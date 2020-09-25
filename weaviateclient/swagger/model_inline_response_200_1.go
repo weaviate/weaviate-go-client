@@ -11,6 +11,6 @@
 package swagger
 
 type InlineResponse2001 struct {
-	Things *Schema  `json:"things,omitempty"`
+	Things  *Schema `json:"things,omitempty"`
 	Actions *Schema `json:"actions,omitempty"`
 }

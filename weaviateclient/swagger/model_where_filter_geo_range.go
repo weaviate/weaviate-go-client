@@ -12,6 +12,6 @@ package swagger
 
 // filter within a distance of a georange
 type WhereFilterGeoRange struct {
-	GeoCoordinates *GeoCoordinates        `json:"geoCoordinates,omitempty"`
-	Distance *WhereFilterGeoRangeDistance `json:"distance,omitempty"`
+	GeoCoordinates *GeoCoordinates              `json:"geoCoordinates,omitempty"`
+	Distance       *WhereFilterGeoRangeDistance `json:"distance,omitempty"`
 }

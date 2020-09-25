@@ -12,9 +12,9 @@ package swagger
 
 // On link on the semantic path chain
 type SemanticPathElement struct {
-	Concept string `json:"concept,omitempty"`
-	DistanceToQuery float32 `json:"distanceToQuery,omitempty"`
-	DistanceToResult float32 `json:"distanceToResult,omitempty"`
+	Concept            string  `json:"concept,omitempty"`
+	DistanceToQuery    float32 `json:"distanceToQuery,omitempty"`
+	DistanceToResult   float32 `json:"distanceToResult,omitempty"`
 	DistanceToPrevious float32 `json:"distanceToPrevious,omitempty"`
-	DistanceToNext float32 `json:"distanceToNext,omitempty"`
+	DistanceToNext     float32 `json:"distanceToNext,omitempty"`
 }

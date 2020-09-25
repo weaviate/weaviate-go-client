@@ -12,5 +12,5 @@ package swagger
 
 type GraphQlErrorLocations struct {
 	Column int64 `json:"column,omitempty"`
-	Line int64 `json:"line,omitempty"`
+	Line   int64 `json:"line,omitempty"`
 }

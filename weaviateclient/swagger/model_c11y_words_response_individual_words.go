@@ -11,7 +11,7 @@
 package swagger
 
 type C11yWordsResponseIndividualWords struct {
-	Word string                 `json:"word,omitempty"`
-	InC11y bool                 `json:"inC11y,omitempty"`
-	Info *C11yWordsResponseInfo `json:"info,omitempty"`
+	Word   string                 `json:"word,omitempty"`
+	InC11y bool                   `json:"inC11y,omitempty"`
+	Info   *C11yWordsResponseInfo `json:"info,omitempty"`
 }

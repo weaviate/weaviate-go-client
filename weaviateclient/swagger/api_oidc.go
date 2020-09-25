@@ -1,4 +1,3 @@
-
 /*
  * Weaviate
  *
@@ -26,20 +25,20 @@ var (
 
 type OidcApiService service
 
-/* 
+/*
 OidcApiService OIDC discovery information if OIDC auth is enabled
 OIDC Discovery page, redirects to the token issuer if one is configured
  * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 
-@return InlineResponse2002
+@return OpenIDConfiguration
 */
-func (a *OidcApiService) WellKnownOpenidConfigurationGet(ctx context.Context) (InlineResponse2002, *http.Response, error) {
+func (a *OidcApiService) WellKnownOpenidConfigurationGet(ctx context.Context) (OpenIDConfiguration, *http.Response, error) {
 	var (
 		localVarHttpMethod  = strings.ToUpper("Get")
 		localVarPostBody    interface{}
 		localVarFileName    string
 		localVarFileBytes   []byte
-		localVarReturnValue InlineResponse2002
+		localVarReturnValue OpenIDConfiguration
 	)
 
 	// create path and map variables
@@ -84,29 +83,29 @@ func (a *OidcApiService) WellKnownOpenidConfigurationGet(ctx context.Context) (I
 
 	if localVarHttpResponse.StatusCode < 300 {
 		// If we succeed, return the data, otherwise pass on to decode error.
-		err = a.client.decode(&localVarReturnValue, localVarBody, localVarHttpResponse.Header.Get("Content-Type"));
-		if err == nil { 
+		err = a.client.decode(&localVarReturnValue, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
+		if err == nil {
 			return localVarReturnValue, localVarHttpResponse, err
 		}
 	}
 
 	if localVarHttpResponse.StatusCode >= 300 {
 		newErr := GenericSwaggerError{
-			body: localVarBody,
+			body:  localVarBody,
 			error: localVarHttpResponse.Status,
 		}
-		
+
 		if localVarHttpResponse.StatusCode == 200 {
-			var v InlineResponse2002
-			err = a.client.decode(&v, localVarBody, localVarHttpResponse.Header.Get("Content-Type"));
-				if err != nil {
-					newErr.error = err.Error()
-					return localVarReturnValue, localVarHttpResponse, newErr
-				}
-				newErr.model = v
+			var v OpenIDConfiguration
+			err = a.client.decode(&v, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
 				return localVarReturnValue, localVarHttpResponse, newErr
+			}
+			newErr.model = v
+			return localVarReturnValue, localVarHttpResponse, newErr
 		}
-		
+
 		return localVarReturnValue, localVarHttpResponse, newErr
 	}
 

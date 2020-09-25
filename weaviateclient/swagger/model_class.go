@@ -12,7 +12,7 @@ package swagger
 
 type Class struct {
 	// Name of the class as URI relative to the schema URL.
-	Class string       `json:"class,omitempty"`
+	Class    string    `json:"class,omitempty"`
 	Keywords *Keywords `json:"keywords,omitempty"`
 	// Set this to true if the object vector should include the class name in calculating the overall vector position
 	VectorizeClassName bool `json:"vectorizeClassName,omitempty"`

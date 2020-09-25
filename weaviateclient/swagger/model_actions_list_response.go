@@ -13,7 +13,7 @@ package swagger
 // List of Actions.
 type ActionsListResponse struct {
 	// The actual list of Actions.
-	Actions []Action           `json:"actions,omitempty"`
+	Actions      []Action      `json:"actions,omitempty"`
 	Deprecations []Deprecation `json:"deprecations,omitempty"`
 	// The total number of Actions for the query. The number of items in a response may be smaller due to paging.
 	TotalResults int64 `json:"totalResults,omitempty"`

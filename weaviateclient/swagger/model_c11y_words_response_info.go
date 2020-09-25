@@ -11,6 +11,6 @@
 package swagger
 
 type C11yWordsResponseInfo struct {
-	Vector *C11yVector                     `json:"vector,omitempty"`
+	Vector           *C11yVector           `json:"vector,omitempty"`
 	NearestNeighbors *C11yNearestNeighbors `json:"nearestNeighbors,omitempty"`
 }

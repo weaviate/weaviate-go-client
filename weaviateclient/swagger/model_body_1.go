@@ -12,6 +12,6 @@ package swagger
 
 type Body1 struct {
 	// Define which fields need to be returned. Default value is ALL
-	Fields []string  `json:"fields,omitempty"`
+	Fields  []string `json:"fields,omitempty"`
 	Actions []Action `json:"actions,omitempty"`
 }

@@ -12,7 +12,7 @@ package swagger
 
 // This underscore property contains additional info about the how the class was vectorized
 type InterpretationSource struct {
-	Concept string `json:"concept,omitempty"`
-	Weight float32 `json:"weight,omitempty"`
+	Concept    string  `json:"concept,omitempty"`
+	Weight     float32 `json:"weight,omitempty"`
 	Occurrence float32 `json:"occurrence,omitempty"`
 }

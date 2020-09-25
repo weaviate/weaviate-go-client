@@ -12,10 +12,10 @@ package swagger
 
 type Action struct {
 	// Type of the Action, defined in the schema.
-	Class string                 `json:"class,omitempty"`
-	VectorWeights *VectorWeights `json:"vectorWeights,omitempty"`
-	Schema *PropertySchema       `json:"schema,omitempty"`
-	Meta *UnderscoreProperties   `json:"meta,omitempty"`
+	Class         string                `json:"class,omitempty"`
+	VectorWeights *VectorWeights        `json:"vectorWeights,omitempty"`
+	Schema        *PropertySchema       `json:"schema,omitempty"`
+	Meta          *UnderscoreProperties `json:"meta,omitempty"`
 	// ID of the Action.
 	Id string `json:"id,omitempty"`
 	// Timestamp of creation of this Action in milliseconds since epoch UTC.

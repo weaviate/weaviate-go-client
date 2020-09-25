@@ -12,6 +12,6 @@ package swagger
 
 type Principal struct {
 	// The username that was extracted either from the authentication information
-	Username string `json:"username,omitempty"`
-	Groups []string `json:"groups,omitempty"`
+	Username string   `json:"username,omitempty"`
+	Groups   []string `json:"groups,omitempty"`
 }

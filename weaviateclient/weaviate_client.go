@@ -1,48 +1,31 @@
 package weaviateclient
 
-const apiVersion = "v1"
+import (
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
+	"time"
+)
 
+const apiVersion = "v1"
+const defaultTimeout = 15000 * time.Millisecond
+
+// Config of the client endpoint
 type Config struct {
-	Host string
+	Host   string
 	Scheme string
 }
 
-func (cfg *Config) basePath() string {
-	return cfg.Scheme+"://"+cfg.Host+"/"+apiVersion
-
-}
-
+// WeaviateClient implementing the weaviate API
 type WeaviateClient struct {
-	config Config
-	Misc Misc
+	connection *connection.Connection
+	Misc       Misc
 }
 
+// New weaviate client from config
 func New(config Config) *WeaviateClient {
-
-	//swagger.Configuration{
-	//	BasePath:      "",
-	//	Host:          "",
-	//	Scheme:        "",
-	//	DefaultHeader: nil,
-	//	UserAgent:     "",
-	//	HTTPClient:    nil,
-	//}
-	//cfg := &swagger.Configuration{
-	//	BasePath:      "https://localhost/v1",
-	//	DefaultHeader: make(map[string]string),
-	//	UserAgent:     "Swagger-Codegen/1.0.0/go",
-	//}
+	con := connection.NewConnection(config.Scheme, config.Host)
 
 	return &WeaviateClient{
-		config: config,
-		Misc: Misc{config: &config},
+		connection: con,
+		Misc:       Misc{connection: con},
 	}
 }
-
-
-
-
-
-
-
-

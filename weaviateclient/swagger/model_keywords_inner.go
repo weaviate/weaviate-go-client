@@ -11,6 +11,6 @@
 package swagger
 
 type KeywordsInner struct {
-	Keyword string `json:"keyword,omitempty"`
-	Weight float32 `json:"weight,omitempty"`
+	Keyword string  `json:"keyword,omitempty"`
+	Weight  float32 `json:"weight,omitempty"`
 }

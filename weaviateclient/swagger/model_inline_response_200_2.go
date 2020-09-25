@@ -10,7 +10,7 @@
 
 package swagger
 
-type InlineResponse2002 struct {
+type OpenIDConfiguration struct {
 	// The Location to redirect to
 	Href string `json:"href,omitempty"`
 	// OAuth Client ID

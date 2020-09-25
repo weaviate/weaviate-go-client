@@ -12,8 +12,8 @@ package swagger
 
 // Weighted results for all words
 type C11yWordsResponseConcatenatedWord struct {
-	ConcatenatedWord string                            `json:"concatenatedWord,omitempty"`
-	SingleWords []interface{}                          `json:"singleWords,omitempty"`
-	ConcatenatedVector *C11yVector                     `json:"concatenatedVector,omitempty"`
+	ConcatenatedWord             string                `json:"concatenatedWord,omitempty"`
+	SingleWords                  []interface{}         `json:"singleWords,omitempty"`
+	ConcatenatedVector           *C11yVector           `json:"concatenatedVector,omitempty"`
 	ConcatenatedNearestNeighbors *C11yNearestNeighbors `json:"concatenatedNearestNeighbors,omitempty"`
 }

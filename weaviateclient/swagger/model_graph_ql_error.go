@@ -13,6 +13,6 @@ package swagger
 // An error response caused by a GraphQL query.
 type GraphQlError struct {
 	Locations []GraphQlErrorLocations `json:"locations,omitempty"`
-	Message string                    `json:"message,omitempty"`
-	Path []string                     `json:"path,omitempty"`
+	Message   string                  `json:"message,omitempty"`
+	Path      []string                `json:"path,omitempty"`
 }

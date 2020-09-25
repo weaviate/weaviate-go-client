@@ -1,71 +1,88 @@
 package weaviateclient
 
 import (
+	"context"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/models"
 	"net/http"
 )
 
+
+// Misc collection of endpoints that don't fit in other categories
 type Misc struct {
-	config *Config
+	connection *connection.Connection
 }
 
+
+// ReadyChecker retrieves weaviate ready status
 func (misc *Misc) ReadyChecker() *readyChecker {
-	return &readyChecker{config: misc.config}
+	return &readyChecker{connection: misc.connection}
 }
 
-func (misc *Misc) LifeChecker() *liveChecker {
-	return &liveChecker{config: misc.config}
+// LiveChecker retrieves weaviate live status
+func (misc *Misc) LiveChecker() *liveChecker {
+	return &liveChecker{connection: misc.connection}
 }
 
+// OpenIDConfigurationGetter retrieves the Open ID configuration
+// may be nil
 func (misc *Misc) OpenIDConfigurationGetter() *openIDConfigGetter {
-	return &openIDConfigGetter{config: misc.config}
+	return &openIDConfigGetter{connection: misc.connection}
 }
-
 
 type readyChecker struct {
-	config *Config
+	connection *connection.Connection
 }
 
-func (rc *readyChecker) Do() (bool, error) {
-	return checker(rc.config, "ready")
+// Do the ready request
+func (rc *readyChecker) Do(ctx context.Context) (bool, error) {
+	response, err := rc.connection.RunREST(ctx, "/.well-known/ready", http.MethodGet)
+	if err != nil {
+		return false, err
+	}
+	if response.StatusCode == 200 {
+		return true, nil
+	}
+	return false, nil
 }
-
 
 type liveChecker struct {
-	config *Config
+	connection *connection.Connection
 }
 
-func (lc *liveChecker) Do() (bool, error) {
-	return checker(lc.config, "live")
-}
-
-
-func checker(config *Config, endpoint string) (bool, error) {
-	path := config.basePath()+"/.well-known/"+endpoint
-	response, getErr := http.Get(path)
-	if getErr != nil {
-		return false, getErr
+// Do the liveChecker request
+func (lc *liveChecker) Do(ctx context.Context) (bool, error) {
+	response, err := lc.connection.RunREST(ctx, "/.well-known/live", http.MethodGet)
+	if err != nil {
+		return false, err
 	}
-	defer response.Body.Close()
-	return response.StatusCode == 200, nil
+	if response.StatusCode == 200 {
+		return true, nil
+	}
+	return false, nil
 }
-
 
 type openIDConfigGetter struct {
-	config *Config
+	connection *connection.Connection
 }
 
-func (oidcg *openIDConfigGetter) Do() (map[string]string, error) {
-	path := oidcg.config.basePath()+"/.well-known/openid-configuration"
-	response, getErr := http.Get(path)
-	if getErr != nil {
-		return nil, getErr
+// Do the open ID config request
+func (oidcg *openIDConfigGetter) Do(ctx context.Context) (*models.OpenIDConfiguration, error) {
+	response, err := oidcg.connection.RunREST(ctx, "/.well-known/openid-configuration", http.MethodGet)
+	if err != nil {
+		return nil, err
 	}
-	defer response.Body.Close()
-	if response.StatusCode == 200 {
-
+	if response.StatusCode == 404 {
 		return nil, nil
-		// TODO set response body to struct
 	}
-	// TODO return error
-	return nil, nil
+	if response.StatusCode == 200 {
+		var openIDConfig models.OpenIDConfiguration
+		decodeErr := response.DecodeBodyIntoTarget(&openIDConfig)
+		if decodeErr != nil {
+			return nil, decodeErr
+		}
+		return &openIDConfig, nil
+	}
+
+	return nil, NewUnexpectedStatusCodeError(response.StatusCode, string(response.Body))
 }

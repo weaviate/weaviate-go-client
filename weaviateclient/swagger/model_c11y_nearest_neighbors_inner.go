@@ -11,6 +11,6 @@
 package swagger
 
 type C11yNearestNeighborsInner struct {
-	Word string `json:"word,omitempty"`
+	Word     string  `json:"word,omitempty"`
 	Distance float32 `json:"distance,omitempty"`
 }

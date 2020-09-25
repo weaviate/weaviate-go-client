@@ -20,7 +20,7 @@ type Property struct {
 	// Set this to true if the object vector should include this property's name in calculating the overall vector position. If set to false (default), only the property value will be used.
 	VectorizePropertyName bool `json:"vectorizePropertyName,omitempty"`
 	// Name of the property as URI relative to the schema URL.
-	Name string        `json:"name,omitempty"`
+	Name     string    `json:"name,omitempty"`
 	Keywords *Keywords `json:"keywords,omitempty"`
 	// Optional. By default each property is fully indexed both for full-text, as well as vector-search. You can ignore properties in searches by explicitly setting index to false. Not set is the same as true
 	Index bool `json:"index,omitempty"`

@@ -12,10 +12,10 @@ package swagger
 
 type ThingsGetResponse struct {
 	// Class of the Thing, defined in the schema.
-	Class string                 `json:"class,omitempty"`
-	VectorWeights *VectorWeights `json:"vectorWeights,omitempty"`
-	Schema *PropertySchema       `json:"schema,omitempty"`
-	Meta *UnderscoreProperties   `json:"meta,omitempty"`
+	Class         string                `json:"class,omitempty"`
+	VectorWeights *VectorWeights        `json:"vectorWeights,omitempty"`
+	Schema        *PropertySchema       `json:"schema,omitempty"`
+	Meta          *UnderscoreProperties `json:"meta,omitempty"`
 	// ID of the Thing.
 	Id string `json:"id,omitempty"`
 	// Timestamp of creation of this Thing in milliseconds since epoch UTC.
@@ -31,6 +31,6 @@ type ThingsGetResponse struct {
 	// Additional information about the neighboring concepts of this element
 	NearestNeighbors *NearestNeighbors `json:"_nearestNeighbors,omitempty"`
 	// A feature projection of the object's vector into lower dimensions for visualization
-	FeatureProjection *FeatureProjection `json:"_featureProjection,omitempty"`
-	Result *ThingsGetResponseResult      `json:"result,omitempty"`
+	FeatureProjection *FeatureProjection       `json:"_featureProjection,omitempty"`
+	Result            *ThingsGetResponseResult `json:"result,omitempty"`
 }
