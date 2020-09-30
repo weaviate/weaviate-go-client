@@ -7,26 +7,25 @@ import (
 	"net/http"
 )
 
-
-// Misc collection of endpoints that don't fit in other categories
-type Misc struct {
+// MiscAPI collection of endpoints that don't fit in other categories
+type MiscAPI struct {
 	connection *connection.Connection
 }
 
 
 // ReadyChecker retrieves weaviate ready status
-func (misc *Misc) ReadyChecker() *readyChecker {
+func (misc *MiscAPI) ReadyChecker() *readyChecker {
 	return &readyChecker{connection: misc.connection}
 }
 
 // LiveChecker retrieves weaviate live status
-func (misc *Misc) LiveChecker() *liveChecker {
+func (misc *MiscAPI) LiveChecker() *liveChecker {
 	return &liveChecker{connection: misc.connection}
 }
 
 // OpenIDConfigurationGetter retrieves the Open ID configuration
 // may be nil
-func (misc *Misc) OpenIDConfigurationGetter() *openIDConfigGetter {
+func (misc *MiscAPI) OpenIDConfigurationGetter() *openIDConfigGetter {
 	return &openIDConfigGetter{connection: misc.connection}
 }
 
@@ -36,7 +35,7 @@ type readyChecker struct {
 
 // Do the ready request
 func (rc *readyChecker) Do(ctx context.Context) (bool, error) {
-	response, err := rc.connection.RunREST(ctx, "/.well-known/ready", http.MethodGet)
+	response, err := rc.connection.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
 	if err != nil {
 		return false, err
 	}
@@ -52,7 +51,7 @@ type liveChecker struct {
 
 // Do the liveChecker request
 func (lc *liveChecker) Do(ctx context.Context) (bool, error) {
-	response, err := lc.connection.RunREST(ctx, "/.well-known/live", http.MethodGet)
+	response, err := lc.connection.RunREST(ctx, "/.well-known/live", http.MethodGet, nil)
 	if err != nil {
 		return false, err
 	}
@@ -68,7 +67,7 @@ type openIDConfigGetter struct {
 
 // Do the open ID config request
 func (oidcg *openIDConfigGetter) Do(ctx context.Context) (*models.OpenIDConfiguration, error) {
-	response, err := oidcg.connection.RunREST(ctx, "/.well-known/openid-configuration", http.MethodGet)
+	response, err := oidcg.connection.RunREST(ctx, "/.well-known/openid-configuration", http.MethodGet, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -2,11 +2,12 @@ package weaviateclient
 
 import (
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
-	"time"
 )
 
-const apiVersion = "v1"
-const defaultTimeout = 15000 * time.Millisecond
+type SemanticKind string
+
+const SemanticKindThings SemanticKind = "things"
+const SemanticKindActions SemanticKind = "actions"
 
 // Config of the client endpoint
 type Config struct {
@@ -17,7 +18,8 @@ type Config struct {
 // WeaviateClient implementing the weaviate API
 type WeaviateClient struct {
 	connection *connection.Connection
-	Misc       Misc
+	Misc       MiscAPI
+	Schema     SchemaAPI
 }
 
 // New weaviate client from config
@@ -26,6 +28,7 @@ func New(config Config) *WeaviateClient {
 
 	return &WeaviateClient{
 		connection: con,
-		Misc:       Misc{connection: con},
+		Misc:       MiscAPI{connection: con},
+		Schema:     SchemaAPI{connection: con},
 	}
 }

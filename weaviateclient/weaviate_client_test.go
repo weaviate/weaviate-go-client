@@ -1,18 +1,13 @@
 package weaviateclient
-
-import (
-	"testing"
-)
-
-func TestNewClient(t *testing.T) {
-	t.Run("todo", func(t *testing.T) {
-		//cfg := Config{
-		//	Host:   "https",
-		//	Scheme: "example.com",
-		//}
-		//
-		//res, err := client.data.GetterById(id).Do()
-
-		// assert.True(t, sandboxManagementStub.CreateSandboxParameterUser.IsPremiumUser)
-	})
-}
+//
+//import (
+//	"github.com/semi-technologies/weaviate-go-client/weaviateclient/swagger"
+//	"testing"
+//)
+//
+//func TestNewClient(t *testing.T) {
+//	t.Run("todo", func(t *testing.T) {
+//		client := swagger.NewAPIClient(swagger.NewConfiguration())
+//		client.SchemaApi.SchemaThingsCreate()
+//	})
+//}
