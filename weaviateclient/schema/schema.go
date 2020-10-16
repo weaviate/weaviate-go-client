@@ -34,3 +34,10 @@ func (schema *SchemaAPI) AllDeleter() *AllDeleter {
 	}
 }
 
+func (schema *SchemaAPI) PropertyCreator() *PropertyCreator {
+	return &PropertyCreator{
+		connection: schema.Connection,
+		semanticKind: clientModels.SemanticKindThings,
+	}
+}
+

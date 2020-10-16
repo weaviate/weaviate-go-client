@@ -170,13 +170,9 @@ func TestSchema_integration(t *testing.T) {
 		assert.Equal(t, "name", loadedSchema.Actions.Classes[0].Properties[0].Name)
 
 		// Clean up classes
-		errRm1 := client.Schema.ClassDeleter().WithClassName(schemaClassThing.Class).Do(context.Background())
-		errRm2 := client.Schema.ClassDeleter().WithClassName(schemaClassAction.Class).WithKind(clientModels.SemanticKindActions).Do(context.Background())
-		assert.Nil(t, errRm1)
-		assert.Nil(t, errRm2)
+		errRm := client.Schema.AllDeleter().Do(context.Background())
+		assert.Nil(t, errRm)
 	})
-
-
 }
 
 func TestSchema_unit(t *testing.T) {

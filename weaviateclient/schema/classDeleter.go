@@ -34,6 +34,6 @@ func (cd *ClassDeleter) Do(ctx context.Context) error {
 	if responseData.StatusCode == 200 {
 		return nil
 	}
-	return clienterrors.NewUnexpectedStatusCodeError(responseData.StatusCode, string(responseData.Body))
+	return clienterrors.NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
 }
 

@@ -1,6 +1,9 @@
 package clienterrors
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
+)
 
 type UnexpectedStatusCodeError struct {
 	StatusCode int
@@ -12,6 +15,10 @@ func NewUnexpectedStatusCodeError(statusCode int, format string, args ...interfa
 		StatusCode: statusCode,
 		msg: fmt.Sprintf(format, args...),
 	}
+}
+
+func NewUnexpectedStatusCodeErrorFromRESTResponse(responseData *connection.ResponseData) *UnexpectedStatusCodeError {
+	return NewUnexpectedStatusCodeError(responseData.StatusCode, string(responseData.Body))
 }
 
 func (uce *UnexpectedStatusCodeError) Error() string {
