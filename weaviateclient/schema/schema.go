@@ -9,7 +9,7 @@ type SchemaAPI struct {
 	Connection *connection.Connection
 }
 
-func (schema *SchemaAPI) Getter() (*SchemaGetter) {
+func (schema *SchemaAPI) Getter() *SchemaGetter {
 	return &SchemaGetter{connection: schema.Connection}
 }
 
@@ -20,11 +20,17 @@ func (schema *SchemaAPI) ClassCreator() *ClassCreator {
 	}
 }
 
-func (schema *SchemaAPI) ClassDeleter() (*ClassDeleter) {
+func (schema *SchemaAPI) ClassDeleter() *ClassDeleter {
 	return &ClassDeleter{
 		connection: schema.Connection,
 		semanticKind: clientModels.SemanticKindThings,
 	}
 }
 
+func (schema *SchemaAPI) AllDeleter() *AllDeleter {
+	return &AllDeleter{
+		connection: schema.Connection,
+		schemaAPI: schema,
+	}
+}
 

@@ -100,6 +100,83 @@ func TestSchema_integration(t *testing.T) {
 		assert.Equal(t, 0, len(loadedSchema.Actions.Classes))
 	})
 
+	t.Run("Delete All schema", func(t *testing.T) {
+
+		cfg := weaviateclient.Config{
+			Host:   "localhost:8080",
+			Scheme: "http",
+		}
+		client := weaviateclient.New(cfg)
+
+		schemaClassThing := &models.Class{
+			Class:              "Pizza",
+			Description:        "A delicious religion like food and arguably the best export of Italy.",
+		}
+		schemaClassAction := &models.Class{
+			Class:              "ChickenSoup",
+			Description:        "A soup made in part out of chicken, not for chicken.",
+		}
+
+		errT := client.Schema.ClassCreator().WithClass(schemaClassThing).Do(context.Background())
+		assert.Nil(t, errT)
+		errA := client.Schema.ClassCreator().WithClass(schemaClassAction).WithKind(clientModels.SemanticKindActions).Do(context.Background())
+		assert.Nil(t, errA)
+
+		errRm1 := client.Schema.AllDeleter().Do(context.Background())
+		assert.Nil(t, errRm1)
+
+		loadedSchema, getErr := client.Schema.Getter().Do(context.Background())
+		assert.Nil(t, getErr)
+		assert.Equal(t, 0, len(loadedSchema.Things.Classes))
+		assert.Equal(t, 0, len(loadedSchema.Actions.Classes))
+	})
+
+	t.Run("POST /schema/{type}/{className}/properties", func(t *testing.T) {
+
+		cfg := weaviateclient.Config{
+			Host:   "localhost:8080",
+			Scheme: "http",
+		}
+		client := weaviateclient.New(cfg)
+
+		schemaClassThing := &models.Class{
+			Class:              "Pizza",
+			Description:        "A delicious religion like food and arguably the best export of Italy.",
+		}
+		schemaClassAction := &models.Class{
+			Class:              "ChickenSoup",
+			Description:        "A soup made in part out of chicken, not for chicken.",
+		}
+
+		errT := client.Schema.ClassCreator().WithClass(schemaClassThing).Do(context.Background())
+		assert.Nil(t, errT)
+		errA := client.Schema.ClassCreator().WithClass(schemaClassAction).WithKind(clientModels.SemanticKindActions).Do(context.Background())
+		assert.Nil(t, errA)
+
+		newProperty := models.Property{
+			DataType:              []string{"string"},
+			Description:           "name",
+			Name:                  "name",
+		}
+
+		client.Schema.PropertyCreator().WithClassName("Pizza").WithProperty(newProperty).Do(context.Background())
+		client.Schema.PropertyCreator().WithClassName("ChickenSoup").WithProperty(newProperty).WithKind(clientModels.SemanticKindActions).Do(context.Background())
+
+		loadedSchema, getErr := client.Schema.Getter().Do(context.Background())
+		assert.Nil(t, getErr)
+		assert.Equal(t, 1, len(loadedSchema.Things.Classes))
+		assert.Equal(t, 1, len(loadedSchema.Actions.Classes))
+		assert.Equal(t, "name", loadedSchema.Things.Classes[0].Properties[0].Name)
+		assert.Equal(t, "name", loadedSchema.Actions.Classes[0].Properties[0].Name)
+
+		// Clean up classes
+		errRm1 := client.Schema.ClassDeleter().WithClassName(schemaClassThing.Class).Do(context.Background())
+		errRm2 := client.Schema.ClassDeleter().WithClassName(schemaClassAction.Class).WithKind(clientModels.SemanticKindActions).Do(context.Background())
+		assert.Nil(t, errRm1)
+		assert.Nil(t, errRm2)
+	})
+
+
 }
 
 func TestSchema_unit(t *testing.T) {
