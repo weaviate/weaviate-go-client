@@ -10,9 +10,12 @@ jobs:
   include:
     - stage: "Unit Test"
       go: "1.13.6"
+      env:
+        - EXTERNAL_WEAVIATE_RUNNING="true"
       before_install:
         - go get -u -v golang.org/x/lint/golint
         - go get -v ./...
       script:
+        - docker-compose -f test/docker-compose.yaml up -d
         - go test -v ./...
         - golint -set_exit_status ./...

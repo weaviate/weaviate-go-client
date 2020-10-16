@@ -10,6 +10,7 @@ import (
 )
 
 func TestMisc_integration(t *testing.T) {
+
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
