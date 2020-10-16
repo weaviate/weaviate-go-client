@@ -1,4 +1,4 @@
-package weaviateclient
+package clienterrors
 
 import "fmt"
 

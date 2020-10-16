@@ -1,15 +1,17 @@
-package weaviateclient
+package misc
 
 import (
 	"context"
 	"fmt"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/testenv"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestMisc_integration(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
-		err := setupLocalWeaviate()
+		err := testenv.SetupLocalWeaviate()
 		if err != nil {
 			fmt.Printf(err.Error())
 			t.Fail()
@@ -18,12 +20,12 @@ func TestMisc_integration(t *testing.T) {
 
 	t.Run("ready", func(t *testing.T) {
 
-		cfg := Config{
+		cfg := weaviateclient.Config{
 			Host:   "localhost:8080",
 			Scheme: "http",
 		}
 
-		client := New(cfg)
+		client := weaviateclient.New(cfg)
 		isReady, err := client.Misc.ReadyChecker().Do(context.Background())
 
 		assert.Nil(t, err)
@@ -32,12 +34,12 @@ func TestMisc_integration(t *testing.T) {
 
 	t.Run("live", func(t *testing.T) {
 
-		cfg := Config{
+		cfg := weaviateclient.Config{
 			Host:   "localhost:8080",
 			Scheme: "http",
 		}
 
-		client := New(cfg)
+		client := weaviateclient.New(cfg)
 		isLive, err := client.Misc.LiveChecker().Do(context.Background())
 
 		assert.Nil(t, err)
@@ -46,12 +48,12 @@ func TestMisc_integration(t *testing.T) {
 
 	t.Run("openID", func(t *testing.T) {
 
-		cfg := Config{
+		cfg := weaviateclient.Config{
 			Host:   "localhost:8080",
 			Scheme: "http",
 		}
 
-		client := New(cfg)
+		client := weaviateclient.New(cfg)
 		openIDconfig, err := client.Misc.OpenIDConfigurationGetter().Do(context.Background())
 
 		assert.Nil(t, err)
@@ -60,7 +62,7 @@ func TestMisc_integration(t *testing.T) {
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
-		err := tearDownLocalWeaviate()
+		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
 			fmt.Printf(err.Error())
 			t.Fail()
@@ -71,12 +73,12 @@ func TestMisc_integration(t *testing.T) {
 
 func TestMisc_connection_error(t *testing.T) {
 	t.Run("ready", func(t *testing.T) {
-		cfg := Config{
+		cfg := weaviateclient.Config{
 			Host:   "localhorst",
 			Scheme: "http",
 		}
 
-		client := New(cfg)
+		client := weaviateclient.New(cfg)
 		isReady, err := client.Misc.ReadyChecker().Do(context.Background())
 
 		assert.NotNil(t, err)
@@ -84,17 +86,15 @@ func TestMisc_connection_error(t *testing.T) {
 	})
 
 	t.Run("live", func(t *testing.T) {
-		cfg := Config{
+		cfg := weaviateclient.Config{
 			Host:   "localhorst",
 			Scheme: "http",
 		}
 
-		client := New(cfg)
+		client := weaviateclient.New(cfg)
 		isReady, err := client.Misc.LiveChecker().Do(context.Background())
 
 		assert.NotNil(t, err)
 		assert.False(t, isReady)
 	})
 }
-
-// TODO docker-compose up -d -env ??? Set env variables for open ID config and check if it is returned

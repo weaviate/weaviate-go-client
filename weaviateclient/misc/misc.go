@@ -1,7 +1,8 @@
-package weaviateclient
+package misc
 
 import (
 	"context"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/models"
 	"net/http"
@@ -9,24 +10,24 @@ import (
 
 // MiscAPI collection of endpoints that don't fit in other categories
 type MiscAPI struct {
-	connection *connection.Connection
+	Connection *connection.Connection
 }
 
 
 // ReadyChecker retrieves weaviate ready status
 func (misc *MiscAPI) ReadyChecker() *readyChecker {
-	return &readyChecker{connection: misc.connection}
+	return &readyChecker{connection: misc.Connection}
 }
 
 // LiveChecker retrieves weaviate live status
 func (misc *MiscAPI) LiveChecker() *liveChecker {
-	return &liveChecker{connection: misc.connection}
+	return &liveChecker{connection: misc.Connection}
 }
 
 // OpenIDConfigurationGetter retrieves the Open ID configuration
 // may be nil
 func (misc *MiscAPI) OpenIDConfigurationGetter() *openIDConfigGetter {
-	return &openIDConfigGetter{connection: misc.connection}
+	return &openIDConfigGetter{connection: misc.Connection}
 }
 
 type readyChecker struct {
@@ -83,5 +84,5 @@ func (oidcg *openIDConfigGetter) Do(ctx context.Context) (*models.OpenIDConfigur
 		return &openIDConfig, nil
 	}
 
-	return nil, NewUnexpectedStatusCodeError(response.StatusCode, string(response.Body))
+	return nil, clienterrors.NewUnexpectedStatusCodeError(response.StatusCode, string(response.Body))
 }

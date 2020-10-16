@@ -2,12 +2,11 @@ package weaviateclient
 
 import (
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/misc"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/schema"
 )
 
-type SemanticKind string
 
-const SemanticKindThings SemanticKind = "things"
-const SemanticKindActions SemanticKind = "actions"
 
 // Config of the client endpoint
 type Config struct {
@@ -18,8 +17,8 @@ type Config struct {
 // WeaviateClient implementing the weaviate API
 type WeaviateClient struct {
 	connection *connection.Connection
-	Misc       MiscAPI
-	Schema     SchemaAPI
+	Misc       misc.MiscAPI
+	Schema     schema.SchemaAPI
 }
 
 // New weaviate client from config
@@ -28,7 +27,7 @@ func New(config Config) *WeaviateClient {
 
 	return &WeaviateClient{
 		connection: con,
-		Misc:       MiscAPI{connection: con},
-		Schema:     SchemaAPI{connection: con},
+		Misc:       misc.MiscAPI{Connection: con},
+		Schema:     schema.SchemaAPI{Connection: con},
 	}
 }

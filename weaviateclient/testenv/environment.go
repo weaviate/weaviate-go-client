@@ -1,26 +1,27 @@
-package weaviateclient
+package testenv
 
 import (
+	"context"
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/test"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient"
 	"time"
-	"context"
 )
 
-func setupLocalWeaviate() error {
+func SetupLocalWeaviate() error {
 	err := test.SetupWeavaite()
 	if err != nil {
 		return err
 	}
-	return waitForWeaviate()
+	return WaitForWeaviate()
 }
 
-func waitForWeaviate() error {
-	cfg := Config{
+func WaitForWeaviate() error {
+	cfg := weaviateclient.Config{
 		Host:   "localhost:8080",
 		Scheme: "http",
 	}
-	client := New(cfg)
+	client := weaviateclient.New(cfg)
 
 
 	for i:=0;i<20;i++ {
@@ -35,6 +36,6 @@ func waitForWeaviate() error {
 	return fmt.Errorf("Weaviate did not start in time")
 }
 
-func tearDownLocalWeaviate() error {
+func TearDownLocalWeaviate() error {
 	return test.TearDownWeavaite()
 }
