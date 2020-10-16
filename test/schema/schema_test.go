@@ -176,8 +176,10 @@ func TestSchema_integration(t *testing.T) {
 			Name:                  "name",
 		}
 
-		client.Schema.PropertyCreator().WithClassName("Pizza").WithProperty(newProperty).Do(context.Background())
-		client.Schema.PropertyCreator().WithClassName("ChickenSoup").WithProperty(newProperty).WithKind(clientModels.SemanticKindActions).Do(context.Background())
+		propErrT := client.Schema.PropertyCreator().WithClassName("Pizza").WithProperty(newProperty).Do(context.Background())
+		assert.Nil(t, propErrT)
+		propErrA := client.Schema.PropertyCreator().WithClassName("ChickenSoup").WithProperty(newProperty).WithKind(clientModels.SemanticKindActions).Do(context.Background())
+		assert.Nil(t, propErrA)
 
 		loadedSchema, getErr := client.Schema.Getter().Do(context.Background())
 		assert.Nil(t, getErr)
