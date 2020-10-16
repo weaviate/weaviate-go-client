@@ -37,5 +37,7 @@ func WaitForWeaviate() error {
 }
 
 func TearDownLocalWeaviate() error {
-	return test.TearDownWeavaite()
+	err := test.TearDownWeavaite()
+	time.Sleep(time.Second * 3) // Add some delay to make sure the command was executed before the program exits
+	return err
 }

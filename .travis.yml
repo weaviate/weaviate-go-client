@@ -1,5 +1,6 @@
 dist: xenial
 os: linux
+language: go
 
 notifications:
   email:
@@ -8,7 +9,6 @@ notifications:
 jobs:
   include:
     - stage: "Unit Test"
-      language: go
       go: "1.13.6"
       before_install:
         - go get -u -v golang.org/x/lint/golint
