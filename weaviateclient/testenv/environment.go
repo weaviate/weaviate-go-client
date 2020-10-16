@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// SetupLocalWeaviate creates a local weaviate running on 8080 using docker compose
 func SetupLocalWeaviate() error {
 	err := test.SetupWeavaite()
 	if err != nil {
@@ -16,6 +17,8 @@ func SetupLocalWeaviate() error {
 	return WaitForWeaviate()
 }
 
+// WaitForWeaviate waits until weaviate is started up and ready
+// expects weaviat at localhost:8080
 func WaitForWeaviate() error {
 	cfg := weaviateclient.Config{
 		Host:   "localhost:8080",
@@ -36,6 +39,7 @@ func WaitForWeaviate() error {
 	return fmt.Errorf("Weaviate did not start in time")
 }
 
+// TearDownLocalWeaviate shuts down the locally started weaviate docker compose
 func TearDownLocalWeaviate() error {
 	err := test.TearDownWeavaite()
 	time.Sleep(time.Second * 3) // Add some delay to make sure the command was executed before the program exits

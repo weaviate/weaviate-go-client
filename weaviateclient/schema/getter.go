@@ -8,11 +8,13 @@ import (
 	"net/http"
 )
 
-type SchemaGetter struct {
+// Getter builder to get the current schema loaded in weaviate
+type Getter struct {
 	connection *connection.Connection
 }
 
-func (sg *SchemaGetter) Do (ctx context.Context) (*clientModels.SchemaDump, error){
+// Do get and return the weaviate schema
+func (sg *Getter) Do (ctx context.Context) (*clientModels.SchemaDump, error){
 	responseData, err := sg.connection.RunREST(ctx, "/schema", http.MethodGet, nil)
 	if err != nil {
 		return nil, err

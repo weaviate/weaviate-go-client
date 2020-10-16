@@ -5,6 +5,7 @@ import (
 	"os/exec"
 )
 
+// SetupWeavaite run docker compose up
 func SetupWeavaite() error {
 	app := "docker-compose"
 	arguments := []string{
@@ -14,6 +15,7 @@ func SetupWeavaite() error {
 	return command(app, arguments)
 }
 
+// TearDownWeavaite run docker-compose down
 func TearDownWeavaite() error {
 	app := "docker-compose"
 	arguments := []string{

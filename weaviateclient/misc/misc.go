@@ -8,34 +8,35 @@ import (
 	"net/http"
 )
 
-// MiscAPI collection of endpoints that don't fit in other categories
-type MiscAPI struct {
+// API collection of endpoints that don't fit in other categories
+type API struct {
 	Connection *connection.Connection
 }
 
 
 // ReadyChecker retrieves weaviate ready status
-func (misc *MiscAPI) ReadyChecker() *readyChecker {
-	return &readyChecker{connection: misc.Connection}
+func (misc *API) ReadyChecker() *ReadyChecker {
+	return &ReadyChecker{connection: misc.Connection}
 }
 
 // LiveChecker retrieves weaviate live status
-func (misc *MiscAPI) LiveChecker() *liveChecker {
-	return &liveChecker{connection: misc.Connection}
+func (misc *API) LiveChecker() *LiveChecker {
+	return &LiveChecker{connection: misc.Connection}
 }
 
 // OpenIDConfigurationGetter retrieves the Open ID configuration
 // may be nil
-func (misc *MiscAPI) OpenIDConfigurationGetter() *openIDConfigGetter {
-	return &openIDConfigGetter{connection: misc.Connection}
+func (misc *API) OpenIDConfigurationGetter() *OpenIDConfigGetter {
+	return &OpenIDConfigGetter{connection: misc.Connection}
 }
 
-type readyChecker struct {
+// ReadyChecker builder to check if weaviate is ready
+type ReadyChecker struct {
 	connection *connection.Connection
 }
 
 // Do the ready request
-func (rc *readyChecker) Do(ctx context.Context) (bool, error) {
+func (rc *ReadyChecker) Do(ctx context.Context) (bool, error) {
 	response, err := rc.connection.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
 	if err != nil {
 		return false, err
@@ -46,12 +47,13 @@ func (rc *readyChecker) Do(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-type liveChecker struct {
+// LiveChecker builder to check if weaviate is live
+type LiveChecker struct {
 	connection *connection.Connection
 }
 
-// Do the liveChecker request
-func (lc *liveChecker) Do(ctx context.Context) (bool, error) {
+// Do the LiveChecker request
+func (lc *LiveChecker) Do(ctx context.Context) (bool, error) {
 	response, err := lc.connection.RunREST(ctx, "/.well-known/live", http.MethodGet, nil)
 	if err != nil {
 		return false, err
@@ -62,12 +64,13 @@ func (lc *liveChecker) Do(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-type openIDConfigGetter struct {
+// OpenIDConfigGetter builder to retrieve the openID configuration
+type OpenIDConfigGetter struct {
 	connection *connection.Connection
 }
 
 // Do the open ID config request
-func (oidcg *openIDConfigGetter) Do(ctx context.Context) (*models.OpenIDConfiguration, error) {
+func (oidcg *OpenIDConfigGetter) Do(ctx context.Context) (*models.OpenIDConfiguration, error) {
 	response, err := oidcg.connection.RunREST(ctx, "/.well-known/openid-configuration", http.MethodGet, nil)
 	if err != nil {
 		return nil, err

@@ -11,11 +11,13 @@ import (
 
 const apiVersion = "v1"
 
+// Connection networking layer accessing weaviate using http requests
 type Connection struct {
 	basePath string
 	httpClient *http.Client
 }
 
+// NewConnection based on scheme://host
 func NewConnection(scheme string, host string) *Connection {
 	return &Connection{
 		basePath: scheme + "://" + host + "/" + apiVersion,

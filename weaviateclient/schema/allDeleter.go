@@ -6,11 +6,13 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/models"
 )
 
+// AllDeleter builder object to delete an entire schema
 type AllDeleter struct {
 	connection *connection.Connection
-	schemaAPI *SchemaAPI
+	schemaAPI *API
 }
 
+// Do deletes all schema classes from weaviate
 func (ad *AllDeleter) Do(ctx context.Context) error {
 	schema, getSchemaErr := ad.schemaAPI.Getter().Do(ctx)
 	if getSchemaErr != nil {

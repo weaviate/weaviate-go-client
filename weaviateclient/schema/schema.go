@@ -5,36 +5,42 @@ import (
 	clientModels "github.com/semi-technologies/weaviate-go-client/weaviateclient/models"
 )
 
-type SchemaAPI struct {
+// API Conntains all the builder objects required to access the weaviate schema API.
+type API struct {
 	Connection *connection.Connection
 }
 
-func (schema *SchemaAPI) Getter() *SchemaGetter {
-	return &SchemaGetter{connection: schema.Connection}
+// Getter builder to get a weaviate schema
+func (schema *API) Getter() *Getter {
+	return &Getter{connection: schema.Connection}
 }
 
-func (schema *SchemaAPI) ClassCreator() *ClassCreator {
+// ClassCreator builder to create a weaviate schema class
+func (schema *API) ClassCreator() *ClassCreator {
 	return &ClassCreator{
 		connection:   schema.Connection,
 		semanticKind: clientModels.SemanticKindThings, // Set the default
 	}
 }
 
-func (schema *SchemaAPI) ClassDeleter() *ClassDeleter {
+// ClassDeleter builder to delete a weaviate schema class
+func (schema *API) ClassDeleter() *ClassDeleter {
 	return &ClassDeleter{
 		connection: schema.Connection,
 		semanticKind: clientModels.SemanticKindThings,
 	}
 }
 
-func (schema *SchemaAPI) AllDeleter() *AllDeleter {
+// AllDeleter builder to delete an entire schema from a weaviate
+func (schema *API) AllDeleter() *AllDeleter {
 	return &AllDeleter{
 		connection: schema.Connection,
 		schemaAPI: schema,
 	}
 }
 
-func (schema *SchemaAPI) PropertyCreator() *PropertyCreator {
+// PropertyCreator builder to add a property to an existing schema class
+func (schema *API) PropertyCreator() *PropertyCreator {
 	return &PropertyCreator{
 		connection: schema.Connection,
 		semanticKind: clientModels.SemanticKindThings,

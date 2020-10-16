@@ -17,8 +17,8 @@ type Config struct {
 // WeaviateClient implementing the weaviate API
 type WeaviateClient struct {
 	connection *connection.Connection
-	Misc       misc.MiscAPI
-	Schema     schema.SchemaAPI
+	Misc       misc.API
+	Schema     schema.API
 }
 
 // New weaviate client from config
@@ -27,7 +27,7 @@ func New(config Config) *WeaviateClient {
 
 	return &WeaviateClient{
 		connection: con,
-		Misc:       misc.MiscAPI{Connection: con},
-		Schema:     schema.SchemaAPI{Connection: con},
+		Misc:       misc.API{Connection: con},
+		Schema:     schema.API{Connection: con},
 	}
 }
