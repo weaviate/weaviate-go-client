@@ -29,7 +29,7 @@ func command(app string, arguments []string) error {
 	}
 
 	cmd := exec.Command(app, arguments...)
-	cmd.Dir = mydir + "/../test/"
+	cmd.Dir = mydir + "/../"
 	err = cmd.Start()
 	return err
 }

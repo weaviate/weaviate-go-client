@@ -2,15 +2,24 @@ package schema
 
 import (
 	"context"
+	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient"
 	clientModels "github.com/semi-technologies/weaviate-go-client/weaviateclient/models"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestSchema_integration(t *testing.T) {
-	// TODO up and down function
+
+	t.Run("up", func(t *testing.T) {
+		err := testenv.SetupLocalWeaviate()
+		if err != nil {
+			fmt.Printf(err.Error())
+			t.Fail()
+		}
+	})
 
 	t.Run("POST /schema/things", func(t *testing.T) {
 
@@ -37,6 +46,10 @@ func TestSchema_integration(t *testing.T) {
 		assert.Equal(t, schemaClass, loadedSchema.Things.Classes[0])
 		assert.Equal(t, schemaClass.Class, loadedSchema.Things.Classes[0].Class)
 		assert.Equal(t, schemaClass.Description, loadedSchema.Things.Classes[0].Description)
+
+		// Clean up classes
+		errRm := client.Schema.AllDeleter().Do(context.Background())
+		assert.Nil(t, errRm)
 	})
 
 	t.Run("POST /schema/actions", func(t *testing.T) {
@@ -59,6 +72,10 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, getErr)
 		assert.Equal(t, 1, len(loadedSchema.Actions.Classes))
 		assert.Equal(t, schemaClass, loadedSchema.Actions.Classes[0])
+
+		// Clean up classes
+		errRm := client.Schema.AllDeleter().Do(context.Background())
+		assert.Nil(t, errRm)
 	})
 
 	t.Run("Delete /schema/{type}", func(t *testing.T) {
@@ -172,6 +189,14 @@ func TestSchema_integration(t *testing.T) {
 		// Clean up classes
 		errRm := client.Schema.AllDeleter().Do(context.Background())
 		assert.Nil(t, errRm)
+	})
+
+	t.Run("tear down weaviate", func(t *testing.T) {
+		err := testenv.TearDownLocalWeaviate()
+		if err != nil {
+			fmt.Printf(err.Error())
+			t.Fail()
+		}
 	})
 }
 

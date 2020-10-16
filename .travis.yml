@@ -1,8 +1,9 @@
+dist: xenial
+os: linux
+
 notifications:
   email:
     on_success: change
-
-os: linux
 
 jobs:
   include:
