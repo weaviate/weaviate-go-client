@@ -30,6 +30,14 @@ func (con *Connection) addHeaderToRequest(request *http.Request) {
 	request.Header.Add("Accept", "application/json")
 }
 
+func (con *Connection) addURLParametersToRequest(request *http.Request, parameters map[string]string) {
+	q := request.URL.Query()
+	for key, value := range parameters {
+		q.Add(key, value)
+	}
+	request.URL.RawQuery = q.Encode()
+}
+
 func (con *Connection) marshalBody(body interface{}) (io.Reader, error) {
 	if body == nil {
 		return nil, nil
@@ -54,6 +62,7 @@ func (con *Connection) createRequest(ctx context.Context, path string, restMetho
 		return nil, err
 	}
 	con.addHeaderToRequest(request)
+	//con.addURLParametersToRequest(request, urlParameters)
 	request.WithContext(ctx)
 	return request, nil
 }
@@ -65,6 +74,8 @@ func (con *Connection) createRequest(ctx context.Context, path string, restMetho
 //  a response that may be parsed into a struct after the fact
 //  error if there was a network issue
 func (con *Connection) RunREST(ctx context.Context, path string, restMethod string, requestBody interface{}) (*ResponseData, error) {
+
+
 	request, requestErr := con.createRequest(ctx, path, restMethod, requestBody)
 	if requestErr != nil {
 		return nil, requestErr

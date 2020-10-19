@@ -18,9 +18,22 @@ func (data *API) Creator() *Creator {
 }
 
 func (data *API) ActionGetter() *ActionGetter {
-	return &ActionGetter{connection: data.Connection}
+	return &ActionGetter{
+		connection:           data.Connection,
+		underscoreProperties: &underscoreProperties{},
+	}
 }
 
 func (data *API) ThingGetter() *ThingGetter {
-	return &ThingGetter{connection: data.Connection}
+	return &ThingGetter{
+		connection: data.Connection,
+		underscoreProperties: &underscoreProperties{},
+	}
+}
+
+func (data *API) Deleter() *Deleter {
+	return &Deleter{
+		connection: data.Connection,
+		semanticKind: paragons.SemanticKindThings,
+	}
 }

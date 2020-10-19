@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
@@ -113,29 +114,94 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, errCreateA)
 
 		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
-		objectT, objErrT := client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").WithUnderscoreInterpretation().Do(context.Background())
+		// THINGS
+		objectT, objErrT := client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, objErrT)
-		objectA, objErrA := client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithUnderscoreInterpretation().Do(context.Background())
-		assert.Nil(t, objErrA)
+		assert.Nil(t, objectT[0].Classification)
+		assert.Nil(t, objectT[0].NearestNeighbors)
+		assert.Nil(t, objectT[0].FeatureProjection)
+		assert.Nil(t, objectT[0].Vector)
+		assert.Nil(t, objectT[0].Interpretation)
 
-		assert.Equal(t, "Pizza", objectT[0].Class)
-		valuesT := objectT[0].Schema.(map[string]interface{})
-		assert.Equal(t, "Hawaii", valuesT["name"])
-		assert.Equal(t, "Soup", objectA[0].Class)
-		valuesA := objectA[0].Schema.(map[string]interface{})
-		assert.Equal(t, "ChickenSoup", valuesA["name"])
+		objectT, objErrT = client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").WithUnderscoreInterpretation().Do(context.Background())
+		assert.Nil(t, objErrT)
+		assert.Nil(t, objectT[0].Classification)
+		assert.Nil(t, objectT[0].NearestNeighbors)
+		assert.Nil(t, objectT[0].FeatureProjection)
+		assert.Nil(t, objectT[0].Vector)
+		assert.NotNil(t, objectT[0].Interpretation)
+
+		objectT, objErrT = client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").WithUnderscoreInterpretation().WithUnderscoreClassification().WithUnderscoreNearestNeighbors().WithUnderscoreVector().Do(context.Background())
+		assert.Nil(t, objErrT)
+		assert.Nil(t, objectT[0].Classification) // Is nil because no classification was executed
+		assert.NotNil(t, objectT[0].NearestNeighbors)
+		assert.Nil(t, objectT[0].FeatureProjection) // Is nil because feature projection is not possible on non list request
+		assert.NotNil(t, objectT[0].Vector)
+		assert.NotNil(t, objectT[0].Interpretation)
+
+		// ACTIONS
+		objectA, objErrA := client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		assert.Nil(t, objErrA)
+		assert.Nil(t, objectA[0].Classification)
+		assert.Nil(t, objectA[0].NearestNeighbors)
+		assert.Nil(t, objectA[0].FeatureProjection)
+		assert.Nil(t, objectA[0].Vector)
+		assert.Nil(t, objectA[0].Interpretation)
+
+		objectA, objErrA = client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithUnderscoreInterpretation().Do(context.Background())
+		assert.Nil(t, objErrA)
+		assert.Nil(t, objectA[0].Classification)
+		assert.Nil(t, objectA[0].NearestNeighbors)
+		assert.Nil(t, objectA[0].FeatureProjection)
+		assert.Nil(t, objectA[0].Vector)
+		assert.NotNil(t, objectA[0].Interpretation)
+
+		objectA, objErrA = client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithUnderscoreInterpretation().WithUnderscoreClassification().WithUnderscoreNearestNeighbors().WithUnderscoreFeatureProjection().WithUnderscoreVector().Do(context.Background())
+		assert.Nil(t, objErrT)
+		assert.Nil(t, objectT[0].Classification) // Is nil because no classification was executed
+		assert.NotNil(t, objectT[0].NearestNeighbors)
+		assert.Nil(t, objectT[0].FeatureProjection) // Is nil because feature projection is not possible on non list request
+		assert.NotNil(t, objectT[0].Vector)
+		assert.NotNil(t, objectT[0].Interpretation)
 
 		cleanUpWeaviate(t, client)
-
-
-		// TODO underscore properties
-		//.withUnderscoreClassification()
-		//.withUnderscoreNearestNeighbors()
-		//.withUnderscoreFeatureProjection()
-		//.withUnderscoreVector()
-
 	})
 
+	t.Run("DELETE /{type}", func(t *testing.T) {
+		client := createTestClient()
+
+		createWeaviateTestSchemaFood(t, client)
+
+		propertySchemaT := map[string]string{
+			"name": "Hawaii",
+			"description": "Universally accepted to be the best pizza ever created.",
+		}
+		propertySchemaA := map[string]string{
+			"name": "ChickenSoup",
+			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
+		}
+		errCreateT := client.Data.Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		assert.Nil(t, errCreateT)
+		errCreateA := client.Data.Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(paragons.SemanticKindActions).Do(context.Background())
+		assert.Nil(t, errCreateA)
+
+		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
+		// THINGS
+		deleteErrT := client.Data.Deleter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		assert.Nil(t, deleteErrT)
+		time.Sleep(2.0 * time.Second)
+		_, getErrT := client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		statusCodeErrorT := getErrT.(*clienterrors.UnexpectedStatusCodeError)
+		assert.Equal(t, 404, statusCodeErrorT.StatusCode)
+
+		deleteErrA := client.Data.Deleter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithKind(paragons.SemanticKindActions).Do(context.Background())
+		assert.Nil(t, deleteErrA)
+		_, getErrA := client.Data.ThingGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		statusCodeErrorA := getErrA.(*clienterrors.UnexpectedStatusCodeError)
+		assert.Equal(t, 404, statusCodeErrorA.StatusCode)
+
+		cleanUpWeaviate(t, client)
+	})
 
 	t.Run("PUT /{type}/{id}", func(t *testing.T) {
 		t.Fail()
@@ -145,9 +211,6 @@ func TestData_integration(t *testing.T) {
 		t.Fail()
 	})
 
-	t.Run("DELETE /{type}", func(t *testing.T) {
-		t.Fail()
-	})
 
 	t.Run("POST /{type}/{id}/references/{propertyName}", func(t *testing.T) {
 		t.Fail()
