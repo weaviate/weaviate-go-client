@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient"
-	clientModels "github.com/semi-technologies/weaviate-go-client/weaviateclient/models"
+	clientModels "github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"

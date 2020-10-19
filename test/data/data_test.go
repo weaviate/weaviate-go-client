@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient"
-	clientModels "github.com/semi-technologies/weaviate-go-client/weaviateclient/models"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestData_integration(t *testing.T) {
@@ -23,32 +24,36 @@ func TestData_integration(t *testing.T) {
 
 	t.Run("POST /actions /things", func(t *testing.T) {
 
-		cfg := weaviateclient.Config{
-			Host:   "localhost:8080",
-			Scheme: "http",
-		}
-		client := weaviateclient.New(cfg)
+		client := createTestClient()
 
 		createWeaviateTestSchemaFood(t, client)
 
-		propertySchema := map[string]string{
+		propertySchemaT := map[string]string{
 			"name": "Hawaii",
 			"description": "Universally accepted to be the best pizza ever created.",
 		}
+		propertySchemaA := map[string]string{
+			"name": "ChickenSoup",
+			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
+		}
 
-		errCreateT := client.Data.Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchema).Do(context.Background())
+		errCreateT := client.Data.Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
 		assert.Nil(t, errCreateT)
-		errCreateA := client.Data.Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchema).WithKind(clientModels.SemanticKindActions).Do(context.Background())
+		errCreateA := client.Data.Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(paragons.SemanticKindActions).Do(context.Background())
 		assert.Nil(t, errCreateA)
 
-		objectT, objErrT := client.Data.Getter.WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
+		objectT, objErrT := client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, objErrT)
-		objectA, objErrA := client.Data.Getter.WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		objectA, objErrA := client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
 		assert.Nil(t, objErrA)
 
-
-		// TODO also assert object values
-		t.Fail()
+		assert.Equal(t, "Pizza", objectT.Class)
+		valuesT := objectT.Schema.(map[string]interface{})
+		assert.Equal(t, "Hawaii", valuesT["name"])
+		assert.Equal(t, "Soup", objectA.Class)
+		valuesA := objectA.Schema.(map[string]interface{})
+		assert.Equal(t, "ChickenSoup", valuesA["name"])
 
 		// Clean up classes
 		errRm := client.Schema.AllDeleter().Do(context.Background())
@@ -56,7 +61,37 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("GET /actions /things", func(t *testing.T) {
-		t.Fail()
+		// Not implemented to only get thigns or actions without uuid yet
+
+		//client := createTestClient()
+		//createWeaviateTestSchemaFood(t, client)
+		//
+		//errCreate := client.Data.Creator().WithClassName("Pizza").WithSchema(map[string]string{
+		//	"name": "Margherita",
+		//	"description": "plain",
+		//}).Do(context.Background())
+		//assert.Nil(t, errCreate)
+		//errCreate = client.Data.Creator().WithClassName("Pizza").WithSchema(map[string]string{
+		//	"name": "Pepperoni",
+		//	"description": "meat",
+		//}).Do(context.Background())
+		//assert.Nil(t, errCreate)
+		//errCreate = client.Data.Creator().WithClassName("Soup").WithKind(paragons.SemanticKindActions).WithSchema(map[string]string{
+		//	"name": "Chicken",
+		//	"description": "meat",
+		//}).Do(context.Background())
+		//assert.Nil(t, errCreate)
+		//errCreate = client.Data.Creator().WithClassName("Soup").WithKind(paragons.SemanticKindActions).WithSchema(map[string]string{
+		//	"name": "Tofu",
+		//	"description": "vegetarian",
+		//}).Do(context.Background())
+		//assert.Nil(t, errCreate)
+		//
+		//time.Sleep(2.0 * time.Second)
+		//objectT, objErrT := client.Data.ThingGetter().Do(context.Background())
+		//assert.Nil(t, objErrT)
+		//objectA, objErrA := client.Data.ActionGetter().Do(context.Background())
+		//assert.Nil(t, objErrA)
 
 	})
 
@@ -67,6 +102,15 @@ func TestData_integration(t *testing.T) {
 			t.Fail()
 		}
 	})
+}
+
+func createTestClient() *weaviateclient.WeaviateClient {
+	cfg := weaviateclient.Config{
+		Host:   "localhost:8080",
+		Scheme: "http",
+	}
+	client := weaviateclient.New(cfg)
+	return client
 }
 
 func createWeaviateTestSchemaFood(t *testing.T, client *weaviateclient.WeaviateClient) {
@@ -80,7 +124,7 @@ func createWeaviateTestSchemaFood(t *testing.T, client *weaviateclient.WeaviateC
 	}
 	errT := client.Schema.ClassCreator().WithClass(schemaClassThing).Do(context.Background())
 	assert.Nil(t, errT)
-	errA := client.Schema.ClassCreator().WithClass(schemaClassAction).WithKind(clientModels.SemanticKindActions).Do(context.Background())
+	errA := client.Schema.ClassCreator().WithClass(schemaClassAction).WithKind(paragons.SemanticKindActions).Do(context.Background())
 	assert.Nil(t, errA)
 	nameProperty := models.Property{
 		DataType:              []string{"string"},
@@ -94,10 +138,10 @@ func createWeaviateTestSchemaFood(t *testing.T, client *weaviateclient.WeaviateC
 	}
 	propErrT1 := client.Schema.PropertyCreator().WithClassName("Pizza").WithProperty(nameProperty).Do(context.Background())
 	assert.Nil(t, propErrT1)
-	propErrA1 := client.Schema.PropertyCreator().WithClassName("ChickenSoup").WithProperty(nameProperty).WithKind(clientModels.SemanticKindActions).Do(context.Background())
+	propErrA1 := client.Schema.PropertyCreator().WithClassName("Soup").WithProperty(nameProperty).WithKind(paragons.SemanticKindActions).Do(context.Background())
 	assert.Nil(t, propErrA1)
 	propErrT2 := client.Schema.PropertyCreator().WithClassName("Pizza").WithProperty(descriptionProperty).Do(context.Background())
 	assert.Nil(t, propErrT2)
-	propErrA2 := client.Schema.PropertyCreator().WithClassName("ChickenSoup").WithProperty(descriptionProperty).WithKind(clientModels.SemanticKindActions).Do(context.Background())
+	propErrA2 := client.Schema.PropertyCreator().WithClassName("Soup").WithProperty(descriptionProperty).WithKind(paragons.SemanticKindActions).Do(context.Background())
 	assert.Nil(t, propErrA2)
 }

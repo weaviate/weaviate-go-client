@@ -2,6 +2,7 @@ package weaviateclient
 
 import (
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/data"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/misc"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/schema"
 )
@@ -19,6 +20,7 @@ type WeaviateClient struct {
 	connection *connection.Connection
 	Misc       misc.API
 	Schema     schema.API
+	Data data.API
 }
 
 // New weaviate client from config
@@ -29,5 +31,6 @@ func New(config Config) *WeaviateClient {
 		connection: con,
 		Misc:       misc.API{Connection: con},
 		Schema:     schema.API{Connection: con},
+		Data: data.API{Connection: con},
 	}
 }

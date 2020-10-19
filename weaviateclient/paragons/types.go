@@ -1,4 +1,4 @@
-package models
+package paragons
 
 // SemanticKind defining if a weaviate object is a thing or an action
 type SemanticKind string

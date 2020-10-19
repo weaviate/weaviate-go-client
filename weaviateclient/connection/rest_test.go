@@ -1,7 +1,7 @@
 package connection
 
 import (
-	clientModels "github.com/semi-technologies/weaviate-go-client/weaviateclient/models"
+	clientModels "github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

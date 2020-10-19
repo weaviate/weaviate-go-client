@@ -1,4 +1,4 @@
-package models
+package paragons
 import (
 	weaviateModels "github.com/semi-technologies/weaviate/entities/models"
 )

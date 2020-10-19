@@ -1,4 +1,4 @@
-package models
+package paragons
 
 // OpenIDConfiguration of weaviate
 type OpenIDConfiguration struct {
