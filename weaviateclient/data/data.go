@@ -37,3 +37,10 @@ func (data *API) Deleter() *Deleter {
 		semanticKind: paragons.SemanticKindThings,
 	}
 }
+
+func (data *API) Updater() *Updater {
+	return &Updater{
+		connection: data.Connection,
+		semanticKind: paragons.SemanticKindThings,
+	}
+}
