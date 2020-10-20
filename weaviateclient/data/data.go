@@ -42,5 +42,6 @@ func (data *API) Updater() *Updater {
 	return &Updater{
 		connection: data.Connection,
 		semanticKind: paragons.SemanticKindThings,
+		withMerge: false,
 	}
 }

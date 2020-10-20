@@ -204,6 +204,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("PUT /{type}/{id}", func(t *testing.T) {
+		// PUT replaces the object fully
 		client := createTestClient()
 
 		createWeaviateTestSchemaFood(t, client)
@@ -253,7 +254,51 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("PATCH(merge) /{type}/{id}", func(t *testing.T) {
-		t.Fail()
+		// PATCH merges the new object with the existing object
+		client := createTestClient()
+
+		createWeaviateTestSchemaFood(t, client)
+
+		propertySchemaT := map[string]string{
+			"name": "Hawaii",
+			"description": "Missing description",
+		}
+		propertySchemaA := map[string]string{
+			"name": "ChickenSoup",
+			"description": "missing description",
+		}
+		errCreateT := client.Data.Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		assert.Nil(t, errCreateT)
+		errCreateA := client.Data.Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(paragons.SemanticKindActions).Do(context.Background())
+		assert.Nil(t, errCreateA)
+
+		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
+		propertySchemaT = map[string]string{
+			"description": "Universally accepted to be the best pizza ever created.",
+		}
+		updateErrT := client.Data.Updater().WithID("abefd256-8574-442b-9293-9205193737ee").WithClassName("Pizza").WithSchema(propertySchemaT).WithMerge().Do(context.Background())
+		assert.Nil(t, updateErrT)
+
+		propertySchemaA = map[string]string{
+			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
+		}
+		updateErrA := client.Data.Updater().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithClassName("Soup").WithSchema(propertySchemaA).WithKind(paragons.SemanticKindActions).WithMerge().Do(context.Background())
+		assert.Nil(t, updateErrA)
+		time.Sleep(2.0 * time.Second)
+
+		things, getErrT := client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		assert.Nil(t, getErrT)
+		valuesT := things[0].Schema.(map[string]interface{})
+		assert.Equal(t, propertySchemaT["description"], valuesT["description"])
+		assert.Equal(t, "Hawaii", valuesT["name"])
+
+		actions, getErrT := client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		assert.Nil(t, getErrT)
+		valuesA := actions[0].Schema.(map[string]interface{})
+		assert.Equal(t, propertySchemaA["description"], valuesA["description"])
+		assert.Equal(t, "ChickenSoup", valuesA["name"])
+
+		cleanUpWeaviate(t, client)
 	})
 
 

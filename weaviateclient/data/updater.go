@@ -17,6 +17,7 @@ type Updater struct {
 	uuid string
 	className string
 	propertySchema models.PropertySchema
+	withMerge bool
 }
 
 func (updater *Updater) WithID(uuid string) *Updater{
@@ -39,30 +40,43 @@ func (updater *Updater) WithKind(semanticKind paragons.SemanticKind) *Updater {
 	return updater
 }
 
+func (updater *Updater) WithMerge() *Updater {
+	updater.withMerge = true
+	return updater
+}
+
 func (updater *Updater) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/%v/%v", string(updater.semanticKind), updater.uuid)
-	var responseData *connection.ResponseData
-	var responseErr error
+	httpMethod := http.MethodPut
+	expectedStatuscode := 200
+	if updater.withMerge {
+		httpMethod = http.MethodPatch
+		expectedStatuscode = 204
+	}
+	responseData, responseErr := updater.runUpdate(ctx, path, httpMethod)
+	if responseErr != nil {
+		return responseErr
+	}
+	if responseData.StatusCode == expectedStatuscode {
+		return nil
+	}
+	return clienterrors.NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
+}
+
+func (updater *Updater) runUpdate(ctx context.Context, path string, httpMethod string) (*connection.ResponseData, error) {
 	if updater.semanticKind == paragons.SemanticKindThings {
 		thing := models.Thing {
 			Class:              updater.className,
 			ID:                 strfmt.UUID(updater.uuid),
 			Schema:             updater.propertySchema,
 		}
-		responseData, responseErr = updater.connection.RunREST(ctx, path, http.MethodPut, thing)
+		return updater.connection.RunREST(ctx, path, httpMethod, thing)
 	} else {
 		action := models.Action {
 			Class:              updater.className,
 			ID:                 strfmt.UUID(updater.uuid),
 			Schema:             updater.propertySchema,
 		}
-		responseData, responseErr = updater.connection.RunREST(ctx, path, http.MethodPut, action)
+		return updater.connection.RunREST(ctx, path, httpMethod, action)
 	}
-	if responseErr != nil {
-		return responseErr
-	}
-	if responseData.StatusCode == 200 {
-		return nil
-	}
-	return clienterrors.NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
 }
