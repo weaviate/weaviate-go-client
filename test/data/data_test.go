@@ -301,22 +301,41 @@ func TestData_integration(t *testing.T) {
 		cleanUpWeaviate(t, client)
 	})
 
-
-	t.Run("POST /{type}/{id}/references/{propertyName}", func(t *testing.T) {
-		t.Fail()
-	})
-
-	t.Run("PUT /{type}/{id}/references/{propertyName}", func(t *testing.T) {
-		t.Fail()
-	})
-
-	t.Run("DELETE /{type}/{id}/references/{propertyName}", func(t *testing.T) {
-		t.Fail()
-	})
-
 	t.Run("POST /{type}/validate", func(t *testing.T) {
-		t.Fail()
+		client := createTestClient()
+
+		createWeaviateTestSchemaFood(t, client)
+
+		propertySchemaT := map[string]string{
+			"name": "Hawaii",
+			"description": "Universally accepted to be the best pizza ever created.",
+		}
+		propertySchemaA := map[string]string{
+			"name": "ChickenSoup",
+			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
+		}
+
+
+		errValidateT := client.Data.Validator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		assert.Nil(t, errValidateT)
+
+		errValidateA := client.Data.Validator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(paragons.SemanticKindActions).Do(context.Background())
+		assert.Nil(t, errValidateA)
+
+
+		propertySchemaT["test"] = "not existing property"
+		errValidateT = client.Data.Validator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		assert.NotNil(t, errValidateT)
+
+		propertySchemaA["test"] = "not existing property"
+		errValidateA = client.Data.Validator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(paragons.SemanticKindActions).Do(context.Background())
+		assert.NotNil(t, errValidateA)
+
+
+		cleanUpWeaviate(t, client)
 	})
+
+
 
 	t.Run("Batching??", func(t *testing.T) {
 		// TODO not sure if this should be in seperate package
@@ -370,6 +389,7 @@ func createWeaviateTestSchemaFood(t *testing.T, client *weaviateclient.WeaviateC
 		Description:           "description",
 		Name:                  "description",
 	}
+
 	propErrT1 := client.Schema.PropertyCreator().WithClassName("Pizza").WithProperty(nameProperty).Do(context.Background())
 	assert.Nil(t, propErrT1)
 	propErrA1 := client.Schema.PropertyCreator().WithClassName("Soup").WithProperty(nameProperty).WithKind(paragons.SemanticKindActions).Do(context.Background())

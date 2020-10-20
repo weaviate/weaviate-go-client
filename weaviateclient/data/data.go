@@ -45,3 +45,10 @@ func (data *API) Updater() *Updater {
 		withMerge: false,
 	}
 }
+
+func (data *API) Validator() *Validator {
+	return &Validator{
+		connection:     data.Connection,
+		semanticKind:   paragons.SemanticKindThings,
+	}
+}
