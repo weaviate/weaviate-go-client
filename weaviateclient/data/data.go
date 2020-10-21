@@ -66,3 +66,10 @@ func (data *API) ReferenceCreator() *ReferenceCreator {
 		semanticKind: paragons.SemanticKindThings,
 	}
 }
+
+func (data *API) ReferenceReplacer() *ReferenceReplacer {
+	return &ReferenceReplacer{
+		connection: data.Connection,
+		semanticKind: paragons.SemanticKindThings,
+	}
+}

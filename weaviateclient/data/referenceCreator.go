@@ -40,13 +40,7 @@ func (rc *ReferenceCreator) WithReference(referencePayload *models.SingleRef) *R
 
 func (rc *ReferenceCreator) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/%v/%v/references/%v", string(rc.semanticKind), rc.uuid, rc.referenceProperty)
-	var responseData *connection.ResponseData
-	var responseErr error
-	if rc.semanticKind == paragons.SemanticKindThings {
-		responseData, responseErr = rc.connection.RunREST(ctx, path, http.MethodPost, *rc.referencePayload)
-	} else {
-		responseData, responseErr = rc.connection.RunREST(ctx, path, http.MethodPost, *rc.referencePayload)
-	}
+	responseData, responseErr := rc.connection.RunREST(ctx, path, http.MethodPost, *rc.referencePayload)
 	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 }
 
