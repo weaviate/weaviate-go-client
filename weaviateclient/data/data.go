@@ -73,3 +73,10 @@ func (data *API) ReferenceReplacer() *ReferenceReplacer {
 		semanticKind: paragons.SemanticKindThings,
 	}
 }
+
+func (data *API) ReferenceDeleter() *ReferenceDelter {
+	return &ReferenceDelter{
+		connection: data.Connection,
+		semanticKind: paragons.SemanticKindThings,
+	}
+}
