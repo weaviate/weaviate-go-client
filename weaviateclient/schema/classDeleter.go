@@ -33,12 +33,6 @@ func (cd *ClassDeleter) WithKind(semanticKind paragons.SemanticKind) *ClassDelet
 func (cd *ClassDeleter) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/schema/%v/%v", cd.semanticKind, cd.className)
 	responseData, err := cd.connection.RunREST(ctx, path, http.MethodDelete, nil)
-	if err != nil {
-		return err
-	}
-	if responseData.StatusCode == 200 {
-		return nil
-	}
-	return clienterrors.NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
+	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }
 

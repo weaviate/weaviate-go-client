@@ -28,11 +28,5 @@ func (deleter *Deleter) WithKind(semanticKind paragons.SemanticKind) *Deleter {
 func (deleter *Deleter) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/%v/%v", deleter.semanticKind, deleter.uuid)
 	responseData, err := deleter.connection.RunREST(ctx, path, http.MethodDelete, nil)
-	if err != nil {
-		return err
-	}
-	if responseData.StatusCode == 204 {
-		return nil
-	}
-	return clienterrors.NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
+	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, err, 204)
 }

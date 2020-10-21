@@ -52,3 +52,17 @@ func (data *API) Validator() *Validator {
 		semanticKind:   paragons.SemanticKindThings,
 	}
 }
+
+func (data *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
+	return &ReferencePayloadBuilder{
+		connection:   data.Connection,
+		semanticKind: paragons.SemanticKindThings,
+	}
+}
+
+func (data *API) ReferenceCreator() *ReferenceCreator {
+	return &ReferenceCreator{
+		connection: data.Connection,
+		semanticKind: paragons.SemanticKindThings,
+	}
+}

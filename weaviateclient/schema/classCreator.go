@@ -34,12 +34,6 @@ func (cc *ClassCreator) WithKind(semanticKind paragons.SemanticKind) *ClassCreat
 func (cc *ClassCreator) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/schema/%v", string(cc.semanticKind))
 	responseData, err := cc.connection.RunREST(ctx, path, http.MethodPost, cc.class)
-	if err != nil {
-		return err
-	}
-	if responseData.StatusCode == 200 {
-		return nil
-	}
-	return clienterrors.NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
+	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }
 

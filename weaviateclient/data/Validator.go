@@ -58,11 +58,5 @@ func (validator *Validator) Do(ctx context.Context) error {
 		}
 		responseData, err = validator.connection.RunREST(ctx, path, http.MethodPost, action)
 	}
-	if err != nil {
-		return err
-	}
-	if responseData.StatusCode == 200 {
-		return nil
-	}
-	return clienterrors.NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
+	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }

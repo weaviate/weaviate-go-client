@@ -41,11 +41,5 @@ func (pc *PropertyCreator) WithKind(semanticKind paragons.SemanticKind) *Propert
 func (pc *PropertyCreator) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/schema/%v/%v/properties", string(pc.semanticKind), pc.className)
 	responseData, err := pc.connection.RunREST(ctx, path, http.MethodPost, pc.property)
-	if err != nil {
-		return err
-	}
-	if responseData.StatusCode == 200 {
-		return nil
-	}
-	return clienterrors.NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
+	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }

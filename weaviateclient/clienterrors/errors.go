@@ -29,3 +29,15 @@ func NewUnexpectedStatusCodeErrorFromRESTResponse(responseData *connection.Respo
 func (uce *UnexpectedStatusCodeError) Error() string {
 	return fmt.Sprintf("status code: %v, error: %v", uce.StatusCode, uce.msg)
 }
+
+// CheckResponnseDataErrorAndStatusCode returns the response error if it is not nil,
+//  and an UnexpectedStatusCodeError if the status code is not matching
+func CheckResponnseDataErrorAndStatusCode(responseData *connection.ResponseData, responseErr error, expectedStatusCode int) error {
+	if responseErr != nil {
+		return responseErr
+	}
+	if responseData.StatusCode == expectedStatusCode {
+		return nil
+	}
+	return NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
+}
