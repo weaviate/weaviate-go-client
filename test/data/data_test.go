@@ -43,9 +43,9 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, errCreateA)
 
 		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
-		objectT, objErrT := client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		objectT, objErrT := client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, objErrT)
-		objectA, objErrA := client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		objectA, objErrA := client.Data.ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
 		assert.Nil(t, objErrA)
 
 		assert.Equal(t, "Pizza", objectT[0].Class)
@@ -84,9 +84,9 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, errCreate)
 
 		time.Sleep(2.0 * time.Second)
-		objectT, objErrT := client.Data.ThingGetter().Do(context.Background())
+		objectT, objErrT := client.Data.ThingsGetter().Do(context.Background())
 		assert.Nil(t, objErrT)
-		objectA, objErrA := client.Data.ActionGetter().Do(context.Background())
+		objectA, objErrA := client.Data.ActionsGetter().Do(context.Background())
 		assert.Nil(t, objErrA)
 
 		assert.Equal(t, 2, len(objectT))
@@ -114,7 +114,7 @@ func TestData_integration(t *testing.T) {
 
 		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
 		// THINGS
-		objectT, objErrT := client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		objectT, objErrT := client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, objErrT)
 		assert.Nil(t, objectT[0].Classification)
 		assert.Nil(t, objectT[0].NearestNeighbors)
@@ -122,7 +122,7 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, objectT[0].Vector)
 		assert.Nil(t, objectT[0].Interpretation)
 
-		objectT, objErrT = client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").WithUnderscoreInterpretation().Do(context.Background())
+		objectT, objErrT = client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").WithUnderscoreInterpretation().Do(context.Background())
 		assert.Nil(t, objErrT)
 		assert.Nil(t, objectT[0].Classification)
 		assert.Nil(t, objectT[0].NearestNeighbors)
@@ -130,7 +130,7 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, objectT[0].Vector)
 		assert.NotNil(t, objectT[0].Interpretation)
 
-		objectT, objErrT = client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").WithUnderscoreInterpretation().WithUnderscoreClassification().WithUnderscoreNearestNeighbors().WithUnderscoreVector().Do(context.Background())
+		objectT, objErrT = client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").WithUnderscoreInterpretation().WithUnderscoreClassification().WithUnderscoreNearestNeighbors().WithUnderscoreVector().Do(context.Background())
 		assert.Nil(t, objErrT)
 		assert.Nil(t, objectT[0].Classification) // Is nil because no classification was executed
 		assert.NotNil(t, objectT[0].NearestNeighbors)
@@ -139,7 +139,7 @@ func TestData_integration(t *testing.T) {
 		assert.NotNil(t, objectT[0].Interpretation)
 
 		// ACTIONS
-		objectA, objErrA := client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		objectA, objErrA := client.Data.ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
 		assert.Nil(t, objErrA)
 		assert.Nil(t, objectA[0].Classification)
 		assert.Nil(t, objectA[0].NearestNeighbors)
@@ -147,7 +147,7 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, objectA[0].Vector)
 		assert.Nil(t, objectA[0].Interpretation)
 
-		objectA, objErrA = client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithUnderscoreInterpretation().Do(context.Background())
+		objectA, objErrA = client.Data.ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithUnderscoreInterpretation().Do(context.Background())
 		assert.Nil(t, objErrA)
 		assert.Nil(t, objectA[0].Classification)
 		assert.Nil(t, objectA[0].NearestNeighbors)
@@ -155,7 +155,7 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, objectA[0].Vector)
 		assert.NotNil(t, objectA[0].Interpretation)
 
-		objectA, objErrA = client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithUnderscoreInterpretation().WithUnderscoreClassification().WithUnderscoreNearestNeighbors().WithUnderscoreFeatureProjection().WithUnderscoreVector().Do(context.Background())
+		objectA, objErrA = client.Data.ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithUnderscoreInterpretation().WithUnderscoreClassification().WithUnderscoreNearestNeighbors().WithUnderscoreFeatureProjection().WithUnderscoreVector().Do(context.Background())
 		assert.Nil(t, objErrT)
 		assert.Nil(t, objectT[0].Classification) // Is nil because no classification was executed
 		assert.NotNil(t, objectT[0].NearestNeighbors)
@@ -189,13 +189,13 @@ func TestData_integration(t *testing.T) {
 		deleteErrT := client.Data.Deleter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, deleteErrT)
 		time.Sleep(2.0 * time.Second)
-		_, getErrT := client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		_, getErrT := client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		statusCodeErrorT := getErrT.(*clienterrors.UnexpectedStatusCodeError)
 		assert.Equal(t, 404, statusCodeErrorT.StatusCode)
 
 		deleteErrA := client.Data.Deleter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithKind(paragons.SemanticKindActions).Do(context.Background())
 		assert.Nil(t, deleteErrA)
-		_, getErrA := client.Data.ThingGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		_, getErrA := client.Data.ThingsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
 		statusCodeErrorA := getErrA.(*clienterrors.UnexpectedStatusCodeError)
 		assert.Equal(t, 404, statusCodeErrorA.StatusCode)
 
@@ -237,13 +237,13 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, updateErrA)
 		time.Sleep(2.0 * time.Second)
 
-		things, getErrT := client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		things, getErrT := client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, getErrT)
 		valuesT := things[0].Schema.(map[string]interface{})
 		assert.Equal(t, propertySchemaT["description"], valuesT["description"])
 		assert.Equal(t, propertySchemaT["name"], valuesT["name"])
 
-		actions, getErrT := client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		actions, getErrT := client.Data.ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
 		assert.Nil(t, getErrT)
 		valuesA := actions[0].Schema.(map[string]interface{})
 		assert.Equal(t, propertySchemaA["description"], valuesA["description"])
@@ -285,13 +285,13 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, updateErrA)
 		time.Sleep(2.0 * time.Second)
 
-		things, getErrT := client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		things, getErrT := client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, getErrT)
 		valuesT := things[0].Schema.(map[string]interface{})
 		assert.Equal(t, propertySchemaT["description"], valuesT["description"])
 		assert.Equal(t, "Hawaii", valuesT["name"])
 
-		actions, getErrT := client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		actions, getErrT := client.Data.ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
 		assert.Nil(t, getErrT)
 		valuesA := actions[0].Schema.(map[string]interface{})
 		assert.Equal(t, propertySchemaA["description"], valuesA["description"])

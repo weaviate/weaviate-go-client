@@ -32,8 +32,5 @@ func (ab *ActionsBatcher) Do(ctx context.Context) ([]models.ActionsGetResponse, 
 
 	var parsedResponse []models.ActionsGetResponse
 	parseErr := responseData.DecodeBodyIntoTarget(&parsedResponse)
-	if parseErr != nil {
-		return nil, parseErr
-	}
-	return parsedResponse, nil
+	return parsedResponse, parseErr
 }

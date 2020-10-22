@@ -58,14 +58,14 @@ func TestData_reference_integration(t *testing.T) {
 		time.Sleep(2.0 * time.Second)
 
 
-		things, getErrT := client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		things, getErrT := client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, getErrT)
 		valuesT := things[0].Schema.(map[string]interface{})
 		assert.Contains(t, valuesT, "otherFoods")
 		referencesT := testsuit.ParseReferenceResponseToStruct(t, valuesT["otherFoods"])
 		assert.Equal(t, strfmt.URI("weaviate://localhost/actions/565da3b6-60b3-40e5-ba21-e6bfe5dbba91"), referencesT[0].Beacon)
 
-		actions, getErrA := client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		actions, getErrA := client.Data.ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
 		assert.Nil(t, getErrA)
 		valuesA := actions[0].Schema.(map[string]interface{})
 		assert.Contains(t, valuesA, "otherFoods")
@@ -127,14 +127,14 @@ func TestData_reference_integration(t *testing.T) {
 		time.Sleep(2.0 * time.Second)
 
 
-		things, getErrT := client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		things, getErrT := client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, getErrT)
 		valuesT := things[0].Schema.(map[string]interface{})
 		assert.Contains(t, valuesT, "otherFoods")
 		referencesT := testsuit.ParseReferenceResponseToStruct(t, valuesT["otherFoods"])
 		assert.Equal(t, strfmt.URI("weaviate://localhost/things/abefd256-8574-442b-9293-9205193737ee"), referencesT[0].Beacon)
 
-		actions, getErrA := client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		actions, getErrA := client.Data.ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
 		assert.Nil(t, getErrA)
 		valuesA := actions[0].Schema.(map[string]interface{})
 		assert.Contains(t, valuesA, "otherFoods")
@@ -182,13 +182,13 @@ func TestData_reference_integration(t *testing.T) {
 		client.Data.ReferenceDeleter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithReferenceProperty("otherFoods").WithReference(payload2).WithKind(paragons.SemanticKindActions).Do(context.Background())
 		time.Sleep(2.0 * time.Second)
 
-		things, getErrT := client.Data.ThingGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		things, getErrT := client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, getErrT)
 		valuesT := things[0].Schema.(map[string]interface{})
 		referencesT := testsuit.ParseReferenceResponseToStruct(t, valuesT["otherFoods"])
 		assert.Equal(t, 0, len(referencesT))
 
-		actions, getErrA := client.Data.ActionGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		actions, getErrA := client.Data.ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
 		assert.Nil(t, getErrA)
 		valuesA := actions[0].Schema.(map[string]interface{})
 		referencesA := testsuit.ParseReferenceResponseToStruct(t, valuesA["otherFoods"])

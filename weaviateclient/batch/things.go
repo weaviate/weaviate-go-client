@@ -32,8 +32,5 @@ func (tb *ThingsBatcher) Do(ctx context.Context) ([]models.ThingsGetResponse, er
 
 	var parsedResponse []models.ThingsGetResponse
 	parseErr := responseData.DecodeBodyIntoTarget(&parsedResponse)
-	if parseErr != nil {
-		return nil, parseErr
-	}
-	return parsedResponse, nil
+	return parsedResponse, parseErr
 }

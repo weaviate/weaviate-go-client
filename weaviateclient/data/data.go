@@ -18,16 +18,16 @@ func (data *API) Creator() *Creator {
 	}
 }
 
-// ActionGetter get a builder to get an Action
-func (data *API) ActionGetter() *ActionsGetter {
+// ActionsGetter get a builder to get an Action
+func (data *API) ActionsGetter() *ActionsGetter {
 	return &ActionsGetter{
 		connection:           data.Connection,
 		underscoreProperties: &underscoreProperties{},
 	}
 }
 
-// ThingGetter get a builder to get a Thing
-func (data *API) ThingGetter() *ThingsGetter {
+// ThingsGetter get a builder to get a Thing
+func (data *API) ThingsGetter() *ThingsGetter {
 	return &ThingsGetter{
 		connection: data.Connection,
 		underscoreProperties: &underscoreProperties{},
