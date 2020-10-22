@@ -8,16 +8,19 @@ import (
 	"net/http"
 )
 
+// ReferencesBatcher builder to add multiple references in one batch request
 type ReferencesBatcher struct {
 	connection *connection.Connection
 	references []*models.BatchReference
 }
 
+// WithReference adds a reference to the current batch
 func (rb *ReferencesBatcher) WithReference(reference *models.BatchReference) *ReferencesBatcher {
 	rb.references = append(rb.references, reference)
 	return rb
 }
 
+// Do add all the references in the batch to weaviate
 func (rb *ReferencesBatcher) Do(ctx context.Context) ([]models.BatchReferenceResponse, error) {
 	responseData, responseErr := rb.connection.RunREST(ctx, "/batching/references", http.MethodPost, rb.references)
 	batchErr := clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)

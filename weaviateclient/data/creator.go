@@ -62,9 +62,10 @@ func (creator *Creator) Do(ctx context.Context) error {
 	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }
 
+// PayloadThing returns the data object payload which may be used in a batch request
 func (creator *Creator) PayloadThing() (*models.Thing, error) {
 	if creator.semanticKind != paragons.SemanticKindThings {
-		return nil, fmt.Errorf("Builder has semantic kind action configured. Please set the correct semantic type!")
+		return nil, fmt.Errorf("builder has semantic kind action configured; please set the correct semantic type")
 	}
 	thing := models.Thing{
 		Class: creator.className,
@@ -76,9 +77,10 @@ func (creator *Creator) PayloadThing() (*models.Thing, error) {
 	return &thing, nil
 }
 
+// PayloadAction returns the data object payload which may be used in a batch request
 func (creator *Creator) PayloadAction() (*models.Action, error) {
 	if creator.semanticKind != paragons.SemanticKindActions {
-		return nil, fmt.Errorf("Builder has semantic kind thing configured. Please set the correct semantic type!")
+		return nil, fmt.Errorf("builder has semantic kind thing configured; Please set the correct semantic type")
 	}
 	action := models.Action{
 		Class:              creator.className,

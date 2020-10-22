@@ -9,16 +9,19 @@ import (
 	"net/http"
 )
 
+// ActionsBatcher builder to add multiple actions in one batch
 type ActionsBatcher struct {
 	connection *connection.Connection
 	actions []*models.Action
 }
 
+// WithObject add an object to the batch
 func (ab *ActionsBatcher) WithObject(action *models.Action) *ActionsBatcher {
 	ab.actions = append(ab.actions, action)
 	return ab
 }
 
+// Do add all the objects in the builder to weaviate
 func (ab *ActionsBatcher) Do(ctx context.Context) ([]models.ActionsGetResponse, error) {
 	body := paragons.ActionsBatchRequestBody{
 		Fields:  []string{"ALL"},

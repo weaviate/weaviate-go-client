@@ -117,13 +117,13 @@ func TestBatch_integration(t *testing.T) {
 			From: "weaviate://localhost/things/Pizza/97fa5147-bdad-4d74-9a81-f8babc811b09/otherFoods",
 			To:   "weaviate://localhost/actions/07473b34-0ab2-4120-882d-303d9e13f7af",
 		}
-		refTtoT := client.Batch.ReferencePayloadBuilder().WithFromClassName("Pizza").WithFromRefProp("otherFoods").WithFromId("97fa5147-bdad-4d74-9a81-f8babc811b09").WithToId("97fa5147-bdad-4d74-9a81-f8babc811b09").Payload()
+		refTtoT := client.Batch.ReferencePayloadBuilder().WithFromClassName("Pizza").WithFromRefProp("otherFoods").WithFromID("97fa5147-bdad-4d74-9a81-f8babc811b09").WithToID("97fa5147-bdad-4d74-9a81-f8babc811b09").Payload()
 
 		refAtoT := &models.BatchReference{
 			From: "weaviate://localhost/actions/Soup/07473b34-0ab2-4120-882d-303d9e13f7af/otherFoods",
 			To:   "weaviate://localhost/things/97fa5147-bdad-4d74-9a81-f8babc811b09",
 		}
-		refAtoA := client.Batch.ReferencePayloadBuilder().WithFromKind(paragons.SemanticKindActions).WithFromClassName("Soup").WithFromRefProp("otherFoods").WithFromId("07473b34-0ab2-4120-882d-303d9e13f7af").WithToKind(paragons.SemanticKindActions).WithToId("07473b34-0ab2-4120-882d-303d9e13f7af").Payload()
+		refAtoA := client.Batch.ReferencePayloadBuilder().WithFromKind(paragons.SemanticKindActions).WithFromClassName("Soup").WithFromRefProp("otherFoods").WithFromID("07473b34-0ab2-4120-882d-303d9e13f7af").WithToKind(paragons.SemanticKindActions).WithToID("07473b34-0ab2-4120-882d-303d9e13f7af").Payload()
 
 		// Add references in batch
 		referenceBatchResult, err := client.Batch.ReferencesBatcher().WithReference(refTtoA).WithReference(refTtoT).WithReference(refAtoT).WithReference(refAtoA).Do(context.Background())

@@ -16,11 +16,13 @@ type SchemaDump struct {
 	Actions *models.Schema `json:"actions"`
 }
 
+// ThingsBatchRequestBody wrapping things to a batch
 type ThingsBatchRequestBody struct {
 	Fields []string `json:"fields"`
 	Things []*models.Thing `json:"things"`
 }
 
+// ActionsBatchRequestBody wrapping actions to a batch
 type ActionsBatchRequestBody struct {
 	Fields []string `json:"fields"`
 	Actions []*models.Action `json:"actions"`
