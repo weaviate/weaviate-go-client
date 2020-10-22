@@ -3,11 +3,10 @@ package data
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient"
+	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/testenv"
-	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -25,9 +24,9 @@ func TestData_integration(t *testing.T) {
 
 	t.Run("POST /actions /things", func(t *testing.T) {
 
-		client := createTestClient()
+		client := testsuit.CreateTestClient()
 
-		createWeaviateTestSchemaFood(t, client)
+		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		propertySchemaT := map[string]string{
 			"name": "Hawaii",
@@ -56,12 +55,12 @@ func TestData_integration(t *testing.T) {
 		valuesA := objectA[0].Schema.(map[string]interface{})
 		assert.Equal(t, "ChickenSoup", valuesA["name"])
 
-		cleanUpWeaviate(t, client)
+		testsuit.CleanUpWeaviate(t, client)
 	})
 
 	t.Run("GET /actions /things", func(t *testing.T) {
-		client := createTestClient()
-		createWeaviateTestSchemaFood(t, client)
+		client := testsuit.CreateTestClient()
+		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		errCreate := client.Data.Creator().WithClassName("Pizza").WithSchema(map[string]string{
 			"name": "Margherita",
@@ -92,13 +91,13 @@ func TestData_integration(t *testing.T) {
 
 		assert.Equal(t, 2, len(objectT))
 		assert.Equal(t, 2, len(objectA))
-		cleanUpWeaviate(t, client)
+		testsuit.CleanUpWeaviate(t, client)
 	})
 
 	t.Run("GET underscore properties", func(t *testing.T) {
-		client := createTestClient()
+		client := testsuit.CreateTestClient()
 
-		createWeaviateTestSchemaFood(t, client)
+		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		propertySchemaT := map[string]string{
 			"name": "Hawaii",
@@ -164,13 +163,13 @@ func TestData_integration(t *testing.T) {
 		assert.NotNil(t, objectT[0].Vector)
 		assert.NotNil(t, objectT[0].Interpretation)
 
-		cleanUpWeaviate(t, client)
+		testsuit.CleanUpWeaviate(t, client)
 	})
 
 	t.Run("DELETE /{type}", func(t *testing.T) {
-		client := createTestClient()
+		client := testsuit.CreateTestClient()
 
-		createWeaviateTestSchemaFood(t, client)
+		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		propertySchemaT := map[string]string{
 			"name": "Hawaii",
@@ -200,14 +199,14 @@ func TestData_integration(t *testing.T) {
 		statusCodeErrorA := getErrA.(*clienterrors.UnexpectedStatusCodeError)
 		assert.Equal(t, 404, statusCodeErrorA.StatusCode)
 
-		cleanUpWeaviate(t, client)
+		testsuit.CleanUpWeaviate(t, client)
 	})
 
 	t.Run("PUT /{type}/{id}", func(t *testing.T) {
 		// PUT replaces the object fully
-		client := createTestClient()
+		client := testsuit.CreateTestClient()
 
-		createWeaviateTestSchemaFood(t, client)
+		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		propertySchemaT := map[string]string{
 			"name": "Random",
@@ -250,14 +249,14 @@ func TestData_integration(t *testing.T) {
 		assert.Equal(t, propertySchemaA["description"], valuesA["description"])
 		assert.Equal(t, propertySchemaA["name"], valuesA["name"])
 
-		cleanUpWeaviate(t, client)
+		testsuit.CleanUpWeaviate(t, client)
 	})
 
 	t.Run("PATCH(merge) /{type}/{id}", func(t *testing.T) {
 		// PATCH merges the new object with the existing object
-		client := createTestClient()
+		client := testsuit.CreateTestClient()
 
-		createWeaviateTestSchemaFood(t, client)
+		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		propertySchemaT := map[string]string{
 			"name": "Hawaii",
@@ -298,13 +297,13 @@ func TestData_integration(t *testing.T) {
 		assert.Equal(t, propertySchemaA["description"], valuesA["description"])
 		assert.Equal(t, "ChickenSoup", valuesA["name"])
 
-		cleanUpWeaviate(t, client)
+		testsuit.CleanUpWeaviate(t, client)
 	})
 
 	t.Run("POST /{type}/validate", func(t *testing.T) {
-		client := createTestClient()
+		client := testsuit.CreateTestClient()
 
-		createWeaviateTestSchemaFood(t, client)
+		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		propertySchemaT := map[string]string{
 			"name": "Hawaii",
@@ -332,12 +331,7 @@ func TestData_integration(t *testing.T) {
 		assert.NotNil(t, errValidateA)
 
 
-		cleanUpWeaviate(t, client)
-	})
-
-	t.Run("Batching??", func(t *testing.T) {
-		// TODO not sure if this should be in seperate package
-		t.Fail()
+		testsuit.CleanUpWeaviate(t, client)
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
@@ -349,51 +343,3 @@ func TestData_integration(t *testing.T) {
 	})
 }
 
-func cleanUpWeaviate(t *testing.T, client *weaviateclient.WeaviateClient) {
-	// Clean up all classes and by that also all data
-	errRm := client.Schema.AllDeleter().Do(context.Background())
-	assert.Nil(t, errRm)
-}
-
-func createTestClient() *weaviateclient.WeaviateClient {
-	cfg := weaviateclient.Config{
-		Host:   "localhost:8080",
-		Scheme: "http",
-	}
-	client := weaviateclient.New(cfg)
-	return client
-}
-
-func createWeaviateTestSchemaFood(t *testing.T, client *weaviateclient.WeaviateClient) {
-	schemaClassThing := &models.Class{
-		Class:              "Pizza",
-		Description:        "A delicious religion like food and arguably the best export of Italy.",
-	}
-	schemaClassAction := &models.Class{
-		Class:              "Soup",
-		Description:        "Mostly water based brew of sustenance for humans.",
-	}
-	errT := client.Schema.ClassCreator().WithClass(schemaClassThing).Do(context.Background())
-	assert.Nil(t, errT)
-	errA := client.Schema.ClassCreator().WithClass(schemaClassAction).WithKind(paragons.SemanticKindActions).Do(context.Background())
-	assert.Nil(t, errA)
-	nameProperty := models.Property{
-		DataType:              []string{"string"},
-		Description:           "name",
-		Name:                  "name",
-	}
-	descriptionProperty := models.Property{
-		DataType:              []string{"string"},
-		Description:           "description",
-		Name:                  "description",
-	}
-
-	propErrT1 := client.Schema.PropertyCreator().WithClassName("Pizza").WithProperty(nameProperty).Do(context.Background())
-	assert.Nil(t, propErrT1)
-	propErrA1 := client.Schema.PropertyCreator().WithClassName("Soup").WithProperty(nameProperty).WithKind(paragons.SemanticKindActions).Do(context.Background())
-	assert.Nil(t, propErrA1)
-	propErrT2 := client.Schema.PropertyCreator().WithClassName("Pizza").WithProperty(descriptionProperty).Do(context.Background())
-	assert.Nil(t, propErrT2)
-	propErrA2 := client.Schema.PropertyCreator().WithClassName("Soup").WithProperty(descriptionProperty).WithKind(paragons.SemanticKindActions).Do(context.Background())
-	assert.Nil(t, propErrA2)
-}
