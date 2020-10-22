@@ -10,18 +10,21 @@ import (
 	"strings"
 )
 
-type ActionGetter struct {
+// ActionsGetter Builder to retrieve Actions from weaviate
+type ActionsGetter struct {
 	connection *connection.Connection
 	uuid string
 	underscoreProperties *underscoreProperties
 }
 
-type ThingGetter struct {
+// ThingsGetter Builder to retrieve Things from weaviate
+type ThingsGetter struct {
 	connection *connection.Connection
 	uuid string
 	underscoreProperties *underscoreProperties
 }
 
+// underscoreProperties that have been set in the builder
 type underscoreProperties struct {
 	withUnderscoreInterpretation bool
 	withUnderscoreClassification bool
@@ -30,64 +33,79 @@ type underscoreProperties struct {
 	withUnderscoreVector bool
 }
 
-func (getter *ActionGetter) WithID(uuid string) *ActionGetter {
+// WithID specifies the uuid of the Action that should be retrieved
+//  if omitted a set of objects matching the builder specifications will be retrieved
+func (getter *ActionsGetter) WithID(uuid string) *ActionsGetter {
 	getter.uuid = uuid
 	return getter
 }
 
-func (getter *ThingGetter) WithID(uuid string) *ThingGetter {
+// WithID specifies the uuid of the Thing that should be retrieved
+//  if omitted a set of objects matching the builder specifications will be retrieved
+func (getter *ThingsGetter) WithID(uuid string) *ThingsGetter {
 	getter.uuid = uuid
 	return getter
 }
 
-
-func (getter *ActionGetter) WithUnderscoreInterpretation() *ActionGetter {
+// WithUnderscoreInterpretation include a description on how the corpus of the data object is interpreted by weaviate
+func (getter *ActionsGetter) WithUnderscoreInterpretation() *ActionsGetter {
 	getter.underscoreProperties.withUnderscoreInterpretation = true
 	return getter
 }
-func (getter *ThingGetter) WithUnderscoreInterpretation() *ThingGetter {
+// WithUnderscoreInterpretation include a description on how the corpus of the data object is interpreted by weaviate
+func (getter *ThingsGetter) WithUnderscoreInterpretation() *ThingsGetter {
 	getter.underscoreProperties.withUnderscoreInterpretation = true
 	return getter
 }
 
-func (getter *ActionGetter) WithUnderscoreClassification() *ActionGetter {
+// WithUnderscoreClassification include information about the classification
+// may be nil if no classification was executed on the object
+func (getter *ActionsGetter) WithUnderscoreClassification() *ActionsGetter {
 	getter.underscoreProperties.withUnderscoreClassification = true
 	return getter
 }
-func (getter *ThingGetter) WithUnderscoreClassification() *ThingGetter {
+// WithUnderscoreClassification include information about the classification
+// may be nil if no classification was executed on the object
+func (getter *ThingsGetter) WithUnderscoreClassification() *ThingsGetter {
 	getter.underscoreProperties.withUnderscoreClassification = true
 	return getter
 }
 
-func (getter *ActionGetter) WithUnderscoreNearestNeighbors() *ActionGetter {
+// WithUnderscoreNearestNeighbors show the nearest neighbors of this data object
+func (getter *ActionsGetter) WithUnderscoreNearestNeighbors() *ActionsGetter {
 	getter.underscoreProperties.withUnderscoreNearestNeighbors = true
 	return getter
 }
-func (getter *ThingGetter) WithUnderscoreNearestNeighbors() *ThingGetter {
+// WithUnderscoreNearestNeighbors show the nearest neighbors of this data object
+func (getter *ThingsGetter) WithUnderscoreNearestNeighbors() *ThingsGetter {
 	getter.underscoreProperties.withUnderscoreNearestNeighbors = true
 	return getter
 }
 
-func (getter *ActionGetter) WithUnderscoreFeatureProjection() *ActionGetter {
+// WithUnderscoreFeatureProjection include a 2D projection of the objects for visualization
+func (getter *ActionsGetter) WithUnderscoreFeatureProjection() *ActionsGetter {
 	getter.underscoreProperties.withUnderscoreFeatureProjection = true
 	return getter
 }
-func (getter *ThingGetter) WithUnderscoreFeatureProjection() *ThingGetter {
+// WithUnderscoreFeatureProjection include a 2D projection of the objects for visualization
+func (getter *ThingsGetter) WithUnderscoreFeatureProjection() *ThingsGetter {
 	getter.underscoreProperties.withUnderscoreFeatureProjection = true
 	return getter
 }
 
-func (getter *ActionGetter) WithUnderscoreVector() *ActionGetter {
+// WithUnderscoreVector include the raw vector of the data object
+func (getter *ActionsGetter) WithUnderscoreVector() *ActionsGetter {
 	getter.underscoreProperties.withUnderscoreVector = true
 	return getter
 }
-func (getter *ThingGetter) WithUnderscoreVector() *ThingGetter {
+// WithUnderscoreVector include the raw vector of the data object
+func (getter *ThingsGetter) WithUnderscoreVector() *ThingsGetter {
 	getter.underscoreProperties.withUnderscoreVector = true
 	return getter
 }
 
-
-func (getter *ActionGetter) Do(ctx context.Context) ([]*models.Action, error) {
+// Do get the data object
+func (getter *ActionsGetter) Do(ctx context.Context) ([]*models.Action, error) {
 	responseData, err := getObjectList(ctx, "/actions", getter.uuid, getParams(getter.underscoreProperties), getter.connection)
 	if err != nil {
 		return nil, err
@@ -105,7 +123,8 @@ func (getter *ActionGetter) Do(ctx context.Context) ([]*models.Action, error) {
 	return []*models.Action{&action}, decodeErr
 }
 
-func (getter *ThingGetter) Do(ctx context.Context) ([]*models.Thing, error) {
+// Do get the data object
+func (getter *ThingsGetter) Do(ctx context.Context) ([]*models.Thing, error) {
 	responseData, err := getObjectList(ctx, "/things", getter.uuid, getParams(getter.underscoreProperties), getter.connection)
 	if err != nil {
 		return nil, err
@@ -123,6 +142,7 @@ func (getter *ThingGetter) Do(ctx context.Context) ([]*models.Thing, error) {
 	return []*models.Thing{&thing}, decodeErr
 }
 
+// getParams build the query URL parameters for the requested underscore properties
 func getParams(underscoreProperties *underscoreProperties) string {
 	selectedProperties := make([]string, 0)
 

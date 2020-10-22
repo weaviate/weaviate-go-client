@@ -10,6 +10,7 @@ type API struct {
 	Connection *connection.Connection
 }
 
+// Creator get a builder to create a data object
 func (data *API) Creator() *Creator {
 	return &Creator{
 		connection:   data.Connection,
@@ -17,20 +18,23 @@ func (data *API) Creator() *Creator {
 	}
 }
 
-func (data *API) ActionGetter() *ActionGetter {
-	return &ActionGetter{
+// ActionGetter get a builder to get an Action
+func (data *API) ActionGetter() *ActionsGetter {
+	return &ActionsGetter{
 		connection:           data.Connection,
 		underscoreProperties: &underscoreProperties{},
 	}
 }
 
-func (data *API) ThingGetter() *ThingGetter {
-	return &ThingGetter{
+// ThingGetter get a builder to get a Thing
+func (data *API) ThingGetter() *ThingsGetter {
+	return &ThingsGetter{
 		connection: data.Connection,
 		underscoreProperties: &underscoreProperties{},
 	}
 }
 
+// Deleter get a builder to delete data objects
 func (data *API) Deleter() *Deleter {
 	return &Deleter{
 		connection: data.Connection,
@@ -38,6 +42,7 @@ func (data *API) Deleter() *Deleter {
 	}
 }
 
+// Updater get a builder to update a data object
 func (data *API) Updater() *Updater {
 	return &Updater{
 		connection: data.Connection,
@@ -46,6 +51,7 @@ func (data *API) Updater() *Updater {
 	}
 }
 
+// Validator get a builder to validate a data object definition
 func (data *API) Validator() *Validator {
 	return &Validator{
 		connection:     data.Connection,
@@ -53,6 +59,7 @@ func (data *API) Validator() *Validator {
 	}
 }
 
+// ReferencePayloadBuilder get a builder to create the payloads that reference an object
 func (data *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 	return &ReferencePayloadBuilder{
 		connection:   data.Connection,
@@ -60,6 +67,7 @@ func (data *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 	}
 }
 
+// ReferenceCreator get a builder to add references to data objects
 func (data *API) ReferenceCreator() *ReferenceCreator {
 	return &ReferenceCreator{
 		connection: data.Connection,
@@ -67,6 +75,7 @@ func (data *API) ReferenceCreator() *ReferenceCreator {
 	}
 }
 
+// ReferenceReplacer get a builder to replace references on a data object
 func (data *API) ReferenceReplacer() *ReferenceReplacer {
 	return &ReferenceReplacer{
 		connection: data.Connection,
@@ -74,8 +83,9 @@ func (data *API) ReferenceReplacer() *ReferenceReplacer {
 	}
 }
 
-func (data *API) ReferenceDeleter() *ReferenceDelter {
-	return &ReferenceDelter{
+// ReferenceDeleter get a builder to delete references on a data object
+func (data *API) ReferenceDeleter() *ReferenceDeleter {
+	return &ReferenceDeleter{
 		connection: data.Connection,
 		semanticKind: paragons.SemanticKindThings,
 	}

@@ -335,8 +335,6 @@ func TestData_integration(t *testing.T) {
 		cleanUpWeaviate(t, client)
 	})
 
-
-
 	t.Run("Batching??", func(t *testing.T) {
 		// TODO not sure if this should be in seperate package
 		t.Fail()
