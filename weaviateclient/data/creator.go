@@ -53,24 +53,39 @@ func (creator *Creator) Do(ctx context.Context) error {
 	var err error
 	var responseData *connection.ResponseData
 	if creator.semanticKind == paragons.SemanticKindActions {
-		action := models.Action{
-			Class:              creator.className,
-			Schema:             creator.propertySchema,
-		}
-		if creator.uuid != "" {
-			action.ID = strfmt.UUID(creator.uuid)
-		}
+		action, _ := creator.PayloadAction()
 		responseData, err = creator.connection.RunREST(ctx, path, http.MethodPost, action)
 	} else {
-		thing := models.Thing{
-			Class: creator.className,
-			Schema: creator.propertySchema,
-		}
-		if creator.uuid != "" {
-			thing.ID = strfmt.UUID(creator.uuid)
-		}
+		thing, _ := creator.PayloadThing()
 		responseData, err = creator.connection.RunREST(ctx, path, http.MethodPost, thing)
 	}
 	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }
 
+func (creator *Creator) PayloadThing() (*models.Thing, error) {
+	if creator.semanticKind != paragons.SemanticKindThings {
+		return nil, fmt.Errorf("Builder has semantic kind action configured. Please set the correct semantic type!")
+	}
+	thing := models.Thing{
+		Class: creator.className,
+		Schema: creator.propertySchema,
+	}
+	if creator.uuid != "" {
+		thing.ID = strfmt.UUID(creator.uuid)
+	}
+	return &thing, nil
+}
+
+func (creator *Creator) PayloadAction() (*models.Action, error) {
+	if creator.semanticKind != paragons.SemanticKindActions {
+		return nil, fmt.Errorf("Builder has semantic kind thing configured. Please set the correct semantic type!")
+	}
+	action := models.Action{
+		Class:              creator.className,
+		Schema:             creator.propertySchema,
+	}
+	if creator.uuid != "" {
+		action.ID = strfmt.UUID(creator.uuid)
+	}
+	return &action, nil
+}

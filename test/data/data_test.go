@@ -22,7 +22,7 @@ func TestData_integration(t *testing.T) {
 		}
 	})
 
-	t.Run("POST /actions /things", func(t *testing.T) {
+	t.Run("POST /{semanticType}", func(t *testing.T) {
 
 		client := testsuit.CreateTestClient()
 

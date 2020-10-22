@@ -1,6 +1,7 @@
 package weaviateclient
 
 import (
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/batch"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/data"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/misc"
@@ -21,6 +22,7 @@ type WeaviateClient struct {
 	Misc       misc.API
 	Schema     schema.API
 	Data data.API
+	Batch batch.API
 }
 
 // New weaviate client from config
@@ -32,5 +34,6 @@ func New(config Config) *WeaviateClient {
 		Misc:       misc.API{Connection: con},
 		Schema:     schema.API{Connection: con},
 		Data: data.API{Connection: con},
+		Batch: batch.API{Connection: con},
 	}
 }
