@@ -29,11 +29,13 @@ func TestBatch_integration(t *testing.T) {
 	})
 
 	t.Run("POST /c11y/extensions", func(t *testing.T) {
-		t.Fail()
-	})
+		client := testsuit.CreateTestClient()
 
-	t.Run("POST /c11y/corpus", func(t *testing.T) {
-		t.Fail()
+		err1 := client.C11y.ExtensionCreator().WithConcept("xoxo").WithDefinition("Hugs and kisses").WithWeight(1.0).Do(context.Background())
+		assert.Nil(t, err1)
+
+		err2 := client.C11y.ExtensionCreator().WithConcept("xoxo").WithDefinition("Hugs and kisses").WithWeight(2.0).Do(context.Background())
+		assert.NotNil(t, err2, "Weight must be between 0 and 1")
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {

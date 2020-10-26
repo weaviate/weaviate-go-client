@@ -1,6 +1,9 @@
 package contextionary
 
-import "github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
+import (
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
+	"github.com/semi-technologies/weaviate/entities/models"
+)
 
 // API for the contextionary endpoint
 type API struct {
@@ -11,5 +14,14 @@ type API struct {
 func (c11y *API) ConceptsGetter() *ConceptGetter {
 	return &ConceptGetter{
 		connection: c11y.Connection,
+	}
+}
+
+func (c11y *API) ExtensionCreator() *ExtensionCreator {
+	return &ExtensionCreator{
+		connection: c11y.Connection,
+		extension:     &models.C11yExtension{
+			Weight:     1.0,
+		},
 	}
 }
