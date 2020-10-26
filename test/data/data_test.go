@@ -132,7 +132,7 @@ func TestData_integration(t *testing.T) {
 
 		objectT, objErrT = client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").WithUnderscoreInterpretation().WithUnderscoreClassification().WithUnderscoreNearestNeighbors().WithUnderscoreVector().Do(context.Background())
 		assert.Nil(t, objErrT)
-		assert.Nil(t, objectT[0].Classification) // Is nil because no classification was executed
+		assert.Nil(t, objectT[0].Classification) // Is nil because no classifications was executed
 		assert.NotNil(t, objectT[0].NearestNeighbors)
 		assert.Nil(t, objectT[0].FeatureProjection) // Is nil because feature projection is not possible on non list request
 		assert.NotNil(t, objectT[0].Vector)
@@ -157,7 +157,7 @@ func TestData_integration(t *testing.T) {
 
 		objectA, objErrA = client.Data.ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithUnderscoreInterpretation().WithUnderscoreClassification().WithUnderscoreNearestNeighbors().WithUnderscoreFeatureProjection().WithUnderscoreVector().Do(context.Background())
 		assert.Nil(t, objErrT)
-		assert.Nil(t, objectT[0].Classification) // Is nil because no classification was executed
+		assert.Nil(t, objectT[0].Classification) // Is nil because no classifications was executed
 		assert.NotNil(t, objectT[0].NearestNeighbors)
 		assert.Nil(t, objectT[0].FeatureProjection) // Is nil because feature projection is not possible on non list request
 		assert.NotNil(t, objectT[0].Vector)

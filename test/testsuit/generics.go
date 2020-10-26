@@ -31,7 +31,7 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviateclient.WeaviateC
 		Name:                  "name",
 	}
 	descriptionProperty := models.Property{
-		DataType:              []string{"string"},
+		DataType:              []string{"text"},
 		Description:           "description",
 		Name:                  "description",
 	}

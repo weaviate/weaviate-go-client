@@ -58,14 +58,14 @@ func (getter *ThingsGetter) WithUnderscoreInterpretation() *ThingsGetter {
 	return getter
 }
 
-// WithUnderscoreClassification include information about the classification
-// may be nil if no classification was executed on the object
+// WithUnderscoreClassification include information about the classifications
+// may be nil if no classifications was executed on the object
 func (getter *ActionsGetter) WithUnderscoreClassification() *ActionsGetter {
 	getter.underscoreProperties.withUnderscoreClassification = true
 	return getter
 }
-// WithUnderscoreClassification include information about the classification
-// may be nil if no classification was executed on the object
+// WithUnderscoreClassification include information about the classifications
+// may be nil if no classifications was executed on the object
 func (getter *ThingsGetter) WithUnderscoreClassification() *ThingsGetter {
 	getter.underscoreProperties.withUnderscoreClassification = true
 	return getter

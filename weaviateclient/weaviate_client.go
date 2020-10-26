@@ -2,6 +2,7 @@ package weaviateclient
 
 import (
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/batch"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/classifications"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/contextionary"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/data"
@@ -19,12 +20,13 @@ type Config struct {
 
 // WeaviateClient implementing the weaviate API
 type WeaviateClient struct {
-	connection *connection.Connection
-	Misc       misc.API
-	Schema     schema.API
-	Data data.API
-	Batch batch.API
-	C11y contextionary.API
+	connection      *connection.Connection
+	Misc            misc.API
+	Schema          schema.API
+	Data            data.API
+	Batch           batch.API
+	C11y            contextionary.API
+	Classifications classifications.API
 }
 
 // New weaviate client from config
@@ -38,5 +40,6 @@ func New(config Config) *WeaviateClient {
 		Data: data.API{Connection: con},
 		Batch: batch.API{Connection: con},
 		C11y: contextionary.API{Connection: con},
+		Classifications: classifications.API{Connection: con},
 	}
 }
