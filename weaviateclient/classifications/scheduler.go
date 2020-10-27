@@ -46,27 +46,31 @@ func (s *Scheduler) WithBasedOnProperties(basedOnProperties []string) *Scheduler
 	return s
 }
 
-// WithSourceWhereFilter filters the data objects to be labeled
+// WithSourceWhereFilter filter the data objects to be labeled
 func (s *Scheduler) WithSourceWhereFilter(whereFilter *models.WhereFilter) *Scheduler {
 	s.withSourceWhereFilter = whereFilter
 	return s
 }
 
+// WithTrainingSetWhereFilter filter the objects that are used as training data. E.g. in a knn classification
 func (s *Scheduler) WithTrainingSetWhereFilter(whereFilter *models.WhereFilter) *Scheduler {
 	s.withTrainingSetWhereFilter = whereFilter
 	return s
 }
 
+// WithTargetWhereFilter filter the label objects
 func (s *Scheduler) WithTargetWhereFilter(whereFilter *models.WhereFilter) *Scheduler {
 	s.withTargetWhereFilter = whereFilter
 	return s
 }
 
+// WithK set the number of neighbours considered by a knn classification
 func (s *Scheduler) WithK(k int32) *Scheduler {
 	s.withK = k
 	return s
 }
 
+// Do schedule the classification in weaviate
 func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
 	classType := string(s.classificationType)
 	config := models.Classification{

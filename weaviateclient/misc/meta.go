@@ -8,10 +8,12 @@ import (
 	"net/http"
 )
 
+// MetaGetter builder to get meta endpoint
 type MetaGetter struct {
 	connection *connection.Connection
 }
 
+// Do get the meta endpoint
 func (mg *MetaGetter) Do(ctx context.Context) (*models.Meta, error) {
 
 	responseData, responseErr := mg.connection.RunREST(ctx, "/meta", http.MethodGet, nil)

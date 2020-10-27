@@ -17,6 +17,7 @@ func (c11y *API) ConceptsGetter() *ConceptGetter {
 	}
 }
 
+// ExtensionCreator get a builder to extend weaviates contextionary
 func (c11y *API) ExtensionCreator() *ExtensionCreator {
 	return &ExtensionCreator{
 		connection: c11y.Connection,
