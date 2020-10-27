@@ -96,4 +96,3 @@ func ParseReferenceResponseToStruct(t *testing.T, reference interface{}) models.
 }
 
 
-

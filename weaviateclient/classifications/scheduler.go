@@ -9,6 +9,7 @@ import (
 	"net/http"
 )
 
+// Scheduler builder to schedule a classification
 type Scheduler struct {
 	connection *connection.Connection
 	classificationType paragons.Classification
@@ -21,26 +22,31 @@ type Scheduler struct {
 	withTargetWhereFilter *models.WhereFilter
 }
 
+// WithType of classification e.g. knn or contextual
 func (s *Scheduler) WithType(classificationType paragons.Classification) *Scheduler {
 	s.classificationType = classificationType
 	return s
 }
 
+// WithClassName that should be classified
 func (s *Scheduler) WithClassName(name string) *Scheduler {
 	s.withClassName = name
 	return s
 }
 
+// WithClassifyProperties defines the properties that will be labeled through the classification
 func (s *Scheduler) WithClassifyProperties(classifyProperties []string) *Scheduler {
 	s.withClassifyProperties = classifyProperties
 	return s
 }
 
+// WithBasedOnProperties defines the properties that will be considered for the classification
 func (s *Scheduler) WithBasedOnProperties(basedOnProperties []string) *Scheduler {
 	s.withBasedOnProperties = basedOnProperties
 	return s
 }
 
+// WithSourceWhereFilter filters the data objects to be labeled
 func (s *Scheduler) WithSourceWhereFilter(whereFilter *models.WhereFilter) *Scheduler {
 	s.withSourceWhereFilter = whereFilter
 	return s
@@ -53,6 +59,11 @@ func (s *Scheduler) WithTrainingSetWhereFilter(whereFilter *models.WhereFilter) 
 
 func (s *Scheduler) WithTargetWhereFilter(whereFilter *models.WhereFilter) *Scheduler {
 	s.withTargetWhereFilter = whereFilter
+	return s
+}
+
+func (s *Scheduler) WithK(k int32) *Scheduler {
+	s.withK = k
 	return s
 }
 
