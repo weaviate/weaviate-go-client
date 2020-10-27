@@ -12,25 +12,25 @@ import (
 
 // ActionsGetter Builder to retrieve Actions from weaviate
 type ActionsGetter struct {
-	connection *connection.Connection
-	uuid string
+	connection           *connection.Connection
+	uuid                 string
 	underscoreProperties *underscoreProperties
 }
 
 // ThingsGetter Builder to retrieve Things from weaviate
 type ThingsGetter struct {
-	connection *connection.Connection
-	uuid string
+	connection           *connection.Connection
+	uuid                 string
 	underscoreProperties *underscoreProperties
 }
 
 // underscoreProperties that have been set in the builder
 type underscoreProperties struct {
-	withUnderscoreInterpretation bool
-	withUnderscoreClassification bool
-	withUnderscoreNearestNeighbors bool
+	withUnderscoreInterpretation    bool
+	withUnderscoreClassification    bool
+	withUnderscoreNearestNeighbors  bool
 	withUnderscoreFeatureProjection bool
-	withUnderscoreVector bool
+	withUnderscoreVector            bool
 }
 
 // WithID specifies the uuid of the Action that should be retrieved
@@ -52,6 +52,7 @@ func (getter *ActionsGetter) WithUnderscoreInterpretation() *ActionsGetter {
 	getter.underscoreProperties.withUnderscoreInterpretation = true
 	return getter
 }
+
 // WithUnderscoreInterpretation include a description on how the corpus of the data object is interpreted by weaviate
 func (getter *ThingsGetter) WithUnderscoreInterpretation() *ThingsGetter {
 	getter.underscoreProperties.withUnderscoreInterpretation = true
@@ -64,6 +65,7 @@ func (getter *ActionsGetter) WithUnderscoreClassification() *ActionsGetter {
 	getter.underscoreProperties.withUnderscoreClassification = true
 	return getter
 }
+
 // WithUnderscoreClassification include information about the classifications
 // may be nil if no classifications was executed on the object
 func (getter *ThingsGetter) WithUnderscoreClassification() *ThingsGetter {
@@ -76,6 +78,7 @@ func (getter *ActionsGetter) WithUnderscoreNearestNeighbors() *ActionsGetter {
 	getter.underscoreProperties.withUnderscoreNearestNeighbors = true
 	return getter
 }
+
 // WithUnderscoreNearestNeighbors show the nearest neighbors of this data object
 func (getter *ThingsGetter) WithUnderscoreNearestNeighbors() *ThingsGetter {
 	getter.underscoreProperties.withUnderscoreNearestNeighbors = true
@@ -87,6 +90,7 @@ func (getter *ActionsGetter) WithUnderscoreFeatureProjection() *ActionsGetter {
 	getter.underscoreProperties.withUnderscoreFeatureProjection = true
 	return getter
 }
+
 // WithUnderscoreFeatureProjection include a 2D projection of the objects for visualization
 func (getter *ThingsGetter) WithUnderscoreFeatureProjection() *ThingsGetter {
 	getter.underscoreProperties.withUnderscoreFeatureProjection = true
@@ -98,6 +102,7 @@ func (getter *ActionsGetter) WithUnderscoreVector() *ActionsGetter {
 	getter.underscoreProperties.withUnderscoreVector = true
 	return getter
 }
+
 // WithUnderscoreVector include the raw vector of the data object
 func (getter *ThingsGetter) WithUnderscoreVector() *ThingsGetter {
 	getter.underscoreProperties.withUnderscoreVector = true
@@ -178,4 +183,3 @@ func getObjectList(ctx context.Context, basePath string, uuid string, urlParamet
 	responseData, err := con.RunREST(ctx, path, http.MethodGet, nil)
 	return responseData, err
 }
-

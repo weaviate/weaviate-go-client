@@ -29,7 +29,7 @@ func (data *API) ActionsGetter() *ActionsGetter {
 // ThingsGetter get a builder to get a Thing
 func (data *API) ThingsGetter() *ThingsGetter {
 	return &ThingsGetter{
-		connection: data.Connection,
+		connection:           data.Connection,
 		underscoreProperties: &underscoreProperties{},
 	}
 }
@@ -37,7 +37,7 @@ func (data *API) ThingsGetter() *ThingsGetter {
 // Deleter get a builder to delete data objects
 func (data *API) Deleter() *Deleter {
 	return &Deleter{
-		connection: data.Connection,
+		connection:   data.Connection,
 		semanticKind: paragons.SemanticKindThings,
 	}
 }
@@ -45,17 +45,17 @@ func (data *API) Deleter() *Deleter {
 // Updater get a builder to update a data object
 func (data *API) Updater() *Updater {
 	return &Updater{
-		connection: data.Connection,
+		connection:   data.Connection,
 		semanticKind: paragons.SemanticKindThings,
-		withMerge: false,
+		withMerge:    false,
 	}
 }
 
 // Validator get a builder to validate a data object definition
 func (data *API) Validator() *Validator {
 	return &Validator{
-		connection:     data.Connection,
-		semanticKind:   paragons.SemanticKindThings,
+		connection:   data.Connection,
+		semanticKind: paragons.SemanticKindThings,
 	}
 }
 
@@ -70,7 +70,7 @@ func (data *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 // ReferenceCreator get a builder to add references to data objects
 func (data *API) ReferenceCreator() *ReferenceCreator {
 	return &ReferenceCreator{
-		connection: data.Connection,
+		connection:   data.Connection,
 		semanticKind: paragons.SemanticKindThings,
 	}
 }
@@ -78,7 +78,7 @@ func (data *API) ReferenceCreator() *ReferenceCreator {
 // ReferenceReplacer get a builder to replace references on a data object
 func (data *API) ReferenceReplacer() *ReferenceReplacer {
 	return &ReferenceReplacer{
-		connection: data.Connection,
+		connection:   data.Connection,
 		semanticKind: paragons.SemanticKindThings,
 	}
 }
@@ -86,7 +86,7 @@ func (data *API) ReferenceReplacer() *ReferenceReplacer {
 // ReferenceDeleter get a builder to delete references on a data object
 func (data *API) ReferenceDeleter() *ReferenceDeleter {
 	return &ReferenceDeleter{
-		connection: data.Connection,
+		connection:   data.Connection,
 		semanticKind: paragons.SemanticKindThings,
 	}
 }

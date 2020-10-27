@@ -21,8 +21,8 @@ func (c11y *API) ConceptsGetter() *ConceptGetter {
 func (c11y *API) ExtensionCreator() *ExtensionCreator {
 	return &ExtensionCreator{
 		connection: c11y.Connection,
-		extension:     &models.C11yExtension{
-			Weight:     1.0,
+		extension: &models.C11yExtension{
+			Weight: 1.0,
 		},
 	}
 }

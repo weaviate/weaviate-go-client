@@ -26,7 +26,7 @@ func (schema *API) ClassCreator() *ClassCreator {
 // ClassDeleter builder to delete a weaviate schema class
 func (schema *API) ClassDeleter() *ClassDeleter {
 	return &ClassDeleter{
-		connection: schema.Connection,
+		connection:   schema.Connection,
 		semanticKind: paragons.SemanticKindThings,
 	}
 }
@@ -35,15 +35,14 @@ func (schema *API) ClassDeleter() *ClassDeleter {
 func (schema *API) AllDeleter() *AllDeleter {
 	return &AllDeleter{
 		connection: schema.Connection,
-		schemaAPI: schema,
+		schemaAPI:  schema,
 	}
 }
 
 // PropertyCreator builder to add a property to an existing schema class
 func (schema *API) PropertyCreator() *PropertyCreator {
 	return &PropertyCreator{
-		connection: schema.Connection,
+		connection:   schema.Connection,
 		semanticKind: paragons.SemanticKindThings,
 	}
 }
-

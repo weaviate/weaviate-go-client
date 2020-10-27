@@ -28,21 +28,21 @@ func TestBatch_integration(t *testing.T) {
 
 		// Create some classes to add in a batch
 		propertySchemaT1 := map[string]string{
-			"name": "Hawaii",
+			"name":        "Hawaii",
 			"description": "Universally accepted to be the best pizza ever created.",
 		}
 		classT1, errPayloadT := client.Data.Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT1).PayloadThing()
 		assert.Nil(t, errPayloadT)
 		classT2 := &models.Thing{
-			Class:              "Pizza",
-			ID:                 "97fa5147-bdad-4d74-9a81-f8babc811b09",
-			Schema:             map[string]string{
-				"name": "Doener",
+			Class: "Pizza",
+			ID:    "97fa5147-bdad-4d74-9a81-f8babc811b09",
+			Schema: map[string]string{
+				"name":        "Doener",
 				"description": "A innovation, some say revolution, in the pizza industry.",
 			},
 		}
 		propertySchemaA1 := map[string]string{
-			"name": "Chicken",
+			"name":        "Chicken",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
 		classA1, errPayloadA := client.Data.Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA1).WithKind(paragons.SemanticKindActions).PayloadAction()
@@ -70,7 +70,7 @@ func TestBatch_integration(t *testing.T) {
 		objectT1, objErrT1 := client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, objErrT1)
 		assert.NotNil(t, objectT1)
-		objectT2, objErrT2 := client.Data.ThingsGetter().WithID("97fa5147-bdad-4d74-9a81-f8babc811b09",).Do(context.Background())
+		objectT2, objErrT2 := client.Data.ThingsGetter().WithID("97fa5147-bdad-4d74-9a81-f8babc811b09").Do(context.Background())
 		assert.Nil(t, objErrT2)
 		assert.NotNil(t, objectT2)
 		objectA1, objErrA1 := client.Data.ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
@@ -89,10 +89,10 @@ func TestBatch_integration(t *testing.T) {
 
 		// Create some objects
 		classT := &models.Thing{
-			Class:              "Pizza",
-			ID:                 "97fa5147-bdad-4d74-9a81-f8babc811b09",
-			Schema:             map[string]string{
-				"name": "Doener",
+			Class: "Pizza",
+			ID:    "97fa5147-bdad-4d74-9a81-f8babc811b09",
+			Schema: map[string]string{
+				"name":        "Doener",
 				"description": "A innovation, some say revolution, in the pizza industry.",
 			},
 		}

@@ -10,9 +10,9 @@ import (
 )
 
 // Getter builder to retrieve a classification status object
-type Getter struct  {
+type Getter struct {
 	connection *connection.Connection
-	withID string
+	withID     string
 }
 
 // WithID of the classification

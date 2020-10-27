@@ -16,7 +16,7 @@ import (
 //   This prevents unnecessary starting and stopping of the docker-compose which prevents errors
 //   due to syncing issues and speeds up the process
 func SetupLocalWeaviate() error {
-	if !isExternalWeaviateRunning(){
+	if !isExternalWeaviateRunning() {
 		err := test.SetupWeavaite()
 		if err != nil {
 			return err
@@ -43,9 +43,8 @@ func WaitForWeaviate() error {
 	}
 	client := weaviateclient.New(cfg)
 
-
-	for i:=0;i<20;i++ {
-		ctx, _ := context.WithTimeout(context.Background(), time.Second * 3)
+	for i := 0; i < 20; i++ {
+		ctx, _ := context.WithTimeout(context.Background(), time.Second*3)
 		isReady, _ := client.Misc.ReadyChecker().Do(ctx)
 		if isReady {
 			return nil

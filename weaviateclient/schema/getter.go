@@ -14,7 +14,7 @@ type Getter struct {
 }
 
 // Do get and return the weaviate schema
-func (sg *Getter) Do (ctx context.Context) (*paragons.SchemaDump, error){
+func (sg *Getter) Do(ctx context.Context) (*paragons.SchemaDump, error) {
 	responseData, err := sg.connection.RunREST(ctx, "/schema", http.MethodGet, nil)
 	if err != nil {
 		return nil, err

@@ -1,4 +1,5 @@
 package weaviateclient
+
 //
 //import (
 //	"github.com/semi-technologies/weaviate-go-client/weaviateclient/swagger"

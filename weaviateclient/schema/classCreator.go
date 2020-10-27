@@ -36,4 +36,3 @@ func (cc *ClassCreator) Do(ctx context.Context) error {
 	responseData, err := cc.connection.RunREST(ctx, path, http.MethodPost, cc.class)
 	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }
-

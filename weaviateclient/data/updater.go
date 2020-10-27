@@ -13,16 +13,16 @@ import (
 
 // Updater builder to update property values in a data object
 type Updater struct {
-	connection *connection.Connection
-	semanticKind paragons.SemanticKind
-	uuid string
-	className string
+	connection     *connection.Connection
+	semanticKind   paragons.SemanticKind
+	uuid           string
+	className      string
 	propertySchema models.PropertySchema
-	withMerge bool
+	withMerge      bool
 }
 
 // WithID specifies the uuid of the object about to be  updated
-func (updater *Updater) WithID(uuid string) *Updater{
+func (updater *Updater) WithID(uuid string) *Updater {
 	updater.uuid = uuid
 	return updater
 }
@@ -73,17 +73,17 @@ func (updater *Updater) Do(ctx context.Context) error {
 
 func (updater *Updater) runUpdate(ctx context.Context, path string, httpMethod string) (*connection.ResponseData, error) {
 	if updater.semanticKind == paragons.SemanticKindThings {
-		thing := models.Thing {
-			Class:              updater.className,
-			ID:                 strfmt.UUID(updater.uuid),
-			Schema:             updater.propertySchema,
+		thing := models.Thing{
+			Class:  updater.className,
+			ID:     strfmt.UUID(updater.uuid),
+			Schema: updater.propertySchema,
 		}
 		return updater.connection.RunREST(ctx, path, httpMethod, thing)
 	}
-	action := models.Action {
-		Class:              updater.className,
-		ID:                 strfmt.UUID(updater.uuid),
-		Schema:             updater.propertySchema,
+	action := models.Action{
+		Class:  updater.className,
+		ID:     strfmt.UUID(updater.uuid),
+		Schema: updater.propertySchema,
 	}
 	return updater.connection.RunREST(ctx, path, httpMethod, action)
 }

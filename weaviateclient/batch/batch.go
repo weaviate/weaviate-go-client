@@ -13,7 +13,7 @@ type API struct {
 
 // ThingsBatcher get a builder to create things in a batch
 func (batch *API) ThingsBatcher() *ThingsBatcher {
-	return &ThingsBatcher {
+	return &ThingsBatcher{
 		connection: batch.Connection,
 	}
 }

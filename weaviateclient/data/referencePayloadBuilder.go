@@ -11,8 +11,8 @@ import (
 // ReferencePayloadBuilder to create a payload that references a data object.
 // The payload may be added to a reference property in another data object.
 type ReferencePayloadBuilder struct {
-	connection *connection.Connection
-	uuid string
+	connection   *connection.Connection
+	uuid         string
 	semanticKind paragons.SemanticKind
 }
 

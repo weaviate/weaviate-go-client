@@ -12,11 +12,11 @@ import (
 // ConceptGetter builder to get weaviate concpets
 type ConceptGetter struct {
 	connection *connection.Connection
-	concept string
+	concept    string
 }
 
 // WithConcept that should be retrieved
-func (cg *ConceptGetter) WithConcept(concept string) *ConceptGetter{
+func (cg *ConceptGetter) WithConcept(concept string) *ConceptGetter {
 	cg.concept = concept
 	return cg
 }

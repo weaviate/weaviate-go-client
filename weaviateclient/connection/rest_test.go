@@ -9,7 +9,7 @@ import (
 func TestResponseData_DecodeBodyIntoTarget(t *testing.T) {
 
 	respond := ResponseData{
-		Body: []byte(`{"actions":{"classes":[],"type":"action"},"things":{"classes":[{"class":"Band","description":"Band that plays and produces music","properties":null}],"type":"thing"}}`),
+		Body:       []byte(`{"actions":{"classes":[],"type":"action"},"things":{"classes":[{"class":"Band","description":"Band that plays and produces music","properties":null}],"type":"thing"}}`),
 		StatusCode: 0,
 	}
 

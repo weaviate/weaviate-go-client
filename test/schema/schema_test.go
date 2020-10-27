@@ -61,8 +61,8 @@ func TestSchema_integration(t *testing.T) {
 		client := weaviateclient.New(cfg)
 
 		schemaClass := &models.Class{
-			Class:              "Run",
-			Description:        "Running from the fuzz",
+			Class:       "Run",
+			Description: "Running from the fuzz",
 		}
 
 		err := client.Schema.ClassCreator().WithClass(schemaClass).WithKind(clientModels.SemanticKindActions).Do(context.Background())
@@ -87,12 +87,12 @@ func TestSchema_integration(t *testing.T) {
 		client := weaviateclient.New(cfg)
 
 		schemaClassThing := &models.Class{
-			Class:              "Pizza",
-			Description:        "A delicious religion like food and arguably the best export of Italy.",
+			Class:       "Pizza",
+			Description: "A delicious religion like food and arguably the best export of Italy.",
 		}
 		schemaClassAction := &models.Class{
-			Class:              "ChickenSoup",
-			Description:        "A soup made in part out of chicken, not for chicken.",
+			Class:       "ChickenSoup",
+			Description: "A soup made in part out of chicken, not for chicken.",
 		}
 
 		errT := client.Schema.ClassCreator().WithClass(schemaClassThing).Do(context.Background())
@@ -126,12 +126,12 @@ func TestSchema_integration(t *testing.T) {
 		client := weaviateclient.New(cfg)
 
 		schemaClassThing := &models.Class{
-			Class:              "Pizza",
-			Description:        "A delicious religion like food and arguably the best export of Italy.",
+			Class:       "Pizza",
+			Description: "A delicious religion like food and arguably the best export of Italy.",
 		}
 		schemaClassAction := &models.Class{
-			Class:              "ChickenSoup",
-			Description:        "A soup made in part out of chicken, not for chicken.",
+			Class:       "ChickenSoup",
+			Description: "A soup made in part out of chicken, not for chicken.",
 		}
 
 		errT := client.Schema.ClassCreator().WithClass(schemaClassThing).Do(context.Background())
@@ -157,12 +157,12 @@ func TestSchema_integration(t *testing.T) {
 		client := weaviateclient.New(cfg)
 
 		schemaClassThing := &models.Class{
-			Class:              "Pizza",
-			Description:        "A delicious religion like food and arguably the best export of Italy.",
+			Class:       "Pizza",
+			Description: "A delicious religion like food and arguably the best export of Italy.",
 		}
 		schemaClassAction := &models.Class{
-			Class:              "ChickenSoup",
-			Description:        "A soup made in part out of chicken, not for chicken.",
+			Class:       "ChickenSoup",
+			Description: "A soup made in part out of chicken, not for chicken.",
 		}
 
 		errT := client.Schema.ClassCreator().WithClass(schemaClassThing).Do(context.Background())
@@ -171,9 +171,9 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, errA)
 
 		newProperty := models.Property{
-			DataType:              []string{"string"},
-			Description:           "name",
-			Name:                  "name",
+			DataType:    []string{"string"},
+			Description: "name",
+			Name:        "name",
 		}
 
 		propErrT := client.Schema.PropertyCreator().WithClassName("Pizza").WithProperty(newProperty).Do(context.Background())
@@ -213,7 +213,6 @@ func TestSchema_unit(t *testing.T) {
 
 		err := client.Schema.ClassCreator().Do(context.Background())
 		assert.NotNil(t, err)
-
 
 	})
 

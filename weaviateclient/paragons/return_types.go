@@ -12,18 +12,18 @@ type OpenIDConfiguration struct {
 
 // SchemaDump Contains all semantic types and respective classes of the schema
 type SchemaDump struct {
-	Things *models.Schema `json:"things"`
+	Things  *models.Schema `json:"things"`
 	Actions *models.Schema `json:"actions"`
 }
 
 // ThingsBatchRequestBody wrapping things to a batch
 type ThingsBatchRequestBody struct {
-	Fields []string `json:"fields"`
+	Fields []string        `json:"fields"`
 	Things []*models.Thing `json:"things"`
 }
 
 // ActionsBatchRequestBody wrapping actions to a batch
 type ActionsBatchRequestBody struct {
-	Fields []string `json:"fields"`
+	Fields  []string         `json:"fields"`
 	Actions []*models.Action `json:"actions"`
 }

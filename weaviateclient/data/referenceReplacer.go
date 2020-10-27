@@ -12,11 +12,11 @@ import (
 
 // ReferenceReplacer builder to replace reference(s) with new one(s)
 type ReferenceReplacer struct {
-	connection *connection.Connection
-	semanticKind paragons.SemanticKind
-	uuid string
+	connection        *connection.Connection
+	semanticKind      paragons.SemanticKind
+	uuid              string
 	referenceProperty string
-	referencePayload *models.MultipleRef
+	referencePayload  *models.MultipleRef
 }
 
 // WithID specifies the uuid of the object about to get its reference replaced

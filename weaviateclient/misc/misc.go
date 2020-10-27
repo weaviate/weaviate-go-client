@@ -9,7 +9,6 @@ type API struct {
 	Connection *connection.Connection
 }
 
-
 // ReadyChecker retrieves weaviate ready status
 func (misc *API) ReadyChecker() *ReadyChecker {
 	return &ReadyChecker{connection: misc.Connection}

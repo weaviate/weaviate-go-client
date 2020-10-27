@@ -28,11 +28,11 @@ func TestData_reference_integration(t *testing.T) {
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		propertySchemaT := map[string]string{
-			"name": "Hawaii",
+			"name":        "Hawaii",
 			"description": "Universally accepted to be the best pizza ever created.",
 		}
 		propertySchemaA := map[string]string{
-			"name": "ChickenSoup",
+			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
 		errCreateT := client.Data.Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
@@ -57,7 +57,6 @@ func TestData_reference_integration(t *testing.T) {
 
 		time.Sleep(2.0 * time.Second)
 
-
 		things, getErrT := client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, getErrT)
 		valuesT := things[0].Schema.(map[string]interface{})
@@ -72,7 +71,6 @@ func TestData_reference_integration(t *testing.T) {
 		referencesA := testsuit.ParseReferenceResponseToStruct(t, valuesA["otherFoods"])
 		assert.Equal(t, strfmt.URI("weaviate://localhost/things/abefd256-8574-442b-9293-9205193737ee"), referencesA[0].Beacon)
 
-
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
@@ -82,11 +80,11 @@ func TestData_reference_integration(t *testing.T) {
 
 		// Create things with references
 		propertySchemaT := map[string]string{
-			"name": "Hawaii",
+			"name":        "Hawaii",
 			"description": "Universally accepted to be the best pizza ever created.",
 		}
 		propertySchemaA := map[string]string{
-			"name": "ChickenSoup",
+			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
 		errCreateT := client.Data.Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
@@ -126,7 +124,6 @@ func TestData_reference_integration(t *testing.T) {
 		assert.Nil(t, refErr)
 		time.Sleep(2.0 * time.Second)
 
-
 		things, getErrT := client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, getErrT)
 		valuesT := things[0].Schema.(map[string]interface{})
@@ -141,8 +138,6 @@ func TestData_reference_integration(t *testing.T) {
 		referencesA := testsuit.ParseReferenceResponseToStruct(t, valuesA["otherFoods"])
 		assert.Equal(t, strfmt.URI("weaviate://localhost/actions/565da3b6-60b3-40e5-ba21-e6bfe5dbba91"), referencesA[0].Beacon)
 
-
-
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
@@ -152,11 +147,11 @@ func TestData_reference_integration(t *testing.T) {
 
 		// Create things with references
 		propertySchemaT := map[string]string{
-			"name": "Hawaii",
+			"name":        "Hawaii",
 			"description": "Universally accepted to be the best pizza ever created.",
 		}
 		propertySchemaA := map[string]string{
-			"name": "ChickenSoup",
+			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
 		errCreateT := client.Data.Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
@@ -205,4 +200,3 @@ func TestData_reference_integration(t *testing.T) {
 		}
 	})
 }
-

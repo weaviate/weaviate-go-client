@@ -12,7 +12,7 @@ import (
 // ActionsBatcher builder to add multiple actions in one batch
 type ActionsBatcher struct {
 	connection *connection.Connection
-	actions []*models.Action
+	actions    []*models.Action
 }
 
 // WithObject add an object to the batch

@@ -35,4 +35,3 @@ func (cd *ClassDeleter) Do(ctx context.Context) error {
 	responseData, err := cd.connection.RunREST(ctx, path, http.MethodDelete, nil)
 	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }
-

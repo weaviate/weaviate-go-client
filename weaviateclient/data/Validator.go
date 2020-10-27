@@ -13,15 +13,15 @@ import (
 
 // Validator builder object to validate a class
 type Validator struct {
-	connection *connection.Connection
-	semanticKind paragons.SemanticKind
-	uuid string
-	className string
+	connection     *connection.Connection
+	semanticKind   paragons.SemanticKind
+	uuid           string
+	className      string
 	propertySchema models.PropertySchema
 }
 
 // WithID specifies the uuid of the object about to be validated
-func (validator *Validator) WithID(uuid string) *Validator{
+func (validator *Validator) WithID(uuid string) *Validator {
 	validator.uuid = uuid
 	return validator
 }
@@ -52,17 +52,17 @@ func (validator *Validator) Do(ctx context.Context) error {
 	var responseData *connection.ResponseData
 	var err error
 	if validator.semanticKind == paragons.SemanticKindThings {
-		thing := models.Thing {
-			Class:              validator.className,
-			ID:                 strfmt.UUID(validator.uuid),
-			Schema:             validator.propertySchema,
+		thing := models.Thing{
+			Class:  validator.className,
+			ID:     strfmt.UUID(validator.uuid),
+			Schema: validator.propertySchema,
 		}
 		responseData, err = validator.connection.RunREST(ctx, path, http.MethodPost, thing)
 	} else {
-		action := models.Action {
-			Class:              validator.className,
-			ID:                 strfmt.UUID(validator.uuid),
-			Schema:             validator.propertySchema,
+		action := models.Action{
+			Class:  validator.className,
+			ID:     strfmt.UUID(validator.uuid),
+			Schema: validator.propertySchema,
 		}
 		responseData, err = validator.connection.RunREST(ctx, path, http.MethodPost, action)
 	}

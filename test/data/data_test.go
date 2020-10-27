@@ -29,11 +29,11 @@ func TestData_integration(t *testing.T) {
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		propertySchemaT := map[string]string{
-			"name": "Hawaii",
+			"name":        "Hawaii",
 			"description": "Universally accepted to be the best pizza ever created.",
 		}
 		propertySchemaA := map[string]string{
-			"name": "ChickenSoup",
+			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
 
@@ -63,22 +63,22 @@ func TestData_integration(t *testing.T) {
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		errCreate := client.Data.Creator().WithClassName("Pizza").WithSchema(map[string]string{
-			"name": "Margherita",
+			"name":        "Margherita",
 			"description": "plain",
 		}).Do(context.Background())
 		assert.Nil(t, errCreate)
 		errCreate = client.Data.Creator().WithClassName("Pizza").WithSchema(map[string]string{
-			"name": "Pepperoni",
+			"name":        "Pepperoni",
 			"description": "meat",
 		}).Do(context.Background())
 		assert.Nil(t, errCreate)
 		errCreate = client.Data.Creator().WithClassName("Soup").WithKind(paragons.SemanticKindActions).WithSchema(map[string]string{
-			"name": "Chicken",
+			"name":        "Chicken",
 			"description": "meat",
 		}).Do(context.Background())
 		assert.Nil(t, errCreate)
 		errCreate = client.Data.Creator().WithClassName("Soup").WithKind(paragons.SemanticKindActions).WithSchema(map[string]string{
-			"name": "Tofu",
+			"name":        "Tofu",
 			"description": "vegetarian",
 		}).Do(context.Background())
 		assert.Nil(t, errCreate)
@@ -100,11 +100,11 @@ func TestData_integration(t *testing.T) {
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		propertySchemaT := map[string]string{
-			"name": "Hawaii",
+			"name":        "Hawaii",
 			"description": "Universally accepted to be the best pizza ever created.",
 		}
 		propertySchemaA := map[string]string{
-			"name": "ChickenSoup",
+			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
 		errCreateT := client.Data.Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
@@ -172,11 +172,11 @@ func TestData_integration(t *testing.T) {
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		propertySchemaT := map[string]string{
-			"name": "Hawaii",
+			"name":        "Hawaii",
 			"description": "Universally accepted to be the best pizza ever created.",
 		}
 		propertySchemaA := map[string]string{
-			"name": "ChickenSoup",
+			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
 		errCreateT := client.Data.Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
@@ -209,11 +209,11 @@ func TestData_integration(t *testing.T) {
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		propertySchemaT := map[string]string{
-			"name": "Random",
+			"name":        "Random",
 			"description": "Missing description",
 		}
 		propertySchemaA := map[string]string{
-			"name": "water",
+			"name":        "water",
 			"description": "missing description",
 		}
 		errCreateT := client.Data.Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
@@ -223,14 +223,14 @@ func TestData_integration(t *testing.T) {
 
 		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
 		propertySchemaT = map[string]string{
-			"name": "Hawaii",
+			"name":        "Hawaii",
 			"description": "Universally accepted to be the best pizza ever created.",
 		}
 		updateErrT := client.Data.Updater().WithID("abefd256-8574-442b-9293-9205193737ee").WithClassName("Pizza").WithSchema(propertySchemaT).Do(context.Background())
 		assert.Nil(t, updateErrT)
 
 		propertySchemaA = map[string]string{
-			"name": "ChickenSoup",
+			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
 		updateErrA := client.Data.Updater().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithClassName("Soup").WithSchema(propertySchemaA).WithKind(paragons.SemanticKindActions).Do(context.Background())
@@ -259,11 +259,11 @@ func TestData_integration(t *testing.T) {
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		propertySchemaT := map[string]string{
-			"name": "Hawaii",
+			"name":        "Hawaii",
 			"description": "Missing description",
 		}
 		propertySchemaA := map[string]string{
-			"name": "ChickenSoup",
+			"name":        "ChickenSoup",
 			"description": "missing description",
 		}
 		errCreateT := client.Data.Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
@@ -306,21 +306,19 @@ func TestData_integration(t *testing.T) {
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		propertySchemaT := map[string]string{
-			"name": "Hawaii",
+			"name":        "Hawaii",
 			"description": "Universally accepted to be the best pizza ever created.",
 		}
 		propertySchemaA := map[string]string{
-			"name": "ChickenSoup",
+			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-
 
 		errValidateT := client.Data.Validator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
 		assert.Nil(t, errValidateT)
 
 		errValidateA := client.Data.Validator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(paragons.SemanticKindActions).Do(context.Background())
 		assert.Nil(t, errValidateA)
-
 
 		propertySchemaT["test"] = "not existing property"
 		errValidateT = client.Data.Validator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
@@ -329,7 +327,6 @@ func TestData_integration(t *testing.T) {
 		propertySchemaA["test"] = "not existing property"
 		errValidateA = client.Data.Validator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(paragons.SemanticKindActions).Do(context.Background())
 		assert.NotNil(t, errValidateA)
-
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
@@ -342,4 +339,3 @@ func TestData_integration(t *testing.T) {
 		}
 	})
 }
-

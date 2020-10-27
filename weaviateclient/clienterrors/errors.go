@@ -9,14 +9,14 @@ import (
 // Contains both the code and the error message
 type UnexpectedStatusCodeError struct {
 	StatusCode int
-	msg string
+	msg        string
 }
 
 // NewUnexpectedStatusCodeError from status code and error message
 func NewUnexpectedStatusCodeError(statusCode int, format string, args ...interface{}) *UnexpectedStatusCodeError {
 	return &UnexpectedStatusCodeError{
 		StatusCode: statusCode,
-		msg: fmt.Sprintf(format, args...),
+		msg:        fmt.Sprintf(format, args...),
 	}
 }
 

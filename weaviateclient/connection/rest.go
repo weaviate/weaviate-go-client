@@ -13,14 +13,14 @@ const apiVersion = "v1"
 
 // Connection networking layer accessing weaviate using http requests
 type Connection struct {
-	basePath string
+	basePath   string
 	httpClient *http.Client
 }
 
 // NewConnection based on scheme://host
 func NewConnection(scheme string, host string) *Connection {
 	return &Connection{
-		basePath: scheme + "://" + host + "/" + apiVersion,
+		basePath:   scheme + "://" + host + "/" + apiVersion,
 		httpClient: &http.Client{},
 	}
 }
@@ -42,7 +42,7 @@ func (con *Connection) marshalBody(body interface{}) (io.Reader, error) {
 	if body == nil {
 		return nil, nil
 	}
-	jsonBody, err := json.Marshal(body)  // Create the JSON body
+	jsonBody, err := json.Marshal(body) // Create the JSON body
 	if err != nil {
 		return nil, err
 	}
@@ -50,10 +50,10 @@ func (con *Connection) marshalBody(body interface{}) (io.Reader, error) {
 }
 
 func (con *Connection) createRequest(ctx context.Context, path string, restMethod string, body interface{}) (*http.Request, error) {
-	url := con.basePath+path  // Create the URL
+	url := con.basePath + path // Create the URL
 
 	jsonBody, err := con.marshalBody(body)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -74,7 +74,6 @@ func (con *Connection) createRequest(ctx context.Context, path string, restMetho
 //  a response that may be parsed into a struct after the fact
 //  error if there was a network issue
 func (con *Connection) RunREST(ctx context.Context, path string, restMethod string, requestBody interface{}) (*ResponseData, error) {
-
 
 	request, requestErr := con.createRequest(ctx, path, restMethod, requestBody)
 	if requestErr != nil {
@@ -99,7 +98,7 @@ func (con *Connection) RunREST(ctx context.Context, path string, restMethod stri
 
 // ResponseData encapsulation of the http request body and status
 type ResponseData struct {
-	Body []byte
+	Body       []byte
 	StatusCode int
 }
 
@@ -112,4 +111,3 @@ func (rd *ResponseData) DecodeBodyIntoTarget(target interface{}) error {
 	}
 	return nil
 }
-

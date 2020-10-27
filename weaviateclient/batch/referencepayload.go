@@ -10,13 +10,13 @@ import (
 
 // ReferencePayloadBuilder to create references that may be added in a batch
 type ReferencePayloadBuilder struct {
-	connection *connection.Connection
+	connection       *connection.Connection
 	fromSemanticKind paragons.SemanticKind
-	toSemanticKind paragons.SemanticKind
-	fromClassName string
+	toSemanticKind   paragons.SemanticKind
+	fromClassName    string
 	fromPropertyName string
-	fromUUID string
-	toUUID string
+	fromUUID         string
+	toUUID           string
 }
 
 // WithFromClassName name of the class that the reference is added to

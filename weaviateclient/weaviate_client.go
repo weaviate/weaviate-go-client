@@ -6,11 +6,10 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/contextionary"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/data"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/graphql"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/misc"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/schema"
 )
-
-
 
 // Config of the client endpoint
 type Config struct {
@@ -27,6 +26,7 @@ type WeaviateClient struct {
 	Batch           batch.API
 	C11y            contextionary.API
 	Classifications classifications.API
+	GraphQL         graphql.API
 }
 
 // New weaviate client from config
@@ -34,12 +34,13 @@ func New(config Config) *WeaviateClient {
 	con := connection.NewConnection(config.Scheme, config.Host)
 
 	return &WeaviateClient{
-		connection: con,
-		Misc:       misc.API{Connection: con},
-		Schema:     schema.API{Connection: con},
-		Data: data.API{Connection: con},
-		Batch: batch.API{Connection: con},
-		C11y: contextionary.API{Connection: con},
+		connection:      con,
+		Misc:            misc.API{Connection: con},
+		Schema:          schema.API{Connection: con},
+		Data:            data.API{Connection: con},
+		Batch:           batch.API{Connection: con},
+		C11y:            contextionary.API{Connection: con},
 		Classifications: classifications.API{Connection: con},
+		GraphQL:         graphql.API{Connection: con},
 	}
 }

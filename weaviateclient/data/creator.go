@@ -13,11 +13,11 @@ import (
 
 // Creator builder to create a data object in weaviate
 type Creator struct {
-	connection *connection.Connection
-	className string
-	uuid string
+	connection     *connection.Connection
+	className      string
+	uuid           string
 	propertySchema models.PropertySchema
-	semanticKind paragons.SemanticKind
+	semanticKind   paragons.SemanticKind
 }
 
 // WithClassName indicates what class the data object is associated with
@@ -68,7 +68,7 @@ func (creator *Creator) PayloadThing() (*models.Thing, error) {
 		return nil, fmt.Errorf("builder has semantic kind action configured; please set the correct semantic type")
 	}
 	thing := models.Thing{
-		Class: creator.className,
+		Class:  creator.className,
 		Schema: creator.propertySchema,
 	}
 	if creator.uuid != "" {
@@ -83,8 +83,8 @@ func (creator *Creator) PayloadAction() (*models.Action, error) {
 		return nil, fmt.Errorf("builder has semantic kind thing configured; Please set the correct semantic type")
 	}
 	action := models.Action{
-		Class:              creator.className,
-		Schema:             creator.propertySchema,
+		Class:  creator.className,
+		Schema: creator.propertySchema,
 	}
 	if creator.uuid != "" {
 		action.ID = strfmt.UUID(creator.uuid)

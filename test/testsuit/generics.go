@@ -14,26 +14,26 @@ import (
 // and adds some primitive properties (name and description)
 func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviateclient.WeaviateClient) {
 	schemaClassThing := &models.Class{
-		Class:              "Pizza",
-		Description:        "A delicious religion like food and arguably the best export of Italy.",
+		Class:       "Pizza",
+		Description: "A delicious religion like food and arguably the best export of Italy.",
 	}
 	schemaClassAction := &models.Class{
-		Class:              "Soup",
-		Description:        "Mostly water based brew of sustenance for humans.",
+		Class:       "Soup",
+		Description: "Mostly water based brew of sustenance for humans.",
 	}
 	errT := client.Schema.ClassCreator().WithClass(schemaClassThing).Do(context.Background())
 	assert.Nil(t, errT)
 	errA := client.Schema.ClassCreator().WithClass(schemaClassAction).WithKind(paragons.SemanticKindActions).Do(context.Background())
 	assert.Nil(t, errA)
 	nameProperty := models.Property{
-		DataType:              []string{"string"},
-		Description:           "name",
-		Name:                  "name",
+		DataType:    []string{"string"},
+		Description: "name",
+		Name:        "name",
 	}
 	descriptionProperty := models.Property{
-		DataType:              []string{"text"},
-		Description:           "description",
-		Name:                  "description",
+		DataType:    []string{"text"},
+		Description: "description",
+		Name:        "description",
 	}
 
 	propErrT1 := client.Schema.PropertyCreator().WithClassName("Pizza").WithProperty(nameProperty).Do(context.Background())
@@ -49,10 +49,10 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviateclient.WeaviateC
 // CreateWeaviateTestSchemaFoodWithReferenceProperty create the testing schema with a reference field otherFoods on both classes
 func CreateWeaviateTestSchemaFoodWithReferenceProperty(t *testing.T, client *weaviateclient.WeaviateClient) {
 	CreateWeaviateTestSchemaFood(t, client)
-	referenceProperty := models.Property {
-		DataType: []string{"Pizza", "Soup"},
+	referenceProperty := models.Property{
+		DataType:    []string{"Pizza", "Soup"},
 		Description: "reference to other foods",
-		Name: "otherFoods",
+		Name:        "otherFoods",
 	}
 	err := client.Schema.PropertyCreator().WithClassName("Pizza").WithProperty(referenceProperty).Do(context.Background())
 	assert.Nil(t, err)
@@ -94,5 +94,3 @@ func ParseReferenceResponseToStruct(t *testing.T, reference interface{}) models.
 	}
 	return out
 }
-
-

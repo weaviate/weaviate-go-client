@@ -12,11 +12,11 @@ import (
 // ThingsBatcher builder to add multiple things in one batch
 type ThingsBatcher struct {
 	connection *connection.Connection
-	things []*models.Thing
+	things     []*models.Thing
 }
 
 // WithObject add an object to the batch
-func (tb *ThingsBatcher) WithObject(thing *models.Thing) *ThingsBatcher{
+func (tb *ThingsBatcher) WithObject(thing *models.Thing) *ThingsBatcher {
 	tb.things = append(tb.things, thing)
 	return tb
 }

@@ -12,11 +12,11 @@ import (
 
 // ReferenceCreator builder to add a reference to the property of a data object
 type ReferenceCreator struct {
-	connection *connection.Connection
-	semanticKind paragons.SemanticKind
-	uuid string
+	connection        *connection.Connection
+	semanticKind      paragons.SemanticKind
+	uuid              string
 	referenceProperty string
-	referencePayload *models.SingleRef
+	referencePayload  *models.SingleRef
 }
 
 // WithID specifies the uuid of the object on which to add the reference
@@ -51,4 +51,3 @@ func (rc *ReferenceCreator) Do(ctx context.Context) error {
 	responseData, responseErr := rc.connection.RunREST(ctx, path, http.MethodPost, *rc.referencePayload)
 	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 }
-

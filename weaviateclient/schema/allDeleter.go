@@ -9,7 +9,7 @@ import (
 // AllDeleter builder object to delete an entire schema
 type AllDeleter struct {
 	connection *connection.Connection
-	schemaAPI *API
+	schemaAPI  *API
 }
 
 // Do deletes all schema classes from weaviate

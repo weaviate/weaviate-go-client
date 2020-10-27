@@ -12,11 +12,11 @@ import (
 
 // ReferenceDeleter builder to remove a reference from a data object
 type ReferenceDeleter struct {
-	connection *connection.Connection
-	semanticKind paragons.SemanticKind
-	uuid string
+	connection        *connection.Connection
+	semanticKind      paragons.SemanticKind
+	uuid              string
 	referenceProperty string
-	referencePayload *models.SingleRef
+	referencePayload  *models.SingleRef
 }
 
 // WithID specifies the uuid of the object on which the reference will be deleted

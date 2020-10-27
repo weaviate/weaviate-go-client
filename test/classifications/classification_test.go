@@ -61,14 +61,14 @@ func TestClassifications_integration(t *testing.T) {
 	})
 }
 
-func createClassificationClasses(t *testing.T, client *weaviateclient.WeaviateClient){
+func createClassificationClasses(t *testing.T, client *weaviateclient.WeaviateClient) {
 	testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 	// Create a class Tag
 	schemaClassTag := &models.Class{
 		Class:       "Tag",
 		Description: "tag for a pizza",
-		Properties:  []*models.Property{
+		Properties: []*models.Property{
 			{
 				DataType:    []string{"string"},
 				Description: "name",
@@ -80,27 +80,27 @@ func createClassificationClasses(t *testing.T, client *weaviateclient.WeaviateCl
 	assert.Nil(t, errT)
 	// Create a reference property that allows to tag a pizza
 	tagProperty := models.Property{
-		DataType: []string{"Tag"},
+		DataType:    []string{"Tag"},
 		Description: "tag of pizza",
-		Name: "taged",
+		Name:        "taged",
 	}
 	addTagPropertyToPizzaErr := client.Schema.PropertyCreator().WithProperty(tagProperty).WithClassName("Pizza").Do(context.Background())
 	assert.Nil(t, addTagPropertyToPizzaErr)
 
 	// Create two pizzas
 	pizza1 := &models.Thing{
-		Class:              "Pizza",
-		ID:                 "97fa5147-bdad-4d74-9a81-f8babc811b09",
-		Schema:             map[string]string{
-			"name": "Quattro Formaggi",
+		Class: "Pizza",
+		ID:    "97fa5147-bdad-4d74-9a81-f8babc811b09",
+		Schema: map[string]string{
+			"name":        "Quattro Formaggi",
 			"description": "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
 		},
 	}
 	pizza2 := &models.Thing{
-		Class:              "Pizza",
-		ID:                 "97fa5147-bdad-4d74-9a81-f8babc811b09",
-		Schema:             map[string]string{
-			"name": "Frutti di Mare",
+		Class: "Pizza",
+		ID:    "97fa5147-bdad-4d74-9a81-f8babc811b09",
+		Schema: map[string]string{
+			"name":        "Frutti di Mare",
 			"description": "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
 		},
 	}

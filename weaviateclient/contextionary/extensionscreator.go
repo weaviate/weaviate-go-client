@@ -12,7 +12,7 @@ import (
 // ExtensionCreator builder for the weaviate contextionary
 type ExtensionCreator struct {
 	connection *connection.Connection
-	extension *models.C11yExtension
+	extension  *models.C11yExtension
 }
 
 // WithConcept a new concept that should be added or an existing concept that should be changed

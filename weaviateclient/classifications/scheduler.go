@@ -11,15 +11,15 @@ import (
 
 // Scheduler builder to schedule a classification
 type Scheduler struct {
-	connection *connection.Connection
-	classificationType paragons.Classification
-	withClassName string
-	withClassifyProperties []string
-	withBasedOnProperties []string
-	withK int32
-	withSourceWhereFilter *models.WhereFilter
+	connection                 *connection.Connection
+	classificationType         paragons.Classification
+	withClassName              string
+	withClassifyProperties     []string
+	withBasedOnProperties      []string
+	withK                      int32
+	withSourceWhereFilter      *models.WhereFilter
 	withTrainingSetWhereFilter *models.WhereFilter
-	withTargetWhereFilter *models.WhereFilter
+	withTargetWhereFilter      *models.WhereFilter
 }
 
 // WithType of classification e.g. knn or contextual
@@ -74,13 +74,13 @@ func (s *Scheduler) WithK(k int32) *Scheduler {
 func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
 	classType := string(s.classificationType)
 	config := models.Classification{
-		BasedOnProperties:               s.withBasedOnProperties,
-		Class:                           s.withClassName,
-		ClassifyProperties:              s.withClassifyProperties,
-		SourceWhere:                     s.withSourceWhereFilter,
-		TargetWhere:                     s.withTargetWhereFilter,
-		TrainingSetWhere:                s.withTrainingSetWhereFilter,
-		Type:                            &classType,
+		BasedOnProperties:  s.withBasedOnProperties,
+		Class:              s.withClassName,
+		ClassifyProperties: s.withClassifyProperties,
+		SourceWhere:        s.withSourceWhereFilter,
+		TargetWhere:        s.withTargetWhereFilter,
+		TrainingSetWhere:   s.withTrainingSetWhereFilter,
+		Type:               &classType,
 	}
 	if s.classificationType == paragons.KNN {
 		config.K = &s.withK

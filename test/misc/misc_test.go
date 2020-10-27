@@ -55,8 +55,6 @@ func TestMisc_integration(t *testing.T) {
 		assert.NotEmpty(t, meta.ContextionaryVersion)
 	})
 
-
-
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
