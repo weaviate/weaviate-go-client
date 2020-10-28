@@ -17,9 +17,9 @@ jobs:
         - go get -v ./...
       script:
         - docker-compose -f test/docker-compose.yaml up -d
-        # Unit tests
+        - echo "Unit tests"
         - go test -v ./weaviateclient/...
-        # Integration tests
-        - for pkg in $(go list ./... | grep 'weaviate-go-client/test'); do; if ! go test -v -count 1 -race "$pkg"; then; echo "Test for $pkg failed" >&2; return 1; fi; done
-        # Linting
+        - echo "Integration tests"
+        - for pkg in $(go list ./... | grep 'weaviate-go-client/test'); do if ! go test -v -count 1 -race "$pkg"; then echo "Test for $pkg failed" >&2 return 1; fi done
+        - echo "Linting"
         - golint -set_exit_status ./...
