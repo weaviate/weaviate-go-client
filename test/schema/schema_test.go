@@ -175,10 +175,6 @@ func TestSchema_integration(t *testing.T) {
 			t.Fail()
 		}
 	})
-
-	t.Run("tear down weaviate", func(t *testing.T) {
-		t.Fail()
-	})
 }
 
 func TestSchema_errors(t *testing.T) {
