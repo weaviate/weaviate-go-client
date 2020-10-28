@@ -16,6 +16,7 @@ func NewWeaviateClientError(statusCode int, format string, args ...interface{}) 
 	}
 }
 
+// NewDerivedWeaviateClientError wraps an error into a WeviateClientError as derived error
 func NewDerivedWeaviateClientError(err error) *clienterror.WeaviateClientError {
 	return &clienterror.WeaviateClientError{
 		IsUnexpectedStatusCode: false,
