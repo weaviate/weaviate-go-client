@@ -57,8 +57,16 @@ func TestGraphQL_integration(t *testing.T) {
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
-	t.Run("", func(t *testing.T) {
-		t.Fail()
+	t.Run("Aggregate", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		testsuit.CreateTestSchemaAndData(t, client)
+
+		fields := "meta {count}"
+		resultSet, gqlErr := client.GraphQL.Aggregate().Things().WithFields(fields).WithClassName("Pizza").Do(context.Background())
+
+		assert.Nil(t, gqlErr)
+		assert.NotNil(t, resultSet)
+		testsuit.CleanUpWeaviate(t, client)
 	})
 
 	t.Run("", func(t *testing.T) {

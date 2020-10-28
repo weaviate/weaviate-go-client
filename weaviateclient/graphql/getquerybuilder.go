@@ -3,10 +3,8 @@ package graphql
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate/entities/models"
-	"net/http"
 	"strings"
 )
 
@@ -61,17 +59,7 @@ func (gb *GetBuilder) WithGroup(group string) *GetBuilder {
 
 // Do execute the GraphQL query
 func (gb *GetBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
-	query := models.GraphQLQuery{
-		Query:         gb.build(),
-	}
-	responseData, responseErr := gb.connection.RunREST(ctx, "/graphql", http.MethodPost, &query)
-	err := clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
-	if err != nil {
-		return nil, err
-	}
-	var gqlResponse models.GraphQLResponse
-	parseErr := responseData.DecodeBodyIntoTarget(&gqlResponse)
-	return &gqlResponse, parseErr
+	return runGraphQLQuery(ctx, gb.connection, gb.build())
 }
 
 // build the GraphQL query string (not needed when Do is executed)

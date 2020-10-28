@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate/entities/models"
-	"net/http"
 )
 
 type Explore struct {
@@ -71,18 +69,7 @@ func (e *Explore) build() string {
 }
 
 func (e *Explore) Do(ctx context.Context) (*models.GraphQLResponse, error) {
-	// Do execute the GraphQL query
-	query := models.GraphQLQuery{
-		Query:         e.build(),
-	}
-	responseData, responseErr := e.connection.RunREST(ctx, "/graphql", http.MethodPost, &query)
-	err := clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
-	if err != nil {
-		return nil, err
-	}
-	var gqlResponse models.GraphQLResponse
-	parseErr := responseData.DecodeBodyIntoTarget(&gqlResponse)
-	return &gqlResponse, parseErr
+	return runGraphQLQuery(ctx, e.connection, e.build())
 }
 
 func (e *Explore) createFilterClause() string {
