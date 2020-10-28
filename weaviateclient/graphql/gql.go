@@ -15,8 +15,11 @@ func (api *API) Get() *Get {
 	}
 }
 
-//funnc ()
-
+func (api *API) Explore() *Explore {
+	return &Explore{
+		connection:    api.Connection,
+	}
+}
 
 type rest interface {
 	RunREST(ctx context.Context, path string, restMethod string, requestBody interface{}) (*connection.ResponseData, error)

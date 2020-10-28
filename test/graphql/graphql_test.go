@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/testenv"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -39,39 +40,21 @@ func TestGraphQL_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		//resultSet, gqlErr := client.GraphQL.Explore().WithFields([]paragons.ExploreFields{paragons.Certainty, paragons.Beacon}).WithConcepts([]string{"Apple"}).WithLimit(3).WithCertainty(0.71).WithMoveTo([]string{"pizza"}, 0.2).WithMoveAwayFrom([]string{"Fish"}, 0.1).Do()
-		//assert.Nil(t, gqlErr)
-		//
-		//assert.NotNil(t, resultSet)
+		fields := []paragons.ExploreFields{paragons.Certainty, paragons.Beacon, paragons.ClassName}
+		concepts := []string{"pineapple slices", "ham"}
+		moveTo := &paragons.MoveParameters{
+			Concepts: []string{"Pizza"},
+			Force:    0.3,
+		}
+		moveAwayFrom := &paragons.MoveParameters{
+			Concepts: []string{"toast", "bread"},
+			Force:    0.4,
+		}
 
-		t.Fail()
-
-
+		resultSet, gqlErr := client.GraphQL.Explore().WithFields(fields).WithConcepts(concepts).WithLimit(3).WithCertainty(0.71).WithMoveTo(moveTo).WithMoveAwayFrom(moveAwayFrom).Do(context.Background())
+		assert.Nil(t, gqlErr)
+		assert.NotNil(t, resultSet)
 		testsuit.CleanUpWeaviate(t, client)
-
-
-
-		/*
-		{
-			Explore(
-				concepts: "apple",
-			limit: 3,
-			certainty: 0.71,
-			moveTo: {
-		concepts: "pizza"
-		force: 0.2
-		}
-		moveAwayFrom: {
-		concepts: "fish",
-			force: 0.1
-		}
-			) {
-			certainty
-			beacon
-			className
-		}
-		}
-		*/
 	})
 
 	t.Run("", func(t *testing.T) {
