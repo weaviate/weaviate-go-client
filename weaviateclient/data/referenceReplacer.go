@@ -3,7 +3,7 @@ package data
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate/entities/models"
@@ -48,5 +48,5 @@ func (rr *ReferenceReplacer) WithReferences(referencePayload *models.MultipleRef
 func (rr *ReferenceReplacer) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/%v/%v/references/%v", string(rr.semanticKind), rr.uuid, rr.referenceProperty)
 	responseData, responseErr := rr.connection.RunREST(ctx, path, http.MethodPut, *rr.referencePayload)
-	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 }

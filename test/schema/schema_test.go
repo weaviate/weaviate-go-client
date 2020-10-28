@@ -3,7 +3,7 @@ package schema
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient"
+	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
 	clientModels "github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
@@ -22,12 +22,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("POST /schema/things", func(t *testing.T) {
-
-		cfg := weaviateclient.Config{
-			Host:   "localhost:8080",
-			Scheme: "http",
-		}
-		client := weaviateclient.New(cfg)
+		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
 			Class:              "Band",
@@ -53,12 +48,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("POST /schema/actions", func(t *testing.T) {
-
-		cfg := weaviateclient.Config{
-			Host:   "localhost:8080",
-			Scheme: "http",
-		}
-		client := weaviateclient.New(cfg)
+		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
 			Class:       "Run",
@@ -79,12 +69,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Delete /schema/{type}", func(t *testing.T) {
-
-		cfg := weaviateclient.Config{
-			Host:   "localhost:8080",
-			Scheme: "http",
-		}
-		client := weaviateclient.New(cfg)
+		client := testsuit.CreateTestClient()
 
 		schemaClassThing := &models.Class{
 			Class:       "Pizza",
@@ -118,12 +103,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Delete All schema", func(t *testing.T) {
-
-		cfg := weaviateclient.Config{
-			Host:   "localhost:8080",
-			Scheme: "http",
-		}
-		client := weaviateclient.New(cfg)
+		client := testsuit.CreateTestClient()
 
 		schemaClassThing := &models.Class{
 			Class:       "Pizza",
@@ -149,12 +129,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("POST /schema/{type}/{className}/properties", func(t *testing.T) {
-
-		cfg := weaviateclient.Config{
-			Host:   "localhost:8080",
-			Scheme: "http",
-		}
-		client := weaviateclient.New(cfg)
+		client := testsuit.CreateTestClient()
 
 		schemaClassThing := &models.Class{
 			Class:       "Pizza",
@@ -202,18 +177,13 @@ func TestSchema_integration(t *testing.T) {
 	})
 }
 
-func TestSchema_unit(t *testing.T) {
+func TestSchema_errors(t *testing.T) {
 
 	t.Run("Run Do withouth setting a class", func(t *testing.T) {
-		cfg := weaviateclient.Config{
-			Host:   "localhost:8080",
-			Scheme: "http",
-		}
-		client := weaviateclient.New(cfg)
+		client := testsuit.CreateTestClient()
 
 		err := client.Schema.ClassCreator().Do(context.Background())
 		assert.NotNil(t, err)
-
 	})
 
 }

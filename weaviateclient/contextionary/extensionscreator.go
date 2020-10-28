@@ -3,7 +3,7 @@ package contextionary
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
@@ -39,5 +39,5 @@ func (ec *ExtensionCreator) Do(ctx context.Context) error {
 		return fmt.Errorf("weight must be between 0.0 and 1.0")
 	}
 	responseData, responseErr := ec.connection.RunREST(ctx, "/c11y/extensions", http.MethodPost, ec.extension)
-	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 }

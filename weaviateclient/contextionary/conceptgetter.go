@@ -3,7 +3,7 @@ package contextionary
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
@@ -25,11 +25,14 @@ func (cg *ConceptGetter) WithConcept(concept string) *ConceptGetter {
 func (cg *ConceptGetter) Do(ctx context.Context) (*models.C11yWordsResponse, error) {
 	path := fmt.Sprintf("/c11y/concepts/%v", cg.concept)
 	responseData, responseErr := cg.connection.RunREST(ctx, path, http.MethodGet, nil)
-	err := clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {
 		return nil, err
 	}
 	var concepts models.C11yWordsResponse
 	parseErr := responseData.DecodeBodyIntoTarget(&concepts)
-	return &concepts, parseErr
+	if parseErr != nil {
+		return nil, except.NewDerivedWeaviateClientError(parseErr)
+	}
+	return &concepts, nil
 }

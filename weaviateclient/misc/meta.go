@@ -2,7 +2,7 @@ package misc
 
 import (
 	"context"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
@@ -17,11 +17,11 @@ type MetaGetter struct {
 func (mg *MetaGetter) Do(ctx context.Context) (*models.Meta, error) {
 
 	responseData, responseErr := mg.connection.RunREST(ctx, "/meta", http.MethodGet, nil)
-	err := clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {
 		return nil, err
 	}
 	var meta models.Meta
 	parseErr := responseData.DecodeBodyIntoTarget(&meta)
-	return &meta, parseErr
+	return &meta, except.NewDerivedWeaviateClientError(parseErr)
 }

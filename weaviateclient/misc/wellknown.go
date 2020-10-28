@@ -2,7 +2,7 @@ package misc
 
 import (
 	"context"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"net/http"
@@ -17,7 +17,7 @@ type ReadyChecker struct {
 func (rc *ReadyChecker) Do(ctx context.Context) (bool, error) {
 	response, err := rc.connection.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
 	if err != nil {
-		return false, err
+		return false, except.NewDerivedWeaviateClientError(err)
 	}
 	if response.StatusCode == 200 {
 		return true, nil
@@ -34,7 +34,7 @@ type LiveChecker struct {
 func (lc *LiveChecker) Do(ctx context.Context) (bool, error) {
 	response, err := lc.connection.RunREST(ctx, "/.well-known/live", http.MethodGet, nil)
 	if err != nil {
-		return false, err
+		return false, except.NewDerivedWeaviateClientError(err)
 	}
 	if response.StatusCode == 200 {
 		return true, nil
@@ -51,7 +51,7 @@ type OpenIDConfigGetter struct {
 func (oidcg *OpenIDConfigGetter) Do(ctx context.Context) (*paragons.OpenIDConfiguration, error) {
 	response, err := oidcg.connection.RunREST(ctx, "/.well-known/openid-configuration", http.MethodGet, nil)
 	if err != nil {
-		return nil, err
+		return nil, except.NewDerivedWeaviateClientError(err)
 	}
 	if response.StatusCode == 404 {
 		return nil, nil
@@ -59,11 +59,8 @@ func (oidcg *OpenIDConfigGetter) Do(ctx context.Context) (*paragons.OpenIDConfig
 	if response.StatusCode == 200 {
 		var openIDConfig paragons.OpenIDConfiguration
 		decodeErr := response.DecodeBodyIntoTarget(&openIDConfig)
-		if decodeErr != nil {
-			return nil, decodeErr
-		}
-		return &openIDConfig, nil
+		return &openIDConfig, decodeErr
 	}
 
-	return nil, clienterrors.NewUnexpectedStatusCodeError(response.StatusCode, string(response.Body))
+	return nil, except.NewWeaviateClientError(response.StatusCode, string(response.Body))
 }

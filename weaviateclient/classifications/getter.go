@@ -3,7 +3,7 @@ package classifications
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
@@ -25,7 +25,7 @@ func (g *Getter) WithID(uuid string) *Getter {
 func (g *Getter) Do(ctx context.Context) (*models.Classification, error) {
 	path := fmt.Sprintf("/classifications/%v", g.withID)
 	responseData, responseErr := g.connection.RunREST(ctx, path, http.MethodGet, nil)
-	err := clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {
 		return nil, err
 	}

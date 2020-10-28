@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate/entities/models"
@@ -66,5 +66,5 @@ func (validator *Validator) Do(ctx context.Context) error {
 		}
 		responseData, err = validator.connection.RunREST(ctx, path, http.MethodPost, action)
 	}
-	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
+	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }

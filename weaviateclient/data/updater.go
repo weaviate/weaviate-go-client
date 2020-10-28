@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate/entities/models"
@@ -62,13 +62,7 @@ func (updater *Updater) Do(ctx context.Context) error {
 		expectedStatuscode = 204
 	}
 	responseData, responseErr := updater.runUpdate(ctx, path, httpMethod)
-	if responseErr != nil {
-		return responseErr
-	}
-	if responseData.StatusCode == expectedStatuscode {
-		return nil
-	}
-	return clienterrors.NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
+	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, expectedStatuscode)
 }
 
 func (updater *Updater) runUpdate(ctx context.Context, path string, httpMethod string) (*connection.ResponseData, error) {

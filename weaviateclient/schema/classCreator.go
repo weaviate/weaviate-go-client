@@ -3,7 +3,7 @@ package schema
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate/entities/models"
@@ -34,5 +34,5 @@ func (cc *ClassCreator) WithKind(semanticKind paragons.SemanticKind) *ClassCreat
 func (cc *ClassCreator) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/schema/%v", string(cc.semanticKind))
 	responseData, err := cc.connection.RunREST(ctx, path, http.MethodPost, cc.class)
-	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
+	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }

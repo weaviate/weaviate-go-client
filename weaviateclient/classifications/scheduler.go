@@ -2,7 +2,7 @@ package classifications
 
 import (
 	"context"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate/entities/models"
@@ -86,7 +86,7 @@ func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
 		config.K = &s.withK
 	}
 	responseData, responseErr := s.connection.RunREST(ctx, "/classifications", http.MethodPost, config)
-	err := clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 201)
+	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 201)
 	if err != nil {
 		return nil, err
 	}

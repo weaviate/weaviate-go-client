@@ -2,7 +2,7 @@ package schema
 
 import (
 	"context"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"net/http"
@@ -17,15 +17,12 @@ type Getter struct {
 func (sg *Getter) Do(ctx context.Context) (*paragons.SchemaDump, error) {
 	responseData, err := sg.connection.RunREST(ctx, "/schema", http.MethodGet, nil)
 	if err != nil {
-		return nil, err
+		return nil, except.NewDerivedWeaviateClientError(err)
 	}
 	if responseData.StatusCode == 200 {
 		var fullSchema paragons.SchemaDump
 		decodeErr := responseData.DecodeBodyIntoTarget(&fullSchema)
-		if decodeErr != nil {
-			return nil, decodeErr
-		}
-		return &fullSchema, nil
+		return &fullSchema, decodeErr
 	}
-	return nil, clienterrors.NewUnexpectedStatusCodeError(responseData.StatusCode, string(responseData.Body))
+	return nil, except.NewWeaviateClientError(responseData.StatusCode, string(responseData.Body))
 }

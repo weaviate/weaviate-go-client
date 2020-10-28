@@ -2,7 +2,7 @@ package batch
 
 import (
 	"context"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
@@ -23,7 +23,7 @@ func (rb *ReferencesBatcher) WithReference(reference *models.BatchReference) *Re
 // Do add all the references in the batch to weaviate
 func (rb *ReferencesBatcher) Do(ctx context.Context) ([]models.BatchReferenceResponse, error) {
 	responseData, responseErr := rb.connection.RunREST(ctx, "/batching/references", http.MethodPost, rb.references)
-	batchErr := clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	batchErr := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if batchErr != nil {
 		return nil, batchErr
 	}

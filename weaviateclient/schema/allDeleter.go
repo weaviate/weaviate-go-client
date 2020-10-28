@@ -3,6 +3,7 @@ package schema
 import (
 	"context"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 )
 
@@ -16,7 +17,7 @@ type AllDeleter struct {
 func (ad *AllDeleter) Do(ctx context.Context) error {
 	schema, getSchemaErr := ad.schemaAPI.Getter().Do(ctx)
 	if getSchemaErr != nil {
-		return getSchemaErr
+		return except.NewDerivedWeaviateClientError(getSchemaErr)
 	}
 	for _, class := range schema.Actions.Classes {
 		delErr := ad.schemaAPI.ClassDeleter().WithClassName(class.Class).WithKind(paragons.SemanticKindActions).Do(ctx)

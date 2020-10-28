@@ -2,7 +2,7 @@ package batch
 
 import (
 	"context"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate/entities/models"
@@ -28,7 +28,7 @@ func (ab *ActionsBatcher) Do(ctx context.Context) ([]models.ActionsGetResponse, 
 		Actions: ab.actions,
 	}
 	responseData, responseErr := ab.connection.RunREST(ctx, "/batching/actions", http.MethodPost, body)
-	batchErr := clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	batchErr := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if batchErr != nil {
 		return nil, batchErr
 	}

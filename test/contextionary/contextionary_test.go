@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestBatch_integration(t *testing.T) {
+func TestContextionary_integration(t *testing.T) {
 
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()

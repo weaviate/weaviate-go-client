@@ -3,7 +3,7 @@ package data
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
@@ -116,7 +116,7 @@ func (getter *ActionsGetter) Do(ctx context.Context) ([]*models.Action, error) {
 		return nil, err
 	}
 	if responseData.StatusCode != 200 {
-		return nil, clienterrors.NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
+		return nil, except.NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
 	}
 	if getter.uuid == "" {
 		var actions models.ActionsListResponse
@@ -135,7 +135,7 @@ func (getter *ThingsGetter) Do(ctx context.Context) ([]*models.Thing, error) {
 		return nil, err
 	}
 	if responseData.StatusCode != 200 {
-		return nil, clienterrors.NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
+		return nil, except.NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
 	}
 	if getter.uuid == "" {
 		var things models.ThingsListResponse
@@ -181,5 +181,8 @@ func getObjectList(ctx context.Context, basePath string, uuid string, urlParamet
 	}
 
 	responseData, err := con.RunREST(ctx, path, http.MethodGet, nil)
+	if err != nil {
+		return responseData, except.NewDerivedWeaviateClientError(err)
+	}
 	return responseData, err
 }

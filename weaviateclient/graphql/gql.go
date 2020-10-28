@@ -2,7 +2,7 @@ package graphql
 
 import (
 	"context"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
@@ -40,11 +40,11 @@ func runGraphQLQuery(ctx context.Context, rest rest, query string) (*models.Grap
 		Query:         query,
 	}
 	responseData, responseErr := rest.RunREST(ctx, "/graphql", http.MethodPost, &gqlQuery)
-	err := clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {
-		return nil, err
+		return nil, except.NewDerivedWeaviateClientError(err)
 	}
 	var gqlResponse models.GraphQLResponse
 	parseErr := responseData.DecodeBodyIntoTarget(&gqlResponse)
-	return &gqlResponse, parseErr
+	return &gqlResponse, except.NewDerivedWeaviateClientError(parseErr)
 }

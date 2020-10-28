@@ -3,7 +3,7 @@ package data
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterrors"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"net/http"
@@ -33,5 +33,5 @@ func (deleter *Deleter) WithKind(semanticKind paragons.SemanticKind) *Deleter {
 func (deleter *Deleter) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/%v/%v", deleter.semanticKind, deleter.uuid)
 	responseData, err := deleter.connection.RunREST(ctx, path, http.MethodDelete, nil)
-	return clienterrors.CheckResponnseDataErrorAndStatusCode(responseData, err, 204)
+	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 204)
 }
