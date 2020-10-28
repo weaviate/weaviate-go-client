@@ -28,6 +28,7 @@ func SetupLocalWeaviate() error {
 func isExternalWeaviateRunning() bool {
 	val := os.Getenv("EXTERNAL_WEAVIATE_RUNNING")
 	val = strings.ToLower(val)
+	fmt.Printf("\nEXTERNAL_WEAVIATE_RUNNING: %v\n", val)
 	if val == "true" {
 		return true
 	}
@@ -49,7 +50,7 @@ func WaitForWeaviate() error {
 		if isReady {
 			return nil
 		}
-		fmt.Printf("Weaviate not yet up waiting another 3 seconds. Iteration: %v", i)
+		fmt.Printf("Weaviate not yet up waiting another 3 seconds. Iteration: %v\n", i)
 		time.Sleep(time.Second * 3)
 	}
 	return fmt.Errorf("Weaviate did not start in time")
