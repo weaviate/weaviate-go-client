@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterror"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/testenv"
 	"github.com/stretchr/testify/assert"
@@ -190,13 +190,13 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, deleteErrT)
 		time.Sleep(2.0 * time.Second)
 		_, getErrT := client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
-		statusCodeErrorT := getErrT.(*except.WeaviateClientError)
+		statusCodeErrorT := getErrT.(*clienterror.WeaviateClientError)
 		assert.Equal(t, 404, statusCodeErrorT.StatusCode)
 
 		deleteErrA := client.Data.Deleter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithKind(paragons.SemanticKindActions).Do(context.Background())
 		assert.Nil(t, deleteErrA)
 		_, getErrA := client.Data.ThingsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
-		statusCodeErrorA := getErrA.(*except.WeaviateClientError)
+		statusCodeErrorA := getErrA.(*clienterror.WeaviateClientError)
 		assert.Equal(t, 404, statusCodeErrorA.StatusCode)
 
 		testsuit.CleanUpWeaviate(t, client)

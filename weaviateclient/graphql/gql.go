@@ -46,5 +46,5 @@ func runGraphQLQuery(ctx context.Context, rest rest, query string) (*models.Grap
 	}
 	var gqlResponse models.GraphQLResponse
 	parseErr := responseData.DecodeBodyIntoTarget(&gqlResponse)
-	return &gqlResponse, except.NewDerivedWeaviateClientError(parseErr)
+	return &gqlResponse, parseErr
 }

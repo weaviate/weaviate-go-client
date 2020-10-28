@@ -38,7 +38,7 @@ func TestQueryBuilder(t *testing.T) {
 
 		query := builder.WithClassName("Pizza").WithFields("name").build()
 
-		expected := "{Get {Things {Pizza {name}}}}"
+		expected := "{Get {Things {Pizza  {name}}}}"
 		assert.Equal(t, expected, query)
 	})
 
@@ -52,7 +52,7 @@ func TestQueryBuilder(t *testing.T) {
 
 		query := builder.WithClassName("Pizza").WithFields("name description").build()
 
-		expected := "{Get {Things {Pizza {name description}}}}"
+		expected := "{Get {Things {Pizza  {name description}}}}"
 		assert.Equal(t, expected, query)
 	})
 
@@ -101,7 +101,7 @@ func TestQueryBuilder(t *testing.T) {
 
 		query := builder.WithClassName("Pizza").WithFields("name").WithExplore(`{concepts: "good"}`).build()
 
-		expected := `{Get {Things {Pizza (explore: {concepts: "good"} ) {name}}}}`
+		expected := `{Get {Things {Pizza (explore: {concepts: "good"}) {name}}}}`
 		assert.Equal(t, expected, query)
 	})
 

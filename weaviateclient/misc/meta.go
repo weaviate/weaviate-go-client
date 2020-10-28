@@ -23,5 +23,5 @@ func (mg *MetaGetter) Do(ctx context.Context) (*models.Meta, error) {
 	}
 	var meta models.Meta
 	parseErr := responseData.DecodeBodyIntoTarget(&meta)
-	return &meta, except.NewDerivedWeaviateClientError(parseErr)
+	return &meta, parseErr
 }
