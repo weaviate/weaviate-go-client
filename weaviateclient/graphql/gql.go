@@ -8,23 +8,29 @@ import (
 	"net/http"
 )
 
+// API group for GrapQL
 type API struct {
 	Connection *connection.Connection
 }
 
+// Get queries
 func (api *API) Get() *Get {
 	return &Get{connection: api.Connection}
 }
 
+// Explore queries
 func (api *API) Explore() *Explore {
 	return &Explore{connection:    api.Connection}
 }
 
+// Aggregate queries
 func (api *API) Aggregate() *Aggregate {
 	return &Aggregate{connection: api.Connection}
 }
 
+// rest requests abstraction
 type rest interface {
+	//RunREST request to weaviate
 	RunREST(ctx context.Context, path string, restMethod string, requestBody interface{}) (*connection.ResponseData, error)
 }
 

@@ -96,6 +96,7 @@ func ParseReferenceResponseToStruct(t *testing.T, reference interface{}) models.
 	return out
 }
 
+// CreateTestSchemaAndData with a few pizzas and soups
 func CreateTestSchemaAndData(t *testing.T, client *weaviateclient.WeaviateClient) {
 	CreateWeaviateTestSchemaFood(t, client)
 

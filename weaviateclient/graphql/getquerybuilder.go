@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// GetBuilder for GraphQL
 type GetBuilder struct {
 	connection rest
 	semanticKind paragons.SemanticKind
@@ -22,22 +23,26 @@ type GetBuilder struct {
 	withGroupFilter string
 }
 
+// WithClassName that should be queried
 func (gb *GetBuilder) WithClassName(name string) *GetBuilder {
 	gb.className = name
 	return gb
 }
 
+// WithFields included in the result set
 func (gb *GetBuilder) WithFields(fields string) *GetBuilder {
 	gb.withFields = fields
 	return gb
 }
 
+// WithWhere filter
 func (gb *GetBuilder) WithWhere(filter string) *GetBuilder {
 	gb.includesFilterClause = true
 	gb.withWhereFilter = filter
 	return gb
 }
 
+// WithLimit of objects in the result set
 func (gb *GetBuilder) WithLimit(limit int) *GetBuilder {
 	gb.includesFilterClause = true
 	gb.includesLimit = true
@@ -45,12 +50,14 @@ func (gb *GetBuilder) WithLimit(limit int) *GetBuilder {
 	return gb
 }
 
+// WithExplore clause to find close objects
 func (gb *GetBuilder) WithExplore(explore string) *GetBuilder {
 	gb.includesFilterClause = true
 	gb.withExploreFilter = explore
 	return gb
 }
 
+// WithGroup statement
 func (gb *GetBuilder) WithGroup(group string) *GetBuilder {
 	gb.includesFilterClause = true
 	gb.withGroupFilter = group

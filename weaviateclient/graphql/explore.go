@@ -8,6 +8,7 @@ import (
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
+// Explore query builder
 type Explore struct {
 	connection rest
 	fields []paragons.ExploreFields
@@ -22,38 +23,45 @@ type Explore struct {
 	moveAwayFrom *paragons.MoveParameters
 }
 
+// WithFields that should be included in the result set
 func (e *Explore) WithFields(fields []paragons.ExploreFields) *Explore {
 	e.fields = fields
 	return e
 }
 
+// WithConcepts the result is based on
 func (e *Explore) WithConcepts(concepts []string) *Explore {
 	e.concepts = concepts
 	return e
 }
 
+// WithLimit of objects in result set
 func (e *Explore) WithLimit(limit int) *Explore {
 	e.withLimit = true
 	e.limit = limit
 	return e
 }
 
+// WithCertainty that is minimally required for an object to be included in the result set
 func (e *Explore) WithCertainty(certainty float32) *Explore {
 	e.withCertainty = true
 	e.certainty = certainty
 	return e
 }
 
+// WithMoveTo specific concept
 func (e *Explore) WithMoveTo(parameters *paragons.MoveParameters) *Explore {
 	e.moveTo = parameters
 	return e
 }
 
+// WithMoveAwayFrom specific concept
 func (e *Explore) WithMoveAwayFrom(parameters *paragons.MoveParameters) *Explore {
 	e.moveAwayFrom = parameters
 	return e
 }
 
+// build query
 func (e *Explore) build() string {
 	fields := ""
 	for _, field := range e.fields {
@@ -68,6 +76,7 @@ func (e *Explore) build() string {
 	return query
 }
 
+// Do execute explore search
 func (e *Explore) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, e.connection, e.build())
 }

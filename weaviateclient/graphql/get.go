@@ -5,10 +5,12 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 )
 
+// Get data objects from weaviate using GraphQL
 type Get struct {
 	connection *connection.Connection
 }
 
+// Things objects in result set
 func (g *Get) Things() *GetBuilder {
 	return &GetBuilder{
 		connection:   g.connection,
@@ -16,6 +18,7 @@ func (g *Get) Things() *GetBuilder {
 	}
 }
 
+// Actions objects in result set
 func (g *Get) Actions() *GetBuilder {
 	return &GetBuilder{
 		connection:   g.connection,
