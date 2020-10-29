@@ -2,11 +2,13 @@ package classifications
 
 import (
 	"context"
+	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
+	"time"
 )
 
 // Scheduler builder to schedule a classification
@@ -20,6 +22,7 @@ type Scheduler struct {
 	withSourceWhereFilter      *models.WhereFilter
 	withTrainingSetWhereFilter *models.WhereFilter
 	withTargetWhereFilter      *models.WhereFilter
+	withWaitForCompletion bool
 }
 
 // WithType of classification e.g. knn or contextual
@@ -70,6 +73,11 @@ func (s *Scheduler) WithK(k int32) *Scheduler {
 	return s
 }
 
+func (s *Scheduler) WithWaitForCompletion() *Scheduler {
+	s.withWaitForCompletion = true
+	return s
+}
+
 // Do schedule the classification in weaviate
 func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
 	classType := string(s.classificationType)
@@ -93,5 +101,30 @@ func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
 
 	var responseClassification models.Classification
 	parseErr := responseData.DecodeBodyIntoTarget(&responseClassification)
-	return &responseClassification, parseErr
+	if parseErr != nil {
+		return nil, parseErr
+	}
+	if !s.withWaitForCompletion {
+		return &responseClassification, nil
+	}
+	return s.waitForCompletion(ctx, responseClassification.ID)
+}
+
+func (s *Scheduler) waitForCompletion(ctx context.Context, uuid strfmt.UUID) (*models.Classification, error) {
+	getter := Getter{
+		connection: s.connection,
+		withID:     string(uuid),
+	}
+	classification, err := getter.Do(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for classification.Status == "running" {
+		time.Sleep(2.0 * time.Second)
+		classification, err = getter.Do(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return classification, nil
 }

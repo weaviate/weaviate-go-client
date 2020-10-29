@@ -33,6 +33,10 @@ func TestClassifications_integration(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Contains(t, classification.BasedOnProperties, "description")
 		assert.Contains(t, classification.ClassifyProperties, "taged")
+		classification, err = client.Classifications.Scheduler().WithType(paragons.Contextual).WithClassName("Pizza").WithClassifyProperties(classifyProperties).WithBasedOnProperties(basedOnProperties).WithWaitForCompletion().Do(context.Background())
+		assert.Nil(t, err)
+		assert.Contains(t, classification.BasedOnProperties, "description")
+		assert.Contains(t, classification.ClassifyProperties, "taged")
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
@@ -84,7 +88,7 @@ func createClassificationClasses(t *testing.T, client *weaviateclient.WeaviateCl
 		Description: "tag of pizza",
 		Name:        "taged",
 	}
-	addTagPropertyToPizzaErr := client.Schema.PropertyCreator().WithProperty(tagProperty).WithClassName("Pizza").Do(context.Background())
+	addTagPropertyToPizzaErr := client.Schema.PropertyCreator().WithProperty(&tagProperty).WithClassName("Pizza").Do(context.Background())
 	assert.Nil(t, addTagPropertyToPizzaErr)
 
 	// Create two pizzas
