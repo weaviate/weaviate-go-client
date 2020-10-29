@@ -73,6 +73,7 @@ func (s *Scheduler) WithK(k int32) *Scheduler {
 	return s
 }
 
+// WithWaitForCompletion block while classification is running (until classification succeeded or failed)
 func (s *Scheduler) WithWaitForCompletion() *Scheduler {
 	s.withWaitForCompletion = true
 	return s

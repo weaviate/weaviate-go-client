@@ -9,6 +9,7 @@ type API struct {
 	connection *connection.Connection
 }
 
+// New Misc (meta, .well-known) api group from connection
 func New(con *connection.Connection) *API {
 	return &API{connection: con}
 }

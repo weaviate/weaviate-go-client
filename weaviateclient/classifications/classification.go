@@ -7,6 +7,7 @@ type API struct {
 	connection *connection.Connection
 }
 
+// New Classification api group from connection
 func New(con *connection.Connection) *API {
 	return &API{connection: con}
 }
