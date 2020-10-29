@@ -91,6 +91,14 @@ func TestData_integration(t *testing.T) {
 
 		assert.Equal(t, 2, len(objectT))
 		assert.Equal(t, 2, len(objectA))
+
+		objectT2, objectErrT2 := client.Data.ThingsGetter().WithLimit(1).Do(context.Background())
+		assert.Nil(t, objectErrT2)
+		assert.Equal(t, 1, len(objectT2))
+		objectA2, objErrA2 := client.Data.ActionsGetter().WithLimit(1).Do(context.Background())
+		assert.Nil(t, objErrA2)
+		assert.Equal(t, 1, len(objectA2))
+
 		testsuit.CleanUpWeaviate(t, client)
 	})
 

@@ -145,7 +145,7 @@ func TestSchema_integration(t *testing.T) {
 		errA := client.Schema.ClassCreator().WithClass(schemaClassAction).WithKind(clientModels.SemanticKindActions).Do(context.Background())
 		assert.Nil(t, errA)
 
-		newProperty := models.Property{
+		newProperty := &models.Property{
 			DataType:    []string{"string"},
 			Description: "name",
 			Name:        "name",

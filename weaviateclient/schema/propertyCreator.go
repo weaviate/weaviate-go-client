@@ -15,7 +15,7 @@ type PropertyCreator struct {
 	connection   *connection.Connection
 	semanticKind paragons.SemanticKind
 	className    string
-	property     models.Property
+	property     *models.Property
 }
 
 // WithClassName defines the name of the class on which the property will be created
@@ -25,7 +25,7 @@ func (pc *PropertyCreator) WithClassName(className string) *PropertyCreator {
 }
 
 // WithProperty defines the property object that will be added to the schema class
-func (pc *PropertyCreator) WithProperty(property models.Property) *PropertyCreator {
+func (pc *PropertyCreator) WithProperty(property *models.Property) *PropertyCreator {
 	pc.property = property
 	return pc
 }

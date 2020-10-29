@@ -26,12 +26,12 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviateclient.WeaviateC
 	assert.Nil(t, errT)
 	errA := client.Schema.ClassCreator().WithClass(schemaClassAction).WithKind(paragons.SemanticKindActions).Do(context.Background())
 	assert.Nil(t, errA)
-	nameProperty := models.Property{
+	nameProperty := &models.Property{
 		DataType:    []string{"string"},
 		Description: "name",
 		Name:        "name",
 	}
-	descriptionProperty := models.Property{
+	descriptionProperty := &models.Property{
 		DataType:    []string{"text"},
 		Description: "description",
 		Name:        "description",
@@ -50,7 +50,7 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviateclient.WeaviateC
 // CreateWeaviateTestSchemaFoodWithReferenceProperty create the testing schema with a reference field otherFoods on both classes
 func CreateWeaviateTestSchemaFoodWithReferenceProperty(t *testing.T, client *weaviateclient.WeaviateClient) {
 	CreateWeaviateTestSchemaFood(t, client)
-	referenceProperty := models.Property{
+	referenceProperty := &models.Property{
 		DataType:    []string{"Pizza", "Soup"},
 		Description: "reference to other foods",
 		Name:        "otherFoods",
