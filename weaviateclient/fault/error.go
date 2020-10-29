@@ -1,4 +1,4 @@
-package clienterror
+package fault
 
 import "fmt"
 

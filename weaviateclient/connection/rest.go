@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterror"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/fault"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -108,7 +108,7 @@ type ResponseData struct {
 func (rd *ResponseData) DecodeBodyIntoTarget(target interface{}) error {
 	err := json.Unmarshal(rd.Body, target)
 	if err != nil {
-		return &clienterror.WeaviateClientError{
+		return &fault.WeaviateClientError{
 			IsUnexpectedStatusCode: false,
 			StatusCode:             -1,
 			Msg:                    "failed to parse resonse data check DerivedFromError field for more information",

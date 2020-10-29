@@ -2,14 +2,14 @@ package except
 
 import (
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/clienterror"
+	"github.com/semi-technologies/weaviate-go-client/weaviateclient/fault"
 	"github.com/semi-technologies/weaviate-go-client/weaviateclient/connection"
 )
 
 
 // NewWeaviateClientError from status code and error message
-func NewWeaviateClientError(statusCode int, format string, args ...interface{}) *clienterror.WeaviateClientError {
-	return &clienterror.WeaviateClientError{
+func NewWeaviateClientError(statusCode int, format string, args ...interface{}) *fault.WeaviateClientError {
+	return &fault.WeaviateClientError{
 		IsUnexpectedStatusCode: true,
 		StatusCode: statusCode,
 		Msg:        fmt.Sprintf(format, args...),
@@ -17,8 +17,8 @@ func NewWeaviateClientError(statusCode int, format string, args ...interface{}) 
 }
 
 // NewDerivedWeaviateClientError wraps an error into a WeviateClientError as derived error
-func NewDerivedWeaviateClientError(err error) *clienterror.WeaviateClientError {
-	return &clienterror.WeaviateClientError{
+func NewDerivedWeaviateClientError(err error) *fault.WeaviateClientError {
+	return &fault.WeaviateClientError{
 		IsUnexpectedStatusCode: false,
 		StatusCode:             -1,
 		Msg:                    "check the DerivedFromError field for more information",
@@ -27,7 +27,7 @@ func NewDerivedWeaviateClientError(err error) *clienterror.WeaviateClientError {
 }
 
 // NewUnexpectedStatusCodeErrorFromRESTResponse creates the error based on a repsonse data object
-func NewUnexpectedStatusCodeErrorFromRESTResponse(responseData *connection.ResponseData) *clienterror.WeaviateClientError {
+func NewUnexpectedStatusCodeErrorFromRESTResponse(responseData *connection.ResponseData) *fault.WeaviateClientError {
 	return NewWeaviateClientError(responseData.StatusCode, string(responseData.Body))
 }
 
