@@ -4,15 +4,19 @@ import "github.com/semi-technologies/weaviate-go-client/weaviateclient/connectio
 
 // API classifications API
 type API struct {
-	Connection *connection.Connection
+	connection *connection.Connection
+}
+
+func New(con *connection.Connection) *API {
+	return &API{connection: con}
 }
 
 // Scheduler get a builder to schedule a classification
 func (api *API) Scheduler() *Scheduler {
-	return &Scheduler{connection: api.Connection}
+	return &Scheduler{connection: api.connection}
 }
 
 // Getter get a builder to retrieve a classification
 func (api *API) Getter() *Getter {
-	return &Getter{connection: api.Connection}
+	return &Getter{connection: api.connection}
 }

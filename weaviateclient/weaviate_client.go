@@ -20,13 +20,13 @@ type Config struct {
 // WeaviateClient implementing the weaviate API
 type WeaviateClient struct {
 	connection      *connection.Connection
-	Misc            misc.API
-	Schema          schema.API
-	Data            data.API
-	Batch           batch.API
-	C11y            contextionary.API
-	Classifications classifications.API
-	GraphQL         graphql.API
+	Misc            *misc.API
+	Schema          *schema.API
+	Data            *data.API
+	Batch           *batch.API
+	C11y            *contextionary.API
+	Classifications *classifications.API
+	GraphQL         *graphql.API
 }
 
 // New weaviate client from config
@@ -35,12 +35,12 @@ func New(config Config) *WeaviateClient {
 
 	return &WeaviateClient{
 		connection:      con,
-		Misc:            misc.API{Connection: con},
-		Schema:          schema.API{Connection: con},
-		Data:            data.API{Connection: con},
-		Batch:           batch.API{Connection: con},
-		C11y:            contextionary.API{Connection: con},
-		Classifications: classifications.API{Connection: con},
-		GraphQL:         graphql.API{Connection: con},
+		Misc:            misc.New(con),
+		Schema:          schema.New(con),
+		Data:            data.New(con),
+		Batch:           batch.New(con),
+		C11y:            contextionary.New(con),
+		Classifications: classifications.New(con),
+		GraphQL:         graphql.New(con),
 	}
 }

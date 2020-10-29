@@ -10,22 +10,26 @@ import (
 
 // API group for GrapQL
 type API struct {
-	Connection *connection.Connection
+	connection *connection.Connection
+}
+
+func New(con *connection.Connection) *API {
+	return &API{connection: con}
 }
 
 // Get queries
 func (api *API) Get() *Get {
-	return &Get{connection: api.Connection}
+	return &Get{connection: api.connection}
 }
 
 // Explore queries
 func (api *API) Explore() *Explore {
-	return &Explore{connection:    api.Connection}
+	return &Explore{connection:    api.connection}
 }
 
 // Aggregate queries
 func (api *API) Aggregate() *Aggregate {
-	return &Aggregate{connection: api.Connection}
+	return &Aggregate{connection: api.connection}
 }
 
 // rest requests abstraction

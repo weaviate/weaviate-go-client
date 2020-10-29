@@ -8,27 +8,31 @@ import (
 
 // API for batch requests
 type API struct {
-	Connection *connection.Connection
+	connection *connection.Connection
+}
+
+func New(con *connection.Connection) *API {
+	return &API{connection: con}
 }
 
 // ThingsBatcher get a builder to create things in a batch
 func (batch *API) ThingsBatcher() *ThingsBatcher {
 	return &ThingsBatcher{
-		connection: batch.Connection,
+		connection: batch.connection,
 	}
 }
 
 // ActionsBatcher get a builder to create actions in a batch
 func (batch *API) ActionsBatcher() *ActionsBatcher {
 	return &ActionsBatcher{
-		connection: batch.Connection,
+		connection: batch.connection,
 	}
 }
 
 // ReferencePayloadBuilder get a builder to create a reference payload for a reference batch
 func (batch *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 	return &ReferencePayloadBuilder{
-		connection:       batch.Connection,
+		connection:       batch.connection,
 		fromSemanticKind: paragons.SemanticKindThings,
 		toSemanticKind:   paragons.SemanticKindThings,
 	}
@@ -37,7 +41,7 @@ func (batch *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 // ReferencesBatcher get a builder to add references in batch
 func (batch *API) ReferencesBatcher() *ReferencesBatcher {
 	return &ReferencesBatcher{
-		connection: batch.Connection,
+		connection: batch.connection,
 		references: []*models.BatchReference{},
 	}
 }
