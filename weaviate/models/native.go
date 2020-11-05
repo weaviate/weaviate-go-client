@@ -46,3 +46,12 @@ func CastThingsFromThingsListResponse(thingsListRsponse *ThingsListResponse) []*
 	return casted
 }
 
+func CastFromNativeWhereFilter(filter *native.WhereFilter) *WhereFilter {
+	newFilter := WhereFilter(*filter)
+	return &newFilter
+}
+
+func CastToNativeWhereFilter(filter *WhereFilter) *native.WhereFilter {
+	newFilter := native.WhereFilter(*filter)
+	return &newFilter
+}

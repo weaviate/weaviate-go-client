@@ -85,9 +85,9 @@ func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
 		BasedOnProperties:  s.withBasedOnProperties,
 		Class:              s.withClassName,
 		ClassifyProperties: s.withClassifyProperties,
-		SourceWhere:        s.withSourceWhereFilter,
-		TargetWhere:        s.withTargetWhereFilter,
-		TrainingSetWhere:   s.withTrainingSetWhereFilter,
+		SourceWhere:        models.CastToNativeWhereFilter(s.withSourceWhereFilter),
+		TargetWhere:        models.CastToNativeWhereFilter(s.withTargetWhereFilter),
+		TrainingSetWhere:   models.CastToNativeWhereFilter(s.withTrainingSetWhereFilter),
 		Type:               &classType,
 	}
 	if s.classificationType == KNN {
