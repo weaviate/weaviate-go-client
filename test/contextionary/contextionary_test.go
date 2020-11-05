@@ -22,7 +22,7 @@ func TestContextionary_integration(t *testing.T) {
 	t.Run("GET /c11y/concepts/{concept}", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
-		concepts, err := client.C11y.ConceptsGetter().WithConcept("pizzaHawaii").Do(context.Background())
+		concepts, err := client.C11y().ConceptsGetter().WithConcept("pizzaHawaii").Do(context.Background())
 		assert.Nil(t, err)
 		assert.NotNil(t, concepts.ConcatenatedWord)
 		assert.NotNil(t, concepts.IndividualWords)
@@ -31,10 +31,10 @@ func TestContextionary_integration(t *testing.T) {
 	t.Run("POST /c11y/extensions", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
-		err1 := client.C11y.ExtensionCreator().WithConcept("xoxo").WithDefinition("Hugs and kisses").WithWeight(1.0).Do(context.Background())
+		err1 := client.C11y().ExtensionCreator().WithConcept("xoxo").WithDefinition("Hugs and kisses").WithWeight(1.0).Do(context.Background())
 		assert.Nil(t, err1)
 
-		err2 := client.C11y.ExtensionCreator().WithConcept("xoxo").WithDefinition("Hugs and kisses").WithWeight(2.0).Do(context.Background())
+		err2 := client.C11y().ExtensionCreator().WithConcept("xoxo").WithDefinition("Hugs and kisses").WithWeight(2.0).Do(context.Background())
 		assert.NotNil(t, err2, "Weight must be between 0 and 1")
 	})
 

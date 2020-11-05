@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // ReferencePayloadBuilder to create references that may be added in a batch
 type ReferencePayloadBuilder struct {
 	connection       *connection.Connection
-	fromSemanticKind paragons.SemanticKind
-	toSemanticKind   paragons.SemanticKind
+	fromSemanticKind semantics.Kind
+	toSemanticKind   semantics.Kind
 	fromClassName    string
 	fromPropertyName string
 	fromUUID         string
@@ -44,13 +44,13 @@ func (rpb *ReferencePayloadBuilder) WithToID(uuid string) *ReferencePayloadBuild
 }
 
 // WithFromKind semantic kind of the object that the reference is added to
-func (rpb *ReferencePayloadBuilder) WithFromKind(semanticKind paragons.SemanticKind) *ReferencePayloadBuilder {
+func (rpb *ReferencePayloadBuilder) WithFromKind(semanticKind semantics.Kind) *ReferencePayloadBuilder {
 	rpb.fromSemanticKind = semanticKind
 	return rpb
 }
 
 // WithToKind semantic kind of the referenced object
-func (rpb *ReferencePayloadBuilder) WithToKind(semanticKind paragons.SemanticKind) *ReferencePayloadBuilder {
+func (rpb *ReferencePayloadBuilder) WithToKind(semanticKind semantics.Kind) *ReferencePayloadBuilder {
 	rpb.toSemanticKind = semanticKind
 	return rpb
 }

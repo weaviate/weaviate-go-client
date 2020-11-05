@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +31,7 @@ func TestBatch_integration(t *testing.T) {
 			"name":        "Hawaii",
 			"description": "Universally accepted to be the best pizza ever created.",
 		}
-		classT1, errPayloadT := client.Data.Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT1).PayloadThing()
+		classT1, errPayloadT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT1).PayloadThing()
 		assert.Nil(t, errPayloadT)
 		classT2 := &models.Thing{
 			Class: "Pizza",
@@ -45,7 +45,7 @@ func TestBatch_integration(t *testing.T) {
 			"name":        "Chicken",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		classA1, errPayloadA := client.Data.Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA1).WithKind(paragons.SemanticKindActions).PayloadAction()
+		classA1, errPayloadA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA1).WithKind(semantics.Actions).PayloadAction()
 		assert.Nil(t, errPayloadA)
 		classA2 := &models.Action{
 			Class: "Soup",
@@ -56,27 +56,27 @@ func TestBatch_integration(t *testing.T) {
 			},
 		}
 
-		batchResultT, batchErrT := client.Batch.ThingsBatcher().WithObject(classT1).WithObject(classT2).Do(context.Background())
+		batchResultT, batchErrT := client.Batch().ThingsBatcher().WithObject(classT1).WithObject(classT2).Do(context.Background())
 		assert.Nil(t, batchErrT)
 		assert.NotNil(t, batchResultT)
 		assert.Equal(t, 2, len(batchResultT))
-		batchResultA, batchErrA := client.Batch.ActionsBatcher().WithObject(classA1).WithObject(classA2).Do(context.Background())
+		batchResultA, batchErrA := client.Batch().ActionsBatcher().WithObject(classA1).WithObject(classA2).Do(context.Background())
 		assert.Nil(t, batchErrA)
 		assert.NotNil(t, batchResultA)
 		assert.Equal(t, 2, len(batchResultA))
 
 		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
 
-		objectT1, objErrT1 := client.Data.ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		objectT1, objErrT1 := client.Data().ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, objErrT1)
 		assert.NotNil(t, objectT1)
-		objectT2, objErrT2 := client.Data.ThingsGetter().WithID("97fa5147-bdad-4d74-9a81-f8babc811b09").Do(context.Background())
+		objectT2, objErrT2 := client.Data().ThingsGetter().WithID("97fa5147-bdad-4d74-9a81-f8babc811b09").Do(context.Background())
 		assert.Nil(t, objErrT2)
 		assert.NotNil(t, objectT2)
-		objectA1, objErrA1 := client.Data.ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		objectA1, objErrA1 := client.Data().ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
 		assert.Nil(t, objErrA1)
 		assert.NotNil(t, objectA1)
-		objectA2, objErrA2 := client.Data.ActionsGetter().WithID("07473b34-0ab2-4120-882d-303d9e13f7af").Do(context.Background())
+		objectA2, objErrA2 := client.Data().ActionsGetter().WithID("07473b34-0ab2-4120-882d-303d9e13f7af").Do(context.Background())
 		assert.Nil(t, objErrA2)
 		assert.NotNil(t, objectA2)
 
@@ -96,7 +96,7 @@ func TestBatch_integration(t *testing.T) {
 				"description": "A innovation, some say revolution, in the pizza industry.",
 			},
 		}
-		batchResultT, batchErrT := client.Batch.ThingsBatcher().WithObject(classT).Do(context.Background())
+		batchResultT, batchErrT := client.Batch().ThingsBatcher().WithObject(classT).Do(context.Background())
 		assert.Nil(t, batchErrT)
 		assert.NotNil(t, batchResultT)
 		classA := &models.Action{
@@ -107,7 +107,7 @@ func TestBatch_integration(t *testing.T) {
 				"description": "Putting the game of letter soups to a whole new level.",
 			},
 		}
-		batchResultA, batchErrA := client.Batch.ActionsBatcher().WithObject(classA).Do(context.Background())
+		batchResultA, batchErrA := client.Batch().ActionsBatcher().WithObject(classA).Do(context.Background())
 		assert.Nil(t, batchErrA)
 		assert.NotNil(t, batchResultA)
 		time.Sleep(2.0 * time.Second)
@@ -117,22 +117,22 @@ func TestBatch_integration(t *testing.T) {
 			From: "weaviate://localhost/things/Pizza/97fa5147-bdad-4d74-9a81-f8babc811b09/otherFoods",
 			To:   "weaviate://localhost/actions/07473b34-0ab2-4120-882d-303d9e13f7af",
 		}
-		refTtoT := client.Batch.ReferencePayloadBuilder().WithFromClassName("Pizza").WithFromRefProp("otherFoods").WithFromID("97fa5147-bdad-4d74-9a81-f8babc811b09").WithToID("97fa5147-bdad-4d74-9a81-f8babc811b09").Payload()
+		refTtoT := client.Batch().ReferencePayloadBuilder().WithFromClassName("Pizza").WithFromRefProp("otherFoods").WithFromID("97fa5147-bdad-4d74-9a81-f8babc811b09").WithToID("97fa5147-bdad-4d74-9a81-f8babc811b09").Payload()
 
 		refAtoT := &models.BatchReference{
 			From: "weaviate://localhost/actions/Soup/07473b34-0ab2-4120-882d-303d9e13f7af/otherFoods",
 			To:   "weaviate://localhost/things/97fa5147-bdad-4d74-9a81-f8babc811b09",
 		}
-		refAtoA := client.Batch.ReferencePayloadBuilder().WithFromKind(paragons.SemanticKindActions).WithFromClassName("Soup").WithFromRefProp("otherFoods").WithFromID("07473b34-0ab2-4120-882d-303d9e13f7af").WithToKind(paragons.SemanticKindActions).WithToID("07473b34-0ab2-4120-882d-303d9e13f7af").Payload()
+		refAtoA := client.Batch().ReferencePayloadBuilder().WithFromKind(semantics.Actions).WithFromClassName("Soup").WithFromRefProp("otherFoods").WithFromID("07473b34-0ab2-4120-882d-303d9e13f7af").WithToKind(semantics.Actions).WithToID("07473b34-0ab2-4120-882d-303d9e13f7af").Payload()
 
 		// Add references in batch
-		referenceBatchResult, err := client.Batch.ReferencesBatcher().WithReference(refTtoA).WithReference(refTtoT).WithReference(refAtoT).WithReference(refAtoA).Do(context.Background())
+		referenceBatchResult, err := client.Batch().ReferencesBatcher().WithReference(refTtoA).WithReference(refTtoT).WithReference(refAtoT).WithReference(refAtoA).Do(context.Background())
 		assert.Nil(t, err)
 		assert.NotNil(t, referenceBatchResult)
 		time.Sleep(2.0 * time.Second)
 
 		// Assert
-		objectT, objErrT := client.Data.ThingsGetter().WithID("97fa5147-bdad-4d74-9a81-f8babc811b09").Do(context.Background())
+		objectT, objErrT := client.Data().ThingsGetter().WithID("97fa5147-bdad-4d74-9a81-f8babc811b09").Do(context.Background())
 		assert.Nil(t, objErrT)
 		valuesT := objectT[0].Schema.(map[string]interface{})
 		referencesT := testsuit.ParseReferenceResponseToStruct(t, valuesT["otherFoods"])
@@ -141,7 +141,7 @@ func TestBatch_integration(t *testing.T) {
 		assert.Contains(t, beaconsT, "weaviate://localhost/actions/07473b34-0ab2-4120-882d-303d9e13f7af")
 		assert.Contains(t, beaconsT, "weaviate://localhost/things/97fa5147-bdad-4d74-9a81-f8babc811b09")
 
-		objectA, objErrA := client.Data.ActionsGetter().WithID("07473b34-0ab2-4120-882d-303d9e13f7af").Do(context.Background())
+		objectA, objErrA := client.Data().ActionsGetter().WithID("07473b34-0ab2-4120-882d-303d9e13f7af").Do(context.Background())
 		assert.Nil(t, objErrA)
 		valuesA := objectA[0].Schema.(map[string]interface{})
 		referencesA := testsuit.ParseReferenceResponseToStruct(t, valuesA["otherFoods"])

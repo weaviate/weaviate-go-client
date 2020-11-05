@@ -23,7 +23,7 @@ func TestMisc_integration(t *testing.T) {
 	t.Run("GET /.well-known/ready", func(t *testing.T) {
 
 		client := testsuit.CreateTestClient()
-		isReady, err := client.Misc.ReadyChecker().Do(context.Background())
+		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
 
 		assert.Nil(t, err)
 		assert.True(t, isReady)
@@ -32,7 +32,7 @@ func TestMisc_integration(t *testing.T) {
 	t.Run("GET /.well-known/live", func(t *testing.T) {
 
 		client := testsuit.CreateTestClient()
-		isLive, err := client.Misc.LiveChecker().Do(context.Background())
+		isLive, err := client.Misc().LiveChecker().Do(context.Background())
 
 		assert.Nil(t, err)
 		assert.True(t, isLive)
@@ -41,7 +41,7 @@ func TestMisc_integration(t *testing.T) {
 	t.Run("GET /.well-known/openid-configuration", func(t *testing.T) {
 
 		client := testsuit.CreateTestClient()
-		openIDconfig, err := client.Misc.OpenIDConfigurationGetter().Do(context.Background())
+		openIDconfig, err := client.Misc().OpenIDConfigurationGetter().Do(context.Background())
 
 		assert.Nil(t, err)
 		assert.Nil(t, openIDconfig)
@@ -49,7 +49,7 @@ func TestMisc_integration(t *testing.T) {
 
 	t.Run("GET /meta", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
-		meta, err := client.Misc.MetaGetter().Do(context.Background())
+		meta, err := client.Misc().MetaGetter().Do(context.Background())
 		assert.Nil(t, err)
 		assert.NotEmpty(t, meta.Version)
 		assert.NotEmpty(t, meta.ContextionaryVersion)
@@ -73,7 +73,7 @@ func TestMisc_connection_error(t *testing.T) {
 		}
 
 		client := weaviate.New(cfg)
-		isReady, err := client.Misc.ReadyChecker().Do(context.Background())
+		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
 
 		assert.NotNil(t, err)
 		assert.False(t, isReady)
@@ -86,7 +86,7 @@ func TestMisc_connection_error(t *testing.T) {
 		}
 
 		client := weaviate.New(cfg)
-		isReady, err := client.Misc.LiveChecker().Do(context.Background())
+		isReady, err := client.Misc().LiveChecker().Do(context.Background())
 
 		assert.NotNil(t, err)
 		assert.False(t, isReady)

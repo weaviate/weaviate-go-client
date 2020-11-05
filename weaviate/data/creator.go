@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
 )
@@ -17,7 +17,7 @@ type Creator struct {
 	className      string
 	uuid           string
 	propertySchema models.PropertySchema
-	semanticKind   paragons.SemanticKind
+	semanticKind   semantics.Kind
 }
 
 // WithClassName indicates what class the data object is associated with
@@ -41,7 +41,7 @@ func (creator *Creator) WithSchema(propertySchema models.PropertySchema) *Creato
 
 // WithKind specifies the semantic kind that is used for the data object
 // If not called the builder defaults to `things`
-func (creator *Creator) WithKind(semanticKind paragons.SemanticKind) *Creator {
+func (creator *Creator) WithKind(semanticKind semantics.Kind) *Creator {
 	creator.semanticKind = semanticKind
 	return creator
 }
@@ -52,7 +52,7 @@ func (creator *Creator) Do(ctx context.Context) error {
 
 	var err error
 	var responseData *connection.ResponseData
-	if creator.semanticKind == paragons.SemanticKindActions {
+	if creator.semanticKind == semantics.Actions {
 		action, _ := creator.PayloadAction()
 		responseData, err = creator.connection.RunREST(ctx, path, http.MethodPost, action)
 	} else {
@@ -64,7 +64,7 @@ func (creator *Creator) Do(ctx context.Context) error {
 
 // PayloadThing returns the data object payload which may be used in a batch request
 func (creator *Creator) PayloadThing() (*models.Thing, error) {
-	if creator.semanticKind != paragons.SemanticKindThings {
+	if creator.semanticKind != semantics.Things {
 		return nil, except.NewDerivedWeaviateClientError(fmt.Errorf("builder has semantic kind action configured; please set the correct semantic type"))
 	}
 	thing := models.Thing{
@@ -79,7 +79,7 @@ func (creator *Creator) PayloadThing() (*models.Thing, error) {
 
 // PayloadAction returns the data object payload which may be used in a batch request
 func (creator *Creator) PayloadAction() (*models.Action, error) {
-	if creator.semanticKind != paragons.SemanticKindActions {
+	if creator.semanticKind != semantics.Actions {
 		return nil, except.NewDerivedWeaviateClientError(fmt.Errorf("builder has semantic kind thing configured; Please set the correct semantic type"))
 	}
 	action := models.Action{

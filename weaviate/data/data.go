@@ -2,7 +2,7 @@ package data
 
 import (
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 )
 
 // API Contains all the builders required to access the weaviate data API
@@ -19,7 +19,7 @@ func New(con *connection.Connection) *API {
 func (data *API) Creator() *Creator {
 	return &Creator{
 		connection:   data.connection,
-		semanticKind: paragons.SemanticKindThings,
+		semanticKind: semantics.Things,
 	}
 }
 
@@ -43,7 +43,7 @@ func (data *API) ThingsGetter() *ThingsGetter {
 func (data *API) Deleter() *Deleter {
 	return &Deleter{
 		connection:   data.connection,
-		semanticKind: paragons.SemanticKindThings,
+		semanticKind: semantics.Things,
 	}
 }
 
@@ -51,7 +51,7 @@ func (data *API) Deleter() *Deleter {
 func (data *API) Updater() *Updater {
 	return &Updater{
 		connection:   data.connection,
-		semanticKind: paragons.SemanticKindThings,
+		semanticKind: semantics.Things,
 		withMerge:    false,
 	}
 }
@@ -60,7 +60,7 @@ func (data *API) Updater() *Updater {
 func (data *API) Validator() *Validator {
 	return &Validator{
 		connection:   data.connection,
-		semanticKind: paragons.SemanticKindThings,
+		semanticKind: semantics.Things,
 	}
 }
 
@@ -68,7 +68,7 @@ func (data *API) Validator() *Validator {
 func (data *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 	return &ReferencePayloadBuilder{
 		connection:   data.connection,
-		semanticKind: paragons.SemanticKindThings,
+		semanticKind: semantics.Things,
 	}
 }
 
@@ -76,7 +76,7 @@ func (data *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 func (data *API) ReferenceCreator() *ReferenceCreator {
 	return &ReferenceCreator{
 		connection:   data.connection,
-		semanticKind: paragons.SemanticKindThings,
+		semanticKind: semantics.Things,
 	}
 }
 
@@ -84,7 +84,7 @@ func (data *API) ReferenceCreator() *ReferenceCreator {
 func (data *API) ReferenceReplacer() *ReferenceReplacer {
 	return &ReferenceReplacer{
 		connection:   data.connection,
-		semanticKind: paragons.SemanticKindThings,
+		semanticKind: semantics.Things,
 	}
 }
 
@@ -92,6 +92,6 @@ func (data *API) ReferenceReplacer() *ReferenceReplacer {
 func (data *API) ReferenceDeleter() *ReferenceDeleter {
 	return &ReferenceDeleter{
 		connection:   data.connection,
-		semanticKind: paragons.SemanticKindThings,
+		semanticKind: semantics.Things,
 	}
 }

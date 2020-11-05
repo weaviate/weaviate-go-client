@@ -2,7 +2,7 @@ package batch
 
 import (
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
@@ -34,8 +34,8 @@ func (batch *API) ActionsBatcher() *ActionsBatcher {
 func (batch *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 	return &ReferencePayloadBuilder{
 		connection:       batch.connection,
-		fromSemanticKind: paragons.SemanticKindThings,
-		toSemanticKind:   paragons.SemanticKindThings,
+		fromSemanticKind: semantics.Things,
+		toSemanticKind:   semantics.Things,
 	}
 }
 

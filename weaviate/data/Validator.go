@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
 )
@@ -14,7 +14,7 @@ import (
 // Validator builder object to validate a class
 type Validator struct {
 	connection     *connection.Connection
-	semanticKind   paragons.SemanticKind
+	semanticKind   semantics.Kind
 	uuid           string
 	className      string
 	propertySchema models.PropertySchema
@@ -40,7 +40,7 @@ func (validator *Validator) WithSchema(propertySchema models.PropertySchema) *Va
 
 // WithKind specifies the semantic kind that is used for the data object
 // If not called the builder defaults to `things`
-func (validator *Validator) WithKind(semanticKind paragons.SemanticKind) *Validator {
+func (validator *Validator) WithKind(semanticKind semantics.Kind) *Validator {
 	validator.semanticKind = semanticKind
 	return validator
 }
@@ -51,7 +51,7 @@ func (validator *Validator) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/%v/validate", string(validator.semanticKind))
 	var responseData *connection.ResponseData
 	var err error
-	if validator.semanticKind == paragons.SemanticKindThings {
+	if validator.semanticKind == semantics.Things {
 		thing := models.Thing{
 			Class:  validator.className,
 			ID:     strfmt.UUID(validator.uuid),

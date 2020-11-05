@@ -2,7 +2,7 @@ package graphql
 
 import (
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 )
 
 // Get data objects from weaviate using GraphQL
@@ -14,7 +14,7 @@ type Get struct {
 func (g *Get) Things() *GetBuilder {
 	return &GetBuilder{
 		connection:   g.connection,
-		semanticKind: paragons.SemanticKindThings,
+		semanticKind: semantics.Things,
 	}
 }
 
@@ -22,7 +22,7 @@ func (g *Get) Things() *GetBuilder {
 func (g *Get) Actions() *GetBuilder {
 	return &GetBuilder{
 		connection:   g.connection,
-		semanticKind: paragons.SemanticKindThings,
+		semanticKind: semantics.Actions,
 	}
 }
 

@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // Explore query builder
 type Explore struct {
 	connection rest
-	fields []paragons.ExploreFields
+	fields []ExploreFields
 	concepts []string
 
 	withLimit bool
@@ -19,12 +18,12 @@ type Explore struct {
 	withCertainty bool
 	certainty float32
 
-	moveTo *paragons.MoveParameters
-	moveAwayFrom *paragons.MoveParameters
+	moveTo *MoveParameters
+	moveAwayFrom *MoveParameters
 }
 
 // WithFields that should be included in the result set
-func (e *Explore) WithFields(fields []paragons.ExploreFields) *Explore {
+func (e *Explore) WithFields(fields []ExploreFields) *Explore {
 	e.fields = fields
 	return e
 }
@@ -50,13 +49,13 @@ func (e *Explore) WithCertainty(certainty float32) *Explore {
 }
 
 // WithMoveTo specific concept
-func (e *Explore) WithMoveTo(parameters *paragons.MoveParameters) *Explore {
+func (e *Explore) WithMoveTo(parameters *MoveParameters) *Explore {
 	e.moveTo = parameters
 	return e
 }
 
 // WithMoveAwayFrom specific concept
-func (e *Explore) WithMoveAwayFrom(parameters *paragons.MoveParameters) *Explore {
+func (e *Explore) WithMoveAwayFrom(parameters *MoveParameters) *Explore {
 	e.moveAwayFrom = parameters
 	return e
 }

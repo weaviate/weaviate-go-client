@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/graphql"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -24,7 +24,7 @@ func TestGraphQL_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		resultSet, gqlErr := client.GraphQL.Get().Things().WithClassName("Pizza").WithFields("name").Do(context.Background())
+		resultSet, gqlErr := client.GraphQL().Get().Things().WithClassName("Pizza").WithFields("name").Do(context.Background())
 		assert.Nil(t, gqlErr)
 
 		get := resultSet.Data["Get"].(map[string]interface{})
@@ -40,18 +40,18 @@ func TestGraphQL_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		fields := []paragons.ExploreFields{paragons.Certainty, paragons.Beacon, paragons.ClassName}
+		fields := []graphql.ExploreFields{graphql.Certainty, graphql.Beacon, graphql.ClassName}
 		concepts := []string{"pineapple slices", "ham"}
-		moveTo := &paragons.MoveParameters{
+		moveTo := &graphql.MoveParameters{
 			Concepts: []string{"Pizza"},
 			Force:    0.3,
 		}
-		moveAwayFrom := &paragons.MoveParameters{
+		moveAwayFrom := &graphql.MoveParameters{
 			Concepts: []string{"toast", "bread"},
 			Force:    0.4,
 		}
 
-		resultSet, gqlErr := client.GraphQL.Explore().WithFields(fields).WithConcepts(concepts).WithLimit(3).WithCertainty(0.71).WithMoveTo(moveTo).WithMoveAwayFrom(moveAwayFrom).Do(context.Background())
+		resultSet, gqlErr := client.GraphQL().Explore().WithFields(fields).WithConcepts(concepts).WithLimit(3).WithCertainty(0.71).WithMoveTo(moveTo).WithMoveAwayFrom(moveAwayFrom).Do(context.Background())
 		assert.Nil(t, gqlErr)
 		assert.NotNil(t, resultSet)
 		testsuit.CleanUpWeaviate(t, client)
@@ -62,7 +62,7 @@ func TestGraphQL_integration(t *testing.T) {
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		fields := "meta {count}"
-		resultSet, gqlErr := client.GraphQL.Aggregate().Things().WithFields(fields).WithClassName("Pizza").Do(context.Background())
+		resultSet, gqlErr := client.GraphQL().Aggregate().Things().WithFields(fields).WithClassName("Pizza").Do(context.Background())
 
 		assert.Nil(t, gqlErr)
 		assert.NotNil(t, resultSet)

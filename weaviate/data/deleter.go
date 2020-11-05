@@ -3,9 +3,9 @@ package data
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"net/http"
 )
 
@@ -13,7 +13,7 @@ import (
 type Deleter struct {
 	connection   *connection.Connection
 	uuid         string
-	semanticKind paragons.SemanticKind
+	semanticKind semantics.Kind
 }
 
 // WithID specifies the uuid of the object about to be deleted
@@ -24,7 +24,7 @@ func (deleter *Deleter) WithID(uuid string) *Deleter {
 
 // WithKind specifies the semantic kind that is used for the data object
 // If not called the builder defaults to `things`
-func (deleter *Deleter) WithKind(semanticKind paragons.SemanticKind) *Deleter {
+func (deleter *Deleter) WithKind(semanticKind semantics.Kind) *Deleter {
 	deleter.semanticKind = semanticKind
 	return deleter
 }

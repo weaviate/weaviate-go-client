@@ -3,9 +3,8 @@ package classifications
 import (
 	"context"
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
 	"time"
@@ -14,7 +13,7 @@ import (
 // Scheduler builder to schedule a classification
 type Scheduler struct {
 	connection                 *connection.Connection
-	classificationType         paragons.Classification
+	classificationType         Type
 	withClassName              string
 	withClassifyProperties     []string
 	withBasedOnProperties      []string
@@ -26,7 +25,7 @@ type Scheduler struct {
 }
 
 // WithType of classification e.g. knn or contextual
-func (s *Scheduler) WithType(classificationType paragons.Classification) *Scheduler {
+func (s *Scheduler) WithType(classificationType Type) *Scheduler {
 	s.classificationType = classificationType
 	return s
 }
@@ -91,7 +90,7 @@ func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
 		TrainingSetWhere:   s.withTrainingSetWhereFilter,
 		Type:               &classType,
 	}
-	if s.classificationType == paragons.KNN {
+	if s.classificationType == KNN {
 		config.K = &s.withK
 	}
 	responseData, responseErr := s.connection.RunREST(ctx, "/classifications", http.MethodPost, config)

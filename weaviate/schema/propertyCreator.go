@@ -3,9 +3,9 @@ package schema
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
 )
@@ -13,7 +13,7 @@ import (
 // PropertyCreator builder to create a property within a schema class
 type PropertyCreator struct {
 	connection   *connection.Connection
-	semanticKind paragons.SemanticKind
+	semanticKind semantics.Kind
 	className    string
 	property     *models.Property
 }
@@ -32,7 +32,7 @@ func (pc *PropertyCreator) WithProperty(property *models.Property) *PropertyCrea
 
 // WithKind specifies the semantic kind that the class is using
 // If not called the builder defaults to `things`
-func (pc *PropertyCreator) WithKind(semanticKind paragons.SemanticKind) *PropertyCreator {
+func (pc *PropertyCreator) WithKind(semanticKind semantics.Kind) *PropertyCreator {
 	pc.semanticKind = semanticKind
 	return pc
 }

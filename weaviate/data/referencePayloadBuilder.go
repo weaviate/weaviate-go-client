@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
@@ -13,7 +13,7 @@ import (
 type ReferencePayloadBuilder struct {
 	connection   *connection.Connection
 	uuid         string
-	semanticKind paragons.SemanticKind
+	semanticKind semantics.Kind
 }
 
 // WithID specifies the uuid of the object to be referenced
@@ -24,7 +24,7 @@ func (rpb *ReferencePayloadBuilder) WithID(uuid string) *ReferencePayloadBuilder
 
 // WithKind specifies the semantic kind that is used for the referenced data object
 // If not called the builder defaults to `things`
-func (rpb *ReferencePayloadBuilder) WithKind(semanticKind paragons.SemanticKind) *ReferencePayloadBuilder {
+func (rpb *ReferencePayloadBuilder) WithKind(semanticKind semantics.Kind) *ReferencePayloadBuilder {
 	rpb.semanticKind = semanticKind
 	return rpb
 }

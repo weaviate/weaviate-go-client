@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
 )
@@ -14,7 +14,7 @@ import (
 // Updater builder to update property values in a data object
 type Updater struct {
 	connection     *connection.Connection
-	semanticKind   paragons.SemanticKind
+	semanticKind   semantics.Kind
 	uuid           string
 	className      string
 	propertySchema models.PropertySchema
@@ -41,7 +41,7 @@ func (updater *Updater) WithSchema(propertySchema models.PropertySchema) *Update
 
 // WithKind specifies the semantic kind that is used for the data object
 // If not called the builder defaults to `things`
-func (updater *Updater) WithKind(semanticKind paragons.SemanticKind) *Updater {
+func (updater *Updater) WithKind(semanticKind semantics.Kind) *Updater {
 	updater.semanticKind = semanticKind
 	return updater
 }
@@ -66,7 +66,7 @@ func (updater *Updater) Do(ctx context.Context) error {
 }
 
 func (updater *Updater) runUpdate(ctx context.Context, path string, httpMethod string) (*connection.ResponseData, error) {
-	if updater.semanticKind == paragons.SemanticKindThings {
+	if updater.semanticKind == semantics.Things {
 		thing := models.Thing{
 			Class:  updater.className,
 			ID:     strfmt.UUID(updater.uuid),

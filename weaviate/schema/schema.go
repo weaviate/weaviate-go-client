@@ -2,7 +2,7 @@ package schema
 
 import (
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 )
 
 // API Conntains all the builder objects required to access the weaviate schema API.
@@ -24,7 +24,7 @@ func (schema *API) Getter() *Getter {
 func (schema *API) ClassCreator() *ClassCreator {
 	return &ClassCreator{
 		connection:   schema.connection,
-		semanticKind: paragons.SemanticKindThings, // Set the default
+		semanticKind: semantics.Things, // Set the default
 	}
 }
 
@@ -32,7 +32,7 @@ func (schema *API) ClassCreator() *ClassCreator {
 func (schema *API) ClassDeleter() *ClassDeleter {
 	return &ClassDeleter{
 		connection:   schema.connection,
-		semanticKind: paragons.SemanticKindThings,
+		semanticKind: semantics.Things,
 	}
 }
 
@@ -48,6 +48,6 @@ func (schema *API) AllDeleter() *AllDeleter {
 func (schema *API) PropertyCreator() *PropertyCreator {
 	return &PropertyCreator{
 		connection:   schema.connection,
-		semanticKind: paragons.SemanticKindThings,
+		semanticKind: semantics.Things,
 	}
 }

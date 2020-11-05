@@ -46,7 +46,7 @@ func WaitForWeaviate() error {
 
 	for i := 0; i < 20; i++ {
 		ctx, _ := context.WithTimeout(context.Background(), time.Second*3)
-		isReady, _ := client.Misc.ReadyChecker().Do(ctx)
+		isReady, _ := client.Misc().ReadyChecker().Do(ctx)
 		if isReady {
 			return nil
 		}

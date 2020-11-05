@@ -3,9 +3,9 @@ package data
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
 )
@@ -13,7 +13,7 @@ import (
 // ReferenceDeleter builder to remove a reference from a data object
 type ReferenceDeleter struct {
 	connection        *connection.Connection
-	semanticKind      paragons.SemanticKind
+	semanticKind      semantics.Kind
 	uuid              string
 	referenceProperty string
 	referencePayload  *models.SingleRef
@@ -33,7 +33,7 @@ func (rr *ReferenceDeleter) WithReferenceProperty(propertyName string) *Referenc
 
 // WithKind specifies the semantic kind that is used for the data object
 // If not called the builder defaults to `things`
-func (rr *ReferenceDeleter) WithKind(semanticKind paragons.SemanticKind) *ReferenceDeleter {
+func (rr *ReferenceDeleter) WithKind(semanticKind semantics.Kind) *ReferenceDeleter {
 	rr.semanticKind = semanticKind
 	return rr
 }

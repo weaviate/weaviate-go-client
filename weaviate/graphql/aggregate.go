@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"strings"
 )
@@ -18,7 +18,7 @@ type Aggregate struct {
 func (a *Aggregate) Things() *AggregateBuilder {
 	return &AggregateBuilder{
 		connection:   a.connection,
-		semanticKind: paragons.SemanticKindThings,
+		semanticKind: semantics.Things,
 	}
 }
 
@@ -26,14 +26,14 @@ func (a *Aggregate) Things() *AggregateBuilder {
 func (a *Aggregate) Actions() *AggregateBuilder {
 	return &AggregateBuilder{
 		connection:   a.connection,
-		semanticKind: paragons.SemanticKindActions,
+		semanticKind: semantics.Actions,
 	}
 }
 
 // AggregateBuilder for the aggregate GraphQL query string
 type AggregateBuilder struct {
 	connection rest
-	semanticKind paragons.SemanticKind
+	semanticKind semantics.Kind
 	fields string
 	className string
 }

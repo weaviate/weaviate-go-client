@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
 	"github.com/semi-technologies/weaviate-go-client/weaviate"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/classifications"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
@@ -29,11 +29,11 @@ func TestClassifications_integration(t *testing.T) {
 
 		classifyProperties := []string{"taged"}
 		basedOnProperties := []string{"description"}
-		classification, err := client.Classifications.Scheduler().WithType(paragons.Contextual).WithClassName("Pizza").WithClassifyProperties(classifyProperties).WithBasedOnProperties(basedOnProperties).Do(context.Background())
+		classification, err := client.Classifications().Scheduler().WithType(classifications.Contextual).WithClassName("Pizza").WithClassifyProperties(classifyProperties).WithBasedOnProperties(basedOnProperties).Do(context.Background())
 		assert.Nil(t, err)
 		assert.Contains(t, classification.BasedOnProperties, "description")
 		assert.Contains(t, classification.ClassifyProperties, "taged")
-		classification, err = client.Classifications.Scheduler().WithType(paragons.Contextual).WithClassName("Pizza").WithClassifyProperties(classifyProperties).WithBasedOnProperties(basedOnProperties).WithWaitForCompletion().Do(context.Background())
+		classification, err = client.Classifications().Scheduler().WithType(classifications.Contextual).WithClassName("Pizza").WithClassifyProperties(classifyProperties).WithBasedOnProperties(basedOnProperties).WithWaitForCompletion().Do(context.Background())
 		assert.Nil(t, err)
 		assert.Contains(t, classification.BasedOnProperties, "description")
 		assert.Contains(t, classification.ClassifyProperties, "taged")
@@ -45,10 +45,10 @@ func TestClassifications_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		createClassificationClasses(t, client)
 
-		c, err := client.Classifications.Scheduler().WithType(paragons.KNN).WithK(3).WithClassName("Pizza").WithClassifyProperties([]string{"taged"}).WithBasedOnProperties([]string{"description"}).Do(context.Background())
+		c, err := client.Classifications().Scheduler().WithType(classifications.KNN).WithK(3).WithClassName("Pizza").WithClassifyProperties([]string{"taged"}).WithBasedOnProperties([]string{"description"}).Do(context.Background())
 		assert.Nil(t, err)
 
-		getC, getErr := client.Classifications.Getter().WithID(string(c.ID)).Do(context.Background())
+		getC, getErr := client.Classifications().Getter().WithID(string(c.ID)).Do(context.Background())
 		assert.Nil(t, getErr)
 		assert.Equal(t, c.ID, getC.ID)
 		assert.Equal(t, int32(3), *getC.K)
@@ -65,7 +65,7 @@ func TestClassifications_integration(t *testing.T) {
 	})
 }
 
-func createClassificationClasses(t *testing.T, client *weaviate.WeaviateClient) {
+func createClassificationClasses(t *testing.T, client *weaviate.Client) {
 	testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 	// Create a class Tag
@@ -80,7 +80,7 @@ func createClassificationClasses(t *testing.T, client *weaviate.WeaviateClient) 
 			},
 		},
 	}
-	errT := client.Schema.ClassCreator().WithClass(schemaClassTag).Do(context.Background())
+	errT := client.Schema().ClassCreator().WithClass(schemaClassTag).Do(context.Background())
 	assert.Nil(t, errT)
 	// Create a reference property that allows to tag a pizza
 	tagProperty := models.Property{
@@ -88,7 +88,7 @@ func createClassificationClasses(t *testing.T, client *weaviate.WeaviateClient) 
 		Description: "tag of pizza",
 		Name:        "taged",
 	}
-	addTagPropertyToPizzaErr := client.Schema.PropertyCreator().WithProperty(&tagProperty).WithClassName("Pizza").Do(context.Background())
+	addTagPropertyToPizzaErr := client.Schema().PropertyCreator().WithProperty(&tagProperty).WithClassName("Pizza").Do(context.Background())
 	assert.Nil(t, addTagPropertyToPizzaErr)
 
 	// Create two pizzas
@@ -108,7 +108,7 @@ func createClassificationClasses(t *testing.T, client *weaviate.WeaviateClient) 
 			"description": "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
 		},
 	}
-	_, batchErr := client.Batch.ThingsBatcher().WithObject(pizza1).WithObject(pizza2).Do(context.Background())
+	_, batchErr := client.Batch().ThingsBatcher().WithObject(pizza1).WithObject(pizza2).Do(context.Background())
 	assert.Nil(t, batchErr)
 	// Create two tags
 	tag1 := &models.Thing{
@@ -123,7 +123,7 @@ func createClassificationClasses(t *testing.T, client *weaviate.WeaviateClient) 
 			"name": "seafood",
 		},
 	}
-	_, batchErr2 := client.Batch.ThingsBatcher().WithObject(tag1).WithObject(tag2).Do(context.Background())
+	_, batchErr2 := client.Batch().ThingsBatcher().WithObject(tag1).WithObject(tag2).Do(context.Background())
 	assert.Nil(t, batchErr2)
 
 	time.Sleep(2.0 * time.Second)

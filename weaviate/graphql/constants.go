@@ -1,4 +1,4 @@
-package paragons
+package graphql
 
 // ExploreFields used in an Explore GraphQL query
 type ExploreFields string
@@ -17,4 +17,3 @@ type MoveParameters struct {
 	// Force to be applied in the movement operation
 	Force float32
 }
-

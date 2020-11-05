@@ -3,7 +3,7 @@ package graphql
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"strings"
 )
@@ -11,7 +11,7 @@ import (
 // GetBuilder for GraphQL
 type GetBuilder struct {
 	connection rest
-	semanticKind paragons.SemanticKind
+	semanticKind semantics.Kind
 	className string
 	withFields string
 

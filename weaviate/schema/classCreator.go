@@ -3,9 +3,9 @@ package schema
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
 )
@@ -14,7 +14,7 @@ import (
 type ClassCreator struct {
 	connection   *connection.Connection
 	class        *models.Class
-	semanticKind paragons.SemanticKind
+	semanticKind semantics.Kind
 }
 
 // WithClass specifies the class that will be added to the schema
@@ -25,7 +25,7 @@ func (cc *ClassCreator) WithClass(class *models.Class) *ClassCreator {
 
 // WithKind specifies the semantic kind that is used for the class about to be created
 // If not called the builder defaults to `things`
-func (cc *ClassCreator) WithKind(semanticKind paragons.SemanticKind) *ClassCreator {
+func (cc *ClassCreator) WithKind(semanticKind semantics.Kind) *ClassCreator {
 	cc.semanticKind = semanticKind
 	return cc
 }

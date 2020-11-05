@@ -21,3 +21,12 @@ func (api *API) Scheduler() *Scheduler {
 func (api *API) Getter() *Getter {
 	return &Getter{connection: api.connection}
 }
+
+
+// Classification defines the type of classification
+type Type string
+
+// KNN (k nearest neighbours) a non parametric classification based on training data
+const KNN Type = "knn"
+// Contextual classification labels a data object with the closest label based on their vector position (which describes the context)
+const Contextual Type = "contextual"
