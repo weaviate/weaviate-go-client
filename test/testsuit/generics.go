@@ -3,8 +3,8 @@ package testsuit
 import (
 	"context"
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -13,7 +13,7 @@ import (
 
 // CreateWeaviateTestSchemaFood creates a class for each semantic type (Pizza and Soup)
 // and adds some primitive properties (name and description)
-func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviateclient.WeaviateClient) {
+func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.WeaviateClient) {
 	schemaClassThing := &models.Class{
 		Class:       "Pizza",
 		Description: "A delicious religion like food and arguably the best export of Italy.",
@@ -48,7 +48,7 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviateclient.WeaviateC
 }
 
 // CreateWeaviateTestSchemaFoodWithReferenceProperty create the testing schema with a reference field otherFoods on both classes
-func CreateWeaviateTestSchemaFoodWithReferenceProperty(t *testing.T, client *weaviateclient.WeaviateClient) {
+func CreateWeaviateTestSchemaFoodWithReferenceProperty(t *testing.T, client *weaviate.WeaviateClient) {
 	CreateWeaviateTestSchemaFood(t, client)
 	referenceProperty := &models.Property{
 		DataType:    []string{"Pizza", "Soup"},
@@ -62,19 +62,19 @@ func CreateWeaviateTestSchemaFoodWithReferenceProperty(t *testing.T, client *wea
 }
 
 // CleanUpWeaviate removes the schema and thereby all data
-func CleanUpWeaviate(t *testing.T, client *weaviateclient.WeaviateClient) {
+func CleanUpWeaviate(t *testing.T, client *weaviate.WeaviateClient) {
 	// Clean up all classes and by that also all data
 	errRm := client.Schema.AllDeleter().Do(context.Background())
 	assert.Nil(t, errRm)
 }
 
 // CreateTestClient running on local host 8080
-func CreateTestClient() *weaviateclient.WeaviateClient {
-	cfg := weaviateclient.Config{
+func CreateTestClient() *weaviate.WeaviateClient {
+	cfg := weaviate.Config{
 		Host:   "localhost:8080",
 		Scheme: "http",
 	}
-	client := weaviateclient.New(cfg)
+	client := weaviate.New(cfg)
 	return client
 }
 
@@ -97,7 +97,7 @@ func ParseReferenceResponseToStruct(t *testing.T, reference interface{}) models.
 }
 
 // CreateTestSchemaAndData with a few pizzas and soups
-func CreateTestSchemaAndData(t *testing.T, client *weaviateclient.WeaviateClient) {
+func CreateTestSchemaAndData(t *testing.T, client *weaviate.WeaviateClient) {
 	CreateWeaviateTestSchemaFood(t, client)
 
 	// Create pizzas

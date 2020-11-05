@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/paragons"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/testenv"
+	"github.com/semi-technologies/weaviate-go-client/weaviate"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -65,7 +65,7 @@ func TestClassifications_integration(t *testing.T) {
 	})
 }
 
-func createClassificationClasses(t *testing.T, client *weaviateclient.WeaviateClient) {
+func createClassificationClasses(t *testing.T, client *weaviate.WeaviateClient) {
 	testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 	// Create a class Tag

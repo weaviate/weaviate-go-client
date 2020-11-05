@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient"
-	"github.com/semi-technologies/weaviate-go-client/weaviateclient/testenv"
+	"github.com/semi-technologies/weaviate-go-client/weaviate"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -67,12 +67,12 @@ func TestMisc_integration(t *testing.T) {
 
 func TestMisc_connection_error(t *testing.T) {
 	t.Run("ready", func(t *testing.T) {
-		cfg := weaviateclient.Config{
+		cfg := weaviate.Config{
 			Host:   "localhorst",
 			Scheme: "http",
 		}
 
-		client := weaviateclient.New(cfg)
+		client := weaviate.New(cfg)
 		isReady, err := client.Misc.ReadyChecker().Do(context.Background())
 
 		assert.NotNil(t, err)
@@ -80,12 +80,12 @@ func TestMisc_connection_error(t *testing.T) {
 	})
 
 	t.Run("live", func(t *testing.T) {
-		cfg := weaviateclient.Config{
+		cfg := weaviate.Config{
 			Host:   "localhorst",
 			Scheme: "http",
 		}
 
-		client := weaviateclient.New(cfg)
+		client := weaviate.New(cfg)
 		isReady, err := client.Misc.LiveChecker().Do(context.Background())
 
 		assert.NotNil(t, err)
