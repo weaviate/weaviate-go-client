@@ -2,11 +2,18 @@ package misc
 
 import (
 	"context"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"net/http"
 )
+
+// OpenIDConfiguration of weaviate
+type OpenIDConfiguration struct {
+	// The Location to redirect to
+	Href string `json:"href,omitempty"`
+	// OAuth Client ID
+	ClientID string `json:"clientId,omitempty"`
+}
 
 // ReadyChecker builder to check if weaviate is ready
 type ReadyChecker struct {
@@ -48,7 +55,7 @@ type OpenIDConfigGetter struct {
 }
 
 // Do the open ID config request
-func (oidcg *OpenIDConfigGetter) Do(ctx context.Context) (*paragons.OpenIDConfiguration, error) {
+func (oidcg *OpenIDConfigGetter) Do(ctx context.Context) (*OpenIDConfiguration, error) {
 	response, err := oidcg.connection.RunREST(ctx, "/.well-known/openid-configuration", http.MethodGet, nil)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
@@ -57,7 +64,7 @@ func (oidcg *OpenIDConfigGetter) Do(ctx context.Context) (*paragons.OpenIDConfig
 		return nil, nil
 	}
 	if response.StatusCode == 200 {
-		var openIDConfig paragons.OpenIDConfiguration
+		var openIDConfig OpenIDConfiguration
 		decodeErr := response.DecodeBodyIntoTarget(&openIDConfig)
 		return &openIDConfig, decodeErr
 	}
