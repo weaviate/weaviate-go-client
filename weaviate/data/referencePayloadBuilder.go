@@ -5,7 +5,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/models"
 )
 
 // ReferencePayloadBuilder to create a payload that references a data object.

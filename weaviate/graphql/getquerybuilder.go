@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/models"
 	"strings"
 )
 

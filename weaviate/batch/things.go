@@ -4,8 +4,7 @@ import (
 	"context"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/models"
 	"net/http"
 )
 
@@ -23,7 +22,7 @@ func (tb *ThingsBatcher) WithObject(thing *models.Thing) *ThingsBatcher {
 
 // Do add all the objects in the builder to weaviate
 func (tb *ThingsBatcher) Do(ctx context.Context) ([]models.ThingsGetResponse, error) {
-	body := paragons.ThingsBatchRequestBody{
+	body := models.ThingsBatchRequestBody{
 		Fields: []string{"ALL"},
 		Things: tb.things,
 	}

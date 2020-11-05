@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/models"
 	"net/http"
 )
 
@@ -48,7 +48,7 @@ type OpenIDConfigGetter struct {
 }
 
 // Do the open ID config request
-func (oidcg *OpenIDConfigGetter) Do(ctx context.Context) (*paragons.OpenIDConfiguration, error) {
+func (oidcg *OpenIDConfigGetter) Do(ctx context.Context) (*models.OpenIDConfiguration, error) {
 	response, err := oidcg.connection.RunREST(ctx, "/.well-known/openid-configuration", http.MethodGet, nil)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
@@ -57,7 +57,7 @@ func (oidcg *OpenIDConfigGetter) Do(ctx context.Context) (*paragons.OpenIDConfig
 		return nil, nil
 	}
 	if response.StatusCode == 200 {
-		var openIDConfig paragons.OpenIDConfiguration
+		var openIDConfig models.OpenIDConfiguration
 		decodeErr := response.DecodeBodyIntoTarget(&openIDConfig)
 		return &openIDConfig, decodeErr
 	}

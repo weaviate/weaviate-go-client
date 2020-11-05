@@ -1,6 +1,4 @@
-package paragons
-
-import "github.com/semi-technologies/weaviate/entities/models"
+package models
 
 // OpenIDConfiguration of weaviate
 type OpenIDConfiguration struct {
@@ -12,18 +10,18 @@ type OpenIDConfiguration struct {
 
 // SchemaDump Contains all semantic types and respective classes of the schema
 type SchemaDump struct {
-	Things  *models.Schema `json:"things"`
-	Actions *models.Schema `json:"actions"`
+	Things  *Schema `json:"things"`
+	Actions *Schema `json:"actions"`
 }
 
 // ThingsBatchRequestBody wrapping things to a batch
 type ThingsBatchRequestBody struct {
 	Fields []string        `json:"fields"`
-	Things []*models.Thing `json:"things"`
+	Things []*Thing `json:"things"`
 }
 
 // ActionsBatchRequestBody wrapping actions to a batch
 type ActionsBatchRequestBody struct {
 	Fields  []string         `json:"fields"`
-	Actions []*models.Action `json:"actions"`
+	Actions []*Action `json:"actions"`
 }

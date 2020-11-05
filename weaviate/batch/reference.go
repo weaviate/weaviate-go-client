@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/models"
 	"net/http"
 )
 

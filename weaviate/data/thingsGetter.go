@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/models"
 	"net/http"
 	"strings"
 )
@@ -89,7 +89,7 @@ func (getter *ThingsGetter) Do(ctx context.Context) ([]*models.Thing, error) {
 	if getter.uuid == "" {
 		var things models.ThingsListResponse
 		decodeErr := responseData.DecodeBodyIntoTarget(&things)
-		return things.Things, decodeErr
+		return models.CastThingsFromThingsListResponse(&things), decodeErr
 	}
 	var thing models.Thing
 	decodeErr := responseData.DecodeBodyIntoTarget(&thing)

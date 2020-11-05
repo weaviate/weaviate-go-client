@@ -22,7 +22,6 @@ func (api *API) Getter() *Getter {
 	return &Getter{connection: api.connection}
 }
 
-
 // Classification defines the type of classification
 type Type string
 

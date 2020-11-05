@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/models"
 )
 
 // ActionsGetter Builder to retrieve Actions from weaviate
@@ -78,7 +78,8 @@ func (getter *ActionsGetter) Do(ctx context.Context) ([]*models.Action, error) {
 	if getter.uuid == "" {
 		var actions models.ActionsListResponse
 		decodeErr := responseData.DecodeBodyIntoTarget(&actions)
-		return actions.Actions, decodeErr
+
+		return models.CastActionsFromActionsListResponse(&actions), decodeErr
 	}
 	var action models.Action
 	decodeErr := responseData.DecodeBodyIntoTarget(&action)

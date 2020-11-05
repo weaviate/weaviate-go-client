@@ -1,7 +1,7 @@
 package connection
 
 import (
-	clientModels "github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/models"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -13,7 +13,7 @@ func TestResponseData_DecodeBodyIntoTarget(t *testing.T) {
 		StatusCode: 0,
 	}
 
-	var schema clientModels.SchemaDump
+	var schema models.SchemaDump
 	err := respond.DecodeBodyIntoTarget(&schema)
 	assert.Nil(t, err)
 	assert.Equal(t, "Band", schema.Things.Classes[0].Class)
