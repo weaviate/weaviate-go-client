@@ -35,9 +35,9 @@ func TestData_reference_integration(t *testing.T) {
 			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
 		assert.Nil(t, errCreateT)
-		errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
 		assert.Nil(t, errCreateA)
 
 		time.Sleep(2.0 * time.Second)
@@ -87,9 +87,9 @@ func TestData_reference_integration(t *testing.T) {
 			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
 		assert.Nil(t, errCreateT)
-		errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
 		assert.Nil(t, errCreateA)
 		time.Sleep(2.0 * time.Second)
 		// Thing -> Action
@@ -154,9 +154,9 @@ func TestData_reference_integration(t *testing.T) {
 			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
 		assert.Nil(t, errCreateT)
-		errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
 		assert.Nil(t, errCreateA)
 		time.Sleep(2.0 * time.Second)
 		// Thing -> Action

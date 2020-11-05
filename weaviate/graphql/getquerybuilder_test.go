@@ -3,7 +3,7 @@ package graphql
 import (
 	"context"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -33,7 +33,7 @@ func TestQueryBuilder(t *testing.T) {
 
 		builder := GetBuilder{
 			connection: conMock,
-			semanticKind: paragons.SemanticKindThings,
+			semanticKind: semantics.Things,
 		}
 
 		query := builder.WithClassName("Pizza").WithFields("name").build()
@@ -47,7 +47,7 @@ func TestQueryBuilder(t *testing.T) {
 
 		builder := GetBuilder{
 			connection: conMock,
-			semanticKind: paragons.SemanticKindThings,
+			semanticKind: semantics.Things,
 		}
 
 		query := builder.WithClassName("Pizza").WithFields("name description").build()
@@ -61,7 +61,7 @@ func TestQueryBuilder(t *testing.T) {
 
 		builder := GetBuilder{
 			connection: conMock,
-			semanticKind: paragons.SemanticKindThings,
+			semanticKind: semantics.Things,
 		}
 
 		query := builder.WithClassName("Pizza").WithFields("name").WithWhere(`{path: ["name"] operator: Equal valueString: "Hawaii" }`).build()
@@ -80,7 +80,7 @@ func TestQueryBuilder(t *testing.T) {
 
 		builder := GetBuilder{
 			connection:           conMock,
-			semanticKind:         paragons.SemanticKindThings,
+			semanticKind:         semantics.Things,
 			includesFilterClause: false,
 		}
 
@@ -95,7 +95,7 @@ func TestQueryBuilder(t *testing.T) {
 
 		builder := GetBuilder{
 			connection:           conMock,
-			semanticKind:         paragons.SemanticKindThings,
+			semanticKind:         semantics.Things,
 			includesFilterClause: false,
 		}
 
@@ -110,7 +110,7 @@ func TestQueryBuilder(t *testing.T) {
 
 		builder := GetBuilder{
 			connection:           conMock,
-			semanticKind:         paragons.SemanticKindThings,
+			semanticKind:         semantics.Things,
 			includesFilterClause: false,
 		}
 
@@ -125,7 +125,7 @@ func TestQueryBuilder(t *testing.T) {
 
 		builder := GetBuilder{
 			connection:           conMock,
-			semanticKind:         paragons.SemanticKindThings,
+			semanticKind:         semantics.Things,
 			includesFilterClause: false,
 		}
 
@@ -139,7 +139,7 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 		builder := GetBuilder{
 			connection:           conMock,
-			semanticKind:         paragons.SemanticKindThings,
+			semanticKind:         semantics.Things,
 			includesFilterClause: false,
 		}
 		query := builder.build()
