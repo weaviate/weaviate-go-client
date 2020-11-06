@@ -43,8 +43,8 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, wrapperT.Action)
 		wrapperA, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
 		assert.Nil(t, errCreateA)
-		assert.NotNil(t, wrapperA.Thing)
-		assert.Nil(t, wrapperA.Action)
+		assert.Nil(t, wrapperA.Thing)
+		assert.NotNil(t, wrapperA.Action)
 
 		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
 		objectT, objErrT := client.Data().ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())

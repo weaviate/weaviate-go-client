@@ -69,17 +69,20 @@ func (creator *Creator) Do(ctx context.Context) (*ObjectWrapper, error) {
 	if respErr != nil {
 		return nil, respErr
 	}
-	var resultThing models.Thing
-	var resultAction models.Action
-	var parseErr error
+
 	if creator.semanticKind == semantics.Actions {
-		parseErr = responseData.DecodeBodyIntoTarget(&resultAction)
-	} else {
-		parseErr = responseData.DecodeBodyIntoTarget(&resultThing)
+		var resultAction models.Action
+		parseErr := responseData.DecodeBodyIntoTarget(&resultAction)
+		return &ObjectWrapper{
+			Thing:  nil,
+			Action: &resultAction,
+		}, parseErr
 	}
+	var resultThing models.Thing
+	parseErr := responseData.DecodeBodyIntoTarget(&resultThing)
 	return &ObjectWrapper{
 		Thing:  &resultThing,
-		Action: &resultAction,
+		Action: nil,
 	}, parseErr
 }
 
