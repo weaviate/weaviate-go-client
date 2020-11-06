@@ -23,7 +23,7 @@ func (api *API) Getter() *Getter {
 }
 
 
-// Classification defines the type of classification
+// Type of classification that is used
 type Type string
 
 // KNN (k nearest neighbours) a non parametric classification based on training data

@@ -17,7 +17,7 @@ type Config struct {
 	Scheme string
 }
 
-// WeaviateClient implementing the weaviate API
+// Client implementing the weaviate API
 type Client struct {
 	connection      *connection.Connection
 	misc            *misc.API
@@ -45,33 +45,37 @@ func New(config Config) *Client {
 	}
 }
 
+// Misc collection group for .well_known and root level API commands
 func (c *Client) Misc() *misc.API {
 	return c.misc
 }
 
+// Schema API group
 func (c *Client) Schema() *schema.API {
 	return c.schema
 }
 
+// Data API group including both things and actions
 func (c *Client) Data() *data.API {
 	return c.data
 }
 
+// Batch loading API group
 func (c *Client) Batch() *batch.API {
 	return c.batch
 }
 
-
+// C11y (contextionary) API group
 func (c *Client) C11y() *contextionary.API {
 	return c.c11y
 }
 
-
+// Classifications API group
 func (c *Client) Classifications() *classifications.API {
 return c.classifications
 }
 
-
+// GraphQL API group
 func (c *Client) GraphQL() *graphql.API {
 return c.graphQL
 }
