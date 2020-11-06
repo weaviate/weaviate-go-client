@@ -2,11 +2,17 @@ package batch
 
 import (
 	"context"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/models"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
+	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
 )
+
+// ThingsBatchRequestBody wrapping things to a batch
+type ThingsBatchRequestBody struct {
+	Fields []string        `json:"fields"`
+	Things []*models.Thing `json:"things"`
+}
 
 // ThingsBatcher builder to add multiple things in one batch
 type ThingsBatcher struct {
@@ -22,7 +28,7 @@ func (tb *ThingsBatcher) WithObject(thing *models.Thing) *ThingsBatcher {
 
 // Do add all the objects in the builder to weaviate
 func (tb *ThingsBatcher) Do(ctx context.Context) ([]models.ThingsGetResponse, error) {
-	body := models.ThingsBatchRequestBody{
+	body := ThingsBatchRequestBody{
 		Fields: []string{"ALL"},
 		Things: tb.things,
 	}

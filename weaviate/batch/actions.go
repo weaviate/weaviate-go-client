@@ -2,12 +2,17 @@ package batch
 
 import (
 	"context"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/models"
-
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
+	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
 )
+
+// ActionsBatchRequestBody wrapping actions to a batch
+type ActionsBatchRequestBody struct {
+	Fields  []string         `json:"fields"`
+	Actions []*models.Action `json:"actions"`
+}
 
 // ActionsBatcher builder to add multiple actions in one batch
 type ActionsBatcher struct {
@@ -23,7 +28,7 @@ func (ab *ActionsBatcher) WithObject(action *models.Action) *ActionsBatcher {
 
 // Do add all the objects in the builder to weaviate
 func (ab *ActionsBatcher) Do(ctx context.Context) ([]models.ActionsGetResponse, error) {
-	body := models.ActionsBatchRequestBody{
+	body := ActionsBatchRequestBody{
 		Fields:  []string{"ALL"},
 		Actions: ab.actions,
 	}

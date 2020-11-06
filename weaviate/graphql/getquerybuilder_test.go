@@ -32,7 +32,7 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection:   conMock,
+			connection: conMock,
 			semanticKind: semantics.Things,
 		}
 
@@ -46,7 +46,7 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection:   conMock,
+			connection: conMock,
 			semanticKind: semantics.Things,
 		}
 
@@ -60,7 +60,7 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection:   conMock,
+			connection: conMock,
 			semanticKind: semantics.Things,
 		}
 

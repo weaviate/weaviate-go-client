@@ -37,10 +37,14 @@ func TestData_integration(t *testing.T) {
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
 
-		errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		wrapperT, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
 		assert.Nil(t, errCreateT)
-		errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		assert.NotNil(t, wrapperT.Thing)
+		assert.Nil(t, wrapperT.Action)
+		wrapperA, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
 		assert.Nil(t, errCreateA)
+		assert.Nil(t, wrapperA.Thing)
+		assert.NotNil(t, wrapperA.Action)
 
 		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
 		objectT, objErrT := client.Data().ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
@@ -62,22 +66,22 @@ func TestData_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
-		errCreate := client.Data().Creator().WithClassName("Pizza").WithSchema(map[string]string{
+		_, errCreate := client.Data().Creator().WithClassName("Pizza").WithSchema(map[string]string{
 			"name":        "Margherita",
 			"description": "plain",
 		}).Do(context.Background())
 		assert.Nil(t, errCreate)
-		errCreate = client.Data().Creator().WithClassName("Pizza").WithSchema(map[string]string{
+		_, errCreate = client.Data().Creator().WithClassName("Pizza").WithSchema(map[string]string{
 			"name":        "Pepperoni",
 			"description": "meat",
 		}).Do(context.Background())
 		assert.Nil(t, errCreate)
-		errCreate = client.Data().Creator().WithClassName("Soup").WithKind(semantics.Actions).WithSchema(map[string]string{
+		_, errCreate = client.Data().Creator().WithClassName("Soup").WithKind(semantics.Actions).WithSchema(map[string]string{
 			"name":        "Chicken",
 			"description": "meat",
 		}).Do(context.Background())
 		assert.Nil(t, errCreate)
-		errCreate = client.Data().Creator().WithClassName("Soup").WithKind(semantics.Actions).WithSchema(map[string]string{
+		_, errCreate = client.Data().Creator().WithClassName("Soup").WithKind(semantics.Actions).WithSchema(map[string]string{
 			"name":        "Tofu",
 			"description": "vegetarian",
 		}).Do(context.Background())
@@ -115,9 +119,9 @@ func TestData_integration(t *testing.T) {
 			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
 		assert.Nil(t, errCreateT)
-		errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
 		assert.Nil(t, errCreateA)
 
 		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
@@ -187,9 +191,9 @@ func TestData_integration(t *testing.T) {
 			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
 		assert.Nil(t, errCreateT)
-		errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
 		assert.Nil(t, errCreateA)
 
 		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
@@ -224,9 +228,9 @@ func TestData_integration(t *testing.T) {
 			"name":        "water",
 			"description": "missing description",
 		}
-		errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
 		assert.Nil(t, errCreateT)
-		errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
 		assert.Nil(t, errCreateA)
 
 		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
@@ -274,9 +278,9 @@ func TestData_integration(t *testing.T) {
 			"name":        "ChickenSoup",
 			"description": "missing description",
 		}
-		errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
 		assert.Nil(t, errCreateT)
-		errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
 		assert.Nil(t, errCreateA)
 
 		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index

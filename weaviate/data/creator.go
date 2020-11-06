@@ -11,6 +11,12 @@ import (
 	"net/http"
 )
 
+// ObjectWrapper wrapping the result of a creation for both actions and things
+type ObjectWrapper struct {
+	Thing *models.Thing
+	Action *models.Action
+}
+
 // Creator builder to create a data object in weaviate
 type Creator struct {
 	connection     *connection.Connection
@@ -47,7 +53,7 @@ func (creator *Creator) WithKind(semanticKind semantics.Kind) *Creator {
 }
 
 // Do create the data object as specified in the builder
-func (creator *Creator) Do(ctx context.Context) error {
+func (creator *Creator) Do(ctx context.Context) (*ObjectWrapper, error) {
 	path := fmt.Sprintf("/%v", string(creator.semanticKind))
 
 	var err error
@@ -59,7 +65,25 @@ func (creator *Creator) Do(ctx context.Context) error {
 		thing, _ := creator.PayloadThing()
 		responseData, err = creator.connection.RunREST(ctx, path, http.MethodPost, thing)
 	}
-	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
+	respErr := except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
+	if respErr != nil {
+		return nil, respErr
+	}
+
+	if creator.semanticKind == semantics.Actions {
+		var resultAction models.Action
+		parseErr := responseData.DecodeBodyIntoTarget(&resultAction)
+		return &ObjectWrapper{
+			Thing:  nil,
+			Action: &resultAction,
+		}, parseErr
+	}
+	var resultThing models.Thing
+	parseErr := responseData.DecodeBodyIntoTarget(&resultThing)
+	return &ObjectWrapper{
+		Thing:  &resultThing,
+		Action: nil,
+	}, parseErr
 }
 
 // PayloadThing returns the data object payload which may be used in a batch request

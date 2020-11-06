@@ -2,11 +2,17 @@ package schema
 
 import (
 	"context"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/models"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
+	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
 )
+
+// Dump Contains all semantic types and respective classes of the schema
+type Dump struct {
+	Things  *models.Schema `json:"things"`
+	Actions *models.Schema `json:"actions"`
+}
 
 // Getter builder to get the current schema loaded in weaviate
 type Getter struct {
@@ -14,13 +20,13 @@ type Getter struct {
 }
 
 // Do get and return the weaviate schema
-func (sg *Getter) Do(ctx context.Context) (*models.SchemaDump, error) {
+func (sg *Getter) Do(ctx context.Context) (*Dump, error) {
 	responseData, err := sg.connection.RunREST(ctx, "/schema", http.MethodGet, nil)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}
 	if responseData.StatusCode == 200 {
-		var fullSchema models.SchemaDump
+		var fullSchema Dump
 		decodeErr := responseData.DecodeBodyIntoTarget(&fullSchema)
 		return &fullSchema, decodeErr
 	}
