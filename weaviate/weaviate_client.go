@@ -50,6 +50,8 @@ type Client struct {
 // there might be go mods issues due to the false use of the go mod system by etcd.
 // The issue can be resolved by adding `replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.0.0`
 // to the go.mod file.
+// There are concrete plans to fully remove the etcd dependency from weaviate with v1.0.0. This issue will be resolved
+// with time one way or the other. Please excuse the questionable UX for the moment.
 func New(config Config) *Client {
 	con := connection.NewConnection(config.Scheme, config.Host)
 
