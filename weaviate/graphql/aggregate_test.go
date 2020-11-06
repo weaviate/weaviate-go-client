@@ -1,7 +1,7 @@
 package graphql
 
 import (
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -13,7 +13,7 @@ func TestAggregateBuilder(t *testing.T) {
 
 		builder := AggregateBuilder{
 			connection:   conMock,
-			semanticKind: paragons.SemanticKindThings,
+			semanticKind: semantics.Things,
 		}
 
 		query := builder.WithClassName("Pizza").WithFields("meta {count}").build()
@@ -26,7 +26,7 @@ func TestAggregateBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 		builder := AggregateBuilder{
 			connection:   conMock,
-			semanticKind: paragons.SemanticKindThings,
+			semanticKind: semantics.Things,
 		}
 		query := builder.build()
 		assert.NotEmpty(t, query, "Check that there is no panic if query is not validly build")

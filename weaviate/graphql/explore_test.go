@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"github.com/semi-technologies/weaviate-go-client/weaviate/paragons"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -15,7 +14,7 @@ func TestExploreBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		query := builder.WithFields([]paragons.ExploreFields{paragons.Certainty, paragons.Beacon}).WithConcepts([]string{"Cheese", "pineapple"}).build()
+		query := builder.WithFields([]ExploreFields{Certainty, Beacon}).WithConcepts([]string{"Cheese", "pineapple"}).build()
 
 		expected := `{Explore(concepts: ["Cheese","pineapple"] ){certainty beacon }}`
 		assert.Equal(t, expected, query)
@@ -28,7 +27,7 @@ func TestExploreBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		query := builder.WithFields([]paragons.ExploreFields{paragons.Beacon}).WithConcepts([]string{"Cheese"}).WithLimit(5).WithCertainty(0.71).build()
+		query := builder.WithFields([]ExploreFields{Beacon}).WithConcepts([]string{"Cheese"}).WithLimit(5).WithCertainty(0.71).build()
 
 		expected := `{Explore(concepts: ["Cheese"] limit: 5 certainty: 0.71 ){beacon }}`
 		assert.Equal(t, expected, query)
@@ -41,13 +40,13 @@ func TestExploreBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		fields := []paragons.ExploreFields{paragons.Beacon}
+		fields := []ExploreFields{Beacon}
 		concepts := []string{"Cheese"}
-		moveTo := &paragons.MoveParameters{
+		moveTo := &MoveParameters{
 			Concepts: []string{"pizza", "pineapple"},
 			Force:    0.2,
 		}
-		moveAwayFrom := &paragons.MoveParameters{
+		moveAwayFrom := &MoveParameters{
 			Concepts: []string{"fish"},
 			Force:    0.1,
 		}
