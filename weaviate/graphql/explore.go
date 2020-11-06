@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/models"
+	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // Explore query builder

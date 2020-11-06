@@ -5,7 +5,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/models"
+	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
 	"time"
 )
@@ -85,9 +85,9 @@ func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
 		BasedOnProperties:  s.withBasedOnProperties,
 		Class:              s.withClassName,
 		ClassifyProperties: s.withClassifyProperties,
-		SourceWhere:        models.CastToNativeWhereFilter(s.withSourceWhereFilter),
-		TargetWhere:        models.CastToNativeWhereFilter(s.withTargetWhereFilter),
-		TrainingSetWhere:   models.CastToNativeWhereFilter(s.withTrainingSetWhereFilter),
+		SourceWhere:        s.withSourceWhereFilter,
+		TargetWhere:        s.withTargetWhereFilter,
+		TrainingSetWhere:   s.withTrainingSetWhereFilter,
 		Type:               &classType,
 	}
 	if s.classificationType == KNN {

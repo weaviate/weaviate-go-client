@@ -2,7 +2,7 @@ package contextionary
 
 import (
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/models"
+	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // API for the contextionary endpoint
