@@ -9,12 +9,21 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/weaviate/graphql"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/misc"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/schema"
+	"net/http"
 )
 
 // Config of the client endpoint
 type Config struct {
+	// Host of the weaviate instance; this is a mandatory field.
 	Host   string
+	// Scheme of the weaviate instance; this is a mandatory field.
 	Scheme string
+
+	// ConnectionClient that will be used to execute http requests to the weaviate instance.
+	//  If omitted a default will be used. The default is not able to handle authenticated requests.
+	//
+	//  To connect with an authenticated weaviate consider using the client from the golang.org/x/oauth2 module.
+	ConnectionClient *http.Client
 }
 
 // Client implementing the weaviate API
@@ -53,7 +62,7 @@ type Client struct {
 // There are concrete plans to fully remove the etcd dependency from weaviate with v1.0.0. This issue will be resolved
 // with time one way or the other. Please excuse the questionable UX for the moment.
 func New(config Config) *Client {
-	con := connection.NewConnection(config.Scheme, config.Host)
+	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient)
 
 	return &Client{
 		connection:      con,

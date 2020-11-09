@@ -19,16 +19,23 @@ type Connection struct {
 }
 
 // NewConnection based on scheme://host
-func NewConnection(scheme string, host string) *Connection {
+// if httpClient is nil a default client will be used
+func NewConnection(scheme string, host string, httpClient *http.Client) *Connection {
+	client := httpClient
+	if client == nil {
+		client = &http.Client{}
+	}
+
 	return &Connection{
 		basePath:   scheme + "://" + host + "/" + apiVersion,
-		httpClient: &http.Client{},
+		httpClient: client,
 	}
 }
 
 func (con *Connection) addHeaderToRequest(request *http.Request) {
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("Accept", "application/json")
+
 }
 
 func (con *Connection) addURLParametersToRequest(request *http.Request, parameters map[string]string) {

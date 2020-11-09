@@ -7,6 +7,7 @@ require (
 	github.com/google/go-cmp v0.5.1 // indirect
 	github.com/semi-technologies/weaviate v0.0.0-20200928095915-ba2119e5fb4a
 	github.com/stretchr/testify v1.6.1
+	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
 )
 
 replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.0.0
