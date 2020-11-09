@@ -36,6 +36,8 @@ type AggregateBuilder struct {
 	semanticKind semantics.Kind
 	fields string
 	className string
+	withGroupByClause bool
+	groupByClausePropertyName string
 }
 
 // WithFields that should be included in the aggregation query e.g. `meta{count}`
@@ -50,6 +52,14 @@ func (ab *AggregateBuilder) WithClassName(name string) *AggregateBuilder {
 	return ab
 }
 
+// WithGroupBy adds the group by property clause as the filter.
+//  The group by value/path clause still needs to be set in the WithFields field.
+func (ab *AggregateBuilder) WithGroupBy(propertyName string) *AggregateBuilder {
+	ab.withGroupByClause = true
+	ab.groupByClausePropertyName = propertyName
+	return ab
+}
+
 // Do execute the aggregation query
 func (ab *AggregateBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, ab.connection, ab.build())
@@ -58,5 +68,9 @@ func (ab *AggregateBuilder) Do(ctx context.Context) (*models.GraphQLResponse, er
 // build the query string
 func (ab *AggregateBuilder) build() string {
 	semanticKind := strings.Title(string(ab.semanticKind))
-	return 	fmt.Sprintf("{Aggregate{%v{%v{%v}}}}", semanticKind, ab.className, ab.fields)
+	filter := ""
+	if ab.withGroupByClause {
+		filter = fmt.Sprintf(`(groupBy: "%v")`, ab.groupByClausePropertyName)
+	}
+	return 	fmt.Sprintf(`{Aggregate{%v{%v%v{%v}}}}`, semanticKind, ab.className, filter, ab.fields)
 }
