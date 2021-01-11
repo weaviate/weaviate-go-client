@@ -3,10 +3,11 @@ package data
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
-	"net/http"
 )
 
 // Deleter builder to delete a data object
@@ -31,7 +32,7 @@ func (deleter *Deleter) WithKind(semanticKind semantics.Kind) *Deleter {
 
 // Do delete the specified data object from weaviate
 func (deleter *Deleter) Do(ctx context.Context) error {
-	path := fmt.Sprintf("/%v/%v", deleter.semanticKind, deleter.uuid)
+	path := fmt.Sprintf("/objects/%v", deleter.uuid)
 	responseData, err := deleter.connection.RunREST(ctx, path, http.MethodDelete, nil)
 	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 204)
 }

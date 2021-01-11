@@ -2,19 +2,19 @@ package graphql
 
 import (
 	"context"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
+	"github.com/stretchr/testify/assert"
 )
 
 // MockRunREST for testing
 type MockRunREST struct {
-	ArgPath string
-	ArgRestMethod string
-	ArgRequestBody interface{}
+	ArgPath            string
+	ArgRestMethod      string
+	ArgRequestBody     interface{}
 	ReturnResponseData *connection.ResponseData
-	ReturnError error
+	ReturnError        error
 }
 
 // RunREST store all arguments in mock and return response as defined in mock struct
@@ -25,7 +25,6 @@ func (mrr *MockRunREST) RunREST(ctx context.Context, path string, restMethod str
 	return mrr.ReturnResponseData, mrr.ReturnError
 }
 
-
 func TestQueryBuilder(t *testing.T) {
 
 	t.Run("Simple Get", func(t *testing.T) {
@@ -33,12 +32,11 @@ func TestQueryBuilder(t *testing.T) {
 
 		builder := GetBuilder{
 			connection: conMock,
-			semanticKind: semantics.Things,
 		}
 
 		query := builder.WithClassName("Pizza").WithFields("name").build()
 
-		expected := "{Get {Things {Pizza  {name}}}}"
+		expected := "{Get {Pizza  {name}}}"
 		assert.Equal(t, expected, query)
 	})
 
@@ -47,12 +45,11 @@ func TestQueryBuilder(t *testing.T) {
 
 		builder := GetBuilder{
 			connection: conMock,
-			semanticKind: semantics.Things,
 		}
 
 		query := builder.WithClassName("Pizza").WithFields("name description").build()
 
-		expected := "{Get {Things {Pizza  {name description}}}}"
+		expected := "{Get {Pizza  {name description}}}"
 		assert.Equal(t, expected, query)
 	})
 
@@ -61,17 +58,16 @@ func TestQueryBuilder(t *testing.T) {
 
 		builder := GetBuilder{
 			connection: conMock,
-			semanticKind: semantics.Things,
 		}
 
 		query := builder.WithClassName("Pizza").WithFields("name").WithWhere(`{path: ["name"] operator: Equal valueString: "Hawaii" }`).build()
 
-		expected := `{Get {Things {Pizza (where: {path: ["name"] operator: Equal valueString: "Hawaii" }) {name}}}}`
+		expected := `{Get {Pizza (where: {path: ["name"] operator: Equal valueString: "Hawaii" }) {name}}}`
 		assert.Equal(t, expected, query)
 
 		query = builder.WithClassName("Pizza").WithFields("name").WithWhere(`{operator: Or operands: [{path: ["name"] operator: Equal valueString: "Hawaii"}, {path: ["name"] operator: Equal valueString: "Doener"}]}`).build()
 
-		expected = `{Get {Things {Pizza (where: {operator: Or operands: [{path: ["name"] operator: Equal valueString: "Hawaii"}, {path: ["name"] operator: Equal valueString: "Doener"}]}) {name}}}}`
+		expected = `{Get {Pizza (where: {operator: Or operands: [{path: ["name"] operator: Equal valueString: "Hawaii"}, {path: ["name"] operator: Equal valueString: "Doener"}]}) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -80,13 +76,12 @@ func TestQueryBuilder(t *testing.T) {
 
 		builder := GetBuilder{
 			connection:           conMock,
-			semanticKind:         semantics.Things,
 			includesFilterClause: false,
 		}
 
 		query := builder.WithClassName("Pizza").WithFields("name").WithLimit(2).build()
 
-		expected := "{Get {Things {Pizza (limit: 2) {name}}}}"
+		expected := "{Get {Pizza (limit: 2) {name}}}"
 		assert.Equal(t, expected, query)
 	})
 
@@ -95,13 +90,12 @@ func TestQueryBuilder(t *testing.T) {
 
 		builder := GetBuilder{
 			connection:           conMock,
-			semanticKind:         semantics.Things,
 			includesFilterClause: false,
 		}
 
-		query := builder.WithClassName("Pizza").WithFields("name").WithExplore(`{concepts: "good"}`).build()
+		query := builder.WithClassName("Pizza").WithFields("name").WithNearText(`{concepts: "good"}`).build()
 
-		expected := `{Get {Things {Pizza (explore: {concepts: "good"}) {name}}}}`
+		expected := `{Get {Pizza (nearText: {concepts: "good"}) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -110,13 +104,12 @@ func TestQueryBuilder(t *testing.T) {
 
 		builder := GetBuilder{
 			connection:           conMock,
-			semanticKind:         semantics.Things,
 			includesFilterClause: false,
 		}
 
 		query := builder.WithClassName("Pizza").WithFields("name").WithGroup(`{type: closest force: 0.4}`).build()
 
-		expected := `{Get {Things {Pizza (group: {type: closest force: 0.4}) {name}}}}`
+		expected := `{Get {Pizza (group: {type: closest force: 0.4}) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -125,13 +118,12 @@ func TestQueryBuilder(t *testing.T) {
 
 		builder := GetBuilder{
 			connection:           conMock,
-			semanticKind:         semantics.Things,
 			includesFilterClause: false,
 		}
 
-		query := builder.WithClassName("Pizza").WithFields("name").WithExplore(`{concepts: "good"}`).WithLimit(2).WithWhere(`{path: ["name"] operator: Equal valueString: "Hawaii"}`).build()
+		query := builder.WithClassName("Pizza").WithFields("name").WithNearText(`{concepts: "good"}`).WithLimit(2).WithWhere(`{path: ["name"] operator: Equal valueString: "Hawaii"}`).build()
 
-		expected := `{Get {Things {Pizza (where: {path: ["name"] operator: Equal valueString: "Hawaii"}, explore: {concepts: "good"}, limit: 2) {name}}}}`
+		expected := `{Get {Pizza (where: {path: ["name"] operator: Equal valueString: "Hawaii"}, nearText: {concepts: "good"}, limit: 2) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -139,7 +131,6 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 		builder := GetBuilder{
 			connection:           conMock,
-			semanticKind:         semantics.Things,
 			includesFilterClause: false,
 		}
 		query := builder.build()

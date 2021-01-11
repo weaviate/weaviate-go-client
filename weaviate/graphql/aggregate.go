@@ -3,10 +3,10 @@ package graphql
 import (
 	"context"
 	"fmt"
+
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
-	"strings"
 )
 
 // Aggregate allows the building of an aggregation query
@@ -14,29 +14,21 @@ type Aggregate struct {
 	connection *connection.Connection
 }
 
-// Things aggregate things
-func (a *Aggregate) Things() *AggregateBuilder {
+// Objects aggregate objects
+func (a *Aggregate) Objects() *AggregateBuilder {
 	return &AggregateBuilder{
 		connection:   a.connection,
-		semanticKind: semantics.Things,
-	}
-}
-
-// Actions aggregate actions
-func (a *Aggregate) Actions() *AggregateBuilder {
-	return &AggregateBuilder{
-		connection:   a.connection,
-		semanticKind: semantics.Actions,
+		semanticKind: semantics.Objects,
 	}
 }
 
 // AggregateBuilder for the aggregate GraphQL query string
 type AggregateBuilder struct {
-	connection rest
-	semanticKind semantics.Kind
-	fields string
-	className string
-	withGroupByClause bool
+	connection                rest
+	semanticKind              semantics.Kind
+	fields                    string
+	className                 string
+	withGroupByClause         bool
 	groupByClausePropertyName string
 }
 
@@ -67,10 +59,9 @@ func (ab *AggregateBuilder) Do(ctx context.Context) (*models.GraphQLResponse, er
 
 // build the query string
 func (ab *AggregateBuilder) build() string {
-	semanticKind := strings.Title(string(ab.semanticKind))
 	filter := ""
 	if ab.withGroupByClause {
 		filter = fmt.Sprintf(`(groupBy: "%v")`, ab.groupByClausePropertyName)
 	}
-	return 	fmt.Sprintf(`{Aggregate{%v{%v%v{%v}}}}`, semanticKind, ab.className, filter, ab.fields)
+	return fmt.Sprintf(`{Aggregate{%v%v{%v}}}`, ab.className, filter, ab.fields)
 }

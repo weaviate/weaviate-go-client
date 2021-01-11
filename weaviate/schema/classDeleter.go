@@ -3,10 +3,11 @@ package schema
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
-	"net/http"
 )
 
 // ClassDeleter builder to remove a class from weaviate
@@ -31,7 +32,7 @@ func (cd *ClassDeleter) WithKind(semanticKind semantics.Kind) *ClassDeleter {
 
 // Do delete the class from the weaviate schema
 func (cd *ClassDeleter) Do(ctx context.Context) error {
-	path := fmt.Sprintf("/schema/%v/%v", cd.semanticKind, cd.className)
+	path := fmt.Sprintf("/schema/%v", cd.className)
 	responseData, err := cd.connection.RunREST(ctx, path, http.MethodDelete, nil)
 	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }

@@ -16,16 +16,9 @@ func New(con *connection.Connection) *API {
 	return &API{connection: con}
 }
 
-// ThingsBatcher get a builder to create things in a batch
-func (batch *API) ThingsBatcher() *ThingsBatcher {
-	return &ThingsBatcher{
-		connection: batch.connection,
-	}
-}
-
-// ActionsBatcher get a builder to create actions in a batch
-func (batch *API) ActionsBatcher() *ActionsBatcher {
-	return &ActionsBatcher{
+// ObjectsBatcher get a builder to create objects in a batch
+func (batch *API) ObjectsBatcher() *ObjectsBatcher {
+	return &ObjectsBatcher{
 		connection: batch.connection,
 	}
 }
@@ -34,8 +27,8 @@ func (batch *API) ActionsBatcher() *ActionsBatcher {
 func (batch *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 	return &ReferencePayloadBuilder{
 		connection:       batch.connection,
-		fromSemanticKind: semantics.Things,
-		toSemanticKind:   semantics.Things,
+		fromSemanticKind: semantics.Objects,
+		toSemanticKind:   semantics.Objects,
 	}
 }
 

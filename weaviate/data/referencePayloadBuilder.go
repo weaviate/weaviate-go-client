@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
@@ -31,7 +32,7 @@ func (rpb *ReferencePayloadBuilder) WithKind(semanticKind semantics.Kind) *Refer
 
 // Payload to reference the in the builder specified data object
 func (rpb *ReferencePayloadBuilder) Payload() *models.SingleRef {
-	beacon := fmt.Sprintf("weaviate://localhost/%v/%v", string(rpb.semanticKind), rpb.uuid)
+	beacon := fmt.Sprintf("weaviate://localhost/%v", rpb.uuid)
 	ref := &models.SingleRef{
 		Beacon: strfmt.URI(beacon),
 	}

@@ -24,7 +24,7 @@ func (schema *API) Getter() *Getter {
 func (schema *API) ClassCreator() *ClassCreator {
 	return &ClassCreator{
 		connection:   schema.connection,
-		semanticKind: semantics.Things, // Set the default
+		semanticKind: semantics.Objects, // Set the default
 	}
 }
 
@@ -32,7 +32,7 @@ func (schema *API) ClassCreator() *ClassCreator {
 func (schema *API) ClassDeleter() *ClassDeleter {
 	return &ClassDeleter{
 		connection:   schema.connection,
-		semanticKind: semantics.Things,
+		semanticKind: semantics.Objects,
 	}
 }
 
@@ -48,6 +48,6 @@ func (schema *API) AllDeleter() *AllDeleter {
 func (schema *API) PropertyCreator() *PropertyCreator {
 	return &PropertyCreator{
 		connection:   schema.connection,
-		semanticKind: semantics.Things,
+		semanticKind: semantics.Objects,
 	}
 }

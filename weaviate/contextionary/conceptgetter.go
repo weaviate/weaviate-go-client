@@ -3,10 +3,11 @@ package contextionary
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
+
+	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
+	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // ConceptGetter builder to get weaviate concpets
@@ -23,7 +24,7 @@ func (cg *ConceptGetter) WithConcept(concept string) *ConceptGetter {
 
 // Do get the concept
 func (cg *ConceptGetter) Do(ctx context.Context) (*models.C11yWordsResponse, error) {
-	path := fmt.Sprintf("/c11y/concepts/%v", cg.concept)
+	path := fmt.Sprintf("/modules/text2vec-contextionary/concepts/%v", cg.concept)
 	responseData, responseErr := cg.connection.RunREST(ctx, path, http.MethodGet, nil)
 	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {

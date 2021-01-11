@@ -2,16 +2,16 @@ package schema
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate/entities/models"
-	"net/http"
 )
 
 // Dump Contains all semantic types and respective classes of the schema
 type Dump struct {
-	Things  *models.Schema `json:"things"`
-	Actions *models.Schema `json:"actions"`
+	models.Schema
 }
 
 // Getter builder to get the current schema loaded in weaviate

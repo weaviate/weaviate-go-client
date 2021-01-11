@@ -3,12 +3,13 @@ package data
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
-	"net/http"
 )
 
 // Validator builder object to validate a class
@@ -48,23 +49,12 @@ func (validator *Validator) WithKind(semanticKind semantics.Kind) *Validator {
 // Do validate the data object specified in the builder
 // Will return an error if the object is not valid or if there is a different error
 func (validator *Validator) Do(ctx context.Context) error {
-	path := fmt.Sprintf("/%v/validate", string(validator.semanticKind))
-	var responseData *connection.ResponseData
-	var err error
-	if validator.semanticKind == semantics.Things {
-		thing := models.Thing{
-			Class:  validator.className,
-			ID:     strfmt.UUID(validator.uuid),
-			Schema: validator.propertySchema,
-		}
-		responseData, err = validator.connection.RunREST(ctx, path, http.MethodPost, thing)
-	} else {
-		action := models.Action{
-			Class:  validator.className,
-			ID:     strfmt.UUID(validator.uuid),
-			Schema: validator.propertySchema,
-		}
-		responseData, err = validator.connection.RunREST(ctx, path, http.MethodPost, action)
+	path := fmt.Sprintf("/objects/validate")
+	object := models.Object{
+		Class:      validator.className,
+		ID:         strfmt.UUID(validator.uuid),
+		Properties: validator.propertySchema,
 	}
+	responseData, err := validator.connection.RunREST(ctx, path, http.MethodPost, object)
 	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }

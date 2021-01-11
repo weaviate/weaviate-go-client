@@ -3,11 +3,12 @@ package data
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
-	"net/http"
 )
 
 // ReferenceDeleter builder to remove a reference from a data object
@@ -46,7 +47,7 @@ func (rr *ReferenceDeleter) WithReference(referencePayload *models.SingleRef) *R
 
 // Do remove the reference defined by the payload set in this builder to the property and object defined in this builder
 func (rr *ReferenceDeleter) Do(ctx context.Context) error {
-	path := fmt.Sprintf("/%v/%v/references/%v", string(rr.semanticKind), rr.uuid, rr.referenceProperty)
+	path := fmt.Sprintf("/objects/%v/references/%v", rr.uuid, rr.referenceProperty)
 	responseData, responseErr := rr.connection.RunREST(ctx, path, http.MethodDelete, *rr.referencePayload)
 	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 204)
 }

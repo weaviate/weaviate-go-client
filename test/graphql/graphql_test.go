@@ -3,11 +3,12 @@ package graphql
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/graphql"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestGraphQL_integration(t *testing.T) {
@@ -24,14 +25,12 @@ func TestGraphQL_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		resultSet, gqlErr := client.GraphQL().Get().Things().WithClassName("Pizza").WithFields("name").Do(context.Background())
+		resultSet, gqlErr := client.GraphQL().Get().Objects().WithClassName("Pizza").WithFields("name").Do(context.Background())
 		assert.Nil(t, gqlErr)
 
 		get := resultSet.Data["Get"].(map[string]interface{})
-		things := get["Things"].(map[string]interface{})
-		pizza := things["Pizza"].([]interface{})
+		pizza := get["Pizza"].([]interface{})
 		assert.Equal(t, 4, len(pizza))
-
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
@@ -62,7 +61,7 @@ func TestGraphQL_integration(t *testing.T) {
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		fields := "meta {count}"
-		resultSet, gqlErr := client.GraphQL().Aggregate().Things().WithFields(fields).WithClassName("Pizza").Do(context.Background())
+		resultSet, gqlErr := client.GraphQL().Aggregate().Objects().WithFields(fields).WithClassName("Pizza").Do(context.Background())
 
 		assert.Nil(t, gqlErr)
 		assert.NotNil(t, resultSet)
@@ -77,4 +76,3 @@ func TestGraphQL_integration(t *testing.T) {
 		}
 	})
 }
-

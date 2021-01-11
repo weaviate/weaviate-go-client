@@ -3,10 +3,11 @@ package contextionary
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
+
+	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
+	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // ExtensionCreator builder for the weaviate contextionary
@@ -38,6 +39,6 @@ func (ec *ExtensionCreator) Do(ctx context.Context) error {
 	if ec.extension.Weight > 1.0 || ec.extension.Weight < 0.0 {
 		return fmt.Errorf("weight must be between 0.0 and 1.0")
 	}
-	responseData, responseErr := ec.connection.RunREST(ctx, "/c11y/extensions", http.MethodPost, ec.extension)
+	responseData, responseErr := ec.connection.RunREST(ctx, "/modules/text2vec-contextionary/extensions", http.MethodPost, ec.extension)
 	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 }

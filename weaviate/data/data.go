@@ -19,23 +19,15 @@ func New(con *connection.Connection) *API {
 func (data *API) Creator() *Creator {
 	return &Creator{
 		connection:   data.connection,
-		semanticKind: semantics.Things,
+		semanticKind: semantics.Objects,
 	}
 }
 
-// ActionsGetter get a builder to get an Action
-func (data *API) ActionsGetter() *ActionsGetter {
-	return &ActionsGetter{
+// ObjectsGetter get a builder to get an Action
+func (data *API) ObjectsGetter() *ObjectsGetter {
+	return &ObjectsGetter{
 		connection:           data.connection,
-		underscoreProperties: &underscoreProperties{},
-	}
-}
-
-// ThingsGetter get a builder to get a Thing
-func (data *API) ThingsGetter() *ThingsGetter {
-	return &ThingsGetter{
-		connection:           data.connection,
-		underscoreProperties: &underscoreProperties{},
+		additionalProperties: &additionalProperties{},
 	}
 }
 
@@ -43,7 +35,7 @@ func (data *API) ThingsGetter() *ThingsGetter {
 func (data *API) Deleter() *Deleter {
 	return &Deleter{
 		connection:   data.connection,
-		semanticKind: semantics.Things,
+		semanticKind: semantics.Objects,
 	}
 }
 
@@ -51,7 +43,7 @@ func (data *API) Deleter() *Deleter {
 func (data *API) Updater() *Updater {
 	return &Updater{
 		connection:   data.connection,
-		semanticKind: semantics.Things,
+		semanticKind: semantics.Objects,
 		withMerge:    false,
 	}
 }
@@ -60,7 +52,7 @@ func (data *API) Updater() *Updater {
 func (data *API) Validator() *Validator {
 	return &Validator{
 		connection:   data.connection,
-		semanticKind: semantics.Things,
+		semanticKind: semantics.Objects,
 	}
 }
 
@@ -68,7 +60,7 @@ func (data *API) Validator() *Validator {
 func (data *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 	return &ReferencePayloadBuilder{
 		connection:   data.connection,
-		semanticKind: semantics.Things,
+		semanticKind: semantics.Objects,
 	}
 }
 
@@ -76,7 +68,7 @@ func (data *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 func (data *API) ReferenceCreator() *ReferenceCreator {
 	return &ReferenceCreator{
 		connection:   data.connection,
-		semanticKind: semantics.Things,
+		semanticKind: semantics.Objects,
 	}
 }
 
@@ -84,7 +76,7 @@ func (data *API) ReferenceCreator() *ReferenceCreator {
 func (data *API) ReferenceReplacer() *ReferenceReplacer {
 	return &ReferenceReplacer{
 		connection:   data.connection,
-		semanticKind: semantics.Things,
+		semanticKind: semantics.Objects,
 	}
 }
 
@@ -92,6 +84,6 @@ func (data *API) ReferenceReplacer() *ReferenceReplacer {
 func (data *API) ReferenceDeleter() *ReferenceDeleter {
 	return &ReferenceDeleter{
 		connection:   data.connection,
-		semanticKind: semantics.Things,
+		semanticKind: semantics.Objects,
 	}
 }

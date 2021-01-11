@@ -3,12 +3,13 @@ package data
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
-	"net/http"
 )
 
 // Updater builder to update property values in a data object
@@ -54,7 +55,7 @@ func (updater *Updater) WithMerge() *Updater {
 
 // Do update the data object specified in the builder
 func (updater *Updater) Do(ctx context.Context) error {
-	path := fmt.Sprintf("/%v/%v", string(updater.semanticKind), updater.uuid)
+	path := fmt.Sprintf("/objects/%v", updater.uuid)
 	httpMethod := http.MethodPut
 	expectedStatuscode := 200
 	if updater.withMerge {
@@ -66,18 +67,10 @@ func (updater *Updater) Do(ctx context.Context) error {
 }
 
 func (updater *Updater) runUpdate(ctx context.Context, path string, httpMethod string) (*connection.ResponseData, error) {
-	if updater.semanticKind == semantics.Things {
-		thing := models.Thing{
-			Class:  updater.className,
-			ID:     strfmt.UUID(updater.uuid),
-			Schema: updater.propertySchema,
-		}
-		return updater.connection.RunREST(ctx, path, httpMethod, thing)
+	object := models.Object{
+		Class:      updater.className,
+		ID:         strfmt.UUID(updater.uuid),
+		Properties: updater.propertySchema,
 	}
-	action := models.Action{
-		Class:  updater.className,
-		ID:     strfmt.UUID(updater.uuid),
-		Schema: updater.propertySchema,
-	}
-	return updater.connection.RunREST(ctx, path, httpMethod, action)
+	return updater.connection.RunREST(ctx, path, httpMethod, object)
 }

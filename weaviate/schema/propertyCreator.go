@@ -3,11 +3,12 @@ package schema
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
-	"net/http"
 )
 
 // PropertyCreator builder to create a property within a schema class
@@ -39,7 +40,7 @@ func (pc *PropertyCreator) WithKind(semanticKind semantics.Kind) *PropertyCreato
 
 // Do create the property on the class specified in the builder
 func (pc *PropertyCreator) Do(ctx context.Context) error {
-	path := fmt.Sprintf("/schema/%v/%v/properties", string(pc.semanticKind), pc.className)
+	path := fmt.Sprintf("/schema/%v/properties", pc.className)
 	responseData, err := pc.connection.RunREST(ctx, path, http.MethodPost, pc.property)
 	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }

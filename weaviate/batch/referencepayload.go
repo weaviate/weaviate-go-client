@@ -2,6 +2,7 @@ package batch
 
 import (
 	"fmt"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
@@ -57,8 +58,8 @@ func (rpb *ReferencePayloadBuilder) WithToKind(semanticKind semantics.Kind) *Ref
 
 // Payload to be used in a batch request
 func (rpb *ReferencePayloadBuilder) Payload() *models.BatchReference {
-	from := fmt.Sprintf("weaviate://localhost/%v/%v/%v/%v", string(rpb.fromSemanticKind), rpb.fromClassName, rpb.fromUUID, rpb.fromPropertyName)
-	to := fmt.Sprintf("weaviate://localhost/%v/%v", string(rpb.toSemanticKind), rpb.toUUID)
+	from := fmt.Sprintf("weaviate://localhost/%v/%v/%v", rpb.fromClassName, rpb.fromUUID, rpb.fromPropertyName)
+	to := fmt.Sprintf("weaviate://localhost/%v", rpb.toUUID)
 
 	return &models.BatchReference{
 		From: strfmt.URI(from),

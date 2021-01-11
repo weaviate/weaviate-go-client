@@ -3,11 +3,12 @@ package data
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
-	"net/http"
 )
 
 // ReferenceCreator builder to add a reference to the property of a data object
@@ -47,7 +48,7 @@ func (rc *ReferenceCreator) WithReference(referencePayload *models.SingleRef) *R
 
 // Do add the reference specified by the set payload to the object and property specified in the builder.
 func (rc *ReferenceCreator) Do(ctx context.Context) error {
-	path := fmt.Sprintf("/%v/%v/references/%v", string(rc.semanticKind), rc.uuid, rc.referenceProperty)
+	path := fmt.Sprintf("/objects/%v/references/%v", rc.uuid, rc.referenceProperty)
 	responseData, responseErr := rc.connection.RunREST(ctx, path, http.MethodPost, *rc.referencePayload)
 	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 }

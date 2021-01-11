@@ -3,18 +3,18 @@ package data
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
-	"net/http"
 )
 
 // ObjectWrapper wrapping the result of a creation for both actions and things
 type ObjectWrapper struct {
-	Thing *models.Thing
-	Action *models.Action
+	Object *models.Object
 }
 
 // Creator builder to create a data object in weaviate
@@ -54,64 +54,33 @@ func (creator *Creator) WithKind(semanticKind semantics.Kind) *Creator {
 
 // Do create the data object as specified in the builder
 func (creator *Creator) Do(ctx context.Context) (*ObjectWrapper, error) {
-	path := fmt.Sprintf("/%v", string(creator.semanticKind))
-
 	var err error
 	var responseData *connection.ResponseData
-	if creator.semanticKind == semantics.Actions {
-		action, _ := creator.PayloadAction()
-		responseData, err = creator.connection.RunREST(ctx, path, http.MethodPost, action)
-	} else {
-		thing, _ := creator.PayloadThing()
-		responseData, err = creator.connection.RunREST(ctx, path, http.MethodPost, thing)
-	}
+	object, _ := creator.PayloadObject()
+	responseData, err = creator.connection.RunREST(ctx, "/objects", http.MethodPost, object)
 	respErr := except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 	if respErr != nil {
 		return nil, respErr
 	}
 
-	if creator.semanticKind == semantics.Actions {
-		var resultAction models.Action
-		parseErr := responseData.DecodeBodyIntoTarget(&resultAction)
-		return &ObjectWrapper{
-			Thing:  nil,
-			Action: &resultAction,
-		}, parseErr
-	}
-	var resultThing models.Thing
-	parseErr := responseData.DecodeBodyIntoTarget(&resultThing)
+	var resultObject models.Object
+	parseErr := responseData.DecodeBodyIntoTarget(&resultObject)
 	return &ObjectWrapper{
-		Thing:  &resultThing,
-		Action: nil,
+		Object: &resultObject,
 	}, parseErr
 }
 
-// PayloadThing returns the data object payload which may be used in a batch request
-func (creator *Creator) PayloadThing() (*models.Thing, error) {
-	if creator.semanticKind != semantics.Things {
+// PayloadObject returns the data object payload which may be used in a batch request
+func (creator *Creator) PayloadObject() (*models.Object, error) {
+	if creator.semanticKind != semantics.Objects {
 		return nil, except.NewDerivedWeaviateClientError(fmt.Errorf("builder has semantic kind action configured; please set the correct semantic type"))
 	}
-	thing := models.Thing{
-		Class:  creator.className,
-		Schema: creator.propertySchema,
+	object := models.Object{
+		Class:      creator.className,
+		Properties: creator.propertySchema,
 	}
 	if creator.uuid != "" {
-		thing.ID = strfmt.UUID(creator.uuid)
+		object.ID = strfmt.UUID(creator.uuid)
 	}
-	return &thing, nil
-}
-
-// PayloadAction returns the data object payload which may be used in a batch request
-func (creator *Creator) PayloadAction() (*models.Action, error) {
-	if creator.semanticKind != semantics.Actions {
-		return nil, except.NewDerivedWeaviateClientError(fmt.Errorf("builder has semantic kind thing configured; Please set the correct semantic type"))
-	}
-	action := models.Action{
-		Class:  creator.className,
-		Schema: creator.propertySchema,
-	}
-	if creator.uuid != "" {
-		action.ID = strfmt.UUID(creator.uuid)
-	}
-	return &action, nil
+	return &object, nil
 }

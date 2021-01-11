@@ -2,12 +2,13 @@ package classifications
 
 import (
 	"context"
+	"net/http"
+	"time"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate/entities/models"
-	"net/http"
-	"time"
 )
 
 // Scheduler builder to schedule a classification
@@ -21,7 +22,7 @@ type Scheduler struct {
 	withSourceWhereFilter      *models.WhereFilter
 	withTrainingSetWhereFilter *models.WhereFilter
 	withTargetWhereFilter      *models.WhereFilter
-	withWaitForCompletion bool
+	withWaitForCompletion      bool
 }
 
 // WithType of classification e.g. knn or contextual
@@ -78,6 +79,7 @@ func (s *Scheduler) WithWaitForCompletion() *Scheduler {
 	return s
 }
 
+// TODO: where
 // Do schedule the classification in weaviate
 func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
 	classType := string(s.classificationType)
@@ -85,14 +87,15 @@ func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
 		BasedOnProperties:  s.withBasedOnProperties,
 		Class:              s.withClassName,
 		ClassifyProperties: s.withClassifyProperties,
-		SourceWhere:        s.withSourceWhereFilter,
-		TargetWhere:        s.withTargetWhereFilter,
-		TrainingSetWhere:   s.withTrainingSetWhereFilter,
-		Type:               &classType,
+		// SourceWhere:        s.withSourceWhereFilter,
+		// TargetWhere:        s.withTargetWhereFilter,
+		// TrainingSetWhere:   s.withTrainingSetWhereFilter,
+		Type: classType,
 	}
-	if s.classificationType == KNN {
-		config.K = &s.withK
-	}
+	// TODO: fix
+	// if s.classificationType == KNN {
+	// 	config.K = &s.withK
+	// }
 	responseData, responseErr := s.connection.RunREST(ctx, "/classifications", http.MethodPost, config)
 	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 201)
 	if err != nil {
