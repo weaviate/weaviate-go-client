@@ -3,24 +3,23 @@ package graphql
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
+
 	"github.com/semi-technologies/weaviate/entities/models"
-	"strings"
 )
 
 // GetBuilder for GraphQL
 type GetBuilder struct {
 	connection rest
-	semanticKind semantics.Kind
-	className string
+	className  string
 	withFields string
 
 	includesFilterClause bool // true if brackets behind class is needed
 	withWhereFilter      string
 	includesLimit        bool
 	limit                int
-	withExploreFilter string
-	withGroupFilter string
+	withNearTextFilter   string
+	withNearVectorFilter string
+	withGroupFilter      string
 }
 
 // WithClassName that should be queried
@@ -50,10 +49,17 @@ func (gb *GetBuilder) WithLimit(limit int) *GetBuilder {
 	return gb
 }
 
-// WithExplore clause to find close objects
-func (gb *GetBuilder) WithExplore(explore string) *GetBuilder {
+// WithNearText clause to find close objects
+func (gb *GetBuilder) WithNearText(nearText string) *GetBuilder {
 	gb.includesFilterClause = true
-	gb.withExploreFilter = explore
+	gb.withNearTextFilter = nearText
+	return gb
+}
+
+// WithNearVector clause to find close objects
+func (gb *GetBuilder) WithNearVector(nearVector string) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.withNearVectorFilter = nearVector
 	return gb
 }
 
@@ -71,14 +77,12 @@ func (gb *GetBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 
 // build the GraphQL query string (not needed when Do is executed)
 func (gb *GetBuilder) build() string {
-	semanticKind := strings.Title(string(gb.semanticKind))
-
 	filterClause := ""
 	if gb.includesFilterClause {
 		filterClause = gb.createFilterClause()
 	}
 
-	query := fmt.Sprintf("{Get {%v {%v %v {%v}}}}", semanticKind, gb.className, filterClause, gb.withFields)
+	query := fmt.Sprintf("{Get {%v %v {%v}}}", gb.className, filterClause, gb.withFields)
 
 	return query
 }
@@ -88,11 +92,18 @@ func (gb *GetBuilder) createFilterClause() string {
 	if len(gb.withWhereFilter) > 0 {
 		clause += fmt.Sprintf("where: %v", gb.withWhereFilter)
 	}
-	if len(gb.withExploreFilter) > 0 {
+	if len(gb.withNearTextFilter) > 0 {
 		if string(clause[len(clause)-1]) == "(" {
-			clause += fmt.Sprintf("explore: %v", gb.withExploreFilter)
+			clause += fmt.Sprintf("nearText: %v", gb.withNearTextFilter)
 		} else {
-			clause += fmt.Sprintf(", explore: %v", gb.withExploreFilter)
+			clause += fmt.Sprintf(", nearText: %v", gb.withNearTextFilter)
+		}
+	}
+	if len(gb.withNearVectorFilter) > 0 {
+		if string(clause[len(clause)-1]) == "(" {
+			clause += fmt.Sprintf("nearVector: %v", gb.withNearVectorFilter)
+		} else {
+			clause += fmt.Sprintf(", nearVector: %v", gb.withNearVectorFilter)
 		}
 	}
 	if len(gb.withGroupFilter) > 0 {
@@ -112,4 +123,3 @@ func (gb *GetBuilder) createFilterClause() string {
 	clause += ")"
 	return clause
 }
-

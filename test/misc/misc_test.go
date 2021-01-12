@@ -3,11 +3,12 @@ package misc
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
 	"github.com/semi-technologies/weaviate-go-client/weaviate"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestMisc_integration(t *testing.T) {
@@ -52,7 +53,16 @@ func TestMisc_integration(t *testing.T) {
 		meta, err := client.Misc().MetaGetter().Do(context.Background())
 		assert.Nil(t, err)
 		assert.NotEmpty(t, meta.Version)
-		assert.NotEmpty(t, meta.ContextionaryVersion)
+		modules, modulesOK := meta.Modules.(map[string]interface{})
+		assert.True(t, modulesOK)
+		text2vecContextionary := modules["text2vec-contextionary"]
+		assert.NotEmpty(t, text2vecContextionary)
+		text2vecContextionaryConfig, ok := text2vecContextionary.(map[string]interface{})
+		assert.True(t, ok)
+		text2vecContextionaryVersion := text2vecContextionaryConfig["version"]
+		assert.NotEmpty(t, text2vecContextionaryVersion)
+		text2vecContextionaryWordCount := text2vecContextionaryConfig["wordCount"]
+		assert.NotEmpty(t, text2vecContextionaryWordCount)
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {

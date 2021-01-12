@@ -3,13 +3,12 @@ package data
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/fault"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestData_integration(t *testing.T) {
@@ -37,26 +36,35 @@ func TestData_integration(t *testing.T) {
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
 
-		wrapperT, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		wrapperT, errCreateT := client.Data().Creator().
+			WithClassName("Pizza").
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			WithProperties(propertySchemaT).
+			Do(context.Background())
 		assert.Nil(t, errCreateT)
-		assert.NotNil(t, wrapperT.Thing)
-		assert.Nil(t, wrapperT.Action)
-		wrapperA, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		assert.NotNil(t, wrapperT.Object)
+		wrapperA, errCreateA := client.Data().Creator().
+			WithClassName("Soup").
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			WithProperties(propertySchemaA).
+			Do(context.Background())
 		assert.Nil(t, errCreateA)
-		assert.Nil(t, wrapperA.Thing)
-		assert.NotNil(t, wrapperA.Action)
+		assert.NotNil(t, wrapperA.Object)
 
-		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
-		objectT, objErrT := client.Data().ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		objectT, objErrT := client.Data().ObjectsGetter().
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			Do(context.Background())
 		assert.Nil(t, objErrT)
-		objectA, objErrA := client.Data().ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		objectA, objErrA := client.Data().ObjectsGetter().
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			Do(context.Background())
 		assert.Nil(t, objErrA)
 
 		assert.Equal(t, "Pizza", objectT[0].Class)
-		valuesT := objectT[0].Schema.(map[string]interface{})
+		valuesT := objectT[0].Properties.(map[string]interface{})
 		assert.Equal(t, "Hawaii", valuesT["name"])
 		assert.Equal(t, "Soup", objectA[0].Class)
-		valuesA := objectA[0].Schema.(map[string]interface{})
+		valuesA := objectA[0].Properties.(map[string]interface{})
 		assert.Equal(t, "ChickenSoup", valuesA["name"])
 
 		testsuit.CleanUpWeaviate(t, client)
@@ -66,40 +74,35 @@ func TestData_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
-		_, errCreate := client.Data().Creator().WithClassName("Pizza").WithSchema(map[string]string{
+		_, errCreate := client.Data().Creator().WithClassName("Pizza").WithProperties(map[string]string{
 			"name":        "Margherita",
 			"description": "plain",
 		}).Do(context.Background())
 		assert.Nil(t, errCreate)
-		_, errCreate = client.Data().Creator().WithClassName("Pizza").WithSchema(map[string]string{
+		_, errCreate = client.Data().Creator().WithClassName("Pizza").WithProperties(map[string]string{
 			"name":        "Pepperoni",
 			"description": "meat",
 		}).Do(context.Background())
 		assert.Nil(t, errCreate)
-		_, errCreate = client.Data().Creator().WithClassName("Soup").WithKind(semantics.Actions).WithSchema(map[string]string{
+		_, errCreate = client.Data().Creator().WithClassName("Soup").WithProperties(map[string]string{
 			"name":        "Chicken",
 			"description": "meat",
 		}).Do(context.Background())
 		assert.Nil(t, errCreate)
-		_, errCreate = client.Data().Creator().WithClassName("Soup").WithKind(semantics.Actions).WithSchema(map[string]string{
+		_, errCreate = client.Data().Creator().WithClassName("Soup").WithProperties(map[string]string{
 			"name":        "Tofu",
 			"description": "vegetarian",
 		}).Do(context.Background())
 		assert.Nil(t, errCreate)
 
-		time.Sleep(2.0 * time.Second)
-		objectT, objErrT := client.Data().ThingsGetter().Do(context.Background())
+		objectT, objErrT := client.Data().ObjectsGetter().Do(context.Background())
 		assert.Nil(t, objErrT)
-		objectA, objErrA := client.Data().ActionsGetter().Do(context.Background())
-		assert.Nil(t, objErrA)
+		assert.Equal(t, 4, len(objectT))
 
-		assert.Equal(t, 2, len(objectT))
-		assert.Equal(t, 2, len(objectA))
-
-		objectT2, objectErrT2 := client.Data().ThingsGetter().WithLimit(1).Do(context.Background())
+		objectT2, objectErrT2 := client.Data().ObjectsGetter().WithLimit(1).Do(context.Background())
 		assert.Nil(t, objectErrT2)
 		assert.Equal(t, 1, len(objectT2))
-		objectA2, objErrA2 := client.Data().ActionsGetter().WithLimit(1).Do(context.Background())
+		objectA2, objErrA2 := client.Data().ObjectsGetter().WithLimit(1).Do(context.Background())
 		assert.Nil(t, objErrA2)
 		assert.Equal(t, 1, len(objectA2))
 
@@ -119,61 +122,81 @@ func TestData_integration(t *testing.T) {
 			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		_, errCreateT := client.Data().Creator().WithClassName("Pizza").
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			WithProperties(propertySchemaT).Do(context.Background())
 		assert.Nil(t, errCreateT)
-		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		_, errCreateA := client.Data().Creator().WithClassName("Soup").
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			WithProperties(propertySchemaA).Do(context.Background())
 		assert.Nil(t, errCreateA)
 
-		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
 		// THINGS
-		objectT, objErrT := client.Data().ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		objectT, objErrT := client.Data().ObjectsGetter().
+			WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, objErrT)
-		assert.Nil(t, objectT[0].Classification)
-		assert.Nil(t, objectT[0].NearestNeighbors)
-		assert.Nil(t, objectT[0].FeatureProjection)
+		assert.Nil(t, objectT[0].Additional.Classification)
+		assert.Nil(t, objectT[0].Additional.NearestNeighbors)
+		assert.Nil(t, objectT[0].Additional.FeatureProjection)
 		assert.Nil(t, objectT[0].Vector)
-		assert.Nil(t, objectT[0].Interpretation)
+		assert.Nil(t, objectT[0].Additional.Interpretation)
 
-		objectT, objErrT = client.Data().ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").WithUnderscoreInterpretation().Do(context.Background())
+		objectT, objErrT = client.Data().ObjectsGetter().
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			WithAdditional("interpretation").Do(context.Background())
 		assert.Nil(t, objErrT)
-		assert.Nil(t, objectT[0].Classification)
-		assert.Nil(t, objectT[0].NearestNeighbors)
-		assert.Nil(t, objectT[0].FeatureProjection)
+		assert.Nil(t, objectT[0].Additional.Classification)
+		assert.Nil(t, objectT[0].Additional.NearestNeighbors)
+		assert.Nil(t, objectT[0].Additional.FeatureProjection)
 		assert.Nil(t, objectT[0].Vector)
-		assert.NotNil(t, objectT[0].Interpretation)
+		assert.NotNil(t, objectT[0].Additional.Interpretation)
 
-		objectT, objErrT = client.Data().ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").WithUnderscoreInterpretation().WithUnderscoreClassification().WithUnderscoreNearestNeighbors().WithUnderscoreVector().Do(context.Background())
+		objectT, objErrT = client.Data().ObjectsGetter().
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			WithAdditional("interpretation").
+			WithAdditional("classification").
+			WithAdditional("nearestNeighbors").
+			WithAdditional("vector").Do(context.Background())
 		assert.Nil(t, objErrT)
-		assert.Nil(t, objectT[0].Classification) // Is nil because no classifications was executed
-		assert.NotNil(t, objectT[0].NearestNeighbors)
-		assert.Nil(t, objectT[0].FeatureProjection) // Is nil because feature projection is not possible on non list request
+		assert.Nil(t, objectT[0].Additional.Classification) // Is nil because no classifications was executed
+		assert.NotNil(t, objectT[0].Additional.NearestNeighbors)
+		assert.Nil(t, objectT[0].Additional.FeatureProjection) // Is nil because feature projection is not possible on non list request
 		assert.NotNil(t, objectT[0].Vector)
-		assert.NotNil(t, objectT[0].Interpretation)
+		assert.NotNil(t, objectT[0].Additional.Interpretation)
 
 		// ACTIONS
-		objectA, objErrA := client.Data().ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		objectA, objErrA := client.Data().ObjectsGetter().
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
 		assert.Nil(t, objErrA)
-		assert.Nil(t, objectA[0].Classification)
-		assert.Nil(t, objectA[0].NearestNeighbors)
-		assert.Nil(t, objectA[0].FeatureProjection)
+		assert.Nil(t, objectA[0].Additional.Classification)
+		assert.Nil(t, objectA[0].Additional.NearestNeighbors)
+		assert.Nil(t, objectA[0].Additional.FeatureProjection)
 		assert.Nil(t, objectA[0].Vector)
-		assert.Nil(t, objectA[0].Interpretation)
+		assert.Nil(t, objectA[0].Additional.Interpretation)
 
-		objectA, objErrA = client.Data().ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithUnderscoreInterpretation().Do(context.Background())
+		objectA, objErrA = client.Data().ObjectsGetter().
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			WithAdditional("interpretation").Do(context.Background())
 		assert.Nil(t, objErrA)
-		assert.Nil(t, objectA[0].Classification)
-		assert.Nil(t, objectA[0].NearestNeighbors)
-		assert.Nil(t, objectA[0].FeatureProjection)
+		assert.Nil(t, objectA[0].Additional.Classification)
+		assert.Nil(t, objectA[0].Additional.NearestNeighbors)
+		assert.Nil(t, objectA[0].Additional.FeatureProjection)
 		assert.Nil(t, objectA[0].Vector)
-		assert.NotNil(t, objectA[0].Interpretation)
+		assert.NotNil(t, objectA[0].Additional.Interpretation)
 
-		objectA, objErrA = client.Data().ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithUnderscoreInterpretation().WithUnderscoreClassification().WithUnderscoreNearestNeighbors().WithUnderscoreFeatureProjection().WithUnderscoreVector().Do(context.Background())
+		objectA, objErrA = client.Data().ObjectsGetter().
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			WithAdditional("interpretation").
+			WithAdditional("classification").
+			WithAdditional("nearestNeighbors").
+			WithAdditional("featureProjection").
+			WithAdditional("vector").Do(context.Background())
 		assert.Nil(t, objErrT)
-		assert.Nil(t, objectT[0].Classification) // Is nil because no classifications was executed
-		assert.NotNil(t, objectT[0].NearestNeighbors)
-		assert.Nil(t, objectT[0].FeatureProjection) // Is nil because feature projection is not possible on non list request
+		assert.Nil(t, objectT[0].Additional.Classification) // Is nil because no classifications was executed
+		assert.NotNil(t, objectT[0].Additional.NearestNeighbors)
+		assert.Nil(t, objectT[0].Additional.FeatureProjection) // Is nil because feature projection is not possible on non list request
 		assert.NotNil(t, objectT[0].Vector)
-		assert.NotNil(t, objectT[0].Interpretation)
+		assert.NotNil(t, objectT[0].Additional.Interpretation)
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
@@ -191,23 +214,36 @@ func TestData_integration(t *testing.T) {
 			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		_, errCreateT := client.Data().Creator().
+			WithClassName("Pizza").
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			WithProperties(propertySchemaT).
+			Do(context.Background())
 		assert.Nil(t, errCreateT)
-		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		_, errCreateA := client.Data().Creator().
+			WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			WithProperties(propertySchemaA).
+			Do(context.Background())
 		assert.Nil(t, errCreateA)
 
-		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
 		// THINGS
-		deleteErrT := client.Data().Deleter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		deleteErrT := client.Data().Deleter().
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			Do(context.Background())
 		assert.Nil(t, deleteErrT)
-		time.Sleep(2.0 * time.Second)
-		_, getErrT := client.Data().ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		_, getErrT := client.Data().ObjectsGetter().
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			Do(context.Background())
 		statusCodeErrorT := getErrT.(*fault.WeaviateClientError)
 		assert.Equal(t, 404, statusCodeErrorT.StatusCode)
 
-		deleteErrA := client.Data().Deleter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithKind(semantics.Actions).Do(context.Background())
+		deleteErrA := client.Data().Deleter().
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			Do(context.Background())
 		assert.Nil(t, deleteErrA)
-		_, getErrA := client.Data().ThingsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		_, getErrA := client.Data().ObjectsGetter().
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			Do(context.Background())
 		statusCodeErrorA := getErrA.(*fault.WeaviateClientError)
 		assert.Equal(t, 404, statusCodeErrorA.StatusCode)
 
@@ -228,36 +264,54 @@ func TestData_integration(t *testing.T) {
 			"name":        "water",
 			"description": "missing description",
 		}
-		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		_, errCreateT := client.Data().Creator().
+			WithClassName("Pizza").
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			WithProperties(propertySchemaT).
+			Do(context.Background())
 		assert.Nil(t, errCreateT)
-		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		_, errCreateA := client.Data().Creator().
+			WithClassName("Soup").
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			WithProperties(propertySchemaA).
+			Do(context.Background())
 		assert.Nil(t, errCreateA)
 
-		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
 		propertySchemaT = map[string]string{
 			"name":        "Hawaii",
 			"description": "Universally accepted to be the best pizza ever created.",
 		}
-		updateErrT := client.Data().Updater().WithID("abefd256-8574-442b-9293-9205193737ee").WithClassName("Pizza").WithSchema(propertySchemaT).Do(context.Background())
+		updateErrT := client.Data().Updater().
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			WithClassName("Pizza").
+			WithProperties(propertySchemaT).
+			Do(context.Background())
 		assert.Nil(t, updateErrT)
 
 		propertySchemaA = map[string]string{
 			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		updateErrA := client.Data().Updater().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithClassName("Soup").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		updateErrA := client.Data().Updater().
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			WithClassName("Soup").
+			WithProperties(propertySchemaA).
+			Do(context.Background())
 		assert.Nil(t, updateErrA)
-		time.Sleep(2.0 * time.Second)
 
-		things, getErrT := client.Data().ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		things, getErrT := client.Data().ObjectsGetter().
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			Do(context.Background())
 		assert.Nil(t, getErrT)
-		valuesT := things[0].Schema.(map[string]interface{})
+		valuesT := things[0].Properties.(map[string]interface{})
 		assert.Equal(t, propertySchemaT["description"], valuesT["description"])
 		assert.Equal(t, propertySchemaT["name"], valuesT["name"])
 
-		actions, getErrT := client.Data().ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		actions, getErrT := client.Data().ObjectsGetter().
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			Do(context.Background())
 		assert.Nil(t, getErrT)
-		valuesA := actions[0].Schema.(map[string]interface{})
+		valuesA := actions[0].Properties.(map[string]interface{})
 		assert.Equal(t, propertySchemaA["description"], valuesA["description"])
 		assert.Equal(t, propertySchemaA["name"], valuesA["name"])
 
@@ -278,34 +332,54 @@ func TestData_integration(t *testing.T) {
 			"name":        "ChickenSoup",
 			"description": "missing description",
 		}
-		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		_, errCreateT := client.Data().Creator().
+			WithClassName("Pizza").
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			WithProperties(propertySchemaT).
+			Do(context.Background())
 		assert.Nil(t, errCreateT)
-		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		_, errCreateA := client.Data().Creator().
+			WithClassName("Soup").
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			WithProperties(propertySchemaA).
+			Do(context.Background())
 		assert.Nil(t, errCreateA)
 
-		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
 		propertySchemaT = map[string]string{
 			"description": "Universally accepted to be the best pizza ever created.",
 		}
-		updateErrT := client.Data().Updater().WithID("abefd256-8574-442b-9293-9205193737ee").WithClassName("Pizza").WithSchema(propertySchemaT).WithMerge().Do(context.Background())
+		updateErrT := client.Data().Updater().
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			WithClassName("Pizza").
+			WithProperties(propertySchemaT).
+			WithMerge().
+			Do(context.Background())
 		assert.Nil(t, updateErrT)
 
 		propertySchemaA = map[string]string{
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		updateErrA := client.Data().Updater().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithClassName("Soup").WithSchema(propertySchemaA).WithKind(semantics.Actions).WithMerge().Do(context.Background())
+		updateErrA := client.Data().Updater().
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			WithClassName("Soup").
+			WithProperties(propertySchemaA).
+			WithMerge().
+			Do(context.Background())
 		assert.Nil(t, updateErrA)
-		time.Sleep(2.0 * time.Second)
 
-		things, getErrT := client.Data().ThingsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		things, getErrT := client.Data().ObjectsGetter().
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			Do(context.Background())
 		assert.Nil(t, getErrT)
-		valuesT := things[0].Schema.(map[string]interface{})
+		valuesT := things[0].Properties.(map[string]interface{})
 		assert.Equal(t, propertySchemaT["description"], valuesT["description"])
 		assert.Equal(t, "Hawaii", valuesT["name"])
 
-		actions, getErrT := client.Data().ActionsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		actions, getErrT := client.Data().ObjectsGetter().
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			Do(context.Background())
 		assert.Nil(t, getErrT)
-		valuesA := actions[0].Schema.(map[string]interface{})
+		valuesA := actions[0].Properties.(map[string]interface{})
 		assert.Equal(t, propertySchemaA["description"], valuesA["description"])
 		assert.Equal(t, "ChickenSoup", valuesA["name"])
 
@@ -326,18 +400,34 @@ func TestData_integration(t *testing.T) {
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
 
-		errValidateT := client.Data().Validator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		errValidateT := client.Data().Validator().
+			WithClassName("Pizza").
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			WithSchema(propertySchemaT).
+			Do(context.Background())
 		assert.Nil(t, errValidateT)
 
-		errValidateA := client.Data().Validator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		errValidateA := client.Data().Validator().
+			WithClassName("Soup").
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			WithSchema(propertySchemaA).
+			Do(context.Background())
 		assert.Nil(t, errValidateA)
 
 		propertySchemaT["test"] = "not existing property"
-		errValidateT = client.Data().Validator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		errValidateT = client.Data().Validator().
+			WithClassName("Pizza").
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			WithSchema(propertySchemaT).
+			Do(context.Background())
 		assert.NotNil(t, errValidateT)
 
 		propertySchemaA["test"] = "not existing property"
-		errValidateA = client.Data().Validator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Actions).Do(context.Background())
+		errValidateA = client.Data().Validator().
+			WithClassName("Soup").
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			WithSchema(propertySchemaA).
+			Do(context.Background())
 		assert.NotNil(t, errValidateA)
 
 		testsuit.CleanUpWeaviate(t, client)

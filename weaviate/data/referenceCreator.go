@@ -3,17 +3,16 @@ package data
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
-	"net/http"
 )
 
 // ReferenceCreator builder to add a reference to the property of a data object
 type ReferenceCreator struct {
 	connection        *connection.Connection
-	semanticKind      semantics.Kind
 	uuid              string
 	referenceProperty string
 	referencePayload  *models.SingleRef
@@ -31,13 +30,6 @@ func (rc *ReferenceCreator) WithReferenceProperty(propertyName string) *Referenc
 	return rc
 }
 
-// WithKind specifies the semantic kind that is used for the data object
-// If not called the builder defaults to `things`
-func (rc *ReferenceCreator) WithKind(semanticKind semantics.Kind) *ReferenceCreator {
-	rc.semanticKind = semanticKind
-	return rc
-}
-
 // WithReference specifies the data object that should be referenced by the in this object specified reference property
 // The payload may be created using the ReferencePayloadBuilder
 func (rc *ReferenceCreator) WithReference(referencePayload *models.SingleRef) *ReferenceCreator {
@@ -47,7 +39,7 @@ func (rc *ReferenceCreator) WithReference(referencePayload *models.SingleRef) *R
 
 // Do add the reference specified by the set payload to the object and property specified in the builder.
 func (rc *ReferenceCreator) Do(ctx context.Context) error {
-	path := fmt.Sprintf("/%v/%v/references/%v", string(rc.semanticKind), rc.uuid, rc.referenceProperty)
+	path := fmt.Sprintf("/objects/%v/references/%v", rc.uuid, rc.referenceProperty)
 	responseData, responseErr := rc.connection.RunREST(ctx, path, http.MethodPost, *rc.referencePayload)
 	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 }

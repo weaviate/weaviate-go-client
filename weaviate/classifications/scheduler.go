@@ -2,18 +2,20 @@ package classifications
 
 import (
 	"context"
+	"net/http"
+	"time"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate/entities/models"
-	"net/http"
-	"time"
+	"github.com/semi-technologies/weaviate/usecases/classification"
 )
 
 // Scheduler builder to schedule a classification
 type Scheduler struct {
 	connection                 *connection.Connection
-	classificationType         Type
+	classificationType         string
 	withClassName              string
 	withClassifyProperties     []string
 	withBasedOnProperties      []string
@@ -21,11 +23,11 @@ type Scheduler struct {
 	withSourceWhereFilter      *models.WhereFilter
 	withTrainingSetWhereFilter *models.WhereFilter
 	withTargetWhereFilter      *models.WhereFilter
-	withWaitForCompletion bool
+	withWaitForCompletion      bool
 }
 
 // WithType of classification e.g. knn or contextual
-func (s *Scheduler) WithType(classificationType Type) *Scheduler {
+func (s *Scheduler) WithType(classificationType string) *Scheduler {
 	s.classificationType = classificationType
 	return s
 }
@@ -80,18 +82,21 @@ func (s *Scheduler) WithWaitForCompletion() *Scheduler {
 
 // Do schedule the classification in weaviate
 func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
-	classType := string(s.classificationType)
 	config := models.Classification{
 		BasedOnProperties:  s.withBasedOnProperties,
 		Class:              s.withClassName,
 		ClassifyProperties: s.withClassifyProperties,
-		SourceWhere:        s.withSourceWhereFilter,
-		TargetWhere:        s.withTargetWhereFilter,
-		TrainingSetWhere:   s.withTrainingSetWhereFilter,
-		Type:               &classType,
+		Filters: &models.ClassificationFilters{
+			SourceWhere:      s.withSourceWhereFilter,
+			TargetWhere:      s.withTargetWhereFilter,
+			TrainingSetWhere: s.withTrainingSetWhereFilter,
+		},
+		Type: s.classificationType,
 	}
 	if s.classificationType == KNN {
-		config.K = &s.withK
+		config.Settings = &classification.ParamsKNN{
+			K: &s.withK,
+		}
 	}
 	responseData, responseErr := s.connection.RunREST(ctx, "/classifications", http.MethodPost, config)
 	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 201)

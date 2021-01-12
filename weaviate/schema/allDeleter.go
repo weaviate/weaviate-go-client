@@ -2,9 +2,9 @@ package schema
 
 import (
 	"context"
+
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 )
 
 // AllDeleter builder object to delete an entire schema
@@ -19,14 +19,8 @@ func (ad *AllDeleter) Do(ctx context.Context) error {
 	if getSchemaErr != nil {
 		return except.NewDerivedWeaviateClientError(getSchemaErr)
 	}
-	for _, class := range schema.Actions.Classes {
-		delErr := ad.schemaAPI.ClassDeleter().WithClassName(class.Class).WithKind(semantics.Actions).Do(ctx)
-		if delErr != nil {
-			return delErr
-		}
-	}
-	for _, class := range schema.Things.Classes {
-		delErr := ad.schemaAPI.ClassDeleter().WithClassName(class.Class).WithKind(semantics.Things).Do(ctx)
+	for _, class := range schema.Classes {
+		delErr := ad.schemaAPI.ClassDeleter().WithClassName(class.Class).Do(ctx)
 		if delErr != nil {
 			return delErr
 		}

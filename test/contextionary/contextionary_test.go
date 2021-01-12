@@ -3,10 +3,11 @@ package contextionary
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestContextionary_integration(t *testing.T) {
@@ -19,7 +20,7 @@ func TestContextionary_integration(t *testing.T) {
 		}
 	})
 
-	t.Run("GET /c11y/concepts/{concept}", func(t *testing.T) {
+	t.Run("GET /modules/text2vec-contextionary/concepts/{concept}", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
 		concepts, err := client.C11y().ConceptsGetter().WithConcept("pizzaHawaii").Do(context.Background())
@@ -28,7 +29,7 @@ func TestContextionary_integration(t *testing.T) {
 		assert.NotNil(t, concepts.IndividualWords)
 	})
 
-	t.Run("POST /c11y/extensions", func(t *testing.T) {
+	t.Run("POST /modules/text2vec-contextionary/extensions", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
 		err1 := client.C11y().ExtensionCreator().WithConcept("xoxo").WithDefinition("Hugs and kisses").WithWeight(1.0).Do(context.Background())

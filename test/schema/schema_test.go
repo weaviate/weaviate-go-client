@@ -3,12 +3,12 @@ package schema
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestSchema_integration(t *testing.T) {
@@ -21,15 +21,15 @@ func TestSchema_integration(t *testing.T) {
 		}
 	})
 
-	t.Run("POST /schema/things", func(t *testing.T) {
+	t.Run("POST /schema", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
-			Class:              "Band",
-			Description:        "Band that plays and produces music",
-			Keywords:           nil,
-			Properties:         nil,
-			VectorizeClassName: nil,
+			Class:           "Band",
+			Description:     "Band that plays and produces music",
+			Properties:      nil,
+			VectorIndexType: "hnsw",
+			Vectorizer:      "text2vec-contextionary",
 		}
 
 		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
@@ -37,31 +37,33 @@ func TestSchema_integration(t *testing.T) {
 
 		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())
 		assert.Nil(t, getErr)
-		assert.Equal(t, 1, len(loadedSchema.Things.Classes))
-		assert.Equal(t, schemaClass, loadedSchema.Things.Classes[0])
-		assert.Equal(t, schemaClass.Class, loadedSchema.Things.Classes[0].Class)
-		assert.Equal(t, schemaClass.Description, loadedSchema.Things.Classes[0].Description)
+		assert.Equal(t, 1, len(loadedSchema.Classes))
+		assert.Equal(t, schemaClass, loadedSchema.Classes[0])
+		assert.Equal(t, schemaClass.Class, loadedSchema.Classes[0].Class)
+		assert.Equal(t, schemaClass.Description, loadedSchema.Classes[0].Description)
 
 		// Clean up classes
 		errRm := client.Schema().AllDeleter().Do(context.Background())
 		assert.Nil(t, errRm)
 	})
 
-	t.Run("POST /schema/actions", func(t *testing.T) {
+	t.Run("POST /schema", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
-			Class:       "Run",
-			Description: "Running from the fuzz",
+			Class:           "Run",
+			Description:     "Running from the fuzz",
+			VectorIndexType: "hnsw",
+			Vectorizer:      "text2vec-contextionary",
 		}
 
-		err := client.Schema().ClassCreator().WithClass(schemaClass).WithKind(semantics.Actions).Do(context.Background())
+		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
 		assert.Nil(t, err)
 
 		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())
 		assert.Nil(t, getErr)
-		assert.Equal(t, 1, len(loadedSchema.Actions.Classes))
-		assert.Equal(t, schemaClass, loadedSchema.Actions.Classes[0])
+		assert.Equal(t, 1, len(loadedSchema.Classes))
+		assert.Equal(t, schemaClass, loadedSchema.Classes[0])
 
 		// Clean up classes
 		errRm := client.Schema().AllDeleter().Do(context.Background())
@@ -82,24 +84,22 @@ func TestSchema_integration(t *testing.T) {
 
 		errT := client.Schema().ClassCreator().WithClass(schemaClassThing).Do(context.Background())
 		assert.Nil(t, errT)
-		errA := client.Schema().ClassCreator().WithClass(schemaClassAction).WithKind(semantics.Actions).Do(context.Background())
+		errA := client.Schema().ClassCreator().WithClass(schemaClassAction).Do(context.Background())
 		assert.Nil(t, errA)
 		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())
 		assert.Nil(t, getErr)
-		assert.Equal(t, loadedSchema.Things.Classes[0].Class, schemaClassThing.Class)
-		assert.Equal(t, loadedSchema.Actions.Classes[0].Class, schemaClassAction.Class)
-		assert.Equal(t, 1, len(loadedSchema.Things.Classes), "There are classes in the schema that are not part of this test")
-		assert.Equal(t, 1, len(loadedSchema.Actions.Classes), "There are classes in the schema that are not part of this test")
+		assert.Equal(t, loadedSchema.Classes[0].Class, schemaClassThing.Class)
+		assert.Equal(t, loadedSchema.Classes[1].Class, schemaClassAction.Class)
+		assert.Equal(t, 2, len(loadedSchema.Classes), "There are classes in the schema that are not part of this test")
 
 		errRm1 := client.Schema().ClassDeleter().WithClassName(schemaClassThing.Class).Do(context.Background())
-		errRm2 := client.Schema().ClassDeleter().WithClassName(schemaClassAction.Class).WithKind(semantics.Actions).Do(context.Background())
+		errRm2 := client.Schema().ClassDeleter().WithClassName(schemaClassAction.Class).Do(context.Background())
 		assert.Nil(t, errRm1)
 		assert.Nil(t, errRm2)
 
 		loadedSchema, getErr = client.Schema().Getter().Do(context.Background())
 		assert.Nil(t, getErr)
-		assert.Equal(t, 0, len(loadedSchema.Things.Classes))
-		assert.Equal(t, 0, len(loadedSchema.Actions.Classes))
+		assert.Equal(t, 0, len(loadedSchema.Classes))
 	})
 
 	t.Run("Delete All schema", func(t *testing.T) {
@@ -116,7 +116,7 @@ func TestSchema_integration(t *testing.T) {
 
 		errT := client.Schema().ClassCreator().WithClass(schemaClassThing).Do(context.Background())
 		assert.Nil(t, errT)
-		errA := client.Schema().ClassCreator().WithClass(schemaClassAction).WithKind(semantics.Actions).Do(context.Background())
+		errA := client.Schema().ClassCreator().WithClass(schemaClassAction).Do(context.Background())
 		assert.Nil(t, errA)
 
 		errRm1 := client.Schema().AllDeleter().Do(context.Background())
@@ -124,8 +124,7 @@ func TestSchema_integration(t *testing.T) {
 
 		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())
 		assert.Nil(t, getErr)
-		assert.Equal(t, 0, len(loadedSchema.Things.Classes))
-		assert.Equal(t, 0, len(loadedSchema.Actions.Classes))
+		assert.Equal(t, 0, len(loadedSchema.Classes))
 	})
 
 	t.Run("POST /schema/{type}/{className}/properties", func(t *testing.T) {
@@ -142,7 +141,7 @@ func TestSchema_integration(t *testing.T) {
 
 		errT := client.Schema().ClassCreator().WithClass(schemaClassThing).Do(context.Background())
 		assert.Nil(t, errT)
-		errA := client.Schema().ClassCreator().WithClass(schemaClassAction).WithKind(semantics.Actions).Do(context.Background())
+		errA := client.Schema().ClassCreator().WithClass(schemaClassAction).Do(context.Background())
 		assert.Nil(t, errA)
 
 		newProperty := &models.Property{
@@ -153,15 +152,14 @@ func TestSchema_integration(t *testing.T) {
 
 		propErrT := client.Schema().PropertyCreator().WithClassName("Pizza").WithProperty(newProperty).Do(context.Background())
 		assert.Nil(t, propErrT)
-		propErrA := client.Schema().PropertyCreator().WithClassName("ChickenSoup").WithProperty(newProperty).WithKind(semantics.Actions).Do(context.Background())
+		propErrA := client.Schema().PropertyCreator().WithClassName("ChickenSoup").WithProperty(newProperty).Do(context.Background())
 		assert.Nil(t, propErrA)
 
 		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())
 		assert.Nil(t, getErr)
-		assert.Equal(t, 1, len(loadedSchema.Things.Classes))
-		assert.Equal(t, 1, len(loadedSchema.Actions.Classes))
-		assert.Equal(t, "name", loadedSchema.Things.Classes[0].Properties[0].Name)
-		assert.Equal(t, "name", loadedSchema.Actions.Classes[0].Properties[0].Name)
+		assert.Equal(t, 2, len(loadedSchema.Classes))
+		assert.Equal(t, "name", loadedSchema.Classes[0].Properties[0].Name)
+		assert.Equal(t, "name", loadedSchema.Classes[1].Properties[0].Name)
 
 		// Clean up classes
 		errRm := client.Schema().AllDeleter().Do(context.Background())
