@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
 	"github.com/semi-technologies/weaviate-go-client/weaviate"
@@ -52,8 +51,9 @@ func TestClassifications_integration(t *testing.T) {
 		getC, getErr := client.Classifications().Getter().WithID(string(c.ID)).Do(context.Background())
 		assert.Nil(t, getErr)
 		assert.Equal(t, c.ID, getC.ID)
-		// TODO:
-		// assert.Equal(t, int32(3), *getC.K)
+		knn, ok := getC.Settings.(map[string]interface{})
+		assert.True(t, ok)
+		assert.Equal(t, float64(3), knn["k"])
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
@@ -127,6 +127,4 @@ func createClassificationClasses(t *testing.T, client *weaviate.Client) {
 	}
 	_, batchErr2 := client.Batch().ObjectsBatcher().WithObject(tag1).WithObject(tag2).Do(context.Background())
 	assert.Nil(t, batchErr2)
-
-	time.Sleep(2.0 * time.Second)
 }

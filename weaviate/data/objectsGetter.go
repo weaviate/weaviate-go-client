@@ -11,20 +11,11 @@ import (
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
-// additionalProperties that have been set in the builder
-type additionalProperties struct {
-	withAdditionalInterpretation    bool
-	withAdditionalClassification    bool
-	withAdditionalNearestNeighbors  bool
-	withAdditionalFeatureProjection bool
-	withAdditionalVector            bool
-}
-
 // ObjectsGetter Builder to retrieve Things from weaviate
 type ObjectsGetter struct {
 	connection           *connection.Connection
 	id                   string
-	additionalProperties *additionalProperties
+	additionalProperties []string
 	withLimit            bool
 	limit                int
 }
@@ -36,34 +27,9 @@ func (getter *ObjectsGetter) WithID(id string) *ObjectsGetter {
 	return getter
 }
 
-// WithAdditionalInterpretation include a description on how the corpus of the data object is interpreted by weaviate
-func (getter *ObjectsGetter) WithAdditionalInterpretation() *ObjectsGetter {
-	getter.additionalProperties.withAdditionalInterpretation = true
-	return getter
-}
-
-// WithAdditionalClassification include information about the classifications
-// may be nil if no classifications was executed on the object
-func (getter *ObjectsGetter) WithAdditionalClassification() *ObjectsGetter {
-	getter.additionalProperties.withAdditionalClassification = true
-	return getter
-}
-
-// WithAdditionalNearestNeighbors show the nearest neighbors of this data object
-func (getter *ObjectsGetter) WithAdditionalNearestNeighbors() *ObjectsGetter {
-	getter.additionalProperties.withAdditionalNearestNeighbors = true
-	return getter
-}
-
-// WithAdditionalFeatureProjection include a 2D projection of the objects for visualization
-func (getter *ObjectsGetter) WithAdditionalFeatureProjection() *ObjectsGetter {
-	getter.additionalProperties.withAdditionalFeatureProjection = true
-	return getter
-}
-
-// WithAdditionalVector include the raw vector of the data object
-func (getter *ObjectsGetter) WithAdditionalVector() *ObjectsGetter {
-	getter.additionalProperties.withAdditionalVector = true
+// WithAdditional parameters such as for example: classification, featureProjection
+func (getter *ObjectsGetter) WithAdditional(additional string) *ObjectsGetter {
+	getter.additionalProperties = append(getter.additionalProperties, additional)
 	return getter
 }
 
@@ -98,23 +64,11 @@ func (getter *ObjectsGetter) Do(ctx context.Context) ([]*models.Object, error) {
 }
 
 // getAdditionalParams build the query URL parameters for the requested underscore properties
-func getAdditionalParams(additionalProperties *additionalProperties) string {
+func getAdditionalParams(additionalProperties []string) string {
 	selectedProperties := make([]string, 0)
 
-	if additionalProperties.withAdditionalInterpretation {
-		selectedProperties = append(selectedProperties, "interpretation")
-	}
-	if additionalProperties.withAdditionalClassification {
-		selectedProperties = append(selectedProperties, "classification")
-	}
-	if additionalProperties.withAdditionalVector {
-		selectedProperties = append(selectedProperties, "vector")
-	}
-	if additionalProperties.withAdditionalFeatureProjection {
-		selectedProperties = append(selectedProperties, "featureProjection")
-	}
-	if additionalProperties.withAdditionalNearestNeighbors {
-		selectedProperties = append(selectedProperties, "nearestNeighbors")
+	for _, additional := range additionalProperties {
+		selectedProperties = append(selectedProperties, additional)
 	}
 
 	params := strings.Join(selectedProperties, ",")

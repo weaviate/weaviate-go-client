@@ -8,14 +8,12 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // Updater builder to update property values in a data object
 type Updater struct {
 	connection     *connection.Connection
-	semanticKind   semantics.Kind
 	uuid           string
 	className      string
 	propertySchema models.PropertySchema
@@ -34,16 +32,9 @@ func (updater *Updater) WithClassName(className string) *Updater {
 	return updater
 }
 
-// WithSchema specifies the property schema of the class about to be updated
-func (updater *Updater) WithSchema(propertySchema models.PropertySchema) *Updater {
+// WithProperties specifies the property schema of the class about to be updated
+func (updater *Updater) WithProperties(propertySchema models.PropertySchema) *Updater {
 	updater.propertySchema = propertySchema
-	return updater
-}
-
-// WithKind specifies the semantic kind that is used for the data object
-// If not called the builder defaults to `things`
-func (updater *Updater) WithKind(semanticKind semantics.Kind) *Updater {
-	updater.semanticKind = semanticKind
 	return updater
 }
 

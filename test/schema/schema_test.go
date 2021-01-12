@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +24,6 @@ func TestSchema_integration(t *testing.T) {
 	t.Run("POST /schema", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
-		// TODO:
 		schemaClass := &models.Class{
 			Class:           "Band",
 			Description:     "Band that plays and produces music",
@@ -59,7 +57,7 @@ func TestSchema_integration(t *testing.T) {
 			Vectorizer:      "text2vec-contextionary",
 		}
 
-		err := client.Schema().ClassCreator().WithClass(schemaClass).WithKind(semantics.Objects).Do(context.Background())
+		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
 		assert.Nil(t, err)
 
 		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())
@@ -86,7 +84,7 @@ func TestSchema_integration(t *testing.T) {
 
 		errT := client.Schema().ClassCreator().WithClass(schemaClassThing).Do(context.Background())
 		assert.Nil(t, errT)
-		errA := client.Schema().ClassCreator().WithClass(schemaClassAction).WithKind(semantics.Objects).Do(context.Background())
+		errA := client.Schema().ClassCreator().WithClass(schemaClassAction).Do(context.Background())
 		assert.Nil(t, errA)
 		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())
 		assert.Nil(t, getErr)
@@ -95,7 +93,7 @@ func TestSchema_integration(t *testing.T) {
 		assert.Equal(t, 2, len(loadedSchema.Classes), "There are classes in the schema that are not part of this test")
 
 		errRm1 := client.Schema().ClassDeleter().WithClassName(schemaClassThing.Class).Do(context.Background())
-		errRm2 := client.Schema().ClassDeleter().WithClassName(schemaClassAction.Class).WithKind(semantics.Objects).Do(context.Background())
+		errRm2 := client.Schema().ClassDeleter().WithClassName(schemaClassAction.Class).Do(context.Background())
 		assert.Nil(t, errRm1)
 		assert.Nil(t, errRm2)
 
@@ -118,7 +116,7 @@ func TestSchema_integration(t *testing.T) {
 
 		errT := client.Schema().ClassCreator().WithClass(schemaClassThing).Do(context.Background())
 		assert.Nil(t, errT)
-		errA := client.Schema().ClassCreator().WithClass(schemaClassAction).WithKind(semantics.Objects).Do(context.Background())
+		errA := client.Schema().ClassCreator().WithClass(schemaClassAction).Do(context.Background())
 		assert.Nil(t, errA)
 
 		errRm1 := client.Schema().AllDeleter().Do(context.Background())
@@ -143,7 +141,7 @@ func TestSchema_integration(t *testing.T) {
 
 		errT := client.Schema().ClassCreator().WithClass(schemaClassThing).Do(context.Background())
 		assert.Nil(t, errT)
-		errA := client.Schema().ClassCreator().WithClass(schemaClassAction).WithKind(semantics.Objects).Do(context.Background())
+		errA := client.Schema().ClassCreator().WithClass(schemaClassAction).Do(context.Background())
 		assert.Nil(t, errA)
 
 		newProperty := &models.Property{
@@ -154,7 +152,7 @@ func TestSchema_integration(t *testing.T) {
 
 		propErrT := client.Schema().PropertyCreator().WithClassName("Pizza").WithProperty(newProperty).Do(context.Background())
 		assert.Nil(t, propErrT)
-		propErrA := client.Schema().PropertyCreator().WithClassName("ChickenSoup").WithProperty(newProperty).WithKind(semantics.Objects).Do(context.Background())
+		propErrA := client.Schema().PropertyCreator().WithClassName("ChickenSoup").WithProperty(newProperty).Do(context.Background())
 		assert.Nil(t, propErrA)
 
 		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())

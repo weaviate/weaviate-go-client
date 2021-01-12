@@ -7,14 +7,12 @@ import (
 
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // ReferenceReplacer builder to replace reference(s) with new one(s)
 type ReferenceReplacer struct {
 	connection        *connection.Connection
-	semanticKind      semantics.Kind
 	uuid              string
 	referenceProperty string
 	referencePayload  *models.MultipleRef
@@ -29,13 +27,6 @@ func (rr *ReferenceReplacer) WithID(uuid string) *ReferenceReplacer {
 // WithReferenceProperty specifies the property that should replace
 func (rr *ReferenceReplacer) WithReferenceProperty(propertyName string) *ReferenceReplacer {
 	rr.referenceProperty = propertyName
-	return rr
-}
-
-// WithKind specifies the semantic kind that is used for the data object
-// If not called the builder defaults to `things`
-func (rr *ReferenceReplacer) WithKind(semanticKind semantics.Kind) *ReferenceReplacer {
-	rr.semanticKind = semanticKind
 	return rr
 }
 

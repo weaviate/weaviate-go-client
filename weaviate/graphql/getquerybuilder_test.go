@@ -60,12 +60,18 @@ func TestQueryBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		query := builder.WithClassName("Pizza").WithFields("name").WithWhere(`{path: ["name"] operator: Equal valueString: "Hawaii" }`).build()
+		query := builder.WithClassName("Pizza").
+			WithFields("name").
+			WithWhere(`{path: ["name"] operator: Equal valueString: "Hawaii" }`).
+			build()
 
 		expected := `{Get {Pizza (where: {path: ["name"] operator: Equal valueString: "Hawaii" }) {name}}}`
 		assert.Equal(t, expected, query)
 
-		query = builder.WithClassName("Pizza").WithFields("name").WithWhere(`{operator: Or operands: [{path: ["name"] operator: Equal valueString: "Hawaii"}, {path: ["name"] operator: Equal valueString: "Doener"}]}`).build()
+		query = builder.WithClassName("Pizza").
+			WithFields("name").
+			WithWhere(`{operator: Or operands: [{path: ["name"] operator: Equal valueString: "Hawaii"}, {path: ["name"] operator: Equal valueString: "Doener"}]}`).
+			build()
 
 		expected = `{Get {Pizza (where: {operator: Or operands: [{path: ["name"] operator: Equal valueString: "Hawaii"}, {path: ["name"] operator: Equal valueString: "Doener"}]}) {name}}}`
 		assert.Equal(t, expected, query)
@@ -85,7 +91,7 @@ func TestQueryBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
-	t.Run("Explor filter", func(t *testing.T) {
+	t.Run("NearText filter", func(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
@@ -96,6 +102,20 @@ func TestQueryBuilder(t *testing.T) {
 		query := builder.WithClassName("Pizza").WithFields("name").WithNearText(`{concepts: "good"}`).build()
 
 		expected := `{Get {Pizza (nearText: {concepts: "good"}) {name}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("NearVector filter", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection:           conMock,
+			includesFilterClause: false,
+		}
+
+		query := builder.WithClassName("Pizza").WithFields("name").WithNearVector("{vector: [0, 1, 0.8]}").build()
+
+		expected := `{Get {Pizza (nearVector: {vector: [0, 1, 0.8]}) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -121,9 +141,34 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
-		query := builder.WithClassName("Pizza").WithFields("name").WithNearText(`{concepts: "good"}`).WithLimit(2).WithWhere(`{path: ["name"] operator: Equal valueString: "Hawaii"}`).build()
+		query := builder.WithClassName("Pizza").
+			WithFields("name").
+			WithNearText(`{concepts: "good"}`).
+			WithLimit(2).
+			WithWhere(`{path: ["name"] operator: Equal valueString: "Hawaii"}`).
+			build()
 
 		expected := `{Get {Pizza (where: {path: ["name"] operator: Equal valueString: "Hawaii"}, nearText: {concepts: "good"}, limit: 2) {name}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("Multiple filters", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection:           conMock,
+			includesFilterClause: false,
+		}
+
+		query := builder.WithClassName("Pizza").
+			WithFields("name").
+			WithNearText(`{concepts: "good"}`).
+			WithNearVector("{vector: [0, 1, 0.8]}").
+			WithLimit(2).
+			WithWhere(`{path: ["name"] operator: Equal valueString: "Hawaii"}`).
+			build()
+
+		expected := `{Get {Pizza (where: {path: ["name"] operator: Equal valueString: "Hawaii"}, nearText: {concepts: "good"}, nearVector: {vector: [0, 1, 0.8]}, limit: 2) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 

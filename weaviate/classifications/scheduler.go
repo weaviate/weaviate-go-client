@@ -9,12 +9,13 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/semi-technologies/weaviate/usecases/classification"
 )
 
 // Scheduler builder to schedule a classification
 type Scheduler struct {
 	connection                 *connection.Connection
-	classificationType         Type
+	classificationType         string
 	withClassName              string
 	withClassifyProperties     []string
 	withBasedOnProperties      []string
@@ -26,7 +27,7 @@ type Scheduler struct {
 }
 
 // WithType of classification e.g. knn or contextual
-func (s *Scheduler) WithType(classificationType Type) *Scheduler {
+func (s *Scheduler) WithType(classificationType string) *Scheduler {
 	s.classificationType = classificationType
 	return s
 }
@@ -79,23 +80,24 @@ func (s *Scheduler) WithWaitForCompletion() *Scheduler {
 	return s
 }
 
-// TODO: where
 // Do schedule the classification in weaviate
 func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
-	classType := string(s.classificationType)
 	config := models.Classification{
 		BasedOnProperties:  s.withBasedOnProperties,
 		Class:              s.withClassName,
 		ClassifyProperties: s.withClassifyProperties,
-		// SourceWhere:        s.withSourceWhereFilter,
-		// TargetWhere:        s.withTargetWhereFilter,
-		// TrainingSetWhere:   s.withTrainingSetWhereFilter,
-		Type: classType,
+		Filters: &models.ClassificationFilters{
+			SourceWhere:      s.withSourceWhereFilter,
+			TargetWhere:      s.withTargetWhereFilter,
+			TrainingSetWhere: s.withTrainingSetWhereFilter,
+		},
+		Type: s.classificationType,
 	}
-	// TODO: fix
-	// if s.classificationType == KNN {
-	// 	config.K = &s.withK
-	// }
+	if s.classificationType == KNN {
+		config.Settings = &classification.ParamsKNN{
+			K: &s.withK,
+		}
+	}
 	responseData, responseErr := s.connection.RunREST(ctx, "/classifications", http.MethodPost, config)
 	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 201)
 	if err != nil {

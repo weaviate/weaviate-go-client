@@ -7,14 +7,12 @@ import (
 
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // ReferenceDeleter builder to remove a reference from a data object
 type ReferenceDeleter struct {
 	connection        *connection.Connection
-	semanticKind      semantics.Kind
 	uuid              string
 	referenceProperty string
 	referencePayload  *models.SingleRef
@@ -29,13 +27,6 @@ func (rr *ReferenceDeleter) WithID(uuid string) *ReferenceDeleter {
 // WithReferenceProperty specifies the property on which the reference should be deleted
 func (rr *ReferenceDeleter) WithReferenceProperty(propertyName string) *ReferenceDeleter {
 	rr.referenceProperty = propertyName
-	return rr
-}
-
-// WithKind specifies the semantic kind that is used for the data object
-// If not called the builder defaults to `things`
-func (rr *ReferenceDeleter) WithKind(semanticKind semantics.Kind) *ReferenceDeleter {
-	rr.semanticKind = semanticKind
 	return rr
 }
 

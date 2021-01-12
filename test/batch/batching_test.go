@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
@@ -32,7 +30,7 @@ func TestBatch_integration(t *testing.T) {
 			"name":        "Hawaii",
 			"description": "Universally accepted to be the best pizza ever created.",
 		}
-		classT1, errPayloadT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT1).PayloadObject()
+		classT1, errPayloadT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithProperties(propertySchemaT1).PayloadObject()
 		assert.Nil(t, errPayloadT)
 		classT2 := &models.Object{
 			Class: "Pizza",
@@ -46,7 +44,7 @@ func TestBatch_integration(t *testing.T) {
 			"name":        "Chicken",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		classA1, errPayloadA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA1).WithKind(semantics.Objects).PayloadObject()
+		classA1, errPayloadA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithProperties(propertySchemaA1).PayloadObject()
 		assert.Nil(t, errPayloadA)
 		classA2 := &models.Object{
 			Class: "Soup",
@@ -65,8 +63,6 @@ func TestBatch_integration(t *testing.T) {
 		assert.Nil(t, batchErrA)
 		assert.NotNil(t, batchResultA)
 		assert.Equal(t, 2, len(batchResultA))
-
-		time.Sleep(2.0 * time.Second) // Give weaviate time to update its index
 
 		objectT1, objErrT1 := client.Data().ObjectsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, objErrT1)
@@ -111,7 +107,6 @@ func TestBatch_integration(t *testing.T) {
 		batchResultA, batchErrA := client.Batch().ObjectsBatcher().WithObject(classA).Do(context.Background())
 		assert.Nil(t, batchErrA)
 		assert.NotNil(t, batchResultA)
-		time.Sleep(2.0 * time.Second)
 
 		// Define references
 		refTtoA := &models.BatchReference{
@@ -124,13 +119,12 @@ func TestBatch_integration(t *testing.T) {
 			From: "weaviate://localhost/Soup/07473b34-0ab2-4120-882d-303d9e13f7af/otherFoods",
 			To:   "weaviate://localhost/97fa5147-bdad-4d74-9a81-f8babc811b09",
 		}
-		refAtoA := client.Batch().ReferencePayloadBuilder().WithFromKind(semantics.Objects).WithFromClassName("Soup").WithFromRefProp("otherFoods").WithFromID("07473b34-0ab2-4120-882d-303d9e13f7af").WithToKind(semantics.Objects).WithToID("07473b34-0ab2-4120-882d-303d9e13f7af").Payload()
+		refAtoA := client.Batch().ReferencePayloadBuilder().WithFromClassName("Soup").WithFromRefProp("otherFoods").WithFromID("07473b34-0ab2-4120-882d-303d9e13f7af").WithToID("07473b34-0ab2-4120-882d-303d9e13f7af").Payload()
 
 		// Add references in batch
 		referenceBatchResult, err := client.Batch().ReferencesBatcher().WithReference(refTtoA).WithReference(refTtoT).WithReference(refAtoT).WithReference(refAtoA).Do(context.Background())
 		assert.Nil(t, err)
 		assert.NotNil(t, referenceBatchResult)
-		time.Sleep(2.0 * time.Second)
 
 		// Assert
 		objectT, objErrT := client.Data().ObjectsGetter().WithID("97fa5147-bdad-4d74-9a81-f8babc811b09").Do(context.Background())

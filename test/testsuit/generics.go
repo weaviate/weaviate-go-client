@@ -3,11 +3,9 @@ package testsuit
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,9 +21,9 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
 		Class:       "Soup",
 		Description: "Mostly water based brew of sustenance for humans.",
 	}
-	errT := client.Schema().ClassCreator().WithClass(schemaClassThing).WithKind(semantics.Objects).Do(context.Background())
+	errT := client.Schema().ClassCreator().WithClass(schemaClassThing).Do(context.Background())
 	assert.Nil(t, errT)
-	errA := client.Schema().ClassCreator().WithClass(schemaClassAction).WithKind(semantics.Objects).Do(context.Background())
+	errA := client.Schema().ClassCreator().WithClass(schemaClassAction).Do(context.Background())
 	assert.Nil(t, errA)
 	nameProperty := &models.Property{
 		DataType:    []string{"string"},
@@ -40,11 +38,11 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
 
 	propErrT1 := client.Schema().PropertyCreator().WithClassName("Pizza").WithProperty(nameProperty).Do(context.Background())
 	assert.Nil(t, propErrT1)
-	propErrA1 := client.Schema().PropertyCreator().WithClassName("Soup").WithProperty(nameProperty).WithKind(semantics.Objects).Do(context.Background())
+	propErrA1 := client.Schema().PropertyCreator().WithClassName("Soup").WithProperty(nameProperty).Do(context.Background())
 	assert.Nil(t, propErrA1)
 	propErrT2 := client.Schema().PropertyCreator().WithClassName("Pizza").WithProperty(descriptionProperty).Do(context.Background())
 	assert.Nil(t, propErrT2)
-	propErrA2 := client.Schema().PropertyCreator().WithClassName("Soup").WithProperty(descriptionProperty).WithKind(semantics.Objects).Do(context.Background())
+	propErrA2 := client.Schema().PropertyCreator().WithClassName("Soup").WithProperty(descriptionProperty).Do(context.Background())
 	assert.Nil(t, propErrA2)
 }
 
@@ -58,7 +56,7 @@ func CreateWeaviateTestSchemaFoodWithReferenceProperty(t *testing.T, client *wea
 	}
 	err := client.Schema().PropertyCreator().WithClassName("Pizza").WithProperty(referenceProperty).Do(context.Background())
 	assert.Nil(t, err)
-	err = client.Schema().PropertyCreator().WithClassName("Soup").WithProperty(referenceProperty).WithKind(semantics.Objects).Do(context.Background())
+	err = client.Schema().PropertyCreator().WithClassName("Soup").WithProperty(referenceProperty).Do(context.Background())
 	assert.Nil(t, err)
 }
 
@@ -158,6 +156,4 @@ func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client) {
 
 	_, actionsErr := client.Batch().ObjectsBatcher().WithObject(menuSoup[0]).WithObject(menuSoup[1]).Do(context.Background())
 	assert.Nil(t, actionsErr)
-
-	time.Sleep(2.0 * time.Second)
 }

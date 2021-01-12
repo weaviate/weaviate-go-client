@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
@@ -17,15 +16,13 @@ type Aggregate struct {
 // Objects aggregate objects
 func (a *Aggregate) Objects() *AggregateBuilder {
 	return &AggregateBuilder{
-		connection:   a.connection,
-		semanticKind: semantics.Objects,
+		connection: a.connection,
 	}
 }
 
 // AggregateBuilder for the aggregate GraphQL query string
 type AggregateBuilder struct {
 	connection                rest
-	semanticKind              semantics.Kind
 	fields                    string
 	className                 string
 	withGroupByClause         bool

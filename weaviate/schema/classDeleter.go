@@ -7,26 +7,17 @@ import (
 
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 )
 
 // ClassDeleter builder to remove a class from weaviate
 type ClassDeleter struct {
-	connection   *connection.Connection
-	semanticKind semantics.Kind
-	className    string
+	connection *connection.Connection
+	className  string
 }
 
 // WithClassName defines the name of the class that should be deleted
 func (cd *ClassDeleter) WithClassName(className string) *ClassDeleter {
 	cd.className = className
-	return cd
-}
-
-// WithKind specifies the semantic kind that is used for the class about to be deleted
-// If not called the builder defaults to `things`
-func (cd *ClassDeleter) WithKind(semanticKind semantics.Kind) *ClassDeleter {
-	cd.semanticKind = semanticKind
 	return cd
 }
 

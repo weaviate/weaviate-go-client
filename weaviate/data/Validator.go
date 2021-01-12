@@ -8,14 +8,12 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // Validator builder object to validate a class
 type Validator struct {
 	connection     *connection.Connection
-	semanticKind   semantics.Kind
 	uuid           string
 	className      string
 	propertySchema models.PropertySchema
@@ -36,13 +34,6 @@ func (validator *Validator) WithClassName(className string) *Validator {
 // WithSchema specifies the property schema of the class about to be validated
 func (validator *Validator) WithSchema(propertySchema models.PropertySchema) *Validator {
 	validator.propertySchema = propertySchema
-	return validator
-}
-
-// WithKind specifies the semantic kind that is used for the data object
-// If not called the builder defaults to `things`
-func (validator *Validator) WithKind(semanticKind semantics.Kind) *Validator {
-	validator.semanticKind = semanticKind
 	return validator
 }
 

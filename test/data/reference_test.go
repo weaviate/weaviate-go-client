@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
@@ -36,15 +34,14 @@ func TestData_reference_integration(t *testing.T) {
 			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithProperties(propertySchemaT).Do(context.Background())
 		assert.Nil(t, errCreateT)
-		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Objects).Do(context.Background())
+		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithProperties(propertySchemaA).Do(context.Background())
 		assert.Nil(t, errCreateA)
 
-		time.Sleep(2.0 * time.Second)
 		// Thing -> Action
 		// Payload to reference the ChickenSoup
-		payload := client.Data().ReferencePayloadBuilder().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithKind(semantics.Objects).Payload()
+		payload := client.Data().ReferencePayloadBuilder().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Payload()
 		// Add the reference to the ChickenSoup to the Pizza OtherFoods reference
 		refErr := client.Data().ReferenceCreator().WithID("abefd256-8574-442b-9293-9205193737ee").WithReferenceProperty("otherFoods").WithReference(payload).Do(context.Background())
 		assert.Nil(t, refErr)
@@ -53,10 +50,8 @@ func TestData_reference_integration(t *testing.T) {
 		// Payload to reference the ChickenSoup
 		payload = client.Data().ReferencePayloadBuilder().WithID("abefd256-8574-442b-9293-9205193737ee").Payload()
 		// Add the reference to the ChickenSoup to the Pizza OtherFoods reference
-		refErr = client.Data().ReferenceCreator().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithKind(semantics.Objects).WithReferenceProperty("otherFoods").WithReference(payload).Do(context.Background())
+		refErr = client.Data().ReferenceCreator().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithReferenceProperty("otherFoods").WithReference(payload).Do(context.Background())
 		assert.Nil(t, refErr)
-
-		time.Sleep(2.0 * time.Second)
 
 		things, getErrT := client.Data().ObjectsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, getErrT)
@@ -88,14 +83,13 @@ func TestData_reference_integration(t *testing.T) {
 			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithProperties(propertySchemaT).Do(context.Background())
 		assert.Nil(t, errCreateT)
-		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Objects).Do(context.Background())
+		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithProperties(propertySchemaA).Do(context.Background())
 		assert.Nil(t, errCreateA)
-		time.Sleep(2.0 * time.Second)
 		// Thing -> Action
 		// Payload to reference the ChickenSoup
-		payload := client.Data().ReferencePayloadBuilder().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithKind(semantics.Objects).Payload()
+		payload := client.Data().ReferencePayloadBuilder().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Payload()
 		// Add the reference to the ChickenSoup to the Pizza OtherFoods reference
 		refErr := client.Data().ReferenceCreator().WithID("abefd256-8574-442b-9293-9205193737ee").WithReferenceProperty("otherFoods").WithReference(payload).Do(context.Background())
 		assert.Nil(t, refErr)
@@ -103,9 +97,8 @@ func TestData_reference_integration(t *testing.T) {
 		// Payload to reference the ChickenSoup
 		payload = client.Data().ReferencePayloadBuilder().WithID("abefd256-8574-442b-9293-9205193737ee").Payload()
 		// Add the reference to the ChickenSoup to the Pizza OtherFoods reference
-		refErr = client.Data().ReferenceCreator().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithKind(semantics.Objects).WithReferenceProperty("otherFoods").WithReference(payload).Do(context.Background())
+		refErr = client.Data().ReferenceCreator().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithReferenceProperty("otherFoods").WithReference(payload).Do(context.Background())
 		assert.Nil(t, refErr)
-		time.Sleep(2.0 * time.Second)
 
 		// Replace the above reference with self references
 
@@ -117,13 +110,12 @@ func TestData_reference_integration(t *testing.T) {
 		refErr2 := client.Data().ReferenceReplacer().WithID("abefd256-8574-442b-9293-9205193737ee").WithReferenceProperty("otherFoods").WithReferences(&refList).Do(context.Background())
 		assert.Nil(t, refErr2)
 		// Action -> Action
-		payload2 = client.Data().ReferencePayloadBuilder().WithKind(semantics.Objects).WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Payload()
+		payload2 = client.Data().ReferencePayloadBuilder().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Payload()
 		refList = models.MultipleRef{
 			payload2,
 		}
-		refErr = client.Data().ReferenceReplacer().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithKind(semantics.Objects).WithReferenceProperty("otherFoods").WithReferences(&refList).Do(context.Background())
+		refErr = client.Data().ReferenceReplacer().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithReferenceProperty("otherFoods").WithReferences(&refList).Do(context.Background())
 		assert.Nil(t, refErr)
-		time.Sleep(2.0 * time.Second)
 
 		things, getErrT := client.Data().ObjectsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, getErrT)
@@ -155,14 +147,13 @@ func TestData_reference_integration(t *testing.T) {
 			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithSchema(propertySchemaT).Do(context.Background())
+		_, errCreateT := client.Data().Creator().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").WithProperties(propertySchemaT).Do(context.Background())
 		assert.Nil(t, errCreateT)
-		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithSchema(propertySchemaA).WithKind(semantics.Objects).Do(context.Background())
+		_, errCreateA := client.Data().Creator().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithProperties(propertySchemaA).Do(context.Background())
 		assert.Nil(t, errCreateA)
-		time.Sleep(2.0 * time.Second)
 		// Thing -> Action
 		// Payload to reference the ChickenSoup
-		payload1 := client.Data().ReferencePayloadBuilder().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithKind(semantics.Objects).Payload()
+		payload1 := client.Data().ReferencePayloadBuilder().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Payload()
 		// Add the reference to the ChickenSoup to the Pizza OtherFoods reference
 		refErr := client.Data().ReferenceCreator().WithID("abefd256-8574-442b-9293-9205193737ee").WithReferenceProperty("otherFoods").WithReference(payload1).Do(context.Background())
 		assert.Nil(t, refErr)
@@ -170,13 +161,11 @@ func TestData_reference_integration(t *testing.T) {
 		// Payload to reference the ChickenSoup
 		payload2 := client.Data().ReferencePayloadBuilder().WithID("abefd256-8574-442b-9293-9205193737ee").Payload()
 		// Add the reference to the ChickenSoup to the Pizza OtherFoods reference
-		refErr = client.Data().ReferenceCreator().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithKind(semantics.Objects).WithReferenceProperty("otherFoods").WithReference(payload2).Do(context.Background())
+		refErr = client.Data().ReferenceCreator().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithReferenceProperty("otherFoods").WithReference(payload2).Do(context.Background())
 		assert.Nil(t, refErr)
-		time.Sleep(2.0 * time.Second)
 
 		client.Data().ReferenceDeleter().WithID("abefd256-8574-442b-9293-9205193737ee").WithReferenceProperty("otherFoods").WithReference(payload1).Do(context.Background())
-		client.Data().ReferenceDeleter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithReferenceProperty("otherFoods").WithReference(payload2).WithKind(semantics.Objects).Do(context.Background())
-		time.Sleep(2.0 * time.Second)
+		client.Data().ReferenceDeleter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").WithReferenceProperty("otherFoods").WithReference(payload2).Do(context.Background())
 
 		things, getErrT := client.Data().ObjectsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, getErrT)

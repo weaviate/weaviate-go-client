@@ -2,7 +2,6 @@ package batch
 
 import (
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
@@ -26,9 +25,7 @@ func (batch *API) ObjectsBatcher() *ObjectsBatcher {
 // ReferencePayloadBuilder get a builder to create a reference payload for a reference batch
 func (batch *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 	return &ReferencePayloadBuilder{
-		connection:       batch.connection,
-		fromSemanticKind: semantics.Objects,
-		toSemanticKind:   semantics.Objects,
+		connection: batch.connection,
 	}
 }
 

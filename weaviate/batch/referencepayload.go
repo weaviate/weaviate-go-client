@@ -5,15 +5,12 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // ReferencePayloadBuilder to create references that may be added in a batch
 type ReferencePayloadBuilder struct {
 	connection       *connection.Connection
-	fromSemanticKind semantics.Kind
-	toSemanticKind   semantics.Kind
 	fromClassName    string
 	fromPropertyName string
 	fromUUID         string
@@ -41,18 +38,6 @@ func (rpb *ReferencePayloadBuilder) WithFromID(uuid string) *ReferencePayloadBui
 // WithToID UUID of the referenced object
 func (rpb *ReferencePayloadBuilder) WithToID(uuid string) *ReferencePayloadBuilder {
 	rpb.toUUID = uuid
-	return rpb
-}
-
-// WithFromKind semantic kind of the object that the reference is added to
-func (rpb *ReferencePayloadBuilder) WithFromKind(semanticKind semantics.Kind) *ReferencePayloadBuilder {
-	rpb.fromSemanticKind = semanticKind
-	return rpb
-}
-
-// WithToKind semantic kind of the referenced object
-func (rpb *ReferencePayloadBuilder) WithToKind(semanticKind semantics.Kind) *ReferencePayloadBuilder {
-	rpb.toSemanticKind = semanticKind
 	return rpb
 }
 

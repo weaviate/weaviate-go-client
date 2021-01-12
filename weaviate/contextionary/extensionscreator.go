@@ -39,6 +39,7 @@ func (ec *ExtensionCreator) Do(ctx context.Context) error {
 	if ec.extension.Weight > 1.0 || ec.extension.Weight < 0.0 {
 		return fmt.Errorf("weight must be between 0.0 and 1.0")
 	}
-	responseData, responseErr := ec.connection.RunREST(ctx, "/modules/text2vec-contextionary/extensions", http.MethodPost, ec.extension)
+	responseData, responseErr := ec.connection.
+		RunREST(ctx, "/modules/text2vec-contextionary/extensions", http.MethodPost, ec.extension)
 	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 }

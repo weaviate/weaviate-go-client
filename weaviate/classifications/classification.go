@@ -22,11 +22,9 @@ func (api *API) Getter() *Getter {
 	return &Getter{connection: api.connection}
 }
 
-
-// Type of classification that is used
-type Type string
-
 // KNN (k nearest neighbours) a non parametric classification based on training data
-const KNN Type = "knn"
-// Contextual classification labels a data object with the closest label based on their vector position (which describes the context)
-const Contextual Type = "contextual"
+const KNN = "knn"
+
+// Contextual classification labels a data object with
+// the closest label based on their vector position (which describes the context)
+const Contextual = "text2vec-contextionary"

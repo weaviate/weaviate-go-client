@@ -2,7 +2,6 @@ package schema
 
 import (
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/semantics"
 )
 
 // API Conntains all the builder objects required to access the weaviate schema API.
@@ -23,16 +22,14 @@ func (schema *API) Getter() *Getter {
 // ClassCreator builder to create a weaviate schema class
 func (schema *API) ClassCreator() *ClassCreator {
 	return &ClassCreator{
-		connection:   schema.connection,
-		semanticKind: semantics.Objects, // Set the default
+		connection: schema.connection,
 	}
 }
 
 // ClassDeleter builder to delete a weaviate schema class
 func (schema *API) ClassDeleter() *ClassDeleter {
 	return &ClassDeleter{
-		connection:   schema.connection,
-		semanticKind: semantics.Objects,
+		connection: schema.connection,
 	}
 }
 
@@ -47,7 +44,6 @@ func (schema *API) AllDeleter() *AllDeleter {
 // PropertyCreator builder to add a property to an existing schema class
 func (schema *API) PropertyCreator() *PropertyCreator {
 	return &PropertyCreator{
-		connection:   schema.connection,
-		semanticKind: semantics.Objects,
+		connection: schema.connection,
 	}
 }
