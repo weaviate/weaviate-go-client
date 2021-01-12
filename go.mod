@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/go-openapi/strfmt v0.19.11
-	github.com/semi-technologies/weaviate v0.0.0-20210111141423-803d721809ec
+	github.com/semi-technologies/weaviate v1.0.0
 	github.com/stretchr/testify v1.6.1
 )
 
