@@ -156,7 +156,8 @@ func TestData_integration(t *testing.T) {
 			WithAdditional("interpretation").
 			WithAdditional("classification").
 			WithAdditional("nearestNeighbors").
-			WithAdditional("vector").Do(context.Background())
+			WithVector().
+			Do(context.Background())
 		assert.Nil(t, objErrT)
 		assert.Nil(t, objectT[0].Additional.Classification) // Is nil because no classifications was executed
 		assert.NotNil(t, objectT[0].Additional.NearestNeighbors)
@@ -190,7 +191,8 @@ func TestData_integration(t *testing.T) {
 			WithAdditional("classification").
 			WithAdditional("nearestNeighbors").
 			WithAdditional("featureProjection").
-			WithAdditional("vector").Do(context.Background())
+			WithVector().
+			Do(context.Background())
 		assert.Nil(t, objErrT)
 		assert.Nil(t, objectT[0].Additional.Classification) // Is nil because no classifications was executed
 		assert.NotNil(t, objectT[0].Additional.NearestNeighbors)

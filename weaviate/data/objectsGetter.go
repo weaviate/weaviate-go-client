@@ -27,6 +27,12 @@ func (getter *ObjectsGetter) WithID(id string) *ObjectsGetter {
 	return getter
 }
 
+// WithVector include the raw vector of the data object
+func (getter *ObjectsGetter) WithVector() *ObjectsGetter {
+	getter.additionalProperties = append(getter.additionalProperties, "vector")
+	return getter
+}
+
 // WithAdditional parameters such as for example: classification, featureProjection
 func (getter *ObjectsGetter) WithAdditional(additional string) *ObjectsGetter {
 	getter.additionalProperties = append(getter.additionalProperties, additional)
