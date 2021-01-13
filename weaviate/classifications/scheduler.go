@@ -9,7 +9,6 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"github.com/semi-technologies/weaviate/entities/models"
-	"github.com/semi-technologies/weaviate/usecases/classification"
 )
 
 // Scheduler builder to schedule a classification
@@ -19,11 +18,11 @@ type Scheduler struct {
 	withClassName              string
 	withClassifyProperties     []string
 	withBasedOnProperties      []string
-	withK                      int32
 	withSourceWhereFilter      *models.WhereFilter
 	withTrainingSetWhereFilter *models.WhereFilter
 	withTargetWhereFilter      *models.WhereFilter
 	withWaitForCompletion      bool
+	withSettings               interface{}
 }
 
 // WithType of classification e.g. knn or contextual
@@ -68,9 +67,9 @@ func (s *Scheduler) WithTargetWhereFilter(whereFilter *models.WhereFilter) *Sche
 	return s
 }
 
-// WithK set the number of neighbours considered by a knn classification
-func (s *Scheduler) WithK(k int32) *Scheduler {
-	s.withK = k
+// WithSettings sets the classification settings
+func (s *Scheduler) WithSettings(settings interface{}) *Scheduler {
+	s.withSettings = settings
 	return s
 }
 
@@ -91,12 +90,8 @@ func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
 			TargetWhere:      s.withTargetWhereFilter,
 			TrainingSetWhere: s.withTrainingSetWhereFilter,
 		},
-		Type: s.classificationType,
-	}
-	if s.classificationType == KNN {
-		config.Settings = &classification.ParamsKNN{
-			K: &s.withK,
-		}
+		Type:     s.classificationType,
+		Settings: s.withSettings,
 	}
 	responseData, responseErr := s.connection.RunREST(ctx, "/classifications", http.MethodPost, config)
 	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 201)

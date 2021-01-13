@@ -10,6 +10,7 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/weaviate/classifications"
 	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/semi-technologies/weaviate/usecases/classification"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,7 +46,14 @@ func TestClassifications_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		createClassificationClasses(t, client)
 
-		c, err := client.Classifications().Scheduler().WithType(classifications.KNN).WithK(3).WithClassName("Pizza").WithClassifyProperties([]string{"taged"}).WithBasedOnProperties([]string{"description"}).Do(context.Background())
+		var k int32 = 3
+		c, err := client.Classifications().Scheduler().
+			WithType(classifications.KNN).
+			WithSettings(&classification.ParamsKNN{K: &k}).
+			WithClassName("Pizza").
+			WithClassifyProperties([]string{"taged"}).
+			WithBasedOnProperties([]string{"description"}).
+			Do(context.Background())
 		assert.Nil(t, err)
 
 		getC, getErr := client.Classifications().Getter().WithID(string(c.ID)).Do(context.Background())
