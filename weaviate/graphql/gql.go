@@ -2,10 +2,11 @@ package graphql
 
 import (
 	"context"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate/entities/models"
 	"net/http"
+
+	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
+	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
+	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // API group for GrapQL
@@ -25,12 +26,17 @@ func (api *API) Get() *Get {
 
 // Explore queries
 func (api *API) Explore() *Explore {
-	return &Explore{connection:    api.connection}
+	return &Explore{connection: api.connection}
 }
 
 // Aggregate queries
 func (api *API) Aggregate() *Aggregate {
 	return &Aggregate{connection: api.connection}
+}
+
+// NearTextArgBuilder nearText clause
+func (api *API) NearTextArgBuilder() *NearTextArgumentBuilder {
+	return &NearTextArgumentBuilder{}
 }
 
 // rest requests abstraction
@@ -42,7 +48,7 @@ type rest interface {
 func runGraphQLQuery(ctx context.Context, rest rest, query string) (*models.GraphQLResponse, error) {
 	// Do execute the GraphQL query
 	gqlQuery := models.GraphQLQuery{
-		Query:         query,
+		Query: query,
 	}
 	responseData, responseErr := rest.RunREST(ctx, "/graphql", http.MethodPost, &gqlQuery)
 	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
