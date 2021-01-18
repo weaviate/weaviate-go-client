@@ -50,7 +50,18 @@ func TestGraphQL_integration(t *testing.T) {
 			Force:    0.4,
 		}
 
-		resultSet, gqlErr := client.GraphQL().Explore().WithFields(fields).WithConcepts(concepts).WithLimit(3).WithCertainty(0.71).WithMoveTo(moveTo).WithMoveAwayFrom(moveAwayFrom).Do(context.Background())
+		withNearText := client.GraphQL().NearTextArgBuilder().
+			WithConcepts(concepts).
+			WithLimit(3).
+			WithCertainty(0.71).
+			WithMoveTo(moveTo).
+			WithMoveAwayFrom(moveAwayFrom)
+
+		resultSet, gqlErr := client.GraphQL().Explore().
+			WithFields(fields).
+			WithNearText(withNearText).
+			Do(context.Background())
+
 		assert.Nil(t, gqlErr)
 		assert.NotNil(t, resultSet)
 		testsuit.CleanUpWeaviate(t, client)

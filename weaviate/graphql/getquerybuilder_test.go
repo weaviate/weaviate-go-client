@@ -182,4 +182,20 @@ func TestQueryBuilder(t *testing.T) {
 		assert.NotEmpty(t, query, "Check that there is no panic if query is not validly build")
 	})
 
+	t.Run("NearText filter with concepts", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection:           conMock,
+			includesFilterClause: false,
+		}
+
+		query := builder.WithClassName("Pizza").
+			WithFields("name").
+			WithNearText(`{concepts: ["good"]}`).
+			build()
+
+		expected := `{Get {Pizza (nearText: {concepts: ["good"]}) {name}}}`
+		assert.Equal(t, expected, query)
+	})
 }
