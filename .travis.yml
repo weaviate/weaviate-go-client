@@ -8,11 +8,27 @@ notifications:
 
 jobs:
   include:
-    - stage: "Test"
+    - stage: "Test v1"
       go: "1.13.6"
       env:
         - EXTERNAL_WEAVIATE_RUNNING="true"
       before_install:
+        - go get -u -v golang.org/x/lint/golint
+        - go get -v ./...
+      script:
+        - docker-compose -f test/docker-compose.yaml up -d
+        - echo "Unit tests"
+        - go test -v ./weaviate/...
+        - echo "Integration tests"
+        - ( for pkg in $(go list ./... | grep 'weaviate-go-client/test'); do if ! go test -v -count 1 -race "$pkg"; then echo "Test for $pkg failed" >&2; false; exit; fi done)
+        - echo "Linting"
+        # - golint -set_exit_status ./...
+    - stage: "Test v2"
+      go: "1.13.6"
+      env:
+        - EXTERNAL_WEAVIATE_RUNNING="true"
+      before_install:
+        - cd ./v2
         - go get -u -v golang.org/x/lint/golint
         - go get -v ./...
       script:
