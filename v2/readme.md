@@ -4,7 +4,53 @@ A go native client for weaviate.
 
 ## Documentation
 
-[TBD]
+In order to get the go client v2 issue this command:
+
+```bash
+$ go get github.com/semi-technologies/weaviate-go-client/v2@v2.x.x
+```
+
+where `2.x.x` is the desired go client v2 version, for example `v2.0.1`.
+
+## Example
+
+Here's a simple code to start up working with go client.
+
+Add dependency to your `go.mod`:
+
+```go
+require github.com/semi-technologies/weaviate-go-client/v2 v2.0.1
+```
+
+Connect to Weaviate on `localhost:8080` and fetch meta information
+
+```go
+package main
+
+import (
+  "context"
+  "fmt"
+
+  clientv2 "github.com/semi-technologies/weaviate-go-client/v2/weaviate"
+)
+
+func main() {
+  config := clientv2.Config{
+    Scheme: "http",
+    Host:   "localhost:8080",
+  }
+  client := clientv2.New(config)
+  metaGetter := client.Misc().MetaGetter()
+  meta, err := metaGetter.Do(context.Background())
+  if err != nil {
+    fmt.Printf("Error occurred %v", err)
+    return
+  }
+  fmt.Printf("Weaviate meta information\n")
+  fmt.Printf("hostname: %s version: %s\n", meta.Hostname, meta.Version)
+  fmt.Printf("enabled modules: %+v\n", meta.Modules)
+}
+```
 
 ## Support
 
