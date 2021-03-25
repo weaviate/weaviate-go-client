@@ -135,21 +135,21 @@ func TestData_integration(t *testing.T) {
 		objectT, objErrT := client.Data().ObjectsGetter().
 			WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, objErrT)
-		assert.Nil(t, objectT[0].Additional.Classification)
-		assert.Nil(t, objectT[0].Additional.NearestNeighbors)
-		assert.Nil(t, objectT[0].Additional.FeatureProjection)
+		assert.Nil(t, objectT[0].Additional["classification"])
+		assert.Nil(t, objectT[0].Additional["nearestNeighbors"])
+		assert.Nil(t, objectT[0].Additional["featureProjection"])
 		assert.Nil(t, objectT[0].Vector)
-		assert.Nil(t, objectT[0].Additional.Interpretation)
+		assert.Nil(t, objectT[0].Additional["interpretation"])
 
 		objectT, objErrT = client.Data().ObjectsGetter().
 			WithID("abefd256-8574-442b-9293-9205193737ee").
 			WithAdditional("interpretation").Do(context.Background())
 		assert.Nil(t, objErrT)
-		assert.Nil(t, objectT[0].Additional.Classification)
-		assert.Nil(t, objectT[0].Additional.NearestNeighbors)
-		assert.Nil(t, objectT[0].Additional.FeatureProjection)
+		assert.Nil(t, objectT[0].Additional["classification"])
+		assert.Nil(t, objectT[0].Additional["nearestNeighbors"])
+		assert.Nil(t, objectT[0].Additional["featureProjection"])
 		assert.Nil(t, objectT[0].Vector)
-		assert.NotNil(t, objectT[0].Additional.Interpretation)
+		assert.NotNil(t, objectT[0].Additional["interpretation"])
 
 		objectT, objErrT = client.Data().ObjectsGetter().
 			WithID("abefd256-8574-442b-9293-9205193737ee").
@@ -159,31 +159,31 @@ func TestData_integration(t *testing.T) {
 			WithVector().
 			Do(context.Background())
 		assert.Nil(t, objErrT)
-		assert.Nil(t, objectT[0].Additional.Classification) // Is nil because no classifications was executed
-		assert.NotNil(t, objectT[0].Additional.NearestNeighbors)
-		assert.Nil(t, objectT[0].Additional.FeatureProjection) // Is nil because feature projection is not possible on non list request
+		assert.Nil(t, objectT[0].Additional["classification"]) // Is nil because no classifications was executed
+		assert.NotNil(t, objectT[0].Additional["nearestNeighbors"])
+		assert.Nil(t, objectT[0].Additional["featureProjection"]) // Is nil because feature projection is not possible on non list request
 		assert.NotNil(t, objectT[0].Vector)
-		assert.NotNil(t, objectT[0].Additional.Interpretation)
+		assert.NotNil(t, objectT[0].Additional["interpretation"])
 
 		// ACTIONS
 		objectA, objErrA := client.Data().ObjectsGetter().
 			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
 		assert.Nil(t, objErrA)
-		assert.Nil(t, objectA[0].Additional.Classification)
-		assert.Nil(t, objectA[0].Additional.NearestNeighbors)
-		assert.Nil(t, objectA[0].Additional.FeatureProjection)
+		assert.Nil(t, objectA[0].Additional["classification"])
+		assert.Nil(t, objectA[0].Additional["nearestNeighbors"])
+		assert.Nil(t, objectA[0].Additional["featureProjection"])
 		assert.Nil(t, objectA[0].Vector)
-		assert.Nil(t, objectA[0].Additional.Interpretation)
+		assert.Nil(t, objectA[0].Additional["interpretation"])
 
 		objectA, objErrA = client.Data().ObjectsGetter().
 			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
 			WithAdditional("interpretation").Do(context.Background())
 		assert.Nil(t, objErrA)
-		assert.Nil(t, objectA[0].Additional.Classification)
-		assert.Nil(t, objectA[0].Additional.NearestNeighbors)
-		assert.Nil(t, objectA[0].Additional.FeatureProjection)
+		assert.Nil(t, objectA[0].Additional["classification"])
+		assert.Nil(t, objectA[0].Additional["nearestNeighbors"])
+		assert.Nil(t, objectA[0].Additional["featureProjection"])
 		assert.Nil(t, objectA[0].Vector)
-		assert.NotNil(t, objectA[0].Additional.Interpretation)
+		assert.NotNil(t, objectA[0].Additional["interpretation"])
 
 		objectA, objErrA = client.Data().ObjectsGetter().
 			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
@@ -194,11 +194,11 @@ func TestData_integration(t *testing.T) {
 			WithVector().
 			Do(context.Background())
 		assert.Nil(t, objErrT)
-		assert.Nil(t, objectT[0].Additional.Classification) // Is nil because no classifications was executed
-		assert.NotNil(t, objectT[0].Additional.NearestNeighbors)
-		assert.Nil(t, objectT[0].Additional.FeatureProjection) // Is nil because feature projection is not possible on non list request
+		assert.Nil(t, objectT[0].Additional["classification"]) // Is nil because no classifications was executed
+		assert.NotNil(t, objectT[0].Additional["nearestNeighbors"])
+		assert.Nil(t, objectT[0].Additional["featureProjection"]) // Is nil because feature projection is not possible on non list request
 		assert.NotNil(t, objectT[0].Vector)
-		assert.NotNil(t, objectT[0].Additional.Interpretation)
+		assert.NotNil(t, objectT[0].Additional["interpretation"])
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
