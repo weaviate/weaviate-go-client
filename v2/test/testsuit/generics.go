@@ -123,6 +123,7 @@ func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client) {
 			},
 		},
 		{
+			ID:    "5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
 			Class: "Pizza",
 			Properties: map[string]string{
 				"name":        "Doener",

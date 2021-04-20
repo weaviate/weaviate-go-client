@@ -198,4 +198,54 @@ func TestQueryBuilder(t *testing.T) {
 		expected := `{Get {Pizza (nearText: {concepts: ["good"]}) {name}}}`
 		assert.Equal(t, expected, query)
 	})
+
+	t.Run("NearObject filter with all fields", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection:           conMock,
+			includesFilterClause: false,
+		}
+
+		nearObject := &NearObjectArgumentBuilder{}
+		nearObject = nearObject.WithBeacon("weawiate/some-uuid")
+		query := builder.WithClassName("Pizza").
+			WithFields("name").
+			WithNearObject(nearObject).
+			build()
+
+		expected := `{Get {Pizza (nearObject:{beacon: "weawiate/some-uuid"} ) {name}}}`
+		assert.Equal(t, expected, query)
+
+		nearObject = &NearObjectArgumentBuilder{}
+		nearObject = nearObject.WithBeacon("weawiate/some-uuid").WithID("some-uuid")
+		query = builder.WithClassName("Pizza").
+			WithFields("name").
+			WithNearObject(nearObject).
+			build()
+
+		expected = `{Get {Pizza (nearObject:{id: "some-uuid" beacon: "weawiate/some-uuid"} ) {name}}}`
+		assert.Equal(t, expected, query)
+
+		nearObject = &NearObjectArgumentBuilder{}
+		nearObject = nearObject.WithBeacon("weawiate/some-uuid").WithID("some-uuid").WithCertainty(0.8)
+		query = builder.WithClassName("Pizza").
+			WithFields("name").
+			WithNearObject(nearObject).
+			build()
+
+		expected = `{Get {Pizza (nearObject:{id: "some-uuid" beacon: "weawiate/some-uuid" certainty: 0.8} ) {name}}}`
+		assert.Equal(t, expected, query)
+
+		nearObject = &NearObjectArgumentBuilder{}
+		nearObject = nearObject.WithBeacon("weawiate/some-uuid").WithID("some-uuid").WithCertainty(0.8)
+		query = builder.WithClassName("Pizza").
+			WithFields("name").
+			WithNearObject(nearObject).
+			WithNearText(`{concepts: ["good"]}`).
+			build()
+
+		expected = `{Get {Pizza (nearText: {concepts: ["good"]}, nearObject:{id: "some-uuid" beacon: "weawiate/some-uuid" certainty: 0.8} ) {name}}}`
+		assert.Equal(t, expected, query)
+	})
 }
