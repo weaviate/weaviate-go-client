@@ -35,13 +35,12 @@ func TestExploreBuilder(t *testing.T) {
 
 		withNearText := nearTextBuilder.
 			WithConcepts([]string{"Cheese"}).
-			WithLimit(5).
 			WithCertainty(0.71)
 		query := builder.WithFields([]ExploreFields{Beacon}).
 			WithNearText(withNearText).
 			build()
 
-		expected := `{Explore(nearText:{concepts: ["Cheese"] limit: 5 certainty: 0.71 } ){beacon }}`
+		expected := `{Explore(nearText:{concepts: ["Cheese"] certainty: 0.71 } ){beacon }}`
 		assert.Equal(t, expected, query)
 	})
 
