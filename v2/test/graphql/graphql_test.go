@@ -52,7 +52,6 @@ func TestGraphQL_integration(t *testing.T) {
 
 		withNearText := client.GraphQL().NearTextArgBuilder().
 			WithConcepts(concepts).
-			WithLimit(3).
 			WithCertainty(0.71).
 			WithMoveTo(moveTo).
 			WithMoveAwayFrom(moveAwayFrom)
