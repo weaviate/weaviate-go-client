@@ -261,4 +261,45 @@ func TestQueryBuilder(t *testing.T) {
 		expected = `{Get {Pizza (nearText:{concepts: ["good"]}, nearObject:{id: "some-uuid" beacon: "weawiate/some-uuid" certainty: 0.8}) {name}}}`
 		assert.Equal(t, expected, query)
 	})
+
+	t.Run("Ask filter with all fields", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection:           conMock,
+			includesFilterClause: false,
+		}
+
+		ask := &AskArgumentBuilder{}
+		ask = ask.WithQuestion("What is Weaviate?")
+		query := builder.WithClassName("Pizza").
+			WithFields("name").
+			WithAsk(ask).
+			build()
+
+		expected := `{Get {Pizza (ask:{question: "What is Weaviate?"}) {name}}}`
+		assert.Equal(t, expected, query)
+
+		ask = &AskArgumentBuilder{}
+		ask = ask.WithQuestion("What is Weaviate?").WithProperties([]string{"prop1", "prop2"})
+		query = builder.WithClassName("Pizza").
+			WithFields("name").
+			WithAsk(ask).
+			build()
+
+		expected = `{Get {Pizza (ask:{question: "What is Weaviate?" properties: ["prop1","prop2"]}) {name}}}`
+		assert.Equal(t, expected, query)
+
+		ask = &AskArgumentBuilder{}
+		ask = ask.WithQuestion("What is Weaviate?").
+			WithProperties([]string{"prop1", "prop2"}).
+			WithCertainty(0.8)
+		query = builder.WithClassName("Pizza").
+			WithFields("name").
+			WithAsk(ask).
+			build()
+
+		expected = `{Get {Pizza (ask:{question: "What is Weaviate?" properties: ["prop1","prop2"] certainty: 0.8}) {name}}}`
+		assert.Equal(t, expected, query)
+	})
 }
