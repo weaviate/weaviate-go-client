@@ -30,6 +30,20 @@ func TestSchema_integration(t *testing.T) {
 			Properties:      nil,
 			VectorIndexType: "hnsw",
 			Vectorizer:      "text2vec-contextionary",
+			InvertedIndexConfig: &models.InvertedIndexConfig{
+				CleanupIntervalSeconds: 60,
+			},
+			ModuleConfig: map[string]interface{}{
+				"text2vec-contextionary": map[string]interface{}{
+					"vectorizeClassName": true,
+				},
+			},
+			VectorIndexConfig: map[string]interface{}{
+				"cleanupIntervalSeconds": float64(300),
+				"efConstruction":         float64(128),
+				"maxConnections":         float64(64),
+				"vectorCacheMaxObjects":  float64(500000),
+			},
 		}
 
 		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
@@ -55,6 +69,20 @@ func TestSchema_integration(t *testing.T) {
 			Description:     "Running from the fuzz",
 			VectorIndexType: "hnsw",
 			Vectorizer:      "text2vec-contextionary",
+			InvertedIndexConfig: &models.InvertedIndexConfig{
+				CleanupIntervalSeconds: 60,
+			},
+			ModuleConfig: map[string]interface{}{
+				"text2vec-contextionary": map[string]interface{}{
+					"vectorizeClassName": true,
+				},
+			},
+			VectorIndexConfig: map[string]interface{}{
+				"cleanupIntervalSeconds": float64(300),
+				"efConstruction":         float64(128),
+				"maxConnections":         float64(64),
+				"vectorCacheMaxObjects":  float64(500000),
+			},
 		}
 
 		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
