@@ -43,5 +43,5 @@ func (e *NearObjectArgumentBuilder) build() string {
 	if e.withCertainty {
 		clause = append(clause, fmt.Sprintf("certainty: %v", e.certainty))
 	}
-	return fmt.Sprintf("nearObject:{%s} ", strings.Join(clause, " "))
+	return fmt.Sprintf("nearObject:{%s}", strings.Join(clause, " "))
 }

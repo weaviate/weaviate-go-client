@@ -5,8 +5,10 @@ type ExploreFields string
 
 // Certainty includes the certainty that a data object is related to the query concept
 const Certainty ExploreFields = "certainty"
+
 // Beacon includes the beacon to the found objects
 const Beacon ExploreFields = "beacon"
+
 // ClassName includes the class name of the found objects
 const ClassName ExploreFields = "className"
 

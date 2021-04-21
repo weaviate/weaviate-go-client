@@ -21,7 +21,7 @@ func TestExploreBuilder(t *testing.T) {
 			WithNearText(withNearText).
 			build()
 
-		expected := `{Explore(nearText:{concepts: ["Cheese","pineapple"] } ){certainty beacon }}`
+		expected := `{Explore(nearText:{concepts: ["Cheese","pineapple"]}){certainty beacon }}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -40,7 +40,7 @@ func TestExploreBuilder(t *testing.T) {
 			WithNearText(withNearText).
 			build()
 
-		expected := `{Explore(nearText:{concepts: ["Cheese"] certainty: 0.71 } ){beacon }}`
+		expected := `{Explore(nearText:{concepts: ["Cheese"] certainty: 0.71}){beacon }}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -71,7 +71,7 @@ func TestExploreBuilder(t *testing.T) {
 			WithNearText(withNearText).
 			build()
 
-		expected := `{Explore(nearText:{concepts: ["Cheese"] moveTo: {concepts: ["pizza","pineapple"] force: 0.2} moveAwayFrom: {concepts: ["fish"] force: 0.1} } ){beacon }}`
+		expected := `{Explore(nearText:{concepts: ["Cheese"] moveTo: {concepts: ["pizza","pineapple"] force: 0.2} moveAwayFrom: {concepts: ["fish"] force: 0.1}}){beacon }}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -105,7 +105,7 @@ func TestExploreBuilder(t *testing.T) {
 			WithNearText(withNearText).
 			build()
 
-		expected := `{Explore(nearText:{concepts: ["New Yorker"] certainty: 0.95 moveTo: {concepts: ["publisher","articles"] force: 0.5} moveAwayFrom: {concepts: ["fashion","shop"] force: 0.2} } ){beacon certainty className }}`
+		expected := `{Explore(nearText:{concepts: ["New Yorker"] certainty: 0.95 moveTo: {concepts: ["publisher","articles"] force: 0.5} moveAwayFrom: {concepts: ["fashion","shop"] force: 0.2}}){beacon certainty className }}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -127,7 +127,7 @@ func TestExploreBuilder(t *testing.T) {
 			WithNearObject(withNearObject).
 			build()
 
-		expected := `{Explore(nearObject:{id: "some-uuid" beacon: "localhost:8080/weaviate/some-uuid" certainty: 0.8} ){beacon }}`
+		expected := `{Explore(nearObject:{id: "some-uuid" beacon: "localhost:8080/weaviate/some-uuid" certainty: 0.8}){beacon }}`
 		assert.Equal(t, expected, query)
 
 		nearObjectBuilder = NearObjectArgumentBuilder{}
@@ -138,7 +138,7 @@ func TestExploreBuilder(t *testing.T) {
 			WithNearObject(withNearObject).
 			build()
 
-		expected = `{Explore(nearObject:{id: "some-uuid" beacon: "localhost:8080/weaviate/some-uuid"} ){beacon }}`
+		expected = `{Explore(nearObject:{id: "some-uuid" beacon: "localhost:8080/weaviate/some-uuid"}){beacon }}`
 		assert.Equal(t, expected, query)
 
 		nearObjectBuilder = NearObjectArgumentBuilder{}
@@ -148,7 +148,7 @@ func TestExploreBuilder(t *testing.T) {
 			WithNearObject(withNearObject).
 			build()
 
-		expected = `{Explore(nearObject:{beacon: "localhost:8080/weaviate/some-uuid"} ){beacon }}`
+		expected = `{Explore(nearObject:{beacon: "localhost:8080/weaviate/some-uuid"}){beacon }}`
 		assert.Equal(t, expected, query)
 	})
 
