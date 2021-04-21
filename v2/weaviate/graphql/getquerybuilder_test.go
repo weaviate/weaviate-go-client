@@ -99,9 +99,11 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
-		query := builder.WithClassName("Pizza").WithFields("name").WithNearText(`{concepts: "good"}`).build()
+		nearText := &NearTextArgumentBuilder{}
+		nearText = nearText.WithConcepts([]string{"good"})
+		query := builder.WithClassName("Pizza").WithFields("name").WithNearText(nearText).build()
 
-		expected := `{Get {Pizza (nearText: {concepts: "good"}) {name}}}`
+		expected := `{Get {Pizza (nearText:{concepts: ["good"]}) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -141,14 +143,17 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
+		nearText := &NearTextArgumentBuilder{}
+		nearText = nearText.WithConcepts([]string{"good"})
+
 		query := builder.WithClassName("Pizza").
 			WithFields("name").
-			WithNearText(`{concepts: "good"}`).
+			WithNearText(nearText).
 			WithLimit(2).
 			WithWhere(`{path: ["name"] operator: Equal valueString: "Hawaii"}`).
 			build()
 
-		expected := `{Get {Pizza (where: {path: ["name"] operator: Equal valueString: "Hawaii"}, nearText: {concepts: "good"}, limit: 2) {name}}}`
+		expected := `{Get {Pizza (where: {path: ["name"] operator: Equal valueString: "Hawaii"}, nearText:{concepts: ["good"]}, limit: 2) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -160,15 +165,18 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
+		nearText := &NearTextArgumentBuilder{}
+		nearText = nearText.WithConcepts([]string{"good"})
+
 		query := builder.WithClassName("Pizza").
 			WithFields("name").
-			WithNearText(`{concepts: "good"}`).
+			WithNearText(nearText).
 			WithNearVector("{vector: [0, 1, 0.8]}").
 			WithLimit(2).
 			WithWhere(`{path: ["name"] operator: Equal valueString: "Hawaii"}`).
 			build()
 
-		expected := `{Get {Pizza (where: {path: ["name"] operator: Equal valueString: "Hawaii"}, nearText: {concepts: "good"}, nearVector: {vector: [0, 1, 0.8]}, limit: 2) {name}}}`
+		expected := `{Get {Pizza (where: {path: ["name"] operator: Equal valueString: "Hawaii"}, nearText:{concepts: ["good"]}, nearVector: {vector: [0, 1, 0.8]}, limit: 2) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -190,12 +198,15 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
+		nearText := &NearTextArgumentBuilder{}
+		nearText = nearText.WithConcepts([]string{"good"})
+
 		query := builder.WithClassName("Pizza").
 			WithFields("name").
-			WithNearText(`{concepts: ["good"]}`).
+			WithNearText(nearText).
 			build()
 
-		expected := `{Get {Pizza (nearText: {concepts: ["good"]}) {name}}}`
+		expected := `{Get {Pizza (nearText:{concepts: ["good"]}) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -214,7 +225,7 @@ func TestQueryBuilder(t *testing.T) {
 			WithNearObject(nearObject).
 			build()
 
-		expected := `{Get {Pizza (nearObject:{beacon: "weawiate/some-uuid"} ) {name}}}`
+		expected := `{Get {Pizza (nearObject:{beacon: "weawiate/some-uuid"}) {name}}}`
 		assert.Equal(t, expected, query)
 
 		nearObject = &NearObjectArgumentBuilder{}
@@ -224,7 +235,7 @@ func TestQueryBuilder(t *testing.T) {
 			WithNearObject(nearObject).
 			build()
 
-		expected = `{Get {Pizza (nearObject:{id: "some-uuid" beacon: "weawiate/some-uuid"} ) {name}}}`
+		expected = `{Get {Pizza (nearObject:{id: "some-uuid" beacon: "weawiate/some-uuid"}) {name}}}`
 		assert.Equal(t, expected, query)
 
 		nearObject = &NearObjectArgumentBuilder{}
@@ -234,18 +245,20 @@ func TestQueryBuilder(t *testing.T) {
 			WithNearObject(nearObject).
 			build()
 
-		expected = `{Get {Pizza (nearObject:{id: "some-uuid" beacon: "weawiate/some-uuid" certainty: 0.8} ) {name}}}`
+		expected = `{Get {Pizza (nearObject:{id: "some-uuid" beacon: "weawiate/some-uuid" certainty: 0.8}) {name}}}`
 		assert.Equal(t, expected, query)
 
 		nearObject = &NearObjectArgumentBuilder{}
 		nearObject = nearObject.WithBeacon("weawiate/some-uuid").WithID("some-uuid").WithCertainty(0.8)
+		nearText := &NearTextArgumentBuilder{}
+		nearText = nearText.WithConcepts([]string{"good"})
 		query = builder.WithClassName("Pizza").
 			WithFields("name").
 			WithNearObject(nearObject).
-			WithNearText(`{concepts: ["good"]}`).
+			WithNearText(nearText).
 			build()
 
-		expected = `{Get {Pizza (nearText: {concepts: ["good"]}, nearObject:{id: "some-uuid" beacon: "weawiate/some-uuid" certainty: 0.8} ) {name}}}`
+		expected = `{Get {Pizza (nearText:{concepts: ["good"]}, nearObject:{id: "some-uuid" beacon: "weawiate/some-uuid" certainty: 0.8}) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 }

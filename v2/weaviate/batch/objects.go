@@ -27,13 +27,18 @@ func (ob *ObjectsBatcher) WithObject(object *models.Object) *ObjectsBatcher {
 	return ob
 }
 
+func (ob *ObjectsBatcher) resetObjects() {
+	ob.objects = []*models.Object{}
+}
+
 // Do add all the objects in the builder to weaviate
-func (tb *ObjectsBatcher) Do(ctx context.Context) ([]models.ObjectsGetResponse, error) {
+func (ob *ObjectsBatcher) Do(ctx context.Context) ([]models.ObjectsGetResponse, error) {
+	defer ob.resetObjects()
 	body := ObjectsBatchRequestBody{
 		Fields:  []string{"ALL"},
-		Objects: tb.objects,
+		Objects: ob.objects,
 	}
-	responseData, responseErr := tb.connection.RunREST(ctx, "/batch/objects", http.MethodPost, body)
+	responseData, responseErr := ob.connection.RunREST(ctx, "/batch/objects", http.MethodPost, body)
 	batchErr := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if batchErr != nil {
 		return nil, batchErr

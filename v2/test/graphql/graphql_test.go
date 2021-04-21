@@ -9,6 +9,7 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/graphql"
 	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/testenv"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGraphQL_integration(t *testing.T) {
@@ -30,6 +31,20 @@ func TestGraphQL_integration(t *testing.T) {
 
 		get := resultSet.Data["Get"].(map[string]interface{})
 		pizza := get["Pizza"].([]interface{})
+		assert.Equal(t, 4, len(pizza))
+
+		withNearObject := client.GraphQL().NearObjectArgBuilder().
+			WithID("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
+		resultSet, gqlErr = client.GraphQL().Get().Objects().
+			WithClassName("Pizza").
+			WithFields("name").
+			WithNearObject(withNearObject).
+			Do(context.Background())
+		assert.Nil(t, gqlErr)
+		require.Nil(t, resultSet.Errors)
+
+		get = resultSet.Data["Get"].(map[string]interface{})
+		pizza = get["Pizza"].([]interface{})
 		assert.Equal(t, 4, len(pizza))
 
 		testsuit.CleanUpWeaviate(t, client)

@@ -18,7 +18,7 @@ type GetBuilder struct {
 	withWhereFilter      string
 	includesLimit        bool
 	limit                int
-	withNearTextFilter   string
+	withNearTextFilter   *NearTextArgumentBuilder
 	withNearVectorFilter string
 	withNearObjectFilter *NearObjectArgumentBuilder
 	withGroupFilter      string
@@ -52,7 +52,7 @@ func (gb *GetBuilder) WithLimit(limit int) *GetBuilder {
 }
 
 // WithNearText clause to find close objects
-func (gb *GetBuilder) WithNearText(nearText string) *GetBuilder {
+func (gb *GetBuilder) WithNearText(nearText *NearTextArgumentBuilder) *GetBuilder {
 	gb.includesFilterClause = true
 	gb.withNearTextFilter = nearText
 	return gb
@@ -101,8 +101,8 @@ func (gb *GetBuilder) createFilterClause() string {
 	if len(gb.withWhereFilter) > 0 {
 		filters = append(filters, fmt.Sprintf("where: %v", gb.withWhereFilter))
 	}
-	if len(gb.withNearTextFilter) > 0 {
-		filters = append(filters, fmt.Sprintf("nearText: %v", gb.withNearTextFilter))
+	if gb.withNearTextFilter != nil {
+		filters = append(filters, gb.withNearTextFilter.build())
 	}
 	if len(gb.withNearVectorFilter) > 0 {
 		filters = append(filters, fmt.Sprintf("nearVector: %v", gb.withNearVectorFilter))

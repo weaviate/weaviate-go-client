@@ -3,6 +3,7 @@ package graphql
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 type NearTextArgumentBuilder struct {
@@ -38,22 +39,24 @@ func (e *NearTextArgumentBuilder) WithMoveAwayFrom(parameters *MoveParameters) *
 	return e
 }
 
+func (e *NearTextArgumentBuilder) buildMoveParam(name string, param *MoveParameters) string {
+	moveToConcepts, _ := json.Marshal(param.Concepts)
+	return fmt.Sprintf("%s: {concepts: %v force: %v}", name, string(moveToConcepts), param.Force)
+}
+
 // Build build the given clause
 func (e *NearTextArgumentBuilder) build() string {
+	clause := []string{}
 	concepts, _ := json.Marshal(e.concepts)
-	clause := fmt.Sprintf("concepts: %v ", string(concepts))
-
+	clause = append(clause, fmt.Sprintf("concepts: %v", string(concepts)))
 	if e.withCertainty {
-		clause += fmt.Sprintf("certainty: %v ", e.certainty)
+		clause = append(clause, fmt.Sprintf("certainty: %v", e.certainty))
 	}
 	if e.moveTo != nil {
-		moveToConcepts, _ := json.Marshal(e.moveTo.Concepts)
-		clause += fmt.Sprintf("moveTo: {concepts: %v force: %v} ", string(moveToConcepts), e.moveTo.Force)
+		clause = append(clause, e.buildMoveParam("moveTo", e.moveTo))
 	}
 	if e.moveAwayFrom != nil {
-		moveAwayFromConcepts, _ := json.Marshal(e.moveAwayFrom.Concepts)
-		clause += fmt.Sprintf("moveAwayFrom: {concepts: %v force: %v} ", string(moveAwayFromConcepts), e.moveAwayFrom.Force)
+		clause = append(clause, e.buildMoveParam("moveAwayFrom", e.moveAwayFrom))
 	}
-
-	return fmt.Sprintf("nearText:{%v} ", clause)
+	return fmt.Sprintf("nearText:{%v}", strings.Join(clause, " "))
 }
