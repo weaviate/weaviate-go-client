@@ -109,6 +109,49 @@ func TestExploreBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
+	t.Run("Explore with nearObject", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := Explore{
+			connection: conMock,
+		}
+
+		fields := []ExploreFields{Beacon}
+
+		nearObjectBuilder := NearObjectArgumentBuilder{}
+		withNearObject := nearObjectBuilder.WithID("some-uuid").
+			WithBeacon("localhost:8080/weaviate/some-uuid").
+			WithCertainty(0.8)
+
+		query := builder.WithFields(fields).
+			WithNearObject(withNearObject).
+			build()
+
+		expected := `{Explore(nearObject:{id: "some-uuid" beacon: "localhost:8080/weaviate/some-uuid" certainty: 0.8} ){beacon }}`
+		assert.Equal(t, expected, query)
+
+		nearObjectBuilder = NearObjectArgumentBuilder{}
+		withNearObject = nearObjectBuilder.WithID("some-uuid").
+			WithBeacon("localhost:8080/weaviate/some-uuid")
+
+		query = builder.WithFields(fields).
+			WithNearObject(withNearObject).
+			build()
+
+		expected = `{Explore(nearObject:{id: "some-uuid" beacon: "localhost:8080/weaviate/some-uuid"} ){beacon }}`
+		assert.Equal(t, expected, query)
+
+		nearObjectBuilder = NearObjectArgumentBuilder{}
+		withNearObject = nearObjectBuilder.WithBeacon("localhost:8080/weaviate/some-uuid")
+
+		query = builder.WithFields(fields).
+			WithNearObject(withNearObject).
+			build()
+
+		expected = `{Explore(nearObject:{beacon: "localhost:8080/weaviate/some-uuid"} ){beacon }}`
+		assert.Equal(t, expected, query)
+	})
+
 	t.Run("Missuse", func(t *testing.T) {
 		conMock := &MockRunREST{}
 		builder := Explore{

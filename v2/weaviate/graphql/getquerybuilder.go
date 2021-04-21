@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/semi-technologies/weaviate/entities/models"
 )
@@ -19,6 +20,7 @@ type GetBuilder struct {
 	limit                int
 	withNearTextFilter   string
 	withNearVectorFilter string
+	withNearObjectFilter *NearObjectArgumentBuilder
 	withGroupFilter      string
 }
 
@@ -56,6 +58,13 @@ func (gb *GetBuilder) WithNearText(nearText string) *GetBuilder {
 	return gb
 }
 
+// WithNearObject clause to find close objects
+func (gb *GetBuilder) WithNearObject(nearObject *NearObjectArgumentBuilder) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.withNearObjectFilter = nearObject
+	return gb
+}
+
 // WithNearVector clause to find close objects
 func (gb *GetBuilder) WithNearVector(nearVector string) *GetBuilder {
 	gb.includesFilterClause = true
@@ -88,38 +97,24 @@ func (gb *GetBuilder) build() string {
 }
 
 func (gb *GetBuilder) createFilterClause() string {
-	clause := "("
+	filters := []string{}
 	if len(gb.withWhereFilter) > 0 {
-		clause += fmt.Sprintf("where: %v", gb.withWhereFilter)
+		filters = append(filters, fmt.Sprintf("where: %v", gb.withWhereFilter))
 	}
 	if len(gb.withNearTextFilter) > 0 {
-		if string(clause[len(clause)-1]) == "(" {
-			clause += fmt.Sprintf("nearText: %v", gb.withNearTextFilter)
-		} else {
-			clause += fmt.Sprintf(", nearText: %v", gb.withNearTextFilter)
-		}
+		filters = append(filters, fmt.Sprintf("nearText: %v", gb.withNearTextFilter))
 	}
 	if len(gb.withNearVectorFilter) > 0 {
-		if string(clause[len(clause)-1]) == "(" {
-			clause += fmt.Sprintf("nearVector: %v", gb.withNearVectorFilter)
-		} else {
-			clause += fmt.Sprintf(", nearVector: %v", gb.withNearVectorFilter)
-		}
+		filters = append(filters, fmt.Sprintf("nearVector: %v", gb.withNearVectorFilter))
+	}
+	if gb.withNearObjectFilter != nil {
+		filters = append(filters, gb.withNearObjectFilter.build())
 	}
 	if len(gb.withGroupFilter) > 0 {
-		if string(clause[len(clause)-1]) == "(" {
-			clause += fmt.Sprintf("group: %v", gb.withGroupFilter)
-		} else {
-			clause += fmt.Sprintf(", group: %v", gb.withGroupFilter)
-		}
+		filters = append(filters, fmt.Sprintf("group: %v", gb.withGroupFilter))
 	}
 	if gb.includesLimit {
-		if string(clause[len(clause)-1]) == "(" {
-			clause += fmt.Sprintf("limit: %v", gb.limit)
-		} else {
-			clause += fmt.Sprintf(", limit: %v", gb.limit)
-		}
+		filters = append(filters, fmt.Sprintf("limit: %v", gb.limit))
 	}
-	clause += ")"
-	return clause
+	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
 }
