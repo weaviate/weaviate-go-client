@@ -152,6 +152,48 @@ func TestExploreBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
+	t.Run("Explore with ask", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := Explore{
+			connection: conMock,
+		}
+
+		fields := []ExploreFields{Beacon}
+
+		askBuilder := &AskArgumentBuilder{}
+		withAsk := askBuilder.WithQuestion("What is Weaviate?")
+
+		query := builder.WithFields(fields).
+			WithAsk(withAsk).
+			build()
+
+		expected := `{Explore(ask:{question: "What is Weaviate?"}){beacon }}`
+		assert.Equal(t, expected, query)
+
+		askBuilder = &AskArgumentBuilder{}
+		withAsk = askBuilder.WithQuestion("What is Weaviate?").WithProperties([]string{"prop1", "prop2"})
+
+		query = builder.WithFields(fields).
+			WithAsk(withAsk).
+			build()
+
+		expected = `{Explore(ask:{question: "What is Weaviate?" properties: ["prop1","prop2"]}){beacon }}`
+		assert.Equal(t, expected, query)
+
+		askBuilder = &AskArgumentBuilder{}
+		withAsk = askBuilder.WithQuestion("What is Weaviate?").
+			WithProperties([]string{"prop1", "prop2"}).
+			WithCertainty(0.2)
+
+		query = builder.WithFields(fields).
+			WithAsk(withAsk).
+			build()
+
+		expected = `{Explore(ask:{question: "What is Weaviate?" properties: ["prop1","prop2"] certainty: 0.2}){beacon }}`
+		assert.Equal(t, expected, query)
+	})
+
 	t.Run("Missuse", func(t *testing.T) {
 		conMock := &MockRunREST{}
 		builder := Explore{

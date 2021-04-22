@@ -3,7 +3,6 @@ package graphql
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/semi-technologies/weaviate/entities/models"
 )
@@ -14,6 +13,7 @@ type Explore struct {
 	fields         []ExploreFields
 	withNearText   *NearTextArgumentBuilder
 	withNearObject *NearObjectArgumentBuilder
+	withAsk        *AskArgumentBuilder
 }
 
 // WithNearText adds nearText to clause
@@ -28,6 +28,12 @@ func (e *Explore) WithNearObject(nearObject *NearObjectArgumentBuilder) *Explore
 	return e
 }
 
+// WithNearObject adds nearObject to clause
+func (e *Explore) WithAsk(ask *AskArgumentBuilder) *Explore {
+	e.withAsk = ask
+	return e
+}
+
 // WithFields that should be included in the result set
 func (e *Explore) WithFields(fields []ExploreFields) *Explore {
 	e.fields = fields
@@ -35,14 +41,16 @@ func (e *Explore) WithFields(fields []ExploreFields) *Explore {
 }
 
 func (e *Explore) createFilterClause() string {
-	filters := []string{}
 	if e.withNearText != nil {
-		filters = append(filters, e.withNearText.build())
+		return e.withNearText.build()
 	}
 	if e.withNearObject != nil {
-		filters = append(filters, e.withNearObject.build())
+		return e.withNearObject.build()
 	}
-	return strings.Join(filters, ", ")
+	if e.withAsk != nil {
+		return e.withAsk.build()
+	}
+	return ""
 }
 
 // build query

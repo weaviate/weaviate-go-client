@@ -22,6 +22,7 @@ type GetBuilder struct {
 	withNearVectorFilter string
 	withNearObjectFilter *NearObjectArgumentBuilder
 	withGroupFilter      string
+	withAskFilter        *AskArgumentBuilder
 }
 
 // WithClassName that should be queried
@@ -79,6 +80,13 @@ func (gb *GetBuilder) WithGroup(group string) *GetBuilder {
 	return gb
 }
 
+// WithAsk clause to find an aswer to the question
+func (gb *GetBuilder) WithAsk(ask *AskArgumentBuilder) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.withAskFilter = ask
+	return gb
+}
+
 // Do execute the GraphQL query
 func (gb *GetBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, gb.connection, gb.build())
@@ -109,6 +117,9 @@ func (gb *GetBuilder) createFilterClause() string {
 	}
 	if gb.withNearObjectFilter != nil {
 		filters = append(filters, gb.withNearObjectFilter.build())
+	}
+	if gb.withAskFilter != nil {
+		filters = append(filters, gb.withAskFilter.build())
 	}
 	if len(gb.withGroupFilter) > 0 {
 		filters = append(filters, fmt.Sprintf("group: %v", gb.withGroupFilter))
