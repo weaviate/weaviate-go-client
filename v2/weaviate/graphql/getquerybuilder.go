@@ -23,6 +23,7 @@ type GetBuilder struct {
 	withNearObjectFilter *NearObjectArgumentBuilder
 	withGroupFilter      string
 	withAskFilter        *AskArgumentBuilder
+	withNearImageFilter  *NearImageArgumentBuilder
 }
 
 // WithClassName that should be queried
@@ -60,9 +61,9 @@ func (gb *GetBuilder) WithNearText(nearText *NearTextArgumentBuilder) *GetBuilde
 }
 
 // WithNearObject clause to find close objects
-func (gb *GetBuilder) WithNearObject(nearObject *NearObjectArgumentBuilder) *GetBuilder {
+func (gb *GetBuilder) WithNearImage(nearImage *NearImageArgumentBuilder) *GetBuilder {
 	gb.includesFilterClause = true
-	gb.withNearObjectFilter = nearObject
+	gb.withNearImageFilter = nearImage
 	return gb
 }
 
@@ -84,6 +85,13 @@ func (gb *GetBuilder) WithGroup(group string) *GetBuilder {
 func (gb *GetBuilder) WithAsk(ask *AskArgumentBuilder) *GetBuilder {
 	gb.includesFilterClause = true
 	gb.withAskFilter = ask
+	return gb
+}
+
+// WithNearObject clause to find close objects
+func (gb *GetBuilder) WithNearObject(nearObject *NearObjectArgumentBuilder) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.withNearObjectFilter = nearObject
 	return gb
 }
 
@@ -120,6 +128,9 @@ func (gb *GetBuilder) createFilterClause() string {
 	}
 	if gb.withAskFilter != nil {
 		filters = append(filters, gb.withAskFilter.build())
+	}
+	if gb.withNearImageFilter != nil {
+		filters = append(filters, gb.withNearImageFilter.build())
 	}
 	if len(gb.withGroupFilter) > 0 {
 		filters = append(filters, fmt.Sprintf("group: %v", gb.withGroupFilter))
