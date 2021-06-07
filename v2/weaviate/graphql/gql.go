@@ -49,6 +49,11 @@ func (api *API) AskArgBuilder() *AskArgumentBuilder {
 	return &AskArgumentBuilder{}
 }
 
+// NearImageArgBuilder nearImage clause
+func (api *API) NearImageArgBuilder() *NearImageArgumentBuilder {
+	return &NearImageArgumentBuilder{}
+}
+
 // rest requests abstraction
 type rest interface {
 	//RunREST request to weaviate
