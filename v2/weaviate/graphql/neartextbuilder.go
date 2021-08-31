@@ -7,11 +7,13 @@ import (
 )
 
 type NearTextArgumentBuilder struct {
-	concepts      []string
-	withCertainty bool
-	certainty     float32
-	moveTo        *MoveParameters
-	moveAwayFrom  *MoveParameters
+	concepts        []string
+	withCertainty   bool
+	certainty       float32
+	moveTo          *MoveParameters
+	moveAwayFrom    *MoveParameters
+	withAutocorrect bool
+	autocorrect     bool
 }
 
 // WithConcepts the result is based on
@@ -39,6 +41,13 @@ func (e *NearTextArgumentBuilder) WithMoveAwayFrom(parameters *MoveParameters) *
 	return e
 }
 
+// WithAutocorrect this is a setting enabling autocorrect of the concepts texts
+func (e *NearTextArgumentBuilder) WithAutocorrect(autocorrect bool) *NearTextArgumentBuilder {
+	e.withAutocorrect = true
+	e.autocorrect = autocorrect
+	return e
+}
+
 func (e *NearTextArgumentBuilder) buildMoveParam(name string, param *MoveParameters) string {
 	moveToConcepts, _ := json.Marshal(param.Concepts)
 	return fmt.Sprintf("%s: {concepts: %v force: %v}", name, string(moveToConcepts), param.Force)
@@ -57,6 +66,9 @@ func (e *NearTextArgumentBuilder) build() string {
 	}
 	if e.moveAwayFrom != nil {
 		clause = append(clause, e.buildMoveParam("moveAwayFrom", e.moveAwayFrom))
+	}
+	if e.withAutocorrect {
+		clause = append(clause, fmt.Sprintf("autocorrect: %v", e.autocorrect))
 	}
 	return fmt.Sprintf("nearText:{%v}", strings.Join(clause, " "))
 }
