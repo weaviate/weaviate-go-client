@@ -43,6 +43,8 @@ func TestSchema_integration(t *testing.T) {
 				"efConstruction":         float64(128),
 				"maxConnections":         float64(64),
 				"vectorCacheMaxObjects":  float64(500000),
+				"ef":                     float64(-1),
+				"skip":                   false,
 			},
 		}
 
@@ -82,6 +84,8 @@ func TestSchema_integration(t *testing.T) {
 				"efConstruction":         float64(128),
 				"maxConnections":         float64(64),
 				"vectorCacheMaxObjects":  float64(500000),
+				"ef":                     float64(-1),
+				"skip":                   false,
 			},
 		}
 
