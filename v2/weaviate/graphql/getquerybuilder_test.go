@@ -111,6 +111,22 @@ func TestQueryBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
+	t.Run("NearText filter with autocorrect", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection:           conMock,
+			includesFilterClause: false,
+		}
+
+		nearText := &NearTextArgumentBuilder{}
+		nearText = nearText.WithConcepts([]string{"good"}).WithAutocorrect(true)
+		query := builder.WithClassName("Pizza").WithFields("name").WithNearText(nearText).build()
+
+		expected := `{Get {Pizza (nearText:{concepts: ["good"] autocorrect: true}) {name}}}`
+		assert.Equal(t, expected, query)
+	})
+
 	t.Run("NearVector filter", func(t *testing.T) {
 		conMock := &MockRunREST{}
 
@@ -214,6 +230,26 @@ func TestQueryBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
+	t.Run("NearText filter with concepts and autocorrect", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection:           conMock,
+			includesFilterClause: false,
+		}
+
+		nearText := &NearTextArgumentBuilder{}
+		nearText = nearText.WithConcepts([]string{"good"}).WithAutocorrect(false)
+
+		query := builder.WithClassName("Pizza").
+			WithFields("name").
+			WithNearText(nearText).
+			build()
+
+		expected := `{Get {Pizza (nearText:{concepts: ["good"] autocorrect: false}) {name}}}`
+		assert.Equal(t, expected, query)
+	})
+
 	t.Run("NearObject filter with all fields", func(t *testing.T) {
 		conMock := &MockRunREST{}
 
@@ -304,6 +340,19 @@ func TestQueryBuilder(t *testing.T) {
 			build()
 
 		expected = `{Get {Pizza (ask:{question: "What is Weaviate?" properties: ["prop1","prop2"] certainty: 0.8}) {name}}}`
+		assert.Equal(t, expected, query)
+
+		ask = &AskArgumentBuilder{}
+		ask = ask.WithQuestion("What is Weaviate?").
+			WithProperties([]string{"prop1", "prop2"}).
+			WithCertainty(0.8).
+			WithAutocorrect(true)
+		query = builder.WithClassName("Pizza").
+			WithFields("name").
+			WithAsk(ask).
+			build()
+
+		expected = `{Get {Pizza (ask:{question: "What is Weaviate?" properties: ["prop1","prop2"] certainty: 0.8 autocorrect: true}) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 

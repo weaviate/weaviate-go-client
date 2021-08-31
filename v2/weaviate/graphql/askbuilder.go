@@ -7,10 +7,12 @@ import (
 )
 
 type AskArgumentBuilder struct {
-	question      string
-	properties    []string
-	withCertainty bool
-	certainty     float32
+	question        string
+	properties      []string
+	withCertainty   bool
+	certainty       float32
+	withAutocorrect bool
+	autocorrect     bool
 }
 
 // WithQuestion the question to be asked
@@ -32,6 +34,13 @@ func (e *AskArgumentBuilder) WithCertainty(certainty float32) *AskArgumentBuilde
 	return e
 }
 
+// WithAutocorrect this is a setting enabling autocorrect of question text
+func (e *AskArgumentBuilder) WithAutocorrect(autocorrect bool) *AskArgumentBuilder {
+	e.withAutocorrect = true
+	e.autocorrect = autocorrect
+	return e
+}
+
 // Build build the given clause
 func (e *AskArgumentBuilder) build() string {
 	clause := []string{}
@@ -44,6 +53,9 @@ func (e *AskArgumentBuilder) build() string {
 	}
 	if e.withCertainty {
 		clause = append(clause, fmt.Sprintf("certainty: %v", e.certainty))
+	}
+	if e.withAutocorrect {
+		clause = append(clause, fmt.Sprintf("autocorrect: %v", e.autocorrect))
 	}
 	return fmt.Sprintf("ask:{%s}", strings.Join(clause, " "))
 }
