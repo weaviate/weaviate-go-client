@@ -47,6 +47,18 @@ func TestGraphQL_integration(t *testing.T) {
 		pizza = get["Pizza"].([]interface{})
 		assert.Equal(t, 4, len(pizza))
 
+		where := client.GraphQL().WhereArgBuilder().
+			WithPath([]string{"name"}).
+			WithOperator(graphql.Equal).
+			WithValueString("Frutti di Mare")
+
+		resultSet, gqlErr = client.GraphQL().Get().Objects().WithClassName("Pizza").WithWhere(where).WithFields("name").Do(context.Background())
+		assert.Nil(t, gqlErr)
+
+		get = resultSet.Data["Get"].(map[string]interface{})
+		pizza = get["Pizza"].([]interface{})
+		assert.Equal(t, 1, len(pizza))
+
 		testsuit.CleanUpWeaviate(t, client)
 	})
 

@@ -54,6 +54,16 @@ func (api *API) NearImageArgBuilder() *NearImageArgumentBuilder {
 	return &NearImageArgumentBuilder{}
 }
 
+// WhereArgBuilder where clause
+func (api *API) WhereArgBuilder() *WhereArgumentBuilder {
+	return &WhereArgumentBuilder{}
+}
+
+// WhereArgBuilder where clause
+func (api *API) WhereFilterBuilder() *WhereFilterBuilder {
+	return &WhereFilterBuilder{}
+}
+
 // rest requests abstraction
 type rest interface {
 	//RunREST request to weaviate

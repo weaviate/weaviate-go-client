@@ -15,9 +15,9 @@ type GetBuilder struct {
 	withFields string
 
 	includesFilterClause bool // true if brackets behind class is needed
-	withWhereFilter      string
 	includesLimit        bool
 	limit                int
+	withWhereFilter      *WhereArgumentBuilder
 	withNearTextFilter   *NearTextArgumentBuilder
 	withNearVectorFilter string
 	withNearObjectFilter *NearObjectArgumentBuilder
@@ -39,9 +39,9 @@ func (gb *GetBuilder) WithFields(fields string) *GetBuilder {
 }
 
 // WithWhere filter
-func (gb *GetBuilder) WithWhere(filter string) *GetBuilder {
+func (gb *GetBuilder) WithWhere(where *WhereArgumentBuilder) *GetBuilder {
 	gb.includesFilterClause = true
-	gb.withWhereFilter = filter
+	gb.withWhereFilter = where
 	return gb
 }
 
@@ -114,8 +114,8 @@ func (gb *GetBuilder) build() string {
 
 func (gb *GetBuilder) createFilterClause() string {
 	filters := []string{}
-	if len(gb.withWhereFilter) > 0 {
-		filters = append(filters, fmt.Sprintf("where: %v", gb.withWhereFilter))
+	if gb.withWhereFilter != nil {
+		filters = append(filters, gb.withWhereFilter.build())
 	}
 	if gb.withNearTextFilter != nil {
 		filters = append(filters, gb.withNearTextFilter.build())
