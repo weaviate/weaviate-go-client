@@ -21,7 +21,7 @@ type GetBuilder struct {
 	withNearTextFilter   *NearTextArgumentBuilder
 	withNearVectorFilter string
 	withNearObjectFilter *NearObjectArgumentBuilder
-	withGroupFilter      string
+	withGroupFilter      *GroupArgumentBuilder
 	withAskFilter        *AskArgumentBuilder
 	withNearImageFilter  *NearImageArgumentBuilder
 }
@@ -75,7 +75,7 @@ func (gb *GetBuilder) WithNearVector(nearVector string) *GetBuilder {
 }
 
 // WithGroup statement
-func (gb *GetBuilder) WithGroup(group string) *GetBuilder {
+func (gb *GetBuilder) WithGroup(group *GroupArgumentBuilder) *GetBuilder {
 	gb.includesFilterClause = true
 	gb.withGroupFilter = group
 	return gb
@@ -132,8 +132,8 @@ func (gb *GetBuilder) createFilterClause() string {
 	if gb.withNearImageFilter != nil {
 		filters = append(filters, gb.withNearImageFilter.build())
 	}
-	if len(gb.withGroupFilter) > 0 {
-		filters = append(filters, fmt.Sprintf("group: %v", gb.withGroupFilter))
+	if gb.withGroupFilter != nil {
+		filters = append(filters, gb.withGroupFilter.build())
 	}
 	if gb.includesLimit {
 		filters = append(filters, fmt.Sprintf("limit: %v", gb.limit))
