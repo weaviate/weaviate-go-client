@@ -15,9 +15,19 @@ func TestAggregateBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		query := builder.WithClassName("Pizza").WithFields("meta {count}").build()
+		fields := []Field{
+			{
+				Name: "meta",
+				Fields: []Field{
+					{
+						Name: "count",
+					},
+				},
+			},
+		}
+		query := builder.WithClassName("Pizza").WithFields(fields).build()
 
-		expected := `{Aggregate{Pizza{meta {count}}}}`
+		expected := `{Aggregate{Pizza{meta{count}}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -27,11 +37,28 @@ func TestAggregateBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		fields := `groupedBy {value}name {count}`
+		fields := []Field{
+			{
+				Name: "groupedBy",
+				Fields: []Field{
+					{
+						Name: "value",
+					},
+				},
+			},
+			{
+				Name: "name",
+				Fields: []Field{
+					{
+						Name: "count",
+					},
+				},
+			},
+		}
 
 		query := builder.WithClassName("Pizza").WithFields(fields).WithGroupBy("name").build()
 
-		expected := `{Aggregate{Pizza(groupBy: "name"){groupedBy {value}name {count}}}}`
+		expected := `{Aggregate{Pizza(groupBy: "name"){groupedBy{value} name{count}}}}`
 		assert.Equal(t, expected, query)
 	})
 

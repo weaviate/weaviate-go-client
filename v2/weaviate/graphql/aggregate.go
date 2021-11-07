@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/connection"
 	"github.com/semi-technologies/weaviate/entities/models"
@@ -23,14 +24,14 @@ func (a *Aggregate) Objects() *AggregateBuilder {
 // AggregateBuilder for the aggregate GraphQL query string
 type AggregateBuilder struct {
 	connection                rest
-	fields                    string
+	fields                    []Field
 	className                 string
 	withGroupByClause         bool
 	groupByClausePropertyName string
 }
 
 // WithFields that should be included in the aggregation query e.g. `meta{count}`
-func (ab *AggregateBuilder) WithFields(fields string) *AggregateBuilder {
+func (ab *AggregateBuilder) WithFields(fields []Field) *AggregateBuilder {
 	ab.fields = fields
 	return ab
 }
@@ -54,11 +55,23 @@ func (ab *AggregateBuilder) Do(ctx context.Context) (*models.GraphQLResponse, er
 	return runGraphQLQuery(ctx, ab.connection, ab.build())
 }
 
+func (gb *AggregateBuilder) createFieldsClause() string {
+	if len(gb.fields) > 0 {
+		fields := make([]string, len(gb.fields))
+		for i := range gb.fields {
+			fields[i] = gb.fields[i].build()
+		}
+		return strings.Join(fields, " ")
+	}
+	return ""
+}
+
 // build the query string
 func (ab *AggregateBuilder) build() string {
 	filter := ""
 	if ab.withGroupByClause {
 		filter = fmt.Sprintf(`(groupBy: "%v")`, ab.groupByClausePropertyName)
 	}
-	return fmt.Sprintf(`{Aggregate{%v%v{%v}}}`, ab.className, filter, ab.fields)
+	fields := ab.createFieldsClause()
+	return fmt.Sprintf(`{Aggregate{%v%v{%v}}}`, ab.className, filter, fields)
 }
