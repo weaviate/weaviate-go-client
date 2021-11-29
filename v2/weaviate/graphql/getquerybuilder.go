@@ -18,6 +18,8 @@ type GetBuilder struct {
 	withWhereFilter      string
 	includesLimit        bool
 	limit                int
+	includesOffset       bool
+	offset               int
 	withNearTextFilter   *NearTextArgumentBuilder
 	withNearVectorFilter string
 	withNearObjectFilter *NearObjectArgumentBuilder
@@ -50,6 +52,14 @@ func (gb *GetBuilder) WithLimit(limit int) *GetBuilder {
 	gb.includesFilterClause = true
 	gb.includesLimit = true
 	gb.limit = limit
+	return gb
+}
+
+// WithOffset of objects in the result set
+func (gb *GetBuilder) WithOffset(offset int) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.includesOffset = true
+	gb.offset = offset
 	return gb
 }
 
@@ -137,6 +147,9 @@ func (gb *GetBuilder) createFilterClause() string {
 	}
 	if gb.includesLimit {
 		filters = append(filters, fmt.Sprintf("limit: %v", gb.limit))
+	}
+	if gb.includesOffset {
+		filters = append(filters, fmt.Sprintf("offset: %v", gb.offset))
 	}
 	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
 }
