@@ -95,6 +95,20 @@ func TestQueryBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
+	t.Run("Limit And Offset Get", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection:           conMock,
+			includesFilterClause: false,
+		}
+
+		query := builder.WithClassName("Pizza").WithFields("name").WithOffset(0).WithLimit(2).build()
+
+		expected := "{Get {Pizza (limit: 2, offset: 0) {name}}}"
+		assert.Equal(t, expected, query)
+	})
+
 	t.Run("NearText filter", func(t *testing.T) {
 		conMock := &MockRunREST{}
 
