@@ -20,6 +20,7 @@ type Creator struct {
 	connection     *connection.Connection
 	className      string
 	uuid           string
+	vector         []float32
 	propertySchema models.PropertySchema
 }
 
@@ -39,6 +40,11 @@ func (creator *Creator) WithID(uuid string) *Creator {
 // WithProperties property values of the data object
 func (creator *Creator) WithProperties(propertySchema models.PropertySchema) *Creator {
 	creator.propertySchema = propertySchema
+	return creator
+}
+
+func (creator *Creator) WithVector(vector []float32) *Creator {
+	creator.vector = vector
 	return creator
 }
 
