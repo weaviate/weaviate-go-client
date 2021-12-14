@@ -46,6 +46,34 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
 	assert.Nil(t, propErrA2)
 }
 
+func CreateWeaviateTestSchemaWithVectorizorlessClass(t *testing.T, client *weaviate.Client) {
+	vectorizorlessClass := &models.Class{
+		Class:       "Donut",
+		Description: "A type of leavened fried dough commonly covered with glaze and sprinkles.",
+		Vectorizer:  "none",
+	}
+
+	err := client.Schema().ClassCreator().WithClass(vectorizorlessClass).Do(context.Background())
+	assert.Nil(t, err)
+
+	nameProperty := &models.Property{
+		DataType:    []string{"string"},
+		Description: "name",
+		Name:        "name",
+	}
+	descriptionProperty := &models.Property{
+		DataType:    []string{"text"},
+		Description: "description",
+		Name:        "description",
+	}
+
+	propErr1 := client.Schema().PropertyCreator().WithClassName("Donut").WithProperty(nameProperty).Do(context.Background())
+	assert.Nil(t, propErr1)
+
+	propErr2 := client.Schema().PropertyCreator().WithClassName("Donut").WithProperty(descriptionProperty).Do(context.Background())
+	assert.Nil(t, propErr2)
+}
+
 // CreateWeaviateTestSchemaFoodWithReferenceProperty create the testing schema with a reference field otherFoods on both classes
 func CreateWeaviateTestSchemaFoodWithReferenceProperty(t *testing.T, client *weaviate.Client) {
 	CreateWeaviateTestSchemaFood(t, client)

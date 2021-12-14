@@ -35,10 +35,6 @@ func TestData_integration(t *testing.T) {
 			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 		}
-		propertySchemaV := map[string]string{
-			"name":        "Supreme",
-			"description": "Contains all toppings known to humankind.",
-		}
 
 		wrapperT, errCreateT := client.Data().Creator().
 			WithClassName("Pizza").
@@ -54,10 +50,41 @@ func TestData_integration(t *testing.T) {
 			Do(context.Background())
 		assert.Nil(t, errCreateA)
 		assert.NotNil(t, wrapperA.Object)
-		wrapperV, errCreateV := client.Data().Creator().
-			WithClassName("Pizza").
+
+		objectT, objErrT := client.Data().ObjectsGetter().
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			Do(context.Background())
+		assert.Nil(t, objErrT)
+		objectA, objErrA := client.Data().ObjectsGetter().
+			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
+			Do(context.Background())
+		assert.Nil(t, objErrA)
+
+		assert.Equal(t, "Pizza", objectT[0].Class)
+		valuesT := objectT[0].Properties.(map[string]interface{})
+		assert.Equal(t, "Hawaii", valuesT["name"])
+		assert.Equal(t, "Soup", objectA[0].Class)
+		valuesA := objectA[0].Properties.(map[string]interface{})
+		assert.Equal(t, "ChickenSoup", valuesA["name"])
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
+	t.Run("POST vectorizorless class", func(t *testing.T) {
+
+		client := testsuit.CreateTestClient()
+
+		testsuit.CreateWeaviateTestSchemaWithVectorizorlessClass(t, client)
+
+		propertySchema := map[string]string{
+			"name":        "Glazed",
+			"description": "The original, and most loved donut covering.",
+		}
+
+		wrapper, errCreate := client.Data().Creator().
+			WithClassName("Donut").
 			WithID("66411b32-5c3e-11ec-bf63-0242ac130002").
-			WithProperties(propertySchemaV).
+			WithProperties(propertySchema).
 			WithVector([]float32{
 				0.09271229058504105, 0.16972236335277557, 0.06719677150249481, 0.001922651077620685,
 				0.026900049299001694, 0.13298650085926056, 0.02028157375752926, -0.039743948727846146,
@@ -69,31 +96,17 @@ func TestData_integration(t *testing.T) {
 				-0.09484986960887909, 0.06478357315063477, 0.11193037033081055, 0.01517763826996088,
 			}).
 			Do(context.Background())
-		assert.Nil(t, errCreateV)
-		assert.NotNil(t, wrapperV.Object)
+		assert.Nil(t, errCreate)
+		assert.NotNil(t, wrapper.Object)
 
-		objectT, objErrT := client.Data().ObjectsGetter().
-			WithID("abefd256-8574-442b-9293-9205193737ee").
-			Do(context.Background())
-		assert.Nil(t, objErrT)
-		objectA, objErrA := client.Data().ObjectsGetter().
-			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
-			Do(context.Background())
-		assert.Nil(t, objErrA)
-		objectV, objErrV := client.Data().ObjectsGetter().
+		object, objErr := client.Data().ObjectsGetter().
 			WithID("66411b32-5c3e-11ec-bf63-0242ac130002").
 			Do(context.Background())
-		assert.Nil(t, objErrV)
+		assert.Nil(t, objErr)
 
-		assert.Equal(t, "Pizza", objectT[0].Class)
-		valuesT := objectT[0].Properties.(map[string]interface{})
-		assert.Equal(t, "Hawaii", valuesT["name"])
-		assert.Equal(t, "Soup", objectA[0].Class)
-		valuesA := objectA[0].Properties.(map[string]interface{})
-		assert.Equal(t, "ChickenSoup", valuesA["name"])
-		assert.Equal(t, "Pizza", objectV[0].Class)
-		valuesV := objectV[0].Properties.(map[string]interface{})
-		assert.Equal(t, "Supreme", valuesV["name"])
+		assert.Equal(t, "Donut", object[0].Class)
+		valuesV := object[0].Properties.(map[string]interface{})
+		assert.Equal(t, "Glazed", valuesV["name"])
 
 		testsuit.CleanUpWeaviate(t, client)
 	})

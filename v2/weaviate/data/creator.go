@@ -71,6 +71,7 @@ func (creator *Creator) PayloadObject() (*models.Object, error) {
 	object := models.Object{
 		Class:      creator.className,
 		Properties: creator.propertySchema,
+		Vector:     creator.vector,
 	}
 	if creator.uuid != "" {
 		object.ID = strfmt.UUID(creator.uuid)
