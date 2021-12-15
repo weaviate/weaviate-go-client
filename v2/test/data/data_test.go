@@ -9,10 +9,10 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/fault"
 	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/testenv"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestData_integration(t *testing.T) {
-
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -22,7 +22,6 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("POST /{semanticType}", func(t *testing.T) {
-
 		client := testsuit.CreateTestClient()
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
@@ -66,6 +65,52 @@ func TestData_integration(t *testing.T) {
 		assert.Equal(t, "Soup", objectA[0].Class)
 		valuesA := objectA[0].Properties.(map[string]interface{})
 		assert.Equal(t, "ChickenSoup", valuesA["name"])
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
+	t.Run("POST vectorizorless class", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+
+		testsuit.CreateWeaviateTestSchemaWithVectorizorlessClass(t, client)
+
+		propertySchema := map[string]string{
+			"name":        "Glazed",
+			"description": "The original, and most loved donut covering.",
+		}
+
+		vec := []float32{
+			0.09271229058504105, 0.16972236335277557, 0.06719677150249481, 0.001922651077620685,
+			0.026900049299001694, 0.13298650085926056, 0.02028157375752926, -0.039743948727846146,
+			-0.012937345542013645, 0.013409551233053207, -0.10988715291023254, -0.04618397727608681,
+			-0.024261055514216423, 0.0663847103714943, 0.004502191673964262, 0.035319264978170395,
+			0.10632412880659103, 0.08058158308267593, 0.08017968386411667, -0.02905050292611122,
+			0.11437326669692993, 0.00924021378159523, -0.02222306653857231, 0.047553546726703644,
+			-0.002701037796214223, 0.15383613109588623, -0.02949700690805912, 0.06906864047050476,
+			-0.09484986960887909, 0.06478357315063477, 0.11193037033081055, 0.01517763826996088,
+		}
+
+		wrapper, errCreate := client.Data().Creator().
+			WithClassName("Donut").
+			WithID("66411b32-5c3e-11ec-bf63-0242ac130002").
+			WithProperties(propertySchema).
+			WithVector(vec).
+			Do(context.Background())
+		assert.Nil(t, errCreate)
+		assert.NotNil(t, wrapper.Object)
+
+		object, objErr := client.Data().ObjectsGetter().
+			WithID("66411b32-5c3e-11ec-bf63-0242ac130002").
+			WithAdditional("vector").
+			Do(context.Background())
+		assert.Nil(t, objErr)
+
+		require.True(t, len(object) > 0) // protect against index OOB in next asserstions
+		assert.Equal(t, "Donut", object[0].Class)
+		valuesV := object[0].Properties.(map[string]interface{})
+		assert.Equal(t, "Glazed", valuesV["name"])
+
+		assert.Equal(t, vec, []float32(object[0].Vector))
 
 		testsuit.CleanUpWeaviate(t, client)
 	})

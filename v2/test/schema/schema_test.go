@@ -209,7 +209,7 @@ func TestSchema_integration(t *testing.T) {
 
 func TestSchema_errors(t *testing.T) {
 
-	t.Run("Run Do withouth setting a class", func(t *testing.T) {
+	t.Run("Run Do without setting a class", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
 		err := client.Schema().ClassCreator().Do(context.Background())
