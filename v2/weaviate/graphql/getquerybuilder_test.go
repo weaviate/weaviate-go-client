@@ -368,6 +368,19 @@ func TestQueryBuilder(t *testing.T) {
 
 		expected = `{Get {Pizza (ask:{question: "What is Weaviate?" properties: ["prop1","prop2"] certainty: 0.8 autocorrect: true}) {name}}}`
 		assert.Equal(t, expected, query)
+
+		ask = &AskArgumentBuilder{}
+		ask = ask.WithQuestion("What is Weaviate?").
+			WithProperties([]string{"prop1", "prop2"}).
+			WithCertainty(0.8).
+			WithRerank(true)
+		query = builder.WithClassName("Pizza").
+			WithFields("name").
+			WithAsk(ask).
+			build()
+
+		expected = `{Get {Pizza (ask:{question: "What is Weaviate?" properties: ["prop1","prop2"] certainty: 0.8 rerank: true}) {name}}}`
+		assert.Equal(t, expected, query)
 	})
 
 	t.Run("NearImage filter with all fields", func(t *testing.T) {
