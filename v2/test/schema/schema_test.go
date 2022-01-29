@@ -45,6 +45,10 @@ func TestSchema_integration(t *testing.T) {
 				"vectorCacheMaxObjects":  float64(500000),
 				"ef":                     float64(-1),
 				"skip":                   false,
+				"dynamicEfFactor":        float64(8),
+				"dynamicEfMax":           float64(500),
+				"dynamicEfMin":           float64(100),
+				"flatSearchCutoff":       float64(40000),
 			},
 		}
 
@@ -86,6 +90,10 @@ func TestSchema_integration(t *testing.T) {
 				"vectorCacheMaxObjects":  float64(500000),
 				"ef":                     float64(-1),
 				"skip":                   false,
+				"dynamicEfFactor":        float64(8),
+				"dynamicEfMax":           float64(500),
+				"dynamicEfMin":           float64(100),
+				"flatSearchCutoff":       float64(40000),
 			},
 		}
 

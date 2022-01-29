@@ -297,6 +297,64 @@ func TestData_integration(t *testing.T) {
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
+	t.Run("HEAD /{id}", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+
+		testsuit.CreateWeaviateTestSchemaFood(t, client)
+
+		objTID := "abefd256-8574-442b-9293-9205193737ee"
+		propertySchemaT := map[string]string{
+			"name":        "Hawaii",
+			"description": "Universally accepted to be the best pizza ever created.",
+		}
+		_, errCreateT := client.Data().Creator().
+			WithClassName("Pizza").
+			WithID(objTID).
+			WithProperties(propertySchemaT).
+			Do(context.Background())
+		assert.Nil(t, errCreateT)
+
+		// Check object which exists
+		exists, checkErrT := client.Data().Checker().
+			WithID(objTID).
+			Do(context.Background())
+		assert.Nil(t, checkErrT)
+		assert.True(t, exists)
+		// Double check that it actually exists in DB
+		objT, afterCheckErrT := client.Data().ObjectsGetter().
+			WithID(objTID).
+			Do(context.Background())
+		assert.NotNil(t, objT)
+		assert.Nil(t, afterCheckErrT)
+
+		// Delete object
+		deleteErrT := client.Data().Deleter().
+			WithID(objTID).
+			Do(context.Background())
+		assert.Nil(t, deleteErrT)
+		// Verify that the object has been actually deleted
+		_, getErrT := client.Data().ObjectsGetter().
+			WithID(objTID).
+			Do(context.Background())
+		statusCodeErrorT := getErrT.(*fault.WeaviateClientError)
+		assert.Equal(t, 404, statusCodeErrorT.StatusCode)
+
+		// Check object which doesn't exist
+		exists, checkErrT = client.Data().Checker().
+			WithID(objTID).
+			Do(context.Background())
+		assert.Nil(t, checkErrT)
+		assert.False(t, exists)
+		// Double check that it really doesn't exits in DB
+		_, getErrT = client.Data().ObjectsGetter().
+			WithID(objTID).
+			Do(context.Background())
+		statusCodeErrorT = getErrT.(*fault.WeaviateClientError)
+		assert.Equal(t, 404, statusCodeErrorT.StatusCode)
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
 	t.Run("PUT /{type}/{id}", func(t *testing.T) {
 		// PUT replaces the object fully
 		client := testsuit.CreateTestClient()

@@ -51,6 +51,13 @@ func (data *API) Validator() *Validator {
 	}
 }
 
+// Checker get a builder to check data object existence
+func (data *API) Checker() *Checker {
+	return &Checker{
+		connection: data.connection,
+	}
+}
+
 // ReferencePayloadBuilder get a builder to create the payloads that reference an object
 func (data *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 	return &ReferencePayloadBuilder{
