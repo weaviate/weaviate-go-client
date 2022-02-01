@@ -13,6 +13,8 @@ type AskArgumentBuilder struct {
 	certainty       float32
 	withAutocorrect bool
 	autocorrect     bool
+	withRerank      bool
+	rerank          bool
 }
 
 // WithQuestion the question to be asked
@@ -41,6 +43,13 @@ func (e *AskArgumentBuilder) WithAutocorrect(autocorrect bool) *AskArgumentBuild
 	return e
 }
 
+// WithRerank this is a setting enabling re-ranking of results based on certainty
+func (e *AskArgumentBuilder) WithRerank(rerank bool) *AskArgumentBuilder {
+	e.withRerank = true
+	e.rerank = rerank
+	return e
+}
+
 // Build build the given clause
 func (e *AskArgumentBuilder) build() string {
 	clause := []string{}
@@ -56,6 +65,9 @@ func (e *AskArgumentBuilder) build() string {
 	}
 	if e.withAutocorrect {
 		clause = append(clause, fmt.Sprintf("autocorrect: %v", e.autocorrect))
+	}
+	if e.withRerank {
+		clause = append(clause, fmt.Sprintf("rerank: %v", e.rerank))
 	}
 	return fmt.Sprintf("ask:{%s}", strings.Join(clause, " "))
 }
