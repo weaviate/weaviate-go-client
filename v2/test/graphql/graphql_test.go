@@ -105,6 +105,29 @@ func TestGraphQL_integration(t *testing.T) {
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
+	t.Run("Get with group filter", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		testsuit.CreateTestSchemaAndData(t, client)
+
+		resultSet, gqlErr := client.GraphQL().
+			Get().
+			Objects().
+			WithClassName("Pizza").
+			WithFields("name").
+			WithGroup("{type:merge force:1.0}").
+			WithLimit(7).
+			Do(context.Background())
+		assert.Nil(t, gqlErr)
+
+		get := resultSet.Data["Get"].(map[string]interface{})
+		require.Equal(t, 1, len(get))
+
+		pizza := get["Pizza"].([]interface{})
+		assert.Equal(t, 1, len(pizza))
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
