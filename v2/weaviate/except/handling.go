@@ -2,17 +2,17 @@ package except
 
 import (
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/fault"
-	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/connection"
-)
 
+	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/connection"
+	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/fault"
+)
 
 // NewWeaviateClientError from status code and error message
 func NewWeaviateClientError(statusCode int, format string, args ...interface{}) *fault.WeaviateClientError {
 	return &fault.WeaviateClientError{
 		IsUnexpectedStatusCode: true,
-		StatusCode: statusCode,
-		Msg:        fmt.Sprintf(format, args...),
+		StatusCode:             statusCode,
+		Msg:                    fmt.Sprintf(format, args...),
 	}
 }
 
@@ -33,12 +33,14 @@ func NewUnexpectedStatusCodeErrorFromRESTResponse(responseData *connection.Respo
 
 // CheckResponnseDataErrorAndStatusCode returns the response error if it is not nil,
 //  and an WeaviateClientError if the status code is not matching
-func CheckResponnseDataErrorAndStatusCode(responseData *connection.ResponseData, responseErr error, expectedStatusCode int) error {
+func CheckResponnseDataErrorAndStatusCode(responseData *connection.ResponseData, responseErr error, expectedStatusCodes ...int) error {
 	if responseErr != nil {
 		return NewDerivedWeaviateClientError(responseErr)
 	}
-	if responseData.StatusCode == expectedStatusCode {
-		return nil
+	for i := range expectedStatusCodes {
+		if responseData.StatusCode == expectedStatusCodes[i] {
+			return nil
+		}
 	}
 	return NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
 }
