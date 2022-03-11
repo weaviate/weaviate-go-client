@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/connection"
 	"github.com/semi-technologies/weaviate/entities/models"
@@ -25,8 +26,9 @@ type AggregateBuilder struct {
 	connection                rest
 	fields                    string
 	className                 string
-	withGroupByClause         bool
+	includesFilterClause      bool // true if brackets behind class is needed
 	groupByClausePropertyName string
+	withWhereFilter           string
 }
 
 // WithFields that should be included in the aggregation query e.g. `meta{count}`
@@ -41,10 +43,17 @@ func (ab *AggregateBuilder) WithClassName(name string) *AggregateBuilder {
 	return ab
 }
 
+// WithWhere adds the where filter.
+func (ab *AggregateBuilder) WithWhere(filter string) *AggregateBuilder {
+	ab.includesFilterClause = true
+	ab.withWhereFilter = filter
+	return ab
+}
+
 // WithGroupBy adds the group by property clause as the filter.
 //  The group by value/path clause still needs to be set in the WithFields field.
 func (ab *AggregateBuilder) WithGroupBy(propertyName string) *AggregateBuilder {
-	ab.withGroupByClause = true
+	ab.includesFilterClause = true
 	ab.groupByClausePropertyName = propertyName
 	return ab
 }
@@ -54,11 +63,22 @@ func (ab *AggregateBuilder) Do(ctx context.Context) (*models.GraphQLResponse, er
 	return runGraphQLQuery(ctx, ab.connection, ab.build())
 }
 
+func (ab *AggregateBuilder) createFilterClause() string {
+	filters := []string{}
+	if len(ab.groupByClausePropertyName) > 0 {
+		filters = append(filters, fmt.Sprintf(`groupBy: "%v"`, ab.groupByClausePropertyName))
+	}
+	if len(ab.withWhereFilter) > 0 {
+		filters = append(filters, fmt.Sprintf("where: %v", ab.withWhereFilter))
+	}
+	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
+}
+
 // build the query string
 func (ab *AggregateBuilder) build() string {
-	filter := ""
-	if ab.withGroupByClause {
-		filter = fmt.Sprintf(`(groupBy: "%v")`, ab.groupByClausePropertyName)
+	filterClause := ""
+	if ab.includesFilterClause {
+		filterClause = ab.createFilterClause()
 	}
-	return fmt.Sprintf(`{Aggregate{%v%v{%v}}}`, ab.className, filter, ab.fields)
+	return fmt.Sprintf(`{Aggregate{%v%v{%v}}}`, ab.className, filterClause, ab.fields)
 }
