@@ -102,6 +102,41 @@ func TestGraphQL_integration(t *testing.T) {
 
 		assert.Nil(t, gqlErr)
 		assert.NotNil(t, resultSet)
+
+		resultSet, gqlErr = client.GraphQL().
+			Aggregate().
+			Objects().
+			WithFields(fields).
+			WithWhere(`{path:["id"] operator:Equal valueString:"5b6a08ba-1d46-43aa-89cc-8b070790c6f2"}`).
+			WithClassName("Pizza").
+			Do(context.Background())
+
+		assert.Nil(t, gqlErr)
+		assert.NotNil(t, resultSet)
+
+		resultSet, gqlErr = client.GraphQL().
+			Aggregate().
+			Objects().
+			WithFields(fields).
+			WithGroupBy("name").
+			WithClassName("Pizza").
+			Do(context.Background())
+
+		assert.Nil(t, gqlErr)
+		assert.NotNil(t, resultSet)
+
+		resultSet, gqlErr = client.GraphQL().
+			Aggregate().
+			Objects().
+			WithFields(fields).
+			WithWhere(`{path:["id"] operator:Equal valueString:"5b6a08ba-1d46-43aa-89cc-8b070790c6f2"}`).
+			WithGroupBy("name").
+			WithClassName("Pizza").
+			Do(context.Background())
+
+		assert.Nil(t, gqlErr)
+		assert.NotNil(t, resultSet)
+
 		testsuit.CleanUpWeaviate(t, client)
 	})
 

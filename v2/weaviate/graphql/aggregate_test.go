@@ -35,6 +35,40 @@ func TestAggregateBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
+	t.Run("Where", func(t *testing.T) {
+		conMock := &MockRunREST{}
+		builder := AggregateBuilder{
+			connection: conMock,
+		}
+
+		fields := `meta {count}`
+		where := `{path: ["id"] operator: Equal valueString: "uuid" }`
+
+		query := builder.WithClassName("Pizza").WithWhere(where).WithFields(fields).build()
+
+		expected := `{Aggregate{Pizza(where: {path: ["id"] operator: Equal valueString: "uuid" }){meta {count}}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("Where and Group by", func(t *testing.T) {
+		conMock := &MockRunREST{}
+		builder := AggregateBuilder{
+			connection: conMock,
+		}
+
+		fields := `meta {count}`
+		where := `{path: ["id"] operator: Equal valueString: "uuid" }`
+
+		query := builder.WithClassName("Pizza").
+			WithGroupBy("name").
+			WithWhere(where).
+			WithFields(fields).
+			build()
+
+		expected := `{Aggregate{Pizza(groupBy: "name", where: {path: ["id"] operator: Equal valueString: "uuid" }){meta {count}}}}`
+		assert.Equal(t, expected, query)
+	})
+
 	t.Run("Missuse", func(t *testing.T) {
 		conMock := &MockRunREST{}
 		builder := AggregateBuilder{
