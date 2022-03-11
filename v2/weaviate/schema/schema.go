@@ -19,6 +19,13 @@ func (schema *API) Getter() *Getter {
 	return &Getter{connection: schema.connection}
 }
 
+// ClassGetter builder to get a weaviate schema class
+func (schema *API) ClassGetter() *ClassGetter {
+	return &ClassGetter{
+		connection: schema.connection,
+	}
+}
+
 // ClassCreator builder to create a weaviate schema class
 func (schema *API) ClassCreator() *ClassCreator {
 	return &ClassCreator{
