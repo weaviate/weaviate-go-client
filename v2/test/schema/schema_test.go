@@ -206,6 +206,60 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, errRm)
 	})
 
+	t.Run("GET /schema/{className}", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+
+		schemaClass := &models.Class{
+			Class:           "Band",
+			Description:     "Band that plays and produces music",
+			Properties:      nil,
+			VectorIndexType: "hnsw",
+			Vectorizer:      "text2vec-contextionary",
+			InvertedIndexConfig: &models.InvertedIndexConfig{
+				CleanupIntervalSeconds: 60,
+			},
+			ModuleConfig: map[string]interface{}{
+				"text2vec-contextionary": map[string]interface{}{
+					"vectorizeClassName": true,
+				},
+			},
+			VectorIndexConfig: map[string]interface{}{
+				"cleanupIntervalSeconds": float64(300),
+				"efConstruction":         float64(128),
+				"maxConnections":         float64(64),
+				"vectorCacheMaxObjects":  float64(500000),
+				"ef":                     float64(-1),
+				"skip":                   false,
+				"dynamicEfFactor":        float64(8),
+				"dynamicEfMax":           float64(500),
+				"dynamicEfMin":           float64(100),
+				"flatSearchCutoff":       float64(40000),
+			},
+		}
+
+		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
+		assert.Nil(t, err)
+
+		bandClass, getErr := client.Schema().ClassGetter().WithClassName("Band").Do(context.Background())
+		assert.Nil(t, getErr)
+		assert.NotNil(t, bandClass)
+		assert.Equal(t, "Band", bandClass.Class)
+		assert.Equal(t, "Band that plays and produces music", bandClass.Description)
+		assert.Equal(t, "hnsw", bandClass.VectorIndexType)
+		assert.Equal(t, "text2vec-contextionary", bandClass.Vectorizer)
+		assert.Nil(t, bandClass.Properties)
+		assert.NotNil(t, bandClass.ModuleConfig)
+		assert.NotNil(t, bandClass.VectorIndexConfig)
+
+		nonExistantClass, getErr := client.Schema().ClassGetter().WithClassName("NonExistantClass").Do(context.Background())
+		assert.NotNil(t, getErr)
+		assert.Nil(t, nonExistantClass)
+
+		// Clean up classes
+		errRm := client.Schema().AllDeleter().Do(context.Background())
+		assert.Nil(t, errRm)
+	})
+
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
