@@ -54,7 +54,7 @@ func (creator *Creator) Do(ctx context.Context) (*ObjectWrapper, error) {
 	var responseData *connection.ResponseData
 	object, _ := creator.PayloadObject()
 	responseData, err = creator.connection.RunREST(ctx, "/objects", http.MethodPost, object)
-	respErr := except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
+	respErr := except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)
 	if respErr != nil {
 		return nil, respErr
 	}

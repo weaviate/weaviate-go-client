@@ -39,7 +39,7 @@ func (ob *ObjectsBatcher) Do(ctx context.Context) ([]models.ObjectsGetResponse, 
 		Objects: ob.objects,
 	}
 	responseData, responseErr := ob.connection.RunREST(ctx, "/batch/objects", http.MethodPost, body)
-	batchErr := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	batchErr := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if batchErr != nil {
 		return nil, batchErr
 	}

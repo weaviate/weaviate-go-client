@@ -40,5 +40,5 @@ func (rr *ReferenceReplacer) WithReferences(referencePayload *models.MultipleRef
 func (rr *ReferenceReplacer) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/objects/%v/references/%v", rr.uuid, rr.referenceProperty)
 	responseData, responseErr := rr.connection.RunREST(ctx, path, http.MethodPut, *rr.referencePayload)
-	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 }

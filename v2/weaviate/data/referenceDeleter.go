@@ -40,5 +40,5 @@ func (rr *ReferenceDeleter) WithReference(referencePayload *models.SingleRef) *R
 func (rr *ReferenceDeleter) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/objects/%v/references/%v", rr.uuid, rr.referenceProperty)
 	responseData, responseErr := rr.connection.RunREST(ctx, path, http.MethodDelete, *rr.referencePayload)
-	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 204)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 204)
 }

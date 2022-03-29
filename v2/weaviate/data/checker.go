@@ -26,5 +26,5 @@ func (checker *Checker) Do(ctx context.Context) (bool, error) {
 	path := fmt.Sprintf("/objects/%v", checker.uuid)
 	responseData, err := checker.connection.RunREST(ctx, path, http.MethodHead, nil)
 	exists := responseData.StatusCode == 204
-	return exists, except.CheckResponnseDataErrorAndStatusCode(responseData, err, 204, 404)
+	return exists, except.CheckResponseDataErrorAndStatusCode(responseData, err, 204, 404)
 }

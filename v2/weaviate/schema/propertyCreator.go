@@ -33,5 +33,5 @@ func (pc *PropertyCreator) WithProperty(property *models.Property) *PropertyCrea
 func (pc *PropertyCreator) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/schema/%v/properties", pc.className)
 	responseData, err := pc.connection.RunREST(ctx, path, http.MethodPost, pc.property)
-	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)
 }

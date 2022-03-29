@@ -54,7 +54,7 @@ func (updater *Updater) Do(ctx context.Context) error {
 		expectedStatuscode = 204
 	}
 	responseData, responseErr := updater.runUpdate(ctx, path, httpMethod)
-	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, expectedStatuscode)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, expectedStatuscode)
 }
 
 func (updater *Updater) runUpdate(ctx context.Context, path string, httpMethod string) (*connection.ResponseData, error) {

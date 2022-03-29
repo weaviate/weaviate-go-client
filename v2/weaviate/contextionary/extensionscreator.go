@@ -41,5 +41,5 @@ func (ec *ExtensionCreator) Do(ctx context.Context) error {
 	}
 	responseData, responseErr := ec.connection.
 		RunREST(ctx, "/modules/text2vec-contextionary/extensions", http.MethodPost, ec.extension)
-	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 }

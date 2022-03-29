@@ -25,5 +25,5 @@ func (deleter *Deleter) WithID(uuid string) *Deleter {
 func (deleter *Deleter) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/objects/%v", deleter.uuid)
 	responseData, err := deleter.connection.RunREST(ctx, path, http.MethodDelete, nil)
-	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 204)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 204)
 }

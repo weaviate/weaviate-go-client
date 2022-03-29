@@ -26,7 +26,7 @@ func (cg *ConceptGetter) WithConcept(concept string) *ConceptGetter {
 func (cg *ConceptGetter) Do(ctx context.Context) (*models.C11yWordsResponse, error) {
 	path := fmt.Sprintf("/modules/text2vec-contextionary/concepts/%v", cg.concept)
 	responseData, responseErr := cg.connection.RunREST(ctx, path, http.MethodGet, nil)
-	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	err := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,6 @@ package schema
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/semi-technologies/weaviate-go-client/v2/test/testsuit"
@@ -16,8 +15,7 @@ func TestSchema_integration(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
-			t.Fail()
+			t.Fatalf("failed to setup weaviate: %s", err)
 		}
 	})
 
@@ -37,6 +35,16 @@ func TestSchema_integration(t *testing.T) {
 				"text2vec-contextionary": map[string]interface{}{
 					"vectorizeClassName": true,
 				},
+			},
+			ShardingConfig: map[string]interface{}{
+				"actualCount":         float64(1),
+				"actualVirtualCount":  float64(128),
+				"desiredCount":        float64(1),
+				"desiredVirtualCount": float64(128),
+				"function":            "murmur3",
+				"key":                 "_id",
+				"strategy":            "hash",
+				"virtualPerPhysical":  float64(128),
 			},
 			VectorIndexConfig: map[string]interface{}{
 				"cleanupIntervalSeconds": float64(300),
@@ -82,6 +90,16 @@ func TestSchema_integration(t *testing.T) {
 				"text2vec-contextionary": map[string]interface{}{
 					"vectorizeClassName": true,
 				},
+			},
+			ShardingConfig: map[string]interface{}{
+				"actualCount":         float64(1),
+				"actualVirtualCount":  float64(128),
+				"desiredCount":        float64(1),
+				"desiredVirtualCount": float64(128),
+				"function":            "murmur3",
+				"key":                 "_id",
+				"strategy":            "hash",
+				"virtualPerPhysical":  float64(128),
 			},
 			VectorIndexConfig: map[string]interface{}{
 				"cleanupIntervalSeconds": float64(300),
@@ -263,8 +281,7 @@ func TestSchema_integration(t *testing.T) {
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
-			t.Fail()
+			t.Fatalf("failed to tear down weaviate: %s", err)
 		}
 	})
 }

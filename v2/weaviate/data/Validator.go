@@ -47,5 +47,5 @@ func (validator *Validator) Do(ctx context.Context) error {
 		Properties: validator.propertySchema,
 	}
 	responseData, err := validator.connection.RunREST(ctx, path, http.MethodPost, object)
-	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)
 }

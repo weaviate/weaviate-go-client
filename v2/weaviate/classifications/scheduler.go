@@ -94,7 +94,7 @@ func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
 		Settings: s.withSettings,
 	}
 	responseData, responseErr := s.connection.RunREST(ctx, "/classifications", http.MethodPost, config)
-	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 201)
+	err := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 201)
 	if err != nil {
 		return nil, err
 	}
