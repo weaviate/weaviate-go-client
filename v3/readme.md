@@ -4,13 +4,13 @@ A go native client for weaviate.
 
 ## Documentation
 
-In order to get the go client v2 issue this command:
+In order to get the go client v3 issue this command:
 
 ```bash
-$ go get github.com/semi-technologies/weaviate-go-client/v3@v2.x.x
+$ go get github.com/semi-technologies/weaviate-go-client/v3@v3.x.x
 ```
 
-where `2.x.x` is the desired go client v2 version, for example `v2.0.1`.
+where `3.x.x` is the desired go client v3 version, for example `v3.0.1`.
 
 ## Example
 
@@ -19,7 +19,7 @@ Here's a simple code to start up working with go client.
 Add dependency to your `go.mod`:
 
 ```go
-require github.com/semi-technologies/weaviate-go-client/v3 v2.0.1
+require github.com/semi-technologies/weaviate-go-client/v3 v3.0.1
 ```
 
 Connect to Weaviate on `localhost:8080` and fetch meta information
@@ -31,15 +31,15 @@ import (
   "context"
   "fmt"
 
-  clientv2 "github.com/semi-technologies/weaviate-go-client/v3/weaviate"
+  clientv3 "github.com/semi-technologies/weaviate-go-client/v3/weaviate"
 )
 
 func main() {
-  config := clientv2.Config{
+  config := clientv3.Config{
     Scheme: "http",
     Host:   "localhost:8080",
   }
-  client := clientv2.New(config)
+  client := clientv3.New(config)
   metaGetter := client.Misc().MetaGetter()
   meta, err := metaGetter.Do(context.Background())
   if err != nil {
