@@ -7,7 +7,9 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/v2/test/testsuit"
 	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/semi-technologies/weaviate/entities/storagestate"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSchema_integration(t *testing.T) {
@@ -23,41 +25,15 @@ func TestSchema_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
-			Class:           "Band",
-			Description:     "Band that plays and produces music",
-			Properties:      nil,
-			VectorIndexType: "hnsw",
-			Vectorizer:      "text2vec-contextionary",
-			InvertedIndexConfig: &models.InvertedIndexConfig{
-				CleanupIntervalSeconds: 60,
-			},
-			ModuleConfig: map[string]interface{}{
-				"text2vec-contextionary": map[string]interface{}{
-					"vectorizeClassName": true,
-				},
-			},
-			ShardingConfig: map[string]interface{}{
-				"actualCount":         float64(1),
-				"actualVirtualCount":  float64(128),
-				"desiredCount":        float64(1),
-				"desiredVirtualCount": float64(128),
-				"function":            "murmur3",
-				"key":                 "_id",
-				"strategy":            "hash",
-				"virtualPerPhysical":  float64(128),
-			},
-			VectorIndexConfig: map[string]interface{}{
-				"cleanupIntervalSeconds": float64(300),
-				"efConstruction":         float64(128),
-				"maxConnections":         float64(64),
-				"vectorCacheMaxObjects":  float64(500000),
-				"ef":                     float64(-1),
-				"skip":                   false,
-				"dynamicEfFactor":        float64(8),
-				"dynamicEfMax":           float64(500),
-				"dynamicEfMin":           float64(100),
-				"flatSearchCutoff":       float64(40000),
-			},
+			Class:               "Band",
+			Description:         "Band that plays and produces music",
+			Properties:          nil,
+			VectorIndexType:     "hnsw",
+			Vectorizer:          "text2vec-contextionary",
+			InvertedIndexConfig: defaultInvertedIndexConfig,
+			ModuleConfig:        defaultModuleConfig,
+			ShardingConfig:      defaultShardingConfig,
+			VectorIndexConfig:   defaultVectorIndexConfig,
 		}
 
 		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
@@ -79,40 +55,14 @@ func TestSchema_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
-			Class:           "Run",
-			Description:     "Running from the fuzz",
-			VectorIndexType: "hnsw",
-			Vectorizer:      "text2vec-contextionary",
-			InvertedIndexConfig: &models.InvertedIndexConfig{
-				CleanupIntervalSeconds: 60,
-			},
-			ModuleConfig: map[string]interface{}{
-				"text2vec-contextionary": map[string]interface{}{
-					"vectorizeClassName": true,
-				},
-			},
-			ShardingConfig: map[string]interface{}{
-				"actualCount":         float64(1),
-				"actualVirtualCount":  float64(128),
-				"desiredCount":        float64(1),
-				"desiredVirtualCount": float64(128),
-				"function":            "murmur3",
-				"key":                 "_id",
-				"strategy":            "hash",
-				"virtualPerPhysical":  float64(128),
-			},
-			VectorIndexConfig: map[string]interface{}{
-				"cleanupIntervalSeconds": float64(300),
-				"efConstruction":         float64(128),
-				"maxConnections":         float64(64),
-				"vectorCacheMaxObjects":  float64(500000),
-				"ef":                     float64(-1),
-				"skip":                   false,
-				"dynamicEfFactor":        float64(8),
-				"dynamicEfMax":           float64(500),
-				"dynamicEfMin":           float64(100),
-				"flatSearchCutoff":       float64(40000),
-			},
+			Class:               "Run",
+			Description:         "Running from the fuzz",
+			VectorIndexType:     "hnsw",
+			Vectorizer:          "text2vec-contextionary",
+			InvertedIndexConfig: defaultInvertedIndexConfig,
+			ModuleConfig:        defaultModuleConfig,
+			ShardingConfig:      defaultShardingConfig,
+			VectorIndexConfig:   defaultVectorIndexConfig,
 		}
 
 		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
@@ -228,31 +178,15 @@ func TestSchema_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
-			Class:           "Band",
-			Description:     "Band that plays and produces music",
-			Properties:      nil,
-			VectorIndexType: "hnsw",
-			Vectorizer:      "text2vec-contextionary",
-			InvertedIndexConfig: &models.InvertedIndexConfig{
-				CleanupIntervalSeconds: 60,
-			},
-			ModuleConfig: map[string]interface{}{
-				"text2vec-contextionary": map[string]interface{}{
-					"vectorizeClassName": true,
-				},
-			},
-			VectorIndexConfig: map[string]interface{}{
-				"cleanupIntervalSeconds": float64(300),
-				"efConstruction":         float64(128),
-				"maxConnections":         float64(64),
-				"vectorCacheMaxObjects":  float64(500000),
-				"ef":                     float64(-1),
-				"skip":                   false,
-				"dynamicEfFactor":        float64(8),
-				"dynamicEfMax":           float64(500),
-				"dynamicEfMin":           float64(100),
-				"flatSearchCutoff":       float64(40000),
-			},
+			Class:               "Band",
+			Description:         "Band that plays and produces music",
+			Properties:          nil,
+			VectorIndexType:     "hnsw",
+			Vectorizer:          "text2vec-contextionary",
+			InvertedIndexConfig: defaultInvertedIndexConfig,
+			ModuleConfig:        defaultModuleConfig,
+			ShardingConfig:      defaultShardingConfig,
+			VectorIndexConfig:   defaultVectorIndexConfig,
 		}
 
 		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
@@ -274,6 +208,158 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, nonExistantClass)
 
 		// Clean up classes
+		errRm := client.Schema().AllDeleter().Do(context.Background())
+		assert.Nil(t, errRm)
+	})
+
+	t.Run("GET /schema/{className}/shards", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+
+		class := &models.Class{
+			Class:               "Article",
+			Description:         "Archived news article",
+			Properties:          nil,
+			VectorIndexType:     "hnsw",
+			Vectorizer:          "text2vec-contextionary",
+			InvertedIndexConfig: defaultInvertedIndexConfig,
+			ModuleConfig:        defaultModuleConfig,
+			ShardingConfig:      defaultShardingConfig,
+			VectorIndexConfig:   defaultVectorIndexConfig,
+		}
+
+		err := client.Schema().ClassCreator().WithClass(class).Do(context.Background())
+		assert.Nil(t, err)
+
+		shards, err := client.Schema().
+			ShardsGetter().
+			WithClassName(class.Class).
+			Do(context.Background())
+		assert.Nil(t, err)
+		assert.NotEmpty(t, shards)
+		assert.Equal(t, storagestate.StatusReady.String(), shards[0].Status)
+
+		// clean up classes
+		errRm := client.Schema().AllDeleter().Do(context.Background())
+		assert.Nil(t, errRm)
+	})
+
+	t.Run("PUT /schema/{className}/shards/{shardName}", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+
+		class := &models.Class{
+			Class:               "ClassOne",
+			Properties:          nil,
+			VectorIndexType:     "hnsw",
+			Vectorizer:          "text2vec-contextionary",
+			InvertedIndexConfig: defaultInvertedIndexConfig,
+			ModuleConfig:        defaultModuleConfig,
+			ShardingConfig:      defaultShardingConfig,
+			VectorIndexConfig:   defaultVectorIndexConfig,
+		}
+
+		// create test class
+		err := client.Schema().ClassCreator().WithClass(class).Do(context.Background())
+		assert.Nil(t, err)
+
+		// ensure shard exists for test class with correct status
+		shards, err := client.Schema().ShardsGetter().WithClassName(class.Class).Do(context.Background())
+		assert.Nil(t, err)
+		require.NotEmpty(t, shards)
+		assert.Equal(t, storagestate.StatusReady.String(), shards[0].Status)
+
+		// set shard to readonly
+		status, err := client.Schema().
+			ShardUpdater().
+			WithClassName(class.Class).
+			WithShardName(shards[0].Name).
+			WithStatus("READONLY").
+			Do(context.Background())
+		assert.Nil(t, err)
+		require.NotNil(t, status)
+		assert.Equal(t, storagestate.StatusReadOnly.String(), status.Status)
+
+		// set shard to ready
+		status, err = client.Schema().
+			ShardUpdater().
+			WithClassName(class.Class).
+			WithShardName(shards[0].Name).
+			WithStatus("READY").
+			Do(context.Background())
+		assert.Nil(t, err)
+		require.NotNil(t, status)
+		assert.Equal(t, storagestate.StatusReady.String(), status.Status)
+
+		// clean up classes
+		errRm := client.Schema().AllDeleter().Do(context.Background())
+		assert.Nil(t, errRm)
+	})
+
+	t.Run("Update all shards convenience method", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+
+		shardCount := 3
+
+		class := &models.Class{
+			Class:               "ClassOne",
+			Properties:          nil,
+			VectorIndexType:     "hnsw",
+			Vectorizer:          "text2vec-contextionary",
+			InvertedIndexConfig: defaultInvertedIndexConfig,
+			ModuleConfig:        defaultModuleConfig,
+			ShardingConfig: map[string]interface{}{
+				"actualCount":         float64(shardCount),
+				"actualVirtualCount":  float64(128),
+				"desiredCount":        float64(shardCount),
+				"desiredVirtualCount": float64(128),
+				"function":            "murmur3",
+				"key":                 "_id",
+				"strategy":            "hash",
+				"virtualPerPhysical":  float64(128),
+			},
+			VectorIndexConfig: defaultVectorIndexConfig,
+		}
+
+		// create test class
+		err := client.Schema().
+			ClassCreator().
+			WithClass(class).
+			Do(context.Background())
+		assert.Nil(t, err)
+
+		resp, err := client.Schema().ShardsGetter().WithClassName(class.Class).Do(context.Background())
+		assert.Nil(t, err)
+		require.NotEmpty(t, resp)
+		assert.Equal(t, shardCount, len(resp))
+
+		// set all shards to readonly
+		shards, err := client.Schema().
+			ShardsUpdater().
+			WithClassName(class.Class).
+			WithStatus("READONLY").
+			Do(context.Background())
+		assert.Nil(t, err)
+		require.NotEmpty(t, resp)
+		assert.Equal(t, shardCount, len(resp))
+
+		for _, shard := range shards {
+			assert.Equal(t, storagestate.StatusReadOnly.String(), shard.Status)
+		}
+
+		// set all shards to ready
+		shards, err = client.Schema().
+			ShardsUpdater().
+			WithClassName(class.Class).
+			WithStatus("READY").
+			Do(context.Background())
+		assert.Nil(t, err)
+		require.NotEmpty(t, resp)
+		assert.Equal(t, shardCount, len(resp))
+
+		for _, shard := range shards {
+			assert.Equal(t, storagestate.StatusReady.String(), shard.Status)
+		}
+
+		// clean up classes
 		errRm := client.Schema().AllDeleter().Do(context.Background())
 		assert.Nil(t, errRm)
 	})

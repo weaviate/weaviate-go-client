@@ -54,3 +54,24 @@ func (schema *API) PropertyCreator() *PropertyCreator {
 		connection: schema.connection,
 	}
 }
+
+// ShardsGetter builder to get a weaviate class' shards
+func (schema *API) ShardsGetter() *ShardsGetter {
+	return &ShardsGetter{
+		connection: schema.connection,
+	}
+}
+
+// ShardUpdater builder to update a single shard
+func (schema *API) ShardUpdater() *ShardUpdater {
+	return &ShardUpdater{
+		connection: schema.connection,
+	}
+}
+
+// ShardsUpdater builder to update all shards within a class
+func (schema *API) ShardsUpdater() *ShardsUpdater {
+	return &ShardsUpdater{
+		connection: schema.connection,
+	}
+}
