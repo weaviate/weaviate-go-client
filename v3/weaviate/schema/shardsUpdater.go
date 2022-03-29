@@ -3,7 +3,7 @@ package schema
 import (
 	"context"
 
-	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/connection"
+	"github.com/semi-technologies/weaviate-go-client/v3/weaviate/connection"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 

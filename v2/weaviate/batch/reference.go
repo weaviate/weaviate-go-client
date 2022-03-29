@@ -24,7 +24,7 @@ func (rb *ReferencesBatcher) WithReference(reference *models.BatchReference) *Re
 // Do add all the references in the batch to weaviate
 func (rb *ReferencesBatcher) Do(ctx context.Context) ([]models.BatchReferenceResponse, error) {
 	responseData, responseErr := rb.connection.RunREST(ctx, "/batch/references", http.MethodPost, rb.references)
-	batchErr := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
+	batchErr := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if batchErr != nil {
 		return nil, batchErr
 	}

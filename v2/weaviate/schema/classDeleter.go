@@ -25,5 +25,5 @@ func (cd *ClassDeleter) WithClassName(className string) *ClassDeleter {
 func (cd *ClassDeleter) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/schema/%v", cd.className)
 	responseData, err := cd.connection.RunREST(ctx, path, http.MethodDelete, nil)
-	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)
+	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }

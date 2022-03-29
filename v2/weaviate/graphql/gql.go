@@ -66,7 +66,7 @@ func runGraphQLQuery(ctx context.Context, rest rest, query string) (*models.Grap
 		Query: query,
 	}
 	responseData, responseErr := rest.RunREST(ctx, "/graphql", http.MethodPost, &gqlQuery)
-	err := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
+	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}

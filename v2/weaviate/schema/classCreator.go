@@ -24,5 +24,5 @@ func (cc *ClassCreator) WithClass(class *models.Class) *ClassCreator {
 // Do create a class in the schema as specified in the builder
 func (cc *ClassCreator) Do(ctx context.Context) error {
 	responseData, err := cc.connection.RunREST(ctx, "/schema", http.MethodPost, cc.class)
-	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)
+	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
 }

@@ -2,10 +2,9 @@ package misc
 
 import (
 	"context"
-	"net/http"
-
 	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/except"
+	"net/http"
 )
 
 // OpenIDConfiguration of weaviate

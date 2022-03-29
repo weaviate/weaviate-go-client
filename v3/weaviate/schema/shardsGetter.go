@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/v2/weaviate/except"
+	"github.com/semi-technologies/weaviate-go-client/v3/weaviate/connection"
+	"github.com/semi-technologies/weaviate-go-client/v3/weaviate/except"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 

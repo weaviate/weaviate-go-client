@@ -17,7 +17,7 @@ type MetaGetter struct {
 // Do get the meta endpoint
 func (mg *MetaGetter) Do(ctx context.Context) (*models.Meta, error) {
 	responseData, responseErr := mg.connection.RunREST(ctx, "/meta", http.MethodGet, nil)
-	err := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
+	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {
 		return nil, err
 	}

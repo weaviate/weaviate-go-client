@@ -41,5 +41,5 @@ func (rc *ReferenceCreator) WithReference(referencePayload *models.SingleRef) *R
 func (rc *ReferenceCreator) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/objects/%v/references/%v", rc.uuid, rc.referenceProperty)
 	responseData, responseErr := rc.connection.RunREST(ctx, path, http.MethodPost, *rc.referencePayload)
-	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
+	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
 }

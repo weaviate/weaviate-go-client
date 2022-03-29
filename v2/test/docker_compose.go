@@ -20,7 +20,6 @@ func TearDownWeavaite() error {
 	app := "docker-compose"
 	arguments := []string{
 		"down",
-		"--remove-orphans",
 	}
 	return command(app, arguments)
 }
@@ -34,6 +33,7 @@ func command(app string, arguments []string) error {
 	cmd := exec.Command(app, arguments...)
 	execDir := mydir + "/../"
 	cmd.Dir = execDir
+	//fmt.Printf("\n\n%v\n\n%v\n\n", execDir, cmd)
 	err = cmd.Start()
 	return err
 }
