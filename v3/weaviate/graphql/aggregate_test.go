@@ -42,11 +42,13 @@ func TestAggregateBuilder(t *testing.T) {
 		}
 
 		fields := `meta {count}`
-		where := `{path: ["id"] operator: Equal valueString: "uuid" }`
+
+		where := newWhereArgBuilder().
+			WithPath([]string{"id"}).WithOperator(Equal).WithValueString("uuid")
 
 		query := builder.WithClassName("Pizza").WithWhere(where).WithFields(fields).build()
 
-		expected := `{Aggregate{Pizza(where: {path: ["id"] operator: Equal valueString: "uuid" }){meta {count}}}}`
+		expected := `{Aggregate{Pizza(where:{operator: Equal path: ["id"] valueString: "uuid"}){meta {count}}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -57,7 +59,9 @@ func TestAggregateBuilder(t *testing.T) {
 		}
 
 		fields := `meta {count}`
-		where := `{path: ["id"] operator: Equal valueString: "uuid" }`
+
+		where := newWhereArgBuilder().
+			WithPath([]string{"id"}).WithOperator(Equal).WithValueString("uuid")
 
 		query := builder.WithClassName("Pizza").
 			WithGroupBy("name").
@@ -65,7 +69,7 @@ func TestAggregateBuilder(t *testing.T) {
 			WithFields(fields).
 			build()
 
-		expected := `{Aggregate{Pizza(groupBy: "name", where: {path: ["id"] operator: Equal valueString: "uuid" }){meta {count}}}}`
+		expected := `{Aggregate{Pizza(groupBy: "name", where:{operator: Equal path: ["id"] valueString: "uuid"}){meta {count}}}}`
 		assert.Equal(t, expected, query)
 	})
 

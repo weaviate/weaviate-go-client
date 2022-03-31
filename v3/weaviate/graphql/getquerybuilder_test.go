@@ -64,20 +64,28 @@ func TestQueryBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
+		where := newWhereArgBuilder().
+			WithPath([]string{"name"}).WithOperator(Equal).WithValueString("Hawaii")
+
 		query := builder.WithClassName("Pizza").
 			WithFields("name").
-			WithWhere(`{path: ["name"] operator: Equal valueString: "Hawaii" }`).
+			WithWhere(where).
 			build()
 
-		expected := `{Get {Pizza (where: {path: ["name"] operator: Equal valueString: "Hawaii" }) {name}}}`
+		expected := `{Get {Pizza (where:{operator: Equal path: ["name"] valueString: "Hawaii"}) {name}}}`
 		assert.Equal(t, expected, query)
+
+		where = newWhereArgBuilder().WithOperator(Or).WithOperands([]*WhereFilterBuilder{
+			newWhereFilter().WithPath([]string{"name"}).WithOperator(Equal).WithValueString("Hawaii"),
+			newWhereFilter().WithPath([]string{"name"}).WithOperator(Equal).WithValueString("Doener"),
+		})
 
 		query = builder.WithClassName("Pizza").
 			WithFields("name").
-			WithWhere(`{operator: Or operands: [{path: ["name"] operator: Equal valueString: "Hawaii"}, {path: ["name"] operator: Equal valueString: "Doener"}]}`).
+			WithWhere(where).
 			build()
 
-		expected = `{Get {Pizza (where: {operator: Or operands: [{path: ["name"] operator: Equal valueString: "Hawaii"}, {path: ["name"] operator: Equal valueString: "Doener"}]}) {name}}}`
+		expected = `{Get {Pizza (where:{operator: Or operands:[{operator: Equal path: ["name"] valueString: "Hawaii"},{operator: Equal path: ["name"] valueString: "Doener"}]}) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -183,14 +191,17 @@ func TestQueryBuilder(t *testing.T) {
 		nearText := &NearTextArgumentBuilder{}
 		nearText = nearText.WithConcepts([]string{"good"})
 
+		where := newWhereArgBuilder().
+			WithPath([]string{"name"}).WithOperator(Equal).WithValueString("Hawaii")
+
 		query := builder.WithClassName("Pizza").
 			WithFields("name").
 			WithNearText(nearText).
 			WithLimit(2).
-			WithWhere(`{path: ["name"] operator: Equal valueString: "Hawaii"}`).
+			WithWhere(where).
 			build()
 
-		expected := `{Get {Pizza (where: {path: ["name"] operator: Equal valueString: "Hawaii"}, nearText:{concepts: ["good"]}, limit: 2) {name}}}`
+		expected := `{Get {Pizza (where:{operator: Equal path: ["name"] valueString: "Hawaii"}, nearText:{concepts: ["good"]}, limit: 2) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -205,15 +216,18 @@ func TestQueryBuilder(t *testing.T) {
 		nearText := &NearTextArgumentBuilder{}
 		nearText = nearText.WithConcepts([]string{"good"})
 
+		where := newWhereArgBuilder().
+			WithPath([]string{"name"}).WithOperator(Equal).WithValueString("Hawaii")
+
 		query := builder.WithClassName("Pizza").
 			WithFields("name").
 			WithNearText(nearText).
 			WithNearVector("{vector: [0, 1, 0.8]}").
 			WithLimit(2).
-			WithWhere(`{path: ["name"] operator: Equal valueString: "Hawaii"}`).
+			WithWhere(where).
 			build()
 
-		expected := `{Get {Pizza (where: {path: ["name"] operator: Equal valueString: "Hawaii"}, nearText:{concepts: ["good"]}, nearVector: {vector: [0, 1, 0.8]}, limit: 2) {name}}}`
+		expected := `{Get {Pizza (where:{operator: Equal path: ["name"] valueString: "Hawaii"}, nearText:{concepts: ["good"]}, nearVector: {vector: [0, 1, 0.8]}, limit: 2) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 

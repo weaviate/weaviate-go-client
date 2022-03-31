@@ -28,7 +28,7 @@ type AggregateBuilder struct {
 	className                 string
 	includesFilterClause      bool // true if brackets behind class is needed
 	groupByClausePropertyName string
-	withWhereFilter           string
+	withWhereFilter           *WhereArgumentBuilder
 }
 
 // WithFields that should be included in the aggregation query e.g. `meta{count}`
@@ -44,9 +44,9 @@ func (ab *AggregateBuilder) WithClassName(name string) *AggregateBuilder {
 }
 
 // WithWhere adds the where filter.
-func (ab *AggregateBuilder) WithWhere(filter string) *AggregateBuilder {
+func (ab *AggregateBuilder) WithWhere(where *WhereArgumentBuilder) *AggregateBuilder {
 	ab.includesFilterClause = true
-	ab.withWhereFilter = filter
+	ab.withWhereFilter = where
 	return ab
 }
 
@@ -68,8 +68,8 @@ func (ab *AggregateBuilder) createFilterClause() string {
 	if len(ab.groupByClausePropertyName) > 0 {
 		filters = append(filters, fmt.Sprintf(`groupBy: "%v"`, ab.groupByClausePropertyName))
 	}
-	if len(ab.withWhereFilter) > 0 {
-		filters = append(filters, fmt.Sprintf("where: %v", ab.withWhereFilter))
+	if ab.withWhereFilter != nil {
+		filters = append(filters, ab.withWhereFilter.build())
 	}
 	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
 }
