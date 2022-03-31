@@ -364,6 +364,41 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, errRm)
 	})
 
+	t.Run("Create class with BM25 config", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+
+		schemaClass := &models.Class{
+			Class:             "Run",
+			Description:       "Running from the fuzz",
+			VectorIndexType:   "hnsw",
+			Vectorizer:        "text2vec-contextionary",
+			ModuleConfig:      defaultModuleConfig,
+			ShardingConfig:    defaultShardingConfig,
+			VectorIndexConfig: defaultVectorIndexConfig,
+		}
+
+		err := client.
+			Schema().
+			ClassCreator().
+			WithClass(schemaClass).
+			WithBM25Config(&models.BM25Config{
+				K1: 1.11,
+				B:  0.66,
+			}).
+			Do(context.Background())
+		assert.Nil(t, err)
+
+		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())
+		assert.Nil(t, getErr)
+		assert.Equal(t, 1, len(loadedSchema.Classes))
+		assert.Equal(t, schemaClass.InvertedIndexConfig.Bm25,
+			loadedSchema.Classes[0].InvertedIndexConfig.Bm25)
+
+		// Clean up classes
+		errRm := client.Schema().AllDeleter().Do(context.Background())
+		assert.Nil(t, errRm)
+	})
+
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {

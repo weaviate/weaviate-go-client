@@ -21,6 +21,16 @@ func (cc *ClassCreator) WithClass(class *models.Class) *ClassCreator {
 	return cc
 }
 
+// WithBM25Config specifies the tuning parameters to be used in BM25 search
+func (cc *ClassCreator) WithBM25Config(config *models.BM25Config) *ClassCreator {
+	if cc.class.InvertedIndexConfig == nil {
+		cc.class.InvertedIndexConfig = &models.InvertedIndexConfig{}
+	}
+
+	cc.class.InvertedIndexConfig.Bm25 = config
+	return cc
+}
+
 // Do create a class in the schema as specified in the builder
 func (cc *ClassCreator) Do(ctx context.Context) error {
 	responseData, err := cc.connection.RunREST(ctx, "/schema", http.MethodPost, cc.class)
