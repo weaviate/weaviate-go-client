@@ -24,7 +24,7 @@ func (a *Aggregate) Objects() *AggregateBuilder {
 // AggregateBuilder for the aggregate GraphQL query string
 type AggregateBuilder struct {
 	connection                rest
-	fields                    string
+	fields                    []Field
 	className                 string
 	includesFilterClause      bool // true if brackets behind class is needed
 	groupByClausePropertyName string
@@ -32,7 +32,7 @@ type AggregateBuilder struct {
 }
 
 // WithFields that should be included in the aggregation query e.g. `meta{count}`
-func (ab *AggregateBuilder) WithFields(fields string) *AggregateBuilder {
+func (ab *AggregateBuilder) WithFields(fields []Field) *AggregateBuilder {
 	ab.fields = fields
 	return ab
 }
@@ -74,11 +74,23 @@ func (ab *AggregateBuilder) createFilterClause() string {
 	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
 }
 
+func (ab *AggregateBuilder) createFieldsClause() string {
+	if len(ab.fields) > 0 {
+		fields := make([]string, len(ab.fields))
+		for i := range ab.fields {
+			fields[i] = ab.fields[i].build()
+		}
+		return strings.Join(fields, " ")
+	}
+	return ""
+}
+
 // build the query string
 func (ab *AggregateBuilder) build() string {
 	filterClause := ""
 	if ab.includesFilterClause {
 		filterClause = ab.createFilterClause()
 	}
-	return fmt.Sprintf(`{Aggregate{%v%v{%v}}}`, ab.className, filterClause, ab.fields)
+	fields := ab.createFieldsClause()
+	return fmt.Sprintf(`{Aggregate{%v%v{%v}}}`, ab.className, filterClause, fields)
 }

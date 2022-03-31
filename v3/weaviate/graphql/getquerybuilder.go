@@ -12,7 +12,7 @@ import (
 type GetBuilder struct {
 	connection rest
 	className  string
-	withFields string
+	withFields []Field
 
 	includesFilterClause bool // true if brackets behind class is needed
 	includesLimit        bool
@@ -35,7 +35,7 @@ func (gb *GetBuilder) WithClassName(name string) *GetBuilder {
 }
 
 // WithFields included in the result set
-func (gb *GetBuilder) WithFields(fields string) *GetBuilder {
+func (gb *GetBuilder) WithFields(fields []Field) *GetBuilder {
 	gb.withFields = fields
 	return gb
 }
@@ -116,8 +116,9 @@ func (gb *GetBuilder) build() string {
 	if gb.includesFilterClause {
 		filterClause = gb.createFilterClause()
 	}
+	fieldsClause := gb.createFieldsClause()
 
-	query := fmt.Sprintf("{Get {%v %v {%v}}}", gb.className, filterClause, gb.withFields)
+	query := fmt.Sprintf("{Get {%v %v {%v}}}", gb.className, filterClause, fieldsClause)
 
 	return query
 }
@@ -152,4 +153,15 @@ func (gb *GetBuilder) createFilterClause() string {
 		filters = append(filters, fmt.Sprintf("offset: %v", gb.offset))
 	}
 	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
+}
+
+func (gb *GetBuilder) createFieldsClause() string {
+	if len(gb.withFields) > 0 {
+		fields := make([]string, len(gb.withFields))
+		for i := range gb.withFields {
+			fields[i] = gb.withFields[i].build()
+		}
+		return strings.Join(fields, " ")
+	}
+	return ""
 }

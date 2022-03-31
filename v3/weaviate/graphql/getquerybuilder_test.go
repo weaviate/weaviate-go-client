@@ -38,7 +38,11 @@ func TestQueryBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		query := builder.WithClassName("Pizza").WithFields("name").build()
+		fields := []Field{
+			{Name: "name"},
+		}
+
+		query := builder.WithClassName("Pizza").WithFields(fields).build()
 
 		expected := "{Get {Pizza  {name}}}"
 		assert.Equal(t, expected, query)
@@ -51,7 +55,12 @@ func TestQueryBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		query := builder.WithClassName("Pizza").WithFields("name description").build()
+		fields := []Field{
+			{Name: "name"},
+			{Name: "description"},
+		}
+
+		query := builder.WithClassName("Pizza").WithFields(fields).build()
 
 		expected := "{Get {Pizza  {name description}}}"
 		assert.Equal(t, expected, query)
@@ -64,11 +73,14 @@ func TestQueryBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
+		fields := []Field{
+			{Name: "name"},
+		}
 		where := newWhereArgBuilder().
 			WithPath([]string{"name"}).WithOperator(Equal).WithValueString("Hawaii")
 
 		query := builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithWhere(where).
 			build()
 
@@ -81,7 +93,7 @@ func TestQueryBuilder(t *testing.T) {
 		})
 
 		query = builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithWhere(where).
 			build()
 
@@ -97,7 +109,11 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
-		query := builder.WithClassName("Pizza").WithFields("name").WithLimit(2).build()
+		fields := []Field{
+			{Name: "name"},
+		}
+
+		query := builder.WithClassName("Pizza").WithFields(fields).WithLimit(2).build()
 
 		expected := "{Get {Pizza (limit: 2) {name}}}"
 		assert.Equal(t, expected, query)
@@ -111,7 +127,11 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
-		query := builder.WithClassName("Pizza").WithFields("name").WithOffset(0).WithLimit(2).build()
+		fields := []Field{
+			{Name: "name"},
+		}
+
+		query := builder.WithClassName("Pizza").WithFields(fields).WithOffset(0).WithLimit(2).build()
 
 		expected := "{Get {Pizza (limit: 2, offset: 0) {name}}}"
 		assert.Equal(t, expected, query)
@@ -125,9 +145,12 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
+		fields := []Field{
+			{Name: "name"},
+		}
 		nearText := &NearTextArgumentBuilder{}
 		nearText = nearText.WithConcepts([]string{"good"})
-		query := builder.WithClassName("Pizza").WithFields("name").WithNearText(nearText).build()
+		query := builder.WithClassName("Pizza").WithFields(fields).WithNearText(nearText).build()
 
 		expected := `{Get {Pizza (nearText:{concepts: ["good"]}) {name}}}`
 		assert.Equal(t, expected, query)
@@ -141,9 +164,12 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
+		fields := []Field{
+			{Name: "name"},
+		}
 		nearText := &NearTextArgumentBuilder{}
 		nearText = nearText.WithConcepts([]string{"good"}).WithAutocorrect(true)
-		query := builder.WithClassName("Pizza").WithFields("name").WithNearText(nearText).build()
+		query := builder.WithClassName("Pizza").WithFields(fields).WithNearText(nearText).build()
 
 		expected := `{Get {Pizza (nearText:{concepts: ["good"] autocorrect: true}) {name}}}`
 		assert.Equal(t, expected, query)
@@ -157,7 +183,10 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
-		query := builder.WithClassName("Pizza").WithFields("name").WithNearVector("{vector: [0, 1, 0.8]}").build()
+		fields := []Field{
+			{Name: "name"},
+		}
+		query := builder.WithClassName("Pizza").WithFields(fields).WithNearVector("{vector: [0, 1, 0.8]}").build()
 
 		expected := `{Get {Pizza (nearVector: {vector: [0, 1, 0.8]}) {name}}}`
 		assert.Equal(t, expected, query)
@@ -171,10 +200,13 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
+		fields := []Field{
+			{Name: "name"},
+		}
 		group := &GroupArgumentBuilder{}
 		group = group.WithType(Closest).WithForce(0.4)
 
-		query := builder.WithClassName("Pizza").WithFields("name").WithGroup(group).build()
+		query := builder.WithClassName("Pizza").WithFields(fields).WithGroup(group).build()
 
 		expected := `{Get {Pizza (group:{type: closest force: 0.4}) {name}}}`
 		assert.Equal(t, expected, query)
@@ -188,6 +220,9 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
+		fields := []Field{
+			{Name: "name"},
+		}
 		nearText := &NearTextArgumentBuilder{}
 		nearText = nearText.WithConcepts([]string{"good"})
 
@@ -195,7 +230,7 @@ func TestQueryBuilder(t *testing.T) {
 			WithPath([]string{"name"}).WithOperator(Equal).WithValueString("Hawaii")
 
 		query := builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithNearText(nearText).
 			WithLimit(2).
 			WithWhere(where).
@@ -213,6 +248,9 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
+		fields := []Field{
+			{Name: "name"},
+		}
 		nearText := &NearTextArgumentBuilder{}
 		nearText = nearText.WithConcepts([]string{"good"})
 
@@ -220,7 +258,7 @@ func TestQueryBuilder(t *testing.T) {
 			WithPath([]string{"name"}).WithOperator(Equal).WithValueString("Hawaii")
 
 		query := builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithNearText(nearText).
 			WithNearVector("{vector: [0, 1, 0.8]}").
 			WithLimit(2).
@@ -249,11 +287,14 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
+		fields := []Field{
+			{Name: "name"},
+		}
 		nearText := &NearTextArgumentBuilder{}
 		nearText = nearText.WithConcepts([]string{"good"})
 
 		query := builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithNearText(nearText).
 			build()
 
@@ -269,11 +310,14 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
+		fields := []Field{
+			{Name: "name"},
+		}
 		nearText := &NearTextArgumentBuilder{}
 		nearText = nearText.WithConcepts([]string{"good"}).WithAutocorrect(false)
 
 		query := builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithNearText(nearText).
 			build()
 
@@ -289,10 +333,13 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
+		fields := []Field{
+			{Name: "name"},
+		}
 		nearObject := &NearObjectArgumentBuilder{}
 		nearObject = nearObject.WithBeacon("weawiate/some-uuid")
 		query := builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithNearObject(nearObject).
 			build()
 
@@ -302,7 +349,7 @@ func TestQueryBuilder(t *testing.T) {
 		nearObject = &NearObjectArgumentBuilder{}
 		nearObject = nearObject.WithBeacon("weawiate/some-uuid").WithID("some-uuid")
 		query = builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithNearObject(nearObject).
 			build()
 
@@ -312,7 +359,7 @@ func TestQueryBuilder(t *testing.T) {
 		nearObject = &NearObjectArgumentBuilder{}
 		nearObject = nearObject.WithBeacon("weawiate/some-uuid").WithID("some-uuid").WithCertainty(0.8)
 		query = builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithNearObject(nearObject).
 			build()
 
@@ -324,7 +371,7 @@ func TestQueryBuilder(t *testing.T) {
 		nearText := &NearTextArgumentBuilder{}
 		nearText = nearText.WithConcepts([]string{"good"})
 		query = builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithNearObject(nearObject).
 			WithNearText(nearText).
 			build()
@@ -341,10 +388,13 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
+		fields := []Field{
+			{Name: "name"},
+		}
 		ask := &AskArgumentBuilder{}
 		ask = ask.WithQuestion("What is Weaviate?")
 		query := builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithAsk(ask).
 			build()
 
@@ -354,7 +404,7 @@ func TestQueryBuilder(t *testing.T) {
 		ask = &AskArgumentBuilder{}
 		ask = ask.WithQuestion("What is Weaviate?").WithProperties([]string{"prop1", "prop2"})
 		query = builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithAsk(ask).
 			build()
 
@@ -366,7 +416,7 @@ func TestQueryBuilder(t *testing.T) {
 			WithProperties([]string{"prop1", "prop2"}).
 			WithCertainty(0.8)
 		query = builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithAsk(ask).
 			build()
 
@@ -379,12 +429,14 @@ func TestQueryBuilder(t *testing.T) {
 			WithCertainty(0.8).
 			WithAutocorrect(true)
 		query = builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithAsk(ask).
 			build()
 
 		expected = `{Get {Pizza (ask:{question: "What is Weaviate?" properties: ["prop1","prop2"] certainty: 0.8 autocorrect: true}) {name}}}`
 		assert.Equal(t, expected, query)
+
+		fields = []Field{{Name: "name"}}
 
 		ask = &AskArgumentBuilder{}
 		ask = ask.WithQuestion("What is Weaviate?").
@@ -392,7 +444,7 @@ func TestQueryBuilder(t *testing.T) {
 			WithCertainty(0.8).
 			WithRerank(true)
 		query = builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithAsk(ask).
 			build()
 
@@ -408,10 +460,13 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
+		fields := []Field{
+			{Name: "name"},
+		}
 		nearImageBuilder := &NearImageArgumentBuilder{}
 		nearImage := nearImageBuilder.WithImage("iVBORw0KGgoAAAANS")
 		query := builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithNearImage(nearImage).
 			build()
 
@@ -421,7 +476,7 @@ func TestQueryBuilder(t *testing.T) {
 		nearImageBuilder = &NearImageArgumentBuilder{}
 		nearImage = nearImageBuilder.WithImage("iVBORw0KGgoAAAANS").WithCertainty(0.8)
 		query = builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithNearImage(nearImage).
 			build()
 
@@ -431,7 +486,7 @@ func TestQueryBuilder(t *testing.T) {
 		nearImageBuilder = &NearImageArgumentBuilder{}
 		nearImage = nearImageBuilder.WithImage("data:image/png;base64,iVBORw0KGgoAAAANS").WithCertainty(0.8)
 		query = builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithNearImage(nearImage).
 			build()
 
@@ -460,7 +515,7 @@ func TestQueryBuilder(t *testing.T) {
 		nearImage = nearImageBuilder.WithReader(file).WithCertainty(0.81)
 
 		query = builder.WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithNearImage(nearImage).
 			build()
 
