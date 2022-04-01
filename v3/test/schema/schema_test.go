@@ -386,17 +386,95 @@ func TestSchema_integration(t *testing.T) {
 				B:  0.66,
 			}).
 			Do(context.Background())
-		assert.Nil(t, err)
+		require.Nil(t, err)
 
 		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())
-		assert.Nil(t, getErr)
-		assert.Equal(t, 1, len(loadedSchema.Classes))
+		require.Nil(t, getErr)
+		require.Equal(t, 1, len(loadedSchema.Classes))
 		assert.Equal(t, schemaClass.InvertedIndexConfig.Bm25,
 			loadedSchema.Classes[0].InvertedIndexConfig.Bm25)
 
 		// Clean up classes
 		errRm := client.Schema().AllDeleter().Do(context.Background())
-		assert.Nil(t, errRm)
+		require.Nil(t, errRm)
+	})
+
+	t.Run("Create class with Stopword config", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+
+		schemaClass := &models.Class{
+			Class:             "SpaceThings",
+			Description:       "Things about the universe",
+			VectorIndexType:   "hnsw",
+			Vectorizer:        "text2vec-contextionary",
+			ModuleConfig:      defaultModuleConfig,
+			ShardingConfig:    defaultShardingConfig,
+			VectorIndexConfig: defaultVectorIndexConfig,
+		}
+
+		err := client.
+			Schema().
+			ClassCreator().
+			WithClass(schemaClass).
+			WithStopwordConfig(&models.StopwordConfig{
+				Preset:    "en",
+				Additions: []string{"star", "nebula"},
+				Removals:  []string{"a", "the"},
+			}).
+			Do(context.Background())
+		require.Nil(t, err)
+
+		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())
+		require.Nil(t, getErr)
+		require.Equal(t, 1, len(loadedSchema.Classes))
+		assert.Equal(t, schemaClass.InvertedIndexConfig.Stopwords,
+			loadedSchema.Classes[0].InvertedIndexConfig.Stopwords)
+
+		// Clean up classes
+		errRm := client.Schema().AllDeleter().Do(context.Background())
+		require.Nil(t, errRm)
+	})
+
+	t.Run("Create class with BM25 and Stopword config", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+
+		schemaClass := &models.Class{
+			Class:             "SpaceThings",
+			Description:       "Things about the universe",
+			VectorIndexType:   "hnsw",
+			Vectorizer:        "text2vec-contextionary",
+			ModuleConfig:      defaultModuleConfig,
+			ShardingConfig:    defaultShardingConfig,
+			VectorIndexConfig: defaultVectorIndexConfig,
+		}
+
+		err := client.
+			Schema().
+			ClassCreator().
+			WithClass(schemaClass).
+			WithBM25Config(&models.BM25Config{
+				K1: 1.777,
+				B:  0.777,
+			}).
+			WithStopwordConfig(&models.StopwordConfig{
+				Preset:    "en",
+				Additions: []string{"star", "nebula"},
+				Removals:  []string{"a", "the"},
+			}).
+			Do(context.Background())
+		require.Nil(t, err)
+
+		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())
+		require.Nil(t, getErr)
+		require.Equal(t, 1, len(loadedSchema.Classes))
+		assert.Equal(t, schemaClass.InvertedIndexConfig.Bm25,
+			loadedSchema.Classes[0].InvertedIndexConfig.Bm25)
+		assert.Equal(t, schemaClass.InvertedIndexConfig.Stopwords,
+			loadedSchema.Classes[0].InvertedIndexConfig.Stopwords)
+
+		// Clean up classes
+		errRm := client.Schema().AllDeleter().Do(context.Background())
+		require.Nil(t, errRm)
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
