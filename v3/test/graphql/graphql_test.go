@@ -144,12 +144,14 @@ func TestGraphQL_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
+		groupBy := client.GraphQL().GroupArgBuilder().WithType(graphql.Merge).WithForce(1.0)
+
 		resultSet, gqlErr := client.GraphQL().
 			Get().
 			Objects().
 			WithClassName("Pizza").
 			WithFields("name").
-			WithGroup("{type:merge force:1.0}").
+			WithGroup(groupBy).
 			WithLimit(7).
 			Do(context.Background())
 		assert.Nil(t, gqlErr)

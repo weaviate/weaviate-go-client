@@ -163,9 +163,12 @@ func TestQueryBuilder(t *testing.T) {
 			includesFilterClause: false,
 		}
 
-		query := builder.WithClassName("Pizza").WithFields("name").WithGroup(`{type: closest force: 0.4}`).build()
+		group := &GroupArgumentBuilder{}
+		group = group.WithType(Closest).WithForce(0.4)
 
-		expected := `{Get {Pizza (group: {type: closest force: 0.4}) {name}}}`
+		query := builder.WithClassName("Pizza").WithFields("name").WithGroup(group).build()
+
+		expected := `{Get {Pizza (group:{type: closest force: 0.4}) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 
