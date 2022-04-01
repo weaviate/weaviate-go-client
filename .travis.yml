@@ -20,7 +20,7 @@ jobs:
         - echo "Unit tests"
         - go test -v ./weaviate/...
         - echo "Integration tests"
-        - ( for pkg in $(go list ./... | grep 'weaviate-go-client/test'); do if ! go test -v -count 1 -race "$pkg"; then echo "Test for $pkg failed" >&2; false; exit; fi done)
+        - ( for pkg in $(go list ./... | grep 'weaviate-go-client/test'); do if ! go test -v -count 1 -race "$pkg"; then echo "Test for $pkg failed" >&2; false; exit; fi; done)
         - echo "Linting"
         # - golint -set_exit_status ./...
     - stage: "Test v2"
@@ -36,7 +36,7 @@ jobs:
         - echo "Unit tests"
         - go test -v ./weaviate/...
         - echo "Integration tests"
-        - ( for pkg in $(go list ./... | grep 'weaviate-go-client/v2/test'); do if ! go test -v -count 1 -race "$pkg"; then echo "Test for $pkg failed" >&2; false; exit; fi done)
+        - ( for pkg in $(go list ./... | grep 'weaviate-go-client/v2/test'); do if ! go test -v -count 1 -race "$pkg"; then echo "Test for $pkg failed" >&2; false; exit; fi; done)
         # - echo "Linting"
         # - golint -set_exit_status ./...
     - stage: "Test v3"
@@ -51,4 +51,4 @@ jobs:
         - echo "Unit tests"
         - go test -v ./weaviate/...
         - echo "Integration tests"
-        - ( for pkg in $(go list ./... | grep 'weaviate-go-client/v3/test'); do if ! go test -v -count 1 -race "$pkg"; then echo "Test for $pkg failed" >&2; false; exit; fi done)
+        - ( for pkg in $(go list ./... | grep 'weaviate-go-client/v3/test'); do if ! go test -v -count 1 -race "$pkg"; then echo "Test for $pkg failed" >&2; false; exit; fi; done)
