@@ -376,16 +376,18 @@ func TestSchema_integration(t *testing.T) {
 			ModuleConfig:      defaultModuleConfig,
 			ShardingConfig:    defaultShardingConfig,
 			VectorIndexConfig: defaultVectorIndexConfig,
+			InvertedIndexConfig: &models.InvertedIndexConfig{
+				Bm25: &models.BM25Config{
+					K1: 1.11,
+					B:  0.66,
+				},
+			},
 		}
 
 		err := client.
 			Schema().
 			ClassCreator().
 			WithClass(schemaClass).
-			WithBM25Config(&models.BM25Config{
-				K1: 1.11,
-				B:  0.66,
-			}).
 			Do(context.Background())
 		require.Nil(t, err)
 
@@ -411,17 +413,19 @@ func TestSchema_integration(t *testing.T) {
 			ModuleConfig:      defaultModuleConfig,
 			ShardingConfig:    defaultShardingConfig,
 			VectorIndexConfig: defaultVectorIndexConfig,
+			InvertedIndexConfig: &models.InvertedIndexConfig{
+				Stopwords: &models.StopwordConfig{
+					Preset:    "en",
+					Additions: []string{"star", "nebula"},
+					Removals:  []string{"a", "the"},
+				},
+			},
 		}
 
 		err := client.
 			Schema().
 			ClassCreator().
 			WithClass(schemaClass).
-			WithStopwordConfig(&models.StopwordConfig{
-				Preset:    "en",
-				Additions: []string{"star", "nebula"},
-				Removals:  []string{"a", "the"},
-			}).
 			Do(context.Background())
 		require.Nil(t, err)
 
@@ -440,28 +444,29 @@ func TestSchema_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
-			Class:             "SpaceThings",
-			Description:       "Things about the universe",
-			VectorIndexType:   "hnsw",
-			Vectorizer:        "text2vec-contextionary",
-			ModuleConfig:      defaultModuleConfig,
-			ShardingConfig:    defaultShardingConfig,
-			VectorIndexConfig: defaultVectorIndexConfig,
+			Class:               "SpaceThings",
+			Description:         "Things about the universe",
+			VectorIndexType:     "hnsw",
+			Vectorizer:          "text2vec-contextionary",
+			ModuleConfig:        defaultModuleConfig,
+			ShardingConfig:      defaultShardingConfig,
+			VectorIndexConfig:   defaultVectorIndexConfig,
+			InvertedIndexConfig: defaultInvertedIndexConfig,
+		}
+		schemaClass.InvertedIndexConfig.Bm25 = &models.BM25Config{
+			K1: 1.777,
+			B:  0.777,
+		}
+		schemaClass.InvertedIndexConfig.Stopwords = &models.StopwordConfig{
+			Preset:    "en",
+			Additions: []string{"star", "nebula"},
+			Removals:  []string{"a", "the"},
 		}
 
 		err := client.
 			Schema().
 			ClassCreator().
 			WithClass(schemaClass).
-			WithBM25Config(&models.BM25Config{
-				K1: 1.777,
-				B:  0.777,
-			}).
-			WithStopwordConfig(&models.StopwordConfig{
-				Preset:    "en",
-				Additions: []string{"star", "nebula"},
-				Removals:  []string{"a", "the"},
-			}).
 			Do(context.Background())
 		require.Nil(t, err)
 
