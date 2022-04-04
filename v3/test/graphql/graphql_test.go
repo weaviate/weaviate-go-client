@@ -26,7 +26,13 @@ func TestGraphQL_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		resultSet, gqlErr := client.GraphQL().Get().Objects().WithClassName("Pizza").WithFields("name").Do(context.Background())
+		fields := []graphql.Field{
+			{
+				Name: "name",
+			},
+		}
+
+		resultSet, gqlErr := client.GraphQL().Get().Objects().WithClassName("Pizza").WithFields(fields).Do(context.Background())
 		assert.Nil(t, gqlErr)
 
 		get := resultSet.Data["Get"].(map[string]interface{})
@@ -37,7 +43,7 @@ func TestGraphQL_integration(t *testing.T) {
 			WithID("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
 		resultSet, gqlErr = client.GraphQL().Get().Objects().
 			WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithNearObject(withNearObject).
 			Do(context.Background())
 		assert.Nil(t, gqlErr)
@@ -52,7 +58,9 @@ func TestGraphQL_integration(t *testing.T) {
 			WithOperator(graphql.Equal).
 			WithValueString("Frutti di Mare")
 
-		resultSet, gqlErr = client.GraphQL().Get().Objects().WithClassName("Pizza").WithWhere(where).WithFields("name").Do(context.Background())
+		fields = []graphql.Field{{Name: "name"}}
+
+		resultSet, gqlErr = client.GraphQL().Get().Objects().WithClassName("Pizza").WithWhere(where).WithFields(fields).Do(context.Background())
 		assert.Nil(t, gqlErr)
 
 		get = resultSet.Data["Get"].(map[string]interface{})
@@ -109,7 +117,16 @@ func TestGraphQL_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		fields := "meta {count}"
+		fields := []graphql.Field{
+			{
+				Name: "meta",
+				Fields: []graphql.Field{
+					{
+						Name: "count",
+					},
+				},
+			},
+		}
 		resultSet, gqlErr := client.GraphQL().Aggregate().Objects().WithFields(fields).WithClassName("Pizza").Do(context.Background())
 
 		assert.Nil(t, gqlErr)
@@ -166,13 +183,14 @@ func TestGraphQL_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
+		fields := []graphql.Field{{Name: "name"}}
 		group := client.GraphQL().GroupArgBuilder().WithType(graphql.Merge).WithForce(1.0)
 
 		resultSet, gqlErr := client.GraphQL().
 			Get().
 			Objects().
 			WithClassName("Pizza").
-			WithFields("name").
+			WithFields(fields).
 			WithGroup(group).
 			WithLimit(7).
 			Do(context.Background())
