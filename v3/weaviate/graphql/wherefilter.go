@@ -3,7 +3,6 @@ package graphql
 import (
 	"fmt"
 	"strings"
-	"time"
 )
 
 type WhereFilterBuilder struct {
@@ -18,7 +17,7 @@ type WhereFilterBuilder struct {
 	valueString      string
 	valueText        string
 	withValueDate    bool
-	valueDate        time.Time
+	valueDate        string
 	valueGeoRange    *GeoCoordinatesParameter
 }
 
@@ -68,7 +67,7 @@ func (b *WhereFilterBuilder) WithValueText(valueText string) *WhereFilterBuilder
 }
 
 // WithValueDate the date value in where filter
-func (b *WhereFilterBuilder) WithValueDate(valueDate time.Time) *WhereFilterBuilder {
+func (b *WhereFilterBuilder) WithValueDate(valueDate string) *WhereFilterBuilder {
 	b.withValueDate = true
 	b.valueDate = valueDate
 	return b
@@ -109,7 +108,7 @@ func (b *WhereFilterBuilder) build() string {
 		clause = append(clause, fmt.Sprintf("valueText: \"%s\"", b.valueText))
 	}
 	if b.withValueDate {
-		clause = append(clause, fmt.Sprintf("valueDate: %s", b.valueDate.Format(time.RFC3339)))
+		clause = append(clause, fmt.Sprintf("valueDate: %s", b.valueDate))
 	}
 	if b.valueGeoRange != nil {
 		clause = append(clause, fmt.Sprintf("valueGeoRange: {geoCoordinates:{latitude:%v,longitude:%v},distance:{max:%v}}",

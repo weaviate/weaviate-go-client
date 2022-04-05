@@ -1,13 +1,10 @@
 package graphql
 
 import (
-	"fmt"
 	"testing"
-	"time"
 )
 
 func TestWhereArgumentBuilder_build(t *testing.T) {
-	now := time.Now()
 	type fields struct {
 		operands      []WhereFilterBuilder
 		operator      WhereOperator
@@ -17,7 +14,7 @@ func TestWhereArgumentBuilder_build(t *testing.T) {
 		valueBoolean  bool
 		valueString   string
 		valueText     string
-		valueDate     time.Time
+		valueDate     string
 		valueGeoRange *GeoCoordinatesParameter
 	}
 	tests := []struct {
@@ -59,8 +56,8 @@ func TestWhereArgumentBuilder_build(t *testing.T) {
 		{
 			name: "with: path operator.Like date",
 			builder: newWhereArgBuilder().WithPath([]string{"id"}).WithOperator(Like).
-				WithValueDate(now),
-			want: fmt.Sprintf("where:{operator: Like path: [\"id\"] valueDate: %s}", now.Format(time.RFC3339)),
+				WithValueDate("2020-01-01T00:00:00-07:00"),
+			want: "where:{operator: Like path: [\"id\"] valueDate: 2020-01-01T00:00:00-07:00}",
 		},
 		{
 			name: "with: operands",
@@ -74,8 +71,8 @@ func TestWhereArgumentBuilder_build(t *testing.T) {
 		{
 			name: "with: multiple path operator.Not date",
 			builder: newWhereArgBuilder().WithPath([]string{"p1", "p2", "p3"}).WithOperator(Not).
-				WithValueDate(now),
-			want: fmt.Sprintf("where:{operator: Not path: [\"p1\",\"p2\",\"p3\"] valueDate: %s}", now.Format(time.RFC3339)),
+				WithValueDate("2021-01-01T00:00:10-07:00"),
+			want: "where:{operator: Not path: [\"p1\",\"p2\",\"p3\"] valueDate: 2021-01-01T00:00:10-07:00}",
 		},
 		{
 			name: "with: operands with multiple path",

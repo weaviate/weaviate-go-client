@@ -3,7 +3,6 @@ package graphql
 import (
 	"fmt"
 	"strings"
-	"time"
 )
 
 type WhereArgumentBuilder struct {
@@ -19,7 +18,7 @@ type WhereArgumentBuilder struct {
 	valueString      string
 	valueText        string
 	withValueDate    bool
-	valueDate        time.Time
+	valueDate        string
 	valueGeoRange    *GeoCoordinatesParameter
 }
 
@@ -69,7 +68,7 @@ func (b *WhereArgumentBuilder) WithValueText(valueText string) *WhereArgumentBui
 }
 
 // WithValueDate the date value in where filter
-func (b *WhereArgumentBuilder) WithValueDate(valueDate time.Time) *WhereArgumentBuilder {
+func (b *WhereArgumentBuilder) WithValueDate(valueDate string) *WhereArgumentBuilder {
 	b.withValueDate = true
 	b.valueDate = valueDate
 	return b
