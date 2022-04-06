@@ -9,3 +9,5 @@ require (
 )
 
 replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.0.0
+
+replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.5.1
