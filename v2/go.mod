@@ -7,3 +7,5 @@ require (
 	github.com/semi-technologies/weaviate v1.2.1
 	github.com/stretchr/testify v1.6.1
 )
+
+replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.5.1
