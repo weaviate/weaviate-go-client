@@ -4,7 +4,7 @@ A go native client for weaviate.
 
 ## Documentation
 
-[TBD]
+[checkout our official weaviate go client docs](https://weaviate.io/developers/weaviate/current/client-libraries/go.html)
 
 ## Support
 
