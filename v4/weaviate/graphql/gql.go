@@ -44,6 +44,11 @@ func (api *API) NearObjectArgBuilder() *NearObjectArgumentBuilder {
 	return &NearObjectArgumentBuilder{}
 }
 
+// NearVectorArgBuilder nearVector clause
+func (api *API) NearVectorArgBuilder() *NearVectorArgumentBuilder {
+	return &NearVectorArgumentBuilder{}
+}
+
 // AskArgBuilder ask clause
 func (api *API) AskArgBuilder() *AskArgumentBuilder {
 	return &AskArgumentBuilder{}

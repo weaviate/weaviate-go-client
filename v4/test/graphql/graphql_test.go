@@ -2,7 +2,6 @@ package graphql
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
@@ -17,8 +16,7 @@ func TestGraphQL_integration(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
-			t.Fail()
+			t.Fatalf("failed to setup weaviate: %s", err)
 		}
 	})
 
@@ -127,54 +125,216 @@ func TestGraphQL_integration(t *testing.T) {
 				},
 			},
 		}
-		resultSet, gqlErr := client.GraphQL().Aggregate().Objects().WithFields(fields).WithClassName("Pizza").Do(context.Background())
 
-		assert.Nil(t, gqlErr)
-		assert.NotNil(t, resultSet)
+		t.Run("no filters", func(t *testing.T) {
+			resultSet, gqlErr := client.GraphQL().Aggregate().Objects().WithFields(fields).WithClassName("Pizza").Do(context.Background())
 
-		where := client.GraphQL().WhereArgBuilder().
-			WithPath([]string{"id"}).
-			WithOperator(graphql.Equal).
-			WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
+			assert.Nil(t, gqlErr)
+			assert.NotNil(t, resultSet)
+		})
 
-		resultSet, gqlErr = client.GraphQL().
-			Aggregate().
-			Objects().
-			WithFields(fields).
-			WithWhere(where).
-			WithClassName("Pizza").
-			Do(context.Background())
+		t.Run("with where filter", func(t *testing.T) {
+			where := client.GraphQL().WhereArgBuilder().
+				WithPath([]string{"id"}).
+				WithOperator(graphql.Equal).
+				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
 
-		assert.Nil(t, gqlErr)
-		assert.NotNil(t, resultSet)
+			resultSet, gqlErr := client.GraphQL().
+				Aggregate().
+				Objects().
+				WithFields(fields).
+				WithWhere(where).
+				WithClassName("Pizza").
+				Do(context.Background())
 
-		resultSet, gqlErr = client.GraphQL().
-			Aggregate().
-			Objects().
-			WithFields(fields).
-			WithGroupBy("name").
-			WithClassName("Pizza").
-			Do(context.Background())
+			assert.Nil(t, gqlErr)
+			assert.NotNil(t, resultSet)
+		})
 
-		assert.Nil(t, gqlErr)
-		assert.NotNil(t, resultSet)
+		t.Run("with groupby", func(t *testing.T) {
+			resultSet, gqlErr := client.GraphQL().
+				Aggregate().
+				Objects().
+				WithFields(fields).
+				WithGroupBy("name").
+				WithClassName("Pizza").
+				Do(context.Background())
 
-		where = client.GraphQL().WhereArgBuilder().
-			WithPath([]string{"id"}).
-			WithOperator(graphql.Equal).
-			WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
+			assert.Nil(t, gqlErr)
+			assert.NotNil(t, resultSet)
+		})
 
-		resultSet, gqlErr = client.GraphQL().
-			Aggregate().
-			Objects().
-			WithFields(fields).
-			WithWhere(where).
-			WithGroupBy("name").
-			WithClassName("Pizza").
-			Do(context.Background())
+		t.Run("with where filter and groupby", func(t *testing.T) {
+			where := client.GraphQL().WhereArgBuilder().
+				WithPath([]string{"id"}).
+				WithOperator(graphql.Equal).
+				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
 
-		assert.Nil(t, gqlErr)
-		assert.NotNil(t, resultSet)
+			resultSet, gqlErr := client.GraphQL().
+				Aggregate().
+				Objects().
+				WithFields(fields).
+				WithWhere(where).
+				WithGroupBy("name").
+				WithClassName("Pizza").
+				Do(context.Background())
+
+			assert.Nil(t, gqlErr)
+			assert.NotNil(t, resultSet)
+		})
+
+		t.Run("with nearVector filter", func(t *testing.T) {
+			pizza := GetOnePizza(t, client)
+
+			nearVector := &graphql.NearVectorArgumentBuilder{}
+			nearVector.WithCertainty(0.85).
+				WithVector(pizza.Additional.Vector)
+
+			resultSet, gqlErr := client.GraphQL().
+				Aggregate().
+				Objects().
+				WithFields(fields).
+				WithNearVector(nearVector).
+				WithClassName("Pizza").
+				Do(context.Background())
+
+			assert.Nil(t, gqlErr)
+			assert.NotNil(t, resultSet)
+		})
+
+		t.Run("with nearObject filter", func(t *testing.T) {
+			pizza := GetOnePizza(t, client)
+
+			nearObject := &graphql.NearObjectArgumentBuilder{}
+			nearObject.WithCertainty(0.85).
+				WithID(pizza.Additional.ID)
+
+			resultSet, gqlErr := client.GraphQL().
+				Aggregate().
+				Objects().
+				WithFields(fields).
+				WithNearObject(nearObject).
+				WithClassName("Pizza").
+				Do(context.Background())
+
+			assert.Nil(t, gqlErr)
+			assert.NotNil(t, resultSet)
+		})
+
+		t.Run("with nearText filter", func(t *testing.T) {
+			concepts := []string{"pineapple slices", "ham"}
+			moveTo := &graphql.MoveParameters{
+				Concepts: []string{"Pizza"},
+				Force:    0.3,
+			}
+			moveAwayFrom := &graphql.MoveParameters{
+				Concepts: []string{"toast", "bread"},
+				Force:    0.4,
+			}
+
+			nearText := &graphql.NearTextArgumentBuilder{}
+			nearText.WithCertainty(0.85).
+				WithConcepts(concepts).
+				WithMoveTo(moveTo).
+				WithMoveAwayFrom(moveAwayFrom)
+
+			resultSet, gqlErr := client.GraphQL().
+				Aggregate().
+				Objects().
+				WithFields(fields).
+				WithNearText(nearText).
+				WithClassName("Pizza").
+				Do(context.Background())
+
+			assert.Nil(t, gqlErr)
+			assert.NotNil(t, resultSet)
+		})
+
+		t.Run("with nearVector, where, groupby", func(t *testing.T) {
+			where := client.GraphQL().WhereArgBuilder().
+				WithPath([]string{"id"}).
+				WithOperator(graphql.Equal).
+				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
+
+			pizza := GetOnePizza(t, client)
+			nearVector := &graphql.NearVectorArgumentBuilder{}
+			nearVector.WithCertainty(0.85).
+				WithVector(pizza.Additional.Vector)
+
+			resultSet, gqlErr := client.GraphQL().
+				Aggregate().
+				Objects().
+				WithFields(fields).
+				WithWhere(where).
+				WithGroupBy("name").
+				WithNearVector(nearVector).
+				WithClassName("Pizza").
+				Do(context.Background())
+
+			assert.Nil(t, gqlErr)
+			assert.NotNil(t, resultSet)
+		})
+
+		t.Run("with nearObject, where, groupby", func(t *testing.T) {
+			where := client.GraphQL().WhereArgBuilder().
+				WithPath([]string{"id"}).
+				WithOperator(graphql.Equal).
+				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
+
+			pizza := GetOnePizza(t, client)
+			nearObject := &graphql.NearObjectArgumentBuilder{}
+			nearObject.WithCertainty(0.85).
+				WithID(pizza.Additional.ID)
+
+			resultSet, gqlErr := client.GraphQL().
+				Aggregate().
+				Objects().
+				WithFields(fields).
+				WithWhere(where).
+				WithGroupBy("name").
+				WithNearObject(nearObject).
+				WithClassName("Pizza").
+				Do(context.Background())
+
+			assert.Nil(t, gqlErr)
+			assert.NotNil(t, resultSet)
+		})
+
+		t.Run("with nearText, where, groupby", func(t *testing.T) {
+			where := client.GraphQL().WhereArgBuilder().
+				WithPath([]string{"id"}).
+				WithOperator(graphql.Equal).
+				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
+
+			concepts := []string{"pineapple slices", "ham"}
+			moveTo := &graphql.MoveParameters{
+				Concepts: []string{"Pizza"},
+				Force:    0.3,
+			}
+			moveAwayFrom := &graphql.MoveParameters{
+				Concepts: []string{"toast", "bread"},
+				Force:    0.4,
+			}
+
+			nearText := &graphql.NearTextArgumentBuilder{}
+			nearText.WithCertainty(0.85).
+				WithConcepts(concepts).
+				WithMoveTo(moveTo).
+				WithMoveAwayFrom(moveAwayFrom)
+
+			resultSet, gqlErr := client.GraphQL().
+				Aggregate().
+				Objects().
+				WithFields(fields).
+				WithWhere(where).
+				WithGroupBy("name").
+				WithNearText(nearText).
+				WithClassName("Pizza").
+				Do(context.Background())
+
+			assert.Nil(t, gqlErr)
+			assert.NotNil(t, resultSet)
+		})
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
@@ -208,8 +368,7 @@ func TestGraphQL_integration(t *testing.T) {
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
-			t.Fail()
+			t.Fatalf("failed to tear down weaviate: %s", err)
 		}
 	})
 }
