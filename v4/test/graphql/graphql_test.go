@@ -127,7 +127,11 @@ func TestGraphQL_integration(t *testing.T) {
 		}
 
 		t.Run("no filters", func(t *testing.T) {
-			resultSet, gqlErr := client.GraphQL().Aggregate().Objects().WithFields(fields).WithClassName("Pizza").Do(context.Background())
+			resultSet, gqlErr := client.GraphQL().
+				Aggregate().
+				WithFields(fields).
+				WithClassName("Pizza").
+				Do(context.Background())
 
 			assert.Nil(t, gqlErr)
 			assert.NotNil(t, resultSet)
@@ -141,7 +145,6 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				Objects().
 				WithFields(fields).
 				WithWhere(where).
 				WithClassName("Pizza").
@@ -154,7 +157,6 @@ func TestGraphQL_integration(t *testing.T) {
 		t.Run("with groupby", func(t *testing.T) {
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				Objects().
 				WithFields(fields).
 				WithGroupBy("name").
 				WithClassName("Pizza").
@@ -172,7 +174,6 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				Objects().
 				WithFields(fields).
 				WithWhere(where).
 				WithGroupBy("name").
@@ -192,7 +193,6 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				Objects().
 				WithFields(fields).
 				WithNearVector(nearVector).
 				WithClassName("Pizza").
@@ -211,7 +211,6 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				Objects().
 				WithFields(fields).
 				WithNearObject(nearObject).
 				WithClassName("Pizza").
@@ -240,7 +239,6 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				Objects().
 				WithFields(fields).
 				WithNearText(nearText).
 				WithClassName("Pizza").
@@ -263,7 +261,6 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				Objects().
 				WithFields(fields).
 				WithWhere(where).
 				WithGroupBy("name").
@@ -288,7 +285,6 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				Objects().
 				WithFields(fields).
 				WithWhere(where).
 				WithGroupBy("name").
@@ -324,7 +320,6 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				Objects().
 				WithFields(fields).
 				WithWhere(where).
 				WithGroupBy("name").

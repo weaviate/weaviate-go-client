@@ -5,14 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
-
-// Aggregate allows the building of an aggregation query
-type Aggregate struct {
-	connection *connection.Connection
-}
 
 // AggregateBuilder for the aggregate GraphQL query string
 type AggregateBuilder struct {
