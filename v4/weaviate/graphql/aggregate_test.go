@@ -238,34 +238,5 @@ func TestAggregateBuilder(t *testing.T) {
 			query := builder.build()
 			assert.NotEmpty(t, query, "Check that there is no panic if query is not validly build")
 		})
-
-		t.Run("multiple nearMedia fields", func(t *testing.T) {
-			builder := AggregateBuilder{connection: conMock}
-
-			fields := []Field{
-				{
-					Name: "meta",
-					Fields: []Field{
-						{
-							Name: "count",
-						},
-					},
-				},
-			}
-
-			withNearText := &NearTextArgumentBuilder{}
-			withNearText.WithConcepts([]string{"pepperoni"}).WithCertainty(0.987)
-
-			withNearObject := &NearObjectArgumentBuilder{}
-			withNearObject.WithID("123").WithBeacon("weaviate://test").WithCertainty(0.7878)
-
-			assert.PanicsWithError(t, "AggregateBuilder can only contain one near<Media> filter", func() {
-				builder.WithClassName("Pizza").
-					WithNearText(withNearText).
-					WithNearObject(withNearObject).
-					WithFields(fields).
-					build()
-			})
-		})
 	})
 }
