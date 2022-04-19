@@ -10,9 +10,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type PizzaResponse struct {
+type GetPizzaResponse struct {
 	Get struct {
 		Pizzas []Pizza `json:"Pizza"`
+	}
+}
+
+type AggregatePizzaResponse struct {
+	Aggregate struct {
+		Pizza []struct {
+			Meta struct {
+				Count int `json:"count"`
+			} `json:"meta"`
+		}
 	}
 }
 
@@ -43,7 +53,7 @@ func GetOnePizza(t *testing.T, c *weaviate.Client) *Pizza {
 	b, err := json.Marshal(resp.Data)
 	require.Nil(t, err)
 
-	var pizza PizzaResponse
+	var pizza GetPizzaResponse
 	err = json.Unmarshal(b, &pizza)
 
 	require.Nil(t, err)
