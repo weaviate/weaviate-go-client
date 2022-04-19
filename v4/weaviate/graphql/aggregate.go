@@ -5,21 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
-
-// Aggregate allows the building of an aggregation query
-type Aggregate struct {
-	connection *connection.Connection
-}
-
-// Objects aggregate objects
-func (a *Aggregate) Objects() *AggregateBuilder {
-	return &AggregateBuilder{
-		connection: a.connection,
-	}
-}
 
 // AggregateBuilder for the aggregate GraphQL query string
 type AggregateBuilder struct {
@@ -29,6 +16,9 @@ type AggregateBuilder struct {
 	includesFilterClause      bool // true if brackets behind class is needed
 	groupByClausePropertyName string
 	withWhereFilter           *WhereArgumentBuilder
+	withNearTextFilter        *NearTextArgumentBuilder
+	withNearVectorFilter      *NearVectorArgumentBuilder
+	withNearObjectFilter      *NearObjectArgumentBuilder
 }
 
 // WithFields that should be included in the aggregation query e.g. `meta{count}`
@@ -58,6 +48,27 @@ func (ab *AggregateBuilder) WithGroupBy(propertyName string) *AggregateBuilder {
 	return ab
 }
 
+// WithNearText clause to find close objects
+func (ab *AggregateBuilder) WithNearText(nearText *NearTextArgumentBuilder) *AggregateBuilder {
+	ab.includesFilterClause = true
+	ab.withNearTextFilter = nearText
+	return ab
+}
+
+// WithNearObject clause to find close objects
+func (ab *AggregateBuilder) WithNearObject(nearObject *NearObjectArgumentBuilder) *AggregateBuilder {
+	ab.includesFilterClause = true
+	ab.withNearObjectFilter = nearObject
+	return ab
+}
+
+// WithNearVector clause to find close objects
+func (ab *AggregateBuilder) WithNearVector(nearVector *NearVectorArgumentBuilder) *AggregateBuilder {
+	ab.includesFilterClause = true
+	ab.withNearVectorFilter = nearVector
+	return ab
+}
+
 // Do execute the aggregation query
 func (ab *AggregateBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, ab.connection, ab.build())
@@ -71,6 +82,16 @@ func (ab *AggregateBuilder) createFilterClause() string {
 	if ab.withWhereFilter != nil {
 		filters = append(filters, ab.withWhereFilter.build())
 	}
+	if ab.withNearTextFilter != nil {
+		filters = append(filters, ab.withNearTextFilter.build())
+	}
+	if ab.withNearVectorFilter != nil {
+		filters = append(filters, ab.withNearVectorFilter.build())
+	}
+	if ab.withNearObjectFilter != nil {
+		filters = append(filters, ab.withNearObjectFilter.build())
+	}
+
 	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
 }
 

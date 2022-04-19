@@ -30,8 +30,8 @@ func (api *API) Explore() *Explore {
 }
 
 // Aggregate queries
-func (api *API) Aggregate() *Aggregate {
-	return &Aggregate{connection: api.connection}
+func (api *API) Aggregate() *AggregateBuilder {
+	return &AggregateBuilder{connection: api.connection}
 }
 
 // NearTextArgBuilder nearText clause
@@ -42,6 +42,11 @@ func (api *API) NearTextArgBuilder() *NearTextArgumentBuilder {
 // NearObjectArgBuilder nearObject clause
 func (api *API) NearObjectArgBuilder() *NearObjectArgumentBuilder {
 	return &NearObjectArgumentBuilder{}
+}
+
+// NearVectorArgBuilder nearVector clause
+func (api *API) NearVectorArgBuilder() *NearVectorArgumentBuilder {
+	return &NearVectorArgumentBuilder{}
 }
 
 // AskArgBuilder ask clause
