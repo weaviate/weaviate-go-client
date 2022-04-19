@@ -2,7 +2,6 @@ package graphql
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -17,7 +16,6 @@ type AggregateBuilder struct {
 	includesFilterClause      bool // true if brackets behind class is needed
 	groupByClausePropertyName string
 	withWhereFilter           *WhereArgumentBuilder
-	includesNearMediaFilter   bool // only one near<Media> field can be set
 	withNearTextFilter        *NearTextArgumentBuilder
 	withNearVectorFilter      *NearVectorArgumentBuilder
 	withNearObjectFilter      *NearObjectArgumentBuilder
@@ -52,36 +50,21 @@ func (ab *AggregateBuilder) WithGroupBy(propertyName string) *AggregateBuilder {
 
 // WithNearText clause to find close objects
 func (ab *AggregateBuilder) WithNearText(nearText *NearTextArgumentBuilder) *AggregateBuilder {
-	if ab.includesNearMediaFilter {
-		panic("AggregateBuilder can only contain one near<Media> filter")
-	}
-
 	ab.includesFilterClause = true
-	ab.includesNearMediaFilter = true
 	ab.withNearTextFilter = nearText
 	return ab
 }
 
 // WithNearObject clause to find close objects
 func (ab *AggregateBuilder) WithNearObject(nearObject *NearObjectArgumentBuilder) *AggregateBuilder {
-	if ab.includesNearMediaFilter {
-		panic(errors.New("AggregateBuilder can only contain one near<Media> filter"))
-	}
-
 	ab.includesFilterClause = true
-	ab.includesNearMediaFilter = true
 	ab.withNearObjectFilter = nearObject
 	return ab
 }
 
 // WithNearVector clause to find close objects
 func (ab *AggregateBuilder) WithNearVector(nearVector *NearVectorArgumentBuilder) *AggregateBuilder {
-	if ab.includesNearMediaFilter {
-		panic("AggregateBuilder can only contain one near<Media> filter")
-	}
-
 	ab.includesFilterClause = true
-	ab.includesNearMediaFilter = true
 	ab.withNearVectorFilter = nearVector
 	return ab
 }
