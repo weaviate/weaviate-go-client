@@ -31,7 +31,7 @@ func (b *NearVectorArgumentBuilder) build() string {
 	if b.withCertainty {
 		clause = append(clause, fmt.Sprintf("certainty: %v", b.certainty))
 	}
-	if b.vector != nil {
+	if len(b.vector) != 0 {
 		vectorB, err := json.Marshal(b.vector)
 		if err != nil {
 			panic(fmt.Errorf("failed to unmarshal nearVector search vector: %s", err))
