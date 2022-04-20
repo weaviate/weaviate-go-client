@@ -20,8 +20,8 @@ func New(con *connection.Connection) *API {
 }
 
 // Get queries
-func (api *API) Get() *Get {
-	return &Get{connection: api.connection}
+func (api *API) Get() *GetBuilder {
+	return &GetBuilder{connection: api.connection}
 }
 
 // Explore queries

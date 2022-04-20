@@ -42,7 +42,6 @@ func GetOnePizza(t *testing.T, c *weaviate.Client) *Pizza {
 
 	resp, err := c.GraphQL().
 		Get().
-		Objects().
 		WithClassName("Pizza").
 		WithFields(fields).
 		Do(context.Background())
