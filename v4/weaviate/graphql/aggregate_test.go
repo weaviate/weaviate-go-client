@@ -200,6 +200,36 @@ func TestAggregateBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
+	t.Run("objectLimit", func(t *testing.T) {
+		conMock := &MockRunREST{}
+		builder := AggregateBuilder{
+			connection: conMock,
+		}
+
+		fields := []Field{
+			{
+				Name: "meta",
+				Fields: []Field{
+					{
+						Name: "count",
+					},
+				},
+			},
+		}
+
+		withNearText := &NearTextArgumentBuilder{}
+		withNearText.WithConcepts([]string{"pepperoni"}).WithCertainty(0.987)
+
+		query := builder.WithClassName("Pizza").
+			WithFields(fields).
+			WithNearText(withNearText).
+			WithObjectLimit(3).
+			build()
+
+		expected := `{Aggregate{Pizza(nearText:{concepts: ["pepperoni"] certainty: 0.987}, objectLimit: 3){meta{count}}}}`
+		assert.Equal(t, expected, query)
+	})
+
 	t.Run("Missuse", func(t *testing.T) {
 		conMock := &MockRunREST{}
 

@@ -19,6 +19,8 @@ type AggregateBuilder struct {
 	withNearTextFilter        *NearTextArgumentBuilder
 	withNearVectorFilter      *NearVectorArgumentBuilder
 	withNearObjectFilter      *NearObjectArgumentBuilder
+	includesObjectLimit       bool
+	objectLimit               int
 }
 
 // WithFields that should be included in the aggregation query e.g. `meta{count}`
@@ -69,6 +71,13 @@ func (ab *AggregateBuilder) WithNearVector(nearVector *NearVectorArgumentBuilder
 	return ab
 }
 
+// WithObjectLimit specifies max number of vector search results to return
+func (ab *AggregateBuilder) WithObjectLimit(objectLimit int) *AggregateBuilder {
+	ab.objectLimit = objectLimit
+	ab.includesObjectLimit = true
+	return ab
+}
+
 // Do execute the aggregation query
 func (ab *AggregateBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, ab.connection, ab.build())
@@ -90,6 +99,9 @@ func (ab *AggregateBuilder) createFilterClause() string {
 	}
 	if ab.withNearObjectFilter != nil {
 		filters = append(filters, ab.withNearObjectFilter.build())
+	}
+	if ab.includesObjectLimit {
+		filters = append(filters, fmt.Sprintf("objectLimit: %d", ab.objectLimit))
 	}
 
 	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))

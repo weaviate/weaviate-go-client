@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
@@ -329,6 +330,38 @@ func TestGraphQL_integration(t *testing.T) {
 
 			assert.Nil(t, gqlErr)
 			assert.NotNil(t, resultSet)
+		})
+
+		t.Run("with objectLimit", func(t *testing.T) {
+			pizza := GetOnePizza(t, client)
+
+			nearObject := &graphql.NearObjectArgumentBuilder{}
+			nearObject.WithCertainty(0.5).
+				WithID(pizza.Additional.ID)
+
+			objectLimit := 1
+
+			resultSet, gqlErr := client.GraphQL().
+				Aggregate().
+				WithFields(fields).
+				WithNearObject(nearObject).
+				WithObjectLimit(objectLimit).
+				WithClassName("Pizza").
+				Do(context.Background())
+
+			assert.Nil(t, gqlErr)
+			assert.NotNil(t, resultSet)
+			assert.NotNil(t, resultSet.Data)
+
+			b, err := json.Marshal(resultSet.Data)
+			require.Nil(t, err)
+
+			var resp AggregatePizzaResponse
+			err = json.Unmarshal(b, &resp)
+			require.Nil(t, err)
+
+			assert.NotEmpty(t, resp.Aggregate.Pizza)
+			assert.Equal(t, objectLimit, resp.Aggregate.Pizza[0].Meta.Count)
 		})
 
 		testsuit.CleanUpWeaviate(t, client)
