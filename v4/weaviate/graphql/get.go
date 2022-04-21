@@ -26,6 +26,7 @@ type GetBuilder struct {
 	withGroupFilter      *GroupArgumentBuilder
 	withAskFilter        *AskArgumentBuilder
 	withNearImageFilter  *NearImageArgumentBuilder
+	withSort             *SortBuilder
 }
 
 // WithClassName that should be queried
@@ -105,6 +106,13 @@ func (gb *GetBuilder) WithNearObject(nearObject *NearObjectArgumentBuilder) *Get
 	return gb
 }
 
+// WithSort included in the result set
+func (gb *GetBuilder) WithSort(sort ...Sort) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.withSort = &SortBuilder{sort}
+	return gb
+}
+
 // Do execute the GraphQL query
 func (gb *GetBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, gb.connection, gb.build())
@@ -151,6 +159,9 @@ func (gb *GetBuilder) createFilterClause() string {
 	}
 	if gb.includesOffset {
 		filters = append(filters, fmt.Sprintf("offset: %v", gb.offset))
+	}
+	if gb.withSort != nil {
+		filters = append(filters, gb.withSort.build())
 	}
 	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
 }

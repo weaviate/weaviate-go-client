@@ -35,6 +35,16 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
 		Description: "description",
 		Name:        "description",
 	}
+	priceProperty := &models.Property{
+		DataType:    []string{"number"},
+		Description: "price",
+		Name:        "price",
+		ModuleConfig: map[string]interface{}{
+			"text2vec-contextionary": map[string]interface{}{
+				"skip": true,
+			},
+		},
+	}
 
 	propErrT1 := client.Schema().PropertyCreator().WithClassName("Pizza").WithProperty(nameProperty).Do(context.Background())
 	assert.Nil(t, propErrT1)
@@ -44,6 +54,10 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
 	assert.Nil(t, propErrT2)
 	propErrA2 := client.Schema().PropertyCreator().WithClassName("Soup").WithProperty(descriptionProperty).Do(context.Background())
 	assert.Nil(t, propErrA2)
+	propErrT3 := client.Schema().PropertyCreator().WithClassName("Pizza").WithProperty(priceProperty).Do(context.Background())
+	assert.Nil(t, propErrT3)
+	propErrA3 := client.Schema().PropertyCreator().WithClassName("Soup").WithProperty(priceProperty).Do(context.Background())
+	assert.Nil(t, propErrA3)
 }
 
 func CreateWeaviateTestSchemaWithVectorizorlessClass(t *testing.T, client *weaviate.Client) {
@@ -131,47 +145,53 @@ func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client) {
 	menuPizza := []*models.Object{
 		{
 			Class: "Pizza",
-			Properties: map[string]string{
+			Properties: map[string]interface{}{
 				"name":        "Quattro Formaggi",
 				"description": "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
+				"price":       float32(1.1),
 			},
 		},
 		{
 			Class: "Pizza",
-			Properties: map[string]string{
+			Properties: map[string]interface{}{
 				"name":        "Frutti di Mare",
 				"description": "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
+				"price":       float32(1.2),
 			},
 		},
 		{
 			Class: "Pizza",
-			Properties: map[string]string{
+			Properties: map[string]interface{}{
 				"name":        "Hawaii",
 				"description": "Universally accepted to be the best pizza ever created.",
+				"price":       float32(1.3),
 			},
 		},
 		{
 			ID:    "5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
 			Class: "Pizza",
-			Properties: map[string]string{
+			Properties: map[string]interface{}{
 				"name":        "Doener",
 				"description": "A innovation, some say revolution, in the pizza industry.",
+				"price":       float32(1.4),
 			},
 		},
 	}
 	menuSoup := []*models.Object{
 		{
 			Class: "Soup",
-			Properties: map[string]string{
+			Properties: map[string]interface{}{
 				"name":        "ChickenSoup",
 				"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
+				"price":       float32(2.1),
 			},
 		},
 		{
 			Class: "Soup",
-			Properties: map[string]string{
+			Properties: map[string]interface{}{
 				"name":        "Beautiful",
 				"description": "Putting the game of letter soups to a whole new level.",
+				"price":       float32(2.2),
 			},
 		},
 	}

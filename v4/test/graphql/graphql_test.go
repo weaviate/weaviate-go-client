@@ -8,6 +8,7 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/testenv"
+	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -65,6 +66,37 @@ func TestGraphQL_integration(t *testing.T) {
 		get = resultSet.Data["Get"].(map[string]interface{})
 		pizza = get["Pizza"].([]interface{})
 		assert.Equal(t, 1, len(pizza))
+
+		assertSortResult := func(resultSet *models.GraphQLResponse, className string, expectedPizzas []string) {
+			get = resultSet.Data["Get"].(map[string]interface{})
+			pizza = get[className].([]interface{})
+			require.Equal(t, len(expectedPizzas), len(pizza))
+			result := make([]string, len(pizza))
+			for i := range pizza {
+				p := pizza[i].(map[string]interface{})
+				result[i] = p["name"].(string)
+			}
+			assert.Equal(t, expectedPizzas, result)
+		}
+
+		byNameAsc := graphql.Sort{Path: []string{"name"}, Order: graphql.Asc}
+		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithSort(byNameAsc).WithFields(fields).Do(context.Background())
+		assert.Nil(t, gqlErr)
+		assertSortResult(resultSet, "Pizza", []string{"Doener", "Frutti di Mare", "Hawaii", "Quattro Formaggi"})
+
+		byNameDesc := graphql.Sort{Path: []string{"name"}, Order: graphql.Desc}
+		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithSort(byNameDesc).WithFields(fields).Do(context.Background())
+		assert.Nil(t, gqlErr)
+		assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Hawaii", "Frutti di Mare", "Doener"})
+
+		byPriceAsc := graphql.Sort{Path: []string{"price"}, Order: graphql.Asc}
+		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Soup").WithSort(byPriceAsc).WithFields(fields).Do(context.Background())
+		assert.Nil(t, gqlErr)
+		assertSortResult(resultSet, "Soup", []string{"ChickenSoup", "Beautiful"})
+
+		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithSort(byPriceAsc, byNameDesc).WithFields(fields).Do(context.Background())
+		assert.Nil(t, gqlErr)
+		assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Frutti di Mare", "Hawaii", "Doener"})
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
