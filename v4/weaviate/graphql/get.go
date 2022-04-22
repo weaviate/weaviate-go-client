@@ -21,7 +21,7 @@ type GetBuilder struct {
 	offset               int
 	withWhereFilter      *WhereArgumentBuilder
 	withNearTextFilter   *NearTextArgumentBuilder
-	withNearVectorFilter string
+	withNearVectorFilter *NearVectorArgumentBuilder
 	withNearObjectFilter *NearObjectArgumentBuilder
 	withGroupFilter      *GroupArgumentBuilder
 	withAskFilter        *AskArgumentBuilder
@@ -79,7 +79,7 @@ func (gb *GetBuilder) WithNearImage(nearImage *NearImageArgumentBuilder) *GetBui
 }
 
 // WithNearVector clause to find close objects
-func (gb *GetBuilder) WithNearVector(nearVector string) *GetBuilder {
+func (gb *GetBuilder) WithNearVector(nearVector *NearVectorArgumentBuilder) *GetBuilder {
 	gb.includesFilterClause = true
 	gb.withNearVectorFilter = nearVector
 	return gb
@@ -139,8 +139,8 @@ func (gb *GetBuilder) createFilterClause() string {
 	if gb.withNearTextFilter != nil {
 		filters = append(filters, gb.withNearTextFilter.build())
 	}
-	if len(gb.withNearVectorFilter) > 0 {
-		filters = append(filters, fmt.Sprintf("nearVector: %v", gb.withNearVectorFilter))
+	if gb.withNearVectorFilter != nil {
+		filters = append(filters, gb.withNearVectorFilter.build())
 	}
 	if gb.withNearObjectFilter != nil {
 		filters = append(filters, gb.withNearObjectFilter.build())

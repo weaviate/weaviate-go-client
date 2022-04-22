@@ -268,4 +268,32 @@ func TestExploreBuilder(t *testing.T) {
 		assert.NotEmpty(t, query, "Check that there is no panic if query is not validly build")
 	})
 
+	t.Run("Explore with nearVector", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := Explore{
+			connection: conMock,
+		}
+
+		nearVectorArgumentBuilder := NearVectorArgumentBuilder{}
+		withNearVector := nearVectorArgumentBuilder.WithVector([]float32{1, 2, 3}).
+			WithCertainty(0.8)
+
+		query := builder.WithFields(Beacon).
+			WithNearVector(withNearVector).
+			build()
+
+		expected := `{Explore(nearVector:{certainty: 0.8 vector: [1,2,3]}){beacon }}`
+		assert.Equal(t, expected, query)
+
+		nearVectorArgumentBuilder = NearVectorArgumentBuilder{}
+		withNearVector = nearVectorArgumentBuilder.WithVector([]float32{1.1, -2.1234344, -.012112123})
+
+		query = builder.WithFields(Beacon).
+			WithNearVector(withNearVector).
+			build()
+
+		expected = `{Explore(nearVector:{vector: [1.1,-2.1234343,-0.012112123]}){beacon }}`
+		assert.Equal(t, expected, query)
+	})
 }

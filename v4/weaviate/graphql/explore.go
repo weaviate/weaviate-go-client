@@ -15,6 +15,7 @@ type Explore struct {
 	withNearObject *NearObjectArgumentBuilder
 	withAsk        *AskArgumentBuilder
 	withNearImage  *NearImageArgumentBuilder
+	withNearVector *NearVectorArgumentBuilder
 }
 
 // WithNearText adds nearText to clause
@@ -41,6 +42,12 @@ func (e *Explore) WithNearImage(nearImage *NearImageArgumentBuilder) *Explore {
 	return e
 }
 
+// WithNearVector clause to find close objects
+func (e *Explore) WithNearVector(nearVector *NearVectorArgumentBuilder) *Explore {
+	e.withNearVector = nearVector
+	return e
+}
+
 // WithFields that should be included in the result set
 func (e *Explore) WithFields(fields ...ExploreFields) *Explore {
 	e.fields = fields
@@ -59,6 +66,9 @@ func (e *Explore) createFilterClause() string {
 	}
 	if e.withNearImage != nil {
 		return e.withNearImage.build()
+	}
+	if e.withNearVector != nil {
+		return e.withNearVector.build()
 	}
 	return ""
 }
