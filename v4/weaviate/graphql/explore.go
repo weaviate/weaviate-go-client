@@ -42,7 +42,7 @@ func (e *Explore) WithNearImage(nearImage *NearImageArgumentBuilder) *Explore {
 }
 
 // WithFields that should be included in the result set
-func (e *Explore) WithFields(fields []ExploreFields) *Explore {
+func (e *Explore) WithFields(fields ...ExploreFields) *Explore {
 	e.fields = fields
 	return e
 }

@@ -21,7 +21,7 @@ func TestExploreBuilder(t *testing.T) {
 		nearTextBuilder := NearTextArgumentBuilder{}
 
 		withNearText := nearTextBuilder.WithConcepts([]string{"Cheese", "pineapple"})
-		query := builder.WithFields([]ExploreFields{Certainty, Beacon}).
+		query := builder.WithFields(Certainty, Beacon).
 			WithNearText(withNearText).
 			build()
 
@@ -40,7 +40,7 @@ func TestExploreBuilder(t *testing.T) {
 		withNearText := nearTextBuilder.
 			WithConcepts([]string{"Cheese"}).
 			WithCertainty(0.71)
-		query := builder.WithFields([]ExploreFields{Beacon}).
+		query := builder.WithFields(Beacon).
 			WithNearText(withNearText).
 			build()
 
@@ -56,7 +56,6 @@ func TestExploreBuilder(t *testing.T) {
 		}
 		nearTextBuilder := NearTextArgumentBuilder{}
 
-		fields := []ExploreFields{Beacon}
 		concepts := []string{"Cheese"}
 		moveTo := &MoveParameters{
 			Concepts: []string{"pizza", "pineapple"},
@@ -71,7 +70,7 @@ func TestExploreBuilder(t *testing.T) {
 			WithMoveTo(moveTo).
 			WithMoveAwayFrom(moveAwayFrom)
 
-		query := builder.WithFields(fields).
+		query := builder.WithFields(Beacon).
 			WithNearText(withNearText).
 			build()
 
@@ -105,7 +104,7 @@ func TestExploreBuilder(t *testing.T) {
 			WithMoveAwayFrom(moveAwayFrom).
 			WithMoveTo(moveTo)
 
-		query := builder.WithFields(fields).
+		query := builder.WithFields(fields...).
 			WithNearText(withNearText).
 			build()
 
@@ -120,14 +119,12 @@ func TestExploreBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		fields := []ExploreFields{Beacon}
-
 		nearObjectBuilder := NearObjectArgumentBuilder{}
 		withNearObject := nearObjectBuilder.WithID("some-uuid").
 			WithBeacon("localhost:8080/weaviate/some-uuid").
 			WithCertainty(0.8)
 
-		query := builder.WithFields(fields).
+		query := builder.WithFields(Beacon).
 			WithNearObject(withNearObject).
 			build()
 
@@ -138,7 +135,7 @@ func TestExploreBuilder(t *testing.T) {
 		withNearObject = nearObjectBuilder.WithID("some-uuid").
 			WithBeacon("localhost:8080/weaviate/some-uuid")
 
-		query = builder.WithFields(fields).
+		query = builder.WithFields(Beacon).
 			WithNearObject(withNearObject).
 			build()
 
@@ -148,7 +145,7 @@ func TestExploreBuilder(t *testing.T) {
 		nearObjectBuilder = NearObjectArgumentBuilder{}
 		withNearObject = nearObjectBuilder.WithBeacon("localhost:8080/weaviate/some-uuid")
 
-		query = builder.WithFields(fields).
+		query = builder.WithFields(Beacon).
 			WithNearObject(withNearObject).
 			build()
 
@@ -163,12 +160,10 @@ func TestExploreBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		fields := []ExploreFields{Beacon}
-
 		askBuilder := &AskArgumentBuilder{}
 		withAsk := askBuilder.WithQuestion("What is Weaviate?")
 
-		query := builder.WithFields(fields).
+		query := builder.WithFields(Beacon).
 			WithAsk(withAsk).
 			build()
 
@@ -178,7 +173,7 @@ func TestExploreBuilder(t *testing.T) {
 		askBuilder = &AskArgumentBuilder{}
 		withAsk = askBuilder.WithQuestion("What is Weaviate?").WithProperties([]string{"prop1", "prop2"})
 
-		query = builder.WithFields(fields).
+		query = builder.WithFields(Beacon).
 			WithAsk(withAsk).
 			build()
 
@@ -190,7 +185,7 @@ func TestExploreBuilder(t *testing.T) {
 			WithProperties([]string{"prop1", "prop2"}).
 			WithCertainty(0.2)
 
-		query = builder.WithFields(fields).
+		query = builder.WithFields(Beacon).
 			WithAsk(withAsk).
 			build()
 
@@ -205,12 +200,10 @@ func TestExploreBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		fields := []ExploreFields{Beacon}
-
 		nearImageBuilder := &NearImageArgumentBuilder{}
 		nearImage := nearImageBuilder.WithImage("iVBORw0KGgoAAAANS")
 
-		query := builder.WithFields(fields).
+		query := builder.WithFields(Beacon).
 			WithNearImage(nearImage).
 			build()
 
@@ -220,7 +213,7 @@ func TestExploreBuilder(t *testing.T) {
 		nearImageBuilder = &NearImageArgumentBuilder{}
 		nearImage = nearImageBuilder.WithImage("iVBORw0KGgoAAAANS").WithCertainty(0.8)
 
-		query = builder.WithFields(fields).
+		query = builder.WithFields(Beacon).
 			WithNearImage(nearImage).
 			build()
 
@@ -230,7 +223,7 @@ func TestExploreBuilder(t *testing.T) {
 		nearImageBuilder = &NearImageArgumentBuilder{}
 		nearImage = nearImageBuilder.WithImage("data:image/png;base64,iVBORw0KGgoAAAANS").WithCertainty(0.8)
 
-		query = builder.WithFields(fields).
+		query = builder.WithFields(Beacon).
 			WithNearImage(nearImage).
 			build()
 
@@ -258,7 +251,7 @@ func TestExploreBuilder(t *testing.T) {
 		nearImageBuilder = &NearImageArgumentBuilder{}
 		nearImage = nearImageBuilder.WithReader(file).WithCertainty(0.81)
 
-		query = builder.WithFields(fields).
+		query = builder.WithFields(Beacon).
 			WithNearImage(nearImage).
 			build()
 

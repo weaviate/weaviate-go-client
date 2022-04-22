@@ -100,7 +100,6 @@ func TestGraphQL_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		fields := []graphql.ExploreFields{graphql.Certainty, graphql.Beacon, graphql.ClassName}
 		concepts := []string{"pineapple slices", "ham"}
 		moveTo := &graphql.MoveParameters{
 			Concepts: []string{"Pizza"},
@@ -118,7 +117,7 @@ func TestGraphQL_integration(t *testing.T) {
 			WithMoveAwayFrom(moveAwayFrom)
 
 		resultSet, gqlErr := client.GraphQL().Explore().
-			WithFields(fields).
+			WithFields(graphql.Certainty, graphql.Beacon, graphql.ClassName).
 			WithNearText(withNearText).
 			Do(context.Background())
 
@@ -129,7 +128,7 @@ func TestGraphQL_integration(t *testing.T) {
 			WithID("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
 
 		resultSet, gqlErr = client.GraphQL().Explore().
-			WithFields(fields).
+			WithFields(graphql.Certainty, graphql.Beacon, graphql.ClassName).
 			WithNearObject(withNearObject).
 			Do(context.Background())
 
