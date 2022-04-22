@@ -60,3 +60,12 @@ const WithinGeoRange WhereOperator = "WithinGeoRange"
 type GeoCoordinatesParameter struct {
 	Latitude, Longitude, MaxDistance float32
 }
+
+// SortOrder used in Sort Argument builder
+type SortOrder string
+
+// Asc ascending sort order
+const Asc SortOrder = "asc"
+
+// Desc descending sort order
+const Desc SortOrder = "desc"
