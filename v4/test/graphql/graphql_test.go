@@ -26,13 +26,8 @@ func TestGraphQL_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		fields := []graphql.Field{
-			{
-				Name: "name",
-			},
-		}
-
-		resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithFields(fields).Do(context.Background())
+		name := graphql.Field{Name: "name"}
+		resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithFields(name).Do(context.Background())
 		assert.Nil(t, gqlErr)
 
 		get := resultSet.Data["Get"].(map[string]interface{})
@@ -43,7 +38,7 @@ func TestGraphQL_integration(t *testing.T) {
 			WithID("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
 		resultSet, gqlErr = client.GraphQL().Get().
 			WithClassName("Pizza").
-			WithFields(fields).
+			WithFields(name).
 			WithNearObject(withNearObject).
 			Do(context.Background())
 		assert.Nil(t, gqlErr)
@@ -58,9 +53,9 @@ func TestGraphQL_integration(t *testing.T) {
 			WithOperator(graphql.Equal).
 			WithValueString("Frutti di Mare")
 
-		fields = []graphql.Field{{Name: "name"}}
+		name = graphql.Field{Name: "name"}
 
-		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithWhere(where).WithFields(fields).Do(context.Background())
+		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithWhere(where).WithFields(name).Do(context.Background())
 		assert.Nil(t, gqlErr)
 
 		get = resultSet.Data["Get"].(map[string]interface{})
@@ -80,21 +75,21 @@ func TestGraphQL_integration(t *testing.T) {
 		}
 
 		byNameAsc := graphql.Sort{Path: []string{"name"}, Order: graphql.Asc}
-		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithSort(byNameAsc).WithFields(fields).Do(context.Background())
+		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithSort(byNameAsc).WithFields(name).Do(context.Background())
 		assert.Nil(t, gqlErr)
 		assertSortResult(resultSet, "Pizza", []string{"Doener", "Frutti di Mare", "Hawaii", "Quattro Formaggi"})
 
 		byNameDesc := graphql.Sort{Path: []string{"name"}, Order: graphql.Desc}
-		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithSort(byNameDesc).WithFields(fields).Do(context.Background())
+		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithSort(byNameDesc).WithFields(name).Do(context.Background())
 		assert.Nil(t, gqlErr)
 		assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Hawaii", "Frutti di Mare", "Doener"})
 
 		byPriceAsc := graphql.Sort{Path: []string{"price"}, Order: graphql.Asc}
-		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Soup").WithSort(byPriceAsc).WithFields(fields).Do(context.Background())
+		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Soup").WithSort(byPriceAsc).WithFields(name).Do(context.Background())
 		assert.Nil(t, gqlErr)
 		assertSortResult(resultSet, "Soup", []string{"ChickenSoup", "Beautiful"})
 
-		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithSort(byPriceAsc, byNameDesc).WithFields(fields).Do(context.Background())
+		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithSort(byPriceAsc, byNameDesc).WithFields(name).Do(context.Background())
 		assert.Nil(t, gqlErr)
 		assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Frutti di Mare", "Hawaii", "Doener"})
 
@@ -403,13 +398,13 @@ func TestGraphQL_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		fields := []graphql.Field{{Name: "name"}}
+		name := graphql.Field{Name: "name"}
 		group := client.GraphQL().GroupArgBuilder().WithType(graphql.Merge).WithForce(1.0)
 
 		resultSet, gqlErr := client.GraphQL().
 			Get().
 			WithClassName("Pizza").
-			WithFields(fields).
+			WithFields(name).
 			WithGroup(group).
 			WithLimit(7).
 			Do(context.Background())

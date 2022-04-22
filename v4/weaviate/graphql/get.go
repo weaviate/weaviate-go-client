@@ -36,7 +36,7 @@ func (gb *GetBuilder) WithClassName(name string) *GetBuilder {
 }
 
 // WithFields included in the result set
-func (gb *GetBuilder) WithFields(fields []Field) *GetBuilder {
+func (gb *GetBuilder) WithFields(fields ...Field) *GetBuilder {
 	gb.withFields = fields
 	return gb
 }

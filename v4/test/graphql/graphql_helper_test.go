@@ -34,16 +34,15 @@ type Pizza struct {
 }
 
 func GetOnePizza(t *testing.T, c *weaviate.Client) *Pizza {
-	fields := []graphql.Field{
-		{
-			Name: "_additional { id vector }",
-		},
+	_additional := graphql.Field{
+		Name:   "_additional",
+		Fields: []graphql.Field{{Name: "id"}, {Name: "vector"}},
 	}
 
 	resp, err := c.GraphQL().
 		Get().
 		WithClassName("Pizza").
-		WithFields(fields).
+		WithFields(_additional).
 		Do(context.Background())
 	if err != nil {
 		t.Fatalf("failed to get an object: %s", err)
