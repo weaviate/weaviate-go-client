@@ -181,7 +181,7 @@ func TestQueryBuilder(t *testing.T) {
 
 		query := builder.WithClassName("Pizza").WithFields(name).WithNearVector(nearVector).build()
 
-		expected := `{Get {Pizza (nearVector: {vector: [0,1,0.8]}) {name}}}`
+		expected := `{Get {Pizza (nearVector:{vector: [0,1,0.8]}) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -258,7 +258,7 @@ func TestQueryBuilder(t *testing.T) {
 			WithWhere(where).
 			build()
 
-		expected := `{Get {Pizza (where:{operator: Equal path: ["name"] valueString: "Hawaii"}, nearText:{concepts: ["good"]}, nearVector: {vector: [0, 1, 0.8]}, limit: 2) {name}}}`
+		expected := `{Get {Pizza (where:{operator: Equal path: ["name"] valueString: "Hawaii"}, nearText:{concepts: ["good"]}, nearVector:{vector: [0,1,0.8]}, limit: 2) {name}}}`
 		assert.Equal(t, expected, query)
 	})
 
