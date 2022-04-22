@@ -24,7 +24,7 @@ type AggregateBuilder struct {
 }
 
 // WithFields that should be included in the aggregation query e.g. `meta{count}`
-func (ab *AggregateBuilder) WithFields(fields []Field) *AggregateBuilder {
+func (ab *AggregateBuilder) WithFields(fields ...Field) *AggregateBuilder {
 	ab.fields = fields
 	return ab
 }

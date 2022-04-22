@@ -14,17 +14,12 @@ func TestAggregateBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		fields := []Field{
-			{
-				Name: "meta",
-				Fields: []Field{
-					{
-						Name: "count",
-					},
-				},
-			},
+		meta := Field{
+			Name:   "meta",
+			Fields: []Field{{Name: "count"}},
 		}
-		query := builder.WithClassName("Pizza").WithFields(fields).build()
+
+		query := builder.WithClassName("Pizza").WithFields(meta).build()
 
 		expected := `{Aggregate{Pizza{meta{count}}}}`
 		assert.Equal(t, expected, query)
@@ -36,26 +31,16 @@ func TestAggregateBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		fields := []Field{
-			{
-				Name: "groupedBy",
-				Fields: []Field{
-					{
-						Name: "value",
-					},
-				},
-			},
-			{
-				Name: "name",
-				Fields: []Field{
-					{
-						Name: "count",
-					},
-				},
-			},
+		groupedBy := Field{
+			Name:   "groupedBy",
+			Fields: []Field{{Name: "value"}},
+		}
+		name := Field{
+			Name:   "name",
+			Fields: []Field{{Name: "count"}},
 		}
 
-		query := builder.WithClassName("Pizza").WithFields(fields).WithGroupBy("name").build()
+		query := builder.WithClassName("Pizza").WithFields(groupedBy, name).WithGroupBy("name").build()
 
 		expected := `{Aggregate{Pizza(groupBy: "name"){groupedBy{value} name{count}}}}`
 		assert.Equal(t, expected, query)
@@ -67,17 +52,15 @@ func TestAggregateBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		fields := []Field{
-			{
-				Name:   "meta",
-				Fields: []Field{{Name: "count"}},
-			},
+		meta := Field{
+			Name:   "meta",
+			Fields: []Field{{Name: "count"}},
 		}
 
 		where := newWhereArgBuilder().
 			WithPath([]string{"id"}).WithOperator(Equal).WithValueString("uuid")
 
-		query := builder.WithClassName("Pizza").WithWhere(where).WithFields(fields).build()
+		query := builder.WithClassName("Pizza").WithWhere(where).WithFields(meta).build()
 
 		expected := `{Aggregate{Pizza(where:{operator: Equal path: ["id"] valueString: "uuid"}){meta{count}}}}`
 		assert.Equal(t, expected, query)
@@ -106,7 +89,7 @@ func TestAggregateBuilder(t *testing.T) {
 		query := builder.WithClassName("Pizza").
 			WithGroupBy("name").
 			WithWhere(where).
-			WithFields(fields).
+			WithFields(fields...).
 			build()
 
 		expected := `{Aggregate{Pizza(groupBy: "name", where:{operator: Equal path: ["id"] valueString: "uuid"}){meta{count}}}}`
@@ -119,15 +102,9 @@ func TestAggregateBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		fields := []Field{
-			{
-				Name: "meta",
-				Fields: []Field{
-					{
-						Name: "count",
-					},
-				},
-			},
+		meta := Field{
+			Name:   "meta",
+			Fields: []Field{{Name: "count"}},
 		}
 
 		withNearVector := &NearVectorArgumentBuilder{}
@@ -135,7 +112,7 @@ func TestAggregateBuilder(t *testing.T) {
 
 		query := builder.WithClassName("Pizza").
 			WithNearVector(withNearVector).
-			WithFields(fields).
+			WithFields(meta).
 			build()
 
 		expected := `{Aggregate{Pizza(nearVector:{certainty: 0.9 vector: [1,2,3]}){meta{count}}}}`
@@ -148,15 +125,9 @@ func TestAggregateBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		fields := []Field{
-			{
-				Name: "meta",
-				Fields: []Field{
-					{
-						Name: "count",
-					},
-				},
-			},
+		meta := Field{
+			Name:   "meta",
+			Fields: []Field{{Name: "count"}},
 		}
 
 		withNearObject := &NearObjectArgumentBuilder{}
@@ -164,7 +135,7 @@ func TestAggregateBuilder(t *testing.T) {
 
 		query := builder.WithClassName("Pizza").
 			WithNearObject(withNearObject).
-			WithFields(fields).
+			WithFields(meta).
 			build()
 
 		expected := `{Aggregate{Pizza(nearObject:{id: "123" beacon: "weaviate://test" certainty: 0.7878}){meta{count}}}}`
@@ -177,15 +148,9 @@ func TestAggregateBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		fields := []Field{
-			{
-				Name: "meta",
-				Fields: []Field{
-					{
-						Name: "count",
-					},
-				},
-			},
+		meta := Field{
+			Name:   "meta",
+			Fields: []Field{{Name: "count"}},
 		}
 
 		withNearText := &NearTextArgumentBuilder{}
@@ -193,7 +158,7 @@ func TestAggregateBuilder(t *testing.T) {
 
 		query := builder.WithClassName("Pizza").
 			WithNearText(withNearText).
-			WithFields(fields).
+			WithFields(meta).
 			build()
 
 		expected := `{Aggregate{Pizza(nearText:{concepts: ["pepperoni"] certainty: 0.987}){meta{count}}}}`
@@ -206,22 +171,16 @@ func TestAggregateBuilder(t *testing.T) {
 			connection: conMock,
 		}
 
-		fields := []Field{
-			{
-				Name: "meta",
-				Fields: []Field{
-					{
-						Name: "count",
-					},
-				},
-			},
+		meta := Field{
+			Name:   "meta",
+			Fields: []Field{{Name: "count"}},
 		}
 
 		withNearText := &NearTextArgumentBuilder{}
 		withNearText.WithConcepts([]string{"pepperoni"}).WithCertainty(0.987)
 
 		query := builder.WithClassName("Pizza").
-			WithFields(fields).
+			WithFields(meta).
 			WithNearText(withNearText).
 			WithObjectLimit(3).
 			build()

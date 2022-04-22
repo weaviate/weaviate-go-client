@@ -143,21 +143,15 @@ func TestGraphQL_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		fields := []graphql.Field{
-			{
-				Name: "meta",
-				Fields: []graphql.Field{
-					{
-						Name: "count",
-					},
-				},
-			},
+		meta := graphql.Field{
+			Name:   "meta",
+			Fields: []graphql.Field{{Name: "count"}},
 		}
 
 		t.Run("no filters", func(t *testing.T) {
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				WithFields(fields).
+				WithFields(meta).
 				WithClassName("Pizza").
 				Do(context.Background())
 
@@ -173,7 +167,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				WithFields(fields).
+				WithFields(meta).
 				WithWhere(where).
 				WithClassName("Pizza").
 				Do(context.Background())
@@ -185,7 +179,7 @@ func TestGraphQL_integration(t *testing.T) {
 		t.Run("with groupby", func(t *testing.T) {
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				WithFields(fields).
+				WithFields(meta).
 				WithGroupBy("name").
 				WithClassName("Pizza").
 				Do(context.Background())
@@ -202,7 +196,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				WithFields(fields).
+				WithFields(meta).
 				WithWhere(where).
 				WithGroupBy("name").
 				WithClassName("Pizza").
@@ -221,7 +215,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				WithFields(fields).
+				WithFields(meta).
 				WithNearVector(nearVector).
 				WithClassName("Pizza").
 				Do(context.Background())
@@ -239,7 +233,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				WithFields(fields).
+				WithFields(meta).
 				WithNearObject(nearObject).
 				WithClassName("Pizza").
 				Do(context.Background())
@@ -267,7 +261,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				WithFields(fields).
+				WithFields(meta).
 				WithNearText(nearText).
 				WithClassName("Pizza").
 				Do(context.Background())
@@ -289,7 +283,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				WithFields(fields).
+				WithFields(meta).
 				WithWhere(where).
 				WithGroupBy("name").
 				WithNearVector(nearVector).
@@ -313,7 +307,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				WithFields(fields).
+				WithFields(meta).
 				WithWhere(where).
 				WithGroupBy("name").
 				WithNearObject(nearObject).
@@ -348,7 +342,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				WithFields(fields).
+				WithFields(meta).
 				WithWhere(where).
 				WithGroupBy("name").
 				WithNearText(nearText).
@@ -370,7 +364,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 			resultSet, gqlErr := client.GraphQL().
 				Aggregate().
-				WithFields(fields).
+				WithFields(meta).
 				WithNearObject(nearObject).
 				WithObjectLimit(objectLimit).
 				WithClassName("Pizza").
