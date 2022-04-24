@@ -30,13 +30,13 @@ func (e *Explore) WithNearObject(nearObject *NearObjectArgumentBuilder) *Explore
 	return e
 }
 
-// WithNearObject adds nearObject to clause
+// WithAsk adds ask to clause
 func (e *Explore) WithAsk(ask *AskArgumentBuilder) *Explore {
 	e.withAsk = ask
 	return e
 }
 
-// WithNearObject adds nearObject to clause
+// WithNearImage adds nearImage to clause
 func (e *Explore) WithNearImage(nearImage *NearImageArgumentBuilder) *Explore {
 	e.withNearImage = nearImage
 	return e

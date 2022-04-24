@@ -189,6 +189,101 @@ func TestAggregateBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
+	t.Run("objectLimit and limit", func(t *testing.T) {
+		conMock := &MockRunREST{}
+		builder := AggregateBuilder{
+			connection: conMock,
+		}
+
+		meta := Field{
+			Name:   "meta",
+			Fields: []Field{{Name: "count"}},
+		}
+
+		withNearText := &NearTextArgumentBuilder{}
+		withNearText.WithConcepts([]string{"pepperoni"}).WithCertainty(0.987)
+
+		query := builder.WithClassName("Pizza").
+			WithFields(meta).
+			WithNearText(withNearText).
+			WithObjectLimit(3).
+			WithLimit(10).
+			build()
+
+		expected := `{Aggregate{Pizza(nearText:{concepts: ["pepperoni"] certainty: 0.987}, objectLimit: 3, limit: 10){meta{count}}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("limit", func(t *testing.T) {
+		conMock := &MockRunREST{}
+		builder := AggregateBuilder{
+			connection: conMock,
+		}
+
+		meta := Field{
+			Name:   "meta",
+			Fields: []Field{{Name: "count"}},
+		}
+
+		withNearText := &NearTextArgumentBuilder{}
+		withNearText.WithConcepts([]string{"pepperoni"}).WithCertainty(0.987)
+
+		query := builder.WithClassName("Pizza").
+			WithFields(meta).
+			WithNearText(withNearText).
+			WithLimit(10).
+			build()
+
+		expected := `{Aggregate{Pizza(nearText:{concepts: ["pepperoni"] certainty: 0.987}, limit: 10){meta{count}}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("nearImage", func(t *testing.T) {
+		conMock := &MockRunREST{}
+		builder := AggregateBuilder{
+			connection: conMock,
+		}
+
+		meta := Field{
+			Name:   "meta",
+			Fields: []Field{{Name: "count"}},
+		}
+
+		withNearImage := &NearImageArgumentBuilder{}
+		withNearImage.WithImage("iVBORw0KGgoAAAANS").WithCertainty(0.9)
+
+		query := builder.WithClassName("Pizza").
+			WithNearImage(withNearImage).
+			WithFields(meta).
+			build()
+
+		expected := `{Aggregate{Pizza(nearImage:{image: "iVBORw0KGgoAAAANS" certainty: 0.9}){meta{count}}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("ask", func(t *testing.T) {
+		conMock := &MockRunREST{}
+		builder := AggregateBuilder{
+			connection: conMock,
+		}
+
+		meta := Field{
+			Name:   "meta",
+			Fields: []Field{{Name: "count"}},
+		}
+
+		withAsk := &AskArgumentBuilder{}
+		withAsk.WithQuestion("question?").WithAutocorrect(true).WithCertainty(0.5).WithProperties([]string{"property"})
+
+		query := builder.WithClassName("Pizza").
+			WithAsk(withAsk).
+			WithFields(meta).
+			build()
+
+		expected := `{Aggregate{Pizza(ask:{question: "question?" properties: ["property"] certainty: 0.5 autocorrect: true}){meta{count}}}}`
+		assert.Equal(t, expected, query)
+	})
+
 	t.Run("Missuse", func(t *testing.T) {
 		conMock := &MockRunREST{}
 

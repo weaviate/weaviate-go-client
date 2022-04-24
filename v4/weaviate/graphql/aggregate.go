@@ -19,8 +19,12 @@ type AggregateBuilder struct {
 	withNearTextFilter        *NearTextArgumentBuilder
 	withNearVectorFilter      *NearVectorArgumentBuilder
 	withNearObjectFilter      *NearObjectArgumentBuilder
+	withAsk                   *AskArgumentBuilder
+	withNearImage             *NearImageArgumentBuilder
 	includesObjectLimit       bool
 	objectLimit               int
+	includesLimit             bool
+	limit                     int
 }
 
 // WithFields that should be included in the aggregation query e.g. `meta{count}`
@@ -78,6 +82,27 @@ func (ab *AggregateBuilder) WithObjectLimit(objectLimit int) *AggregateBuilder {
 	return ab
 }
 
+// WithLimit specifies limit to group by argument
+func (ab *AggregateBuilder) WithLimit(limit int) *AggregateBuilder {
+	ab.limit = limit
+	ab.includesLimit = true
+	return ab
+}
+
+// WithAsk adds ask to clause
+func (ab *AggregateBuilder) WithAsk(ask *AskArgumentBuilder) *AggregateBuilder {
+	ab.includesFilterClause = true
+	ab.withAsk = ask
+	return ab
+}
+
+// WithNearImage adds nearImage to clause
+func (ab *AggregateBuilder) WithNearImage(nearImage *NearImageArgumentBuilder) *AggregateBuilder {
+	ab.includesFilterClause = true
+	ab.withNearImage = nearImage
+	return ab
+}
+
 // Do execute the aggregation query
 func (ab *AggregateBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, ab.connection, ab.build())
@@ -100,8 +125,17 @@ func (ab *AggregateBuilder) createFilterClause() string {
 	if ab.withNearObjectFilter != nil {
 		filters = append(filters, ab.withNearObjectFilter.build())
 	}
+	if ab.withAsk != nil {
+		filters = append(filters, ab.withAsk.build())
+	}
+	if ab.withNearImage != nil {
+		filters = append(filters, ab.withNearImage.build())
+	}
 	if ab.includesObjectLimit {
 		filters = append(filters, fmt.Sprintf("objectLimit: %d", ab.objectLimit))
+	}
+	if ab.includesLimit {
+		filters = append(filters, fmt.Sprintf("limit: %d", ab.limit))
 	}
 
 	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
