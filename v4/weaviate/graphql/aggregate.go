@@ -16,9 +16,9 @@ type AggregateBuilder struct {
 	includesFilterClause      bool // true if brackets behind class is needed
 	groupByClausePropertyName string
 	withWhereFilter           *WhereArgumentBuilder
-	withNearTextFilter        *NearTextArgumentBuilder
 	withNearVectorFilter      *NearVectorArgumentBuilder
 	withNearObjectFilter      *NearObjectArgumentBuilder
+	withNearTextFilter        *NearTextArgumentBuilder
 	withAsk                   *AskArgumentBuilder
 	withNearImage             *NearImageArgumentBuilder
 	includesObjectLimit       bool
@@ -109,36 +109,38 @@ func (ab *AggregateBuilder) Do(ctx context.Context) (*models.GraphQLResponse, er
 }
 
 func (ab *AggregateBuilder) createFilterClause() string {
-	filters := []string{}
-	if len(ab.groupByClausePropertyName) > 0 {
-		filters = append(filters, fmt.Sprintf(`groupBy: "%v"`, ab.groupByClausePropertyName))
+	if ab.includesFilterClause {
+		filters := []string{}
+		if len(ab.groupByClausePropertyName) > 0 {
+			filters = append(filters, fmt.Sprintf(`groupBy: "%v"`, ab.groupByClausePropertyName))
+		}
+		if ab.withWhereFilter != nil {
+			filters = append(filters, ab.withWhereFilter.build())
+		}
+		if ab.withNearTextFilter != nil {
+			filters = append(filters, ab.withNearTextFilter.build())
+		}
+		if ab.withNearVectorFilter != nil {
+			filters = append(filters, ab.withNearVectorFilter.build())
+		}
+		if ab.withNearObjectFilter != nil {
+			filters = append(filters, ab.withNearObjectFilter.build())
+		}
+		if ab.withAsk != nil {
+			filters = append(filters, ab.withAsk.build())
+		}
+		if ab.withNearImage != nil {
+			filters = append(filters, ab.withNearImage.build())
+		}
+		if ab.includesObjectLimit {
+			filters = append(filters, fmt.Sprintf("objectLimit: %d", ab.objectLimit))
+		}
+		if ab.includesLimit {
+			filters = append(filters, fmt.Sprintf("limit: %d", ab.limit))
+		}
+		return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
 	}
-	if ab.withWhereFilter != nil {
-		filters = append(filters, ab.withWhereFilter.build())
-	}
-	if ab.withNearTextFilter != nil {
-		filters = append(filters, ab.withNearTextFilter.build())
-	}
-	if ab.withNearVectorFilter != nil {
-		filters = append(filters, ab.withNearVectorFilter.build())
-	}
-	if ab.withNearObjectFilter != nil {
-		filters = append(filters, ab.withNearObjectFilter.build())
-	}
-	if ab.withAsk != nil {
-		filters = append(filters, ab.withAsk.build())
-	}
-	if ab.withNearImage != nil {
-		filters = append(filters, ab.withNearImage.build())
-	}
-	if ab.includesObjectLimit {
-		filters = append(filters, fmt.Sprintf("objectLimit: %d", ab.objectLimit))
-	}
-	if ab.includesLimit {
-		filters = append(filters, fmt.Sprintf("limit: %d", ab.limit))
-	}
-
-	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
+	return ""
 }
 
 func (ab *AggregateBuilder) createFieldsClause() string {
@@ -154,10 +156,7 @@ func (ab *AggregateBuilder) createFieldsClause() string {
 
 // build the query string
 func (ab *AggregateBuilder) build() string {
-	filterClause := ""
-	if ab.includesFilterClause {
-		filterClause = ab.createFilterClause()
-	}
+	filterClause := ab.createFilterClause()
 	fields := ab.createFieldsClause()
 	return fmt.Sprintf(`{Aggregate{%v%v{%v}}}`, ab.className, filterClause, fields)
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func TestAggregateBuilder(t *testing.T) {
-	t.Run("Simple Explore", func(t *testing.T) {
+	t.Run("Simple Aggregate", func(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := AggregateBuilder{
