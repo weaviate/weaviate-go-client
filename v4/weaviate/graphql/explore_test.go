@@ -259,6 +259,60 @@ func TestExploreBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
+	t.Run("Explore with limit and offset", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := Explore{
+			connection: conMock,
+		}
+
+		nearImageBuilder := &NearImageArgumentBuilder{}
+		nearImage := nearImageBuilder.WithImage("iVBORw0KGgoAAAANS")
+
+		query := builder.WithFields(Beacon).
+			WithNearImage(nearImage).
+			WithLimit(100).
+			WithOffset(20).
+			build()
+
+		expected := `{Explore(nearImage:{image: "iVBORw0KGgoAAAANS"}, limit: 100, offset: 20){beacon }}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("Explore with nearVector", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := Explore{
+			connection: conMock,
+		}
+
+		nearVectorBuilder := &NearVectorArgumentBuilder{}
+		nearVector := nearVectorBuilder.WithVector([]float32{0.1, 0.2}).WithCertainty(0.8)
+
+		query := builder.WithFields(Beacon).
+			WithNearVector(nearVector).
+			WithLimit(100).
+			WithOffset(20).
+			build()
+
+		expected := `{Explore(nearVector:{certainty: 0.8 vector: [0.1,0.2]}, limit: 100, offset: 20){beacon }}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("Only Explore", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := Explore{
+			connection: conMock,
+		}
+
+		query := builder.WithFields(Beacon).
+			build()
+
+		expected := `{Explore{beacon }}`
+		assert.Equal(t, expected, query)
+	})
+
 	t.Run("Missuse", func(t *testing.T) {
 		conMock := &MockRunREST{}
 		builder := Explore{
