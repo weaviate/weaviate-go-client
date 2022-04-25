@@ -31,8 +31,8 @@ func (validator *Validator) WithClassName(className string) *Validator {
 	return validator
 }
 
-// WithSchema specifies the property schema of the class about to be validated
-func (validator *Validator) WithSchema(propertySchema models.PropertySchema) *Validator {
+// WithProperties specifies the property schema of the class about to be validated
+func (validator *Validator) WithProperties(propertySchema models.PropertySchema) *Validator {
 	validator.propertySchema = propertySchema
 	return validator
 }

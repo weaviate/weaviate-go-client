@@ -508,14 +508,14 @@ func TestData_integration(t *testing.T) {
 		errValidateT := client.Data().Validator().
 			WithClassName("Pizza").
 			WithID("abefd256-8574-442b-9293-9205193737ee").
-			WithSchema(propertySchemaT).
+			WithProperties(propertySchemaT).
 			Do(context.Background())
 		assert.Nil(t, errValidateT)
 
 		errValidateA := client.Data().Validator().
 			WithClassName("Soup").
 			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
-			WithSchema(propertySchemaA).
+			WithProperties(propertySchemaA).
 			Do(context.Background())
 		assert.Nil(t, errValidateA)
 
@@ -523,7 +523,7 @@ func TestData_integration(t *testing.T) {
 		errValidateT = client.Data().Validator().
 			WithClassName("Pizza").
 			WithID("abefd256-8574-442b-9293-9205193737ee").
-			WithSchema(propertySchemaT).
+			WithProperties(propertySchemaT).
 			Do(context.Background())
 		assert.NotNil(t, errValidateT)
 
@@ -531,7 +531,7 @@ func TestData_integration(t *testing.T) {
 		errValidateA = client.Data().Validator().
 			WithClassName("Soup").
 			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
-			WithSchema(propertySchemaA).
+			WithProperties(propertySchemaA).
 			Do(context.Background())
 		assert.NotNil(t, errValidateA)
 
