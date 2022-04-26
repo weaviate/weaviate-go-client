@@ -14,8 +14,9 @@ import (
 // and adds some primitive properties (name and description)
 func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
 	schemaClassThing := &models.Class{
-		Class:       "Pizza",
-		Description: "A delicious religion like food and arguably the best export of Italy.",
+		Class:               "Pizza",
+		Description:         "A delicious religion like food and arguably the best export of Italy.",
+		InvertedIndexConfig: &models.InvertedIndexConfig{IndexTimestamps: true},
 	}
 	schemaClassAction := &models.Class{
 		Class:       "Soup",

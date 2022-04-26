@@ -412,6 +412,88 @@ func TestGraphQL_integration(t *testing.T) {
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
+	t.Run("Get with creationTimeUnix filters", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		testsuit.CreateTestSchemaAndData(t, client)
+
+		pizza := GetOnePizza(t, client)
+		expectedCreateTime := pizza.Additional.CreationTimeUnix
+
+		additional := graphql.Field{
+			Name: "_additional", Fields: []graphql.Field{
+				{Name: "creationTimeUnix"},
+			}}
+
+		whereCreateTime := client.GraphQL().WhereArgBuilder().
+			WithPath([]string{"_creationTimeUnix"}).
+			WithOperator(graphql.Equal).
+			WithValueString(expectedCreateTime)
+
+		result, err := client.GraphQL().Get().
+			WithClassName("Pizza").
+			WithFields(additional).
+			WithWhere(whereCreateTime).
+			Do(context.Background())
+
+		require.Nil(t, err)
+		require.Nil(t, result.Errors)
+		require.NotNil(t, result)
+		require.NotNil(t, result.Data)
+
+		b, err := json.Marshal(result.Data)
+		require.Nil(t, err)
+
+		var resp GetPizzaResponse
+		err = json.Unmarshal(b, &resp)
+		require.Nil(t, err)
+		require.NotEmpty(t, resp.Get.Pizzas)
+
+		assert.Equal(t, expectedCreateTime, resp.Get.Pizzas[0].Additional.CreationTimeUnix)
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
+	t.Run("Get with lastUpdateTimeUnix filters", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		testsuit.CreateTestSchemaAndData(t, client)
+
+		pizza := GetOnePizza(t, client)
+		expectedUpdateTime := pizza.Additional.LastUpdateTimeUnix
+
+		additional := graphql.Field{
+			Name: "_additional", Fields: []graphql.Field{
+				{Name: "lastUpdateTimeUnix"},
+			}}
+
+		whereCreateTime := client.GraphQL().WhereArgBuilder().
+			WithPath([]string{"_lastUpdateTimeUnix"}).
+			WithOperator(graphql.Equal).
+			WithValueString(expectedUpdateTime)
+
+		result, err := client.GraphQL().Get().
+			WithClassName("Pizza").
+			WithFields(additional).
+			WithWhere(whereCreateTime).
+			Do(context.Background())
+
+		require.Nil(t, err)
+		require.Nil(t, result.Errors)
+		require.NotNil(t, result)
+		require.NotNil(t, result.Data)
+
+		b, err := json.Marshal(result.Data)
+		require.Nil(t, err)
+
+		var resp GetPizzaResponse
+		err = json.Unmarshal(b, &resp)
+		require.Nil(t, err)
+		require.NotEmpty(t, resp.Get.Pizzas)
+
+		assert.Equal(t, expectedUpdateTime, resp.Get.Pizzas[0].Additional.LastUpdateTimeUnix)
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
