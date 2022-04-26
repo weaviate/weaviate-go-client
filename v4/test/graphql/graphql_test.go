@@ -465,7 +465,7 @@ func TestGraphQL_integration(t *testing.T) {
 				{Name: "lastUpdateTimeUnix"},
 			}}
 
-		whereCreateTime := client.GraphQL().WhereArgBuilder().
+		whereUpdateTime := client.GraphQL().WhereArgBuilder().
 			WithPath([]string{"_lastUpdateTimeUnix"}).
 			WithOperator(graphql.Equal).
 			WithValueString(expectedUpdateTime)
@@ -473,7 +473,7 @@ func TestGraphQL_integration(t *testing.T) {
 		result, err := client.GraphQL().Get().
 			WithClassName("Pizza").
 			WithFields(additional).
-			WithWhere(whereCreateTime).
+			WithWhere(whereUpdateTime).
 			Do(context.Background())
 
 		require.Nil(t, err)
