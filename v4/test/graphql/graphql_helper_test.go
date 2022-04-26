@@ -28,15 +28,22 @@ type AggregatePizzaResponse struct {
 
 type Pizza struct {
 	Additional struct {
-		ID     string    `json:"id"`
-		Vector []float32 `json:"vector"`
+		ID                 string    `json:"id"`
+		Vector             []float32 `json:"vector"`
+		CreationTimeUnix   string    `json:"creationTimeUnix"`
+		LastUpdateTimeUnix string    `json:"lastUpdateTimeUnix"`
 	} `json:"_additional"`
 }
 
 func GetOnePizza(t *testing.T, c *weaviate.Client) *Pizza {
 	_additional := graphql.Field{
-		Name:   "_additional",
-		Fields: []graphql.Field{{Name: "id"}, {Name: "vector"}},
+		Name: "_additional",
+		Fields: []graphql.Field{
+			{Name: "id"},
+			{Name: "vector"},
+			{Name: "creationTimeUnix"},
+			{Name: "lastUpdateTimeUnix"},
+		},
 	}
 
 	resp, err := c.GraphQL().
