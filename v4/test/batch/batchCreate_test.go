@@ -2,7 +2,6 @@ package batch
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
@@ -11,13 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBatch_integration(t *testing.T) {
-
+func TestBatchCreate_integration(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
-			t.Fail()
+			t.Fatal(err.Error())
 		}
 	})
 
@@ -151,8 +148,7 @@ func TestBatch_integration(t *testing.T) {
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
-			t.Fail()
+			t.Fatal(err.Error())
 		}
 	})
 }

@@ -9,8 +9,8 @@ services:
     - '8080'
     - --scheme
     - http
-    # TODO: temporarily use this image until next release
-    image: semitechnologies/weaviate:1.12.2-779bfd9
+    # TODO: temporarily use this image until batch delete merged into master
+    image: semitechnologies/weaviate:latest@sha256:48fb22222f30d900ab469dae4d4e5918bf15264a6dec921cf8ffc1710c869238
     ports:
     - 8080:8080
     restart: on-failure:0

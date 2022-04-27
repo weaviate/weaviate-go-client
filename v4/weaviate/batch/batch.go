@@ -22,6 +22,13 @@ func (batch *API) ObjectsBatcher() *ObjectsBatcher {
 	}
 }
 
+// ObjectsBatchDeleter returns a builder which deletes objects in bulk
+func (batch *API) ObjectsBatchDeleter() *ObjectsBatchDeleter {
+	return &ObjectsBatchDeleter{
+		connection: batch.connection,
+	}
+}
+
 // ReferencePayloadBuilder get a builder to create a reference payload for a reference batch
 func (batch *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 	return &ReferencePayloadBuilder{
