@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/batch"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
@@ -30,10 +29,10 @@ func TestBatchDelete_integration(t *testing.T) {
 		output := "verbose"
 		id := "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"
 
-		filter := batch.BatchDeleteFilter{
+		filter := &models.BatchDelete{
 			DryRun: &dryRun,
 			Output: &output,
-			Match: &batch.BatchDeleteMatch{
+			Match: &models.BatchDeleteMatch{
 				Class: "Pizza",
 				Where: &models.WhereFilter{
 					Operator:    "Equal",
@@ -43,21 +42,21 @@ func TestBatchDelete_integration(t *testing.T) {
 			},
 		}
 
-		expectedResults := batch.BatchDeleteResults{
+		expectedResults := &models.BatchDeleteResponseResults{
 			Matches:    1,
 			Failed:     0,
 			Successful: 0,
 			Limit:      10000,
-			Objects: []batch.BatchDeleteResultObject{
+			Objects: []*models.BatchDeleteResponseResultsObjectsItems0{
 				{
 					ID:     "5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
-					Status: "DRYRUN",
+					Status: stringPtr("DRYRUN"),
 				},
 			},
 		}
 
 		resp, err := client.Batch().ObjectsBatchDeleter().
-			WithFilter(&filter).
+			WithFilter(filter).
 			Do(context.Background())
 		require.Nil(t, err)
 		require.NotNil(t, resp.Match)
@@ -76,10 +75,10 @@ func TestBatchDelete_integration(t *testing.T) {
 		output := "verbose"
 		nowString := fmt.Sprint(time.Now().UnixNano() / int64(time.Millisecond))
 
-		filter := batch.BatchDeleteFilter{
+		filter := &models.BatchDelete{
 			DryRun: &dryRun,
 			Output: &output,
-			Match: &batch.BatchDeleteMatch{
+			Match: &models.BatchDeleteMatch{
 				Class: "Pizza",
 				Where: &models.WhereFilter{
 					Operator:    "LessThan",
@@ -89,7 +88,7 @@ func TestBatchDelete_integration(t *testing.T) {
 			},
 		}
 
-		expectedResults := batch.BatchDeleteResults{
+		expectedResults := &models.BatchDeleteResponseResults{
 			Matches:    4,
 			Failed:     0,
 			Successful: 4,
@@ -97,7 +96,7 @@ func TestBatchDelete_integration(t *testing.T) {
 		}
 
 		resp, err := client.Batch().ObjectsBatchDeleter().
-			WithFilter(&filter).
+			WithFilter(filter).
 			Do(context.Background())
 		require.Nil(t, err)
 		require.NotNil(t, resp.Match)
@@ -109,7 +108,9 @@ func TestBatchDelete_integration(t *testing.T) {
 		assert.Len(t, resp.Results.Objects, 4)
 
 		for _, obj := range resp.Results.Objects {
-			assert.Equal(t, "SUCCESS", obj.Status)
+			require.NotNil(t, obj.Status)
+			require.NotNil(t, obj.Status)
+			assert.Equal(t, stringPtr("SUCCESS"), obj.Status)
 			assert.Nil(t, obj.Errors)
 		}
 
@@ -124,10 +125,10 @@ func TestBatchDelete_integration(t *testing.T) {
 		output := "verbose"
 		id := "267f5125-c9fd-4ca6-9134-f383ff5f0cb6"
 
-		filter := batch.BatchDeleteFilter{
+		filter := &models.BatchDelete{
 			DryRun: &dryRun,
 			Output: &output,
-			Match: &batch.BatchDeleteMatch{
+			Match: &models.BatchDeleteMatch{
 				Class: "Pizza",
 				Where: &models.WhereFilter{
 					Operator:    "Equal",
@@ -137,7 +138,7 @@ func TestBatchDelete_integration(t *testing.T) {
 			},
 		}
 
-		expectedResults := batch.BatchDeleteResults{
+		expectedResults := &models.BatchDeleteResponseResults{
 			Matches:    0,
 			Failed:     0,
 			Successful: 0,
@@ -146,7 +147,7 @@ func TestBatchDelete_integration(t *testing.T) {
 		}
 
 		resp, err := client.Batch().ObjectsBatchDeleter().
-			WithFilter(&filter).
+			WithFilter(filter).
 			Do(context.Background())
 		assert.Nil(t, err)
 		assert.Equal(t, expectedResults, resp.Results)
@@ -160,4 +161,8 @@ func TestBatchDelete_integration(t *testing.T) {
 			t.Fatal(err.Error())
 		}
 	})
+}
+
+func stringPtr(s string) *string {
+	return &s
 }
