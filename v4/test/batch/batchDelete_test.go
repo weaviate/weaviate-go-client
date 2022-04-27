@@ -150,6 +150,8 @@ func TestBatchDelete_integration(t *testing.T) {
 			Do(context.Background())
 		assert.Nil(t, err)
 		assert.Equal(t, expectedResults, resp.Results)
+
+		testsuit.CleanUpWeaviate(t, client)
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
