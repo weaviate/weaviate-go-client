@@ -104,9 +104,9 @@ func (b *WhereArgumentBuilder) build() string {
 }
 
 func (b *WhereArgumentBuilder) buildWhereFilter() string {
-	whereFilter := &filters.WhereBuilder{}
-	whereFilter.WithOperator(b.operator)
-	whereFilter.WithPath(b.path)
+	whereFilter := (&filters.WhereBuilder{}).
+		WithOperator(b.operator).
+		WithPath(b.path)
 
 	if b.withValueInt {
 		whereFilter.WithValueInt(b.valueInt)

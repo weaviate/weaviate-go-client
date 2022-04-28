@@ -26,8 +26,8 @@ func TestBatchDelete_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		where := &filters.WhereBuilder{}
-		where.WithOperator(filters.Equal).
+		where := (&filters.WhereBuilder{}).
+			WithOperator(filters.Equal).
 			WithPath([]string{"id"}).
 			WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
 
@@ -65,8 +65,8 @@ func TestBatchDelete_integration(t *testing.T) {
 
 		nowString := fmt.Sprint(time.Now().UnixNano() / int64(time.Millisecond))
 
-		where := &filters.WhereBuilder{}
-		where.WithOperator(filters.LessThan).
+		where := (&filters.WhereBuilder{}).
+			WithOperator(filters.LessThan).
 			WithPath([]string{"_creationTimeUnix"}).
 			WithValueString(nowString)
 
@@ -105,8 +105,8 @@ func TestBatchDelete_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		where := &filters.WhereBuilder{}
-		where.WithOperator(filters.Equal).
+		where := (&filters.WhereBuilder{}).
+			WithOperator(filters.Equal).
 			WithPath([]string{"id"}).
 			WithValueString("267f5125-c9fd-4ca6-9134-f383ff5f0cb6")
 
