@@ -3,6 +3,7 @@ package graphql
 import (
 	"testing"
 
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,7 +59,7 @@ func TestAggregateBuilder(t *testing.T) {
 		}
 
 		where := newWhereArgBuilder().
-			WithPath([]string{"id"}).WithOperator(Equal).WithValueString("uuid")
+			WithPath([]string{"id"}).WithOperator(filters.Equal).WithValueString("uuid")
 
 		query := builder.WithClassName("Pizza").WithWhere(where).WithFields(meta).build()
 
@@ -84,7 +85,7 @@ func TestAggregateBuilder(t *testing.T) {
 		}
 
 		where := newWhereArgBuilder().
-			WithPath([]string{"id"}).WithOperator(Equal).WithValueString("uuid")
+			WithPath([]string{"id"}).WithOperator(filters.Equal).WithValueString("uuid")
 
 		query := builder.WithClassName("Pizza").
 			WithGroupBy("name").

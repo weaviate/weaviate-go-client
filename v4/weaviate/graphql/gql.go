@@ -6,6 +6,7 @@ import (
 
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
@@ -70,8 +71,8 @@ func (api *API) WhereArgBuilder() *WhereArgumentBuilder {
 }
 
 // WhereArgBuilder where clause
-func (api *API) WhereFilterBuilder() *WhereFilterBuilder {
-	return &WhereFilterBuilder{}
+func (api *API) WhereFilterBuilder() *filters.WhereBuilder {
+	return &filters.WhereBuilder{}
 }
 
 // rest requests abstraction

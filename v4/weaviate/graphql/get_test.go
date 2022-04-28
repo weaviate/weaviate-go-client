@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -74,7 +75,7 @@ func TestQueryBuilder(t *testing.T) {
 		name := Field{Name: "name"}
 
 		where := newWhereArgBuilder().
-			WithPath([]string{"name"}).WithOperator(Equal).WithValueString("Hawaii")
+			WithPath([]string{"name"}).WithOperator(filters.Equal).WithValueString("Hawaii")
 
 		query := builder.WithClassName("Pizza").
 			WithFields(name).
@@ -84,9 +85,9 @@ func TestQueryBuilder(t *testing.T) {
 		expected := `{Get {Pizza (where:{operator: Equal path: ["name"] valueString: "Hawaii"}) {name}}}`
 		assert.Equal(t, expected, query)
 
-		where = newWhereArgBuilder().WithOperator(Or).WithOperands([]*WhereFilterBuilder{
-			newWhereFilter().WithPath([]string{"name"}).WithOperator(Equal).WithValueString("Hawaii"),
-			newWhereFilter().WithPath([]string{"name"}).WithOperator(Equal).WithValueString("Doener"),
+		where = newWhereArgBuilder().WithOperator("Or").WithOperands([]*filters.WhereBuilder{
+			newWhereFilter().WithPath([]string{"name"}).WithOperator(filters.Equal).WithValueString("Hawaii"),
+			newWhereFilter().WithPath([]string{"name"}).WithOperator(filters.Equal).WithValueString("Doener"),
 		})
 
 		query = builder.WithClassName("Pizza").
@@ -218,7 +219,7 @@ func TestQueryBuilder(t *testing.T) {
 		nearText = nearText.WithConcepts([]string{"good"})
 
 		where := newWhereArgBuilder().
-			WithPath([]string{"name"}).WithOperator(Equal).WithValueString("Hawaii")
+			WithPath([]string{"name"}).WithOperator(filters.Equal).WithValueString("Hawaii")
 
 		query := builder.WithClassName("Pizza").
 			WithFields(name).
@@ -248,7 +249,7 @@ func TestQueryBuilder(t *testing.T) {
 		nearVector.WithVector([]float32{0, 1, 0.8})
 
 		where := newWhereArgBuilder().
-			WithPath([]string{"name"}).WithOperator(Equal).WithValueString("Hawaii")
+			WithPath([]string{"name"}).WithOperator(filters.Equal).WithValueString("Hawaii")
 
 		query := builder.WithClassName("Pizza").
 			WithFields(name).
