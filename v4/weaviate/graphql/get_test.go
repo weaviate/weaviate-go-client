@@ -85,7 +85,7 @@ func TestQueryBuilder(t *testing.T) {
 		expected := `{Get {Pizza (where:{operator: Equal path: ["name"] valueString: "Hawaii"}) {name}}}`
 		assert.Equal(t, expected, query)
 
-		where = newWhereArgBuilder().WithOperator("Or").WithOperands([]*filters.WhereBuilder{
+		where = newWhereArgBuilder().WithOperator(filters.Or).WithOperands([]*filters.WhereBuilder{
 			newWhereFilter().WithPath([]string{"name"}).WithOperator(filters.Equal).WithValueString("Hawaii"),
 			newWhereFilter().WithPath([]string{"name"}).WithOperator(filters.Equal).WithValueString("Doener"),
 		})
