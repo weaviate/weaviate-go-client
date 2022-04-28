@@ -204,8 +204,8 @@ github.com/ruudk/golang-pdf417 v0.0.0-20181029194003-1af4ab5afa58/go.mod h1:6lfF
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 h1:nn5Wsu0esKSJiIVhscUtVbo7ada43DJhG55ua/hjS5I=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/semi-technologies/contextionary v0.0.0-20210324171723-00263e697379/go.mod h1:K4Y0AopAsafXvvt8IO9PXspi+FeDaJdFSD61I3Homkc=
-github.com/semi-technologies/weaviate v1.12.3-0.20220426135631-b20a2d43d2f7 h1:Rf253aNc75uKoxmz74T0R/gnuIz5vkLG4H2JExFRFq4=
-github.com/semi-technologies/weaviate v1.12.3-0.20220426135631-b20a2d43d2f7/go.mod h1:nCqCVsR2nG+8TGphkQuLgUETgXzKFKnTGJywo1cRkGA=
+github.com/semi-technologies/weaviate v0.0.0-20220427180858-a8b65965faa7 h1:V5JHX2IN8G2kWgTdmWU1Jipoar/o0/CFKX+3HTRtaRU=
+github.com/semi-technologies/weaviate v0.0.0-20220427180858-a8b65965faa7/go.mod h1:nCqCVsR2nG+8TGphkQuLgUETgXzKFKnTGJywo1cRkGA=
 github.com/sirupsen/logrus v1.4.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.1/go.mod h1:ni0Sbl8bgC9z8RoU9G6nDWqqs/fq4eDPysMBDgk/93Q=
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
