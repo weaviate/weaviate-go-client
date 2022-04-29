@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
@@ -15,7 +16,7 @@ type AggregateBuilder struct {
 	className                 string
 	includesFilterClause      bool // true if brackets behind class is needed
 	groupByClausePropertyName string
-	withWhereFilter           *WhereArgumentBuilder
+	withWhereFilter           *filters.WhereBuilder
 	withNearVectorFilter      *NearVectorArgumentBuilder
 	withNearObjectFilter      *NearObjectArgumentBuilder
 	withNearTextFilter        *NearTextArgumentBuilder
@@ -40,7 +41,7 @@ func (ab *AggregateBuilder) WithClassName(name string) *AggregateBuilder {
 }
 
 // WithWhere adds the where filter.
-func (ab *AggregateBuilder) WithWhere(where *WhereArgumentBuilder) *AggregateBuilder {
+func (ab *AggregateBuilder) WithWhere(where *filters.WhereBuilder) *AggregateBuilder {
 	ab.includesFilterClause = true
 	ab.withWhereFilter = where
 	return ab
@@ -115,7 +116,7 @@ func (ab *AggregateBuilder) createFilterClause() string {
 			filters = append(filters, fmt.Sprintf(`groupBy: "%v"`, ab.groupByClausePropertyName))
 		}
 		if ab.withWhereFilter != nil {
-			filters = append(filters, ab.withWhereFilter.build())
+			filters = append(filters, ab.withWhereFilter.String())
 		}
 		if ab.withNearTextFilter != nil {
 			filters = append(filters, ab.withNearTextFilter.build())

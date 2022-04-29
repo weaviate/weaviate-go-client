@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
@@ -19,7 +20,7 @@ type GetBuilder struct {
 	limit                int
 	includesOffset       bool
 	offset               int
-	withWhereFilter      *WhereArgumentBuilder
+	withWhereFilter      *filters.WhereBuilder
 	withNearTextFilter   *NearTextArgumentBuilder
 	withNearVectorFilter *NearVectorArgumentBuilder
 	withNearObjectFilter *NearObjectArgumentBuilder
@@ -42,7 +43,7 @@ func (gb *GetBuilder) WithFields(fields ...Field) *GetBuilder {
 }
 
 // WithWhere filter
-func (gb *GetBuilder) WithWhere(where *WhereArgumentBuilder) *GetBuilder {
+func (gb *GetBuilder) WithWhere(where *filters.WhereBuilder) *GetBuilder {
 	gb.includesFilterClause = true
 	gb.withWhereFilter = where
 	return gb
@@ -134,7 +135,7 @@ func (gb *GetBuilder) build() string {
 func (gb *GetBuilder) createFilterClause() string {
 	filters := []string{}
 	if gb.withWhereFilter != nil {
-		filters = append(filters, gb.withWhereFilter.build())
+		filters = append(filters, gb.withWhereFilter.String())
 	}
 	if gb.withNearTextFilter != nil {
 		filters = append(filters, gb.withNearTextFilter.build())

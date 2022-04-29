@@ -49,7 +49,7 @@ func TestGraphQL_integration(t *testing.T) {
 		pizza = get["Pizza"].([]interface{})
 		assert.Equal(t, 4, len(pizza))
 
-		where := client.GraphQL().WhereArgBuilder().
+		where := filters.Where().
 			WithPath([]string{"name"}).
 			WithOperator(filters.Equal).
 			WithValueString("Frutti di Mare")
@@ -160,7 +160,7 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with where filter", func(t *testing.T) {
-			where := client.GraphQL().WhereArgBuilder().
+			where := filters.Where().
 				WithPath([]string{"id"}).
 				WithOperator(filters.Equal).
 				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
@@ -189,7 +189,7 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with where filter and groupby", func(t *testing.T) {
-			where := client.GraphQL().WhereArgBuilder().
+			where := filters.Where().
 				WithPath([]string{"id"}).
 				WithOperator(filters.Equal).
 				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
@@ -271,7 +271,7 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with nearVector, where, groupby", func(t *testing.T) {
-			where := client.GraphQL().WhereArgBuilder().
+			where := filters.Where().
 				WithPath([]string{"id"}).
 				WithOperator(filters.Equal).
 				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
@@ -295,7 +295,7 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with nearObject, where, groupby", func(t *testing.T) {
-			where := client.GraphQL().WhereArgBuilder().
+			where := filters.Where().
 				WithPath([]string{"id"}).
 				WithOperator(filters.Equal).
 				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
@@ -319,7 +319,7 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with nearText, where, groupby", func(t *testing.T) {
-			where := client.GraphQL().WhereArgBuilder().
+			where := filters.Where().
 				WithPath([]string{"id"}).
 				WithOperator(filters.Equal).
 				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
@@ -425,7 +425,7 @@ func TestGraphQL_integration(t *testing.T) {
 				{Name: "creationTimeUnix"},
 			}}
 
-		whereCreateTime := client.GraphQL().WhereArgBuilder().
+		whereCreateTime := filters.Where().
 			WithPath([]string{"_creationTimeUnix"}).
 			WithOperator(filters.Equal).
 			WithValueString(expectedCreateTime)
@@ -466,7 +466,7 @@ func TestGraphQL_integration(t *testing.T) {
 				{Name: "lastUpdateTimeUnix"},
 			}}
 
-		whereUpdateTime := client.GraphQL().WhereArgBuilder().
+		whereUpdateTime := filters.Where().
 			WithPath([]string{"_lastUpdateTimeUnix"}).
 			WithOperator(filters.Equal).
 			WithValueString(expectedUpdateTime)

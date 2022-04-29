@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/semi-technologies/weaviate-go-client/v4/test/helpers"
 	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/testenv"
@@ -26,7 +27,7 @@ func TestBatchDelete_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		where := (&filters.WhereBuilder{}).
+		where := filters.Where().
 			WithOperator(filters.Equal).
 			WithPath([]string{"id"}).
 			WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
@@ -39,7 +40,7 @@ func TestBatchDelete_integration(t *testing.T) {
 			Objects: []*models.BatchDeleteResponseResultsObjectsItems0{
 				{
 					ID:     "5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
-					Status: stringPtr("DRYRUN"),
+					Status: helpers.StringPointer("DRYRUN"),
 				},
 			},
 		}
@@ -65,7 +66,7 @@ func TestBatchDelete_integration(t *testing.T) {
 
 		nowString := fmt.Sprint(time.Now().UnixNano() / int64(time.Millisecond))
 
-		where := (&filters.WhereBuilder{}).
+		where := filters.Where().
 			WithOperator(filters.LessThan).
 			WithPath([]string{"_creationTimeUnix"}).
 			WithValueString(nowString)
@@ -94,7 +95,7 @@ func TestBatchDelete_integration(t *testing.T) {
 		for _, obj := range resp.Results.Objects {
 			require.NotNil(t, obj.Status)
 			require.NotNil(t, obj.Status)
-			assert.Equal(t, stringPtr("SUCCESS"), obj.Status)
+			assert.Equal(t, helpers.StringPointer("SUCCESS"), obj.Status)
 			assert.Nil(t, obj.Errors)
 		}
 
@@ -105,7 +106,7 @@ func TestBatchDelete_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		where := (&filters.WhereBuilder{}).
+		where := filters.Where().
 			WithOperator(filters.Equal).
 			WithPath([]string{"id"}).
 			WithValueString("267f5125-c9fd-4ca6-9134-f383ff5f0cb6")
@@ -136,8 +137,4 @@ func TestBatchDelete_integration(t *testing.T) {
 			t.Fatal(err.Error())
 		}
 	})
-}
-
-func stringPtr(s string) *string {
-	return &s
 }

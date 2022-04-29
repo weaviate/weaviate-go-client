@@ -6,7 +6,6 @@ import (
 
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
@@ -63,16 +62,6 @@ func (api *API) NearImageArgBuilder() *NearImageArgumentBuilder {
 // GroupArgBuilder nearImage clause
 func (api *API) GroupArgBuilder() *GroupArgumentBuilder {
 	return &GroupArgumentBuilder{}
-}
-
-// WhereArgBuilder where clause
-func (api *API) WhereArgBuilder() *WhereArgumentBuilder {
-	return &WhereArgumentBuilder{}
-}
-
-// WhereArgBuilder where clause
-func (api *API) WhereFilterBuilder() *filters.WhereBuilder {
-	return &filters.WhereBuilder{}
 }
 
 // rest requests abstraction

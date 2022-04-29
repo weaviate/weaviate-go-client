@@ -8,7 +8,12 @@ import (
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
+func Where() *WhereBuilder {
+	return &WhereBuilder{}
+}
+
 type WhereBuilder struct {
+	operands         []*WhereBuilder
 	operator         WhereOperator
 	path             []string
 	withValueInt     bool
@@ -33,6 +38,11 @@ func (b *WhereBuilder) WithOperator(operator WhereOperator) *WhereBuilder {
 // WithPath the list of properties that should be looked for
 func (b *WhereBuilder) WithPath(path []string) *WhereBuilder {
 	b.path = path
+	return b
+}
+
+func (b *WhereBuilder) WithOperands(operands []*WhereBuilder) *WhereBuilder {
+	b.operands = operands
 	return b
 }
 
@@ -112,11 +122,29 @@ func (b *WhereBuilder) Build() *models.WhereFilter {
 		whereFilter.ValueGeoRange = buildWhereFilterGeoRange(b.valueGeoRange)
 	}
 
+	// recursively build operands
+	for _, op := range b.operands {
+		whereFilter.Operands = append(whereFilter.Operands, op.Build())
+	}
+
 	return whereFilter
 }
 
 // String formats the where builder as a string for GQL queries
 func (b *WhereBuilder) String() string {
+	clause := []string{}
+	clause = append(clause, b.string())
+	if len(b.operands) > 0 {
+		operands := make([]string, len(b.operands))
+		for i := range b.operands {
+			operands[i] = fmt.Sprintf("{%s}", b.operands[i].string())
+		}
+		clause = append(clause, fmt.Sprintf("operands:[%s]", strings.Join(operands, ",")))
+	}
+	return fmt.Sprintf("where:{%s}", strings.Join(clause, " "))
+}
+
+func (b *WhereBuilder) string() string {
 	clause := []string{}
 	if len(b.operator) > 0 {
 		clause = append(clause, fmt.Sprintf("operator: %s", b.operator))
