@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
@@ -48,9 +49,9 @@ func TestGraphQL_integration(t *testing.T) {
 		pizza = get["Pizza"].([]interface{})
 		assert.Equal(t, 4, len(pizza))
 
-		where := client.GraphQL().WhereArgBuilder().
+		where := filters.Where().
 			WithPath([]string{"name"}).
-			WithOperator(graphql.Equal).
+			WithOperator(filters.Equal).
 			WithValueString("Frutti di Mare")
 
 		name = graphql.Field{Name: "name"}
@@ -159,9 +160,9 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with where filter", func(t *testing.T) {
-			where := client.GraphQL().WhereArgBuilder().
+			where := filters.Where().
 				WithPath([]string{"id"}).
-				WithOperator(graphql.Equal).
+				WithOperator(filters.Equal).
 				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
 
 			resultSet, gqlErr := client.GraphQL().
@@ -188,9 +189,9 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with where filter and groupby", func(t *testing.T) {
-			where := client.GraphQL().WhereArgBuilder().
+			where := filters.Where().
 				WithPath([]string{"id"}).
-				WithOperator(graphql.Equal).
+				WithOperator(filters.Equal).
 				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
 
 			resultSet, gqlErr := client.GraphQL().
@@ -270,9 +271,9 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with nearVector, where, groupby", func(t *testing.T) {
-			where := client.GraphQL().WhereArgBuilder().
+			where := filters.Where().
 				WithPath([]string{"id"}).
-				WithOperator(graphql.Equal).
+				WithOperator(filters.Equal).
 				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
 
 			pizza := GetOnePizza(t, client)
@@ -294,9 +295,9 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with nearObject, where, groupby", func(t *testing.T) {
-			where := client.GraphQL().WhereArgBuilder().
+			where := filters.Where().
 				WithPath([]string{"id"}).
-				WithOperator(graphql.Equal).
+				WithOperator(filters.Equal).
 				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
 
 			pizza := GetOnePizza(t, client)
@@ -318,9 +319,9 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with nearText, where, groupby", func(t *testing.T) {
-			where := client.GraphQL().WhereArgBuilder().
+			where := filters.Where().
 				WithPath([]string{"id"}).
-				WithOperator(graphql.Equal).
+				WithOperator(filters.Equal).
 				WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
 
 			concepts := []string{"pineapple slices", "ham"}
@@ -424,9 +425,9 @@ func TestGraphQL_integration(t *testing.T) {
 				{Name: "creationTimeUnix"},
 			}}
 
-		whereCreateTime := client.GraphQL().WhereArgBuilder().
+		whereCreateTime := filters.Where().
 			WithPath([]string{"_creationTimeUnix"}).
-			WithOperator(graphql.Equal).
+			WithOperator(filters.Equal).
 			WithValueString(expectedCreateTime)
 
 		result, err := client.GraphQL().Get().
@@ -465,9 +466,9 @@ func TestGraphQL_integration(t *testing.T) {
 				{Name: "lastUpdateTimeUnix"},
 			}}
 
-		whereUpdateTime := client.GraphQL().WhereArgBuilder().
+		whereUpdateTime := filters.Where().
 			WithPath([]string{"_lastUpdateTimeUnix"}).
-			WithOperator(graphql.Equal).
+			WithOperator(filters.Equal).
 			WithValueString(expectedUpdateTime)
 
 		result, err := client.GraphQL().Get().

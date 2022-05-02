@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/semi-technologies/weaviate-go-client/v4/test/helpers"
 	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
@@ -25,22 +27,10 @@ func TestBatchDelete_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		dryRun := true
-		output := "verbose"
-		id := "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"
-
-		filter := &models.BatchDelete{
-			DryRun: &dryRun,
-			Output: &output,
-			Match: &models.BatchDeleteMatch{
-				Class: "Pizza",
-				Where: &models.WhereFilter{
-					Operator:    "Equal",
-					Path:        []string{"id"},
-					ValueString: &id,
-				},
-			},
-		}
+		where := filters.Where().
+			WithOperator(filters.Equal).
+			WithPath([]string{"id"}).
+			WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
 
 		expectedResults := &models.BatchDeleteResponseResults{
 			Matches:    1,
@@ -50,18 +40,21 @@ func TestBatchDelete_integration(t *testing.T) {
 			Objects: []*models.BatchDeleteResponseResultsObjectsItems0{
 				{
 					ID:     "5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
-					Status: stringPtr("DRYRUN"),
+					Status: helpers.StringPointer("DRYRUN"),
 				},
 			},
 		}
 
 		resp, err := client.Batch().ObjectsBatchDeleter().
-			WithFilter(filter).
+			WithClassName("Pizza").
+			WithDryRun(true).
+			WithOutput("verbose").
+			WithWhere(where).
 			Do(context.Background())
 		require.Nil(t, err)
 		require.NotNil(t, resp.Match)
 		assert.Equal(t, "Pizza", resp.Match.Class)
-		assert.Equal(t, filter.Match.Where, resp.Match.Where)
+		assert.Equal(t, where.Build(), resp.Match.Where)
 		assert.Equal(t, expectedResults, resp.Results)
 
 		testsuit.CleanUpWeaviate(t, client)
@@ -71,22 +64,12 @@ func TestBatchDelete_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		dryRun := false
-		output := "verbose"
 		nowString := fmt.Sprint(time.Now().UnixNano() / int64(time.Millisecond))
 
-		filter := &models.BatchDelete{
-			DryRun: &dryRun,
-			Output: &output,
-			Match: &models.BatchDeleteMatch{
-				Class: "Pizza",
-				Where: &models.WhereFilter{
-					Operator:    "LessThan",
-					Path:        []string{"_creationTimeUnix"},
-					ValueString: &nowString,
-				},
-			},
-		}
+		where := filters.Where().
+			WithOperator(filters.LessThan).
+			WithPath([]string{"_creationTimeUnix"}).
+			WithValueString(nowString)
 
 		expectedResults := &models.BatchDeleteResponseResults{
 			Matches:    4,
@@ -96,12 +79,14 @@ func TestBatchDelete_integration(t *testing.T) {
 		}
 
 		resp, err := client.Batch().ObjectsBatchDeleter().
-			WithFilter(filter).
+			WithClassName("Pizza").
+			WithOutput("verbose").
+			WithWhere(where).
 			Do(context.Background())
 		require.Nil(t, err)
 		require.NotNil(t, resp.Match)
 		assert.Equal(t, "Pizza", resp.Match.Class)
-		assert.Equal(t, filter.Match.Where, resp.Match.Where)
+		assert.Equal(t, where.Build(), resp.Match.Where)
 		assert.Equal(t, expectedResults.Matches, resp.Results.Matches)
 		assert.Equal(t, expectedResults.Failed, resp.Results.Failed)
 		assert.Equal(t, expectedResults.Successful, resp.Results.Successful)
@@ -110,7 +95,7 @@ func TestBatchDelete_integration(t *testing.T) {
 		for _, obj := range resp.Results.Objects {
 			require.NotNil(t, obj.Status)
 			require.NotNil(t, obj.Status)
-			assert.Equal(t, stringPtr("SUCCESS"), obj.Status)
+			assert.Equal(t, helpers.StringPointer("SUCCESS"), obj.Status)
 			assert.Nil(t, obj.Errors)
 		}
 
@@ -121,22 +106,10 @@ func TestBatchDelete_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
-		dryRun := true
-		output := "verbose"
-		id := "267f5125-c9fd-4ca6-9134-f383ff5f0cb6"
-
-		filter := &models.BatchDelete{
-			DryRun: &dryRun,
-			Output: &output,
-			Match: &models.BatchDeleteMatch{
-				Class: "Pizza",
-				Where: &models.WhereFilter{
-					Operator:    "Equal",
-					Path:        []string{"id"},
-					ValueString: &id,
-				},
-			},
-		}
+		where := filters.Where().
+			WithOperator(filters.Equal).
+			WithPath([]string{"id"}).
+			WithValueString("267f5125-c9fd-4ca6-9134-f383ff5f0cb6")
 
 		expectedResults := &models.BatchDeleteResponseResults{
 			Matches:    0,
@@ -147,7 +120,10 @@ func TestBatchDelete_integration(t *testing.T) {
 		}
 
 		resp, err := client.Batch().ObjectsBatchDeleter().
-			WithFilter(filter).
+			WithClassName("Pizza").
+			WithDryRun(true).
+			WithOutput("verbose").
+			WithWhere(where).
 			Do(context.Background())
 		assert.Nil(t, err)
 		assert.Equal(t, expectedResults, resp.Results)
@@ -161,8 +137,4 @@ func TestBatchDelete_integration(t *testing.T) {
 			t.Fatal(err.Error())
 		}
 	})
-}
-
-func stringPtr(s string) *string {
-	return &s
 }

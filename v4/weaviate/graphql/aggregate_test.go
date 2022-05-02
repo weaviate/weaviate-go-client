@@ -3,6 +3,7 @@ package graphql
 import (
 	"testing"
 
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -57,10 +58,14 @@ func TestAggregateBuilder(t *testing.T) {
 			Fields: []Field{{Name: "count"}},
 		}
 
-		where := newWhereArgBuilder().
-			WithPath([]string{"id"}).WithOperator(Equal).WithValueString("uuid")
+		where := filters.Where().
+			WithPath([]string{"id"}).
+			WithOperator(filters.Equal).
+			WithValueString("uuid")
 
-		query := builder.WithClassName("Pizza").WithWhere(where).WithFields(meta).build()
+		query := builder.WithClassName("Pizza").
+			WithWhere(where).
+			WithFields(meta).build()
 
 		expected := `{Aggregate{Pizza(where:{operator: Equal path: ["id"] valueString: "uuid"}){meta{count}}}}`
 		assert.Equal(t, expected, query)
@@ -83,8 +88,10 @@ func TestAggregateBuilder(t *testing.T) {
 			},
 		}
 
-		where := newWhereArgBuilder().
-			WithPath([]string{"id"}).WithOperator(Equal).WithValueString("uuid")
+		where := filters.Where().
+			WithPath([]string{"id"}).
+			WithOperator(filters.Equal).
+			WithValueString("uuid")
 
 		query := builder.WithClassName("Pizza").
 			WithGroupBy("name").

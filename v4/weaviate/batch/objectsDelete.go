@@ -7,27 +7,54 @@ import (
 
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 type ObjectsBatchDeleter struct {
-	connection *connection.Connection
-	filter     *models.BatchDelete
+	connection  *connection.Connection
+	className   string
+	dryRun      bool
+	output      string
+	whereFilter *filters.WhereBuilder
 }
 
-// WithFilter sets the filter for matching which objects to delete
-func (ob *ObjectsBatchDeleter) WithFilter(filter *models.BatchDelete) *ObjectsBatchDeleter {
-	ob.filter = filter
-	return ob
+func (b *ObjectsBatchDeleter) WithClassName(className string) *ObjectsBatchDeleter {
+	b.className = className
+	return b
+}
+
+func (b *ObjectsBatchDeleter) WithDryRun(dryRun bool) *ObjectsBatchDeleter {
+	b.dryRun = dryRun
+	return b
+}
+
+func (b *ObjectsBatchDeleter) WithOutput(output string) *ObjectsBatchDeleter {
+	b.output = output
+	return b
+}
+
+func (b *ObjectsBatchDeleter) WithWhere(whereFilter *filters.WhereBuilder) *ObjectsBatchDeleter {
+	b.whereFilter = whereFilter
+	return b
 }
 
 // Do delete's all the objects which match the builder's filter
 func (ob *ObjectsBatchDeleter) Do(ctx context.Context) (*models.BatchDeleteResponse, error) {
-	if ob.filter == nil {
+	if ob.whereFilter == nil {
 		return nil, fmt.Errorf("filter must be set prior to deletion, use WithFilter")
 	}
 
-	responseData, responseErr := ob.connection.RunREST(ctx, "/batch/objects", http.MethodDelete, ob.filter)
+	body := &models.BatchDelete{
+		DryRun: &ob.dryRun,
+		Output: &ob.output,
+		Match: &models.BatchDeleteMatch{
+			Class: ob.className,
+			Where: ob.whereFilter.Build(),
+		},
+	}
+
+	responseData, responseErr := ob.connection.RunREST(ctx, "/batch/objects", http.MethodDelete, body)
 	err := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {
 		return nil, err
