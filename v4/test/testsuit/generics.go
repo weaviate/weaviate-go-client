@@ -31,6 +31,11 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
 		Description: "name",
 		Name:        "name",
 	}
+	bestBeforeProperty := &models.Property{
+		DataType:    []string{"date"},
+		Description: "You better eat this food before it expires",
+		Name:        "best_before",
+	}
 	descriptionProperty := &models.Property{
 		DataType:    []string{"text"},
 		Description: "description",
@@ -59,6 +64,10 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
 	assert.Nil(t, propErrT3)
 	propErrA3 := client.Schema().PropertyCreator().WithClassName("Soup").WithProperty(priceProperty).Do(context.Background())
 	assert.Nil(t, propErrA3)
+	propErrT4 := client.Schema().PropertyCreator().WithClassName("Pizza").WithProperty(bestBeforeProperty).Do(context.Background())
+	assert.Nil(t, propErrT4)
+	propErrA4 := client.Schema().PropertyCreator().WithClassName("Soup").WithProperty(bestBeforeProperty).Do(context.Background())
+	assert.Nil(t, propErrA4)
 }
 
 func CreateWeaviateTestSchemaWithVectorizorlessClass(t *testing.T, client *weaviate.Client) {
@@ -150,6 +159,7 @@ func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client) {
 				"name":        "Quattro Formaggi",
 				"description": "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
 				"price":       float32(1.1),
+				"best_before": "2022-05-03T12:04:40+02:00",
 			},
 		},
 		{
@@ -158,6 +168,7 @@ func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client) {
 				"name":        "Frutti di Mare",
 				"description": "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
 				"price":       float32(1.2),
+				"best_before": "2022-05-05T07:16:30+02:00",
 			},
 		},
 		{

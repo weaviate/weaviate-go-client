@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
@@ -15,7 +16,6 @@ import (
 )
 
 func TestGraphQL_integration(t *testing.T) {
-
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -28,71 +28,107 @@ func TestGraphQL_integration(t *testing.T) {
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		name := graphql.Field{Name: "name"}
-		resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithFields(name).Do(context.Background())
-		assert.Nil(t, gqlErr)
+		t.Run("get all", func(t *testing.T) {
+			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithFields(name).Do(context.Background())
+			assert.Nil(t, gqlErr)
 
-		get := resultSet.Data["Get"].(map[string]interface{})
-		pizza := get["Pizza"].([]interface{})
-		assert.Equal(t, 4, len(pizza))
+			get := resultSet.Data["Get"].(map[string]interface{})
+			pizza := get["Pizza"].([]interface{})
+			assert.Equal(t, 4, len(pizza))
+		})
 
-		withNearObject := client.GraphQL().NearObjectArgBuilder().
-			WithID("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
-		resultSet, gqlErr = client.GraphQL().Get().
-			WithClassName("Pizza").
-			WithFields(name).
-			WithNearObject(withNearObject).
-			Do(context.Background())
-		assert.Nil(t, gqlErr)
-		require.Nil(t, resultSet.Errors)
+		t.Run("by near object", func(t *testing.T) {
+			withNearObject := client.GraphQL().NearObjectArgBuilder().
+				WithID("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
+			resultSet, gqlErr := client.GraphQL().Get().
+				WithClassName("Pizza").
+				WithFields(name).
+				WithNearObject(withNearObject).
+				Do(context.Background())
+			assert.Nil(t, gqlErr)
+			require.Nil(t, resultSet.Errors)
 
-		get = resultSet.Data["Get"].(map[string]interface{})
-		pizza = get["Pizza"].([]interface{})
-		assert.Equal(t, 4, len(pizza))
+			get := resultSet.Data["Get"].(map[string]interface{})
+			pizza := get["Pizza"].([]interface{})
+			assert.Equal(t, 4, len(pizza))
+		})
 
-		where := filters.Where().
-			WithPath([]string{"name"}).
-			WithOperator(filters.Equal).
-			WithValueString("Frutti di Mare")
+		t.Run("with where filter (string)", func(t *testing.T) {
+			where := filters.Where().
+				WithPath([]string{"name"}).
+				WithOperator(filters.Equal).
+				WithValueString("Frutti di Mare")
 
-		name = graphql.Field{Name: "name"}
+			name = graphql.Field{Name: "name"}
 
-		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithWhere(where).WithFields(name).Do(context.Background())
-		assert.Nil(t, gqlErr)
+			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithWhere(where).WithFields(name).Do(context.Background())
+			assert.Nil(t, gqlErr)
 
-		get = resultSet.Data["Get"].(map[string]interface{})
-		pizza = get["Pizza"].([]interface{})
-		assert.Equal(t, 1, len(pizza))
+			get := resultSet.Data["Get"].(map[string]interface{})
+			pizza := get["Pizza"].([]interface{})
+			assert.Equal(t, 1, len(pizza))
+		})
 
-		assertSortResult := func(resultSet *models.GraphQLResponse, className string, expectedPizzas []string) {
-			get = resultSet.Data["Get"].(map[string]interface{})
-			pizza = get[className].([]interface{})
-			require.Equal(t, len(expectedPizzas), len(pizza))
-			result := make([]string, len(pizza))
-			for i := range pizza {
-				p := pizza[i].(map[string]interface{})
-				result[i] = p["name"].(string)
+		t.Run("with where filter (date)", func(t *testing.T) {
+			// two pizzas have best_before dates in the test set, one of them expires
+			// May 3rd, the other May 5th, so the filter below should match exactly
+			// one.
+			targetDate, err := time.Parse(time.RFC3339, "2022-05-04T12:00:00+02:00")
+			require.Nil(t, err)
+
+			where := filters.Where().
+				WithPath([]string{"best_before"}).
+				WithOperator(filters.LessThan).
+				WithValueDate(targetDate)
+
+			name = graphql.Field{Name: "name"}
+
+			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithWhere(where).WithFields(name).Do(context.Background())
+			assert.Nil(t, gqlErr)
+
+			get := resultSet.Data["Get"].(map[string]interface{})
+			pizza := get["Pizza"].([]interface{})
+			assert.Equal(t, 1, len(pizza))
+		})
+
+		t.Run("with sorting", func(t *testing.T) {
+			var pizza []interface{}
+
+			assertSortResult := func(resultSet *models.GraphQLResponse, className string, expectedPizzas []string) {
+				get := resultSet.Data["Get"].(map[string]interface{})
+				pizza = get[className].([]interface{})
+				require.Equal(t, len(expectedPizzas), len(pizza))
+				result := make([]string, len(pizza))
+				for i := range pizza {
+					p := pizza[i].(map[string]interface{})
+					result[i] = p["name"].(string)
+				}
+				assert.Equal(t, expectedPizzas, result)
 			}
-			assert.Equal(t, expectedPizzas, result)
-		}
 
-		byNameAsc := graphql.Sort{Path: []string{"name"}, Order: graphql.Asc}
-		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithSort(byNameAsc).WithFields(name).Do(context.Background())
-		assert.Nil(t, gqlErr)
-		assertSortResult(resultSet, "Pizza", []string{"Doener", "Frutti di Mare", "Hawaii", "Quattro Formaggi"})
+			byNameAsc := graphql.Sort{Path: []string{"name"}, Order: graphql.Asc}
+			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").
+				WithSort(byNameAsc).WithFields(name).Do(context.Background())
+			assert.Nil(t, gqlErr)
+			assertSortResult(resultSet, "Pizza", []string{"Doener", "Frutti di Mare", "Hawaii", "Quattro Formaggi"})
 
-		byNameDesc := graphql.Sort{Path: []string{"name"}, Order: graphql.Desc}
-		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithSort(byNameDesc).WithFields(name).Do(context.Background())
-		assert.Nil(t, gqlErr)
-		assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Hawaii", "Frutti di Mare", "Doener"})
+			byNameDesc := graphql.Sort{Path: []string{"name"}, Order: graphql.Desc}
+			resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").
+				WithSort(byNameDesc).WithFields(name).Do(context.Background())
+			assert.Nil(t, gqlErr)
+			assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Hawaii", "Frutti di Mare", "Doener"})
 
-		byPriceAsc := graphql.Sort{Path: []string{"price"}, Order: graphql.Asc}
-		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Soup").WithSort(byPriceAsc).WithFields(name).Do(context.Background())
-		assert.Nil(t, gqlErr)
-		assertSortResult(resultSet, "Soup", []string{"ChickenSoup", "Beautiful"})
+			byPriceAsc := graphql.Sort{Path: []string{"price"}, Order: graphql.Asc}
+			resultSet, gqlErr = client.GraphQL().Get().WithClassName("Soup").
+				WithSort(byPriceAsc).WithFields(name).Do(context.Background())
+			assert.Nil(t, gqlErr)
+			assertSortResult(resultSet, "Soup", []string{"ChickenSoup", "Beautiful"})
 
-		resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").WithSort(byPriceAsc, byNameDesc).WithFields(name).Do(context.Background())
-		assert.Nil(t, gqlErr)
-		assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Frutti di Mare", "Hawaii", "Doener"})
+			resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").
+				WithSort(byPriceAsc, byNameDesc).WithFields(name).Do(context.Background())
+			assert.Nil(t, gqlErr)
+			assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Frutti di Mare", "Hawaii", "Doener"})
+		})
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
@@ -423,7 +459,8 @@ func TestGraphQL_integration(t *testing.T) {
 		additional := graphql.Field{
 			Name: "_additional", Fields: []graphql.Field{
 				{Name: "creationTimeUnix"},
-			}}
+			},
+		}
 
 		whereCreateTime := filters.Where().
 			WithPath([]string{"_creationTimeUnix"}).
@@ -464,7 +501,8 @@ func TestGraphQL_integration(t *testing.T) {
 		additional := graphql.Field{
 			Name: "_additional", Fields: []graphql.Field{
 				{Name: "lastUpdateTimeUnix"},
-			}}
+			},
+		}
 
 		whereUpdateTime := filters.Where().
 			WithPath([]string{"_lastUpdateTimeUnix"}).
