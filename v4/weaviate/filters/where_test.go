@@ -115,7 +115,7 @@ func TestWhereBuilder_String(t *testing.T) {
 			name: "with: path operator.Like date",
 			builder: Where().WithPath([]string{"id"}).WithOperator(Like).
 				WithValueDate(now),
-			want: fmt.Sprintf("where:{operator: Like path: [\"id\"] valueDate: %s}", now.Format(time.RFC3339Nano)),
+			want: fmt.Sprintf("where:{operator: Like path: [\"id\"] valueDate: \"%s\"}", now.Format(time.RFC3339Nano)),
 		},
 		{
 			name: "with: operands",
@@ -130,7 +130,7 @@ func TestWhereBuilder_String(t *testing.T) {
 			name: "with: multiple path operator.Not date",
 			builder: Where().WithPath([]string{"p1", "p2", "p3"}).WithOperator(Not).
 				WithValueDate(now),
-			want: fmt.Sprintf("where:{operator: Not path: [\"p1\",\"p2\",\"p3\"] valueDate: %s}", now.Format(time.RFC3339Nano)),
+			want: fmt.Sprintf("where:{operator: Not path: [\"p1\",\"p2\",\"p3\"] valueDate: \"%s\"}", now.Format(time.RFC3339Nano)),
 		},
 		{
 			name: "with: operands with multiple path",

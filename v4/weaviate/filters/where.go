@@ -172,7 +172,7 @@ func (b *WhereBuilder) string() string {
 		clause = append(clause, fmt.Sprintf("valueText: \"%s\"", b.valueText))
 	}
 	if b.withValueDate {
-		clause = append(clause, fmt.Sprintf("valueDate: %s", b.valueDate.Format(time.RFC3339Nano)))
+		clause = append(clause, fmt.Sprintf("valueDate: \"%s\"", b.valueDate.Format(time.RFC3339Nano)))
 	}
 	if b.valueGeoRange != nil {
 		clause = append(clause, fmt.Sprintf("valueGeoRange: {geoCoordinates:{latitude:%v,longitude:%v},distance:{max:%v}}",
