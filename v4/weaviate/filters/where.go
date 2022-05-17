@@ -132,16 +132,7 @@ func (b *WhereBuilder) Build() *models.WhereFilter {
 
 // String formats the where builder as a string for GQL queries
 func (b *WhereBuilder) String() string {
-	clause := []string{}
-	clause = append(clause, b.string())
-	if len(b.operands) > 0 {
-		operands := make([]string, len(b.operands))
-		for i := range b.operands {
-			operands[i] = fmt.Sprintf("{%s}", b.operands[i].string())
-		}
-		clause = append(clause, fmt.Sprintf("operands:[%s]", strings.Join(operands, ",")))
-	}
-	return fmt.Sprintf("where:{%s}", strings.Join(clause, " "))
+	return fmt.Sprintf("where:{%s}", b.string())
 }
 
 func (b *WhereBuilder) string() string {
@@ -177,6 +168,13 @@ func (b *WhereBuilder) string() string {
 	if b.valueGeoRange != nil {
 		clause = append(clause, fmt.Sprintf("valueGeoRange: {geoCoordinates:{latitude:%v,longitude:%v},distance:{max:%v}}",
 			b.valueGeoRange.Latitude, b.valueGeoRange.Longitude, b.valueGeoRange.MaxDistance))
+	}
+	if len(b.operands) > 0 {
+		operands := make([]string, len(b.operands))
+		for i := range b.operands {
+			operands[i] = fmt.Sprintf("{%s}", b.operands[i].string())
+		}
+		clause = append(clause, fmt.Sprintf("operands:[%s]", strings.Join(operands, ",")))
 	}
 	return strings.Join(clause, " ")
 }
