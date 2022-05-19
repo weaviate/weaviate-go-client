@@ -24,7 +24,7 @@ type MoveParameters struct {
 	// Force to be applied in the movement operation
 	Force float32
 	// Movers _
-	Movers []MoveObject
+	Movers []MoverObject
 }
 
 func (m *MoveParameters) String() string {
@@ -46,8 +46,8 @@ func (m *MoveParameters) String() string {
 	return fmt.Sprintf("%s %s: %v %s: %v}", s, fLDMoverForce, m.Force, fldMoverObjects, ms)
 }
 
-// MoveObject is the subject of the move query
-type MoveObject struct {
+// MoverObject is the object the search is supposed to move close to (or further away from) it.
+type MoverObject struct {
 	ID     string
 	Beacon string
 }
@@ -55,7 +55,7 @@ type MoveObject struct {
 //String returns string representation of m as {"id": "value" beacon:"value"}.
 // Empty fields are considered optional and are excluded.
 // It returns EmptyObjectStr if both fields are empty
-func (m *MoveObject) String() string {
+func (m *MoverObject) String() string {
 	if m.ID != "" && m.Beacon != "" {
 		return fmt.Sprintf(`{%s: "%s" %s: "%s"}`, fldMoverID, m.ID, fldMoverBeacon, m.Beacon)
 	}

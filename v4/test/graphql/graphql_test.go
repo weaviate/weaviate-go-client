@@ -53,6 +53,41 @@ func TestGraphQL_integration(t *testing.T) {
 			assert.Equal(t, 4, len(pizza))
 		})
 
+		t.Run("by near text and movers", func(t *testing.T) {
+			concepts := []string{"pineapple slices", "ham"}
+			moveTo := &graphql.MoveParameters{
+				Force: 0.3,
+				Movers: []graphql.MoverObject{
+					{ID: "5b6a08ba-1d46-43aa-89cc-8b070790c6f1"},
+					{Beacon: "weaviate://localhost/5b6a08ba-1d46-43aa-89cc-8b070790c6f1"},
+				},
+			}
+			moveAwayFrom := &graphql.MoveParameters{
+				Force: 0.3,
+				Movers: []graphql.MoverObject{
+					{},
+					{ID: "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"},
+					{ID: "5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
+						Beacon: "weaviate://localhost/5b6a08ba-1d46-43aa-89cc-8b070790c6f2"},
+				},
+			}
+
+			withNearText := client.GraphQL().NearTextArgBuilder().
+				WithConcepts(concepts).
+				WithCertainty(0.71).
+				WithMoveTo(moveTo).
+				WithMoveAwayFrom(moveAwayFrom)
+
+			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").
+				WithFields(name).
+				WithNearText(withNearText).
+				Do(context.Background())
+
+			assert.Nil(t, gqlErr)
+			assert.NotNil(t, resultSet)
+			assert.Nil(t, resultSet.Errors)
+		})
+
 		t.Run("with where filter (string)", func(t *testing.T) {
 			where := filters.Where().
 				WithPath([]string{"name"}).
