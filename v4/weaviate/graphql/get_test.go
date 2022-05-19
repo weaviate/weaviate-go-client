@@ -153,6 +153,38 @@ func TestQueryBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
+	t.Run("NearText filter with movers", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection:           conMock,
+			includesFilterClause: false,
+		}
+
+		name := Field{Name: "name"}
+		nearText := &NearTextArgumentBuilder{
+			moveTo: &MoveParameters{
+				Concepts: []string{"c1"},
+				Force:    0.1,
+				Movers: []MoveObject{
+					{},
+					{ID: "I1"},
+					{Beacon: "B2"},
+					{ID: "I3", Beacon: "B3"},
+				},
+			},
+		}
+		nearText = nearText.WithConcepts([]string{"good"})
+		query := builder.WithClassName("Pizza").
+			WithFields(name).
+			WithNearText(nearText).
+			build()
+
+		expected := `{Get {Pizza (nearText:{concepts: ["good"] moveTo: {concepts: ["c1"] force: 0.1 objects: [{id: "I1"} {beacon: "B2"} {id: "I3" beacon: "B3"}]}}) {name}}}`
+		assert.Equal(t, expected, query)
+	})
+
+
 	t.Run("NearText filter with autocorrect", func(t *testing.T) {
 		conMock := &MockRunREST{}
 
