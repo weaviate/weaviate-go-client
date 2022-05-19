@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -11,7 +10,7 @@ type fldMover string
 
 const (
 	fldMoverConcepts fldMover = "concepts"
-	fLDMoverForce    fldMover = "force"
+	fldMoverForce    fldMover = "force"
 	fldMoverID       fldMover = "id"
 	fldMoverBeacon   fldMover = "beacon"
 	fldMoverObjects  fldMover = "objects"
@@ -23,12 +22,12 @@ type MoveParameters struct {
 	Concepts []string
 	// Force to be applied in the movement operation
 	Force float32
-	// Movers _
+	// Movers is a list of movers used to adjust the serach direction
 	Movers []MoverObject
 }
 
 func (m *MoveParameters) String() string {
-	concepts, _ := json.Marshal(m.Concepts)
+	concepts := marshalStrings(m.Concepts)
 	ms := make([]string, 0, len(m.Movers))
 	for _, m := range m.Movers {
 		if s := m.String(); s != EmptyObjectStr {
@@ -36,14 +35,14 @@ func (m *MoveParameters) String() string {
 		}
 	}
 	if len(ms) < 1 {
-		return fmt.Sprintf("{%s: %s %s: %v}", fldMoverConcepts, concepts, fLDMoverForce, m.Force)
+		return fmt.Sprintf("{%s: %s %s: %v}", fldMoverConcepts, concepts, fldMoverForce, m.Force)
 	}
 
 	s := "{"
 	if len(m.Concepts) > 0 {
 		s = fmt.Sprintf("{%s: %s", fldMoverConcepts, concepts)
 	}
-	return fmt.Sprintf("%s %s: %v %s: %v}", s, fLDMoverForce, m.Force, fldMoverObjects, ms)
+	return fmt.Sprintf("%s %s: %v %s: %v}", s, fldMoverForce, m.Force, fldMoverObjects, ms)
 }
 
 // MoverObject is the object the search is supposed to move close to (or further away from) it.
@@ -113,7 +112,8 @@ func (e *NearTextArgumentBuilder) WithAutocorrect(autocorrect bool) *NearTextArg
 // Build build the given clause
 func (e *NearTextArgumentBuilder) build() string {
 	clause := []string{}
-	concepts, _ := json.Marshal(e.concepts)
+	concepts := marshalStrings(e.concepts)
+
 	clause = append(clause, fmt.Sprintf("concepts: %s", concepts))
 	if e.withCertainty {
 		clause = append(clause, fmt.Sprintf("certainty: %v", e.certainty))
