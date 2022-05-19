@@ -150,3 +150,48 @@ func TestWhereBuilder_String(t *testing.T) {
 		})
 	}
 }
+
+func TestWhereBuilder_NestedOperands(t *testing.T) {
+	// given
+	expected := `where:{operator: And operands:[{operator: Equal path: ["member_id"] valueString: "will"},{operator: Equal path: ["is_banned"] valueBoolean: false},{operator: Or operands:[{operator: GreaterThanEqual path: ["certainty"] valueNumber: 0.5},{operator: Equal path: ["is_tagged"] valueBoolean: true},{operator: And operands:[{operator: Equal path: ["certainty"] valueNumber: -1},{operator: GreaterThanEqual path: ["parent_score"] valueNumber: 0.5}]}]}]}`
+	where := Where().
+		WithOperator(And).
+		WithOperands([]*WhereBuilder{
+			Where().
+				WithPath([]string{"member_id"}).
+				WithOperator(Equal).
+				WithValueString("will"),
+			Where().
+				WithPath([]string{"is_banned"}).
+				WithOperator(Equal).
+				WithValueBoolean(false),
+			Where().
+				WithOperator(Or).
+				WithOperands([]*WhereBuilder{
+					Where().
+						WithPath([]string{"certainty"}).
+						WithOperator(GreaterThanEqual).
+						WithValueNumber(0.5),
+					Where().
+						WithPath([]string{"is_tagged"}).
+						WithOperator(Equal).
+						WithValueBoolean(true),
+					Where().
+						WithOperator(And).
+						WithOperands([]*WhereBuilder{
+							Where().
+								WithPath([]string{"certainty"}).
+								WithOperator(Equal).
+								WithValueNumber(-1),
+							Where().
+								WithPath([]string{"parent_score"}).
+								WithOperator(GreaterThanEqual).
+								WithValueNumber(0.5),
+						}),
+				}),
+		})
+	// when
+	whereString := where.String()
+	// then
+	assert.Equal(t, expected, whereString)
+}
