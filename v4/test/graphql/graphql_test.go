@@ -57,14 +57,14 @@ func TestGraphQL_integration(t *testing.T) {
 			concepts := []string{"pineapple slices", "ham"}
 			moveTo := &graphql.MoveParameters{
 				Force: 0.3,
-				Movers: []graphql.MoverObject{
+				Objects: []graphql.MoverObject{
 					{ID: "5b6a08ba-1d46-43aa-89cc-8b070790c6f1"},
 					{Beacon: "weaviate://localhost/5b6a08ba-1d46-43aa-89cc-8b070790c6f1"},
 				},
 			}
 			moveAwayFrom := &graphql.MoveParameters{
 				Force: 0.3,
-				Movers: []graphql.MoverObject{
+				Objects: []graphql.MoverObject{
 					{},
 					{ID: "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"},
 					{ID: "5b6a08ba-1d46-43aa-89cc-8b070790c6f2",

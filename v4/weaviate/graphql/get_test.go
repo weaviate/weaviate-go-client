@@ -166,7 +166,7 @@ func TestQueryBuilder(t *testing.T) {
 			moveTo: &MoveParameters{
 				Concepts: []string{"c1"},
 				Force:    0.1,
-				Movers: []MoverObject{
+				Objects: []MoverObject{
 					{},
 					{ID: "I1"},
 					{Beacon: "B2"},

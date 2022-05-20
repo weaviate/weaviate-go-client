@@ -22,16 +22,16 @@ type MoveParameters struct {
 	Concepts []string
 	// Force to be applied in the movement operation
 	Force float32
-	// Movers is a list of movers used to adjust the serach direction
-	Movers []MoverObject
+	// Objects used to adjust the serach direction
+	Objects []MoverObject
 }
 
 func (m *MoveParameters) String() string {
 	concepts := marshalStrings(m.Concepts)
-	ms := make([]string, 0, len(m.Movers))
-	for _, m := range m.Movers {
+	ms := make([]string, 0, len(m.Objects))
+	for _, m := range m.Objects {
 		if s := m.String(); s != EmptyObjectStr {
-			ms = append(ms, m.String())
+			ms = append(ms, s)
 		}
 	}
 	if len(ms) < 1 {
@@ -51,7 +51,7 @@ type MoverObject struct {
 	Beacon string
 }
 
-//String returns string representation of m as {"id": "value" beacon:"value"}.
+// String returns string representation of m as {"id": "value" beacon:"value"}.
 // Empty fields are considered optional and are excluded.
 // It returns EmptyObjectStr if both fields are empty
 func (m *MoverObject) String() string {
