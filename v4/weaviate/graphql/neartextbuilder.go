@@ -1,10 +1,71 @@
 package graphql
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 )
+
+// fldMover is a type representing field names of a move sub query
+type fldMover string
+
+const (
+	fldMoverConcepts fldMover = "concepts"
+	fldMoverForce    fldMover = "force"
+	fldMoverID       fldMover = "id"
+	fldMoverBeacon   fldMover = "beacon"
+	fldMoverObjects  fldMover = "objects"
+)
+
+// MoveParameters to fine tune Explore queries
+type MoveParameters struct {
+	// Concepts that should be used as base for the movement operation
+	Concepts []string
+	// Force to be applied in the movement operation
+	Force float32
+	// Objects used to adjust the serach direction
+	Objects []MoverObject
+}
+
+func (m *MoveParameters) String() string {
+	concepts := marshalStrings(m.Concepts)
+	ms := make([]string, 0, len(m.Objects))
+	for _, m := range m.Objects {
+		if s := m.String(); s != EmptyObjectStr {
+			ms = append(ms, s)
+		}
+	}
+	if len(ms) < 1 {
+		return fmt.Sprintf("{%s: %s %s: %v}", fldMoverConcepts, concepts, fldMoverForce, m.Force)
+	}
+
+	s := "{"
+	if len(m.Concepts) > 0 {
+		s = fmt.Sprintf("{%s: %s", fldMoverConcepts, concepts)
+	}
+	return fmt.Sprintf("%s %s: %v %s: %v}", s, fldMoverForce, m.Force, fldMoverObjects, ms)
+}
+
+// MoverObject is the object the search is supposed to move close to (or further away from) it.
+type MoverObject struct {
+	ID     string
+	Beacon string
+}
+
+// String returns string representation of m as {"id": "value" beacon:"value"}.
+// Empty fields are considered optional and are excluded.
+// It returns EmptyObjectStr if both fields are empty
+func (m *MoverObject) String() string {
+	if m.ID != "" && m.Beacon != "" {
+		return fmt.Sprintf(`{%s: "%s" %s: "%s"}`, fldMoverID, m.ID, fldMoverBeacon, m.Beacon)
+	}
+	if m.ID != "" {
+		return fmt.Sprintf(`{%s: "%s"}`, fldMoverID, m.ID)
+	}
+	if m.Beacon != "" {
+		return fmt.Sprintf(`{%s: "%s"}`, fldMoverBeacon, m.Beacon)
+	}
+	return EmptyObjectStr
+}
 
 type NearTextArgumentBuilder struct {
 	concepts        []string
@@ -48,24 +109,20 @@ func (e *NearTextArgumentBuilder) WithAutocorrect(autocorrect bool) *NearTextArg
 	return e
 }
 
-func (e *NearTextArgumentBuilder) buildMoveParam(name string, param *MoveParameters) string {
-	moveToConcepts, _ := json.Marshal(param.Concepts)
-	return fmt.Sprintf("%s: {concepts: %v force: %v}", name, string(moveToConcepts), param.Force)
-}
-
 // Build build the given clause
 func (e *NearTextArgumentBuilder) build() string {
 	clause := []string{}
-	concepts, _ := json.Marshal(e.concepts)
-	clause = append(clause, fmt.Sprintf("concepts: %v", string(concepts)))
+	concepts := marshalStrings(e.concepts)
+
+	clause = append(clause, fmt.Sprintf("concepts: %s", concepts))
 	if e.withCertainty {
 		clause = append(clause, fmt.Sprintf("certainty: %v", e.certainty))
 	}
 	if e.moveTo != nil {
-		clause = append(clause, e.buildMoveParam("moveTo", e.moveTo))
+		clause = append(clause, fmt.Sprintf("moveTo: %s", e.moveTo))
 	}
 	if e.moveAwayFrom != nil {
-		clause = append(clause, e.buildMoveParam("moveAwayFrom", e.moveAwayFrom))
+		clause = append(clause, fmt.Sprintf("moveAwayFrom: %s", e.moveAwayFrom))
 	}
 	if e.withAutocorrect {
 		clause = append(clause, fmt.Sprintf("autocorrect: %v", e.autocorrect))
