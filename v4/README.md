@@ -2,7 +2,7 @@
 
 A go native client for weaviate.
 
-## Documentation
+## Usage
 
 In order to get the go client v4 issue this command:
 
@@ -10,16 +10,12 @@ In order to get the go client v4 issue this command:
 $ go get github.com/semi-technologies/weaviate-go-client/v4@v4.x.x
 ```
 
-where `4.x.x` is the desired go client v4 version, for example `v4.0.1`.
-
-## Example
-
-Here's a simple code to start up working with go client.
+where `v4.x.x` is the desired go client v4 version, for example `v4.1.0`
 
 Add dependency to your `go.mod`:
 
 ```go
-require github.com/semi-technologies/weaviate-go-client/v4 v4.0.1
+require github.com/semi-technologies/weaviate-go-client/v4 v4.1.0
 ```
 
 Connect to Weaviate on `localhost:8080` and fetch meta information
@@ -31,15 +27,15 @@ import (
   "context"
   "fmt"
 
-  clientv4 "github.com/semi-technologies/weaviate-go-client/v4/weaviate"
+  client "github.com/semi-technologies/weaviate-go-client/v4/weaviate"
 )
 
 func main() {
-  config := clientv4.Config{
+  config := client.Config{
     Scheme: "http",
     Host:   "localhost:8080",
   }
-  client := clientv4.New(config)
+  client := client.New(config)
   metaGetter := client.Misc().MetaGetter()
   meta, err := metaGetter.Do(context.Background())
   if err != nil {
@@ -52,6 +48,10 @@ func main() {
 }
 ```
 
+## Documentation
+
+- [Documentation](https://weaviate.io/developers/weaviate/current/client-libraries/go.html).
+
 ## Support
 
 - [Stackoverflow for questions](https://stackoverflow.com/questions/tagged/weaviate).
@@ -59,7 +59,7 @@ func main() {
 
 ## Contributing
 
-- [How to Contribute](https://github.com/semi-technologies/weaviate/blob/master/CONTRIBUTE.md).
+- [How to Contribute](https://github.com/semi-technologies/weaviate-go-client/blob/master/CONTRIBUTE.md).
 
 ## Build Status
 
