@@ -15,15 +15,22 @@ import (
 type ObjectsGetter struct {
 	connection           *connection.Connection
 	id                   string
+	className            string
 	additionalProperties []string
 	withLimit            bool
 	limit                int
 }
 
-// WithID specifies the uuid of the Thing that should be retrieved
-//  if omitted a set of objects matching the builder specifications will be retrieved
+// WithID specifies the uuid of the object that should be retrieved
+// if omitted a set of objects matching the builder specifications will be retrieved
 func (getter *ObjectsGetter) WithID(id string) *ObjectsGetter {
 	getter.id = id
+	return getter
+}
+
+// WithClassName specifies the class name of the object that should be retrieved
+func (getter *ObjectsGetter) WithClassName(className string) *ObjectsGetter {
+	getter.className = className
 	return getter
 }
 
@@ -48,29 +55,47 @@ func (getter *ObjectsGetter) WithLimit(limit int) *ObjectsGetter {
 
 // Do get the data object
 func (getter *ObjectsGetter) Do(ctx context.Context) ([]*models.Object, error) {
-	param := getAdditionalParams(getter.additionalProperties)
-	if getter.withLimit {
-		param += fmt.Sprintf("?limit=%v", getter.limit)
-	}
-	responseData, err := getObjectList(ctx, "/objects", getter.id, param, getter.connection)
+	responseData, err := getter.objectList(ctx)
 	if err != nil {
 		return nil, err
 	}
+
 	if responseData.StatusCode != 200 {
 		return nil, except.NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
 	}
+
 	if getter.id == "" {
 		var objects models.ObjectsListResponse
 		decodeErr := responseData.DecodeBodyIntoTarget(&objects)
 		return objects.Objects, decodeErr
 	}
+
 	var object models.Object
 	decodeErr := responseData.DecodeBodyIntoTarget(&object)
 	return []*models.Object{&object}, decodeErr
 }
 
-// getAdditionalParams build the query URL parameters for the requested underscore properties
-func getAdditionalParams(additionalProperties []string) string {
+func (getter *ObjectsGetter) objectList(ctx context.Context) (*connection.ResponseData, error) {
+	responseData, err := getter.connection.RunREST(ctx, getter.buildPath(), http.MethodGet, nil)
+	if err != nil {
+		return responseData, except.NewDerivedWeaviateClientError(err)
+	}
+	return responseData, err
+}
+
+func (getter *ObjectsGetter) buildPath() string {
+	basePath := buildObjectsPath(getter.id, getter.className)
+
+	params := buildAdditionalParams(getter.additionalProperties)
+	if getter.withLimit {
+		params += fmt.Sprintf("?limit=%v", getter.limit)
+	}
+
+	return fmt.Sprintf("%s%v", basePath, params)
+}
+
+// buildAdditionalParams build the query URL parameters for the requested underscore properties
+func buildAdditionalParams(additionalProperties []string) string {
 	selectedProperties := make([]string, 0)
 
 	for _, additional := range additionalProperties {
@@ -83,19 +108,4 @@ func getAdditionalParams(additionalProperties []string) string {
 	}
 
 	return params
-}
-
-func getObjectList(ctx context.Context, basePath string, id string, urlParameters string, con *connection.Connection) (*connection.ResponseData, error) {
-	path := basePath
-	if id != "" {
-		path += fmt.Sprintf("/%v/%v", id, urlParameters)
-	} else {
-		path += fmt.Sprintf("%v", urlParameters)
-	}
-
-	responseData, err := con.RunREST(ctx, path, http.MethodGet, nil)
-	if err != nil {
-		return responseData, except.NewDerivedWeaviateClientError(err)
-	}
-	return responseData, err
 }

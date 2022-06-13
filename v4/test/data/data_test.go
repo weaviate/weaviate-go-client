@@ -248,6 +248,21 @@ func TestData_integration(t *testing.T) {
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
+	t.Run("GET /objects/{className}/{id}", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		testsuit.CreateTestSchemaAndData(t, client)
+
+		resp, err := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
+			WithID("5b6a08ba-1d46-43aa-89cc-8b070790c6f2").
+			Do(context.Background())
+		assert.Nil(t, err)
+		assert.Len(t, resp, 1)
+		assert.Equal(t, "Doener", resp[0].Properties.(map[string]interface{})["name"])
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
 	t.Run("DELETE /{type}", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
