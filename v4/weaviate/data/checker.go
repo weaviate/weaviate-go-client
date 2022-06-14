@@ -2,7 +2,6 @@ package data
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
@@ -12,18 +11,25 @@ import (
 // Checker builder to check data object's existence
 type Checker struct {
 	connection *connection.Connection
-	uuid       string
+	id         string
+	className  string
 }
 
-// WithID specifies the uuid of an data object to be checked
-func (checker *Checker) WithID(uuid string) *Checker {
-	checker.uuid = uuid
+// WithID specifies the id of an data object to be checked
+func (checker *Checker) WithID(id string) *Checker {
+	checker.id = id
+	return checker
+}
+
+// WithClassName specifies the class name of the object to be checked
+func (checker *Checker) WithClassName(className string) *Checker {
+	checker.className = className
 	return checker
 }
 
 // Do check the specified data object if it exists in weaviate
 func (checker *Checker) Do(ctx context.Context) (bool, error) {
-	path := fmt.Sprintf("/objects/%v", checker.uuid)
+	path := buildObjectsPath(checker.id, checker.className)
 	responseData, err := checker.connection.RunREST(ctx, path, http.MethodHead, nil)
 	exists := responseData.StatusCode == 204
 	return exists, except.CheckResponseDataErrorAndStatusCode(responseData, err, 204, 404)

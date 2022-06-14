@@ -383,6 +383,20 @@ func TestData_integration(t *testing.T) {
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
+	t.Run("HEAD /objects/{className}/{id}", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		testsuit.CreateTestSchemaAndData(t, client)
+
+		exists, err := client.Data().Checker().
+			WithClassName("Pizza").
+			WithID("5b6a08ba-1d46-43aa-89cc-8b070790c6f2").
+			Do(context.Background())
+		assert.Nil(t, err)
+		assert.True(t, exists)
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
 	t.Run("PUT /{type}/{id}", func(t *testing.T) {
 		// PUT replaces the object fully
 		client := testsuit.CreateTestClient()
