@@ -451,6 +451,34 @@ func TestData_integration(t *testing.T) {
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
+	t.Run("PUT /objects/{className}/{id}", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		testsuit.CreateTestSchemaAndData(t, client)
+
+		id := "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"
+		props := map[string]interface{}{
+			"name":        "Margherita",
+			"description": "Invented in honor of the Queen of Italy, Margherita of Savoy",
+			"price":       5.12,
+		}
+
+		err := client.Data().Updater().
+			WithClassName("Pizza").
+			WithID(id).
+			WithProperties(props).
+			Do(context.Background())
+		assert.Nil(t, err)
+
+		resp, err := client.Data().ObjectsGetter().
+			WithID(id).
+			Do(context.Background())
+		assert.Nil(t, err)
+		assert.Len(t, resp, 1)
+		assert.EqualValues(t, props, resp[0].Properties)
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
 	t.Run("PATCH(merge) /{type}/{id}", func(t *testing.T) {
 		// PATCH merges the new object with the existing object
 		client := testsuit.CreateTestClient()
@@ -515,6 +543,38 @@ func TestData_integration(t *testing.T) {
 		valuesA := actions[0].Properties.(map[string]interface{})
 		assert.Equal(t, propertySchemaA["description"], valuesA["description"])
 		assert.Equal(t, "ChickenSoup", valuesA["name"])
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
+	t.Run("PATCH /objects/{className}/{id}", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		testsuit.CreateTestSchemaAndData(t, client)
+
+		id := "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"
+		inputProps := map[string]interface{}{
+			"description": "Kebap, in pizza form",
+		}
+		expectedProps := map[string]interface{}{
+			"name":        "Doener",
+			"description": "Kebap, in pizza form",
+			"price":       1.4,
+		}
+
+		err := client.Data().Updater().
+			WithClassName("Pizza").
+			WithID(id).
+			WithProperties(inputProps).
+			WithMerge().
+			Do(context.Background())
+		assert.Nil(t, err)
+
+		resp, err := client.Data().ObjectsGetter().
+			WithID(id).
+			Do(context.Background())
+		assert.Nil(t, err)
+		assert.Len(t, resp, 1)
+		assert.EqualValues(t, expectedProps, resp[0].Properties)
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
