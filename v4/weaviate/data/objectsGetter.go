@@ -81,15 +81,17 @@ func (getter *ObjectsGetter) objectList(ctx context.Context) (*connection.Respon
 	if err != nil {
 		return responseData, except.NewDerivedWeaviateClientError(err)
 	}
-	return responseData, err
+	return responseData, nil
 }
 
 func (getter *ObjectsGetter) buildPath() string {
 	basePath := buildObjectsPath(getter.id, getter.className, getter.version)
 
 	params := buildAdditionalParams(getter.additionalProperties)
-	if getter.withLimit {
-		params += fmt.Sprintf("?limit=%v", getter.limit)
+	if getter.withLimit && len(params) > 0 {
+		params += fmt.Sprintf("&limit=%v", getter.limit)
+	} else if getter.withLimit {
+		params = fmt.Sprintf("?limit=%v", getter.limit)
 	}
 
 	return fmt.Sprintf("%s%v", basePath, params)

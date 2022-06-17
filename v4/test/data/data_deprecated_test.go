@@ -144,7 +144,7 @@ func TestData_integration_deprecated(t *testing.T) {
 		assert.Nil(t, objErrT)
 		assert.Equal(t, 4, len(objectT))
 
-		objectT2, objectErrT2 := client.Data().ObjectsGetter().WithLimit(1).Do(context.Background())
+		objectT2, objectErrT2 := client.Data().ObjectsGetter().WithAdditional("vector").WithLimit(1).Do(context.Background())
 		assert.Nil(t, objectErrT2)
 		assert.Equal(t, 1, len(objectT2))
 		objectA2, objErrA2 := client.Data().ObjectsGetter().WithLimit(1).Do(context.Background())
