@@ -26,6 +26,22 @@ func SetupLocalWeaviate() error {
 	return WaitForWeaviate()
 }
 
+// SetupLocalWeaviateDeprecated creates a local weaviate running on 8080 using docker compose
+// for pre-v1.14 backwards compatibility tests.
+// Will only wait for it to be reachable if env `EXTERNAL_WEAVIATE_RUNNING` is set to True.
+//   `EXTERNAL_WEAVIATE_RUNNING` should be set if all tests are supposed to be run in a test suit.
+//   This prevents unnecessary starting and stopping of the docker-compose which prevents errors
+//   due to syncing issues and speeds up the process
+func SetupLocalWeaviateDeprecated() error {
+	if !isExternalWeaviateRunning() {
+		err := test.SetupWeavaiteDeprecated()
+		if err != nil {
+			return err
+		}
+	}
+	return WaitForWeaviate()
+}
+
 func isExternalWeaviateRunning() bool {
 	val := os.Getenv("EXTERNAL_WEAVIATE_RUNNING")
 	val = strings.ToLower(val)
@@ -65,6 +81,19 @@ func TearDownLocalWeaviate() error {
 		return nil
 	}
 	err := test.TearDownWeavaite()
+	time.Sleep(time.Second * 3) // Add some delay to make sure the command was executed before the program exits
+	return err
+}
+
+// TearDownLocalWeaviateDeprecated shuts down the locally started weaviate docker compose
+// used for pre-v1.14 backwards compatibility tests.
+// If `EXTERNAL_WEAVIATE_RUNNING` this function will not do anything
+//   see SetupLocalWeaviate for more info.
+func TearDownLocalWeaviateDeprecated() error {
+	if isExternalWeaviateRunning() {
+		return nil
+	}
+	err := test.TearDownWeavaiteDeprecated()
 	time.Sleep(time.Second * 3) // Add some delay to make sure the command was executed before the program exits
 	return err
 }

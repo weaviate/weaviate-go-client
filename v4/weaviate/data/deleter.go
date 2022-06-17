@@ -13,6 +13,7 @@ type Deleter struct {
 	connection *connection.Connection
 	id         string
 	className  string
+	version    string
 }
 
 // WithID specifies the uuid of the object about to be deleted
@@ -29,7 +30,7 @@ func (deleter *Deleter) WithClassName(className string) *Deleter {
 
 // Do delete the specified data object from weaviate
 func (deleter *Deleter) Do(ctx context.Context) error {
-	path := buildObjectsPath(deleter.id, deleter.className)
+	path := buildObjectsPath(deleter.id, deleter.className, deleter.version)
 	responseData, err := deleter.connection.RunREST(ctx, path, http.MethodDelete, nil)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 204)
 }

@@ -25,6 +25,32 @@ func TearDownWeavaite() error {
 	return command(app, arguments)
 }
 
+// SetupWeavaiteDeprecated run docker compose up
+// for pre-v1.14 backwards compatibility tests
+func SetupWeavaiteDeprecated() error {
+	app := "docker-compose"
+	arguments := []string{
+		"-f",
+		"docker-compose-deprecated-api-test.yml",
+		"up",
+		"-d",
+	}
+	return command(app, arguments)
+}
+
+// TearDownWeavaiteDeprecated run docker-compose down
+// for pre-v1.14 backwards compatibility tests
+func TearDownWeavaiteDeprecated() error {
+	app := "docker-compose"
+	arguments := []string{
+		"-f",
+		"docker-compose-deprecated-api-test.yml",
+		"down",
+		"--remove-orphans",
+	}
+	return command(app, arguments)
+}
+
 func command(app string, arguments []string) error {
 	mydir, err := os.Getwd()
 	if err != nil {

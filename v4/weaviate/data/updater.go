@@ -17,6 +17,7 @@ type Updater struct {
 	className      string
 	propertySchema models.PropertySchema
 	withMerge      bool
+	version        string
 }
 
 // WithID specifies the uuid of the object about to be  updated
@@ -45,7 +46,7 @@ func (updater *Updater) WithMerge() *Updater {
 
 // Do update the data object specified in the builder
 func (updater *Updater) Do(ctx context.Context) error {
-	path := buildObjectsPath(updater.id, updater.className)
+	path := buildObjectsPath(updater.id, updater.className, updater.className)
 	httpMethod := http.MethodPut
 	expectedStatuscode := 200
 	if updater.withMerge {

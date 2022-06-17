@@ -19,6 +19,7 @@ type ObjectsGetter struct {
 	additionalProperties []string
 	withLimit            bool
 	limit                int
+	version              string
 }
 
 // WithID specifies the uuid of the object that should be retrieved
@@ -84,7 +85,7 @@ func (getter *ObjectsGetter) objectList(ctx context.Context) (*connection.Respon
 }
 
 func (getter *ObjectsGetter) buildPath() string {
-	basePath := buildObjectsPath(getter.id, getter.className)
+	basePath := buildObjectsPath(getter.id, getter.className, getter.version)
 
 	params := buildAdditionalParams(getter.additionalProperties)
 	if getter.withLimit {

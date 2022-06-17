@@ -7,17 +7,19 @@ import (
 // API Contains all the builders required to access the weaviate data API
 type API struct {
 	connection *connection.Connection
+	version    string
 }
 
 // New {semanticKind} api group from connection
-func New(con *connection.Connection) *API {
-	return &API{connection: con}
+func New(con *connection.Connection, version string) *API {
+	return &API{connection: con, version: version}
 }
 
 // Creator get a builder to create a data object
 func (data *API) Creator() *Creator {
 	return &Creator{
 		connection: data.connection,
+		version:    data.version,
 	}
 }
 
@@ -26,6 +28,7 @@ func (data *API) ObjectsGetter() *ObjectsGetter {
 	return &ObjectsGetter{
 		connection:           data.connection,
 		additionalProperties: []string{},
+		version:              data.version,
 	}
 }
 
@@ -33,6 +36,7 @@ func (data *API) ObjectsGetter() *ObjectsGetter {
 func (data *API) Deleter() *Deleter {
 	return &Deleter{
 		connection: data.connection,
+		version:    data.version,
 	}
 }
 
@@ -41,6 +45,7 @@ func (data *API) Updater() *Updater {
 	return &Updater{
 		connection: data.connection,
 		withMerge:  false,
+		version:    data.version,
 	}
 }
 
@@ -55,6 +60,7 @@ func (data *API) Validator() *Validator {
 func (data *API) Checker() *Checker {
 	return &Checker{
 		connection: data.connection,
+		version:    data.version,
 	}
 }
 

@@ -1,6 +1,7 @@
 package weaviate
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/batch"
@@ -41,6 +42,7 @@ type Client struct {
 	c11y            *contextionary.API
 	classifications *classifications.API
 	graphQL         *graphql.API
+	version         string
 }
 
 // New client from config
@@ -51,16 +53,22 @@ type Client struct {
 func New(config Config) *Client {
 	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient)
 
-	return &Client{
+	client := &Client{
 		connection:      con,
 		misc:            misc.New(con),
 		schema:          schema.New(con),
-		data:            data.New(con),
 		batch:           batch.New(con),
 		c11y:            contextionary.New(con),
 		classifications: classifications.New(con),
 		graphQL:         graphql.New(con),
 	}
+
+	// some endpoints now require a className namespace.
+	// to determine if this new convention is to be used,
+	// we must check the weaviate server version
+	client.getWeaviateVersion()
+	client.data = data.New(con, client.version)
+	return client
 }
 
 // Misc collection group for .well_known and root level API commands
@@ -96,4 +104,11 @@ func (c *Client) Classifications() *classifications.API {
 // GraphQL API group
 func (c *Client) GraphQL() *graphql.API {
 	return c.graphQL
+}
+
+func (c *Client) getWeaviateVersion() {
+	meta, err := c.misc.MetaGetter().Do(context.Background())
+	if err == nil {
+		c.version = meta.Version
+	}
 }
