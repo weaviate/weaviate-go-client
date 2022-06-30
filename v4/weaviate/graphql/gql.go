@@ -9,7 +9,7 @@ import (
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
-// API group for GrapQL
+// API group for GraphQL
 type API struct {
 	connection *connection.Connection
 }
