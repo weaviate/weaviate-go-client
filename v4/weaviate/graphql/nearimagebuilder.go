@@ -13,6 +13,8 @@ type NearImageArgumentBuilder struct {
 	fileReader    io.Reader
 	withCertainty bool
 	certainty     float32
+	withDistance  bool
+	distance      float32
 }
 
 // WithImage base64 encoded image
@@ -31,6 +33,13 @@ func (b *NearImageArgumentBuilder) WithReader(fileReader io.Reader) *NearImageAr
 func (b *NearImageArgumentBuilder) WithCertainty(certainty float32) *NearImageArgumentBuilder {
 	b.withCertainty = true
 	b.certainty = certainty
+	return b
+}
+
+// WithDistance that is minimally required for an object to be included in the result set
+func (b *NearImageArgumentBuilder) WithDistance(distance float32) *NearImageArgumentBuilder {
+	b.withDistance = true
+	b.distance = distance
 	return b
 }
 
@@ -58,6 +67,9 @@ func (b *NearImageArgumentBuilder) build() string {
 	}
 	if b.withCertainty {
 		clause = append(clause, fmt.Sprintf("certainty: %v", b.certainty))
+	}
+	if b.withDistance {
+		clause = append(clause, fmt.Sprintf("distance: %v", b.distance))
 	}
 	return fmt.Sprintf("nearImage:{%s}", strings.Join(clause, " "))
 }
