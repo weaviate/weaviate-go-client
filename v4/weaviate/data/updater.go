@@ -7,17 +7,18 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // Updater builder to update property values in a data object
 type Updater struct {
-	connection     *connection.Connection
-	id             string
-	className      string
-	propertySchema models.PropertySchema
-	withMerge      bool
-	version        string
+	connection       *connection.Connection
+	id               string
+	className        string
+	propertySchema   models.PropertySchema
+	withMerge        bool
+	dbVersionSupport *util.DBVersionSupport
 }
 
 // WithID specifies the uuid of the object about to be  updated
@@ -46,7 +47,7 @@ func (updater *Updater) WithMerge() *Updater {
 
 // Do update the data object specified in the builder
 func (updater *Updater) Do(ctx context.Context) error {
-	path := buildObjectsPath(updater.id, updater.className, updater.className)
+	path := buildObjectsUpdatePath(updater.id, updater.className, updater.dbVersionSupport)
 	httpMethod := http.MethodPut
 	expectedStatuscode := 200
 	if updater.withMerge {

@@ -2,17 +2,19 @@ package batch
 
 import (
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // API for batch requests
 type API struct {
 	connection *connection.Connection
+	version    string
 }
 
 // New Batch api group from connection
-func New(con *connection.Connection) *API {
-	return &API{connection: con}
+func New(con *connection.Connection, version string) *API {
+	return &API{connection: con, version: version}
 }
 
 // ObjectsBatcher get a builder to create objects in a batch
@@ -33,6 +35,7 @@ func (batch *API) ObjectsBatchDeleter() *ObjectsBatchDeleter {
 func (batch *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 	return &ReferencePayloadBuilder{
 		connection: batch.connection,
+		dbVersion:  util.NewDBVersionSupport(batch.version),
 	}
 }
 

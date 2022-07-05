@@ -57,7 +57,6 @@ func New(config Config) *Client {
 		connection:      con,
 		misc:            misc.New(con),
 		schema:          schema.New(con),
-		batch:           batch.New(con),
 		c11y:            contextionary.New(con),
 		classifications: classifications.New(con),
 		graphQL:         graphql.New(con),
@@ -68,6 +67,7 @@ func New(config Config) *Client {
 	// we must check the weaviate server version
 	client.getWeaviateVersion()
 	client.data = data.New(con, client.version)
+	client.batch = batch.New(con, client.version)
 	return client
 }
 

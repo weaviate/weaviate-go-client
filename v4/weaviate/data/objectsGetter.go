@@ -8,6 +8,7 @@ import (
 
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
@@ -19,7 +20,7 @@ type ObjectsGetter struct {
 	additionalProperties []string
 	withLimit            bool
 	limit                int
-	version              string
+	dbVersionSupport     *util.DBVersionSupport
 }
 
 // WithID specifies the uuid of the object that should be retrieved
@@ -85,7 +86,7 @@ func (getter *ObjectsGetter) objectList(ctx context.Context) (*connection.Respon
 }
 
 func (getter *ObjectsGetter) buildPath() string {
-	basePath := buildObjectsPath(getter.id, getter.className, getter.version)
+	basePath := buildObjectsGetPath(getter.id, getter.className, getter.dbVersionSupport)
 
 	params := buildAdditionalParams(getter.additionalProperties)
 	if getter.withLimit && len(params) > 0 {
