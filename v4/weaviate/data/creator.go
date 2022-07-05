@@ -22,6 +22,7 @@ type Creator struct {
 	uuid           string
 	vector         []float32
 	propertySchema models.PropertySchema
+	version        string
 }
 
 // WithClassName indicates what class the data object is associated with
@@ -53,7 +54,8 @@ func (creator *Creator) Do(ctx context.Context) (*ObjectWrapper, error) {
 	var err error
 	var responseData *connection.ResponseData
 	object, _ := creator.PayloadObject()
-	responseData, err = creator.connection.RunREST(ctx, "/objects", http.MethodPost, object)
+	path := buildObjectsPath("", creator.className, creator.version)
+	responseData, err = creator.connection.RunREST(ctx, path, http.MethodPost, object)
 	respErr := except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)
 	if respErr != nil {
 		return nil, respErr

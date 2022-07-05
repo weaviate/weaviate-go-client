@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestData_integration(t *testing.T) {
+func TestData_integration_deprecated(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
-		err := testenv.SetupLocalWeaviate()
+		err := testenv.SetupLocalWeaviateDeprecated()
 		if err != nil {
 			fmt.Printf(err.Error())
 			t.Fail()
@@ -144,7 +144,7 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, objErrT)
 		assert.Equal(t, 4, len(objectT))
 
-		objectT2, objectErrT2 := client.Data().ObjectsGetter().WithLimit(1).Do(context.Background())
+		objectT2, objectErrT2 := client.Data().ObjectsGetter().WithAdditional("vector").WithLimit(1).Do(context.Background())
 		assert.Nil(t, objectErrT2)
 		assert.Equal(t, 1, len(objectT2))
 		objectA2, objErrA2 := client.Data().ObjectsGetter().WithLimit(1).Do(context.Background())
@@ -248,21 +248,6 @@ func TestData_integration(t *testing.T) {
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
-	t.Run("GET /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		testsuit.CreateTestSchemaAndData(t, client)
-
-		resp, err := client.Data().ObjectsGetter().
-			WithClassName("Pizza").
-			WithID("5b6a08ba-1d46-43aa-89cc-8b070790c6f2").
-			Do(context.Background())
-		assert.Nil(t, err)
-		assert.Len(t, resp, 1)
-		assert.Equal(t, "Doener", resp[0].Properties.(map[string]interface{})["name"])
-
-		testsuit.CleanUpWeaviate(t, client)
-	})
-
 	t.Run("DELETE /{type}", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
@@ -308,19 +293,6 @@ func TestData_integration(t *testing.T) {
 			Do(context.Background())
 		statusCodeErrorA := getErrA.(*fault.WeaviateClientError)
 		assert.Equal(t, 404, statusCodeErrorA.StatusCode)
-
-		testsuit.CleanUpWeaviate(t, client)
-	})
-
-	t.Run("DELETE /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		testsuit.CreateTestSchemaAndData(t, client)
-
-		err := client.Data().Deleter().
-			WithClassName("Pizza").
-			WithID("5b6a08ba-1d46-43aa-89cc-8b070790c6f2").
-			Do(context.Background())
-		assert.Nil(t, err)
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
@@ -379,20 +351,6 @@ func TestData_integration(t *testing.T) {
 			Do(context.Background())
 		statusCodeErrorT = getErrT.(*fault.WeaviateClientError)
 		assert.Equal(t, 404, statusCodeErrorT.StatusCode)
-
-		testsuit.CleanUpWeaviate(t, client)
-	})
-
-	t.Run("HEAD /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		testsuit.CreateTestSchemaAndData(t, client)
-
-		exists, err := client.Data().Checker().
-			WithClassName("Pizza").
-			WithID("5b6a08ba-1d46-43aa-89cc-8b070790c6f2").
-			Do(context.Background())
-		assert.Nil(t, err)
-		assert.True(t, exists)
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
@@ -465,34 +423,6 @@ func TestData_integration(t *testing.T) {
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
-	t.Run("PUT /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		testsuit.CreateTestSchemaAndData(t, client)
-
-		id := "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"
-		props := map[string]interface{}{
-			"name":        "Margherita",
-			"description": "Invented in honor of the Queen of Italy, Margherita of Savoy",
-			"price":       5.12,
-		}
-
-		err := client.Data().Updater().
-			WithClassName("Pizza").
-			WithID(id).
-			WithProperties(props).
-			Do(context.Background())
-		assert.Nil(t, err)
-
-		resp, err := client.Data().ObjectsGetter().
-			WithID(id).
-			Do(context.Background())
-		assert.Nil(t, err)
-		assert.Len(t, resp, 1)
-		assert.EqualValues(t, props, resp[0].Properties)
-
-		testsuit.CleanUpWeaviate(t, client)
-	})
-
 	t.Run("PATCH(merge) /{type}/{id}", func(t *testing.T) {
 		// PATCH merges the new object with the existing object
 		client := testsuit.CreateTestClient()
@@ -561,38 +491,6 @@ func TestData_integration(t *testing.T) {
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
-	t.Run("PATCH /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		testsuit.CreateTestSchemaAndData(t, client)
-
-		id := "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"
-		inputProps := map[string]interface{}{
-			"description": "Kebap, in pizza form",
-		}
-		expectedProps := map[string]interface{}{
-			"name":        "Doener",
-			"description": "Kebap, in pizza form",
-			"price":       1.4,
-		}
-
-		err := client.Data().Updater().
-			WithClassName("Pizza").
-			WithID(id).
-			WithProperties(inputProps).
-			WithMerge().
-			Do(context.Background())
-		assert.Nil(t, err)
-
-		resp, err := client.Data().ObjectsGetter().
-			WithID(id).
-			Do(context.Background())
-		assert.Nil(t, err)
-		assert.Len(t, resp, 1)
-		assert.EqualValues(t, expectedProps, resp[0].Properties)
-
-		testsuit.CleanUpWeaviate(t, client)
-	})
-
 	t.Run("POST /{type}/validate", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
@@ -641,7 +539,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
-		err := testenv.TearDownLocalWeaviate()
+		err := testenv.TearDownLocalWeaviateDeprecated()
 		if err != nil {
 			fmt.Printf(err.Error())
 			t.Fail()

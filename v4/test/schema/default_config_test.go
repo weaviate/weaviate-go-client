@@ -44,4 +44,5 @@ var defaultVectorIndexConfig = map[string]interface{}{
 	"dynamicEfMax":           float64(500),
 	"dynamicEfMin":           float64(100),
 	"flatSearchCutoff":       float64(40000),
+	"distance":               "cosine",
 }

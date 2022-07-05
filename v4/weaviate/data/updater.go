@@ -2,7 +2,6 @@ package data
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/go-openapi/strfmt"
@@ -14,15 +13,16 @@ import (
 // Updater builder to update property values in a data object
 type Updater struct {
 	connection     *connection.Connection
-	uuid           string
+	id             string
 	className      string
 	propertySchema models.PropertySchema
 	withMerge      bool
+	version        string
 }
 
 // WithID specifies the uuid of the object about to be  updated
 func (updater *Updater) WithID(uuid string) *Updater {
-	updater.uuid = uuid
+	updater.id = uuid
 	return updater
 }
 
@@ -46,7 +46,7 @@ func (updater *Updater) WithMerge() *Updater {
 
 // Do update the data object specified in the builder
 func (updater *Updater) Do(ctx context.Context) error {
-	path := fmt.Sprintf("/objects/%v", updater.uuid)
+	path := buildObjectsPath(updater.id, updater.className, updater.className)
 	httpMethod := http.MethodPut
 	expectedStatuscode := 200
 	if updater.withMerge {
@@ -60,7 +60,7 @@ func (updater *Updater) Do(ctx context.Context) error {
 func (updater *Updater) runUpdate(ctx context.Context, path string, httpMethod string) (*connection.ResponseData, error) {
 	object := models.Object{
 		Class:      updater.className,
-		ID:         strfmt.UUID(updater.uuid),
+		ID:         strfmt.UUID(updater.id),
 		Properties: updater.propertySchema,
 	}
 	return updater.connection.RunREST(ctx, path, httpMethod, object)

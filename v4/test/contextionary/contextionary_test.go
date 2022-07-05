@@ -2,7 +2,6 @@ package contextionary
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
@@ -11,12 +10,10 @@ import (
 )
 
 func TestContextionary_integration(t *testing.T) {
-
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
-			t.Fail()
+			t.Fatal(err.Error())
 		}
 	})
 
@@ -25,8 +22,10 @@ func TestContextionary_integration(t *testing.T) {
 
 		concepts, err := client.C11y().ConceptsGetter().WithConcept("pizzaHawaii").Do(context.Background())
 		assert.Nil(t, err)
-		assert.NotNil(t, concepts.ConcatenatedWord)
-		assert.NotNil(t, concepts.IndividualWords)
+		if assert.NotNil(t, concepts) {
+			assert.NotNil(t, concepts.ConcatenatedWord)
+			assert.NotNil(t, concepts.IndividualWords)
+		}
 	})
 
 	t.Run("POST /modules/text2vec-contextionary/extensions", func(t *testing.T) {
@@ -42,8 +41,7 @@ func TestContextionary_integration(t *testing.T) {
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
-			t.Fail()
+			t.Fatal(err.Error())
 		}
 	})
 }
