@@ -51,10 +51,12 @@ func TestData_integration(t *testing.T) {
 		assert.NotNil(t, wrapperA.Object)
 
 		objectT, objErrT := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
 			WithID("abefd256-8574-442b-9293-9205193737ee").
 			Do(context.Background())
 		assert.Nil(t, objErrT)
 		objectA, objErrA := client.Data().ObjectsGetter().
+			WithClassName("Soup").
 			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
 			Do(context.Background())
 		assert.Nil(t, objErrA)
@@ -100,6 +102,7 @@ func TestData_integration(t *testing.T) {
 		assert.NotNil(t, wrapper.Object)
 
 		object, objErr := client.Data().ObjectsGetter().
+			WithClassName("Donut").
 			WithID("66411b32-5c3e-11ec-bf63-0242ac130002").
 			WithAdditional("vector").
 			Do(context.Background())
@@ -178,6 +181,7 @@ func TestData_integration(t *testing.T) {
 
 		// THINGS
 		objectT, objErrT := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
 			WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, objErrT)
 		assert.Nil(t, objectT[0].Additional["classification"])
@@ -187,6 +191,7 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, objectT[0].Additional["interpretation"])
 
 		objectT, objErrT = client.Data().ObjectsGetter().
+			WithClassName("Pizza").
 			WithID("abefd256-8574-442b-9293-9205193737ee").
 			WithAdditional("interpretation").Do(context.Background())
 		assert.Nil(t, objErrT)
@@ -197,6 +202,7 @@ func TestData_integration(t *testing.T) {
 		assert.NotNil(t, objectT[0].Additional["interpretation"])
 
 		objectT, objErrT = client.Data().ObjectsGetter().
+			WithClassName("Pizza").
 			WithID("abefd256-8574-442b-9293-9205193737ee").
 			WithAdditional("interpretation").
 			WithAdditional("classification").
@@ -212,6 +218,7 @@ func TestData_integration(t *testing.T) {
 
 		// ACTIONS
 		objectA, objErrA := client.Data().ObjectsGetter().
+			WithClassName("Soup").
 			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
 		assert.Nil(t, objErrA)
 		assert.Nil(t, objectA[0].Additional["classification"])
@@ -221,6 +228,7 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, objectA[0].Additional["interpretation"])
 
 		objectA, objErrA = client.Data().ObjectsGetter().
+			WithClassName("Soup").
 			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
 			WithAdditional("interpretation").Do(context.Background())
 		assert.Nil(t, objErrA)
@@ -231,6 +239,7 @@ func TestData_integration(t *testing.T) {
 		assert.NotNil(t, objectA[0].Additional["interpretation"])
 
 		objectA, objErrA = client.Data().ObjectsGetter().
+			WithClassName("Soup").
 			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
 			WithAdditional("interpretation").
 			WithAdditional("classification").
@@ -290,20 +299,24 @@ func TestData_integration(t *testing.T) {
 
 		// THINGS
 		deleteErrT := client.Data().Deleter().
+			WithClassName("Pizza").
 			WithID("abefd256-8574-442b-9293-9205193737ee").
 			Do(context.Background())
 		assert.Nil(t, deleteErrT)
 		_, getErrT := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
 			WithID("abefd256-8574-442b-9293-9205193737ee").
 			Do(context.Background())
 		statusCodeErrorT := getErrT.(*fault.WeaviateClientError)
 		assert.Equal(t, 404, statusCodeErrorT.StatusCode)
 
 		deleteErrA := client.Data().Deleter().
+			WithClassName("Soup").
 			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
 			Do(context.Background())
 		assert.Nil(t, deleteErrA)
 		_, getErrA := client.Data().ObjectsGetter().
+			WithClassName("Soup").
 			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
 			Do(context.Background())
 		statusCodeErrorA := getErrA.(*fault.WeaviateClientError)
@@ -344,12 +357,14 @@ func TestData_integration(t *testing.T) {
 
 		// Check object which exists
 		exists, checkErrT := client.Data().Checker().
+			WithClassName("Pizza").
 			WithID(objTID).
 			Do(context.Background())
 		assert.Nil(t, checkErrT)
 		assert.True(t, exists)
 		// Double check that it actually exists in DB
 		objT, afterCheckErrT := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
 			WithID(objTID).
 			Do(context.Background())
 		assert.NotNil(t, objT)
@@ -357,11 +372,13 @@ func TestData_integration(t *testing.T) {
 
 		// Delete object
 		deleteErrT := client.Data().Deleter().
+			WithClassName("Pizza").
 			WithID(objTID).
 			Do(context.Background())
 		assert.Nil(t, deleteErrT)
 		// Verify that the object has been actually deleted
 		_, getErrT := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
 			WithID(objTID).
 			Do(context.Background())
 		statusCodeErrorT := getErrT.(*fault.WeaviateClientError)
@@ -369,12 +386,14 @@ func TestData_integration(t *testing.T) {
 
 		// Check object which doesn't exist
 		exists, checkErrT = client.Data().Checker().
+			WithClassName("Pizza").
 			WithID(objTID).
 			Do(context.Background())
 		assert.Nil(t, checkErrT)
 		assert.False(t, exists)
 		// Double check that it really doesn't exits in DB
 		_, getErrT = client.Data().ObjectsGetter().
+			WithClassName("Pizza").
 			WithID(objTID).
 			Do(context.Background())
 		statusCodeErrorT = getErrT.(*fault.WeaviateClientError)
@@ -447,6 +466,7 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, updateErrA)
 
 		things, getErrT := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
 			WithID("abefd256-8574-442b-9293-9205193737ee").
 			Do(context.Background())
 		assert.Nil(t, getErrT)
@@ -455,6 +475,7 @@ func TestData_integration(t *testing.T) {
 		assert.Equal(t, propertySchemaT["name"], valuesT["name"])
 
 		actions, getErrT := client.Data().ObjectsGetter().
+			WithClassName("Soup").
 			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
 			Do(context.Background())
 		assert.Nil(t, getErrT)
@@ -484,6 +505,7 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, err)
 
 		resp, err := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
 			WithID(id).
 			Do(context.Background())
 		assert.Nil(t, err)
@@ -543,6 +565,7 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, updateErrA)
 
 		things, getErrT := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
 			WithID("abefd256-8574-442b-9293-9205193737ee").
 			Do(context.Background())
 		assert.Nil(t, getErrT)
@@ -551,6 +574,7 @@ func TestData_integration(t *testing.T) {
 		assert.Equal(t, "Hawaii", valuesT["name"])
 
 		actions, getErrT := client.Data().ObjectsGetter().
+			WithClassName("Soup").
 			WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").
 			Do(context.Background())
 		assert.Nil(t, getErrT)
@@ -584,6 +608,7 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, err)
 
 		resp, err := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
 			WithID(id).
 			Do(context.Background())
 		assert.Nil(t, err)

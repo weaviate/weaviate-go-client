@@ -34,7 +34,7 @@ func SetupLocalWeaviate() error {
 //   due to syncing issues and speeds up the process
 func SetupLocalWeaviateDeprecated() error {
 	if !isExternalWeaviateRunning() {
-		err := test.SetupWeavaiteDeprecated()
+		err := test.SetupWeaviateDeprecated()
 		if err != nil {
 			return err
 		}
@@ -93,7 +93,7 @@ func TearDownLocalWeaviateDeprecated() error {
 	if isExternalWeaviateRunning() {
 		return nil
 	}
-	err := test.TearDownWeavaiteDeprecated()
+	err := test.TearDownWeaviateDeprecated()
 	time.Sleep(time.Second * 3) // Add some delay to make sure the command was executed before the program exits
 	return err
 }

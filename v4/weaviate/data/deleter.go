@@ -6,14 +6,15 @@ import (
 
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
 )
 
 // Deleter builder to delete a data object
 type Deleter struct {
-	connection *connection.Connection
-	id         string
-	className  string
-	version    string
+	connection       *connection.Connection
+	id               string
+	className        string
+	dbVersionSupport *util.DBVersionSupport
 }
 
 // WithID specifies the uuid of the object about to be deleted
@@ -30,7 +31,7 @@ func (deleter *Deleter) WithClassName(className string) *Deleter {
 
 // Do delete the specified data object from weaviate
 func (deleter *Deleter) Do(ctx context.Context) error {
-	path := buildObjectsPath(deleter.id, deleter.className, deleter.version)
+	path := buildObjectsDeletePath(deleter.id, deleter.className, deleter.dbVersionSupport)
 	responseData, err := deleter.connection.RunREST(ctx, path, http.MethodDelete, nil)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 204)
 }

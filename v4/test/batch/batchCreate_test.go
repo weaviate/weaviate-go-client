@@ -61,16 +61,16 @@ func TestBatchCreate_integration(t *testing.T) {
 		assert.NotNil(t, batchResultA)
 		assert.Equal(t, 2, len(batchResultA))
 
-		objectT1, objErrT1 := client.Data().ObjectsGetter().WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
+		objectT1, objErrT1 := client.Data().ObjectsGetter().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, objErrT1)
 		assert.NotNil(t, objectT1)
-		objectT2, objErrT2 := client.Data().ObjectsGetter().WithID("97fa5147-bdad-4d74-9a81-f8babc811b09").Do(context.Background())
+		objectT2, objErrT2 := client.Data().ObjectsGetter().WithClassName("Pizza").WithID("97fa5147-bdad-4d74-9a81-f8babc811b09").Do(context.Background())
 		assert.Nil(t, objErrT2)
 		assert.NotNil(t, objectT2)
-		objectA1, objErrA1 := client.Data().ObjectsGetter().WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
+		objectA1, objErrA1 := client.Data().ObjectsGetter().WithClassName("Soup").WithID("565da3b6-60b3-40e5-ba21-e6bfe5dbba91").Do(context.Background())
 		assert.Nil(t, objErrA1)
 		assert.NotNil(t, objectA1)
-		objectA2, objErrA2 := client.Data().ObjectsGetter().WithID("07473b34-0ab2-4120-882d-303d9e13f7af").Do(context.Background())
+		objectA2, objErrA2 := client.Data().ObjectsGetter().WithClassName("Soup").WithID("07473b34-0ab2-4120-882d-303d9e13f7af").Do(context.Background())
 		assert.Nil(t, objErrA2)
 		assert.NotNil(t, objectA2)
 
@@ -108,39 +108,46 @@ func TestBatchCreate_integration(t *testing.T) {
 		// Define references
 		refTtoA := &models.BatchReference{
 			From: "weaviate://localhost/Pizza/97fa5147-bdad-4d74-9a81-f8babc811b09/otherFoods",
-			To:   "weaviate://localhost/07473b34-0ab2-4120-882d-303d9e13f7af",
+			To:   "weaviate://localhost/Soup/07473b34-0ab2-4120-882d-303d9e13f7af",
 		}
-		refTtoT := client.Batch().ReferencePayloadBuilder().WithFromClassName("Pizza").WithFromRefProp("otherFoods").WithFromID("97fa5147-bdad-4d74-9a81-f8babc811b09").WithToID("97fa5147-bdad-4d74-9a81-f8babc811b09").Payload()
+		refTtoT := client.Batch().ReferencePayloadBuilder().
+			WithFromClassName("Pizza").WithFromRefProp("otherFoods").WithFromID("97fa5147-bdad-4d74-9a81-f8babc811b09").
+			WithToClassName("Pizza").WithToID("97fa5147-bdad-4d74-9a81-f8babc811b09").Payload()
 
 		refAtoT := &models.BatchReference{
 			From: "weaviate://localhost/Soup/07473b34-0ab2-4120-882d-303d9e13f7af/otherFoods",
-			To:   "weaviate://localhost/97fa5147-bdad-4d74-9a81-f8babc811b09",
+			To:   "weaviate://localhost/Pizza/97fa5147-bdad-4d74-9a81-f8babc811b09",
 		}
-		refAtoA := client.Batch().ReferencePayloadBuilder().WithFromClassName("Soup").WithFromRefProp("otherFoods").WithFromID("07473b34-0ab2-4120-882d-303d9e13f7af").WithToID("07473b34-0ab2-4120-882d-303d9e13f7af").Payload()
+		refAtoA := client.Batch().ReferencePayloadBuilder().
+			WithFromClassName("Soup").WithFromRefProp("otherFoods").WithFromID("07473b34-0ab2-4120-882d-303d9e13f7af").
+			WithToClassName("Soup").WithToID("07473b34-0ab2-4120-882d-303d9e13f7af").Payload()
 
 		// Add references in batch
-		referenceBatchResult, err := client.Batch().ReferencesBatcher().WithReference(refTtoA).WithReference(refTtoT).WithReference(refAtoT).WithReference(refAtoA).Do(context.Background())
+		referenceBatchResult, err := client.Batch().ReferencesBatcher().
+			WithReference(refTtoA).WithReference(refTtoT).WithReference(refAtoT).WithReference(refAtoA).Do(context.Background())
 		assert.Nil(t, err)
 		assert.NotNil(t, referenceBatchResult)
 
 		// Assert
-		objectT, objErrT := client.Data().ObjectsGetter().WithID("97fa5147-bdad-4d74-9a81-f8babc811b09").Do(context.Background())
+		objectT, objErrT := client.Data().ObjectsGetter().
+			WithClassName("Pizza").WithID("97fa5147-bdad-4d74-9a81-f8babc811b09").Do(context.Background())
 		assert.Nil(t, objErrT)
 		valuesT := objectT[0].Properties.(map[string]interface{})
 		referencesT := testsuit.ParseReferenceResponseToStruct(t, valuesT["otherFoods"])
 		assert.Equal(t, 2, len(referencesT))
 		beaconsT := []string{string(referencesT[0].Beacon), string(referencesT[1].Beacon)}
-		assert.Contains(t, beaconsT, "weaviate://localhost/07473b34-0ab2-4120-882d-303d9e13f7af")
-		assert.Contains(t, beaconsT, "weaviate://localhost/97fa5147-bdad-4d74-9a81-f8babc811b09")
+		assert.Contains(t, beaconsT, "weaviate://localhost/Soup/07473b34-0ab2-4120-882d-303d9e13f7af")
+		assert.Contains(t, beaconsT, "weaviate://localhost/Pizza/97fa5147-bdad-4d74-9a81-f8babc811b09")
 
-		objectA, objErrA := client.Data().ObjectsGetter().WithID("07473b34-0ab2-4120-882d-303d9e13f7af").Do(context.Background())
+		objectA, objErrA := client.Data().ObjectsGetter().
+			WithClassName("Soup").WithID("07473b34-0ab2-4120-882d-303d9e13f7af").Do(context.Background())
 		assert.Nil(t, objErrA)
 		valuesA := objectA[0].Properties.(map[string]interface{})
 		referencesA := testsuit.ParseReferenceResponseToStruct(t, valuesA["otherFoods"])
 		assert.Equal(t, 2, len(referencesA))
 		beaconsA := []string{string(referencesA[0].Beacon), string(referencesA[1].Beacon)}
-		assert.Contains(t, beaconsA, "weaviate://localhost/07473b34-0ab2-4120-882d-303d9e13f7af")
-		assert.Contains(t, beaconsA, "weaviate://localhost/97fa5147-bdad-4d74-9a81-f8babc811b09")
+		assert.Contains(t, beaconsA, "weaviate://localhost/Soup/07473b34-0ab2-4120-882d-303d9e13f7af")
+		assert.Contains(t, beaconsA, "weaviate://localhost/Pizza/97fa5147-bdad-4d74-9a81-f8babc811b09")
 
 		testsuit.CleanUpWeaviate(t, client)
 	})

@@ -2,20 +2,28 @@ package data
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 // ReferenceReplacer builder to replace reference(s) with new one(s)
 type ReferenceReplacer struct {
 	connection        *connection.Connection
+	className         string
 	uuid              string
 	referenceProperty string
 	referencePayload  *models.MultipleRef
+	dbVersionSupport  *util.DBVersionSupport
+}
+
+// WithClassName specifies the class name of the object about to get its reference replaced
+func (rr *ReferenceReplacer) WithClassName(className string) *ReferenceReplacer {
+	rr.className = className
+	return rr
 }
 
 // WithID specifies the uuid of the object about to get its reference replaced
@@ -38,7 +46,7 @@ func (rr *ReferenceReplacer) WithReferences(referencePayload *models.MultipleRef
 
 // Do replace the references of the in this builder specified data object
 func (rr *ReferenceReplacer) Do(ctx context.Context) error {
-	path := fmt.Sprintf("/objects/%v/references/%v", rr.uuid, rr.referenceProperty)
+	path := buildReferencesPath(rr.uuid, rr.className, rr.referenceProperty, rr.dbVersionSupport)
 	responseData, responseErr := rr.connection.RunREST(ctx, path, http.MethodPut, *rr.referencePayload)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 }

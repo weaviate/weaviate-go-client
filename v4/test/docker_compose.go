@@ -25,9 +25,9 @@ func TearDownWeavaite() error {
 	return command(app, arguments)
 }
 
-// SetupWeavaiteDeprecated run docker compose up
+// SetupWeaviateDeprecated run docker compose up
 // for pre-v1.14 backwards compatibility tests
-func SetupWeavaiteDeprecated() error {
+func SetupWeaviateDeprecated() error {
 	app := "docker-compose"
 	arguments := []string{
 		"-f",
@@ -38,9 +38,9 @@ func SetupWeavaiteDeprecated() error {
 	return command(app, arguments)
 }
 
-// TearDownWeavaiteDeprecated run docker-compose down
+// TearDownWeaviateDeprecated run docker-compose down
 // for pre-v1.14 backwards compatibility tests
-func TearDownWeavaiteDeprecated() error {
+func TearDownWeaviateDeprecated() error {
 	app := "docker-compose"
 	arguments := []string{
 		"-f",

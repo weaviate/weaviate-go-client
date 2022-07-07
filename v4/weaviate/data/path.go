@@ -1,15 +1,38 @@
 package data
 
 import (
+	"fmt"
 	"path"
-	"strconv"
-	"strings"
+
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
 )
 
-func buildObjectsPath(id, className, version string) string {
+func buildObjectsGetPath(id, className string, dbVersion *util.DBVersionSupport) string {
+	return buildObjectsPath(id, className, dbVersion, "get")
+}
+
+func buildObjectsDeletePath(id, className string, dbVersion *util.DBVersionSupport) string {
+	return buildObjectsPath(id, className, dbVersion, "delete")
+}
+
+func buildObjectsCheckPath(id, className string, dbVersion *util.DBVersionSupport) string {
+	return buildObjectsPath(id, className, dbVersion, "check")
+}
+
+func buildObjectsUpdatePath(id, className string, dbVersion *util.DBVersionSupport) string {
+	return buildObjectsPath(id, className, dbVersion, "update")
+}
+
+func buildObjectsPath(id, className string, dbVersion *util.DBVersionSupport, action string) string {
 	p := "/objects"
-	if supportsClassNameNamespacedEndpoints(version) && className != "" {
-		p = path.Join(p, className)
+	if dbVersion.SupportsClassNameNamespacedEndpoints() {
+		if len(className) > 0 {
+			p = path.Join(p, className)
+		} else {
+			dbVersion.WarnDeprecatedNonClassNameNamespacedEndpointsForObjects()
+		}
+	} else if len(className) > 0 && action != "update" {
+		dbVersion.WarnUsageOfNotSupportedClassNamespacedEndpointsForObjects()
 	}
 	if id != "" {
 		p = path.Join(p, id)
@@ -17,21 +40,15 @@ func buildObjectsPath(id, className, version string) string {
 	return p
 }
 
-func supportsClassNameNamespacedEndpoints(version string) bool {
-	versionNumbers := strings.Split(version, ".")
-	if len(versionNumbers) < 3 {
-		return false
+func buildReferencesPath(id, className, referenceProperty string, dbVersion *util.DBVersionSupport) string {
+	if dbVersion.SupportsClassNameNamespacedEndpoints() {
+		if len(className) > 0 {
+			return fmt.Sprintf("/objects/%v/%v/references/%v", className, id, referenceProperty)
+		} else {
+			dbVersion.WarnDeprecatedNonClassNameNamespacedEndpointsForReferences()
+		}
+	} else if len(className) > 0 {
+		dbVersion.WarnUsageOfNotSupportedClassNamespacedEndpointsForReferences()
 	}
-
-	major, err := strconv.Atoi(versionNumbers[0])
-	if err != nil {
-		return false
-	}
-
-	minor, err := strconv.Atoi(versionNumbers[1])
-	if err != nil {
-		return false
-	}
-
-	return major >= 1 && minor >= 14
+	return fmt.Sprintf("/objects/%v/references/%v", id, referenceProperty)
 }
