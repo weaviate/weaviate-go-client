@@ -25,16 +25,16 @@ func buildObjectsUpdatePath(id, className string, dbVersion *util.DBVersionSuppo
 
 func buildObjectsPath(id, className string, dbVersion *util.DBVersionSupport, action string) string {
 	p := "/objects"
-	if dbVersion.SupportsClassNameNamespacedEndpoints() {
-		if len(className) > 0 {
-			p = path.Join(p, className)
-		} else {
-			dbVersion.WarnDeprecatedNonClassNameNamespacedEndpointsForObjects()
+	if len(id) > 0 {
+		if dbVersion.SupportsClassNameNamespacedEndpoints() {
+			if len(className) > 0 {
+				p = path.Join(p, className)
+			} else {
+				dbVersion.WarnDeprecatedNonClassNameNamespacedEndpointsForObjects()
+			}
+		} else if len(className) > 0 && action != "update" {
+			dbVersion.WarnUsageOfNotSupportedClassNamespacedEndpointsForObjects()
 		}
-	} else if len(className) > 0 && action != "update" {
-		dbVersion.WarnUsageOfNotSupportedClassNamespacedEndpointsForObjects()
-	}
-	if id != "" {
 		p = path.Join(p, id)
 	}
 	return p
