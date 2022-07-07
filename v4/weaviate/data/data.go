@@ -7,13 +7,13 @@ import (
 
 // API Contains all the builders required to access the weaviate data API
 type API struct {
-	connection *connection.Connection
-	version    string
+	connection       *connection.Connection
+	dbVersionSupport *util.DBVersionSupport
 }
 
 // New {semanticKind} api group from connection
-func New(con *connection.Connection, version string) *API {
-	return &API{connection: con, version: version}
+func New(con *connection.Connection, dbVersionSupport *util.DBVersionSupport) *API {
+	return &API{connection: con, dbVersionSupport: dbVersionSupport}
 }
 
 // Creator get a builder to create a data object
@@ -28,7 +28,7 @@ func (data *API) ObjectsGetter() *ObjectsGetter {
 	return &ObjectsGetter{
 		connection:           data.connection,
 		additionalProperties: []string{},
-		dbVersionSupport:     util.NewDBVersionSupport(data.version),
+		dbVersionSupport:     data.dbVersionSupport,
 	}
 }
 
@@ -36,7 +36,7 @@ func (data *API) ObjectsGetter() *ObjectsGetter {
 func (data *API) Deleter() *Deleter {
 	return &Deleter{
 		connection:       data.connection,
-		dbVersionSupport: util.NewDBVersionSupport(data.version),
+		dbVersionSupport: data.dbVersionSupport,
 	}
 }
 
@@ -45,7 +45,7 @@ func (data *API) Updater() *Updater {
 	return &Updater{
 		connection:       data.connection,
 		withMerge:        false,
-		dbVersionSupport: util.NewDBVersionSupport(data.version),
+		dbVersionSupport: data.dbVersionSupport,
 	}
 }
 
@@ -60,7 +60,7 @@ func (data *API) Validator() *Validator {
 func (data *API) Checker() *Checker {
 	return &Checker{
 		connection:       data.connection,
-		dbVersionSupport: util.NewDBVersionSupport(data.version),
+		dbVersionSupport: data.dbVersionSupport,
 	}
 }
 
@@ -68,7 +68,7 @@ func (data *API) Checker() *Checker {
 func (data *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 	return &ReferencePayloadBuilder{
 		connection:       data.connection,
-		dbVersionSupport: util.NewDBVersionSupport(data.version),
+		dbVersionSupport: data.dbVersionSupport,
 	}
 }
 
@@ -76,7 +76,7 @@ func (data *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 func (data *API) ReferenceCreator() *ReferenceCreator {
 	return &ReferenceCreator{
 		connection:       data.connection,
-		dbVersionSupport: util.NewDBVersionSupport(data.version),
+		dbVersionSupport: data.dbVersionSupport,
 	}
 }
 
@@ -84,7 +84,7 @@ func (data *API) ReferenceCreator() *ReferenceCreator {
 func (data *API) ReferenceReplacer() *ReferenceReplacer {
 	return &ReferenceReplacer{
 		connection:       data.connection,
-		dbVersionSupport: util.NewDBVersionSupport(data.version),
+		dbVersionSupport: data.dbVersionSupport,
 	}
 }
 
@@ -92,6 +92,6 @@ func (data *API) ReferenceReplacer() *ReferenceReplacer {
 func (data *API) ReferenceDeleter() *ReferenceDeleter {
 	return &ReferenceDeleter{
 		connection:       data.connection,
-		dbVersionSupport: util.NewDBVersionSupport(data.version),
+		dbVersionSupport: data.dbVersionSupport,
 	}
 }
