@@ -51,15 +51,22 @@ func TestBatchCreate_integration(t *testing.T) {
 				"description": "Putting the game of letter soups to a whole new level.",
 			},
 		}
+		classASlice := []*models.Object{classA1,classA2}
 
 		batchResultT, batchErrT := client.Batch().ObjectsBatcher().WithObject(classT1).WithObject(classT2).Do(context.Background())
 		assert.Nil(t, batchErrT)
 		assert.NotNil(t, batchResultT)
 		assert.Equal(t, 2, len(batchResultT))
-		batchResultA, batchErrA := client.Batch().ObjectsBatcher().WithObject(classA1).WithObject(classA2).Do(context.Background())
+		batchResultA, batchErrA := client.Batch().ObjectsBatcher().WithObjects(classA1,classA2).Do(context.Background())
 		assert.Nil(t, batchErrA)
 		assert.NotNil(t, batchResultA)
 		assert.Equal(t, 2, len(batchResultA))
+
+		batchResultSlice, batchErrSlice := client.Batch().ObjectsBatcher().WithObjects(classASlice...).Do(context.Background())
+		assert.Nil(t, batchErrSlice)
+		assert.NotNil(t, batchResultSlice)
+		assert.Equal(t, 2, len(batchResultSlice))
+
 
 		objectT1, objErrT1 := client.Data().ObjectsGetter().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, objErrT1)
@@ -124,7 +131,7 @@ func TestBatchCreate_integration(t *testing.T) {
 
 		// Add references in batch
 		referenceBatchResult, err := client.Batch().ReferencesBatcher().
-			WithReference(refTtoA).WithReference(refTtoT).WithReference(refAtoT).WithReference(refAtoA).Do(context.Background())
+			WithReference(refTtoA).WithReference(refTtoT).WithReferences(refAtoT, refAtoA).Do(context.Background())
 		assert.Nil(t, err)
 		assert.NotNil(t, referenceBatchResult)
 
