@@ -7,6 +7,9 @@ import (
 )
 
 func Test_buildReferencesPath(t *testing.T) {
+	newDBVersionSupportForTests := func(version string) *util.DBVersionSupport {
+		return util.NewDBVersionSupport(newDBVersionProviderMock(version))
+	}
 	type args struct {
 		id                string
 		className         string
@@ -23,7 +26,7 @@ func Test_buildReferencesPath(t *testing.T) {
 			args: args{
 				id:                "some-uuid",
 				referenceProperty: "ref-prop",
-				version:           util.NewDBVersionSupport("1.13.2"),
+				version:           newDBVersionSupportForTests("1.13.2"),
 			},
 			want: "/objects/some-uuid/references/ref-prop",
 		},
@@ -32,7 +35,7 @@ func Test_buildReferencesPath(t *testing.T) {
 			args: args{
 				id:                "some-uuid",
 				referenceProperty: "ref-prop",
-				version:           util.NewDBVersionSupport("1.14.0"),
+				version:           newDBVersionSupportForTests("1.14.0"),
 			},
 			want: "/objects/some-uuid/references/ref-prop",
 		},
@@ -42,7 +45,7 @@ func Test_buildReferencesPath(t *testing.T) {
 				id:                "some-uuid",
 				className:         "class-name",
 				referenceProperty: "ref-prop",
-				version:           util.NewDBVersionSupport("1.13.2"),
+				version:           newDBVersionSupportForTests("1.13.2"),
 			},
 			want: "/objects/some-uuid/references/ref-prop",
 		},
@@ -52,7 +55,7 @@ func Test_buildReferencesPath(t *testing.T) {
 				id:                "some-uuid",
 				className:         "class-name",
 				referenceProperty: "ref-prop",
-				version:           util.NewDBVersionSupport("1.14.0"),
+				version:           newDBVersionSupportForTests("1.14.0"),
 			},
 			want: "/objects/class-name/some-uuid/references/ref-prop",
 		},
@@ -64,4 +67,16 @@ func Test_buildReferencesPath(t *testing.T) {
 			}
 		})
 	}
+}
+
+type dbVersionProviderMock struct {
+	version string
+}
+
+func (s *dbVersionProviderMock) Version() string {
+	return s.version
+}
+
+func newDBVersionProviderMock(version string) *dbVersionProviderMock {
+	return &dbVersionProviderMock{version}
 }

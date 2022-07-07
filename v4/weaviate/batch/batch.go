@@ -8,13 +8,13 @@ import (
 
 // API for batch requests
 type API struct {
-	connection *connection.Connection
-	version    string
+	connection       *connection.Connection
+	dbVersionSupport *util.DBVersionSupport
 }
 
 // New Batch api group from connection
-func New(con *connection.Connection, version string) *API {
-	return &API{connection: con, version: version}
+func New(con *connection.Connection, dbVersionSupport *util.DBVersionSupport) *API {
+	return &API{connection: con, dbVersionSupport: dbVersionSupport}
 }
 
 // ObjectsBatcher get a builder to create objects in a batch
@@ -35,7 +35,7 @@ func (batch *API) ObjectsBatchDeleter() *ObjectsBatchDeleter {
 func (batch *API) ReferencePayloadBuilder() *ReferencePayloadBuilder {
 	return &ReferencePayloadBuilder{
 		connection: batch.connection,
-		dbVersion:  util.NewDBVersionSupport(batch.version),
+		dbVersion:  batch.dbVersionSupport,
 	}
 }
 

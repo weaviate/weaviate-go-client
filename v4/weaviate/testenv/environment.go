@@ -18,7 +18,7 @@ import (
 //   due to syncing issues and speeds up the process
 func SetupLocalWeaviate() error {
 	if !isExternalWeaviateRunning() {
-		err := test.SetupWeavaite()
+		err := test.SetupWeaviate()
 		if err != nil {
 			return err
 		}
@@ -80,7 +80,7 @@ func TearDownLocalWeaviate() error {
 	if isExternalWeaviateRunning() {
 		return nil
 	}
-	err := test.TearDownWeavaite()
+	err := test.TearDownWeaviate()
 	time.Sleep(time.Second * 3) // Add some delay to make sure the command was executed before the program exits
 	return err
 }

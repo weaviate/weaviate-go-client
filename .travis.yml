@@ -55,12 +55,11 @@ jobs:
     - stage: "Test v4"
       go: "1.16"
       env:
-        - EXTERNAL_WEAVIATE_RUNNING="true"
+        - EXTERNAL_WEAVIATE_RUNNING="false"
       before_install:
         - cd ./v4
         - go get -v ./...
       script:
-        - docker-compose -f test/docker-compose.yaml up -d
         - echo "Unit tests"
         - go test -v ./weaviate/...
         - echo "Integration tests"

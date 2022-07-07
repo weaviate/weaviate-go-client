@@ -183,7 +183,7 @@ func TestData_reference_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
-		err := testenv.TearDownLocalWeaviate()
+		err := testenv.TearDownLocalWeaviateDeprecated()
 		if err != nil {
 			fmt.Printf(err.Error())
 			t.Fail()

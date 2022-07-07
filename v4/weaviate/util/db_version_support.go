@@ -6,16 +6,20 @@ import (
 	"strings"
 )
 
-type DBVersionSupport struct {
-	version string
+type VersionProvider interface {
+	Version() string
 }
 
-func NewDBVersionSupport(version string) *DBVersionSupport {
-	return &DBVersionSupport{version}
+type DBVersionSupport struct {
+	dbVersionProvider VersionProvider
+}
+
+func NewDBVersionSupport(dbVersionProvider VersionProvider) *DBVersionSupport {
+	return &DBVersionSupport{dbVersionProvider}
 }
 
 func (s *DBVersionSupport) SupportsClassNameNamespacedEndpoints() bool {
-	versionNumbers := strings.Split(s.version, ".")
+	versionNumbers := strings.Split(s.dbVersionProvider.Version(), ".")
 	if len(versionNumbers) < 3 {
 		return false
 	}
@@ -35,35 +39,35 @@ func (s *DBVersionSupport) SupportsClassNameNamespacedEndpoints() bool {
 
 func (s *DBVersionSupport) WarnDeprecatedNonClassNameNamespacedEndpointsForObjects() {
 	fmt.Printf("WARNING: Usage of objects paths without className is deprecated in Weaviate %s."+
-		" Please provide className parameter\n", s.version)
+		" Please provide className parameter\n", s.dbVersionProvider.Version())
 }
 
 func (s *DBVersionSupport) WarnDeprecatedNonClassNameNamespacedEndpointsForReferences() {
 	fmt.Printf("WARNING: Usage of references paths without className is deprecated in Weaviate %s."+
-		" Please provide className parameter\n", s.version)
+		" Please provide className parameter\n", s.dbVersionProvider.Version())
 }
 
 func (s *DBVersionSupport) WarnDeprecatedNonClassNameNamespacedEndpointsForBeacons() {
 	fmt.Printf("WARNING: Usage of beacon paths without className is deprecated in Weaviate %s."+
-		" Please provide className parameter\n", s.version)
+		" Please provide className parameter\n", s.dbVersionProvider.Version())
 }
 
 func (s *DBVersionSupport) WarnUsageOfNotSupportedClassNamespacedEndpointsForObjects() {
 	fmt.Printf("WARNING: Usage of objects paths with className is not supported in Weaviate %s."+
-		" className parameter is ignored\n", s.version)
+		" className parameter is ignored\n", s.dbVersionProvider.Version())
 }
 
 func (s *DBVersionSupport) WarnUsageOfNotSupportedClassNamespacedEndpointsForReferences() {
 	fmt.Printf("WARNING: Usage of references paths with className is not supported in Weaviate %s."+
-		" className parameter is ignored\n", s.version)
+		" className parameter is ignored\n", s.dbVersionProvider.Version())
 }
 
 func (s *DBVersionSupport) WarnUsageOfNotSupportedClassNamespacedEndpointsForBeacons() {
 	fmt.Printf("WARNING: Usage of beacons paths with className is not supported in Weaviate %s."+
-		" className parameter is ignored\n", s.version)
+		" className parameter is ignored\n", s.dbVersionProvider.Version())
 }
 
 func (s *DBVersionSupport) WarnNotSupportedClassParameterInEndpointsForObjects() {
 	fmt.Printf("WARNING: Usage of objects paths with class query parameter is not supported in Weaviate %s."+
-		" class query parameter is ignored\n", s.version)
+		" class query parameter is ignored\n", s.dbVersionProvider.Version())
 }

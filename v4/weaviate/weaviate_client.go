@@ -12,6 +12,7 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/misc"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/schema"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
 )
 
 // Config of the client endpoint
@@ -34,15 +35,17 @@ type Config struct {
 // The client uses the original data models as provided by weaviate itself.
 // All these models are provided in the sub module "github.com/semi-technologies/weaviate/entities/models"
 type Client struct {
-	connection      *connection.Connection
-	misc            *misc.API
-	schema          *schema.API
-	data            *data.API
-	batch           *batch.API
-	c11y            *contextionary.API
-	classifications *classifications.API
-	graphQL         *graphql.API
-	version         string
+	connection        *connection.Connection
+	misc              *misc.API
+	schema            *schema.API
+	data              *data.API
+	batch             *batch.API
+	c11y              *contextionary.API
+	classifications   *classifications.API
+	graphQL           *graphql.API
+	version           string
+	dbVersionProvider *util.DBVersionProvider
+	dbVersionSupport  *util.DBVersionSupport
 }
 
 // New client from config
@@ -53,21 +56,31 @@ type Client struct {
 func New(config Config) *Client {
 	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient)
 
+	// some endpoints now require a className namespace.
+	// to determine if this new convention is to be used,
+	// we must check the weaviate server version
+	getVersionFn := func() string {
+		meta, err := misc.New(con, nil).MetaGetter().Do(context.Background())
+		if err == nil {
+			return meta.Version
+		}
+		return ""
+	}
+
+	dbVersionProvider := util.NewDBVersionProvider(getVersionFn)
+	dbVersionSupport := util.NewDBVersionSupport(dbVersionProvider)
+
 	client := &Client{
 		connection:      con,
-		misc:            misc.New(con),
+		misc:            misc.New(con, dbVersionProvider),
 		schema:          schema.New(con),
 		c11y:            contextionary.New(con),
 		classifications: classifications.New(con),
 		graphQL:         graphql.New(con),
+		data:            data.New(con, dbVersionSupport),
+		batch:           batch.New(con, dbVersionSupport),
 	}
 
-	// some endpoints now require a className namespace.
-	// to determine if this new convention is to be used,
-	// we must check the weaviate server version
-	client.getWeaviateVersion()
-	client.data = data.New(con, client.version)
-	client.batch = batch.New(con, client.version)
 	return client
 }
 
@@ -104,11 +117,4 @@ func (c *Client) Classifications() *classifications.API {
 // GraphQL API group
 func (c *Client) GraphQL() *graphql.API {
 	return c.graphQL
-}
-
-func (c *Client) getWeaviateVersion() {
-	meta, err := c.misc.MetaGetter().Do(context.Background())
-	if err == nil {
-		c.version = meta.Version
-	}
 }
