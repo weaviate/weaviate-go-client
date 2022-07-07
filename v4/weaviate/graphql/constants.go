@@ -7,6 +7,9 @@ const (
 	// Certainty includes the certainty that a data object is related to the query concept
 	Certainty ExploreFields = "certainty"
 
+	// Distance includes the distance that a data object is related to the query concept
+	Distance ExploreFields = "distance"
+
 	// Beacon includes the beacon to the found objects
 	Beacon ExploreFields = "beacon"
 

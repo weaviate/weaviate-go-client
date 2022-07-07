@@ -11,6 +11,8 @@ type AskArgumentBuilder struct {
 	properties      []string
 	withCertainty   bool
 	certainty       float32
+	withDistance    bool
+	distance        float32
 	withAutocorrect bool
 	autocorrect     bool
 	withRerank      bool
@@ -29,10 +31,17 @@ func (e *AskArgumentBuilder) WithProperties(properties []string) *AskArgumentBui
 	return e
 }
 
-// WithCertainty that specifies how accurate the answer should be
+// WithCertainty specifies how accurate the answer should be
 func (e *AskArgumentBuilder) WithCertainty(certainty float32) *AskArgumentBuilder {
 	e.withCertainty = true
 	e.certainty = certainty
+	return e
+}
+
+// WithDistance specifies how accurate the answer should be
+func (e *AskArgumentBuilder) WithDistance(distance float32) *AskArgumentBuilder {
+	e.withDistance = true
+	e.distance = distance
 	return e
 }
 
@@ -62,6 +71,9 @@ func (e *AskArgumentBuilder) build() string {
 	}
 	if e.withCertainty {
 		clause = append(clause, fmt.Sprintf("certainty: %v", e.certainty))
+	}
+	if e.withDistance {
+		clause = append(clause, fmt.Sprintf("distance: %v", e.distance))
 	}
 	if e.withAutocorrect {
 		clause = append(clause, fmt.Sprintf("autocorrect: %v", e.autocorrect))

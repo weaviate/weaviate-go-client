@@ -71,6 +71,8 @@ type NearTextArgumentBuilder struct {
 	concepts        []string
 	withCertainty   bool
 	certainty       float32
+	withDistance    bool
+	distance        float32
 	moveTo          *MoveParameters
 	moveAwayFrom    *MoveParameters
 	withAutocorrect bool
@@ -87,6 +89,13 @@ func (e *NearTextArgumentBuilder) WithConcepts(concepts []string) *NearTextArgum
 func (e *NearTextArgumentBuilder) WithCertainty(certainty float32) *NearTextArgumentBuilder {
 	e.withCertainty = true
 	e.certainty = certainty
+	return e
+}
+
+// WithDistance that is minimally required for an object to be included in the result set
+func (e *NearTextArgumentBuilder) WithDistance(distance float32) *NearTextArgumentBuilder {
+	e.withDistance = true
+	e.distance = distance
 	return e
 }
 
@@ -117,6 +126,9 @@ func (e *NearTextArgumentBuilder) build() string {
 	clause = append(clause, fmt.Sprintf("concepts: %s", concepts))
 	if e.withCertainty {
 		clause = append(clause, fmt.Sprintf("certainty: %v", e.certainty))
+	}
+	if e.withDistance {
+		clause = append(clause, fmt.Sprintf("distance: %v", e.distance))
 	}
 	if e.moveTo != nil {
 		clause = append(clause, fmt.Sprintf("moveTo: %s", e.moveTo))

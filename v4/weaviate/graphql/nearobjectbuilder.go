@@ -10,6 +10,8 @@ type NearObjectArgumentBuilder struct {
 	beacon        string
 	withCertainty bool
 	certainty     float32
+	withDistance  bool
+	distance      float32
 }
 
 // WithID the id of the object
@@ -31,6 +33,13 @@ func (e *NearObjectArgumentBuilder) WithCertainty(certainty float32) *NearObject
 	return e
 }
 
+// WithDistance that is minimally required for an object to be included in the result set
+func (e *NearObjectArgumentBuilder) WithDistance(distance float32) *NearObjectArgumentBuilder {
+	e.withDistance = true
+	e.distance = distance
+	return e
+}
+
 // Build build the given clause
 func (e *NearObjectArgumentBuilder) build() string {
 	clause := []string{}
@@ -42,6 +51,9 @@ func (e *NearObjectArgumentBuilder) build() string {
 	}
 	if e.withCertainty {
 		clause = append(clause, fmt.Sprintf("certainty: %v", e.certainty))
+	}
+	if e.withDistance {
+		clause = append(clause, fmt.Sprintf("distance: %v", e.distance))
 	}
 	return fmt.Sprintf("nearObject:{%s}", strings.Join(clause, " "))
 }
