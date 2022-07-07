@@ -86,16 +86,37 @@ func (getter *ObjectsGetter) objectList(ctx context.Context) (*connection.Respon
 }
 
 func (getter *ObjectsGetter) buildPath() string {
-	basePath := buildObjectsGetPath(getter.id, getter.className, getter.dbVersionSupport)
+	basePath := getter.getPath()
+	pathParams := getter.buildPathParams()
+	return fmt.Sprintf("%s%v", basePath, pathParams)
+}
 
-	params := buildAdditionalParams(getter.additionalProperties)
-	if getter.withLimit && len(params) > 0 {
-		params += fmt.Sprintf("&limit=%v", getter.limit)
-	} else if getter.withLimit {
-		params = fmt.Sprintf("?limit=%v", getter.limit)
+func (getter *ObjectsGetter) getPath() string {
+	return buildObjectsGetPath(getter.id, getter.className, getter.dbVersionSupport)
+}
+
+func (getter *ObjectsGetter) buildPathParams() string {
+	pathParams := make([]string, 0)
+
+	additionalParams := buildAdditionalParams(getter.additionalProperties)
+	if len(additionalParams) > 0 {
+		pathParams = append(pathParams, additionalParams)
+	}
+	if getter.withLimit {
+		pathParams = append(pathParams, fmt.Sprintf("limit=%v", getter.limit))
+	}
+	if len(getter.id) == 0 && len(getter.className) > 0 {
+		if getter.dbVersionSupport.SupportsClassNameNamespacedEndpoints() {
+			pathParams = append(pathParams, fmt.Sprintf("class=%v", getter.className))
+		} else {
+			getter.dbVersionSupport.WarnNotSupportedClassParameterInEndpointsForObjects()
+		}
 	}
 
-	return fmt.Sprintf("%s%v", basePath, params)
+	if len(pathParams) > 0 {
+		return fmt.Sprintf("?%v", strings.Join(pathParams, "&"))
+	}
+	return ""
 }
 
 // buildAdditionalParams build the query URL parameters for the requested underscore properties
@@ -108,7 +129,7 @@ func buildAdditionalParams(additionalProperties []string) string {
 
 	params := strings.Join(selectedProperties, ",")
 	if len(params) > 0 {
-		params = fmt.Sprintf("?include=%v", params)
+		params = fmt.Sprintf("include=%v", params)
 	}
 
 	return params

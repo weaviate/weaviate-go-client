@@ -62,3 +62,8 @@ func (s *DBVersionSupport) WarnUsageOfNotSupportedClassNamespacedEndpointsForBea
 	fmt.Printf("WARNING: Usage of beacons paths with className is not supported in Weaviate %s."+
 		" className parameter is ignored\n", s.version)
 }
+
+func (s *DBVersionSupport) WarnNotSupportedClassParameterInEndpointsForObjects() {
+	fmt.Printf("WARNING: Usage of objects paths with class query parameter is not supported in Weaviate %s."+
+		" class query parameter is ignored\n", s.version)
+}
