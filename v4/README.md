@@ -10,12 +10,12 @@ In order to get the go client v4 issue this command:
 $ go get github.com/semi-technologies/weaviate-go-client/v4@v4.x.x
 ```
 
-where `v4.x.x` is the desired go client v4 version, for example `v4.2.0`
+where `v4.x.x` is the desired go client v4 version, for example `v4.2.1`
 
 Add dependency to your `go.mod`:
 
 ```go
-require github.com/semi-technologies/weaviate-go-client/v4 v4.2.0
+require github.com/semi-technologies/weaviate-go-client/v4 v4.2.1
 ```
 
 Connect to Weaviate on `localhost:8080` and fetch meta information
