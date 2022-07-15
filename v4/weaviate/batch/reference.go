@@ -21,6 +21,12 @@ func (rb *ReferencesBatcher) WithReference(reference *models.BatchReference) *Re
 	return rb
 }
 
+// WithReferences adds references to the current batch
+func (rb *ReferencesBatcher) WithReferences(references ...*models.BatchReference) *ReferencesBatcher {
+	rb.references = append(rb.references, references...)
+	return rb
+}
+
 // Do add all the references in the batch to weaviate
 func (rb *ReferencesBatcher) Do(ctx context.Context) ([]models.BatchReferenceResponse, error) {
 	responseData, responseErr := rb.connection.RunREST(ctx, "/batch/references", http.MethodPost, rb.references)

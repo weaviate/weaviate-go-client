@@ -52,11 +52,11 @@ func TestBatchCreate_integration(t *testing.T) {
 			},
 		}
 
-		batchResultT, batchErrT := client.Batch().ObjectsBatcher().WithObject(classT1).WithObject(classT2).Do(context.Background())
+		batchResultT, batchErrT := client.Batch().ObjectsBatcher().WithObjects(classT1, classT2).Do(context.Background())
 		assert.Nil(t, batchErrT)
 		assert.NotNil(t, batchResultT)
 		assert.Equal(t, 2, len(batchResultT))
-		batchResultA, batchErrA := client.Batch().ObjectsBatcher().WithObject(classA1).WithObject(classA2).Do(context.Background())
+		batchResultA, batchErrA := client.Batch().ObjectsBatcher().WithObjects(classA1, classA2).Do(context.Background())
 		assert.Nil(t, batchErrA)
 		assert.NotNil(t, batchResultA)
 		assert.Equal(t, 2, len(batchResultA))
@@ -124,7 +124,7 @@ func TestBatchCreate_integration(t *testing.T) {
 
 		// Add references in batch
 		referenceBatchResult, err := client.Batch().ReferencesBatcher().
-			WithReference(refTtoA).WithReference(refTtoT).WithReference(refAtoT).WithReference(refAtoA).Do(context.Background())
+			WithReferences(refTtoA, refTtoT, refAtoT, refAtoA).Do(context.Background())
 		assert.Nil(t, err)
 		assert.NotNil(t, referenceBatchResult)
 

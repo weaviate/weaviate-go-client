@@ -21,9 +21,15 @@ type ObjectsBatcher struct {
 	objects    []*models.Object
 }
 
-// WithObject add an object to the batch
+// WithObject adds an object to the batch
 func (ob *ObjectsBatcher) WithObject(object *models.Object) *ObjectsBatcher {
 	ob.objects = append(ob.objects, object)
+	return ob
+}
+
+// WithObjects adds objects to the batch
+func (ob *ObjectsBatcher) WithObjects(objects ...*models.Object) *ObjectsBatcher {
+	ob.objects = append(ob.objects, objects...)
 	return ob
 }
 

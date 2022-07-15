@@ -118,7 +118,7 @@ func createClassificationClasses(t *testing.T, client *weaviate.Client) {
 			"description": "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
 		},
 	}
-	_, batchErr := client.Batch().ObjectsBatcher().WithObject(pizza1).WithObject(pizza2).Do(context.Background())
+	_, batchErr := client.Batch().ObjectsBatcher().WithObjects(pizza1, pizza2).Do(context.Background())
 	assert.Nil(t, batchErr)
 	// Create two tags
 	tag1 := &models.Object{
@@ -133,6 +133,6 @@ func createClassificationClasses(t *testing.T, client *weaviate.Client) {
 			"name": "seafood",
 		},
 	}
-	_, batchErr2 := client.Batch().ObjectsBatcher().WithObject(tag1).WithObject(tag2).Do(context.Background())
+	_, batchErr2 := client.Batch().ObjectsBatcher().WithObjects(tag1, tag2).Do(context.Background())
 	assert.Nil(t, batchErr2)
 }

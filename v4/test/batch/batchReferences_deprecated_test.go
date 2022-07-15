@@ -60,7 +60,7 @@ func TestBatchCreate_integration_deprecated(t *testing.T) {
 		refAtoA := client.Batch().ReferencePayloadBuilder().WithFromClassName("Soup").WithFromRefProp("otherFoods").WithFromID("07473b34-0ab2-4120-882d-303d9e13f7af").WithToID("07473b34-0ab2-4120-882d-303d9e13f7af").Payload()
 
 		// Add references in batch
-		referenceBatchResult, err := client.Batch().ReferencesBatcher().WithReference(refTtoA).WithReference(refTtoT).WithReference(refAtoT).WithReference(refAtoA).Do(context.Background())
+		referenceBatchResult, err := client.Batch().ReferencesBatcher().WithReferences(refTtoA, refTtoT, refAtoT, refAtoA).Do(context.Background())
 		assert.Nil(t, err)
 		assert.NotNil(t, referenceBatchResult)
 

@@ -209,13 +209,9 @@ func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client) {
 		},
 	}
 
-	thingsBatcher := client.Batch().ObjectsBatcher()
-	for _, pizza := range menuPizza {
-		thingsBatcher.WithObject(pizza)
-	}
-	_, thingsErr := thingsBatcher.Do(context.Background())
+	_, thingsErr := client.Batch().ObjectsBatcher().WithObjects(menuPizza...).Do(context.Background())
 	assert.Nil(t, thingsErr)
 
-	_, actionsErr := client.Batch().ObjectsBatcher().WithObject(menuSoup[0]).WithObject(menuSoup[1]).Do(context.Background())
+	_, actionsErr := client.Batch().ObjectsBatcher().WithObjects(menuSoup...).Do(context.Background())
 	assert.Nil(t, actionsErr)
 }
