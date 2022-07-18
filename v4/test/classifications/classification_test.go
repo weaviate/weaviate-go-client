@@ -28,16 +28,16 @@ func TestClassifications_integration(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		createClassificationClasses(t, client)
 
-		classifyProperties := []string{"taged"}
+		classifyProperties := []string{"tagged"}
 		basedOnProperties := []string{"description"}
 		classification, err := client.Classifications().Scheduler().WithType(classifications.Contextual).WithClassName("Pizza").WithClassifyProperties(classifyProperties).WithBasedOnProperties(basedOnProperties).Do(context.Background())
 		assert.Nil(t, err)
 		assert.Contains(t, classification.BasedOnProperties, "description")
-		assert.Contains(t, classification.ClassifyProperties, "taged")
+		assert.Contains(t, classification.ClassifyProperties, "tagged")
 		classification, err = client.Classifications().Scheduler().WithType(classifications.Contextual).WithClassName("Pizza").WithClassifyProperties(classifyProperties).WithBasedOnProperties(basedOnProperties).WithWaitForCompletion().Do(context.Background())
 		assert.Nil(t, err)
 		assert.Contains(t, classification.BasedOnProperties, "description")
-		assert.Contains(t, classification.ClassifyProperties, "taged")
+		assert.Contains(t, classification.ClassifyProperties, "tagged")
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
@@ -51,7 +51,7 @@ func TestClassifications_integration(t *testing.T) {
 			WithType(classifications.KNN).
 			WithSettings(&classification.ParamsKNN{K: &k}).
 			WithClassName("Pizza").
-			WithClassifyProperties([]string{"taged"}).
+			WithClassifyProperties([]string{"tagged"}).
 			WithBasedOnProperties([]string{"description"}).
 			Do(context.Background())
 		assert.Nil(t, err)
@@ -96,7 +96,7 @@ func createClassificationClasses(t *testing.T, client *weaviate.Client) {
 	tagProperty := models.Property{
 		DataType:    []string{"Tag"},
 		Description: "tag of pizza",
-		Name:        "taged",
+		Name:        "tagged",
 	}
 	addTagPropertyToPizzaErr := client.Schema().PropertyCreator().WithProperty(&tagProperty).WithClassName("Pizza").Do(context.Background())
 	assert.Nil(t, addTagPropertyToPizzaErr)
