@@ -15,10 +15,17 @@ type ReferencesBatcher struct {
 	references []*models.BatchReference
 }
 
-// WithReference adds a reference to the current batch
-func (rb *ReferencesBatcher) WithReference(reference *models.BatchReference) *ReferencesBatcher {
-	rb.references = append(rb.references, reference)
+// WithReferences adds references to the current batch
+func (rb *ReferencesBatcher) WithReferences(reference ...*models.BatchReference) *ReferencesBatcher {
+	rb.references = append(rb.references, reference...)
 	return rb
+}
+
+// WithReference adds a reference to the current batch
+//
+// Deprecated: Use WithReferences with the same syntax
+func (rb *ReferencesBatcher) WithReference(reference *models.BatchReference) *ReferencesBatcher {
+	return rb.WithReferences(reference)
 }
 
 // Do add all the references in the batch to weaviate
