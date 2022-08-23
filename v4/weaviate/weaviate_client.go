@@ -12,6 +12,7 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/misc"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/schema"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/snapshots"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
 )
 
@@ -45,6 +46,7 @@ type Client struct {
 	batch             *batch.API
 	c11y              *contextionary.API
 	classifications   *classifications.API
+	snapshots         *snapshots.API
 	graphQL           *graphql.API
 	version           string
 	dbVersionProvider *util.DBVersionProvider
@@ -82,6 +84,7 @@ func New(config Config) *Client {
 		graphQL:         graphql.New(con),
 		data:            data.New(con, dbVersionSupport),
 		batch:           batch.New(con, dbVersionSupport),
+		snapshots:       snapshots.New(con),
 	}
 
 	return client
@@ -120,4 +123,9 @@ func (c *Client) Classifications() *classifications.API {
 // GraphQL API group
 func (c *Client) GraphQL() *graphql.API {
 	return c.graphQL
+}
+
+// Snapshots API group
+func (c *Client) Snapshots() *snapshots.API {
+	return c.snapshots
 }
