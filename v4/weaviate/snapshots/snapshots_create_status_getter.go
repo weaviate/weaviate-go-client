@@ -32,5 +32,5 @@ func (s *SnapshotsCreateStatusGetter) WithSnapshotID(snapshotID string) *Snapsho
 }
 
 func (s *SnapshotsCreateStatusGetter) Do(ctx context.Context) (*models.SnapshotMeta, error) {
-	return s.helper.createGetSnapshot(ctx, s.className, s.storageProvider, s.snapshotID)
+	return s.helper.statusCreateSnapshot(ctx, s.className, s.storageProvider, s.snapshotID)
 }

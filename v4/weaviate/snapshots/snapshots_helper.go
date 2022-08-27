@@ -34,7 +34,7 @@ func (s *snapshotsHelper) createAndWaitForCompletion(ctx context.Context,
 		return nil, err
 	}
 	for {
-		meta, err = s.createGetSnapshot(ctx, className, storageProvider, snapshotID)
+		meta, err = s.statusCreateSnapshot(ctx, className, storageProvider, snapshotID)
 		if err != nil {
 			return nil, err
 		}
@@ -47,7 +47,7 @@ func (s *snapshotsHelper) createAndWaitForCompletion(ctx context.Context,
 	}
 }
 
-func (s *snapshotsHelper) createGetSnapshot(ctx context.Context,
+func (s *snapshotsHelper) statusCreateSnapshot(ctx context.Context,
 	className, storageProvider, snapshotID string,
 ) (*models.SnapshotMeta, error) {
 	url := fmt.Sprintf("/schema/%s/snapshots/%s/%s", className, storageProvider, snapshotID)
@@ -88,7 +88,7 @@ func (s *snapshotsHelper) restoreSnapshot(ctx context.Context,
 	return s.decodeRestoreResponse(resp)
 }
 
-func (s *snapshotsHelper) restoreGetSnapshot(ctx context.Context,
+func (s *snapshotsHelper) statusRestoreSnapshot(ctx context.Context,
 	className, storageProvider, snapshotID string,
 ) (*models.SnapshotRestoreMeta, error) {
 	url := fmt.Sprintf("/schema/%s/snapshots/%s/%s/restore", className, storageProvider, snapshotID)
@@ -107,7 +107,7 @@ func (s *snapshotsHelper) restoreAndWaitForCompletion(ctx context.Context,
 		return nil, err
 	}
 	for {
-		meta, err = s.restoreGetSnapshot(ctx, className, storageProvider, snapshotID)
+		meta, err = s.statusRestoreSnapshot(ctx, className, storageProvider, snapshotID)
 		if err != nil {
 			return nil, err
 		}

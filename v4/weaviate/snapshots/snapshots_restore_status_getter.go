@@ -32,5 +32,5 @@ func (s *SnapshotsRestoreStatusGetter) WithSnapshotID(snapshotID string) *Snapsh
 }
 
 func (s *SnapshotsRestoreStatusGetter) Do(ctx context.Context) (*models.SnapshotRestoreMeta, error) {
-	return s.helper.restoreGetSnapshot(ctx, s.className, s.storageProvider, s.snapshotID)
+	return s.helper.statusRestoreSnapshot(ctx, s.className, s.storageProvider, s.snapshotID)
 }
