@@ -51,7 +51,6 @@ func TestBuckups_integration(t *testing.T) {
 
 		t.Run("check backup status", func(t *testing.T) {
 			meta, err := client.Backup().CreateStatusGetter().
-				WithClassName(className).
 				WithStorageName(backup.STORAGE_FILESYSTEM).
 				WithBackupID(backupID).
 				Do(context.Background())
@@ -90,7 +89,6 @@ func TestBuckups_integration(t *testing.T) {
 
 		t.Run("check restore status", func(t *testing.T) {
 			meta, err := client.Backup().RestoreStatusGetter().
-				WithClassName(className).
 				WithStorageName(backup.STORAGE_FILESYSTEM).
 				WithBackupID(backupID).
 				Do(context.Background())
