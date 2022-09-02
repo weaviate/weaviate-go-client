@@ -17,40 +17,46 @@ type backupCreateHelper struct {
 	connection *connection.Connection
 }
 
-func (h *backupCreateHelper) create(ctx context.Context, className,
+func (h *backupCreateHelper) create(ctx context.Context, includeClasses, excludeClasses []string,
 	storageName, backupID string,
-) (*models.SnapshotMeta, error) {
-	return h.createByEndpoint(ctx, endpointCreate(className, storageName, backupID))
+) (*models.BackupCreateMeta, error) {
+	return h.createByEndpoint(ctx, endpointCreate(storageName), backupID, includeClasses, excludeClasses)
 }
 
-func (h *backupCreateHelper) createByEndpoint(ctx context.Context, endpoint string) (*models.SnapshotMeta, error) {
-	return h.runREST(ctx, endpoint, http.MethodPost)
+func (h *backupCreateHelper) createByEndpoint(ctx context.Context, endpoint, backupID string, includeClasses, excludeClasses []string) (*models.BackupCreateMeta, error) {
+	data := models.BackupCreateRequest{
+		Include: includeClasses,
+		Exclude: excludeClasses,
+		ID:      backupID,
+	}
+	return h.runREST(ctx, endpoint, http.MethodPost, data)
 }
 
 func (h *backupCreateHelper) statusCreate(ctx context.Context,
-	className, storageName, backupID string,
-) (*models.SnapshotMeta, error) {
-	return h.statusCreateByEndpoint(ctx, endpointCreate(className, storageName, backupID))
+	storageName, backupID string,
+) (*models.BackupCreateMeta, error) {
+	return h.statusCreateByEndpoint(ctx, endpointStatusCreate(storageName, backupID))
 }
 
-func (h *backupCreateHelper) statusCreateByEndpoint(ctx context.Context, endpoint string) (*models.SnapshotMeta, error) {
-	return h.runREST(ctx, endpoint, http.MethodGet)
+func (h *backupCreateHelper) statusCreateByEndpoint(ctx context.Context, endpoint string) (*models.BackupCreateMeta, error) {
+	return h.runREST(ctx, endpoint, http.MethodGet, nil)
 }
 
 func (h *backupCreateHelper) createAndWaitForCompletion(ctx context.Context,
-	className, storageName, backupID string,
-) (*models.SnapshotMeta, error) {
-	endpoint := endpointCreate(className, storageName, backupID)
-	if _, err := h.createByEndpoint(ctx, endpoint); err != nil {
+	storageName, backupID string, includeClasses, excludeClasses []string,
+) (*models.BackupCreateMeta, error) {
+	endpoint := endpointCreate(storageName)
+	if _, err := h.createByEndpoint(ctx, endpoint, backupID, includeClasses, excludeClasses); err != nil {
 		return nil, err
 	}
+	endpoint = endpointStatusCreate(storageName, backupID)
 	for {
 		meta, err := h.statusCreateByEndpoint(ctx, endpoint)
 		if err != nil {
 			return nil, err
 		}
 		switch *meta.Status {
-		case models.SnapshotMetaStatusSUCCESS, models.SnapshotMetaStatusFAILED:
+		case models.BackupCreateMetaStatusSUCCESS, models.BackupCreateMetaStatusFAILED:
 			return meta, nil
 		default:
 			time.Sleep(waitTimeoutCreate)
@@ -58,20 +64,23 @@ func (h *backupCreateHelper) createAndWaitForCompletion(ctx context.Context,
 	}
 }
 
-func (h *backupCreateHelper) runREST(ctx context.Context, endpoint, httpMethod string) (*models.SnapshotMeta, error) {
-	responseData, err := h.connection.RunREST(ctx, endpoint, httpMethod, nil)
+func (h *backupCreateHelper) runREST(ctx context.Context, endpoint, httpMethod string, data interface{}) (*models.BackupCreateMeta, error) {
+	responseData, err := h.connection.RunREST(ctx, endpoint, httpMethod, data)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}
 	if responseData.StatusCode == 200 {
-		var obj models.SnapshotMeta
+		var obj models.BackupCreateMeta
 		decodeErr := responseData.DecodeBodyIntoTarget(&obj)
 		return &obj, decodeErr
 	}
 	return nil, except.NewDerivedWeaviateClientError(err)
 }
 
-func endpointCreate(className, storageName, backupID string) string {
-	// TODO change snapshots to backups
-	return fmt.Sprintf("/schema/%s/snapshots/%s/%s", className, storageName, backupID)
+func endpointCreate(storageName string) string {
+	return fmt.Sprintf("/backups/%s", storageName)
+}
+
+func endpointStatusCreate(storageName, ID string) string {
+	return fmt.Sprintf("/backups/%s/%s", storageName, ID)
 }

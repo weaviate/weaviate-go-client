@@ -38,15 +38,15 @@ func TestBuckups_integration(t *testing.T) {
 
 		t.Run("run backup process", func(t *testing.T) {
 			meta, err := client.Backup().Creator().
-				WithClassName(className).
+				WithIncludeClasses(className).
 				WithStorageName(backup.STORAGE_FILESYSTEM).
 				WithBackupID(backupID).
 				WithWaitForCompletion(true).
 				Do(context.Background())
-			
+
 			require.Nil(t, err)
 			require.NotNil(t, meta)
-			assert.Equal(t, models.SnapshotMetaStatusSUCCESS, *meta.Status)
+			assert.Equal(t, models.BackupCreateMetaStatusSUCCESS, *meta.Status)
 		})
 
 		t.Run("check backup status", func(t *testing.T) {
@@ -58,7 +58,7 @@ func TestBuckups_integration(t *testing.T) {
 
 			require.Nil(t, err)
 			require.NotNil(t, meta)
-			assert.Equal(t, models.SnapshotMetaStatusSUCCESS, *meta.Status)
+			assert.Equal(t, models.BackupCreateMetaStatusSUCCESS, *meta.Status)
 		})
 
 		t.Run("check data still exist", func(t *testing.T) {
@@ -85,7 +85,7 @@ func TestBuckups_integration(t *testing.T) {
 
 			require.Nil(t, err)
 			require.NotNil(t, meta)
-			assert.Equal(t, models.SnapshotRestoreMetaStatusSUCCESS, *meta.Status)
+			assert.Equal(t, models.BackupRestoreMetaStatusSUCCESS, *meta.Status)
 		})
 
 		t.Run("check restore status", func(t *testing.T) {
@@ -97,7 +97,7 @@ func TestBuckups_integration(t *testing.T) {
 
 			require.Nil(t, err)
 			require.NotNil(t, meta)
-			assert.Equal(t, models.SnapshotRestoreMetaStatusSUCCESS, *meta.Status)
+			assert.Equal(t, models.BackupRestoreMetaStatusSUCCESS, *meta.Status)
 		})
 
 		t.Run("check data again exist", func(t *testing.T) {

@@ -38,10 +38,9 @@ func (r *BackupRestorer) WithWaitForCompletion(waitForCompletion bool) *BackupRe
 	return r
 }
 
-func (r *BackupRestorer) Do(ctx context.Context) (*models.SnapshotRestoreMeta, error) {
+func (r *BackupRestorer) Do(ctx context.Context) (*models.BackupRestoreMeta, error) {
 	if r.waitForCompletion {
 		return r.helper.restoreAndWaitForCompletion(ctx, r.className, r.storageName, r.backupID)
-
 	}
 	return r.helper.restore(ctx, r.className, r.storageName, r.backupID)
 }

@@ -8,15 +8,20 @@ import (
 
 type BackupCreator struct {
 	helper            *backupCreateHelper
-	className         string
+	includeClasses    []string
+	excludeClasses    []string
 	storageName       string
 	backupID          string
 	waitForCompletion bool
 }
 
-// WithClassName specifies the class which should be backed up
-func (c *BackupCreator) WithClassName(className string) *BackupCreator {
-	c.className = className
+func (c *BackupCreator) WithIncludeClasses(classes ...string) *BackupCreator {
+	c.includeClasses = classes
+	return c
+}
+
+func (c *BackupCreator) WithExcludeClasses(classes ...string) *BackupCreator {
+	c.excludeClasses = classes
 	return c
 }
 
@@ -38,10 +43,9 @@ func (c *BackupCreator) WithWaitForCompletion(waitForCompletion bool) *BackupCre
 	return c
 }
 
-func (c *BackupCreator) Do(ctx context.Context) (*models.SnapshotMeta, error) {
+func (c *BackupCreator) Do(ctx context.Context) (*models.BackupCreateMeta, error) {
 	if c.waitForCompletion {
-		return c.helper.createAndWaitForCompletion(ctx, c.className, c.storageName, c.backupID)
-
+		return c.helper.createAndWaitForCompletion(ctx, c.storageName, c.backupID, c.includeClasses, c.excludeClasses)
 	}
-	return c.helper.create(ctx, c.className, c.storageName, c.backupID)
+	return c.helper.create(ctx, c.includeClasses, c.excludeClasses, c.storageName, c.backupID)
 }

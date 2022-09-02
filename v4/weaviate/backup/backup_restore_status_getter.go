@@ -8,15 +8,8 @@ import (
 
 type BackupRestoreStatusGetter struct {
 	helper      *backupRestoreHelper
-	className   string
 	storageName string
 	backupID    string
-}
-
-// WithClassName specifies the class which should be restored
-func (g *BackupRestoreStatusGetter) WithClassName(className string) *BackupRestoreStatusGetter {
-	g.className = className
-	return g
 }
 
 // WithStorageName specifies the storage from backup should be restored
@@ -31,6 +24,6 @@ func (g *BackupRestoreStatusGetter) WithBackupID(backupID string) *BackupRestore
 	return g
 }
 
-func (g *BackupRestoreStatusGetter) Do(ctx context.Context) (*models.SnapshotRestoreMeta, error) {
-	return g.helper.statusRestore(ctx, g.className, g.storageName, g.backupID)
+func (g *BackupRestoreStatusGetter) Do(ctx context.Context) (*models.BackupRestoreMeta, error) {
+	return g.helper.statusRestore(ctx, g.storageName, g.backupID)
 }
