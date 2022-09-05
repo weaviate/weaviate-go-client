@@ -34,6 +34,11 @@ func (api *API) Aggregate() *AggregateBuilder {
 	return &AggregateBuilder{connection: api.connection}
 }
 
+// RawGQLQueryBuilder creates a raw GraphQL query
+func (api *API) RawGQLQueryBuilder() *RawGQLQueryBuilder {
+	return &RawGQLQueryBuilder{connection: api.connection}
+}
+
 // NearTextArgBuilder nearText clause
 func (api *API) NearTextArgBuilder() *NearTextArgumentBuilder {
 	return &NearTextArgumentBuilder{}
@@ -66,7 +71,7 @@ func (api *API) GroupArgBuilder() *GroupArgumentBuilder {
 
 // rest requests abstraction
 type rest interface {
-	//RunREST request to weaviate
+	// RunREST request to weaviate
 	RunREST(ctx context.Context, path string, restMethod string, requestBody interface{}) (*connection.ResponseData, error)
 }
 
