@@ -2,19 +2,23 @@ package backup
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
 type BackupRestoreStatusGetter struct {
-	helper      *backupRestoreHelper
-	storageName string
-	backupID    string
+	connection *connection.Connection
+	backend    string
+	backupID   string
 }
 
-// WithStorageName specifies the storage from backup should be restored
-func (g *BackupRestoreStatusGetter) WithStorageName(storageName string) *BackupRestoreStatusGetter {
-	g.storageName = storageName
+// WithBackend specifies the backend backup is restored from
+func (g *BackupRestoreStatusGetter) WithBackend(backend string) *BackupRestoreStatusGetter {
+	g.backend = backend
 	return g
 }
 
@@ -24,6 +28,19 @@ func (g *BackupRestoreStatusGetter) WithBackupID(backupID string) *BackupRestore
 	return g
 }
 
-func (g *BackupRestoreStatusGetter) Do(ctx context.Context) (*models.BackupRestoreMeta, error) {
-	return g.helper.statusRestore(ctx, g.storageName, g.backupID)
+func (g *BackupRestoreStatusGetter) Do(ctx context.Context) (*models.BackupRestoreStatusResponse, error) {
+	responseData, err := g.connection.RunREST(ctx, g.path(), http.MethodGet, nil)
+	if err != nil {
+		return nil, except.NewDerivedWeaviateClientError(err)
+	}
+	if responseData.StatusCode == 200 {
+		var obj models.BackupRestoreStatusResponse
+		decodeErr := responseData.DecodeBodyIntoTarget(&obj)
+		return &obj, decodeErr
+	}
+	return nil, except.NewDerivedWeaviateClientError(err)
+}
+
+func (g *BackupRestoreStatusGetter) path() string {
+	return fmt.Sprintf("/backups/%s/%s/restore", g.backend, g.backupID)
 }

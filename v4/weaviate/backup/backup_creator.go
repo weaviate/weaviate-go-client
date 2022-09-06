@@ -2,32 +2,40 @@ package backup
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"time"
 
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
+const waitTimeoutCreate = time.Second
+
 type BackupCreator struct {
-	helper            *backupCreateHelper
+	connection        *connection.Connection
+	statusGetter      *BackupCreateStatusGetter
 	includeClasses    []string
 	excludeClasses    []string
-	storageName       string
+	backend           string
 	backupID          string
 	waitForCompletion bool
 }
 
-func (c *BackupCreator) WithIncludeClassNames(classes ...string) *BackupCreator {
-	c.includeClasses = classes
+func (c *BackupCreator) WithIncludeClassNames(classNames ...string) *BackupCreator {
+	c.includeClasses = classNames
 	return c
 }
 
-func (c *BackupCreator) WithExcludeClassNames(classes ...string) *BackupCreator {
-	c.excludeClasses = classes
+func (c *BackupCreator) WithExcludeClassNames(classNames ...string) *BackupCreator {
+	c.excludeClasses = classNames
 	return c
 }
 
-// WithStorageName specifies the storage where backup should be saved
-func (c *BackupCreator) WithStorageName(storageName string) *BackupCreator {
-	c.storageName = storageName
+// WithBackend specifies the backend backup should be stored to
+func (c *BackupCreator) WithBackend(backend string) *BackupCreator {
+	c.backend = backend
 	return c
 }
 
@@ -43,9 +51,68 @@ func (c *BackupCreator) WithWaitForCompletion(waitForCompletion bool) *BackupCre
 	return c
 }
 
-func (c *BackupCreator) Do(ctx context.Context) (*models.BackupCreateMeta, error) {
-	if c.waitForCompletion {
-		return c.helper.createAndWaitForCompletion(ctx, c.storageName, c.backupID, c.includeClasses, c.excludeClasses)
+func (c *BackupCreator) Do(ctx context.Context) (*models.BackupCreateResponse, error) {
+	payload := models.BackupCreateRequest{
+		ID:      c.backupID,
+		Include: c.includeClasses,
+		Exclude: c.excludeClasses,
 	}
-	return c.helper.create(ctx, c.includeClasses, c.excludeClasses, c.storageName, c.backupID)
+
+	if c.waitForCompletion {
+		return c.createAndWaitForCompletion(ctx, payload)
+	}
+	return c.create(ctx, payload)
+}
+
+func (c *BackupCreator) create(ctx context.Context, payload models.BackupCreateRequest,
+) (*models.BackupCreateResponse, error) {
+	response, err := c.connection.RunREST(ctx, c.path(), http.MethodPost, payload)
+	if err != nil {
+		return nil, except.NewDerivedWeaviateClientError(err)
+	}
+	if response.StatusCode == http.StatusOK {
+		var obj models.BackupCreateResponse
+		decodeErr := response.DecodeBodyIntoTarget(&obj)
+		return &obj, decodeErr
+	}
+	return nil, except.NewDerivedWeaviateClientError(err)
+}
+
+func (c *BackupCreator) createAndWaitForCompletion(ctx context.Context, payload models.BackupCreateRequest,
+) (*models.BackupCreateResponse, error) {
+	response, err := c.create(ctx, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	c.statusGetter.WithBackupID(c.backupID).WithBackend(c.backend)
+	for {
+		statusResponse, err := c.statusGetter.Do(ctx)
+		if err != nil {
+			return nil, err
+		}
+		switch *statusResponse.Status {
+		case models.BackupCreateResponseStatusSUCCESS, models.BackupCreateResponseStatusFAILED:
+			return c.merge(response, statusResponse), nil
+		default:
+			time.Sleep(waitTimeoutCreate)
+		}
+	}
+}
+
+func (c *BackupCreator) path() string {
+	return fmt.Sprintf("/backups/%s", c.backend)
+}
+
+func (c *BackupCreator) merge(response *models.BackupCreateResponse,
+	statusResponse *models.BackupCreateStatusResponse,
+) *models.BackupCreateResponse {
+	return &models.BackupCreateResponse{
+		ID:          statusResponse.ID,
+		Classes:     response.Classes,
+		StorageName: statusResponse.StorageName,
+		Path:        statusResponse.Path,
+		Status:      statusResponse.Status,
+		Error:       statusResponse.Error,
+	}
 }

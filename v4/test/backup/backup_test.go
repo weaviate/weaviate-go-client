@@ -29,7 +29,7 @@ func TestBuckups_integration(t *testing.T) {
 	testsuit.CreateTestSchemaAndData(t, client)
 	defer testsuit.CleanUpWeaviate(t, client)
 
-	backupID := "1"
+	backupID := "backup-id"
 	className := "Pizza"
 
 	t.Run("create backup", func(t *testing.T) {
@@ -38,27 +38,27 @@ func TestBuckups_integration(t *testing.T) {
 		})
 
 		t.Run("run backup process", func(t *testing.T) {
-			meta, err := client.Backup().Creator().
+			createResponse, err := client.Backup().Creator().
 				WithIncludeClassNames(className).
-				WithStorageName(backup.STORAGE_FILESYSTEM).
+				WithBackend(backup.BACKEND_FILESYSTEM).
 				WithBackupID(backupID).
 				WithWaitForCompletion(true).
 				Do(context.Background())
 
 			require.Nil(t, err)
-			require.NotNil(t, meta)
-			assert.Equal(t, models.BackupCreateMetaStatusSUCCESS, *meta.Status)
+			require.NotNil(t, createResponse)
+			assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse.Status)
 		})
 
 		t.Run("check backup status", func(t *testing.T) {
-			meta, err := client.Backup().CreateStatusGetter().
-				WithStorageName(backup.STORAGE_FILESYSTEM).
+			createStatusResponse, err := client.Backup().CreateStatusGetter().
+				WithBackend(backup.BACKEND_FILESYSTEM).
 				WithBackupID(backupID).
 				Do(context.Background())
 
 			require.Nil(t, err)
-			require.NotNil(t, meta)
-			assert.Equal(t, models.BackupCreateMetaStatusSUCCESS, *meta.Status)
+			require.NotNil(t, createStatusResponse)
+			assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createStatusResponse.Status)
 		})
 
 		t.Run("check data still exist", func(t *testing.T) {
@@ -76,27 +76,27 @@ func TestBuckups_integration(t *testing.T) {
 		})
 
 		t.Run("run restore process", func(t *testing.T) {
-			meta, err := client.Backup().Restorer().
+			restoreResponse, err := client.Backup().Restorer().
 				WithIncludeClassNames(className).
-				WithStorageName(backup.STORAGE_FILESYSTEM).
+				WithBackend(backup.BACKEND_FILESYSTEM).
 				WithBackupID(backupID).
 				WithWaitForCompletion(true).
 				Do(context.Background())
 
 			require.Nil(t, err)
-			require.NotNil(t, meta)
-			assert.Equal(t, models.BackupRestoreMetaStatusSUCCESS, *meta.Status)
+			require.NotNil(t, restoreResponse)
+			assert.Equal(t, models.BackupRestoreResponseStatusSUCCESS, *restoreResponse.Status)
 		})
 
 		t.Run("check restore status", func(t *testing.T) {
-			meta, err := client.Backup().RestoreStatusGetter().
-				WithStorageName(backup.STORAGE_FILESYSTEM).
+			restoreStatusResponse, err := client.Backup().RestoreStatusGetter().
+				WithBackend(backup.BACKEND_FILESYSTEM).
 				WithBackupID(backupID).
 				Do(context.Background())
 
 			require.Nil(t, err)
-			require.NotNil(t, meta)
-			assert.Equal(t, models.BackupRestoreMetaStatusSUCCESS, *meta.Status)
+			require.NotNil(t, restoreStatusResponse)
+			assert.Equal(t, models.BackupRestoreResponseStatusSUCCESS, *restoreStatusResponse.Status)
 		})
 
 		t.Run("check data again exist", func(t *testing.T) {

@@ -2,32 +2,40 @@ package backup
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"time"
 
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
+const waitTimeoutRestore = time.Second
+
 type BackupRestorer struct {
-	helper            *backupRestoreHelper
+	connection        *connection.Connection
+	statusGetter      *BackupRestoreStatusGetter
 	includeClasses    []string
 	excludeClasses    []string
-	storageName       string
+	backend           string
 	backupID          string
 	waitForCompletion bool
 }
 
-func (c *BackupRestorer) WithIncludeClassNames(classes ...string) *BackupRestorer {
-	c.includeClasses = classes
+func (c *BackupRestorer) WithIncludeClassNames(classNames ...string) *BackupRestorer {
+	c.includeClasses = classNames
 	return c
 }
 
-func (c *BackupRestorer) WithExcludeClassNames(classes ...string) *BackupRestorer {
-	c.excludeClasses = classes
+func (c *BackupRestorer) WithExcludeClassNames(classNames ...string) *BackupRestorer {
+	c.excludeClasses = classNames
 	return c
 }
 
-// WithStorageName specifies the storage from backup should be restored
-func (r *BackupRestorer) WithStorageName(storageName string) *BackupRestorer {
-	r.storageName = storageName
+// WithBackend specifies the backend backup should be restored from
+func (r *BackupRestorer) WithBackend(backend string) *BackupRestorer {
+	r.backend = backend
 	return r
 }
 
@@ -43,9 +51,67 @@ func (r *BackupRestorer) WithWaitForCompletion(waitForCompletion bool) *BackupRe
 	return r
 }
 
-func (r *BackupRestorer) Do(ctx context.Context) (*models.BackupRestoreMeta, error) {
-	if r.waitForCompletion {
-		return r.helper.restoreAndWaitForCompletion(ctx, r.includeClasses, r.excludeClasses, r.storageName, r.backupID)
+func (r *BackupRestorer) Do(ctx context.Context) (*models.BackupRestoreResponse, error) {
+	payload := models.BackupRestoreRequest{
+		Include: r.includeClasses,
+		Exclude: r.excludeClasses,
 	}
-	return r.helper.restore(ctx, r.storageName, r.backupID, r.includeClasses, r.excludeClasses)
+
+	if r.waitForCompletion {
+		return r.restoreAndWaitForCompletion(ctx, payload)
+	}
+	return r.restore(ctx, payload)
+}
+
+func (r *BackupRestorer) restore(ctx context.Context, payload models.BackupRestoreRequest,
+) (*models.BackupRestoreResponse, error) {
+	response, err := r.connection.RunREST(ctx, r.path(), http.MethodPost, payload)
+	if err != nil {
+		return nil, except.NewDerivedWeaviateClientError(err)
+	}
+	if response.StatusCode == http.StatusOK {
+		var obj models.BackupRestoreResponse
+		decodeErr := response.DecodeBodyIntoTarget(&obj)
+		return &obj, decodeErr
+	}
+	return nil, except.NewDerivedWeaviateClientError(err)
+}
+
+func (r *BackupRestorer) restoreAndWaitForCompletion(ctx context.Context, payload models.BackupRestoreRequest,
+) (*models.BackupRestoreResponse, error) {
+	response, err := r.restore(ctx, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	r.statusGetter.WithBackupID(r.backupID).WithBackend(r.backend)
+	for {
+		statusResponse, err := r.statusGetter.Do(ctx)
+		if err != nil {
+			return nil, err
+		}
+		switch *statusResponse.Status {
+		case models.BackupRestoreResponseStatusSUCCESS, models.BackupRestoreResponseStatusFAILED:
+			return r.merge(response, statusResponse), nil
+		default:
+			time.Sleep(waitTimeoutRestore)
+		}
+	}
+}
+
+func (r *BackupRestorer) path() string {
+	return fmt.Sprintf("/backups/%s/%s/restore", r.backend, r.backupID)
+}
+
+func (r *BackupRestorer) merge(response *models.BackupRestoreResponse,
+	statusResponse *models.BackupRestoreStatusResponse,
+) *models.BackupRestoreResponse {
+	return &models.BackupRestoreResponse{
+		ID:          statusResponse.ID,
+		Classes:     response.Classes,
+		StorageName: statusResponse.StorageName,
+		Path:        statusResponse.Path,
+		Status:      statusResponse.Status,
+		Error:       statusResponse.Error,
+	}
 }

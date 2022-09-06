@@ -5,9 +5,9 @@ import (
 )
 
 const (
-	STORAGE_FILESYSTEM = "filesystem"
-	STORAGE_S3         = "s3"
-	STORAGE_GCS        = "gcs"
+	BACKEND_FILESYSTEM = "filesystem"
+	BACKEND_S3         = "s3"
+	BACKEND_GCS        = "gcs"
 )
 
 type API struct {
@@ -21,27 +21,29 @@ func New(connection *connection.Connection) *API {
 // Creator creates backup creator builder
 func (s *API) Creator() *BackupCreator {
 	return &BackupCreator{
-		helper: &backupCreateHelper{s.connection},
+		connection: s.connection,
+    statusGetter: s.CreateStatusGetter(),
 	}
 }
 
 // CreateStatusGetter creates create status getter builder
 func (s *API) CreateStatusGetter() *BackupCreateStatusGetter {
 	return &BackupCreateStatusGetter{
-		helper: &backupCreateHelper{s.connection},
+		connection: s.connection,
 	}
 }
 
 // Restorer creates restorer builder
 func (s *API) Restorer() *BackupRestorer {
 	return &BackupRestorer{
-		helper: &backupRestoreHelper{s.connection},
+		connection:   s.connection,
+		statusGetter: s.RestoreStatusGetter(),
 	}
 }
 
 // RestoreStatusGetter creates restore status getter builder
 func (s *API) RestoreStatusGetter() *BackupRestoreStatusGetter {
 	return &BackupRestoreStatusGetter{
-		helper: &backupRestoreHelper{s.connection},
+		connection: s.connection,
 	}
 }
