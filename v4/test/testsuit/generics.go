@@ -215,7 +215,9 @@ func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client) {
 	}
 	_, thingsErr := thingsBatcher.Do(context.Background())
 	assert.Nil(t, thingsErr)
+	_, actionsErr := client.Batch().ObjectsBatcher().WithObject(menuSoup[0]).WithObject(menuSoup[1]).Do(context.Background())
+	assert.Nil(t, actionsErr)
 
-	_, actionsErr := client.Batch().ObjectsBatcher().WithObjects(menuSoup[0], menuSoup[1]).Do(context.Background())
+	_, actionsErr = client.Batch().ObjectsBatcher().WithObjects(menuSoup[0], menuSoup[1]).Do(context.Background())
 	assert.Nil(t, actionsErr)
 }
