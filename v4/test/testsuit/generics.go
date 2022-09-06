@@ -13,7 +13,6 @@ import (
 // CreateWeaviateTestSchemaFood creates a class for each semantic type (Pizza and Soup)
 // and adds some primitive properties (name and description)
 func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
-	CleanUpWeaviate(t, client)
 	schemaClassThing := &models.Class{
 		Class:               "Pizza",
 		Description:         "A delicious religion like food and arguably the best export of Italy.",

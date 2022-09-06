@@ -15,12 +15,12 @@ type BackupCreator struct {
 	waitForCompletion bool
 }
 
-func (c *BackupCreator) WithIncludeClasses(classes ...string) *BackupCreator {
+func (c *BackupCreator) WithIncludeClassNames(classes ...string) *BackupCreator {
 	c.includeClasses = classes
 	return c
 }
 
-func (c *BackupCreator) WithExcludeClasses(classes ...string) *BackupCreator {
+func (c *BackupCreator) WithExcludeClassNames(classes ...string) *BackupCreator {
 	c.excludeClasses = classes
 	return c
 }

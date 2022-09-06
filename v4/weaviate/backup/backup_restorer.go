@@ -8,16 +8,21 @@ import (
 
 type BackupRestorer struct {
 	helper            *backupRestoreHelper
-	className         string
+	includeClasses    []string
+	excludeClasses    []string
 	storageName       string
 	backupID          string
 	waitForCompletion bool
 }
 
-// WithClassName specifies the class which should be restored
-func (r *BackupRestorer) WithClassName(className string) *BackupRestorer {
-	r.className = className
-	return r
+func (c *BackupRestorer) WithIncludeClassNames(classes ...string) *BackupRestorer {
+	c.includeClasses = classes
+	return c
+}
+
+func (c *BackupRestorer) WithExcludeClassNames(classes ...string) *BackupRestorer {
+	c.excludeClasses = classes
+	return c
 }
 
 // WithStorageName specifies the storage from backup should be restored
@@ -40,7 +45,7 @@ func (r *BackupRestorer) WithWaitForCompletion(waitForCompletion bool) *BackupRe
 
 func (r *BackupRestorer) Do(ctx context.Context) (*models.BackupRestoreMeta, error) {
 	if r.waitForCompletion {
-		return r.helper.restoreAndWaitForCompletion(ctx, r.className, r.storageName, r.backupID)
+		return r.helper.restoreAndWaitForCompletion(ctx, r.includeClasses, r.excludeClasses, r.storageName, r.backupID)
 	}
-	return r.helper.restore(ctx, r.className, r.storageName, r.backupID)
+	return r.helper.restore(ctx, r.storageName, r.backupID, r.includeClasses, r.excludeClasses)
 }

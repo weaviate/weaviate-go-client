@@ -775,6 +775,10 @@ github.com/seccomp/libseccomp-golang v0.9.1/go.mod h1:GbW5+tmTXfcxTToHLXlScSlAvW
 github.com/semi-technologies/contextionary v0.0.0-20210324171723-00263e697379/go.mod h1:K4Y0AopAsafXvvt8IO9PXspi+FeDaJdFSD61I3Homkc=
 github.com/semi-technologies/weaviate v1.14.2-0.20220822105901-4f5cc619ff24 h1:JUhBvokZF8Y74URB3tg/gJ4YZ7e+Eobi1bKyhKHSWh0=
 github.com/semi-technologies/weaviate v1.14.2-0.20220822105901-4f5cc619ff24/go.mod h1:Q+WAUz/WmSI1IqTsWh0hUuPGJv6bMzc6siGJWRvjboo=
+github.com/semi-technologies/weaviate v1.15.0-alpha1.0.20220831221706-3aa0e906d4a2 h1:W2OQMoIn36qc0KYXPsfu+F6B+++g3s9OWterl3Gxzqk=
+github.com/semi-technologies/weaviate v1.15.0-alpha1.0.20220831221706-3aa0e906d4a2/go.mod h1:Q+WAUz/WmSI1IqTsWh0hUuPGJv6bMzc6siGJWRvjboo=
+github.com/semi-technologies/weaviate v1.15.0-alpha1.0.20220905111650-8ce7d45581b9 h1:W0GbIU/R5oNb0CqikebDVHTC7cPUof7AEElQp2h7fwk=
+github.com/semi-technologies/weaviate v1.15.0-alpha1.0.20220905111650-8ce7d45581b9/go.mod h1:Q+WAUz/WmSI1IqTsWh0hUuPGJv6bMzc6siGJWRvjboo=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
 github.com/sirupsen/logrus v1.0.4-0.20170822132746-89742aefa4b2/go.mod h1:pMByvHTf9Beacp5x1UXfOR9xyW/9antXMhjMPG0dEzc=
 github.com/sirupsen/logrus v1.0.6/go.mod h1:pMByvHTf9Beacp5x1UXfOR9xyW/9antXMhjMPG0dEzc=

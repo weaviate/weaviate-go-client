@@ -25,6 +25,7 @@ func TestBuckups_integration(t *testing.T) {
 	}()
 
 	client := testsuit.CreateTestClient()
+	testsuit.CleanUpWeaviate(t, client)
 	testsuit.CreateTestSchemaAndData(t, client)
 	defer testsuit.CleanUpWeaviate(t, client)
 
@@ -38,7 +39,7 @@ func TestBuckups_integration(t *testing.T) {
 
 		t.Run("run backup process", func(t *testing.T) {
 			meta, err := client.Backup().Creator().
-				WithIncludeClasses(className).
+				WithIncludeClassNames(className).
 				WithStorageName(backup.STORAGE_FILESYSTEM).
 				WithBackupID(backupID).
 				WithWaitForCompletion(true).
@@ -76,7 +77,7 @@ func TestBuckups_integration(t *testing.T) {
 
 		t.Run("run restore process", func(t *testing.T) {
 			meta, err := client.Backup().Restorer().
-				WithClassName(className).
+				WithIncludeClassNames(className).
 				WithStorageName(backup.STORAGE_FILESYSTEM).
 				WithBackupID(backupID).
 				WithWaitForCompletion(true).

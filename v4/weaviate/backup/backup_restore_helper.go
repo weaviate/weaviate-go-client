@@ -17,14 +17,18 @@ type backupRestoreHelper struct {
 	connection *connection.Connection
 }
 
-func (h *backupRestoreHelper) restore(ctx context.Context, className,
-	storageName, backupID string,
+func (h *backupRestoreHelper) restore(ctx context.Context,
+	storageName, backupID string, includeClasses, excludeClasses []string,
 ) (*models.BackupRestoreMeta, error) {
-	return h.restoreByEndpoint(ctx, endpointRestore(storageName))
+	return h.restoreByEndpoint(ctx, endpointRestore(storageName, backupID), includeClasses, excludeClasses)
 }
 
-func (h *backupRestoreHelper) restoreByEndpoint(ctx context.Context, endpoint string) (*models.BackupRestoreMeta, error) {
-	return h.runREST(ctx, endpoint, http.MethodPost)
+func (h *backupRestoreHelper) restoreByEndpoint(ctx context.Context, endpoint string, includeClasses, excludeClasses []string) (*models.BackupRestoreMeta, error) {
+	data := models.BackupRestoreRequest{
+		Include: includeClasses,
+		Exclude: excludeClasses,
+	}
+	return h.runREST(ctx, endpoint, http.MethodPost, data)
 }
 
 func (h *backupRestoreHelper) statusRestore(ctx context.Context,
@@ -34,14 +38,14 @@ func (h *backupRestoreHelper) statusRestore(ctx context.Context,
 }
 
 func (h *backupRestoreHelper) statusRestoreByEndpoint(ctx context.Context, endpoint string) (*models.BackupRestoreMeta, error) {
-	return h.runREST(ctx, endpoint, http.MethodGet)
+	return h.runREST(ctx, endpoint, http.MethodGet, nil)
 }
 
 func (h *backupRestoreHelper) restoreAndWaitForCompletion(ctx context.Context,
-	className, storageName, backupID string,
+	includeClasses, excludeClasses []string, storageName, backupID string,
 ) (*models.BackupRestoreMeta, error) {
-	endpoint := endpointRestore(storageName)
-	if _, err := h.restoreByEndpoint(ctx, endpoint); err != nil {
+	endpoint := endpointRestore(storageName, backupID)
+	if _, err := h.restoreByEndpoint(ctx, endpoint, includeClasses, excludeClasses); err != nil {
 		return nil, err
 	}
 	endpoint = endpointStatusRestore(storageName, backupID)
@@ -59,8 +63,8 @@ func (h *backupRestoreHelper) restoreAndWaitForCompletion(ctx context.Context,
 	}
 }
 
-func (h *backupRestoreHelper) runREST(ctx context.Context, endpoint, httpMethod string) (*models.BackupRestoreMeta, error) {
-	responseData, err := h.connection.RunREST(ctx, endpoint, httpMethod, nil)
+func (h *backupRestoreHelper) runREST(ctx context.Context, endpoint, httpMethod string, data interface{}) (*models.BackupRestoreMeta, error) {
+	responseData, err := h.connection.RunREST(ctx, endpoint, httpMethod, data)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}
@@ -72,12 +76,10 @@ func (h *backupRestoreHelper) runREST(ctx context.Context, endpoint, httpMethod 
 	return nil, except.NewDerivedWeaviateClientError(err)
 }
 
-func endpointRestore(storageName string) string {
-	// TODO change snapshots to backups
-	return fmt.Sprintf("/backups/%s/restore", storageName)
+func endpointRestore(storageName, ID string) string {
+	return fmt.Sprintf("/backups/%s/%s/restore", storageName, ID)
 }
 
 func endpointStatusRestore(storageName, ID string) string {
-	// TODO change snapshots to backups
-	return fmt.Sprintf("/restore/%s/%s/restore", storageName, ID)
+	return fmt.Sprintf("/backups/%s/%s/restore", storageName, ID)
 }
