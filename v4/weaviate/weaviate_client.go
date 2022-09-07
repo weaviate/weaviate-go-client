@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/backup"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/batch"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/classifications"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
@@ -45,6 +46,7 @@ type Client struct {
 	batch             *batch.API
 	c11y              *contextionary.API
 	classifications   *classifications.API
+	backup            *backup.API
 	graphQL           *graphql.API
 	version           string
 	dbVersionProvider *util.DBVersionProvider
@@ -82,6 +84,7 @@ func New(config Config) *Client {
 		graphQL:         graphql.New(con),
 		data:            data.New(con, dbVersionSupport),
 		batch:           batch.New(con, dbVersionSupport),
+		backup:          backup.New(con),
 	}
 
 	return client
@@ -120,4 +123,9 @@ func (c *Client) Classifications() *classifications.API {
 // GraphQL API group
 func (c *Client) GraphQL() *graphql.API {
 	return c.graphQL
+}
+
+// Backup API group
+func (c *Client) Backup() *backup.API {
+	return c.backup
 }
