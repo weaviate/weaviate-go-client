@@ -27,6 +27,9 @@ type Config struct {
 	//
 	//  To connect with an authenticated weaviate consider using the client from the golang.org/x/oauth2 module.
 	ConnectionClient *http.Client
+
+  // Headers added for every request
+  Headers map[string]string
 }
 
 // Client implementing the weaviate API
@@ -54,7 +57,7 @@ type Client struct {
 // The client uses the original data models as provided by weaviate itself.
 // All these models are provided in the sub module "github.com/semi-technologies/weaviate/entities/models"
 func New(config Config) *Client {
-	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient)
+	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
 
 	// some endpoints now require a className namespace.
 	// to determine if this new convention is to be used,
