@@ -2,10 +2,11 @@ package backup
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/backup"
@@ -27,6 +28,7 @@ func TestBackups_integration(t *testing.T) {
 	}()
 
 	const dockerComposeBackupDir = "/tmp/backups"
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	client := testsuit.CreateTestClient()
 	testsuit.CleanUpWeaviate(t, client)
 
@@ -35,7 +37,7 @@ func TestBackups_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		backend := backup.BACKEND_FILESYSTEM
-		backupID := uuid.Must(uuid.NewRandom()).String()
+		backupID := fmt.Sprint(random.Int63())
 		className := "Pizza"
 
 		t.Run("check data exist", func(t *testing.T) {
@@ -133,7 +135,7 @@ func TestBackups_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		backend := backup.BACKEND_FILESYSTEM
-		backupID := uuid.Must(uuid.NewRandom()).String()
+		backupID := fmt.Sprint(random.Int63())
 		className := "Pizza"
 
 		t.Run("check data exist", func(t *testing.T) {
@@ -250,7 +252,7 @@ func TestBackups_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		backend := backup.BACKEND_FILESYSTEM
-		backupID := uuid.Must(uuid.NewRandom()).String()
+		backupID := fmt.Sprint(random.Int63())
 		pizzaClassName := "Pizza"
 		soupClassName := "Soup"
 
@@ -352,7 +354,7 @@ func TestBackups_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		backend := "not-existing-backend"
-		backupID := uuid.Must(uuid.NewRandom()).String()
+		backupID := fmt.Sprint(random.Int63())
 		className := "Pizza"
 
 		t.Run("fail create", func(t *testing.T) {
@@ -374,7 +376,7 @@ func TestBackups_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		backend := "not-existing-backend"
-		backupID := uuid.Must(uuid.NewRandom()).String()
+		backupID := fmt.Sprint(random.Int63())
 
 		t.Run("fail check status", func(t *testing.T) {
 			createStatusResponse, err := client.Backup().CreateStatusGetter().
@@ -394,7 +396,7 @@ func TestBackups_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		backend := "non-existing-backend"
-		backupID := uuid.Must(uuid.NewRandom()).String()
+		backupID := fmt.Sprint(random.Int63())
 		className := "not-existing-class"
 
 		t.Run("fails restore", func(t *testing.T) {
@@ -416,7 +418,7 @@ func TestBackups_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		backend := backup.BACKEND_FILESYSTEM
-		backupID := uuid.Must(uuid.NewRandom()).String()
+		backupID := fmt.Sprint(random.Int63())
 		className := "not-existing-class"
 
 		t.Run("fail create", func(t *testing.T) {
@@ -438,7 +440,7 @@ func TestBackups_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		backend := backup.BACKEND_FILESYSTEM
-		backupID := uuid.Must(uuid.NewRandom()).String()
+		backupID := fmt.Sprint(random.Int63())
 		className := "Pizza"
 
 		t.Run("create backup", func(t *testing.T) {
@@ -472,7 +474,7 @@ func TestBackups_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		backend := backup.BACKEND_FILESYSTEM
-		backupID := uuid.Must(uuid.NewRandom()).String()
+		backupID := fmt.Sprint(random.Int63())
 		className := "Pizza"
 
 		t.Run("create backup", func(t *testing.T) {
@@ -506,7 +508,7 @@ func TestBackups_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		backend := backup.BACKEND_FILESYSTEM
-		backupID := uuid.Must(uuid.NewRandom()).String()
+		backupID := fmt.Sprint(random.Int63())
 
 		t.Run("fail check status", func(t *testing.T) {
 			createStatusResponse, err := client.Backup().CreateStatusGetter().
@@ -526,7 +528,7 @@ func TestBackups_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		backend := backup.BACKEND_FILESYSTEM
-		backupID := uuid.Must(uuid.NewRandom()).String()
+		backupID := fmt.Sprint(random.Int63())
 		className := "Pizza"
 
 		t.Run("fail restore", func(t *testing.T) {
@@ -548,7 +550,7 @@ func TestBackups_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		backend := backup.BACKEND_FILESYSTEM
-		backupID := uuid.Must(uuid.NewRandom()).String()
+		backupID := fmt.Sprint(random.Int63())
 		className := "Pizza"
 
 		t.Run("create backup", func(t *testing.T) {
@@ -582,7 +584,7 @@ func TestBackups_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		backend := backup.BACKEND_FILESYSTEM
-		backupID := uuid.Must(uuid.NewRandom()).String()
+		backupID := fmt.Sprint(random.Int63())
 		pizzaClassName := "Pizza"
 		soupClassName := "Soup"
 
@@ -608,7 +610,7 @@ func TestBackups_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		backend := backup.BACKEND_FILESYSTEM
-		backupID := uuid.Must(uuid.NewRandom()).String()
+		backupID := fmt.Sprint(random.Int63())
 		pizzaClassName := "Pizza"
 		soupClassName := "Soup"
 
