@@ -29,16 +29,16 @@ func (g *BackupCreateStatusGetter) WithBackupID(backupID string) *BackupCreateSt
 }
 
 func (g *BackupCreateStatusGetter) Do(ctx context.Context) (*models.BackupCreateStatusResponse, error) {
-	responseData, err := g.connection.RunREST(ctx, g.path(), http.MethodGet, nil)
+	response, err := g.connection.RunREST(ctx, g.path(), http.MethodGet, nil)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}
-	if responseData.StatusCode == 200 {
+	if response.StatusCode == 200 {
 		var obj models.BackupCreateStatusResponse
-		decodeErr := responseData.DecodeBodyIntoTarget(&obj)
+		decodeErr := response.DecodeBodyIntoTarget(&obj)
 		return &obj, decodeErr
 	}
-	return nil, except.NewDerivedWeaviateClientError(err)
+	return nil, except.NewUnexpectedStatusCodeErrorFromRESTResponse(response)
 }
 
 func (g *BackupCreateStatusGetter) path() string {

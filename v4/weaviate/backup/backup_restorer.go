@@ -74,7 +74,7 @@ func (r *BackupRestorer) restore(ctx context.Context, payload models.BackupResto
 		decodeErr := response.DecodeBodyIntoTarget(&obj)
 		return &obj, decodeErr
 	}
-	return nil, except.NewDerivedWeaviateClientError(err)
+	return nil, except.NewUnexpectedStatusCodeErrorFromRESTResponse(response)
 }
 
 func (r *BackupRestorer) restoreAndWaitForCompletion(ctx context.Context, payload models.BackupRestoreRequest,
