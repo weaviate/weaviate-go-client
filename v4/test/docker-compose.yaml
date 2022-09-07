@@ -10,7 +10,7 @@ services:
     - --scheme
     - http
     # TODO: temporarily use this version until next release
-    image: semitechnologies/weaviate:latest@sha256:9d44331c7ab5c6d6138775f4441aa97dfd81b18c7bfecd8992054b2a6f7461b9
+    image: semitechnologies/weaviate:1.15.0
     ports:
     - 8080:8080
     restart: on-failure:0
