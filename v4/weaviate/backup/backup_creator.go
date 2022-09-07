@@ -75,7 +75,7 @@ func (c *BackupCreator) create(ctx context.Context, payload models.BackupCreateR
 		decodeErr := response.DecodeBodyIntoTarget(&obj)
 		return &obj, decodeErr
 	}
-	return nil, except.NewDerivedWeaviateClientError(err)
+	return nil, except.NewUnexpectedStatusCodeErrorFromRESTResponse(response)
 }
 
 func (c *BackupCreator) createAndWaitForCompletion(ctx context.Context, payload models.BackupCreateRequest,
