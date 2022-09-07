@@ -17,11 +17,12 @@ const apiVersion = "v1"
 type Connection struct {
 	basePath   string
 	httpClient *http.Client
+	headers    map[string]string
 }
 
 // NewConnection based on scheme://host
 // if httpClient is nil a default client will be used
-func NewConnection(scheme string, host string, httpClient *http.Client) *Connection {
+func NewConnection(scheme string, host string, httpClient *http.Client, headers map[string]string) *Connection {
 	client := httpClient
 	if client == nil {
 		client = &http.Client{}
@@ -30,12 +31,16 @@ func NewConnection(scheme string, host string, httpClient *http.Client) *Connect
 	return &Connection{
 		basePath:   scheme + "://" + host + "/" + apiVersion,
 		httpClient: client,
+		headers:    headers,
 	}
 }
 
 func (con *Connection) addHeaderToRequest(request *http.Request) {
-	request.Header.Add("Content-Type", "application/json")
-	request.Header.Add("Accept", "application/json")
+	for k, v := range con.headers {
+		request.Header.Add(k, v)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
 
 }
 
@@ -81,8 +86,9 @@ func (con *Connection) createRequest(ctx context.Context, path string,
 // path: expects a resource path e.g. `/schema/things`
 // restMethod: as they are defined in constants in the *http* package
 // Returns:
-//  a response that may be parsed into a struct after the fact
-//  error if there was a network issue
+//
+//	a response that may be parsed into a struct after the fact
+//	error if there was a network issue
 func (con *Connection) RunREST(ctx context.Context, path string,
 	restMethod string, requestBody interface{}) (*ResponseData, error) {
 	request, requestErr := con.createRequest(ctx, path, restMethod, requestBody)
