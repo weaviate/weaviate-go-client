@@ -107,11 +107,11 @@ func (r *BackupRestorer) merge(response *models.BackupRestoreResponse,
 	statusResponse *models.BackupRestoreStatusResponse,
 ) *models.BackupRestoreResponse {
 	return &models.BackupRestoreResponse{
-		ID:          statusResponse.ID,
-		Classes:     response.Classes,
-		StorageName: statusResponse.StorageName,
-		Path:        statusResponse.Path,
-		Status:      statusResponse.Status,
-		Error:       statusResponse.Error,
+		ID:      statusResponse.ID,
+		Backend: statusResponse.Backend,
+		Classes: response.Classes,
+		Path:    statusResponse.Path,
+		Status:  statusResponse.Status,
+		Error:   statusResponse.Error,
 	}
 }

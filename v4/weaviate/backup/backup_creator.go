@@ -108,11 +108,11 @@ func (c *BackupCreator) merge(response *models.BackupCreateResponse,
 	statusResponse *models.BackupCreateStatusResponse,
 ) *models.BackupCreateResponse {
 	return &models.BackupCreateResponse{
-		ID:          statusResponse.ID,
-		Classes:     response.Classes,
-		StorageName: statusResponse.StorageName,
-		Path:        statusResponse.Path,
-		Status:      statusResponse.Status,
-		Error:       statusResponse.Error,
+		ID:      statusResponse.ID,
+		Backend: statusResponse.Backend,
+		Classes: response.Classes,
+		Path:    statusResponse.Path,
+		Status:  statusResponse.Status,
+		Error:   statusResponse.Error,
 	}
 }
