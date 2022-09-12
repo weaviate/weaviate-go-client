@@ -34,7 +34,7 @@ func (api *API) Aggregate() *AggregateBuilder {
 	return &AggregateBuilder{connection: api.connection}
 }
 
-// RawGQLQueryBuilder creates a raw GraphQL query
+// RawGraphQLQueryBuilder creates a raw GraphQL query
 func (api *API) Raw(query string) *RawGraphQLQueryBuilder {
 	return &RawGraphQLQueryBuilder{connection: api.connection, query: query}
 }
