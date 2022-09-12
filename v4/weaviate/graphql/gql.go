@@ -35,8 +35,8 @@ func (api *API) Aggregate() *AggregateBuilder {
 }
 
 // RawGQLQueryBuilder creates a raw GraphQL query
-func (api *API) Raw(query string) *RawGQLQueryBuilder {
-	return &RawGQLQueryBuilder{connection: api.connection, query: query}
+func (api *API) Raw(query string) *RawGraphQLQueryBuilder {
+	return &RawGraphQLQueryBuilder{connection: api.connection, query: query}
 }
 
 // NearTextArgBuilder nearText clause
