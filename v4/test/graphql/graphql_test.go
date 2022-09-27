@@ -16,6 +16,7 @@ import (
 )
 
 func TestGraphQL_integration(t *testing.T) {
+
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -28,6 +29,17 @@ func TestGraphQL_integration(t *testing.T) {
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		name := graphql.Field{Name: "name"}
+
+		// what what
+		t.Run("get raw", func(t *testing.T) {
+			resultSet, gqlErr := client.GraphQL().Raw().WithQuery("{Get {Pizza {name}}}").Do(context.Background())
+			assert.Nil(t, gqlErr)
+
+			get := resultSet.Data["Get"].(map[string]interface{})
+			pizza := get["Pizza"].([]interface{})
+			assert.Equal(t, 4, len(pizza))
+		})
+
 		t.Run("get all", func(t *testing.T) {
 			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithFields(name).Do(context.Background())
 			assert.Nil(t, gqlErr)
@@ -68,8 +80,10 @@ func TestGraphQL_integration(t *testing.T) {
 					Objects: []graphql.MoverObject{
 						{},
 						{ID: "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"},
-						{ID: "5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
-							Beacon: "weaviate://localhost/5b6a08ba-1d46-43aa-89cc-8b070790c6f2"},
+						{
+							ID:     "5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
+							Beacon: "weaviate://localhost/5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
+						},
 					},
 				}
 
@@ -103,8 +117,10 @@ func TestGraphQL_integration(t *testing.T) {
 					Objects: []graphql.MoverObject{
 						{},
 						{ID: "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"},
-						{ID: "5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
-							Beacon: "weaviate://localhost/5b6a08ba-1d46-43aa-89cc-8b070790c6f2"},
+						{
+							ID:     "5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
+							Beacon: "weaviate://localhost/5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
+						},
 					},
 				}
 
