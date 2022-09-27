@@ -14,7 +14,7 @@ type Raw struct {
 
 // Do execute the GraphQL query
 func (gql *Raw) Do(ctx context.Context) (*models.GraphQLResponse, error) {
-	return runGraphQLQuery(ctx, gql.connection, gql.query)
+	return runGraphQLQuery(ctx, gql.connection, gql.build())
 }
 
 // WithQuery the query string

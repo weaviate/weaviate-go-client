@@ -30,6 +30,15 @@ func TestGraphQL_integration(t *testing.T) {
 
 		name := graphql.Field{Name: "name"}
 
+		t.Run("get raw", func(t *testing.T) {
+			resultSet, gqlErr := client.GraphQL().Raw().WithQuery("{Get {Pizza {name}}}").Do(context.Background())
+			assert.Nil(t, gqlErr)
+
+			get := resultSet.Data["Get"].(map[string]interface{})
+			pizza := get["Pizza"].([]interface{})
+			assert.Equal(t, 4, len(pizza))
+		})
+
 		t.Run("get all", func(t *testing.T) {
 			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithFields(name).Do(context.Background())
 			assert.Nil(t, gqlErr)
