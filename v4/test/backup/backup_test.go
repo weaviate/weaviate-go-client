@@ -650,13 +650,11 @@ func TestBackups_integration(t *testing.T) {
 }
 
 func assertAllPizzasExist(t *testing.T, client *weaviate.Client) {
-	//FIXME make work with new backup api
-	//assertAllFoodObjectsExist(t, client, "Pizza", 4)
+	assertAllFoodObjectsExist(t, client, "Pizza", 4)
 }
 
 func assertAllSoupsExist(t *testing.T, client *weaviate.Client) {
-	//FIXME make work with new backup api
-	//assertAllFoodObjectsExist(t, client, "Soup", 2)
+	assertAllFoodObjectsExist(t, client, "Soup", 2)
 }
 
 func assertAllFoodObjectsExist(t *testing.T, client *weaviate.Client, className string, count int) {
