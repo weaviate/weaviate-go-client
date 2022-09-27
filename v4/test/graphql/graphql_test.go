@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/testenv"
@@ -17,36 +16,6 @@ import (
 )
 
 func TestGraphQL_integration(t *testing.T) {
-	t.Run("RawGraphQL", func(t *testing.T) {
-		t.Run("up", func(t *testing.T) {
-			err := testenv.SetupLocalWeaviate()
-			if err != nil {
-				t.Fatalf("failed to setup weaviate: %s", err)
-			}
-		})
-
-		var client *weaviate.Client
-		t.Run("createdb", func(t *testing.T) {
-			client = testsuit.CreateTestClient()
-			testsuit.CreateTestSchemaAndData(t, client)
-		})
-
-		t.Run("get all", func(t *testing.T) {
-			resultSet, gqlErr := client.GraphQL().Raw("{Get {Pizza {name}}}").Do(context.Background())
-			assert.Nil(t, gqlErr)
-
-			get := resultSet.Data["Get"].(map[string]interface{})
-			pizza := get["Pizza"].([]interface{})
-			assert.Equal(t, 4, len(pizza))
-		})
-
-		t.Run("tear down weaviate", func(t *testing.T) {
-			err := testenv.TearDownLocalWeaviate()
-			if err != nil {
-				t.Fatalf("failed to tear down weaviate: %s", err)
-			}
-		})
-	})
 
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
@@ -60,6 +29,7 @@ func TestGraphQL_integration(t *testing.T) {
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		name := graphql.Field{Name: "name"}
+
 		t.Run("get all", func(t *testing.T) {
 			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithFields(name).Do(context.Background())
 			assert.Nil(t, gqlErr)

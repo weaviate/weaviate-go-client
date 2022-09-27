@@ -21,9 +21,9 @@ func TestRawGQLBuilder_build(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := &RawGraphQLQueryBuilder{query: tt.fields.query}
+			e := &Raw{query: tt.fields.query}
 			if got := e.build(); got != tt.want {
-				t.Errorf("RawGQLBuilder.build() = %v, want %v", got, tt.want)
+				t.Errorf("Raw.build() = %v, want %v", got, tt.want)
 			}
 		})
 	}
