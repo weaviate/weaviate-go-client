@@ -465,19 +465,9 @@ func TestBackups_integration(t *testing.T) {
 
 			require.Nil(t, err)
 			require.NotNil(t, restoreResponse)
-			require.NotNil(t, restoreResponse.Status)
-			require.Equal(t, models.BackupRestoreResponseStatusFAILED, *restoreResponse.Status)
-
-			restoreStatusResponse, err := client.Backup().RestoreStatusGetter().
-				WithBackend(backend).
-				WithBackupID(backupID).
-				Do(context.Background())
-
-			require.Nil(t, err)
-			require.NotNil(t, restoreStatusResponse)
-			assert.Contains(t, restoreStatusResponse.Error, "restore class Pizza: already exists")
-			assert.Contains(t, restoreStatusResponse.ID, backupID)
-			assert.Contains(t, restoreStatusResponse.Error, className)
+			assert.Equal(t, models.BackupRestoreResponseStatusFAILED, *restoreResponse.Status)
+			assert.Contains(t, restoreResponse.Error, className)
+			assert.Contains(t, restoreResponse.Error, "already exists")
 		})
 	})
 
