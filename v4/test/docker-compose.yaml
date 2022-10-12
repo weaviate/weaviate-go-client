@@ -9,7 +9,7 @@ services:
     - '8080'
     - --scheme
     - http
-    image: semitechnologies/weaviate:1.15.2
+    image: semitechnologies/weaviate:latest@sha256:6b4d510d59f57bd00d6b1cb5957db2bc80963e59355cd4dc8935c7c6f2df4559
     ports:
     - 8080:8080
     restart: on-failure:0
@@ -22,6 +22,8 @@ services:
       DEFAULT_VECTORIZER_MODULE: text2vec-contextionary
       ENABLE_MODULES: text2vec-contextionary,backup-filesystem
       BACKUP_FILESYSTEM_PATH: "/tmp/backups"
+      CLUSTER_GOSSIP_BIND_PORT: "7100" 
+      CLUSTER_DATA_BIND_PORT: "7101" 
   contextionary:
     image: semitechnologies/contextionary:en0.16.0-v1.1.0
     ports:
