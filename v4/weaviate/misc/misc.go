@@ -36,8 +36,3 @@ func (misc *API) OpenIDConfigurationGetter() *OpenIDConfigGetter {
 func (misc *API) MetaGetter() *MetaGetter {
 	return &MetaGetter{connection: misc.connection}
 }
-
-// NodesStatusGetter returns a builder to get the weaviate nodes status
-func (misc *API) NodesStatusGetter() *NodesStatusGetter {
-	return &NodesStatusGetter{connection: misc.connection}
-}
