@@ -72,6 +72,7 @@ func TestMisc_integration(t *testing.T) {
 			t.Fail()
 		}
 	})
+
 }
 
 func TestMisc_connection_error(t *testing.T) {

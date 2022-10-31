@@ -32,7 +32,7 @@ func (misc *API) OpenIDConfigurationGetter() *OpenIDConfigGetter {
 	return &OpenIDConfigGetter{connection: misc.connection}
 }
 
-// MetaGetter returns a builder to get the weaviate meta description
+// MetaGetter get a builder to get the weaviat meta description
 func (misc *API) MetaGetter() *MetaGetter {
 	return &MetaGetter{connection: misc.connection}
 }

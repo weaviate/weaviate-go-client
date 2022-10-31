@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/testenv"
+	"github.com/semi-technologies/weaviate-go-client/v5/test/testsuit"
+	"github.com/semi-technologies/weaviate-go-client/v5/weaviate/testenv"
 	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

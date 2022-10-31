@@ -460,14 +460,12 @@ func TestBackups_integration(t *testing.T) {
 				WithIncludeClassNames(className).
 				WithBackend(backend).
 				WithBackupID(backupID).
-				WithWaitForCompletion(true).
 				Do(context.Background())
 
-			require.Nil(t, err)
-			require.NotNil(t, restoreResponse)
-			assert.Equal(t, models.BackupRestoreResponseStatusFAILED, *restoreResponse.Status)
-			assert.Contains(t, restoreResponse.Error, className)
-			assert.Contains(t, restoreResponse.Error, "already exists")
+			require.NotNil(t, err)
+			require.Nil(t, restoreResponse)
+			assert.Contains(t, err.Error(), "422")
+			assert.Contains(t, err.Error(), className)
 		})
 	})
 
@@ -576,6 +574,7 @@ func TestBackups_integration(t *testing.T) {
 			require.NotNil(t, err)
 			require.Nil(t, restoreStatusResponse)
 			assert.Contains(t, err.Error(), "404")
+			assert.Contains(t, err.Error(), backend)
 			assert.Contains(t, err.Error(), backupID)
 		})
 	})

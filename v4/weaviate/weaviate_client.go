@@ -7,7 +7,6 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/backup"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/batch"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/classifications"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/cluster"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/contextionary"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/data"
@@ -30,8 +29,8 @@ type Config struct {
 	//  To connect with an authenticated weaviate consider using the client from the golang.org/x/oauth2 module.
 	ConnectionClient *http.Client
 
-	// Headers added for every request
-	Headers map[string]string
+  // Headers added for every request
+  Headers map[string]string
 }
 
 // Client implementing the weaviate API
@@ -40,16 +39,18 @@ type Config struct {
 // The client uses the original data models as provided by weaviate itself.
 // All these models are provided in the sub module "github.com/semi-technologies/weaviate/entities/models"
 type Client struct {
-	connection      *connection.Connection
-	misc            *misc.API
-	schema          *schema.API
-	data            *data.API
-	batch           *batch.API
-	c11y            *contextionary.API
-	classifications *classifications.API
-	backup          *backup.API
-	graphQL         *graphql.API
-	cluster         *cluster.API
+	connection        *connection.Connection
+	misc              *misc.API
+	schema            *schema.API
+	data              *data.API
+	batch             *batch.API
+	c11y              *contextionary.API
+	classifications   *classifications.API
+	backup            *backup.API
+	graphQL           *graphql.API
+	version           string
+	dbVersionProvider *util.DBVersionProvider
+	dbVersionSupport  *util.DBVersionSupport
 }
 
 // New client from config
@@ -84,7 +85,6 @@ func New(config Config) *Client {
 		data:            data.New(con, dbVersionSupport),
 		batch:           batch.New(con, dbVersionSupport),
 		backup:          backup.New(con),
-		cluster:         cluster.New(con),
 	}
 
 	return client
@@ -128,9 +128,4 @@ func (c *Client) GraphQL() *graphql.API {
 // Backup API group
 func (c *Client) Backup() *backup.API {
 	return c.backup
-}
-
-// Cluster API group
-func (c *Client) Cluster() *cluster.API {
-	return c.cluster
 }
