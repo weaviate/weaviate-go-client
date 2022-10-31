@@ -359,6 +359,8 @@ github.com/go-openapi/loads v0.21.1 h1:Wb3nVZpdEzDTcly8S4HMkey6fjARRzb7iEaySimlD
 github.com/go-openapi/loads v0.21.1/go.mod h1:/DtAMXXneXFjbQMGEtbamCZb+4x7eGwkvZCvBmwUG+g=
 github.com/go-openapi/runtime v0.24.1 h1:Sml5cgQKGYQHF+M7yYSHaH1eOjvTykrddTE/KtQVjqo=
 github.com/go-openapi/runtime v0.24.1/go.mod h1:AKurw9fNre+h3ELZfk6ILsfvPN+bvvlaU/M9q/r9hpk=
+github.com/go-openapi/runtime v0.24.2 h1:yX9HMGQbz32M87ECaAhGpJjBmErO3QLcgdZj9BzGx7c=
+github.com/go-openapi/runtime v0.24.2/go.mod h1:AKurw9fNre+h3ELZfk6ILsfvPN+bvvlaU/M9q/r9hpk=
 github.com/go-openapi/spec v0.19.3/go.mod h1:FpwSN1ksY1eteniUU7X0N/BgJ7a4WvBFVA8Lj9mJglo=
 github.com/go-openapi/spec v0.20.4 h1:O8hJrt0UMnhHcluhIdUgCLRWyM2x7QkBXRvOs7m+O1M=
 github.com/go-openapi/spec v0.20.4/go.mod h1:faYFR1CvsJZ0mNsmsphTMSoRrNV3TEDoAM7FOEWeq8I=
@@ -775,6 +777,8 @@ github.com/seccomp/libseccomp-golang v0.9.1/go.mod h1:GbW5+tmTXfcxTToHLXlScSlAvW
 github.com/semi-technologies/contextionary v0.0.0-20210324171723-00263e697379/go.mod h1:K4Y0AopAsafXvvt8IO9PXspi+FeDaJdFSD61I3Homkc=
 github.com/semi-technologies/weaviate v1.15.5-0.20221012105542-8246fe53151d h1:8P/XVF42dWg9gjCtLwxSi+limRavn1LFCXaNrZI2YUY=
 github.com/semi-technologies/weaviate v1.15.5-0.20221012105542-8246fe53151d/go.mod h1:EmbC9WTYZSYnthoVWULiFO+OwEYj60dJubnXrJwexCk=
+github.com/semi-technologies/weaviate v1.16.0 h1:hNjKsbdBfzvM00xakNoKW70m5XVB1pf8am6mjRIMQ9E=
+github.com/semi-technologies/weaviate v1.16.0/go.mod h1:WVdZnV6gl9IL3BOv6pfE3+Dphhs1YLEHsEJP1kM8eZ8=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
 github.com/sirupsen/logrus v1.0.4-0.20170822132746-89742aefa4b2/go.mod h1:pMByvHTf9Beacp5x1UXfOR9xyW/9antXMhjMPG0dEzc=
 github.com/sirupsen/logrus v1.0.6/go.mod h1:pMByvHTf9Beacp5x1UXfOR9xyW/9antXMhjMPG0dEzc=
