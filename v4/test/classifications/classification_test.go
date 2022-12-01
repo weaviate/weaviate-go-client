@@ -25,7 +25,7 @@ func TestClassifications_integration(t *testing.T) {
 	})
 
 	t.Run("POST /classifications", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		createClassificationClasses(t, client)
 
 		classifyProperties := []string{"tagged"}
@@ -43,7 +43,7 @@ func TestClassifications_integration(t *testing.T) {
 	})
 
 	t.Run("GET /classifications/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		createClassificationClasses(t, client)
 
 		var k int32 = 3

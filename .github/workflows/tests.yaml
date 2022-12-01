@@ -67,6 +67,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EXTERNAL_WEAVIATE_RUNNING: false
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      OKTA_CLIENT_SECRET: ${{ secrets.OKTA_CLIENT_SECRET }}
+      WCS_DUMMY_CI_PW: ${{ secrets.WCS_DUMMY_CI_PW }}
     steps:
       - uses: actions/checkout@v3
       - name: Login to Docker Hub
@@ -79,6 +82,11 @@ jobs:
         with:
           go-version: 1.19
           cache: true
+      - name: Start Weaviate with authentication
+        run: |
+          docker-compose -f v4/test/docker-compose-azure.yaml up -d
+          docker-compose -f v4/test/docker-compose-okta.yaml up -d
+          docker-compose -f v4/test/docker-compose-wcs.yaml up -d
       - name: Run tests
         run: |
           cd v4

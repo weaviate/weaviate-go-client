@@ -2,6 +2,8 @@ package testsuit
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/go-openapi/strfmt"
@@ -120,10 +122,11 @@ func CleanUpWeaviate(t *testing.T, client *weaviate.Client) {
 }
 
 // CreateTestClient running on local host 8080
-func CreateTestClient() *weaviate.Client {
+func CreateTestClient(port int, connectionClient *http.Client) *weaviate.Client {
 	cfg := weaviate.Config{
-		Host:   "localhost:8080",
-		Scheme: "http",
+		Host:             "localhost:" + fmt.Sprint(port),
+		Scheme:           "http",
+		ConnectionClient: connectionClient,
 	}
 	client := weaviate.New(cfg)
 	return client

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/fault"
@@ -101,7 +100,36 @@ func (con *Connection) RunREST(ctx context.Context, path string,
 	}
 
 	defer response.Body.Close()
-	body, bodyErr := ioutil.ReadAll(response.Body)
+	body, bodyErr := io.ReadAll(response.Body)
+	if bodyErr != nil {
+		return nil, bodyErr
+	}
+
+	return &ResponseData{
+		Body:       body,
+		StatusCode: response.StatusCode,
+	}, nil
+}
+
+func (con *Connection) RunRESTExternal(ctx context.Context, hostAndPath string, restMethod string, requestBody interface{}) (*ResponseData, error) {
+	jsonBody, err := con.marshalBody(requestBody)
+	if err != nil {
+		return nil, err
+	}
+
+	request, err := http.NewRequest(restMethod, hostAndPath, jsonBody)
+	if err != nil {
+		return nil, err
+	}
+	con.addHeaderToRequest(request)
+	request.WithContext(ctx)
+	response, responseErr := con.httpClient.Do(request)
+	if responseErr != nil {
+		return nil, responseErr
+	}
+
+	defer response.Body.Close()
+	body, bodyErr := io.ReadAll(response.Body)
 	if bodyErr != nil {
 		return nil, bodyErr
 	}

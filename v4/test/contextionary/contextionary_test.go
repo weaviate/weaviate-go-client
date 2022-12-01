@@ -18,7 +18,7 @@ func TestContextionary_integration(t *testing.T) {
 	})
 
 	t.Run("GET /modules/text2vec-contextionary/concepts/{concept}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 
 		concepts, err := client.C11y().ConceptsGetter().WithConcept("pizzaHawaii").Do(context.Background())
 		assert.Nil(t, err)
@@ -29,7 +29,7 @@ func TestContextionary_integration(t *testing.T) {
 	})
 
 	t.Run("POST /modules/text2vec-contextionary/extensions", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 
 		err1 := client.C11y().ExtensionCreator().WithConcept("xoxo").WithDefinition("Hugs and kisses").WithWeight(1.0).Do(context.Background())
 		assert.Nil(t, err1)

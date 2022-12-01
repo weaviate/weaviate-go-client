@@ -19,7 +19,7 @@ func TestBatchCreate_integration(t *testing.T) {
 	})
 
 	t.Run("POST /batch/{type}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		// Create some classes to add in a batch
@@ -51,13 +51,13 @@ func TestBatchCreate_integration(t *testing.T) {
 				"description": "Putting the game of letter soups to a whole new level.",
 			},
 		}
-		classASlice := []*models.Object{classA1,classA2}
+		classASlice := []*models.Object{classA1, classA2}
 
 		batchResultT, batchErrT := client.Batch().ObjectsBatcher().WithObject(classT1).WithObject(classT2).Do(context.Background())
 		assert.Nil(t, batchErrT)
 		assert.NotNil(t, batchResultT)
 		assert.Equal(t, 2, len(batchResultT))
-		batchResultA, batchErrA := client.Batch().ObjectsBatcher().WithObjects(classA1,classA2).Do(context.Background())
+		batchResultA, batchErrA := client.Batch().ObjectsBatcher().WithObjects(classA1, classA2).Do(context.Background())
 		assert.Nil(t, batchErrA)
 		assert.NotNil(t, batchResultA)
 		assert.Equal(t, 2, len(batchResultA))
@@ -66,7 +66,6 @@ func TestBatchCreate_integration(t *testing.T) {
 		assert.Nil(t, batchErrSlice)
 		assert.NotNil(t, batchResultSlice)
 		assert.Equal(t, 2, len(batchResultSlice))
-
 
 		objectT1, objErrT1 := client.Data().ObjectsGetter().WithClassName("Pizza").WithID("abefd256-8574-442b-9293-9205193737ee").Do(context.Background())
 		assert.Nil(t, objErrT1)
@@ -85,7 +84,7 @@ func TestBatchCreate_integration(t *testing.T) {
 	})
 
 	t.Run("POST /batch/references", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create some objects

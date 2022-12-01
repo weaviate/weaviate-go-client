@@ -25,7 +25,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		name := graphql.Field{Name: "name"}
@@ -223,7 +223,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 	t.Run("Explore", func(t *testing.T) {
 		t.Run("with certainty", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
+			client := testsuit.CreateTestClient(8080, nil)
 			testsuit.CreateTestSchemaAndData(t, client)
 
 			concepts := []string{"pineapple slices", "ham"}
@@ -265,7 +265,7 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with distance", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
+			client := testsuit.CreateTestClient(8080, nil)
 			testsuit.CreateTestSchemaAndData(t, client)
 
 			concepts := []string{"pineapple slices", "ham"}
@@ -308,7 +308,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Aggregate", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		meta := graphql.Field{
@@ -750,7 +750,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get with group filter", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		name := graphql.Field{Name: "name"}
@@ -775,7 +775,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get with creationTimeUnix filters", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		pizza := GetOnePizza(t, client)
@@ -817,7 +817,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get with lastUpdateTimeUnix filters", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		pizza := GetOnePizza(t, client)
@@ -859,7 +859,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get bm25 filter", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		description := graphql.Field{
@@ -895,7 +895,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get hybrid filter", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		description := graphql.Field{

@@ -23,7 +23,7 @@ func TestData_reference_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("POST /{type}/{id}/references/{propertyName}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		propertySchemaT := map[string]string{
@@ -71,7 +71,7 @@ func TestData_reference_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("PUT /{type}/{id}/references/{propertyName}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create things with references
@@ -135,7 +135,7 @@ func TestData_reference_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("DELETE /{type}/{id}/references/{propertyName}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create things with references
