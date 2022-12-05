@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,7 +12,7 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
-const OidcConfigURL = "/.well-known/openid-configuration"
+const oidcConfigURL = "/.well-known/openid-configuration"
 
 type Config interface {
 	GetAuthClient(con *connection.Connection) (*http.Client, error)
@@ -22,25 +21,30 @@ type Config interface {
 type authBase struct{}
 
 func (ab authBase) getIdAndTokenEndpoint(con *connection.Connection) (string, string, error) {
-	rest, err := con.RunREST(context.TODO(), "/.well-known/openid-configuration", http.MethodGet, nil)
+	rest, err := con.RunREST(context.TODO(), oidcConfigURL, http.MethodGet, nil)
 	if err != nil {
 		return "", "", err
 	}
-	if rest.StatusCode == 404 {
+
+	switch status := rest.StatusCode; status {
+	case 404:
 		log.Println("The client was configured to use authentication, but weaviate is configured without authentication. Are you sure this is correct?")
 		return "", "", nil
-	} else if rest.StatusCode != 200 {
-		return "", "", errors.New("OIDC configuration url " + OidcConfigURL + "returned status code " + fmt.Sprint(rest.StatusCode))
+	case 200: // status code is ok
+	default:
+		return "", "", fmt.Errorf("OIDC configuration url "+oidcConfigURL+"returned status code %v", fmt.Sprint(rest.StatusCode))
 	}
-	var result map[string]interface{}
-	decodeErr := rest.DecodeBodyIntoTarget(&result)
+
+	cfg := struct {
+		Href     string `json:"href"`
+		ClientID string `json:"clientId"`
+	}{}
+	decodeErr := rest.DecodeBodyIntoTarget(&cfg)
 	if decodeErr != nil {
 		return "", "", decodeErr
 	}
 
-	clientId := result["clientId"].(string)
-	href := result["href"].(string)
-	endpoints, err := con.RunRESTExternal(context.TODO(), href, http.MethodGet, nil)
+	endpoints, err := con.RunRESTExternal(context.TODO(), cfg.Href, http.MethodGet, nil)
 	if err != nil {
 		return "", "", err
 	}
@@ -49,7 +53,7 @@ func (ab authBase) getIdAndTokenEndpoint(con *connection.Connection) (string, st
 	if decodeEndpointErr != nil {
 		return "", "", err
 	}
-	return clientId, resultEndpoints["token_endpoint"].(string), nil
+	return cfg.ClientID, resultEndpoints["token_endpoint"].(string), nil
 }
 
 type ClientCredentials struct {
@@ -62,7 +66,7 @@ func (cc ClientCredentials) GetAuthClient(con *connection.Connection) (*http.Cli
 	clientId, tokenEndpoint, err := cc.getIdAndTokenEndpoint(con)
 	if err != nil {
 		return nil, err
-	} else if err == nil && clientId == "" && tokenEndpoint == "" {
+	} else if clientId == "" && tokenEndpoint == "" {
 		return nil, nil // not configured with authentication
 	}
 
@@ -91,7 +95,7 @@ func (ro ResourceOwnerPasswordFlow) GetAuthClient(con *connection.Connection) (*
 	clientId, tokenEndpoint, err := ro.getIdAndTokenEndpoint(con)
 	if err != nil {
 		return nil, err
-	} else if err == nil && clientId == "" && tokenEndpoint == "" {
+	} else if clientId == "" && tokenEndpoint == "" {
 		return nil, nil // not configured with authentication
 	}
 
