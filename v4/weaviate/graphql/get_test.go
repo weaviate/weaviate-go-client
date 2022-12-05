@@ -31,7 +31,6 @@ func (mrr *MockRunREST) RunREST(ctx context.Context, path string, restMethod str
 }
 
 func TestQueryBuilder(t *testing.T) {
-
 	t.Run("Simple Get", func(t *testing.T) {
 		conMock := &MockRunREST{}
 

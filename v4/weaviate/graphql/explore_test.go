@@ -11,7 +11,6 @@ import (
 )
 
 func TestExploreBuilder(t *testing.T) {
-
 	t.Run("Simple Explore", func(t *testing.T) {
 		conMock := &MockRunREST{}
 

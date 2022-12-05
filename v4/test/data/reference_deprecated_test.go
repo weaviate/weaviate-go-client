@@ -13,7 +13,6 @@ import (
 )
 
 func TestData_reference_integration_deprecated(t *testing.T) {
-
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviateDeprecated()
 		if err != nil {

@@ -12,7 +12,6 @@ import (
 )
 
 func TestMisc_integration(t *testing.T) {
-
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -22,7 +21,6 @@ func TestMisc_integration(t *testing.T) {
 	})
 
 	t.Run("GET /.well-known/ready", func(t *testing.T) {
-
 		client := testsuit.CreateTestClient(8080, nil)
 		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
 
@@ -31,7 +29,6 @@ func TestMisc_integration(t *testing.T) {
 	})
 
 	t.Run("GET /.well-known/live", func(t *testing.T) {
-
 		client := testsuit.CreateTestClient(8080, nil)
 		isLive, err := client.Misc().LiveChecker().Do(context.Background())
 
@@ -40,7 +37,6 @@ func TestMisc_integration(t *testing.T) {
 	})
 
 	t.Run("GET /.well-known/openid-configuration", func(t *testing.T) {
-
 		client := testsuit.CreateTestClient(8080, nil)
 		openIDconfig, err := client.Misc().OpenIDConfigurationGetter().Do(context.Background())
 

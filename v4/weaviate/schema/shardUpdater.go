@@ -42,7 +42,8 @@ func (s *ShardUpdater) Do(ctx context.Context) (*models.ShardStatus, error) {
 }
 
 func updateShard(ctx context.Context, conn *connection.Connection, className, shardName string,
-	status models.ShardStatus) (*models.ShardStatus, error) {
+	status models.ShardStatus,
+) (*models.ShardStatus, error) {
 	responseData, err := conn.RunREST(
 		ctx, fmt.Sprintf("/schema/%s/shards/%s", className, shardName), http.MethodPut, status)
 	if err != nil {

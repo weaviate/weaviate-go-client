@@ -32,7 +32,8 @@ func NewUnexpectedStatusCodeErrorFromRESTResponse(responseData *connection.Respo
 }
 
 // CheckResponseDataErrorAndStatusCode returns the response error if it is not nil,
-//  and an WeaviateClientError if the status code is not matching
+//
+//	and an WeaviateClientError if the status code is not matching
 func CheckResponseDataErrorAndStatusCode(responseData *connection.ResponseData, responseErr error, expectedStatusCodes ...int) error {
 	if responseErr != nil {
 		return NewDerivedWeaviateClientError(responseErr)

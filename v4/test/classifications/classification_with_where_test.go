@@ -14,7 +14,6 @@ import (
 )
 
 func TestClassifications_With_Where_Filters_integration(t *testing.T) {
-
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {

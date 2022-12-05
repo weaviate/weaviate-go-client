@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/clientcredentials"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 const OidcConfigURL = "/.well-known/openid-configuration"
@@ -18,8 +19,7 @@ type Config interface {
 	GetAuthClient(con *connection.Connection) (*http.Client, error)
 }
 
-type authBase struct {
-}
+type authBase struct{}
 
 func (ab authBase) getIdAndTokenEndpoint(con *connection.Connection) (string, string, error) {
 	rest, err := con.RunREST(context.TODO(), "/.well-known/openid-configuration", http.MethodGet, nil)

@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/auth"
-	"github.com/stretchr/testify/assert"
 	"log"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate"
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/auth"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -130,7 +131,6 @@ func TestAuthOnWeaviateWithoutAuth(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(t.Name(), func(t *testing.T) {
-
 			var buf bytes.Buffer
 			log.SetOutput(&buf)
 			defer func() {
@@ -151,5 +151,4 @@ func TestAuthOnWeaviateWithoutAuth(t *testing.T) {
 func TestAuthNoWeaviateOnPort(t *testing.T) {
 	_, err := weaviate.NewConfig("localhost:"+fmt.Sprint(NoWeaviatePort), "http", auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}, nil)
 	assert.NotNil(t, err)
-
 }

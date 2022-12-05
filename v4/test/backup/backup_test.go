@@ -174,10 +174,12 @@ func TestBackups_integration(t *testing.T) {
 				assert.Equal(t, dockerComposeBackupDir+"/"+backupID, createStatusResponse.Path)
 				assert.Equal(t, backup.BACKEND_FILESYSTEM, createStatusResponse.Backend)
 				assert.Empty(t, createStatusResponse.Error)
-				assert.Contains(t, []string{models.BackupCreateStatusResponseStatusSTARTED,
+				assert.Contains(t, []string{
+					models.BackupCreateStatusResponseStatusSTARTED,
 					models.BackupCreateStatusResponseStatusTRANSFERRING,
 					models.BackupCreateStatusResponseStatusTRANSFERRED,
-					models.BackupCreateStatusResponseStatusSUCCESS}, *createStatusResponse.Status)
+					models.BackupCreateStatusResponseStatusSUCCESS,
+				}, *createStatusResponse.Status)
 
 				if models.BackupCreateStatusResponseStatusSUCCESS == *createStatusResponse.Status {
 					break
@@ -230,10 +232,12 @@ func TestBackups_integration(t *testing.T) {
 				assert.Equal(t, dockerComposeBackupDir+"/"+backupID, restoreStatusResponse.Path)
 				assert.Equal(t, backup.BACKEND_FILESYSTEM, restoreStatusResponse.Backend)
 				assert.Empty(t, restoreStatusResponse.Error)
-				assert.Contains(t, []string{models.BackupRestoreStatusResponseStatusSTARTED,
+				assert.Contains(t, []string{
+					models.BackupRestoreStatusResponseStatusSTARTED,
 					models.BackupRestoreStatusResponseStatusTRANSFERRING,
 					models.BackupRestoreStatusResponseStatusTRANSFERRED,
-					models.BackupRestoreStatusResponseStatusSUCCESS}, *restoreStatusResponse.Status)
+					models.BackupRestoreStatusResponseStatusSUCCESS,
+				}, *restoreStatusResponse.Status)
 
 				if models.BackupRestoreStatusResponseStatusSUCCESS == *restoreStatusResponse.Status {
 					break
