@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
 	"golang.org/x/oauth2"
@@ -103,6 +104,12 @@ func (ro ResourceOwnerPasswordFlow) GetAuthClient(con *connection.Connection) (*
 	token, err := conf.PasswordCredentialsToken(context.TODO(), ro.Username, ro.Password)
 	if err != nil {
 		return nil, err
+	}
+
+	// username + password are not saved by the client, so there is no possibility of refreshing the token with a
+	// refresh_token.
+	if token.RefreshToken == "" && time.Now().Add(time.Hour*24).After(token.Expiry) {
+		log.Printf("Your access token is valid for %v and no refresh token was provided.", token.Expiry.Sub(time.Now()))
 	}
 	return oauth2.NewClient(context.TODO(), oauth2.StaticTokenSource(token)), nil
 }

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
@@ -144,4 +146,51 @@ func TestAuthOnWeaviateWithoutAuth(t *testing.T) {
 func TestAuthNoWeaviateOnPort(t *testing.T) {
 	_, err := weaviate.NewConfig("localhost:"+fmt.Sprint(testsuit.NoWeaviatePort), "http", auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}, nil)
 	assert.NotNil(t, err)
+}
+
+func TestUserPWNoRefreshToken(t *testing.T) {
+	// write log to buffer
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer func() {
+		log.SetOutput(os.Stderr)
+	}()
+
+	AccessToken := "HELLO!IamAnAccessToken"
+
+	// endpoint for access tokens
+	muxToken := http.NewServeMux()
+	muxToken.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(fmt.Sprint(`{"access_token": "` + AccessToken + `", "expires_in": "1"}`)))
+	})
+	sToken := httptest.NewServer(muxToken)
+	defer sToken.Close()
+
+	// provides all endpoints
+	muxEndpoints := http.NewServeMux()
+	muxEndpoints.HandleFunc("/endpoints", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(fmt.Sprintf(`{"token_endpoint": "` + sToken.URL + `/auth"}`)))
+	})
+	sEndpoints := httptest.NewServer(muxEndpoints)
+	defer sEndpoints.Close()
+
+	// Returns the address of the auth server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"href": "` + sEndpoints.URL + `/endpoints", "clientId": "DoesNotMatter"}`))
+	})
+	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{}`))
+	})
+	s := httptest.NewServer(mux)
+	defer s.Close()
+
+	cfg, err := weaviate.NewConfig(strings.TrimPrefix(s.URL, "http://"), "http", auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}, nil)
+	assert.Nil(t, err)
+	assert.True(t, strings.Contains(buf.String(), "Your access token is valid for"))
+
+	client := weaviate.New(*cfg)
+	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+	assert.Nil(t, AuthErr)
 }
