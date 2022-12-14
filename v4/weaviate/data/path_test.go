@@ -3,6 +3,7 @@ package data
 import (
 	"testing"
 
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,7 +20,7 @@ func Test_buildObjectPath(t *testing.T) {
 			name: "with consistency level only",
 			getter: newTestGetter(version).WithID("123").
 				WithClassName("SomeClass").
-				WithConsistencyLevel("QUORUM"),
+				WithConsistencyLevel(replication.ConsistencyLevel.QUORUM),
 			expectedPath: "/objects/SomeClass/123?consistency_level=QUORUM",
 		},
 		{
@@ -33,7 +34,7 @@ func Test_buildObjectPath(t *testing.T) {
 			name: "with consistency level and with vector and classification",
 			getter: newTestGetter(version).WithID("123").
 				WithClassName("SomeClass").
-				WithConsistencyLevel("QUORUM").
+				WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
 				WithAdditional("classification").
 				WithVector(),
 			expectedPath: "/objects/SomeClass/123?include=classification,vector&consistency_level=QUORUM",
