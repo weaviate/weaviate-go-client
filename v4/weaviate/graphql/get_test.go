@@ -779,3 +779,40 @@ func TestQueryBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 }
+
+func TestBM25Builder(t *testing.T) {
+	conMock := &MockRunREST{}
+
+	builder := GetBuilder{
+		connection:           conMock,
+		includesFilterClause: false,
+	}
+
+	bm25B := &BM25ArgumentBuilder{}
+	bm25B = bm25B.WithQuery("good").WithProperties("name", "description")
+
+	query := builder.WithClassName("Pizza").WithBM25(bm25B).build()
+
+	expected := `{Get {Pizza (bm25:{query: "good", properties: ["name","description"]}) {}}}`
+	assert.Equal(t, expected, query)
+
+}
+
+func TestHybridBuilder(t *testing.T) {
+	conMock := &MockRunREST{}
+
+	builder := GetBuilder{
+		connection:           conMock,
+		includesFilterClause: false,
+	}
+
+	hybrid := &HybridArgumentBuilder{}
+	hybrid.WithQuery("query").WithVector(1, 2, 3).WithAlpha(0.6)
+	
+
+	query := builder.WithClassName("Pizza").WithHybrid(hybrid).build()
+
+	expected := `{Get {Pizza (hybrid:{query: "query", vector: [1, 2, 3], alpha: 0.6}) {}}}`
+	assert.Equal(t, expected, query)
+
+}

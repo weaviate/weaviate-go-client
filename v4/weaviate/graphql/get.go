@@ -28,6 +28,8 @@ type GetBuilder struct {
 	withAskFilter        *AskArgumentBuilder
 	withNearImageFilter  *NearImageArgumentBuilder
 	withSort             *SortBuilder
+	withBM25             *BM25ArgumentBuilder
+	withHybrid           *HybridArgumentBuilder
 }
 
 // WithClassName that should be queried
@@ -66,8 +68,16 @@ func (gb *GetBuilder) WithOffset(offset int) *GetBuilder {
 }
 
 // WithBM25 to search the inverted index
-func (gb *GetBuilder) WithBM25(nearText *BM25ArgumentBuilder) *GetBuilder {
-	gb.includesFilterClause = false
+func (gb *GetBuilder) WithBM25(bm25 *BM25ArgumentBuilder) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.withBM25 = bm25
+	return gb
+}
+
+// WithHybrid to combine multiple searches
+func (gb *GetBuilder) WithHybrid(hybrid *HybridArgumentBuilder) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.withHybrid = hybrid
 	return gb
 }
 
@@ -145,6 +155,12 @@ func (gb *GetBuilder) createFilterClause() string {
 	}
 	if gb.withNearTextFilter != nil {
 		filters = append(filters, gb.withNearTextFilter.build())
+	}
+	if gb.withBM25 != nil {
+		filters = append(filters, gb.withBM25.build())
+	}
+	if gb.withHybrid != nil {
+		filters = append(filters, gb.withHybrid.build())
 	}
 	if gb.withNearVectorFilter != nil {
 		filters = append(filters, gb.withNearVectorFilter.build())
