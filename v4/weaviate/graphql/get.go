@@ -65,6 +65,12 @@ func (gb *GetBuilder) WithOffset(offset int) *GetBuilder {
 	return gb
 }
 
+// WithBM25 to search the inverted index
+func (gb *GetBuilder) WithBM25(nearText *BM25ArgumentBuilder) *GetBuilder {
+	gb.includesFilterClause = false
+	return gb
+}
+
 // WithNearText clause to find close objects
 func (gb *GetBuilder) WithNearText(nearText *NearTextArgumentBuilder) *GetBuilder {
 	gb.includesFilterClause = true
