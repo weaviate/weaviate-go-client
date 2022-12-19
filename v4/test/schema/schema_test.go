@@ -33,6 +33,7 @@ func TestSchema_integration(t *testing.T) {
 			ModuleConfig:        defaultModuleConfig,
 			ShardingConfig:      defaultShardingConfig,
 			VectorIndexConfig:   defaultVectorIndexConfig,
+			ReplicationConfig:   defaultReplicationConfig,
 		}
 
 		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
@@ -62,6 +63,7 @@ func TestSchema_integration(t *testing.T) {
 			ModuleConfig:        defaultModuleConfig,
 			ShardingConfig:      defaultShardingConfig,
 			VectorIndexConfig:   defaultVectorIndexConfig,
+			ReplicationConfig:   defaultReplicationConfig,
 		}
 
 		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
@@ -477,6 +479,59 @@ func TestSchema_integration(t *testing.T) {
 			loadedSchema.Classes[0].InvertedIndexConfig.Bm25)
 		assert.Equal(t, schemaClass.InvertedIndexConfig.Stopwords,
 			loadedSchema.Classes[0].InvertedIndexConfig.Stopwords)
+
+		// Clean up classes
+		errRm := client.Schema().AllDeleter().Do(context.Background())
+		require.Nil(t, errRm)
+	})
+
+	t.Run("Create class with explicit replication config", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		className := "ReplicationClass"
+
+		schemaClass := &models.Class{
+			Class:             className,
+			ReplicationConfig: &models.ReplicationConfig{
+				Factor: 3,
+			},
+		}
+
+		err := client.
+			Schema().
+			ClassCreator().
+			WithClass(schemaClass).
+			Do(context.Background())
+		require.Nil(t, err)
+
+		loadedClass, getErr := client.Schema().ClassGetter().WithClassName(className).Do(context.Background())
+		require.Nil(t, getErr)
+		require.NotNil(t, loadedClass.ReplicationConfig)
+		assert.Equal(t, int64(3), loadedClass.ReplicationConfig.Factor)
+
+		// Clean up classes
+		errRm := client.Schema().AllDeleter().Do(context.Background())
+		require.Nil(t, errRm)
+	})
+
+	t.Run("Create class with implicit replication config", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		className := "ReplicationClass"
+
+		schemaClass := &models.Class{
+			Class:             className,
+		}
+
+		err := client.
+			Schema().
+			ClassCreator().
+			WithClass(schemaClass).
+			Do(context.Background())
+		require.Nil(t, err)
+
+		loadedClass, getErr := client.Schema().ClassGetter().WithClassName(className).Do(context.Background())
+		require.Nil(t, getErr)
+		require.NotNil(t, loadedClass.ReplicationConfig)
+		assert.Equal(t, int64(1), loadedClass.ReplicationConfig.Factor)
 
 		// Clean up classes
 		errRm := client.Schema().AllDeleter().Do(context.Background())

@@ -9,7 +9,7 @@ services:
     - '8080'
     - --scheme
     - http
-    image: semitechnologies/weaviate:1.16.0
+    image: semitechnologies/weaviate:preview-replace-shardingconfig-replicas-with-replication-factor-29e987d
     ports:
     - 8080:8080
     restart: on-failure:0
