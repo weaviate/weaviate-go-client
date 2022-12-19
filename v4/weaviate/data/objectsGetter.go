@@ -20,6 +20,8 @@ type ObjectsGetter struct {
 	additionalProperties []string
 	withLimit            bool
 	limit                int
+	consistencyLevel     string
+	nodeName             string
 	dbVersionSupport     *util.DBVersionSupport
 }
 
@@ -52,6 +54,22 @@ func (getter *ObjectsGetter) WithAdditional(additional string) *ObjectsGetter {
 func (getter *ObjectsGetter) WithLimit(limit int) *ObjectsGetter {
 	getter.withLimit = true
 	getter.limit = limit
+	return getter
+}
+
+// WithConsistencyLevel determines how many replicas must acknowledge a request
+// before it is considered successful. Mutually exclusive with node_name param.
+// Can be one of 'ALL', 'ONE', or 'QUORUM'. Note that WithConsistencyLevel and
+// WithNodeName are mutually exclusive.
+func (getter *ObjectsGetter) WithConsistencyLevel(cl string) *ObjectsGetter {
+	getter.consistencyLevel = cl
+	return getter
+}
+
+// WithNodeName specifies the name of the target node which should fulfill the request.
+// Note that WithNodeName and WithConsistencyLevel are mutually exclusive.
+func (getter *ObjectsGetter) WithNodeName(name string) *ObjectsGetter {
+	getter.nodeName = name
 	return getter
 }
 
@@ -113,6 +131,13 @@ func (getter *ObjectsGetter) buildPathParams() string {
 		}
 	}
 
+	if getter.consistencyLevel != "" {
+		pathParams = append(pathParams, fmt.Sprintf("consistency_level=%v", getter.consistencyLevel))
+	}
+	if getter.nodeName != "" {
+		pathParams = append(pathParams, fmt.Sprintf("node_name=%v", getter.nodeName))
+	}
+
 	if len(pathParams) > 0 {
 		return fmt.Sprintf("?%v", strings.Join(pathParams, "&"))
 	}
@@ -122,10 +147,7 @@ func (getter *ObjectsGetter) buildPathParams() string {
 // buildAdditionalParams build the query URL parameters for the requested underscore properties
 func buildAdditionalParams(additionalProperties []string) string {
 	selectedProperties := make([]string, 0)
-
-	for _, additional := range additionalProperties {
-		selectedProperties = append(selectedProperties, additional)
-	}
+	selectedProperties = append(selectedProperties, additionalProperties...)
 
 	params := strings.Join(selectedProperties, ",")
 	if len(params) > 0 {

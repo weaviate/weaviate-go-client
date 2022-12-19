@@ -3,13 +3,59 @@ package data
 import (
 	"testing"
 
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
+	"github.com/stretchr/testify/assert"
 )
 
-func Test_buildReferencesPath(t *testing.T) {
-	newDBVersionSupportForTests := func(version string) *util.DBVersionSupport {
-		return util.NewDBVersionSupport(newDBVersionProviderMock(version))
+func Test_buildObjectPath(t *testing.T) {
+	version := "1.17.0"
+
+	tests := []struct {
+		name         string
+		getter       *ObjectsGetter
+		expectedPath string
+	}{
+		{
+			name: "with consistency level only",
+			getter: newTestGetter(version).WithID("123").
+				WithClassName("SomeClass").
+				WithConsistencyLevel(replication.ConsistencyLevel.QUORUM),
+			expectedPath: "/objects/SomeClass/123?consistency_level=QUORUM",
+		},
+		{
+			name: "with node name only",
+			getter: newTestGetter(version).WithID("123").
+				WithClassName("SomeClass").
+				WithNodeName("node1"),
+			expectedPath: "/objects/SomeClass/123?node_name=node1",
+		},
+		{
+			name: "with consistency level and with vector and classification",
+			getter: newTestGetter(version).WithID("123").
+				WithClassName("SomeClass").
+				WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
+				WithAdditional("classification").
+				WithVector(),
+			expectedPath: "/objects/SomeClass/123?include=classification,vector&consistency_level=QUORUM",
+		},
+		{
+			name: "with node name and with vector and classification",
+			getter: newTestGetter(version).WithID("123").
+				WithClassName("SomeClass").
+				WithNodeName("node1").
+				WithAdditional("classification").
+				WithVector(),
+			expectedPath: "/objects/SomeClass/123?include=classification,vector&node_name=node1",
+		},
 	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.expectedPath, test.getter.buildPath())
+	}
+}
+
+func Test_buildReferencesPath(t *testing.T) {
 	type args struct {
 		id                string
 		className         string
@@ -79,4 +125,14 @@ func (s *dbVersionProviderMock) Version() string {
 
 func newDBVersionProviderMock(version string) *dbVersionProviderMock {
 	return &dbVersionProviderMock{version}
+}
+
+func newDBVersionSupportForTests(version string) *util.DBVersionSupport {
+	return util.NewDBVersionSupport(newDBVersionProviderMock(version))
+}
+
+func newTestGetter(version string) *ObjectsGetter {
+	return &ObjectsGetter{
+		dbVersionSupport: newDBVersionSupportForTests(version),
+	}
 }
