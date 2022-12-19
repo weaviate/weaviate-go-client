@@ -27,7 +27,8 @@ type AggregatePizzaResponse struct {
 }
 
 type Pizza struct {
-	Additional struct {
+	Description string `json:"description"`
+	Additional  struct {
 		ID                 string    `json:"id"`
 		Vector             []float32 `json:"vector"`
 		CreationTimeUnix   string    `json:"creationTimeUnix"`

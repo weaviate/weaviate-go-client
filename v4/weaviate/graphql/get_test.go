@@ -807,12 +807,10 @@ func TestHybridBuilder(t *testing.T) {
 	}
 
 	hybrid := &HybridArgumentBuilder{}
-	hybrid.WithQuery("query").WithVector(1, 2, 3).WithAlpha(0.6)
-	
+	hybrid.WithQuery("query").WithVector([]float32{1, 2, 3}).WithAlpha(0.6)
 
 	query := builder.WithClassName("Pizza").WithHybrid(hybrid).build()
 
-	expected := `{Get {Pizza (hybrid:{query: "query", vector: [1, 2, 3], alpha: 0.6}) {}}}`
+	expected := `{Get {Pizza (hybrid:{query: "query", vector: [1,2,3], alpha: 0.6}) {}}}`
 	assert.Equal(t, expected, query)
-
 }

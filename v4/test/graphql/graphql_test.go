@@ -858,6 +858,77 @@ func TestGraphQL_integration(t *testing.T) {
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
+	t.Run("Get bm25 filter", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		testsuit.CreateTestSchemaAndData(t, client)
+
+		description := graphql.Field{
+			Name: "description",
+		}
+
+		bm25 := &graphql.BM25ArgumentBuilder{}
+		bm25.WithQuery("innovation").WithProperties("description")
+
+		result, err := client.GraphQL().Get().
+			WithClassName("Pizza").
+			WithFields(description).
+			WithBM25(bm25).
+			Do(context.Background())
+
+		require.Nil(t, err)
+		require.Nil(t, result.Errors)
+		require.NotNil(t, result)
+		require.NotNil(t, result.Data)
+
+		b, err := json.Marshal(result.Data)
+		require.Nil(t, err)
+
+		var resp GetPizzaResponse
+		err = json.Unmarshal(b, &resp)
+		require.Nil(t, err)
+		require.NotEmpty(t, resp.Get.Pizzas)
+
+		assert.Equal(t, 1, len(resp.Get.Pizzas))
+		assert.Equal(t, "A innovation, some say revolution, in the pizza industry.", resp.Get.Pizzas[0].Description)
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
+	t.Run("Get hybrid filter", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		testsuit.CreateTestSchemaAndData(t, client)
+
+		description := graphql.Field{
+			Name: "description",
+		}
+
+		hybrid := &graphql.HybridArgumentBuilder{}
+		hybrid.WithQuery("some say revolution").WithAlpha(0.8)
+
+		result, err := client.GraphQL().Get().
+			WithClassName("Pizza").
+			WithFields(description).
+			WithHybrid(hybrid).
+			Do(context.Background())
+
+		require.Nil(t, err)
+		require.Nil(t, result.Errors)
+		require.NotNil(t, result)
+		require.NotNil(t, result.Data)
+
+		b, err := json.Marshal(result.Data)
+		require.Nil(t, err)
+
+		var resp GetPizzaResponse
+		err = json.Unmarshal(b, &resp)
+		require.Nil(t, err)
+		require.NotEmpty(t, resp.Get.Pizzas)
+
+		assert.Equal(t, 4, len(resp.Get.Pizzas))
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
