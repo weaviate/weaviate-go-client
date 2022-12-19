@@ -20,9 +20,7 @@ type ObjectsGetter struct {
 	additionalProperties []string
 	withLimit            bool
 	limit                int
-	withConsistencyLevel bool
 	consistencyLevel     string
-	withNodeName         bool
 	nodeName             string
 	dbVersionSupport     *util.DBVersionSupport
 }
@@ -64,7 +62,6 @@ func (getter *ObjectsGetter) WithLimit(limit int) *ObjectsGetter {
 // Can be one of 'ALL', 'ONE', or 'QUORUM'. Note that WithConsistencyLevel and
 // WithNodeName are mutually exclusive.
 func (getter *ObjectsGetter) WithConsistencyLevel(cl string) *ObjectsGetter {
-	getter.withConsistencyLevel = true
 	getter.consistencyLevel = cl
 	return getter
 }
@@ -72,7 +69,6 @@ func (getter *ObjectsGetter) WithConsistencyLevel(cl string) *ObjectsGetter {
 // WithNodeName specifies the name of the target node which should fulfill the request.
 // Note that WithNodeName and WithConsistencyLevel are mutually exclusive.
 func (getter *ObjectsGetter) WithNodeName(name string) *ObjectsGetter {
-	getter.withNodeName = true
 	getter.nodeName = name
 	return getter
 }
@@ -135,10 +131,10 @@ func (getter *ObjectsGetter) buildPathParams() string {
 		}
 	}
 
-	if getter.withConsistencyLevel {
+	if getter.consistencyLevel != "" {
 		pathParams = append(pathParams, fmt.Sprintf("consistency_level=%v", getter.consistencyLevel))
 	}
-	if getter.withNodeName {
+	if getter.nodeName != "" {
 		pathParams = append(pathParams, fmt.Sprintf("node_name=%v", getter.nodeName))
 	}
 
