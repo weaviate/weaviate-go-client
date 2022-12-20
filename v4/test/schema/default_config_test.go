@@ -46,3 +46,7 @@ var defaultVectorIndexConfig = map[string]interface{}{
 	"flatSearchCutoff":       float64(40000),
 	"distance":               "cosine",
 }
+
+var defaultReplicationConfig = &models.ReplicationConfig{
+	Factor: 2,
+}
