@@ -80,7 +80,7 @@ func TestAuth_clientCredential_WrongParameters(t *testing.T) {
 	}
 }
 
-func TestAuth_UserPW_WCS(t *testing.T) {
+func TestAuth_UserPW(t *testing.T) {
 	tests := []struct {
 		name    string
 		user    string
@@ -95,7 +95,7 @@ func TestAuth_UserPW_WCS(t *testing.T) {
 		{name: "Okta (scope without refresh)", user: OktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort, scope: []string{"offline_access"}, warning: true},
 	}
 	for _, tc := range tests {
-		t.Run(t.Name(), func(t *testing.T) {
+		t.Run(t.Name()+" "+tc.name, func(t *testing.T) {
 			// write log to buffer
 			var buf bytes.Buffer
 			log.SetOutput(&buf)
@@ -116,7 +116,7 @@ func TestAuth_UserPW_WCS(t *testing.T) {
 			assert.Nil(t, AuthErr)
 
 			if tc.warning {
-				assert.True(t, strings.Contains(buf.String(), "Auth001"))
+				assert.True(t, strings.Contains(buf.String(), "Auth002"))
 			}
 		})
 	}
