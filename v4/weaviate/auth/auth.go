@@ -26,23 +26,30 @@ func (ab authBase) getIdAndTokenEndpoint(con *connection.Connection) (string, st
 	if err != nil {
 		return "", "", err
 	}
-
-	switch status := rest.StatusCode; status {
-	case 404:
-		log.Println("The client was configured to use authentication, but weaviate is configured without authentication. Are you sure this is correct?")
-		return "", "", nil
-	case 200: // status code is ok
-	default:
-		return "", "", fmt.Errorf("OIDC configuration url "+oidcConfigURL+"returned status code %v", fmt.Sprint(rest.StatusCode))
-	}
-
 	cfg := struct {
 		Href     string `json:"href"`
 		ClientID string `json:"clientId"`
 	}{}
-	decodeErr := rest.DecodeBodyIntoTarget(&cfg)
-	if decodeErr != nil {
-		return "", "", decodeErr
+
+	switch status := rest.StatusCode; status {
+	case 404:
+		log.Println("Auth001: The client was configured to use authentication, but weaviate is configured without" +
+			"authentication. Are you sure this is correct?")
+		return "", "", nil
+	case 200: // status code is ok
+		decodeErr := rest.DecodeBodyIntoTarget(&cfg)
+		if decodeErr != nil {
+			// Some setups are behind proxies that return some default page - for example a login - for all requests.
+			// If the response is not json, we assume that this is the case and try unauthenticated access.
+			log.Printf("Auth005: Could not parse Weaviates OIDC configuration, using unauthenticated access. If "+
+				"you added an authorization header yourself it will be unaffected. This can happen if weaviate is "+
+				"miss-configured or you have a proxy inbetween the client and weaviate. You can test this by visiting %v.",
+				oidcConfigURL)
+
+			return "", "", nil
+		}
+	default:
+		return "", "", fmt.Errorf("OIDC configuration url "+oidcConfigURL+"returned status code %v", fmt.Sprint(rest.StatusCode))
 	}
 
 	endpoints, err := con.RunRESTExternal(context.TODO(), cfg.Href, http.MethodGet, nil)
@@ -113,7 +120,7 @@ func (ro ResourceOwnerPasswordFlow) GetAuthClient(con *connection.Connection) (*
 	// username + password are not saved by the client, so there is no possibility of refreshing the token with a
 	// refresh_token.
 	if token.RefreshToken == "" {
-		log.Printf("Auth001: Your access token is valid for %v and no refresh token was provided.", token.Expiry.Sub(time.Now()))
+		log.Printf("Auth002: Your access token is valid for %v and no refresh token was provided.", token.Expiry.Sub(time.Now()))
 		return oauth2.NewClient(context.TODO(), oauth2.StaticTokenSource(token)), nil
 	}
 
@@ -130,7 +137,7 @@ func (ro ResourceOwnerPasswordFlow) GetAuthClient(con *connection.Connection) (*
 type BearerToken struct {
 	AccessToken  string
 	RefreshToken string
-	ExpiresIn    int
+	ExpiresIn    uint
 	authBase
 }
 
@@ -143,7 +150,7 @@ func (bt BearerToken) GetAuthClient(con *connection.Connection) (*http.Client, e
 
 	// there is no possibility of refreshing the token without a refresh_token.
 	if bt.RefreshToken == "" {
-		log.Printf("Auth001: Your access token is valid for %v and no refresh token was provided.", time.Now().Add(time.Second*time.Duration(bt.ExpiresIn)))
+		log.Printf("Auth002: Your access token is valid for %v and no refresh token was provided.", time.Now().Add(time.Second*time.Duration(bt.ExpiresIn)))
 		return oauth2.NewClient(context.TODO(), oauth2.StaticTokenSource(&oauth2.Token{AccessToken: bt.AccessToken})), nil
 	}
 	conf := oauth2.Config{ClientID: clientId, Endpoint: oauth2.Endpoint{TokenURL: tokenEndpoint}}

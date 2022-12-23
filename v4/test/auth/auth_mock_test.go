@@ -72,7 +72,7 @@ func TestNoRefreshToken(t *testing.T) {
 
 			cfg, err := weaviate.NewConfig(strings.TrimPrefix(s.URL, "http://"), "http", tc.authConfig, nil)
 			assert.Nil(t, err)
-			assert.True(t, strings.Contains(buf.String(), "Auth001"))
+			assert.True(t, strings.Contains(buf.String(), "Auth002"))
 
 			client := weaviate.New(*cfg)
 			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
@@ -131,7 +131,7 @@ func TestRefreshCC(t *testing.T) {
 // times.
 func TestRefreshUserPWAndToken(t *testing.T) {
 	expirationTimeRefreshToken := 3
-	expirationTimeToken := 2
+	expirationTimeToken := uint(2)
 	tests := []struct {
 		name       string
 		authConfig auth.Config
@@ -194,4 +194,31 @@ func TestRefreshUserPWAndToken(t *testing.T) {
 			assert.Nil(t, AuthErr2)
 		})
 	}
+}
+
+// Test that the client can handle situations in which a proxy returns a catchall page for all requests
+func TestCatchAllProxy(t *testing.T) {
+	// write log to buffer
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer func() {
+		log.SetOutput(os.Stderr)
+	}()
+
+	// Simulate a proxy that returns something if a page is not available => no valid json
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`NotAValidJsonResponse`))
+	})
+	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{}`))
+	})
+	s := httptest.NewServer(mux)
+	defer s.Close()
+
+	cfg, err := weaviate.NewConfig(strings.TrimPrefix(s.URL, "http://"), "http", nil, nil)
+	assert.Nil(t, err)
+	client := weaviate.New(*cfg)
+	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+	assert.Nil(t, AuthErr)
 }
