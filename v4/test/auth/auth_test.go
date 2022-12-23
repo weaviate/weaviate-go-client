@@ -3,21 +3,28 @@ package test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
+	"io"
 	"log"
 	"net/http"
-	"net/http/httptest"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/auth"
 	"github.com/stretchr/testify/assert"
 )
 
-const OktaScope = "some_scope"
+const (
+	OktaScope = "some_scope"
+	WcsUser   = "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net"
+	OktaUser  = "test@test.de"
+)
 
 func TestAuth_clientCredential(t *testing.T) {
 	tests := []struct {
@@ -26,7 +33,7 @@ func TestAuth_clientCredential(t *testing.T) {
 		scope  []string
 		port   int
 	}{
-		{name: "Okta", envVar: "OKTA_CLIENT_SECRET", scope: []string{OktaScope}, port: testsuit.OktaPort},
+		{name: "Okta", envVar: "OKTA_CLIENT_SECRET", scope: []string{OktaScope}, port: testsuit.OktaCCPort},
 		{name: "Azure", envVar: "AZURE_CLIENT_SECRET", scope: []string{"4706508f-30c2-469b-8b12-ad272b3de864/.default"}, port: testsuit.AzurePort},
 		{name: "Azure (hardcoded scope)", envVar: "AZURE_CLIENT_SECRET", scope: nil, port: testsuit.AzurePort},
 	}
@@ -64,7 +71,7 @@ func TestAuth_clientCredential_WrongParameters(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(t.Name(), func(t *testing.T) {
 			clientCredentialConf := auth.ClientCredentials{ClientSecret: tc.secret, Scopes: tc.scope}
-			cfg, err := weaviate.NewConfig("localhost:"+fmt.Sprint(testsuit.OktaPort), "http", clientCredentialConf, nil)
+			cfg, err := weaviate.NewConfig("localhost:"+fmt.Sprint(testsuit.OktaCCPort), "http", clientCredentialConf, nil)
 			assert.Nil(t, err)
 			client := weaviate.New(*cfg)
 			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
@@ -74,17 +81,45 @@ func TestAuth_clientCredential_WrongParameters(t *testing.T) {
 }
 
 func TestAuth_UserPW_WCS(t *testing.T) {
-	wcsPw := os.Getenv("WCS_DUMMY_CI_PW")
-	if wcsPw == "" {
-		t.Skip("No password supplied for WCS")
+	tests := []struct {
+		name    string
+		user    string
+		envVar  string
+		scope   []string
+		port    int
+		warning bool
+	}{
+		{name: "WCS", user: WcsUser, envVar: "WCS_DUMMY_CI_PW", port: testsuit.WCSPort, warning: false},
+		{name: "Okta (no scope)", user: OktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort, warning: false},
+		{name: "Okta", user: OktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort, scope: []string{"offline_access"}, warning: false},
+		{name: "Okta (scope without refresh)", user: OktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort, scope: []string{"offline_access"}, warning: true},
 	}
+	for _, tc := range tests {
+		t.Run(t.Name(), func(t *testing.T) {
+			// write log to buffer
+			var buf bytes.Buffer
+			log.SetOutput(&buf)
+			defer func() {
+				log.SetOutput(os.Stderr)
+			}()
 
-	clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net", Password: wcsPw}
-	cfg, err := weaviate.NewConfig("localhost:"+fmt.Sprint(testsuit.WCSPort), "http", clientCredentialConf, nil)
-	assert.Nil(t, err)
-	client := weaviate.New(*cfg)
-	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-	assert.Nil(t, AuthErr)
+			pw := os.Getenv(tc.envVar)
+			if pw == "" {
+				t.Skip("No password supplied for " + tc.name)
+			}
+
+			clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: tc.user, Password: pw, Scopes: tc.scope}
+			cfg, err := weaviate.NewConfig("localhost:"+fmt.Sprint(tc.port), "http", clientCredentialConf, nil)
+			assert.Nil(t, err)
+			client := weaviate.New(*cfg)
+			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+			assert.Nil(t, AuthErr)
+
+			if tc.warning {
+				assert.True(t, strings.Contains(buf.String(), "Auth001"))
+			}
+		})
+	}
 }
 
 func TestAuth_UserPW_wrongPW(t *testing.T) {
@@ -112,7 +147,7 @@ func TestNoAuthOnWeaviateWithAuth(t *testing.T) {
 }
 
 // Test that log contains a warning when configuring the client with authentication, but weaviate is configured without
-// authentication. Otherwise the client is working normally
+// authentication. Otherwise, the client is working normally
 func TestAuthOnWeaviateWithoutAuth(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -121,7 +156,7 @@ func TestAuthOnWeaviateWithoutAuth(t *testing.T) {
 	}{
 		{name: "User/PW", authConfig: auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}},
 		{name: "Client credentials", authConfig: auth.ClientCredentials{ClientSecret: "NotASecret", Scopes: []string{"No scope"}}},
-		{name: "Bearer token", authConfig: auth.BearerToken{Token: "NotAToken"}},
+		{name: "Bearer token", authConfig: auth.BearerToken{AccessToken: "NotAToken"}},
 	}
 
 	for _, tc := range tests {
@@ -148,49 +183,64 @@ func TestAuthNoWeaviateOnPort(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
-func TestUserPWNoRefreshToken(t *testing.T) {
-	// write log to buffer
-	var buf bytes.Buffer
-	log.SetOutput(&buf)
-	defer func() {
-		log.SetOutput(os.Stderr)
-	}()
+func TestAuthBearerToken(t *testing.T) {
+	tests := []struct {
+		name   string
+		user   string
+		envVar string
+		port   int
+	}{
+		{name: "WCS", user: WcsUser, envVar: "WCS_DUMMY_CI_PW", port: testsuit.WCSPort},
+		{name: "Okta", user: OktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort},
+	}
+	for _, tc := range tests {
+		t.Run(t.Name(), func(t *testing.T) {
+			pw := os.Getenv(tc.envVar)
+			if pw == "" {
+				t.Skip("No password supplied for " + tc.name)
+			}
+			url := "localhost:" + fmt.Sprint(tc.port)
 
-	AccessToken := "HELLO!IamAnAccessToken"
+			AccessToken, RefreshToken := get_access_token(t, url, tc.user, pw)
+			cfg, err := weaviate.NewConfig(url, "http", auth.BearerToken{AccessToken: AccessToken, RefreshToken: RefreshToken}, nil)
+			assert.Nil(t, err)
 
-	// endpoint for access tokens
-	muxToken := http.NewServeMux()
-	muxToken.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(fmt.Sprint(`{"access_token": "` + AccessToken + `", "expires_in": "1"}`)))
+			client := weaviate.New(*cfg)
+			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+			assert.Nil(t, AuthErr)
+		})
+	}
+}
+
+func get_access_token(t *testing.T, weavUrl, user, pw string) (string, string) {
+	resp, err := http.Get("http://" + weavUrl + "/v1/.well-known/openid-configuration")
+	if err != nil {
+		t.Fail()
+	}
+	body, _ := io.ReadAll(resp.Body)
+	cfg := struct {
+		Href     string `json:"href"`
+		ClientID string `json:"clientId"`
+	}{}
+	json.Unmarshal(body, &cfg)
+	resp.Body.Close()
+	respAuth, err := http.Get(cfg.Href)
+	bodyAuth, _ := io.ReadAll(respAuth.Body)
+	endpoint := struct {
+		TokenEndpoint string `json:"token_endpoint"`
+	}{}
+	json.Unmarshal(bodyAuth, &endpoint)
+	respAuth.Body.Close()
+	respToken, _ := http.PostForm(endpoint.TokenEndpoint, url.Values{
+		"grant_type": []string{"password"}, "client_id": []string{cfg.ClientID}, "username": []string{user}, "password": []string{pw},
 	})
-	sToken := httptest.NewServer(muxToken)
-	defer sToken.Close()
+	bodyTokens, _ := io.ReadAll(respToken.Body)
+	respToken.Body.Close()
 
-	// provides all endpoints
-	muxEndpoints := http.NewServeMux()
-	muxEndpoints.HandleFunc("/endpoints", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(fmt.Sprintf(`{"token_endpoint": "` + sToken.URL + `/auth"}`)))
-	})
-	sEndpoints := httptest.NewServer(muxEndpoints)
-	defer sEndpoints.Close()
-
-	// Returns the address of the auth server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/v1/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"href": "` + sEndpoints.URL + `/endpoints", "clientId": "DoesNotMatter"}`))
-	})
-	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{}`))
-	})
-	s := httptest.NewServer(mux)
-	defer s.Close()
-
-	cfg, err := weaviate.NewConfig(strings.TrimPrefix(s.URL, "http://"), "http", auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}, nil)
-	assert.Nil(t, err)
-	assert.True(t, strings.Contains(buf.String(), "Your access token is valid for"))
-
-	client := weaviate.New(*cfg)
-	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-	assert.Nil(t, AuthErr)
+	tokens := struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+	}{}
+	json.Unmarshal(bodyTokens, &tokens)
+	return tokens.AccessToken, tokens.RefreshToken
 }

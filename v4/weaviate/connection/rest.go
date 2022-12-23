@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/fault"
+	"golang.org/x/oauth2"
 )
 
 const apiVersion = "v1"
@@ -26,12 +28,40 @@ func NewConnection(scheme string, host string, httpClient *http.Client, headers 
 	if client == nil {
 		client = &http.Client{}
 	}
-
-	return &Connection{
+	connection := &Connection{
 		basePath:   scheme + "://" + host + "/" + apiVersion,
 		httpClient: client,
 		headers:    headers,
 	}
+
+	// background goroutine that periodically refreshes the auth token.
+	// The oauth2 package only refreshes the Tokens on new http requests => if there is no request for the lifetime of
+	// the refresh token the client will become de-authenticated without this.
+	go func(con *Connection) {
+		transport, ok := con.httpClient.Transport.(*oauth2.Transport)
+		if !ok {
+			return
+		}
+		for {
+			token, err := transport.Source.Token()
+			if err != nil {
+				return
+			}
+			// there is no point in manual refreshing if there is no refresh token
+			if token.RefreshToken == "" {
+				return
+			}
+
+			timeToSleep := token.Expiry.Sub(time.Now()) - time.Second/10
+			time.Sleep(timeToSleep)
+			_, err = connection.RunREST(context.TODO(), "/meta", http.MethodGet, nil)
+			if err != nil {
+				return
+			}
+		}
+	}(connection)
+
+	return connection
 }
 
 func (con *Connection) addHeaderToRequest(request *http.Request) {

@@ -1,10 +1,9 @@
 package graphql
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
-
-	"encoding/json"
 )
 
 type BM25ArgumentBuilder struct {

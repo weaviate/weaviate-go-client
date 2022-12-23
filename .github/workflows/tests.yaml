@@ -73,6 +73,7 @@ jobs:
       AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       OKTA_CLIENT_SECRET: ${{ secrets.OKTA_CLIENT_SECRET }}
       WCS_DUMMY_CI_PW: ${{ secrets.WCS_DUMMY_CI_PW }}
+      OKTA_DUMMY_CI_PW: ${{ secrets.OKTA_DUMMY_CI_PW }}
       INTEGRATION_TESTS_AUTH: ${{ matrix.auth_integration }}
     steps:
       - uses: actions/checkout@v3

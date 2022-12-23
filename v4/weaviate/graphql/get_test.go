@@ -794,7 +794,6 @@ func TestBM25Builder(t *testing.T) {
 
 	expected := `{Get {Pizza (bm25:{query: "good", properties: ["name","description"]}) {}}}`
 	assert.Equal(t, expected, query)
-
 }
 
 func TestHybridBuilder(t *testing.T) {

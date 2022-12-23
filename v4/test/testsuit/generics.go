@@ -3,10 +3,11 @@ package testsuit
 import (
 	"context"
 	"fmt"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/auth"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/auth"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate"
@@ -17,8 +18,9 @@ import (
 const (
 	NoAuthPort     = 8080
 	AzurePort      = 8081
-	OktaPort       = 8082
-	WCSPort        = 8083
+	OktaCCPort     = 8082
+	OktaUsersPort  = 8083
+	WCSPort        = 8085
 	NoWeaviatePort = 8888
 )
 
