@@ -35,17 +35,17 @@ type Config struct {
 	Headers map[string]string
 }
 
-func NewConfig(Host string, Scheme string, AuthConfig auth.Config, Headers map[string]string) (*Config, error) {
+func NewConfig(host string, scheme string, authConfig auth.Config, headers map[string]string) (*Config, error) {
 	var client *http.Client = nil
 	var err error
-	if AuthConfig != nil {
-		tmpCon := connection.NewConnection(Scheme, Host, nil, Headers)
-		client, err = AuthConfig.GetAuthClient(tmpCon)
+	if authConfig != nil {
+		tmpCon := connection.NewConnection(scheme, host, nil, headers)
+		client, err = authConfig.GetAuthClient(tmpCon)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return &Config{Host: Host, Scheme: Scheme, Headers: Headers, ConnectionClient: client}, nil
+	return &Config{Host: host, Scheme: scheme, Headers: headers, ConnectionClient: client}, nil
 }
 
 // Client implementing the weaviate API

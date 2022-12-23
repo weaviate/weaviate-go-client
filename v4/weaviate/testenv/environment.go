@@ -18,7 +18,7 @@ import (
 //	This prevents unnecessary starting and stopping of the docker-compose which prevents errors
 //	due to syncing issues and speeds up the process
 func SetupLocalWeaviate() error {
-	if !IsExternalWeaviateRunning() {
+	if !isExternalWeaviateRunning() {
 		err := test.SetupWeaviate()
 		if err != nil {
 			return err
@@ -35,7 +35,7 @@ func SetupLocalWeaviate() error {
 //	This prevents unnecessary starting and stopping of the docker-compose which prevents errors
 //	due to syncing issues and speeds up the process
 func SetupLocalWeaviateDeprecated() error {
-	if !IsExternalWeaviateRunning() {
+	if !isExternalWeaviateRunning() {
 		err := test.SetupWeaviateDeprecated()
 		if err != nil {
 			return err
@@ -44,7 +44,7 @@ func SetupLocalWeaviateDeprecated() error {
 	return WaitForWeaviate()
 }
 
-func IsExternalWeaviateRunning() bool {
+func isExternalWeaviateRunning() bool {
 	val := os.Getenv("EXTERNAL_WEAVIATE_RUNNING")
 	val = strings.ToLower(val)
 	fmt.Printf("\nEXTERNAL_WEAVIATE_RUNNING: %v\n", val)
@@ -80,7 +80,7 @@ func WaitForWeaviate() error {
 //
 //	see SetupLocalWeaviate for more info.
 func TearDownLocalWeaviate() error {
-	if IsExternalWeaviateRunning() {
+	if isExternalWeaviateRunning() {
 		return nil
 	}
 	err := test.TearDownWeaviate()
@@ -94,7 +94,7 @@ func TearDownLocalWeaviate() error {
 //
 //	see SetupLocalWeaviate for more info.
 func TearDownLocalWeaviateDeprecated() error {
-	if IsExternalWeaviateRunning() {
+	if isExternalWeaviateRunning() {
 		return nil
 	}
 	err := test.TearDownWeaviateDeprecated()
