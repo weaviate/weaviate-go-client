@@ -49,8 +49,8 @@ func GetOnePizza(t *testing.T, c *weaviate.Client) *Pizza {
 
 	resp, err := c.GraphQL().
 		Get().
-		WithClassName("Pizza").
-		WithFields(_additional).
+		AddQueryClass(graphql.NewQueryClassBuilder("Pizza").
+			WithFields(_additional)).
 		Do(context.Background())
 	if err != nil {
 		t.Fatalf("failed to get an object: %s", err)

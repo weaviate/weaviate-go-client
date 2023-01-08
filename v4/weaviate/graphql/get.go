@@ -11,7 +11,11 @@ import (
 
 // GetBuilder for GraphQL
 type GetBuilder struct {
-	connection rest
+	connection    rest
+	ClassBuilders map[string]*ClassBuilder
+}
+
+type ClassBuilder struct {
 	className  string
 	withFields []Field
 
@@ -32,102 +36,101 @@ type GetBuilder struct {
 	withHybrid           *HybridArgumentBuilder
 }
 
-// WithClassName that should be queried
-func (gb *GetBuilder) WithClassName(name string) *GetBuilder {
-	gb.className = name
-	return gb
+// ClassName that should be queried
+func NewQueryClassBuilder(className string) *ClassBuilder {
+	return &ClassBuilder{className: className}
 }
 
 // WithFields included in the result set
-func (gb *GetBuilder) WithFields(fields ...Field) *GetBuilder {
-	gb.withFields = fields
-	return gb
+func (cb *ClassBuilder) WithFields(fields ...Field) *ClassBuilder {
+	cb.withFields = fields
+	return cb
 }
 
 // WithWhere filter
-func (gb *GetBuilder) WithWhere(where *filters.WhereBuilder) *GetBuilder {
-	gb.includesFilterClause = true
-	gb.withWhereFilter = where
-	return gb
+func (cb *ClassBuilder) WithWhere(where *filters.WhereBuilder) *ClassBuilder {
+	cb.includesFilterClause = true
+	cb.withWhereFilter = where
+	return cb
 }
 
 // WithLimit of objects in the result set
-func (gb *GetBuilder) WithLimit(limit int) *GetBuilder {
-	gb.includesFilterClause = true
-	gb.includesLimit = true
-	gb.limit = limit
-	return gb
+func (cb *ClassBuilder) WithLimit(limit int) *ClassBuilder {
+	cb.includesFilterClause = true
+	cb.includesLimit = true
+	cb.limit = limit
+	return cb
 }
 
 // WithOffset of objects in the result set
-func (gb *GetBuilder) WithOffset(offset int) *GetBuilder {
-	gb.includesFilterClause = true
-	gb.includesOffset = true
-	gb.offset = offset
-	return gb
+func (cb *ClassBuilder) WithOffset(offset int) *ClassBuilder {
+	cb.includesFilterClause = true
+	cb.includesOffset = true
+	cb.offset = offset
+	return cb
 }
 
 // WithBM25 to search the inverted index
-func (gb *GetBuilder) WithBM25(bm25 *BM25ArgumentBuilder) *GetBuilder {
-	gb.includesFilterClause = true
-	gb.withBM25 = bm25
-	return gb
+func (cb *ClassBuilder) WithBM25(bm25 *BM25ArgumentBuilder) *ClassBuilder {
+	cb.includesFilterClause = true
+	cb.withBM25 = bm25
+	return cb
 }
 
 // WithHybrid to combine multiple searches
-func (gb *GetBuilder) WithHybrid(hybrid *HybridArgumentBuilder) *GetBuilder {
-	gb.includesFilterClause = true
-	gb.withHybrid = hybrid
-	return gb
+func (cb *ClassBuilder) WithHybrid(hybrid *HybridArgumentBuilder) *ClassBuilder {
+	cb.includesFilterClause = true
+	cb.withHybrid = hybrid
+	return cb
 }
 
 // WithNearText clause to find close objects
-func (gb *GetBuilder) WithNearText(nearText *NearTextArgumentBuilder) *GetBuilder {
-	gb.includesFilterClause = true
-	gb.withNearTextFilter = nearText
-	return gb
+func (cb *ClassBuilder) WithNearText(nearText *NearTextArgumentBuilder) *ClassBuilder {
+	cb.includesFilterClause = true
+	cb.withNearTextFilter = nearText
+	return cb
 }
 
 // WithNearObject clause to find close objects
-func (gb *GetBuilder) WithNearImage(nearImage *NearImageArgumentBuilder) *GetBuilder {
-	gb.includesFilterClause = true
-	gb.withNearImageFilter = nearImage
-	return gb
+func (cb *ClassBuilder) WithNearImage(nearImage *NearImageArgumentBuilder) *ClassBuilder {
+	cb.includesFilterClause = true
+	cb.withNearImageFilter = nearImage
+	return cb
 }
 
 // WithNearVector clause to find close objects
-func (gb *GetBuilder) WithNearVector(nearVector *NearVectorArgumentBuilder) *GetBuilder {
-	gb.includesFilterClause = true
-	gb.withNearVectorFilter = nearVector
-	return gb
+func (cb *ClassBuilder) WithNearVector(nearVector *NearVectorArgumentBuilder) *ClassBuilder {
+	cb.includesFilterClause = true
+	cb.withNearVectorFilter = nearVector
+	return cb
 }
 
 // WithGroup statement
-func (gb *GetBuilder) WithGroup(group *GroupArgumentBuilder) *GetBuilder {
-	gb.includesFilterClause = true
-	gb.withGroupFilter = group
-	return gb
+func (cb *ClassBuilder) WithGroup(group *GroupArgumentBuilder) *ClassBuilder {
+	cb.includesFilterClause = true
+	cb.withGroupFilter = group
+	return cb
 }
 
 // WithAsk clause to find an aswer to the question
-func (gb *GetBuilder) WithAsk(ask *AskArgumentBuilder) *GetBuilder {
-	gb.includesFilterClause = true
-	gb.withAskFilter = ask
-	return gb
+func (cb *ClassBuilder) WithAsk(ask *AskArgumentBuilder) *ClassBuilder {
+	cb.includesFilterClause = true
+	cb.withAskFilter = ask
+	return cb
 }
 
 // WithNearObject clause to find close objects
-func (gb *GetBuilder) WithNearObject(nearObject *NearObjectArgumentBuilder) *GetBuilder {
-	gb.includesFilterClause = true
-	gb.withNearObjectFilter = nearObject
-	return gb
+func (cb *ClassBuilder) WithNearObject(nearObject *NearObjectArgumentBuilder) *ClassBuilder {
+	cb.includesFilterClause = true
+	cb.withNearObjectFilter = nearObject
+	return cb
 }
 
 // WithSort included in the result set
-func (gb *GetBuilder) WithSort(sort ...Sort) *GetBuilder {
-	gb.includesFilterClause = true
-	gb.withSort = &SortBuilder{sort}
-	return gb
+func (cb *ClassBuilder) WithSort(sort ...Sort) *ClassBuilder {
+	cb.includesFilterClause = true
+	cb.withSort = &SortBuilder{sort}
+	return cb
 }
 
 // Do execute the GraphQL query
@@ -135,65 +138,73 @@ func (gb *GetBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, gb.connection, gb.build())
 }
 
+func (gb *GetBuilder) AddQueryClass(class *ClassBuilder) *GetBuilder {
+	gb.ClassBuilders[class.className] = class
+	return gb
+}
+
 // build the GraphQL query string (not needed when Do is executed)
 func (gb *GetBuilder) build() string {
-	filterClause := ""
-	if gb.includesFilterClause {
-		filterClause = gb.createFilterClause()
+	var query string
+	for _, class := range gb.ClassBuilders {
+		filterClause := ""
+		if class.includesFilterClause {
+			filterClause = gb.createFilterClause(class)
+		}
+		fieldsClause := gb.createFieldsClause(class)
+		query = query + fmt.Sprintf("%v %v {%v}", class.className, filterClause, fieldsClause) + " "
 	}
-	fieldsClause := gb.createFieldsClause()
-
-	query := fmt.Sprintf("{Get {%v %v {%v}}}", gb.className, filterClause, fieldsClause)
-
+	query = strings.TrimSpace(query)
+	query = fmt.Sprintf("{Get {%v}}", query)
 	return query
 }
 
-func (gb *GetBuilder) createFilterClause() string {
+func (gb *GetBuilder) createFilterClause(class *ClassBuilder) string {
 	filters := []string{}
-	if gb.withWhereFilter != nil {
-		filters = append(filters, gb.withWhereFilter.String())
+	if class.withWhereFilter != nil {
+		filters = append(filters, class.withWhereFilter.String())
 	}
-	if gb.withNearTextFilter != nil {
-		filters = append(filters, gb.withNearTextFilter.build())
+	if class.withNearTextFilter != nil {
+		filters = append(filters, class.withNearTextFilter.build())
 	}
-	if gb.withBM25 != nil {
-		filters = append(filters, gb.withBM25.build())
+	if class.withBM25 != nil {
+		filters = append(filters, class.withBM25.build())
 	}
-	if gb.withHybrid != nil {
-		filters = append(filters, gb.withHybrid.build())
+	if class.withHybrid != nil {
+		filters = append(filters, class.withHybrid.build())
 	}
-	if gb.withNearVectorFilter != nil {
-		filters = append(filters, gb.withNearVectorFilter.build())
+	if class.withNearVectorFilter != nil {
+		filters = append(filters, class.withNearVectorFilter.build())
 	}
-	if gb.withNearObjectFilter != nil {
-		filters = append(filters, gb.withNearObjectFilter.build())
+	if class.withNearObjectFilter != nil {
+		filters = append(filters, class.withNearObjectFilter.build())
 	}
-	if gb.withAskFilter != nil {
-		filters = append(filters, gb.withAskFilter.build())
+	if class.withAskFilter != nil {
+		filters = append(filters, class.withAskFilter.build())
 	}
-	if gb.withNearImageFilter != nil {
-		filters = append(filters, gb.withNearImageFilter.build())
+	if class.withNearImageFilter != nil {
+		filters = append(filters, class.withNearImageFilter.build())
 	}
-	if gb.withGroupFilter != nil {
-		filters = append(filters, gb.withGroupFilter.build())
+	if class.withGroupFilter != nil {
+		filters = append(filters, class.withGroupFilter.build())
 	}
-	if gb.includesLimit {
-		filters = append(filters, fmt.Sprintf("limit: %v", gb.limit))
+	if class.includesLimit {
+		filters = append(filters, fmt.Sprintf("limit: %v", class.limit))
 	}
-	if gb.includesOffset {
-		filters = append(filters, fmt.Sprintf("offset: %v", gb.offset))
+	if class.includesOffset {
+		filters = append(filters, fmt.Sprintf("offset: %v", class.offset))
 	}
-	if gb.withSort != nil {
-		filters = append(filters, gb.withSort.build())
+	if class.withSort != nil {
+		filters = append(filters, class.withSort.build())
 	}
 	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
 }
 
-func (gb *GetBuilder) createFieldsClause() string {
-	if len(gb.withFields) > 0 {
-		fields := make([]string, len(gb.withFields))
-		for i := range gb.withFields {
-			fields[i] = gb.withFields[i].build()
+func (gb *GetBuilder) createFieldsClause(class *ClassBuilder) string {
+	if len(class.withFields) > 0 {
+		fields := make([]string, len(class.withFields))
+		for i := range class.withFields {
+			fields[i] = class.withFields[i].build()
 		}
 		return strings.Join(fields, " ")
 	}
