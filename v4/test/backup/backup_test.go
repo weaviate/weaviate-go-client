@@ -663,8 +663,8 @@ func assertAllSoupsExist(t *testing.T, client *weaviate.Client) {
 func assertAllFoodObjectsExist(t *testing.T, client *weaviate.Client, className string, count int) {
 	resultSet, err := client.GraphQL().
 		Get().
-		AddQueryClass(graphql.NewQueryClassBuilder(className).
-			WithFields(graphql.Field{Name: "name"})).
+		WithClassName(className).
+		WithFields(graphql.Field{Name: "name"}).
 		Do(context.Background())
 	assert.Nil(t, err)
 

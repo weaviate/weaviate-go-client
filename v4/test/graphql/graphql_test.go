@@ -52,7 +52,8 @@ func TestGraphQL_integration(t *testing.T) {
 		t.Run("by near object", func(t *testing.T) {
 			withNearObject := client.GraphQL().NearObjectArgBuilder().
 				WithID("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
-			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").
+			resultSet, gqlErr := client.GraphQL().Get().
+				WithClassName("Pizza").
 				WithFields(name).
 				WithNearObject(withNearObject).
 				Do(context.Background())
@@ -148,10 +149,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 			name = graphql.Field{Name: "name"}
 
-			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").
-				WithWhere(where).
-				WithFields(name).
-				Do(context.Background())
+			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithWhere(where).WithFields(name).Do(context.Background())
 			assert.Nil(t, gqlErr)
 
 			get := resultSet.Data["Get"].(map[string]interface{})
@@ -173,10 +171,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 			name = graphql.Field{Name: "name"}
 
-			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").
-				WithWhere(where).
-				WithFields(name).
-				Do(context.Background())
+			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithWhere(where).WithFields(name).Do(context.Background())
 			assert.Nil(t, gqlErr)
 
 			get := resultSet.Data["Get"].(map[string]interface{})
@@ -762,7 +757,8 @@ func TestGraphQL_integration(t *testing.T) {
 		group := client.GraphQL().GroupArgBuilder().WithType(graphql.Merge).WithForce(1.0)
 
 		resultSet, gqlErr := client.GraphQL().
-			Get().WithClassName("Pizza").
+			Get().
+			WithClassName("Pizza").
 			WithFields(name).
 			WithGroup(group).
 			WithLimit(7).

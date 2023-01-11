@@ -21,11 +21,10 @@ func New(con *connection.Connection) *API {
 
 // Get queries
 func (api *API) Get() *GetBuilder {
-	return &GetBuilder{
-		connection: api.connection,
-	}
+	return &GetBuilder{connection: api.connection}
 }
 
+// Get queries with Multiple Class
 func (api *API) MultiClassGet() *MultiClassBuilder {
 	return &MultiClassBuilder{
 		connection:    api.connection,
