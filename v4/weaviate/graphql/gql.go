@@ -22,8 +22,14 @@ func New(con *connection.Connection) *API {
 // Get queries
 func (api *API) Get() *GetBuilder {
 	return &GetBuilder{
+		connection: api.connection,
+	}
+}
+
+func (api *API) MultiClassGet() *MultiClassBuilder {
+	return &MultiClassBuilder{
 		connection:    api.connection,
-		ClassBuilders: make(map[string]*ClassBuilder),
+		classBuilders: make(map[string]*classBuilder),
 	}
 }
 

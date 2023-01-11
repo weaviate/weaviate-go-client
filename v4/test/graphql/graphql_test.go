@@ -41,7 +41,7 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("get all", func(t *testing.T) {
-			resultSet, gqlErr := client.GraphQL().Get().AddQueryClass(graphql.NewQueryClassBuilder("Pizza").WithFields(name)).Do(context.Background())
+			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithFields(name).Do(context.Background())
 			assert.Nil(t, gqlErr)
 
 			get := resultSet.Data["Get"].(map[string]interface{})
@@ -52,9 +52,9 @@ func TestGraphQL_integration(t *testing.T) {
 		t.Run("by near object", func(t *testing.T) {
 			withNearObject := client.GraphQL().NearObjectArgBuilder().
 				WithID("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
-			resultSet, gqlErr := client.GraphQL().Get().AddQueryClass(graphql.NewQueryClassBuilder("Pizza").
+			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").
 				WithFields(name).
-				WithNearObject(withNearObject)).
+				WithNearObject(withNearObject).
 				Do(context.Background())
 			assert.Nil(t, gqlErr)
 			require.Nil(t, resultSet.Errors)
@@ -92,9 +92,9 @@ func TestGraphQL_integration(t *testing.T) {
 					WithMoveTo(moveTo).
 					WithMoveAwayFrom(moveAwayFrom)
 
-				resultSet, gqlErr := client.GraphQL().Get().AddQueryClass(graphql.NewQueryClassBuilder("Pizza").
+				resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").
 					WithFields(name).
-					WithNearText(withNearText)).
+					WithNearText(withNearText).
 					Do(context.Background())
 
 				assert.Nil(t, gqlErr)
@@ -129,9 +129,9 @@ func TestGraphQL_integration(t *testing.T) {
 					WithMoveTo(moveTo).
 					WithMoveAwayFrom(moveAwayFrom)
 
-				resultSet, gqlErr := client.GraphQL().Get().AddQueryClass(graphql.NewQueryClassBuilder("Pizza").
+				resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").
 					WithFields(name).
-					WithNearText(withNearText)).
+					WithNearText(withNearText).
 					Do(context.Background())
 
 				assert.Nil(t, gqlErr)
@@ -148,9 +148,9 @@ func TestGraphQL_integration(t *testing.T) {
 
 			name = graphql.Field{Name: "name"}
 
-			resultSet, gqlErr := client.GraphQL().Get().AddQueryClass(graphql.NewQueryClassBuilder("Pizza").
+			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").
 				WithWhere(where).
-				WithFields(name)).
+				WithFields(name).
 				Do(context.Background())
 			assert.Nil(t, gqlErr)
 
@@ -173,9 +173,9 @@ func TestGraphQL_integration(t *testing.T) {
 
 			name = graphql.Field{Name: "name"}
 
-			resultSet, gqlErr := client.GraphQL().Get().AddQueryClass(graphql.NewQueryClassBuilder("Pizza").
+			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").
 				WithWhere(where).
-				WithFields(name)).
+				WithFields(name).
 				Do(context.Background())
 			assert.Nil(t, gqlErr)
 
@@ -200,25 +200,25 @@ func TestGraphQL_integration(t *testing.T) {
 			}
 
 			byNameAsc := graphql.Sort{Path: []string{"name"}, Order: graphql.Asc}
-			resultSet, gqlErr := client.GraphQL().Get().AddQueryClass(graphql.NewQueryClassBuilder("Pizza").
-				WithSort(byNameAsc).WithFields(name)).Do(context.Background())
+			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").
+				WithSort(byNameAsc).WithFields(name).Do(context.Background())
 			assert.Nil(t, gqlErr)
 			assertSortResult(resultSet, "Pizza", []string{"Doener", "Frutti di Mare", "Hawaii", "Quattro Formaggi"})
 
 			byNameDesc := graphql.Sort{Path: []string{"name"}, Order: graphql.Desc}
-			resultSet, gqlErr = client.GraphQL().Get().AddQueryClass(graphql.NewQueryClassBuilder("Pizza").
-				WithSort(byNameDesc).WithFields(name)).Do(context.Background())
+			resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").
+				WithSort(byNameDesc).WithFields(name).Do(context.Background())
 			assert.Nil(t, gqlErr)
 			assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Hawaii", "Frutti di Mare", "Doener"})
 
 			byPriceAsc := graphql.Sort{Path: []string{"price"}, Order: graphql.Asc}
-			resultSet, gqlErr = client.GraphQL().Get().AddQueryClass(graphql.NewQueryClassBuilder("Soup").
-				WithSort(byPriceAsc).WithFields(name)).Do(context.Background())
+			resultSet, gqlErr = client.GraphQL().Get().WithClassName("Soup").
+				WithSort(byPriceAsc).WithFields(name).Do(context.Background())
 			assert.Nil(t, gqlErr)
 			assertSortResult(resultSet, "Soup", []string{"ChickenSoup", "Beautiful"})
 
-			resultSet, gqlErr = client.GraphQL().Get().AddQueryClass(graphql.NewQueryClassBuilder("Pizza").
-				WithSort(byPriceAsc, byNameDesc).WithFields(name)).Do(context.Background())
+			resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").
+				WithSort(byPriceAsc, byNameDesc).WithFields(name).Do(context.Background())
 			assert.Nil(t, gqlErr)
 			assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Frutti di Mare", "Hawaii", "Doener"})
 		})
@@ -762,12 +762,10 @@ func TestGraphQL_integration(t *testing.T) {
 		group := client.GraphQL().GroupArgBuilder().WithType(graphql.Merge).WithForce(1.0)
 
 		resultSet, gqlErr := client.GraphQL().
-			Get().
-			AddQueryClass(
-				graphql.NewQueryClassBuilder("Pizza").
-					WithFields(name).
-					WithGroup(group).
-					WithLimit(7)).
+			Get().WithClassName("Pizza").
+			WithFields(name).
+			WithGroup(group).
+			WithLimit(7).
 			Do(context.Background())
 		assert.Nil(t, gqlErr)
 
@@ -799,9 +797,9 @@ func TestGraphQL_integration(t *testing.T) {
 			WithValueString(expectedCreateTime)
 
 		result, err := client.GraphQL().Get().
-			AddQueryClass(graphql.NewQueryClassBuilder("Pizza").
-				WithFields(additional).
-				WithWhere(whereCreateTime)).
+			WithClassName("Pizza").
+			WithFields(additional).
+			WithWhere(whereCreateTime).
 			Do(context.Background())
 
 		require.Nil(t, err)
@@ -841,9 +839,9 @@ func TestGraphQL_integration(t *testing.T) {
 			WithValueString(expectedUpdateTime)
 
 		result, err := client.GraphQL().Get().
-			AddQueryClass(graphql.NewQueryClassBuilder("Pizza").
-				WithFields(additional).
-				WithWhere(whereUpdateTime)).
+			WithClassName("Pizza").
+			WithFields(additional).
+			WithWhere(whereUpdateTime).
 			Do(context.Background())
 
 		require.Nil(t, err)
@@ -876,9 +874,9 @@ func TestGraphQL_integration(t *testing.T) {
 		bm25.WithQuery("innovation").WithProperties("description")
 
 		result, err := client.GraphQL().Get().
-			AddQueryClass(graphql.NewQueryClassBuilder("Pizza").
-				WithFields(description).
-				WithBM25(bm25)).
+			WithClassName("Pizza").
+			WithFields(description).
+			WithBM25(bm25).
 			Do(context.Background())
 
 		require.Nil(t, err)
@@ -912,9 +910,9 @@ func TestGraphQL_integration(t *testing.T) {
 		hybrid.WithQuery("some say revolution").WithAlpha(0.8)
 
 		result, err := client.GraphQL().Get().
-			AddQueryClass(graphql.NewQueryClassBuilder("Pizza").
-				WithFields(description).
-				WithHybrid(hybrid)).
+			WithClassName("Pizza").
+			WithFields(description).
+			WithHybrid(hybrid).
 			Do(context.Background())
 
 		require.Nil(t, err)
