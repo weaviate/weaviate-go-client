@@ -9,57 +9,35 @@ import (
 	"github.com/semi-technologies/weaviate/entities/models"
 )
 
-// MultiClassBuilder for GraphQL
 type MultiClassBuilder struct {
 	connection    rest
-	classBuilders map[string]*classBuilder
-}
-
-type classBuilder struct {
-	className  string
-	withFields []Field
-
-	includesFilterClause bool // true if brackets behind class is needed
-	includesLimit        bool
-	limit                int
-	includesOffset       bool
-	offset               int
-	withWhereFilter      *filters.WhereBuilder
-	withNearTextFilter   *NearTextArgumentBuilder
-	withNearVectorFilter *NearVectorArgumentBuilder
-	withNearObjectFilter *NearObjectArgumentBuilder
-	withGroupFilter      *GroupArgumentBuilder
-	withAskFilter        *AskArgumentBuilder
-	withNearImageFilter  *NearImageArgumentBuilder
-	withSort             *SortBuilder
-	withBM25             *BM25ArgumentBuilder
-	withHybrid           *HybridArgumentBuilder
+	classBuilders map[string]*builderBase
 }
 
 // ClassName that should be queried
-func NewQueryClassBuilder(className string) *classBuilder {
-	return &classBuilder{className: className}
+func NewQueryClassBuilder(className string) *builderBase {
+	return &builderBase{className: className}
 }
 
-func (cb *MultiClassBuilder) AddQueryClass(class *classBuilder) *MultiClassBuilder {
-	cb.classBuilders[class.className] = class
-	return cb
+func (mb *MultiClassBuilder) AddQueryClass(class *builderBase) *MultiClassBuilder {
+	mb.classBuilders[class.className] = class
+	return mb
 }
 
 // Do execute the GraphQL query
-func (cb *MultiClassBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
-	return runGraphQLQuery(ctx, cb.connection, cb.build())
+func (mb *MultiClassBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
+	return runGraphQLQuery(ctx, mb.connection, mb.build())
 }
 
 // build the GraphQL query string (not needed when Do is executed)
-func (cb *MultiClassBuilder) build() string {
+func (mb *MultiClassBuilder) build() string {
 	var query string
-	for _, class := range cb.classBuilders {
+	for _, class := range mb.classBuilders {
 		filterClause := ""
 		if class.includesFilterClause {
-			filterClause = cb.createFilterClause(class)
+			filterClause = mb.createFilterClause(class)
 		}
-		fieldsClause := cb.createFieldsClause(class)
+		fieldsClause := mb.createFieldsClause(class)
 		query += fmt.Sprintf("%v %v {%v}", class.className, filterClause, fieldsClause) + " "
 	}
 	query = strings.TrimSpace(query)
@@ -67,7 +45,7 @@ func (cb *MultiClassBuilder) build() string {
 	return query
 }
 
-func (cb *MultiClassBuilder) createFilterClause(class *classBuilder) string {
+func (mb *MultiClassBuilder) createFilterClause(class *builderBase) string {
 	filters := []string{}
 	if class.withWhereFilter != nil {
 		filters = append(filters, class.withWhereFilter.String())
@@ -108,7 +86,7 @@ func (cb *MultiClassBuilder) createFilterClause(class *classBuilder) string {
 	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
 }
 
-func (cb *MultiClassBuilder) createFieldsClause(class *classBuilder) string {
+func (mb *MultiClassBuilder) createFieldsClause(class *builderBase) string {
 	if len(class.withFields) > 0 {
 		fields := make([]string, len(class.withFields))
 		for i := range class.withFields {
@@ -120,93 +98,93 @@ func (cb *MultiClassBuilder) createFieldsClause(class *classBuilder) string {
 }
 
 // WithFields included in the result set
-func (cb *classBuilder) WithFields(fields ...Field) *classBuilder {
-	cb.withFields = fields
-	return cb
+func (bb *builderBase) WithFields(fields ...Field) *builderBase {
+	bb.withFields = fields
+	return bb
 }
 
 // WithWhere filter
-func (cb *classBuilder) WithWhere(where *filters.WhereBuilder) *classBuilder {
-	cb.includesFilterClause = true
-	cb.withWhereFilter = where
-	return cb
+func (bb *builderBase) WithWhere(where *filters.WhereBuilder) *builderBase {
+	bb.includesFilterClause = true
+	bb.withWhereFilter = where
+	return bb
 }
 
 // WithLimit of objects in the result set
-func (cb *classBuilder) WithLimit(limit int) *classBuilder {
-	cb.includesFilterClause = true
-	cb.includesLimit = true
-	cb.limit = limit
-	return cb
+func (bb *builderBase) WithLimit(limit int) *builderBase {
+	bb.includesFilterClause = true
+	bb.includesLimit = true
+	bb.limit = limit
+	return bb
 }
 
 // WithOffset of objects in the result set
-func (cb *classBuilder) WithOffset(offset int) *classBuilder {
-	cb.includesFilterClause = true
-	cb.includesOffset = true
-	cb.offset = offset
-	return cb
+func (bb *builderBase) WithOffset(offset int) *builderBase {
+	bb.includesFilterClause = true
+	bb.includesOffset = true
+	bb.offset = offset
+	return bb
 }
 
 // WithBM25 to search the inverted index
-func (cb *classBuilder) WithBM25(bm25 *BM25ArgumentBuilder) *classBuilder {
-	cb.includesFilterClause = true
-	cb.withBM25 = bm25
-	return cb
+func (bb *builderBase) WithBM25(bm25 *BM25ArgumentBuilder) *builderBase {
+	bb.includesFilterClause = true
+	bb.withBM25 = bm25
+	return bb
 }
 
 // WithHybrid to combine multiple searches
-func (cb *classBuilder) WithHybrid(hybrid *HybridArgumentBuilder) *classBuilder {
-	cb.includesFilterClause = true
-	cb.withHybrid = hybrid
-	return cb
+func (bb *builderBase) WithHybrid(hybrid *HybridArgumentBuilder) *builderBase {
+	bb.includesFilterClause = true
+	bb.withHybrid = hybrid
+	return bb
 }
 
 // WithNearText clause to find close objects
-func (cb *classBuilder) WithNearText(nearText *NearTextArgumentBuilder) *classBuilder {
-	cb.includesFilterClause = true
-	cb.withNearTextFilter = nearText
-	return cb
+func (bb *builderBase) WithNearText(nearText *NearTextArgumentBuilder) *builderBase {
+	bb.includesFilterClause = true
+	bb.withNearTextFilter = nearText
+	return bb
 }
 
 // WithNearObject clause to find close objects
-func (cb *classBuilder) WithNearImage(nearImage *NearImageArgumentBuilder) *classBuilder {
-	cb.includesFilterClause = true
-	cb.withNearImageFilter = nearImage
-	return cb
+func (bb *builderBase) WithNearImage(nearImage *NearImageArgumentBuilder) *builderBase {
+	bb.includesFilterClause = true
+	bb.withNearImageFilter = nearImage
+	return bb
 }
 
 // WithNearVector clause to find close objects
-func (cb *classBuilder) WithNearVector(nearVector *NearVectorArgumentBuilder) *classBuilder {
-	cb.includesFilterClause = true
-	cb.withNearVectorFilter = nearVector
-	return cb
+func (bb *builderBase) WithNearVector(nearVector *NearVectorArgumentBuilder) *builderBase {
+	bb.includesFilterClause = true
+	bb.withNearVectorFilter = nearVector
+	return bb
 }
 
 // WithGroup statement
-func (cb *classBuilder) WithGroup(group *GroupArgumentBuilder) *classBuilder {
-	cb.includesFilterClause = true
-	cb.withGroupFilter = group
-	return cb
+func (bb *builderBase) WithGroup(group *GroupArgumentBuilder) *builderBase {
+	bb.includesFilterClause = true
+	bb.withGroupFilter = group
+	return bb
 }
 
 // WithAsk clause to find an aswer to the question
-func (cb *classBuilder) WithAsk(ask *AskArgumentBuilder) *classBuilder {
-	cb.includesFilterClause = true
-	cb.withAskFilter = ask
-	return cb
+func (bb *builderBase) WithAsk(ask *AskArgumentBuilder) *builderBase {
+	bb.includesFilterClause = true
+	bb.withAskFilter = ask
+	return bb
 }
 
 // WithNearObject clause to find close objects
-func (cb *classBuilder) WithNearObject(nearObject *NearObjectArgumentBuilder) *classBuilder {
-	cb.includesFilterClause = true
-	cb.withNearObjectFilter = nearObject
-	return cb
+func (bb *builderBase) WithNearObject(nearObject *NearObjectArgumentBuilder) *builderBase {
+	bb.includesFilterClause = true
+	bb.withNearObjectFilter = nearObject
+	return bb
 }
 
 // WithSort included in the result set
-func (cb *classBuilder) WithSort(sort ...Sort) *classBuilder {
-	cb.includesFilterClause = true
-	cb.withSort = &SortBuilder{sort}
-	return cb
+func (bb *builderBase) WithSort(sort ...Sort) *builderBase {
+	bb.includesFilterClause = true
+	bb.withSort = &SortBuilder{sort}
+	return bb
 }

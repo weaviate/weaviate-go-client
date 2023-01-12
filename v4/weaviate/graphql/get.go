@@ -12,6 +12,10 @@ import (
 // GetBuilder for GraphQL
 type GetBuilder struct {
 	connection rest
+	builderBase
+}
+
+type builderBase struct {
 	className  string
 	withFields []Field
 
