@@ -62,7 +62,7 @@ type Client struct {
 func New(config Config) *Client {
 	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
 	if time.Now().UTC().After(time.Date(2023, 1, 19, 0, 0, 0, 0, time.UTC)) {
-		fmt.Printf("On 2023-01-19 the repositoy of the weaviate-go-client moved from https://github.com/semi-technologies/weaviate-go-client to" +
+		fmt.Println("WARNING: On 2023-01-19 the repositoy of the weaviate-go-client moved from https://github.com/semi-technologies/weaviate-go-client to" +
 			"https://github.com/weaviate/weaviate-go-client . Please update your imports." +
 			"This warning will disappear after updating.")
 	}
