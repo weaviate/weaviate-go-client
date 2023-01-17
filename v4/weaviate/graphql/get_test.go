@@ -107,10 +107,8 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection: conMock,
-			builderBase: builderBase{
-				includesFilterClause: false,
-			},
+			connection:           conMock,
+			includesFilterClause: false,
 		}
 
 		name := Field{Name: "name"}
@@ -125,10 +123,8 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection: conMock,
-			builderBase: builderBase{
-				includesFilterClause: false,
-			},
+			connection:           conMock,
+			includesFilterClause: false,
 		}
 
 		name := Field{Name: "name"}
@@ -143,10 +139,8 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection: conMock,
-			builderBase: builderBase{
-				includesFilterClause: false,
-			},
+			connection:           conMock,
+			includesFilterClause: false,
 		}
 
 		name := Field{Name: "name"}
@@ -163,10 +157,8 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection: conMock,
-			builderBase: builderBase{
-				includesFilterClause: false,
-			},
+			connection:           conMock,
+			includesFilterClause: false,
 		}
 
 		name := Field{Name: "name"}
@@ -196,10 +188,8 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection: conMock,
-			builderBase: builderBase{
-				includesFilterClause: false,
-			},
+			connection:           conMock,
+			includesFilterClause: false,
 		}
 
 		name := Field{Name: "name"}
@@ -216,10 +206,8 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection: conMock,
-			builderBase: builderBase{
-				includesFilterClause: false,
-			},
+			connection:           conMock,
+			includesFilterClause: false,
 		}
 
 		name := Field{Name: "name"}
@@ -237,10 +225,8 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection: conMock,
-			builderBase: builderBase{
-				includesFilterClause: false,
-			},
+			connection:           conMock,
+			includesFilterClause: false,
 		}
 
 		name := Field{Name: "name"}
@@ -258,10 +244,8 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection: conMock,
-			builderBase: builderBase{
-				includesFilterClause: false,
-			},
+			connection:           conMock,
+			includesFilterClause: false,
 		}
 
 		name := Field{Name: "name"}
@@ -289,10 +273,8 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection: conMock,
-			builderBase: builderBase{
-				includesFilterClause: false,
-			},
+			connection:           conMock,
+			includesFilterClause: false,
 		}
 
 		name := Field{Name: "name"}
@@ -323,10 +305,8 @@ func TestQueryBuilder(t *testing.T) {
 	t.Run("Missuse", func(t *testing.T) {
 		conMock := &MockRunREST{}
 		builder := GetBuilder{
-			connection: conMock,
-			builderBase: builderBase{
-				includesFilterClause: false,
-			},
+			connection:           conMock,
+			includesFilterClause: false,
 		}
 		query := builder.build()
 		assert.NotEmpty(t, query, "Check that there is no panic if query is not validly build")
@@ -336,10 +316,8 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection: conMock,
-			builderBase: builderBase{
-				includesFilterClause: false,
-			},
+			connection:           conMock,
+			includesFilterClause: false,
 		}
 
 		name := Field{Name: "name"}
@@ -360,10 +338,8 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection: conMock,
-			builderBase: builderBase{
-				includesFilterClause: false,
-			},
+			connection:           conMock,
+			includesFilterClause: false,
 		}
 
 		name := Field{Name: "name"}
@@ -385,10 +361,8 @@ func TestQueryBuilder(t *testing.T) {
 			conMock := &MockRunREST{}
 
 			builder := GetBuilder{
-				connection: conMock,
-				builderBase: builderBase{
-					includesFilterClause: false,
-				},
+				connection:           conMock,
+				includesFilterClause: false,
 			}
 
 			name := Field{Name: "name"}
@@ -441,10 +415,8 @@ func TestQueryBuilder(t *testing.T) {
 			conMock := &MockRunREST{}
 
 			builder := GetBuilder{
-				connection: conMock,
-				builderBase: builderBase{
-					includesFilterClause: false,
-				},
+				connection:           conMock,
+				includesFilterClause: false,
 			}
 
 			name := Field{Name: "name"}
@@ -499,10 +471,8 @@ func TestQueryBuilder(t *testing.T) {
 			conMock := &MockRunREST{}
 
 			builder := GetBuilder{
-				connection: conMock,
-				builderBase: builderBase{
-					includesFilterClause: false,
-				},
+				connection:           conMock,
+				includesFilterClause: false,
 			}
 
 			name := Field{Name: "name"}
@@ -572,10 +542,8 @@ func TestQueryBuilder(t *testing.T) {
 			conMock := &MockRunREST{}
 
 			builder := GetBuilder{
-				connection: conMock,
-				builderBase: builderBase{
-					includesFilterClause: false,
-				},
+				connection:           conMock,
+				includesFilterClause: false,
 			}
 
 			name := Field{Name: "name"}
@@ -647,10 +615,8 @@ func TestQueryBuilder(t *testing.T) {
 			conMock := &MockRunREST{}
 
 			builder := GetBuilder{
-				connection: conMock,
-				builderBase: builderBase{
-					includesFilterClause: false,
-				},
+				connection:           conMock,
+				includesFilterClause: false,
 			}
 
 			name := Field{Name: "name"}
@@ -719,10 +685,8 @@ func TestQueryBuilder(t *testing.T) {
 			conMock := &MockRunREST{}
 
 			builder := GetBuilder{
-				connection: conMock,
-				builderBase: builderBase{
-					includesFilterClause: false,
-				},
+				connection:           conMock,
+				includesFilterClause: false,
 			}
 
 			name := Field{Name: "name"}
@@ -792,10 +756,8 @@ func TestQueryBuilder(t *testing.T) {
 		conMock := &MockRunREST{}
 
 		builder := GetBuilder{
-			connection: conMock,
-			builderBase: builderBase{
-				includesFilterClause: false,
-			},
+			connection:           conMock,
+			includesFilterClause: false,
 		}
 
 		name := Field{Name: "name"}
@@ -822,10 +784,8 @@ func TestBM25Builder(t *testing.T) {
 	conMock := &MockRunREST{}
 
 	builder := GetBuilder{
-		connection: conMock,
-		builderBase: builderBase{
-			includesFilterClause: false,
-		},
+		connection:           conMock,
+		includesFilterClause: false,
 	}
 
 	bm25B := &BM25ArgumentBuilder{}
@@ -842,10 +802,8 @@ func TestHybridBuilder(t *testing.T) {
 	conMock := &MockRunREST{}
 
 	builder := GetBuilder{
-		connection: conMock,
-		builderBase: builderBase{
-			includesFilterClause: false,
-		},
+		connection:           conMock,
+		includesFilterClause: false,
 	}
 
 	hybrid := &HybridArgumentBuilder{}
