@@ -59,8 +59,8 @@ func main() {
 
 ## Contributing
 
-- [How to Contribute](https://github.com/weaviate/weaviate-go-client/blob/master/CONTRIBUTE.md).
+- [How to Contribute](https://github.com/weaviate/weaviate-go-client/blob/main/CONTRIBUTE.md).
 
 ## Build Status
 
-[![Build Status](https://github.com/weaviate/weaviate-go-client/actions/workflows/.github/workflows/tests.yaml/badge.svg?branch=master)](https://github.com/weaviate/weaviate-go-client/actions/workflows/.github/workflows/tests.yaml)
+[![Build Status](https://github.com/weaviate/weaviate-go-client/actions/workflows/.github/workflows/tests.yaml/badge.svg?branch=main)](https://github.com/weaviate/weaviate-go-client/actions/workflows/.github/workflows/tests.yaml)
