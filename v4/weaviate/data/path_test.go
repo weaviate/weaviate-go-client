@@ -3,8 +3,8 @@ package data
 import (
 	"testing"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/data/replication"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
 	"github.com/stretchr/testify/assert"
 )
 

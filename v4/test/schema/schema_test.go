@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/testenv"
-	"github.com/semi-technologies/weaviate/entities/models"
-	"github.com/semi-technologies/weaviate/entities/storagestate"
+	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
+	"github.com/weaviate/weaviate/entities/models"
+	"github.com/weaviate/weaviate/entities/storagestate"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

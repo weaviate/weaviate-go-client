@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/testenv"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
+	"github.com/weaviate/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
 )
 

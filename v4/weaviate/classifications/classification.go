@@ -1,6 +1,6 @@
 package classifications
 
-import "github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
+import "github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 
 // API classifications API
 type API struct {

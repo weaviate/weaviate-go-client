@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // Updater builder to update property values in a data object

@@ -3,8 +3,8 @@ package schema
 import (
 	"context"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // ShardsUpdater builder object to update all shards of a class
