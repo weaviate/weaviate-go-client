@@ -3,7 +3,7 @@ package graphql
 import (
 	"context"
 
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // Raw for accepting a prebuilt query from the user

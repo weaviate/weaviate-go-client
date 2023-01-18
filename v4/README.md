@@ -7,7 +7,7 @@ A go native client for weaviate.
 In order to get the go client v4 issue this command:
 
 ```bash
-$ go get github.com/semi-technologies/weaviate-go-client/v4@v4.x.x
+$ go get github.com/weaviate/weaviate-go-client/v4@v4.x.x
 ```
 
 where `v4.x.x` is the desired go client v4 version, for example `v4.5.1`
@@ -15,7 +15,7 @@ where `v4.x.x` is the desired go client v4 version, for example `v4.5.1`
 Add dependency to your `go.mod`:
 
 ```go
-require github.com/semi-technologies/weaviate-go-client/v4 v4.5.1
+require github.com/weaviate/weaviate-go-client/v4 v4.5.1
 ```
 
 Connect to Weaviate on `localhost:8080` and fetch meta information
@@ -55,14 +55,12 @@ func main() {
 ## Support
 
 - [Stackoverflow for questions](https://stackoverflow.com/questions/tagged/weaviate).
-- [Github for issues](https://github.com/semi-technologies/weaviate-go-client/issues).
+- [Github for issues](https://github.com/weaviate/weaviate-go-client/issues).
 
 ## Contributing
 
-- [How to Contribute](https://github.com/semi-technologies/weaviate-go-client/blob/master/CONTRIBUTE.md).
+- [How to Contribute](https://github.com/weaviate/weaviate-go-client/blob/master/CONTRIBUTE.md).
 
 ## Build Status
 
-| Branch   | Status        |
-| -------- |:-------------:|
-| Master   | [![Build Status](https://travis-ci.com/semi-technologies/weaviate-go-client.svg?token=1qdvi3hJanQcWdqEstmy&branch=master)](https://travis-ci.com/github/semi-technologies/weaviate-go-client)
+[![Build Status](https://github.com/weaviate/weaviate-go-client/actions/workflows/.github/workflows/tests.yaml/badge.svg?branch=master)](https://github.com/weaviate/weaviate-go-client/actions/workflows/.github/workflows/tests.yaml)

@@ -2,9 +2,9 @@ package data
 
 import (
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // ReferencePayloadBuilder to create a payload that references a data object.

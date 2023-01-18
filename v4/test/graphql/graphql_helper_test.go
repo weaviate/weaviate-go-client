@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/graphql"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/stretchr/testify/require"
 )
 

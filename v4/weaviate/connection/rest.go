@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/fault"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
 )
 
 const apiVersion = "v1"

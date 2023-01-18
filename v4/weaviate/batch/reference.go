@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // ReferencesBatcher builder to add multiple references in one batch request

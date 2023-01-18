@@ -6,17 +6,17 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/backup"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/batch"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/classifications"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/cluster"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/contextionary"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/data"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/graphql"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/misc"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/schema"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/backup"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/batch"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/classifications"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/cluster"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/contextionary"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/data"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/misc"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/schema"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
 )
 
 // Config of the client endpoint
@@ -40,7 +40,7 @@ type Config struct {
 // Every function represents one API group of weaviate and provides a set of functions and builders to interact with them.
 //
 // The client uses the original data models as provided by weaviate itself.
-// All these models are provided in the sub module "github.com/semi-technologies/weaviate/entities/models"
+// All these models are provided in the sub module "github.com/weaviate/weaviate/entities/models"
 type Client struct {
 	connection      *connection.Connection
 	misc            *misc.API
@@ -58,11 +58,11 @@ type Client struct {
 // Every function represents one API group of weaviate and provides a set of functions and builders to interact with them.
 //
 // The client uses the original data models as provided by weaviate itself.
-// All these models are provided in the sub module "github.com/semi-technologies/weaviate/entities/models"
+// All these models are provided in the sub module "github.com/weaviate/weaviate/entities/models"
 func New(config Config) *Client {
 	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
 	if time.Now().UTC().After(time.Date(2023, 1, 19, 0, 0, 0, 0, time.UTC)) {
-		fmt.Println("WARNING: On 2023-01-19 the repositoy of the weaviate-go-client moved from https://github.com/semi-technologies/weaviate-go-client to" +
+		fmt.Println("WARNING: On 2023-01-19 the repositoy of the weaviate-go-client moved from https://github.com/weaviate/weaviate-go-client to" +
 			"https://github.com/weaviate/weaviate-go-client . Please update your imports." +
 			"This warning will disappear after updating.")
 	}

@@ -9,7 +9,7 @@ A go native client for weaviate.
 ## Support
 
 - [Stackoverflow for questions](https://stackoverflow.com/questions/tagged/weaviate).
-- [Github for issues](https://github.com/semi-technologies/weaviate-go-client/issues).
+- [Github for issues](https://github.com/weaviate/weaviate-go-client/issues).
 
 ## Contributing
 
