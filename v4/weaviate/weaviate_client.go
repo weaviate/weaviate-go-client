@@ -2,10 +2,6 @@ package weaviate
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-	"time"
-
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/backup"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/batch"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/classifications"
@@ -17,6 +13,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/misc"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/schema"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"net/http"
 )
 
 // Config of the client endpoint
@@ -61,11 +58,6 @@ type Client struct {
 // All these models are provided in the sub module "github.com/weaviate/weaviate/entities/models"
 func New(config Config) *Client {
 	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
-	if time.Now().UTC().After(time.Date(2023, 1, 19, 0, 0, 0, 0, time.UTC)) {
-		fmt.Println("WARNING: On 2023-01-19 the repositoy of the weaviate-go-client moved from https://github.com/weaviate/weaviate-go-client to" +
-			"https://github.com/weaviate/weaviate-go-client . Please update your imports." +
-			"This warning will disappear after updating.")
-	}
 
 	// some endpoints now require a className namespace.
 	// to determine if this new convention is to be used,
