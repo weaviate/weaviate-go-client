@@ -18,12 +18,13 @@ import (
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate"
 	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/auth"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
-	OktaScope = "some_scope"
-	WcsUser   = "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net"
-	OktaUser  = "test@test.de"
+	oktaScope = "some_scope"
+	wcsUser   = "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net"
+	oktaUser  = "test@test.de"
 )
 
 func TestAuth_clientCredential(t *testing.T) {
@@ -33,7 +34,7 @@ func TestAuth_clientCredential(t *testing.T) {
 		scope  []string
 		port   int
 	}{
-		{name: "Okta", envVar: "OKTA_CLIENT_SECRET", scope: []string{OktaScope}, port: testsuit.OktaCCPort},
+		{name: "Okta", envVar: "OKTA_CLIENT_SECRET", scope: []string{oktaScope}, port: testsuit.OktaCCPort},
 		{name: "Azure", envVar: "AZURE_CLIENT_SECRET", scope: []string{"4706508f-30c2-469b-8b12-ad272b3de864/.default"}, port: testsuit.AzurePort},
 		{name: "Azure (hardcoded scope)", envVar: "AZURE_CLIENT_SECRET", scope: nil, port: testsuit.AzurePort},
 	}
@@ -45,7 +46,7 @@ func TestAuth_clientCredential(t *testing.T) {
 		}
 
 		clientCredentialConf := auth.ClientCredentials{ClientSecret: clientSecret, Scopes: tc.scope}
-		cfg, err := weaviate.NewConfig("localhost:"+fmt.Sprint(tc.port), "http", clientCredentialConf, nil)
+		cfg, err := weaviate.NewConfig(fmt.Sprintf("localhost:%v", tc.port), "http", clientCredentialConf, nil)
 		assert.Nil(t, err)
 		client := weaviate.New(*cfg)
 		AuthErr := client.Schema().AllDeleter().Do(context.TODO())
@@ -71,7 +72,7 @@ func TestAuth_clientCredential_WrongParameters(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(t.Name(), func(t *testing.T) {
 			clientCredentialConf := auth.ClientCredentials{ClientSecret: tc.secret, Scopes: tc.scope}
-			cfg, err := weaviate.NewConfig("localhost:"+fmt.Sprint(testsuit.OktaCCPort), "http", clientCredentialConf, nil)
+			cfg, err := weaviate.NewConfig(fmt.Sprintf("localhost:%v", testsuit.OktaCCPort), "http", clientCredentialConf, nil)
 			assert.Nil(t, err)
 			client := weaviate.New(*cfg)
 			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
@@ -89,13 +90,13 @@ func TestAuth_UserPW(t *testing.T) {
 		port    int
 		warning bool
 	}{
-		{name: "WCS", user: WcsUser, envVar: "WCS_DUMMY_CI_PW", port: testsuit.WCSPort, warning: false},
-		{name: "Okta (no scope)", user: OktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort, warning: false},
-		{name: "Okta", user: OktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort, scope: []string{"offline_access"}, warning: false},
-		{name: "Okta (scope without refresh)", user: OktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort, scope: []string{"offline_access"}, warning: true},
+		{name: "WCS", user: wcsUser, envVar: "WCS_DUMMY_CI_PW", port: testsuit.WCSPort, warning: false},
+		{name: "Okta (no scope)", user: oktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort, warning: false},
+		{name: "Okta", user: oktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort, scope: []string{"offline_access"}, warning: false},
+		{name: "Okta (scope without refresh)", user: oktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort, scope: []string{"offline_access"}, warning: true},
 	}
 	for _, tc := range tests {
-		t.Run(t.Name()+" "+tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			// write log to buffer
 			var buf bytes.Buffer
 			log.SetOutput(&buf)
@@ -109,7 +110,7 @@ func TestAuth_UserPW(t *testing.T) {
 			}
 
 			clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: tc.user, Password: pw, Scopes: tc.scope}
-			cfg, err := weaviate.NewConfig("localhost:"+fmt.Sprint(tc.port), "http", clientCredentialConf, nil)
+			cfg, err := weaviate.NewConfig(fmt.Sprintf("localhost:%v", tc.port), "http", clientCredentialConf, nil)
 			assert.Nil(t, err)
 			client := weaviate.New(*cfg)
 			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
@@ -124,12 +125,12 @@ func TestAuth_UserPW(t *testing.T) {
 
 func TestAuth_UserPW_wrongPW(t *testing.T) {
 	clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}
-	_, err := weaviate.NewConfig("localhost:"+fmt.Sprint(testsuit.WCSPort), "http", clientCredentialConf, nil)
+	_, err := weaviate.NewConfig(fmt.Sprintf("localhost:%v", testsuit.WCSPort), "http", clientCredentialConf, nil)
 	assert.NotNil(t, err)
 }
 
 func TestNoAuthOnWeaviateWithoutAuth(t *testing.T) {
-	cfg, err := weaviate.NewConfig("localhost:"+fmt.Sprint(testsuit.NoAuthPort), "http", nil, nil)
+	cfg, err := weaviate.NewConfig(fmt.Sprintf("localhost:%v", testsuit.NoAuthPort), "http", nil, nil)
 	assert.Nil(t, err)
 	client := weaviate.New(*cfg)
 
@@ -138,7 +139,7 @@ func TestNoAuthOnWeaviateWithoutAuth(t *testing.T) {
 }
 
 func TestNoAuthOnWeaviateWithAuth(t *testing.T) {
-	cfg, err := weaviate.NewConfig("localhost:"+fmt.Sprint(testsuit.WCSPort), "http", nil, nil)
+	cfg, err := weaviate.NewConfig(fmt.Sprintf("localhost:%v", testsuit.WCSPort), "http", nil, nil)
 	assert.Nil(t, err)
 	client := weaviate.New(*cfg)
 
@@ -160,14 +161,14 @@ func TestAuthOnWeaviateWithoutAuth(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(t.Name(), func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			log.SetOutput(&buf)
 			defer func() {
 				log.SetOutput(os.Stderr)
 			}()
 
-			cfg, err := weaviate.NewConfig("localhost:"+fmt.Sprint(testsuit.NoAuthPort), "http", tc.authConfig, nil)
+			cfg, err := weaviate.NewConfig(fmt.Sprintf("localhost:%v", testsuit.NoAuthPort), "http", tc.authConfig, nil)
 			assert.Nil(t, err)
 			assert.True(t, strings.Contains(buf.String(), "The client was configured to use authentication"))
 
@@ -190,19 +191,19 @@ func TestAuthBearerToken(t *testing.T) {
 		envVar string
 		port   int
 	}{
-		{name: "WCS", user: WcsUser, envVar: "WCS_DUMMY_CI_PW", port: testsuit.WCSPort},
-		{name: "Okta", user: OktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort},
+		{name: "WCS", user: wcsUser, envVar: "WCS_DUMMY_CI_PW", port: testsuit.WCSPort},
+		{name: "Okta", user: oktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort},
 	}
 	for _, tc := range tests {
-		t.Run(t.Name(), func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			pw := os.Getenv(tc.envVar)
 			if pw == "" {
 				t.Skip("No password supplied for " + tc.name)
 			}
-			url := "localhost:" + fmt.Sprint(tc.port)
+			url := fmt.Sprintf("localhost:%v", tc.port)
 
-			AccessToken, RefreshToken := get_access_token(t, url, tc.user, pw)
-			cfg, err := weaviate.NewConfig(url, "http", auth.BearerToken{AccessToken: AccessToken, RefreshToken: RefreshToken}, nil)
+			accessToken, refreshToken := getAccessToken(t, url, tc.user, pw)
+			cfg, err := weaviate.NewConfig(url, "http", auth.BearerToken{AccessToken: accessToken, RefreshToken: refreshToken}, nil)
 			assert.Nil(t, err)
 
 			client := weaviate.New(*cfg)
@@ -212,35 +213,45 @@ func TestAuthBearerToken(t *testing.T) {
 	}
 }
 
-func get_access_token(t *testing.T, weavUrl, user, pw string) (string, string) {
-	resp, err := http.Get("http://" + weavUrl + "/v1/.well-known/openid-configuration")
-	if err != nil {
-		t.Fail()
-	}
-	body, _ := io.ReadAll(resp.Body)
+func getAccessToken(t *testing.T, weaviateUrl, user, pw string) (string, string) {
+	resp, err := http.Get(fmt.Sprintf("http://%s/v1/.well-known/openid-configuration", weaviateUrl))
+	require.Nil(t, err)
+	body, err := io.ReadAll(resp.Body)
+	require.Nil(t, err)
 	cfg := struct {
 		Href     string `json:"href"`
 		ClientID string `json:"clientId"`
 	}{}
-	json.Unmarshal(body, &cfg)
-	resp.Body.Close()
+	err = json.Unmarshal(body, &cfg)
+	require.Nil(t, err)
+	if err := resp.Body.Close(); err != nil {
+		t.Error(err)
+	}
 	respAuth, err := http.Get(cfg.Href)
-	bodyAuth, _ := io.ReadAll(respAuth.Body)
+	require.Nil(t, err)
+	bodyAuth, err := io.ReadAll(respAuth.Body)
+	require.Nil(t, err)
 	endpoint := struct {
 		TokenEndpoint string `json:"token_endpoint"`
 	}{}
-	json.Unmarshal(bodyAuth, &endpoint)
-	respAuth.Body.Close()
-	respToken, _ := http.PostForm(endpoint.TokenEndpoint, url.Values{
+	err = json.Unmarshal(bodyAuth, &endpoint)
+	require.Nil(t, err)
+	err = respAuth.Body.Close()
+	require.Nil(t, err)
+	respToken, err := http.PostForm(endpoint.TokenEndpoint, url.Values{
 		"grant_type": []string{"password"}, "client_id": []string{cfg.ClientID}, "username": []string{user}, "password": []string{pw},
 	})
-	bodyTokens, _ := io.ReadAll(respToken.Body)
-	respToken.Body.Close()
-
+	require.Nil(t, err)
+	bodyTokens, err := io.ReadAll(respToken.Body)
+	require.Nil(t, err)
+	err = respToken.Body.Close()
+	require.Nil(t, err)
+	// get tokens
 	tokens := struct {
 		AccessToken  string `json:"access_token"`
 		RefreshToken string `json:"refresh_token"`
 	}{}
-	json.Unmarshal(bodyTokens, &tokens)
+	err = json.Unmarshal(bodyTokens, &tokens)
+	require.Nil(t, err)
 	return tokens.AccessToken, tokens.RefreshToken
 }

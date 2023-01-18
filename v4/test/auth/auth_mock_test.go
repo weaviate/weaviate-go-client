@@ -23,7 +23,7 @@ const (
 )
 
 // Test that the client warns when no refresh token is provided by the authentication provider
-func TestNoRefreshToken(t *testing.T) {
+func TestAuthMock_NoRefreshToken(t *testing.T) {
 	tests := []struct {
 		name       string
 		authConfig auth.Config
@@ -34,7 +34,7 @@ func TestNoRefreshToken(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(t.Name()+"_"+tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			// write log to buffer
 			var buf bytes.Buffer
 			log.SetOutput(&buf)
@@ -82,7 +82,7 @@ func TestNoRefreshToken(t *testing.T) {
 }
 
 // Test that client using CC automatically get a new token after expiration
-func TestRefreshCC(t *testing.T) {
+func TestAuthMock_RefreshCC(t *testing.T) {
 	i := 0
 	// endpoint for access tokens
 	muxToken := http.NewServeMux()
@@ -129,7 +129,7 @@ func TestRefreshCC(t *testing.T) {
 
 // Test that client uses refresh tokens to get new access/refresh tokens before their expiration, including during idle
 // times.
-func TestRefreshUserPWAndToken(t *testing.T) {
+func TestAuthMock_RefreshUserPWAndToken(t *testing.T) {
 	expirationTimeRefreshToken := 3
 	expirationTimeToken := uint(2)
 	tests := []struct {
@@ -144,7 +144,7 @@ func TestRefreshUserPWAndToken(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(t.Name()+"_"+tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			tokenRefreshTime := time.Now()
 			// endpoint for access tokens
 			muxToken := http.NewServeMux()
@@ -197,7 +197,7 @@ func TestRefreshUserPWAndToken(t *testing.T) {
 }
 
 // Test that the client can handle situations in which a proxy returns a catchall page for all requests
-func TestCatchAllProxy(t *testing.T) {
+func TestAuthMock_CatchAllProxy(t *testing.T) {
 	// write log to buffer
 	var buf bytes.Buffer
 	log.SetOutput(&buf)

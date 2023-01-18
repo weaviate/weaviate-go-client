@@ -21,8 +21,8 @@ type Config interface {
 
 type authBase struct{}
 
-func (ab authBase) getIdAndTokenEndpoint(con *connection.Connection) (string, string, error) {
-	rest, err := con.RunREST(context.TODO(), oidcConfigURL, http.MethodGet, nil)
+func (ab authBase) getIdAndTokenEndpoint(ctx context.Context, con *connection.Connection) (string, string, error) {
+	rest, err := con.RunREST(ctx, oidcConfigURL, http.MethodGet, nil)
 	if err != nil {
 		return "", "", err
 	}
@@ -49,7 +49,7 @@ func (ab authBase) getIdAndTokenEndpoint(con *connection.Connection) (string, st
 			return "", "", nil
 		}
 	default:
-		return "", "", fmt.Errorf("OIDC configuration url "+oidcConfigURL+"returned status code %v", fmt.Sprint(rest.StatusCode))
+		return "", "", fmt.Errorf("OIDC configuration url %s returned status code %v", oidcConfigURL, rest.StatusCode)
 	}
 
 	endpoints, err := con.RunRESTExternal(context.TODO(), cfg.Href, http.MethodGet, nil)
@@ -71,7 +71,7 @@ type ClientCredentials struct {
 }
 
 func (cc ClientCredentials) GetAuthClient(con *connection.Connection) (*http.Client, error) {
-	clientId, tokenEndpoint, err := cc.getIdAndTokenEndpoint(con)
+	clientId, tokenEndpoint, err := cc.getIdAndTokenEndpoint(context.Background(), con)
 	if err != nil {
 		return nil, err
 	} else if clientId == "" && tokenEndpoint == "" {
@@ -101,7 +101,7 @@ type ResourceOwnerPasswordFlow struct {
 }
 
 func (ro ResourceOwnerPasswordFlow) GetAuthClient(con *connection.Connection) (*http.Client, error) {
-	clientId, tokenEndpoint, err := ro.getIdAndTokenEndpoint(con)
+	clientId, tokenEndpoint, err := ro.getIdAndTokenEndpoint(context.Background(), con)
 	if err != nil {
 		return nil, err
 	} else if clientId == "" && tokenEndpoint == "" {
@@ -143,7 +143,7 @@ type BearerToken struct {
 
 func (bt BearerToken) GetAuthClient(con *connection.Connection) (*http.Client, error) {
 	// we don't need these values, but we can check if weaviate is configured with authentication enabled
-	clientId, tokenEndpoint, err := bt.getIdAndTokenEndpoint(con)
+	clientId, tokenEndpoint, err := bt.getIdAndTokenEndpoint(context.Background(), con)
 	if err == nil && clientId == "" && tokenEndpoint == "" {
 		return nil, nil
 	}
