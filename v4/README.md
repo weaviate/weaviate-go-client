@@ -1,4 +1,4 @@
-# Weaviate go client  <img alt='Weaviate logo' src='https://raw.githubusercontent.com/semi-technologies/weaviate/19de0956c69b66c5552447e84d016f4fe29d12c9/docs/assets/weaviate-logo.png' width='180' align='right' />
+# Weaviate go client  <img alt='Weaviate logo' src='https://raw.githubusercontent.com/weaviate/weaviate/19de0956c69b66c5552447e84d016f4fe29d12c9/docs/assets/weaviate-logo.png' width='180' align='right' />
 
 A go native client for weaviate.
 
@@ -27,7 +27,7 @@ import (
   "context"
   "fmt"
 
-  client "github.com/semi-technologies/weaviate-go-client/v4/weaviate"
+  client "github.com/weaviate/weaviate-go-client/v4/weaviate"
 )
 
 func main() {
