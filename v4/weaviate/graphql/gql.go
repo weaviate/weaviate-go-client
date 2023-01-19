@@ -28,7 +28,7 @@ func (api *API) Get() *GetBuilder {
 func (api *API) MultiClassGet() *MultiClassBuilder {
 	return &MultiClassBuilder{
 		connection:    api.connection,
-		classBuilders: make(map[string]*builderBase),
+		classBuilders: make(map[string]*GetBuilder),
 	}
 }
 

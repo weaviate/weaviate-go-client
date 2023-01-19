@@ -13,7 +13,7 @@ func TestMultiClassQueryBuilder(t *testing.T) {
 
 		builder := MultiClassBuilder{
 			connection:    conMock,
-			classBuilders: make(map[string]*builderBase),
+			classBuilders: make(map[string]*GetBuilder),
 		}
 
 		name1 := Field{Name: "name1"}
