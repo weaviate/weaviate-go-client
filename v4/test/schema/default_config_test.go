@@ -1,8 +1,8 @@
 package schema
 
 import (
-	"github.com/semi-technologies/weaviate/entities/models"
-	"github.com/semi-technologies/weaviate/usecases/config"
+	"github.com/weaviate/weaviate/entities/models"
+	"github.com/weaviate/weaviate/usecases/config"
 )
 
 var defaultInvertedIndexConfig = &models.InvertedIndexConfig{

@@ -29,10 +29,10 @@ fi
 DIR=$(pwd -P)
 LIB_VER=$(basename $DIR)
 
-sed -i '' "s/^$ go get github.com\/semi-technologies\/weaviate-go-client\/.*/$ go get github.com\/semi-technologies\/weaviate-go-client\/$LIB_VER@$LIB_VER.x.x/" README.md
+sed -i '' "s/^$ go get github.com\/weaviate\/weaviate-go-client\/.*/$ go get github.com\/weaviate\/weaviate-go-client\/$LIB_VER@$LIB_VER.x.x/" README.md
 sed -i '' "s/^where \`.*/where \`$LIB_VER.x.x\` is the desired go client v4 version, for example \`$VERSION\`/" README.md
-sed -i '' "s/^require github.com\/semi-technologies\/weaviate-go-client\/.*/require github.com\/semi-technologies\/weaviate-go-client\/$LIB_VER $VERSION/" README.md
-sed -i '' "s/^  client \"github.com\/semi-technologies\/weaviate-go-client.*/  client \"github.com\/semi-technologies\/weaviate-go-client\/$LIB_VER\/weaviate\"/" README.md
+sed -i '' "s/^require github.com\/weaviate\/weaviate-go-client\/.*/require github.com\/weaviate\/weaviate-go-client\/$LIB_VER $VERSION/" README.md
+sed -i '' "s/^  client \"github.com\/weaviate\/weaviate-go-client.*/  client \"github.com\/weaviate\/weaviate-go-client\/$LIB_VER\/weaviate\"/" README.md
 
 git commit -a -m "Release $VERSION version"
 
