@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/test/helpers"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/test/helpers"
+	"github.com/weaviate/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
 )
 
 // ClassDeleter builder to remove a class from weaviate

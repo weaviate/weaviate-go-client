@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/test"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate"
+	"github.com/weaviate/weaviate-go-client/v4/test"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 )
 
 // SetupLocalWeaviate creates a local weaviate running on 8080 using docker compose

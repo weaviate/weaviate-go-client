@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/classifications"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/testenv"
-	"github.com/semi-technologies/weaviate/usecases/classification"
+	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/classifications"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
+	"github.com/weaviate/weaviate/usecases/classification"
 	"github.com/stretchr/testify/assert"
 )
 

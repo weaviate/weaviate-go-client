@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
 )
 
 func buildObjectsGetPath(id, className string, dbVersion *util.DBVersionSupport) string {
