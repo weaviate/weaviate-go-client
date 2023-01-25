@@ -21,21 +21,22 @@ type Config interface {
 
 type authBase struct{}
 
-func (ab authBase) getIdAndTokenEndpoint(ctx context.Context, con *connection.Connection) (string, string, error) {
+func (ab authBase) getIdAndTokenEndpoint(ctx context.Context, con *connection.Connection) (string, []string, string, error) {
 	rest, err := con.RunREST(ctx, oidcConfigURL, http.MethodGet, nil)
 	if err != nil {
-		return "", "", err
+		return "", []string{}, "", err
 	}
 	cfg := struct {
-		Href     string `json:"href"`
-		ClientID string `json:"clientId"`
+		Href     string   `json:"href"`
+		ClientID string   `json:"clientId"`
+		Scopes   []string `json:"scopes"`
 	}{}
 
 	switch status := rest.StatusCode; status {
 	case 404:
 		log.Println("Auth001: The client was configured to use authentication, but weaviate is configured without" +
 			"authentication. Are you sure this is correct?")
-		return "", "", nil
+		return "", []string{}, "", nil
 	case 200: // status code is ok
 		decodeErr := rest.DecodeBodyIntoTarget(&cfg)
 		if decodeErr != nil {
@@ -46,22 +47,22 @@ func (ab authBase) getIdAndTokenEndpoint(ctx context.Context, con *connection.Co
 				"miss-configured or you have a proxy inbetween the client and weaviate. You can test this by visiting %v.",
 				oidcConfigURL)
 
-			return "", "", nil
+			return "", []string{}, "", nil
 		}
 	default:
-		return "", "", fmt.Errorf("OIDC configuration url %s returned status code %v", oidcConfigURL, rest.StatusCode)
+		return "", []string{}, "", fmt.Errorf("OIDC configuration url %s returned status code %v", oidcConfigURL, rest.StatusCode)
 	}
 
 	endpoints, err := con.RunRESTExternal(context.TODO(), cfg.Href, http.MethodGet, nil)
 	if err != nil {
-		return "", "", err
+		return "", []string{}, "", err
 	}
 	var resultEndpoints map[string]interface{}
 	decodeEndpointErr := endpoints.DecodeBodyIntoTarget(&resultEndpoints)
 	if decodeEndpointErr != nil {
-		return "", "", err
+		return "", []string{}, "", err
 	}
-	return cfg.ClientID, resultEndpoints["token_endpoint"].(string), nil
+	return cfg.ClientID, cfg.Scopes, resultEndpoints["token_endpoint"].(string), nil
 }
 
 type ClientCredentials struct {
@@ -71,11 +72,22 @@ type ClientCredentials struct {
 }
 
 func (cc ClientCredentials) GetAuthClient(con *connection.Connection) (*http.Client, error) {
-	clientId, tokenEndpoint, err := cc.getIdAndTokenEndpoint(context.Background(), con)
+	clientId, weaviateScopes, tokenEndpoint, err := cc.getIdAndTokenEndpoint(context.Background(), con)
 	if err != nil {
 		return nil, err
 	} else if clientId == "" && tokenEndpoint == "" {
 		return nil, nil // not configured with authentication
+	}
+
+	// remove openid scopes from the scopes returned by weaviate (these are returned by default). These are not accepted
+	// by some providers for client credentials
+	for j := len(weaviateScopes) - 1; j >= 0; j-- {
+		if weaviateScopes[j] == "openid" || weaviateScopes[j] == "email" {
+			if j != len(weaviateScopes) {
+				weaviateScopes[j] = weaviateScopes[len(weaviateScopes)-1]
+			}
+			weaviateScopes = weaviateScopes[:len(weaviateScopes)-1]
+		}
 	}
 
 	if cc.Scopes == nil {
@@ -83,6 +95,7 @@ func (cc ClientCredentials) GetAuthClient(con *connection.Connection) (*http.Cli
 			cc.Scopes = []string{clientId + "/.default"}
 		}
 	}
+	cc.Scopes = append(cc.Scopes, weaviateScopes...)
 
 	config := clientcredentials.Config{
 		ClientID:     clientId,
@@ -101,7 +114,7 @@ type ResourceOwnerPasswordFlow struct {
 }
 
 func (ro ResourceOwnerPasswordFlow) GetAuthClient(con *connection.Connection) (*http.Client, error) {
-	clientId, tokenEndpoint, err := ro.getIdAndTokenEndpoint(context.Background(), con)
+	clientId, weaviateScopes, tokenEndpoint, err := ro.getIdAndTokenEndpoint(context.Background(), con)
 	if err != nil {
 		return nil, err
 	} else if clientId == "" && tokenEndpoint == "" {
@@ -111,6 +124,7 @@ func (ro ResourceOwnerPasswordFlow) GetAuthClient(con *connection.Connection) (*
 	if ro.Scopes == nil || len(ro.Scopes) == 0 {
 		ro.Scopes = []string{"offline_access"}
 	}
+	ro.Scopes = append(ro.Scopes, weaviateScopes...)
 
 	conf := oauth2.Config{ClientID: clientId, Endpoint: oauth2.Endpoint{TokenURL: tokenEndpoint}}
 	token, err := conf.PasswordCredentialsToken(context.TODO(), ro.Username, ro.Password)
@@ -143,8 +157,8 @@ type BearerToken struct {
 
 func (bt BearerToken) GetAuthClient(con *connection.Connection) (*http.Client, error) {
 	// we don't need these values, but we can check if weaviate is configured with authentication enabled
-	clientId, tokenEndpoint, err := bt.getIdAndTokenEndpoint(context.Background(), con)
-	if err == nil && clientId == "" && tokenEndpoint == "" {
+	clientId, weaviateScopes, tokenEndpoint, err := bt.getIdAndTokenEndpoint(context.Background(), con)
+	if err == nil && clientId == "" && len(weaviateScopes) == 0 && tokenEndpoint == "" {
 		return nil, nil
 	}
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -221,4 +222,47 @@ func TestAuthMock_CatchAllProxy(t *testing.T) {
 	client := weaviate.New(*cfg)
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 	assert.Nil(t, AuthErr)
+}
+
+// Test that client using CC automatically get a new token after expiration
+func TestAuthMock_CheckDefaultScopes(t *testing.T) {
+	// endpoint for access tokens
+	muxToken := http.NewServeMux()
+	muxToken.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		body, _ := io.ReadAll(r.Body)
+		bodyS := string(body)
+		assert.Equal(t, bodyS[len(bodyS)-15:], "something+extra") // scopes are in the body
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(fmt.Sprint(`{"access_token": "` + AccessToken + `", "expires_in": "1"}`)))
+	})
+	sToken := httptest.NewServer(muxToken)
+	defer sToken.Close()
+
+	// provides all endpoints
+	muxEndpoints := http.NewServeMux()
+	muxEndpoints.HandleFunc("/endpoints", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(fmt.Sprintf(`{"token_endpoint": "` + sToken.URL + `/auth"}`)))
+	})
+	sEndpoints := httptest.NewServer(muxEndpoints)
+	defer sEndpoints.Close()
+
+	// Returns the address of the auth server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"href": "` + sEndpoints.URL + `/endpoints", "clientId": "DoesNotMatter", "scopes": ["something", "extra"]}`))
+	})
+	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{}`))
+	})
+	s := httptest.NewServer(mux)
+	defer s.Close()
+
+	cfg, err := weaviate.NewConfig(strings.TrimPrefix(s.URL, "http://"), "http", auth.ClientCredentials{ClientSecret: "SecretValue"}, nil)
+	assert.Nil(t, err)
+	client := weaviate.New(*cfg)
+	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+	assert.Nil(t, AuthErr)
+
 }
