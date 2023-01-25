@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/filters"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // GetBuilder for GraphQL

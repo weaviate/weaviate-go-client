@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/util"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // ReferenceCreator builder to add a reference to the property of a data object

@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
+	"golang.org/x/oauth2"
 	"io"
 	"net/http"
 	"time"
-
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/fault"
-	"golang.org/x/oauth2"
 )
 
 const apiVersion = "v1"

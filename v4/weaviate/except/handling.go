@@ -3,8 +3,8 @@ package except
 import (
 	"fmt"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/fault"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
 )
 
 // NewWeaviateClientError from status code and error message

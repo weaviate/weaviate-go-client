@@ -9,11 +9,11 @@ Please note that this project is released with a Contributor Code of Conduct. By
 ### How we use Gitflow
 How we use [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) and how you can contribute following a few steps.
 
-- The master branch is what is released and developed currently.
+- The main branch is what is released and developed currently.
 - You can create a feature-branch that is named: feature/YOUR-FEATURE-NAME.
-- Your feature branch always has the master branch as a starting point.
-- When you are done with your feature you should create a pull request into the master branch.
-- The master branch is protected.
+- Your feature branch always has the main branch as a starting point.
+- When you are done with your feature you should create a pull request into the main branch.
+- The main branch is protected.
 
 ### Tagging your commit
 

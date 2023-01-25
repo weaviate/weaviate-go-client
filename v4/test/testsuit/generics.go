@@ -7,12 +7,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/auth"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate"
-	"github.com/semi-technologies/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 const (

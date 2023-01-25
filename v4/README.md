@@ -1,4 +1,4 @@
-# Weaviate go client  <img alt='Weaviate logo' src='https://raw.githubusercontent.com/semi-technologies/weaviate/19de0956c69b66c5552447e84d016f4fe29d12c9/docs/assets/weaviate-logo.png' width='180' align='right' />
+# Weaviate go client  <img alt='Weaviate logo' src='https://raw.githubusercontent.com/weaviate/weaviate/19de0956c69b66c5552447e84d016f4fe29d12c9/docs/assets/weaviate-logo.png' width='180' align='right' />
 
 A go native client for weaviate.
 
@@ -7,15 +7,15 @@ A go native client for weaviate.
 In order to get the go client v4 issue this command:
 
 ```bash
-$ go get github.com/semi-technologies/weaviate-go-client/v4@v4.x.x
+$ go get github.com/weaviate/weaviate-go-client/v4@v4.x.x
 ```
 
-where `v4.x.x` is the desired go client v4 version, for example `v4.5.0`
+where `v4.x.x` is the desired go client v4 version, for example `v4.5.2`
 
 Add dependency to your `go.mod`:
 
 ```go
-require github.com/semi-technologies/weaviate-go-client/v4 v4.5.0
+require github.com/weaviate/weaviate-go-client/v4 v4.5.2
 ```
 
 Connect to Weaviate on `localhost:8080` and fetch meta information
@@ -27,7 +27,7 @@ import (
   "context"
   "fmt"
 
-  client "github.com/semi-technologies/weaviate-go-client/v4/weaviate"
+  client "github.com/weaviate/weaviate-go-client/v4/weaviate"
 )
 
 func main() {
@@ -55,14 +55,12 @@ func main() {
 ## Support
 
 - [Stackoverflow for questions](https://stackoverflow.com/questions/tagged/weaviate).
-- [Github for issues](https://github.com/semi-technologies/weaviate-go-client/issues).
+- [Github for issues](https://github.com/weaviate/weaviate-go-client/issues).
 
 ## Contributing
 
-- [How to Contribute](https://github.com/semi-technologies/weaviate-go-client/blob/master/CONTRIBUTE.md).
+- [How to Contribute](https://github.com/weaviate/weaviate-go-client/blob/main/CONTRIBUTE.md).
 
 ## Build Status
 
-| Branch   | Status        |
-| -------- |:-------------:|
-| Master   | [![Build Status](https://travis-ci.com/semi-technologies/weaviate-go-client.svg?token=1qdvi3hJanQcWdqEstmy&branch=master)](https://travis-ci.com/github/semi-technologies/weaviate-go-client)
+[![Build Status](https://github.com/weaviate/weaviate-go-client/actions/workflows/.github/workflows/tests.yaml/badge.svg?branch=main)](https://github.com/weaviate/weaviate-go-client/actions/workflows/.github/workflows/tests.yaml)

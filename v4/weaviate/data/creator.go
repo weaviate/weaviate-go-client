@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/except"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // ObjectWrapper wrapping the result of a creation for both actions and things

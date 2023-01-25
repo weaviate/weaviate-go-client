@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/semi-technologies/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
