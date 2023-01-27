@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -62,7 +63,13 @@ func (ab authBase) getIdAndTokenEndpoint(ctx context.Context, con *connection.Co
 	if decodeEndpointErr != nil {
 		return "", []string{}, "", err
 	}
-	return cfg.ClientID, cfg.Scopes, resultEndpoints["token_endpoint"].(string), nil
+
+	tokenEndpoint, ok := resultEndpoints["token_endpoint"].(string)
+	if !ok {
+		return "", []string{}, "", errors.New("could not parse token_endpoint from OIDC response")
+	}
+
+	return cfg.ClientID, cfg.Scopes, tokenEndpoint, nil
 }
 
 type ClientCredentials struct {
