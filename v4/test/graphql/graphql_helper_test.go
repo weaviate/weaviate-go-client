@@ -16,6 +16,12 @@ type GetPizzaResponse struct {
 	}
 }
 
+type GetRisottoResponse struct {
+	Get struct {
+		Risotto []Pizza `json:"Risotto"`
+	}
+}
+
 type AggregatePizzaResponse struct {
 	Aggregate struct {
 		Pizza []struct {
@@ -66,4 +72,35 @@ func GetOnePizza(t *testing.T, c *weaviate.Client) *Pizza {
 	require.NotEmpty(t, pizza.Get.Pizzas)
 
 	return &pizza.Get.Pizzas[0]
+}
+
+func GetOneRisotto(t *testing.T, c *weaviate.Client) *Pizza {
+	_additional := graphql.Field{
+		Name: "_additional",
+		Fields: []graphql.Field{
+			{Name: "id"},
+			{Name: "vector"},
+			{Name: "creationTimeUnix"},
+			{Name: "lastUpdateTimeUnix"},
+		},
+	}
+
+	resp, err := c.GraphQL().
+		Get().
+		WithClassName("Risotto").
+		WithFields(_additional).
+		Do(context.Background())
+	if err != nil {
+		t.Fatalf("failed to get an object: %s", err)
+	}
+
+	b, err := json.Marshal(resp.Data)
+	require.Nil(t, err)
+
+	var risotto GetRisottoResponse
+	err = json.Unmarshal(b, &risotto)
+	require.Nil(t, err)
+	require.NotEmpty(t, risotto.Get.Risotto)
+
+	return &risotto.Get.Risotto[0]
 }
