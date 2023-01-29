@@ -22,10 +22,10 @@ func TestMultiClassQueryBuilder(t *testing.T) {
 
 		query := builder.
 			AddQueryClass(NewQueryClassBuilder("Pizza").WithFields(name1)).
-			AddQueryClass(NewQueryClassBuilder("Pasta").WithFields(name2)).
+			AddQueryClass(NewQueryClassBuilder("Risotto").WithFields(name2)).
 			build()
 
-		expected := "{Get {Pizza  {name1} Pasta  {name2}}}"
+		expected := "{Get {Pizza  {name1} Risotto  {name2}}}"
 		assert.Equal(t, expected, query)
 	})
 
@@ -49,10 +49,10 @@ func TestMultiClassQueryBuilder(t *testing.T) {
 
 		query := builder.
 			AddQueryClass(NewQueryClassBuilder("Pizza").WithFields(fields1...)).
-			AddQueryClass(NewQueryClassBuilder("Pasta").WithFields(fields2...)).
+			AddQueryClass(NewQueryClassBuilder("Risotto").WithFields(fields2...)).
 			build()
 
-		expected := "{Get {Pizza  {name description} Pasta  {email password}}}"
+		expected := "{Get {Pizza  {name description} Risotto  {email password}}}"
 		assert.Equal(t, expected, query)
 	})
 
@@ -79,10 +79,10 @@ func TestMultiClassQueryBuilder(t *testing.T) {
 
 		query := builder.
 			AddQueryClass(NewQueryClassBuilder("Pizza").WithFields(name).WithWhere(where1)).
-			AddQueryClass(NewQueryClassBuilder("Pasta").WithFields(city).WithWhere(where2)).
+			AddQueryClass(NewQueryClassBuilder("Risotto").WithFields(city).WithWhere(where2)).
 			build()
 
-		expected := `{Get {Pizza (where:{operator: Equal path: ["name"] valueString: "Hawaii"}) {name} Pasta (where:{operator: Equal path: ["city"] valueString: "New York"}) {city}}}`
+		expected := `{Get {Pizza (where:{operator: Equal path: ["name"] valueString: "Hawaii"}) {name} Risotto (where:{operator: Equal path: ["city"] valueString: "New York"}) {city}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -99,10 +99,10 @@ func TestMultiClassQueryBuilder(t *testing.T) {
 
 		query := builder.
 			AddQueryClass(NewQueryClassBuilder("Pizza").WithFields(name).WithOffset(0).WithLimit(2)).
-			AddQueryClass(NewQueryClassBuilder("Pasta").WithFields(city).WithOffset(5).WithLimit(8)).
+			AddQueryClass(NewQueryClassBuilder("Risotto").WithFields(city).WithOffset(5).WithLimit(8)).
 			build()
 
-		expected := "{Get {Pizza (limit: 2, offset: 0) {name} Pasta (limit: 8, offset: 5) {city}}}"
+		expected := "{Get {Pizza (limit: 2, offset: 0) {name} Risotto (limit: 8, offset: 5) {city}}}"
 		assert.Equal(t, expected, query)
 	})
 
@@ -125,10 +125,10 @@ func TestMultiClassQueryBuilder(t *testing.T) {
 
 		query := builder.
 			AddQueryClass(NewQueryClassBuilder("Pizza").WithFields(name).WithNearVector(nearVector1)).
-			AddQueryClass(NewQueryClassBuilder("Pasta").WithFields(city).WithNearVector(nearVector2)).
+			AddQueryClass(NewQueryClassBuilder("Risotto").WithFields(city).WithNearVector(nearVector2)).
 			build()
 
-		expected := `{Get {Pizza (nearVector:{vector: [0,1,0.8]}) {name} Pasta (nearVector:{vector: [0.3,0.5,0.6]}) {city}}}`
+		expected := `{Get {Pizza (nearVector:{vector: [0,1,0.8]}) {name} Risotto (nearVector:{vector: [0.3,0.5,0.6]}) {city}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -151,10 +151,10 @@ func TestMultiClassQueryBuilder(t *testing.T) {
 
 		query := builder.
 			AddQueryClass(NewQueryClassBuilder("Pizza").WithFields(name).WithGroup(group1)).
-			AddQueryClass(NewQueryClassBuilder("Pasta").WithFields(city).WithGroup(group2)).
+			AddQueryClass(NewQueryClassBuilder("Risotto").WithFields(city).WithGroup(group2)).
 			build()
 
-		expected := `{Get {Pizza (group:{type: closest force: 0.4}) {name} Pasta (group:{type: merge force: 0.8}) {city}}}`
+		expected := `{Get {Pizza (group:{type: closest force: 0.4}) {name} Risotto (group:{type: merge force: 0.8}) {city}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -179,10 +179,10 @@ func TestMultiClassQueryBuilder(t *testing.T) {
 
 		query := builder.
 			AddQueryClass(NewQueryClassBuilder("Pizza").WithFields(name).WithNearText(nearText)).
-			AddQueryClass(NewQueryClassBuilder("Pasta").WithFields(city).WithWhere(where)).
+			AddQueryClass(NewQueryClassBuilder("Risotto").WithFields(city).WithWhere(where)).
 			build()
 
-		expected := `{Get {Pizza (nearText:{concepts: ["good"]}) {name} Pasta (where:{operator: Equal path: ["city"] valueString: "New York"}) {city}}}`
+		expected := `{Get {Pizza (nearText:{concepts: ["good"]}) {name} Risotto (where:{operator: Equal path: ["city"] valueString: "New York"}) {city}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -218,13 +218,13 @@ func TestMultiClassQueryBuilder(t *testing.T) {
 				WithNearText(nearText1).
 				WithLimit(2).
 				WithWhere(where1)).
-			AddQueryClass(NewQueryClassBuilder("Pasta").WithFields(city).
+			AddQueryClass(NewQueryClassBuilder("Risotto").WithFields(city).
 				WithNearText(nearText2).
 				WithLimit(5).
 				WithWhere(where2)).
 			build()
 
-		expected := `{Get {Pizza (where:{operator: Equal path: ["name"] valueString: "Hawaii"}, nearText:{concepts: ["good"]}, limit: 2) {name} Pasta (where:{operator: Equal path: ["city"] valueString": "New York"}, nearText:{concepts: ["best"]}, limit: 5) {city}}}`
+		expected := `{Get {Pizza (where:{operator: Equal path: ["name"] valueString: "Hawaii"}, nearText:{concepts: ["good"]}, limit: 2) {name} Risotto (where:{operator: Equal path: ["city"] valueString: "New York"}, nearText:{concepts: ["best"]}, limit: 5) {city}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -255,13 +255,13 @@ func TestMultiClassQueryBuilder(t *testing.T) {
 					WithFields(name).
 					WithNearObject(nearObject1).
 					WithNearText(nearText1)).
-				AddQueryClass(NewQueryClassBuilder("Pasta").
+				AddQueryClass(NewQueryClassBuilder("Risotto").
 					WithFields(city).
 					WithNearObject(nearObject2).
 					WithNearText(nearText2)).
 				build()
 
-			expected := `{Get {Pizza (nearText:{concepts: ["good"]}, nearObject:{id: "uuid1" beacon: "uuid1" certainty: 0.8}) {name} Pasta (nearText:{concepts: ["best"]}, nearObject:{id: "uuid2" beacon: "uuid2" certainty: 0.5}) {city}}}`
+			expected := `{Get {Pizza (nearText:{concepts: ["good"]}, nearObject:{id: "uuid1" beacon: "uuid1" certainty: 0.8}) {name} Risotto (nearText:{concepts: ["best"]}, nearObject:{id: "uuid2" beacon: "uuid2" certainty: 0.5}) {city}}}`
 			assert.Equal(t, expected, query)
 		})
 
@@ -291,13 +291,13 @@ func TestMultiClassQueryBuilder(t *testing.T) {
 					WithFields(name).
 					WithNearObject(nearObject1).
 					WithNearText(nearText1)).
-				AddQueryClass(NewQueryClassBuilder("Pasta").
+				AddQueryClass(NewQueryClassBuilder("Risotto").
 					WithFields(city).
 					WithNearObject(nearObject2).
 					WithNearText(nearText2)).
 				build()
 
-			expected := `{Get {Pizza (nearText:{concepts: ["good"]}, nearObject:{id: "uuid1" beacon: "uuid1" distance: 0.2}) {name} Pasta (nearText:{concepts: ["best"]}, nearObject:{id: "uuid2" beacon: "uuid2" distance: 0.5}) {city}}}`
+			expected := `{Get {Pizza (nearText:{concepts: ["good"]}, nearObject:{id: "uuid1" beacon: "uuid1" distance: 0.2}) {name} Risotto (nearText:{concepts: ["best"]}, nearObject:{id: "uuid2" beacon: "uuid2" distance: 0.5}) {city}}}`
 			assert.Equal(t, expected, query)
 		})
 	})
@@ -330,12 +330,12 @@ func TestMultiClassQueryBuilder(t *testing.T) {
 				AddQueryClass(NewQueryClassBuilder("Pizza").
 					WithFields(name).
 					WithAsk(ask1)).
-				AddQueryClass(NewQueryClassBuilder("Pasta").
+				AddQueryClass(NewQueryClassBuilder("Risotto").
 					WithFields(city).
 					WithAsk(ask2)).
 				build()
 
-			expected := `{Get {Pizza (ask:{question: "What is Weaviate?" properties: ["prop1","prop2"] certainty: 0.8 rerank: true}) {name} Pasta (ask:{question: "How to use Weaviate?" properties: ["prop3","prop4"] certainty: 0.5 rerank: false}) {city}}}`
+			expected := `{Get {Pizza (ask:{question: "What is Weaviate?" properties: ["prop1","prop2"] certainty: 0.8 rerank: true}) {name} Risotto (ask:{question: "How to use Weaviate?" properties: ["prop3","prop4"] certainty: 0.5 rerank: false}) {city}}}`
 			assert.Equal(t, expected, query)
 		})
 
@@ -366,12 +366,12 @@ func TestMultiClassQueryBuilder(t *testing.T) {
 				AddQueryClass(NewQueryClassBuilder("Pizza").
 					WithFields(name).
 					WithAsk(ask1)).
-				AddQueryClass(NewQueryClassBuilder("Pasta").
+				AddQueryClass(NewQueryClassBuilder("Risotto").
 					WithFields(city).
 					WithAsk(ask2)).
 				build()
 
-			expected := `{Get {Pizza (ask:{question: "What is Weaviate?" properties: ["prop1","prop2"] distance: 0.2 rerank: true}) {name} Pasta (ask:{question: "How to use Weaviate?" properties: ["prop3","prop4"] distance: 0.5 rerank: false}) {city}}}`
+			expected := `{Get {Pizza (ask:{question: "What is Weaviate?" properties: ["prop1","prop2"] distance: 0.2 rerank: true}) {name} Risotto (ask:{question: "How to use Weaviate?" properties: ["prop3","prop4"] distance: 0.5 rerank: false}) {city}}}`
 			assert.Equal(t, expected, query)
 		})
 	})
@@ -394,10 +394,10 @@ func TestMultiClassBM25Builder(t *testing.T) {
 
 	query := builder.
 		AddQueryClass(NewQueryClassBuilder("Pizza").WithBM25(bm25B_1)).
-		AddQueryClass(NewQueryClassBuilder("Pasta").WithBM25(bm25B_2)).
+		AddQueryClass(NewQueryClassBuilder("Risotto").WithBM25(bm25B_2)).
 		build()
 
-	expected := `{Get {Pizza (bm25:{query: "good", properties: ["name","description"]}) {} Pasta (bm25:{query: "best", properties: ["email","password"]}) {}}}`
+	expected := `{Get {Pizza (bm25:{query: "good", properties: ["name","description"]}) {} Risotto (bm25:{query: "best", properties: ["email","password"]}) {}}}`
 	assert.Equal(t, expected, query)
 
 }
@@ -418,9 +418,9 @@ func TestMultiClassHybridBuilder(t *testing.T) {
 
 	query := builder.
 		AddQueryClass(NewQueryClassBuilder("Pizza").WithHybrid(hybrid_1)).
-		AddQueryClass(NewQueryClassBuilder("Pasta").WithHybrid(hybrid_2)).
+		AddQueryClass(NewQueryClassBuilder("Risotto").WithHybrid(hybrid_2)).
 		build()
 
-	expected := `{Get {Pizza (hybrid:{query: "query1", vector: [1,2,3], alpha: 0.6}) {} Pasta (hybrid:{query: "query2", vector: [4,5,6], alpha: 0.8}) {}}}`
+	expected := `{Get {Pizza (hybrid:{query: "query1", vector: [1,2,3], alpha: 0.6}) {} Risotto (hybrid:{query: "query2", vector: [4,5,6], alpha: 0.8}) {}}}`
 	assert.Equal(t, expected, query)
 }

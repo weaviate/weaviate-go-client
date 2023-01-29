@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/weaviate/weaviate/entities/models"
@@ -31,7 +32,13 @@ func (mb *MultiClassBuilder) Do(ctx context.Context) (*models.GraphQLResponse, e
 // build the GraphQL query string (not needed when Do is executed)
 func (mb *MultiClassBuilder) build() string {
 	var query string
-	for _, class := range mb.classBuilders {
+	// sorting classBuilder based on className to have consistent order in query
+	s := make(classBuildersSorter, 0, len(mb.classBuilders))
+	for _, k := range mb.classBuilders {
+		s = append(s, k)
+	}
+	sort.Sort(classBuildersSorter(s))
+	for _, class := range s {
 		filterClause := ""
 		if class.includesFilterClause {
 			filterClause = class.createFilterClause()
@@ -42,4 +49,19 @@ func (mb *MultiClassBuilder) build() string {
 	query = strings.TrimSpace(query)
 	query = fmt.Sprintf("{Get {%v}}", query)
 	return query
+}
+
+// Implementing Sort Interface for *GetBuilder Struct
+type classBuildersSorter []*GetBuilder
+
+func (mb classBuildersSorter) Len() int {
+	return len(mb)
+}
+
+func (mb classBuildersSorter) Less(i, j int) bool {
+	return mb[i].className < mb[j].className
+}
+
+func (mb classBuildersSorter) Swap(i, j int) {
+	mb[i], mb[j] = mb[j], mb[i]
 }
