@@ -32,36 +32,21 @@ func (mb *MultiClassBuilder) Do(ctx context.Context) (*models.GraphQLResponse, e
 // build the GraphQL query string (not needed when Do is executed)
 func (mb *MultiClassBuilder) build() string {
 	var query string
-	// sorting classBuilder based on className to have consistent order in query
-	s := make(classBuildersSorter, 0, len(mb.classBuilders))
-	for _, k := range mb.classBuilders {
-		s = append(s, k)
+	// sorting className to have consistent order in query
+	s := make([]string, 0, len(mb.classBuilders))
+	for key := range mb.classBuilders {
+		s = append(s, key)
 	}
-	sort.Sort(classBuildersSorter(s))
-	for _, class := range s {
+	sort.Strings(s)
+	for _, className := range s {
 		filterClause := ""
-		if class.includesFilterClause {
-			filterClause = class.createFilterClause()
+		if mb.classBuilders[className].includesFilterClause {
+			filterClause = mb.classBuilders[className].createFilterClause()
 		}
-		fieldsClause := class.createFieldsClause()
-		query += fmt.Sprintf("%v %v {%v}", class.className, filterClause, fieldsClause) + " "
+		fieldsClause := mb.classBuilders[className].createFieldsClause()
+		query += fmt.Sprintf("%v %v {%v}", className, filterClause, fieldsClause) + " "
 	}
 	query = strings.TrimSpace(query)
 	query = fmt.Sprintf("{Get {%v}}", query)
 	return query
-}
-
-// Implementing Sort Interface for *GetBuilder Struct
-type classBuildersSorter []*GetBuilder
-
-func (mb classBuildersSorter) Len() int {
-	return len(mb)
-}
-
-func (mb classBuildersSorter) Less(i, j int) bool {
-	return mb[i].className < mb[j].className
-}
-
-func (mb classBuildersSorter) Swap(i, j int) {
-	mb[i], mb[j] = mb[j], mb[i]
 }
