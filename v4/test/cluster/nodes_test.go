@@ -63,10 +63,10 @@ func TestClusterNodes_integration(t *testing.T) {
 		assert.Equal(t, expectedWeaviateGitHash, nodeStatus.GitHash)
 		assert.Equal(t, models.NodeStatusStatusHEALTHY, *nodeStatus.Status)
 		require.NotNil(t, nodeStatus.Stats)
-		assert.Equal(t, int64(6), nodeStatus.Stats.ObjectCount)
-		assert.Equal(t, int64(2), nodeStatus.Stats.ShardCount)
+		assert.Equal(t, int64(9), nodeStatus.Stats.ObjectCount)
+		assert.Equal(t, int64(3), nodeStatus.Stats.ShardCount)
 
-		assert.Len(t, nodeStatus.Shards, 2)
+		assert.Len(t, nodeStatus.Shards, 3)
 		for _, shardStatus := range nodeStatus.Shards {
 			assert.NotEmpty(t, shardStatus.Name)
 			switch shardStatus.Class {
@@ -74,6 +74,8 @@ func TestClusterNodes_integration(t *testing.T) {
 				assert.Equal(t, int64(4), shardStatus.ObjectCount)
 			case "Soup":
 				assert.Equal(t, int64(2), shardStatus.ObjectCount)
+			case "Risotto":
+				assert.Equal(t, int64(3), shardStatus.ObjectCount)
 			default:
 				t.Fatalf("unexpected class name")
 			}
