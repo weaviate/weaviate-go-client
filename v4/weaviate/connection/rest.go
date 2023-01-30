@@ -7,6 +7,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
 	"golang.org/x/oauth2"
 	"io"
+	"log"
 	"net/http"
 	"time"
 )
@@ -44,10 +45,12 @@ func NewConnection(scheme string, host string, httpClient *http.Client, headers 
 		for {
 			token, err := transport.Source.Token()
 			if err != nil {
+				log.Printf("Error during token refresh, getting token: %v", err)
 				return
 			}
 			// there is no point in manual refreshing if there is no refresh token
 			if token.RefreshToken == "" {
+				log.Println("No refresh token, exiting background goroutine")
 				return
 			}
 
@@ -55,6 +58,7 @@ func NewConnection(scheme string, host string, httpClient *http.Client, headers 
 			time.Sleep(timeToSleep)
 			_, err = connection.RunREST(context.TODO(), "/meta", http.MethodGet, nil)
 			if err != nil {
+				log.Printf("Error during token refresh, rest request: %v", err)
 				return
 			}
 		}
