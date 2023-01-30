@@ -264,5 +264,4 @@ func TestAuthMock_CheckDefaultScopes(t *testing.T) {
 	client := weaviate.New(*cfg)
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 	assert.Nil(t, AuthErr)
-
 }

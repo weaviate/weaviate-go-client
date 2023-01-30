@@ -2,6 +2,8 @@ package weaviate
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/backup"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/batch"
@@ -14,7 +16,6 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/misc"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/schema"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
-	"net/http"
 )
 
 // Config of the client endpoint

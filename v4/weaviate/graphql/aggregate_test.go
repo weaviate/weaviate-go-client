@@ -3,8 +3,8 @@ package graphql
 import (
 	"testing"
 
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
 	"github.com/stretchr/testify/assert"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
 )
 
 func TestAggregateBuilder(t *testing.T) {
