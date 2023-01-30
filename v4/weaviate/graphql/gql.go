@@ -24,6 +24,14 @@ func (api *API) Get() *GetBuilder {
 	return &GetBuilder{connection: api.connection}
 }
 
+// Get queries with Multiple Class
+func (api *API) MultiClassGet() *MultiClassBuilder {
+	return &MultiClassBuilder{
+		connection:    api.connection,
+		classBuilders: make(map[string]*GetBuilder),
+	}
+}
+
 // Explore queries
 func (api *API) Explore() *Explore {
 	return &Explore{connection: api.connection}

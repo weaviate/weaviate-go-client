@@ -36,10 +36,17 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
 		Class:       "Soup",
 		Description: "Mostly water based brew of sustenance for humans.",
 	}
+	schemaClassItem := &models.Class{
+		Class:               "Risotto",
+		Description:         "Risotto is a northern Italian rice dish cooked with broth.",
+		InvertedIndexConfig: &models.InvertedIndexConfig{IndexTimestamps: true},
+	}
 	errT := client.Schema().ClassCreator().WithClass(schemaClassThing).Do(context.Background())
 	assert.Nil(t, errT)
 	errA := client.Schema().ClassCreator().WithClass(schemaClassAction).Do(context.Background())
 	assert.Nil(t, errA)
+	errI := client.Schema().ClassCreator().WithClass(schemaClassItem).Do(context.Background())
+	assert.Nil(t, errI)
 	nameProperty := &models.Property{
 		DataType:    []string{"string"},
 		Description: "name",
@@ -70,18 +77,26 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
 	assert.Nil(t, propErrT1)
 	propErrA1 := client.Schema().PropertyCreator().WithClassName("Soup").WithProperty(nameProperty).Do(context.Background())
 	assert.Nil(t, propErrA1)
+	propErrI1 := client.Schema().PropertyCreator().WithClassName("Risotto").WithProperty(nameProperty).Do(context.Background())
+	assert.Nil(t, propErrI1)
 	propErrT2 := client.Schema().PropertyCreator().WithClassName("Pizza").WithProperty(descriptionProperty).Do(context.Background())
 	assert.Nil(t, propErrT2)
 	propErrA2 := client.Schema().PropertyCreator().WithClassName("Soup").WithProperty(descriptionProperty).Do(context.Background())
 	assert.Nil(t, propErrA2)
+	propErrI2 := client.Schema().PropertyCreator().WithClassName("Risotto").WithProperty(descriptionProperty).Do(context.Background())
+	assert.Nil(t, propErrI2)
 	propErrT3 := client.Schema().PropertyCreator().WithClassName("Pizza").WithProperty(priceProperty).Do(context.Background())
 	assert.Nil(t, propErrT3)
 	propErrA3 := client.Schema().PropertyCreator().WithClassName("Soup").WithProperty(priceProperty).Do(context.Background())
 	assert.Nil(t, propErrA3)
+	propErrI3 := client.Schema().PropertyCreator().WithClassName("Risotto").WithProperty(priceProperty).Do(context.Background())
+	assert.Nil(t, propErrI3)
 	propErrT4 := client.Schema().PropertyCreator().WithClassName("Pizza").WithProperty(bestBeforeProperty).Do(context.Background())
 	assert.Nil(t, propErrT4)
 	propErrA4 := client.Schema().PropertyCreator().WithClassName("Soup").WithProperty(bestBeforeProperty).Do(context.Background())
 	assert.Nil(t, propErrA4)
+	propErrI4 := client.Schema().PropertyCreator().WithClassName("Risotto").WithProperty(bestBeforeProperty).Do(context.Background())
+	assert.Nil(t, propErrI4)
 }
 
 func CreateWeaviateTestSchemaWithVectorizorlessClass(t *testing.T, client *weaviate.Client) {
@@ -235,14 +250,46 @@ func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client) {
 			},
 		},
 	}
-
+	menuRisotto := []*models.Object{
+		{
+			Class: "Risotto",
+			Properties: map[string]interface{}{
+				"name":        "Risi e bisi",
+				"description": "A Veneto spring dish.",
+				"price":       float32(3.1),
+				"best_before": "2022-05-03T12:04:40+02:00",
+			},
+		},
+		{
+			Class: "Risotto",
+			Properties: map[string]interface{}{
+				"name":        "Risotto alla pilota",
+				"description": "A specialty of Mantua, made with sausage, pork, and Parmesan cheese.",
+				"price":       float32(3.2),
+				"best_before": "2022-05-03T12:04:40+02:00",
+			},
+		},
+		{
+			Class: "Risotto",
+			ID:    "696bf381-7f98-40a4-bcad-841780e00e0e",
+			Properties: map[string]interface{}{
+				"name":        "Risotto al nero di seppia",
+				"description": "A specialty of the Veneto region, made with cuttlefish cooked with their ink-sacs intact, leaving the risotto black .",
+				"price":       float32(3.3),
+			},
+		},
+	}
 	thingsBatcher := client.Batch().ObjectsBatcher()
 	for _, pizza := range menuPizza {
 		thingsBatcher.WithObject(pizza)
 	}
+	for _, soup := range menuSoup {
+		thingsBatcher.WithObject(soup)
+	}
+	for _, risotto := range menuRisotto {
+		thingsBatcher.WithObject(risotto)
+	}
+
 	_, thingsErr := thingsBatcher.Do(context.Background())
 	assert.Nil(t, thingsErr)
-
-	_, actionsErr := client.Batch().ObjectsBatcher().WithObject(menuSoup[0]).WithObject(menuSoup[1]).Do(context.Background())
-	assert.Nil(t, actionsErr)
 }

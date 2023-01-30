@@ -251,7 +251,7 @@ func TestBackups_integration(t *testing.T) {
 		})
 	})
 
-	t.Run("create and restore 1 of 2 classes", func(t *testing.T) {
+	t.Run("create and restore 1 of 3 classes", func(t *testing.T) {
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -259,10 +259,12 @@ func TestBackups_integration(t *testing.T) {
 		backupID := fmt.Sprint(random.Int63())
 		pizzaClassName := "Pizza"
 		soupClassName := "Soup"
+		risottoClassName := "Risotto"
 
 		t.Run("check data exist", func(t *testing.T) {
 			assertAllPizzasExist(t, client)
 			assertAllSoupsExist(t, client)
+			assertAllRisottoExist(t, client)
 		})
 
 		t.Run("create backup", func(t *testing.T) {
@@ -275,9 +277,10 @@ func TestBackups_integration(t *testing.T) {
 			require.Nil(t, err)
 			require.NotNil(t, createResponse)
 			assert.Equal(t, backupID, createResponse.ID)
-			assert.Len(t, createResponse.Classes, 2)
+			assert.Len(t, createResponse.Classes, 3)
 			assert.Contains(t, createResponse.Classes, pizzaClassName)
 			assert.Contains(t, createResponse.Classes, soupClassName)
+			assert.Contains(t, createResponse.Classes, risottoClassName)
 			assert.Equal(t, dockerComposeBackupDir+"/"+backupID, createResponse.Path)
 			assert.Equal(t, backup.BACKEND_FILESYSTEM, createResponse.Backend)
 			assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse.Status)
@@ -287,6 +290,7 @@ func TestBackups_integration(t *testing.T) {
 		t.Run("check data still exist", func(t *testing.T) {
 			assertAllPizzasExist(t, client)
 			assertAllSoupsExist(t, client)
+			assertAllRisottoExist(t, client)
 		})
 
 		t.Run("check create status", func(t *testing.T) {
@@ -334,6 +338,7 @@ func TestBackups_integration(t *testing.T) {
 		t.Run("check data again exist", func(t *testing.T) {
 			assertAllPizzasExist(t, client)
 			assertAllSoupsExist(t, client)
+			assertAllRisottoExist(t, client)
 		})
 
 		t.Run("check restore status", func(t *testing.T) {
@@ -662,6 +667,10 @@ func assertAllPizzasExist(t *testing.T, client *weaviate.Client) {
 
 func assertAllSoupsExist(t *testing.T, client *weaviate.Client) {
 	assertAllFoodObjectsExist(t, client, "Soup", 2)
+}
+
+func assertAllRisottoExist(t *testing.T, client *weaviate.Client) {
+	assertAllFoodObjectsExist(t, client, "Risotto", 3)
 }
 
 func assertAllFoodObjectsExist(t *testing.T, client *weaviate.Client, className string, count int) {
