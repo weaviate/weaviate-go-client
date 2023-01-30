@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -107,14 +108,18 @@ func TestAuth_UserPW(t *testing.T) {
 			pw := os.Getenv(tc.envVar)
 			if pw == "" {
 				t.Skip("No password supplied for " + tc.name)
+			} else {
+				// This should be in a branch, so the GC can collect the client and with that shut down the background
+				// routine that writes to the log. Otherwise, we'd have a data race between the this goroutine and the
+				// test accessing the buffer.
+				clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: tc.user, Password: pw, Scopes: tc.scope}
+				cfg, err := weaviate.NewConfig(fmt.Sprintf("localhost:%v", tc.port), "http", clientCredentialConf, nil)
+				assert.Nil(t, err)
+				client := weaviate.New(*cfg)
+				AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+				assert.Nil(t, AuthErr)
 			}
-
-			clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: tc.user, Password: pw, Scopes: tc.scope}
-			cfg, err := weaviate.NewConfig(fmt.Sprintf("localhost:%v", tc.port), "http", clientCredentialConf, nil)
-			assert.Nil(t, err)
-			client := weaviate.New(*cfg)
-			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-			assert.Nil(t, AuthErr)
+			runtime.GC()
 
 			if tc.warning {
 				assert.True(t, strings.Contains(buf.String(), "Auth002"))
