@@ -921,7 +921,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("MultiClass Get", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1196,7 +1196,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("MultiClassGet with group filter", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1225,7 +1225,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("MultiClassGet with creationTimeUnix filters", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1282,7 +1282,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("MultiClassGet with lastUpdateTimeUnix filters", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
