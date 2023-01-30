@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
@@ -20,6 +21,11 @@ type Connection struct {
 	basePath   string
 	httpClient *http.Client
 	headers    map[string]string
+	doneCh     chan bool
+}
+
+func finalizer(c *Connection) {
+	c.doneCh <- true
 }
 
 // NewConnection based on scheme://host
@@ -33,39 +39,55 @@ func NewConnection(scheme string, host string, httpClient *http.Client, headers 
 		basePath:   scheme + "://" + host + "/" + apiVersion,
 		httpClient: client,
 		headers:    headers,
+		doneCh:     make(chan bool),
 	}
 
-	// background goroutine that periodically refreshes the auth token.
-	// The oauth2 package only refreshes the Tokens on new http requests => if there is no request for the lifetime of
-	// the refresh token the client will become de-authenticated without this.
-	go func(con *Connection) {
-		transport, ok := con.httpClient.Transport.(*oauth2.Transport)
-		if !ok {
-			return
-		}
-		for {
-			token, err := transport.Source.Token()
-			if err != nil {
-				log.Printf("Error during token refresh, getting token: %v", err)
-				return
-			}
-			// there is no point in manual refreshing if there is no refresh token
-			if token.RefreshToken == "" {
-				log.Println("No refresh token, exiting background goroutine")
-				return
-			}
+	// shutdown goroutine when connections is cleaned up
+	runtime.SetFinalizer(connection, finalizer)
 
-			timeToSleep := token.Expiry.Sub(time.Now()) - time.Second/10
-			time.Sleep(timeToSleep)
-			_, err = connection.RunREST(context.TODO(), "/meta", http.MethodGet, nil)
-			if err != nil {
-				log.Printf("Error during token refresh, rest request: %v", err)
-				return
-			}
-		}
-	}(connection)
+	transport, ok := connection.httpClient.Transport.(*oauth2.Transport)
+	if ok {
+		connection.startRefreshGoroutine(transport)
+	}
 
 	return connection
+}
+
+// startRefreshGoroutine starts a background goroutine that periodically refreshes the auth token.
+// The oauth2 package only refreshes the Tokens on new http requests => if there is no request for the lifetime of
+// the refresh token the client will become de-authenticated without this.
+func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
+	token, err := transport.Source.Token()
+	if err != nil {
+		log.Printf("Error during token refresh, getting token: %v", err)
+		return
+	}
+	// there is no point in manual refreshing if there is no refresh token. Note that this is the default with client
+	// credentials
+	if token.RefreshToken == "" {
+		return
+	}
+
+	timeToSleep := token.Expiry.Sub(time.Now()) - time.Second/10
+	if timeToSleep <= 0 {
+		return
+	}
+	ticker := time.NewTicker(timeToSleep)
+	go func() {
+		for {
+			select {
+			case <-con.doneCh:
+				return
+			case <-ticker.C:
+				_, err = con.RunREST(context.TODO(), "/meta", http.MethodGet, nil)
+				if err != nil {
+					log.Printf("Error during token refresh, rest request: %v", err)
+					return
+				}
+			}
+		}
+	}()
+
 }
 
 func (con *Connection) addHeaderToRequest(request *http.Request) {
