@@ -98,14 +98,6 @@ func (con *Connection) addHeaderToRequest(request *http.Request) {
 	request.Header.Set("Accept", "application/json")
 }
 
-func (con *Connection) addURLParametersToRequest(request *http.Request, parameters map[string]string) {
-	q := request.URL.Query()
-	for key, value := range parameters {
-		q.Add(key, value)
-	}
-	request.URL.RawQuery = q.Encode()
-}
-
 func (con *Connection) marshalBody(body interface{}) (io.Reader, error) {
 	if body == nil {
 		return nil, nil
@@ -132,7 +124,6 @@ func (con *Connection) createRequest(ctx context.Context, path string,
 		return nil, err
 	}
 	con.addHeaderToRequest(request)
-	// con.addURLParametersToRequest(request, urlParameters)
 	request.WithContext(ctx)
 	return request, nil
 }
