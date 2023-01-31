@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/backup"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBackups_integration(t *testing.T) {
@@ -29,7 +29,7 @@ func TestBackups_integration(t *testing.T) {
 
 	const dockerComposeBackupDir = "/tmp/backups"
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
-	client := testsuit.CreateTestClient()
+	client := testsuit.CreateTestClient(8080, nil)
 	testsuit.CleanUpWeaviate(t, client)
 
 	t.Run("create and restore backup with waiting", func(t *testing.T) {
@@ -174,10 +174,12 @@ func TestBackups_integration(t *testing.T) {
 				assert.Equal(t, dockerComposeBackupDir+"/"+backupID, createStatusResponse.Path)
 				assert.Equal(t, backup.BACKEND_FILESYSTEM, createStatusResponse.Backend)
 				assert.Empty(t, createStatusResponse.Error)
-				assert.Contains(t, []string{models.BackupCreateStatusResponseStatusSTARTED,
+				assert.Contains(t, []string{
+					models.BackupCreateStatusResponseStatusSTARTED,
 					models.BackupCreateStatusResponseStatusTRANSFERRING,
 					models.BackupCreateStatusResponseStatusTRANSFERRED,
-					models.BackupCreateStatusResponseStatusSUCCESS}, *createStatusResponse.Status)
+					models.BackupCreateStatusResponseStatusSUCCESS,
+				}, *createStatusResponse.Status)
 
 				if models.BackupCreateStatusResponseStatusSUCCESS == *createStatusResponse.Status {
 					break
@@ -230,10 +232,12 @@ func TestBackups_integration(t *testing.T) {
 				assert.Equal(t, dockerComposeBackupDir+"/"+backupID, restoreStatusResponse.Path)
 				assert.Equal(t, backup.BACKEND_FILESYSTEM, restoreStatusResponse.Backend)
 				assert.Empty(t, restoreStatusResponse.Error)
-				assert.Contains(t, []string{models.BackupRestoreStatusResponseStatusSTARTED,
+				assert.Contains(t, []string{
+					models.BackupRestoreStatusResponseStatusSTARTED,
 					models.BackupRestoreStatusResponseStatusTRANSFERRING,
 					models.BackupRestoreStatusResponseStatusTRANSFERRED,
-					models.BackupRestoreStatusResponseStatusSUCCESS}, *restoreStatusResponse.Status)
+					models.BackupRestoreStatusResponseStatusSUCCESS,
+				}, *restoreStatusResponse.Status)
 
 				if models.BackupRestoreStatusResponseStatusSUCCESS == *restoreStatusResponse.Status {
 					break

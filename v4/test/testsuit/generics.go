@@ -2,12 +2,25 @@ package testsuit
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"os"
 	"testing"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate"
-	"github.com/weaviate/weaviate/entities/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
+	"github.com/weaviate/weaviate/entities/models"
+)
+
+const (
+	NoAuthPort     = 8080
+	AzurePort      = 8081
+	OktaCCPort     = 8082
+	OktaUsersPort  = 8083
+	WCSPort        = 8085
+	NoWeaviatePort = 8888
 )
 
 // CreateWeaviateTestSchemaFood creates a class for each semantic type (Pizza and Soup)
@@ -135,12 +148,25 @@ func CleanUpWeaviate(t *testing.T, client *weaviate.Client) {
 }
 
 // CreateTestClient running on local host 8080
-func CreateTestClient() *weaviate.Client {
-	cfg := weaviate.Config{
-		Host:   "localhost:8080",
-		Scheme: "http",
+func CreateTestClient(port int, connectionClient *http.Client) *weaviate.Client {
+	integrationTestsWithAuth := os.Getenv("INTEGRATION_TESTS_AUTH")
+	var cfg *weaviate.Config
+	wcsPw := os.Getenv("WCS_DUMMY_CI_PW")
+	if connectionClient == nil && integrationTestsWithAuth == "auth_enabled" && wcsPw != "" {
+		clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net", Password: wcsPw}
+		var err error
+		cfg, err = weaviate.NewConfig("localhost:"+fmt.Sprint(WCSPort), "http", clientCredentialConf, nil)
+		if err != nil {
+			cfg = &weaviate.Config{Host: "localhost:" + fmt.Sprint(port), Scheme: "http"}
+		}
+	} else {
+		cfg = &weaviate.Config{
+			Host:             "localhost:" + fmt.Sprint(port),
+			Scheme:           "http",
+			ConnectionClient: connectionClient,
+		}
 	}
-	client := weaviate.New(cfg)
+	client := weaviate.New(*cfg)
 	return client
 }
 

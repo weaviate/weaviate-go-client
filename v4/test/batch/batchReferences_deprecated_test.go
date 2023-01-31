@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestBatchCreate_integration_deprecated(t *testing.T) {
@@ -19,7 +19,7 @@ func TestBatchCreate_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("POST /batch/references", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create some objects

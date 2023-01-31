@@ -21,8 +21,8 @@ func New(connection *connection.Connection) *API {
 // Creator creates backup creator builder
 func (s *API) Creator() *BackupCreator {
 	return &BackupCreator{
-		connection: s.connection,
-    statusGetter: s.CreateStatusGetter(),
+		connection:   s.connection,
+		statusGetter: s.CreateStatusGetter(),
 	}
 }
 

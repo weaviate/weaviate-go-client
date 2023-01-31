@@ -48,7 +48,8 @@ func (ab *AggregateBuilder) WithWhere(where *filters.WhereBuilder) *AggregateBui
 }
 
 // WithGroupBy adds the group by property clause as the filter.
-//  The group by value/path clause still needs to be set in the WithFields field.
+//
+//	The group by value/path clause still needs to be set in the WithFields field.
 func (ab *AggregateBuilder) WithGroupBy(propertyName string) *AggregateBuilder {
 	ab.includesFilterClause = true
 	ab.groupByClausePropertyName = propertyName

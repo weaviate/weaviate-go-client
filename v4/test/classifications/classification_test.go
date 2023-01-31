@@ -5,17 +5,16 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/classifications"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
 	"github.com/weaviate/weaviate/usecases/classification"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestClassifications_integration(t *testing.T) {
-
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -25,7 +24,7 @@ func TestClassifications_integration(t *testing.T) {
 	})
 
 	t.Run("POST /classifications", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		createClassificationClasses(t, client)
 
 		classifyProperties := []string{"tagged"}
@@ -43,7 +42,7 @@ func TestClassifications_integration(t *testing.T) {
 	})
 
 	t.Run("GET /classifications/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		createClassificationClasses(t, client)
 
 		var k int32 = 3

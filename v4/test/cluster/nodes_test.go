@@ -5,18 +5,17 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestClusterNodes_integration(t *testing.T) {
-
 	const (
-		expectedWeaviateVersion = "1.17.0-prealpha"
-		expectedWeaviateGitHash = "29e987d"
+		expectedWeaviateVersion = "1.17.0"
+		expectedWeaviateGitHash = "37d3b17"
 	)
 
 	t.Run("up", func(t *testing.T) {
@@ -28,7 +27,7 @@ func TestClusterNodes_integration(t *testing.T) {
 	})
 
 	t.Run("GET /nodes without data", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		nodesStatus, err := client.Cluster().NodesStatusGetter().Do(context.Background())
 
 		require.Nil(t, err)
@@ -47,7 +46,7 @@ func TestClusterNodes_integration(t *testing.T) {
 	})
 
 	t.Run("GET /nodes with data", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 

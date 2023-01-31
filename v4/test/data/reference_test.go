@@ -6,14 +6,13 @@ import (
 	"testing"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestData_reference_integration(t *testing.T) {
-
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -23,7 +22,7 @@ func TestData_reference_integration(t *testing.T) {
 	})
 
 	t.Run("POST /{type}/{className}/{id}/references/{propertyName}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		propertySchemaT := map[string]string{
@@ -71,7 +70,7 @@ func TestData_reference_integration(t *testing.T) {
 	})
 
 	t.Run("PUT /{type}/{className}/{id}/references/{propertyName}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create things with references
@@ -135,7 +134,7 @@ func TestData_reference_integration(t *testing.T) {
 	})
 
 	t.Run("DELETE /{type}/{className}/{id}/references/{propertyName}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create things with references

@@ -3,9 +3,9 @@ package data
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_buildObjectPath(t *testing.T) {

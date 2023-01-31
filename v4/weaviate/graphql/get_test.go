@@ -7,10 +7,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
 )
 
 // MockRunREST for testing
@@ -31,7 +31,6 @@ func (mrr *MockRunREST) RunREST(ctx context.Context, path string, restMethod str
 }
 
 func TestQueryBuilder(t *testing.T) {
-
 	t.Run("Simple Get", func(t *testing.T) {
 		conMock := &MockRunREST{}
 
@@ -795,7 +794,6 @@ func TestBM25Builder(t *testing.T) {
 
 	expected := `{Get {Pizza (bm25:{query: "good", properties: ["name","description"]}) {}}}`
 	assert.Equal(t, expected, query)
-
 }
 
 func TestHybridBuilder(t *testing.T) {

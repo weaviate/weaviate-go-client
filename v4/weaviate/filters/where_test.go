@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/test/helpers"
 	"github.com/weaviate/weaviate/entities/models"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestWhereBuilder_BuildOperandsRecursively(t *testing.T) {

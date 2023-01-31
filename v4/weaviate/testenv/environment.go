@@ -13,9 +13,10 @@ import (
 
 // SetupLocalWeaviate creates a local weaviate running on 8080 using docker compose
 // Will only wait for it to be reachable if env `EXTERNAL_WEAVIATE_RUNNING` is set to True.
-//   `EXTERNAL_WEAVIATE_RUNNING` should be set if all tests are supposed to be run in a test suit.
-//   This prevents unnecessary starting and stopping of the docker-compose which prevents errors
-//   due to syncing issues and speeds up the process
+//
+//	`EXTERNAL_WEAVIATE_RUNNING` should be set if all tests are supposed to be run in a test suit.
+//	This prevents unnecessary starting and stopping of the docker-compose which prevents errors
+//	due to syncing issues and speeds up the process
 func SetupLocalWeaviate() error {
 	if !isExternalWeaviateRunning() {
 		err := test.SetupWeaviate()
@@ -29,9 +30,10 @@ func SetupLocalWeaviate() error {
 // SetupLocalWeaviateDeprecated creates a local weaviate running on 8080 using docker compose
 // for pre-v1.14 backwards compatibility tests.
 // Will only wait for it to be reachable if env `EXTERNAL_WEAVIATE_RUNNING` is set to True.
-//   `EXTERNAL_WEAVIATE_RUNNING` should be set if all tests are supposed to be run in a test suit.
-//   This prevents unnecessary starting and stopping of the docker-compose which prevents errors
-//   due to syncing issues and speeds up the process
+//
+//	`EXTERNAL_WEAVIATE_RUNNING` should be set if all tests are supposed to be run in a test suit.
+//	This prevents unnecessary starting and stopping of the docker-compose which prevents errors
+//	due to syncing issues and speeds up the process
 func SetupLocalWeaviateDeprecated() error {
 	if !isExternalWeaviateRunning() {
 		err := test.SetupWeaviateDeprecated()
@@ -75,7 +77,8 @@ func WaitForWeaviate() error {
 
 // TearDownLocalWeaviate shuts down the locally started weaviate docker compose
 // If `EXTERNAL_WEAVIATE_RUNNING` this function will not do anything
-//   see SetupLocalWeaviate for more info.
+//
+//	see SetupLocalWeaviate for more info.
 func TearDownLocalWeaviate() error {
 	if isExternalWeaviateRunning() {
 		return nil
@@ -88,7 +91,8 @@ func TearDownLocalWeaviate() error {
 // TearDownLocalWeaviateDeprecated shuts down the locally started weaviate docker compose
 // used for pre-v1.14 backwards compatibility tests.
 // If `EXTERNAL_WEAVIATE_RUNNING` this function will not do anything
-//   see SetupLocalWeaviate for more info.
+//
+//	see SetupLocalWeaviate for more info.
 func TearDownLocalWeaviateDeprecated() error {
 	if isExternalWeaviateRunning() {
 		return nil

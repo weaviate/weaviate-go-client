@@ -2,6 +2,9 @@ package weaviate
 
 import (
 	"context"
+	"net/http"
+
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/backup"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/batch"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/classifications"
@@ -13,7 +16,6 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/misc"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/schema"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
-	"net/http"
 )
 
 // Config of the client endpoint
@@ -31,6 +33,19 @@ type Config struct {
 
 	// Headers added for every request
 	Headers map[string]string
+}
+
+func NewConfig(host string, scheme string, authConfig auth.Config, headers map[string]string) (*Config, error) {
+	var client *http.Client
+	var err error
+	if authConfig != nil {
+		tmpCon := connection.NewConnection(scheme, host, nil, headers)
+		client, err = authConfig.GetAuthClient(tmpCon)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &Config{Host: host, Scheme: scheme, Headers: headers, ConnectionClient: client}, nil
 }
 
 // Client implementing the weaviate API

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestData_integration(t *testing.T) {
@@ -22,7 +22,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("POST /{semanticType}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -72,7 +72,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("POST vectorizorless class", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 
 		testsuit.CreateWeaviateTestSchemaWithVectorizorlessClass(t, client)
 
@@ -119,7 +119,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("GET /actions /things", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		_, errCreate := client.Data().Creator().WithClassName("Pizza").WithProperties(map[string]string{
@@ -161,7 +161,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("GET underscore properties", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -261,7 +261,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("GET /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		resp, err := client.Data().ObjectsGetter().
@@ -276,7 +276,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("DELETE /{type}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -329,7 +329,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("DELETE /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		err := client.Data().Deleter().
@@ -342,7 +342,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("HEAD /{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -406,7 +406,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("HEAD /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		exists, err := client.Data().Checker().
@@ -421,7 +421,7 @@ func TestData_integration(t *testing.T) {
 
 	t.Run("PUT /{type}/{id}", func(t *testing.T) {
 		// PUT replaces the object fully
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -490,7 +490,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("PUT /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		id := "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"
@@ -520,7 +520,7 @@ func TestData_integration(t *testing.T) {
 
 	t.Run("PATCH(merge) /{type}/{id}", func(t *testing.T) {
 		// PATCH merges the new object with the existing object
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -589,7 +589,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("PATCH /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		id := "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"
@@ -622,7 +622,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("POST /{type}/validate", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 

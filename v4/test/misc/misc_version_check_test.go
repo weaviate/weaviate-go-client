@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestMisc_version_check(t *testing.T) {
 	// needs to be the same client for the whole test
-	client := testsuit.CreateTestClient()
+	client := testsuit.CreateTestClient(8080, nil)
 
 	t.Run("Weaviate is not live, perform live check", func(t *testing.T) {
 		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
@@ -71,7 +71,7 @@ func TestMisc_version_check(t *testing.T) {
 
 func TestMisc_empty_version_check(t *testing.T) {
 	// needs to be the same client for the whole test
-	client := testsuit.CreateTestClient()
+	client := testsuit.CreateTestClient(8080, nil)
 
 	t.Run("Weaviate is not live, perform live check", func(t *testing.T) {
 		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
