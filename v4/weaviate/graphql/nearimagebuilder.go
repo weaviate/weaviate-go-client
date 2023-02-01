@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 )
 
@@ -45,7 +44,7 @@ func (b *NearImageArgumentBuilder) WithDistance(distance float32) *NearImageArgu
 
 func (b *NearImageArgumentBuilder) getImage(image string, fileReader io.Reader) string {
 	if fileReader != nil {
-		content, err := ioutil.ReadAll(fileReader)
+		content, err := io.ReadAll(fileReader)
 		if err != nil {
 			return err.Error()
 		}

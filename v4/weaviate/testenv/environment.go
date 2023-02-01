@@ -48,10 +48,7 @@ func isExternalWeaviateRunning() bool {
 	val := os.Getenv("EXTERNAL_WEAVIATE_RUNNING")
 	val = strings.ToLower(val)
 	fmt.Printf("\nEXTERNAL_WEAVIATE_RUNNING: %v\n", val)
-	if val == "true" {
-		return true
-	}
-	return false
+	return val == "true"
 }
 
 // WaitForWeaviate waits until weaviate is started up and ready
@@ -64,8 +61,9 @@ func WaitForWeaviate() error {
 	client := weaviate.New(cfg)
 
 	for i := 0; i < 20; i++ {
-		ctx, _ := context.WithTimeout(context.Background(), time.Second*3)
+		ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*3)
 		isReady, _ := client.Misc().ReadyChecker().Do(ctx)
+		cancelFunc()
 		if isReady {
 			return nil
 		}
