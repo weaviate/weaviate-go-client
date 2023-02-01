@@ -77,6 +77,14 @@ func (api *API) GroupArgBuilder() *GroupArgumentBuilder {
 	return &GroupArgumentBuilder{}
 }
 
+func (api *API) Bm25ArgBuilder() *BM25ArgumentBuilder {
+	return &BM25ArgumentBuilder{}
+}
+
+func (api *API) HybridArgumentBuilder() *HybridArgumentBuilder {
+	return &HybridArgumentBuilder{}
+}
+
 // rest requests abstraction
 type rest interface {
 	// RunREST request to weaviate

@@ -859,8 +859,7 @@ func TestGraphQL_integration(t *testing.T) {
 			Name: "description",
 		}
 
-		bm25 := &graphql.BM25ArgumentBuilder{}
-		bm25.WithQuery("innovation").WithProperties("description")
+		bm25 := client.GraphQL().Bm25ArgBuilder().WithQuery("innovation").WithProperties("description")
 
 		result, err := client.GraphQL().Get().
 			WithClassName("Pizza").
@@ -894,8 +893,7 @@ func TestGraphQL_integration(t *testing.T) {
 			Name: "description",
 		}
 
-		hybrid := &graphql.HybridArgumentBuilder{}
-		hybrid.WithQuery("some say revolution").WithAlpha(0.8)
+		hybrid := client.GraphQL().HybridArgumentBuilder().WithQuery("some say revolution").WithAlpha(0.8)
 
 		result, err := client.GraphQL().Get().
 			WithClassName("Pizza").
