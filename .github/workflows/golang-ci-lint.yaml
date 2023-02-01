@@ -1,6 +1,16 @@
 name: golangci-lint
+
 on:
-  push
+  push:
+    branches:
+      - main
+    tags:
+      - '**'
+    paths-ignore:
+      - readme.md
+      - license.md
+  pull_request:
+
 jobs:
   golangci:
     name: lint
