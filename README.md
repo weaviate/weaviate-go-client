@@ -7,15 +7,15 @@ A go native client for weaviate.
 In order to get the go client v4 issue this command:
 
 ```bash
-$ go get github.com/weaviate/weaviate-go-client/v4@v4.x.x
+$ go get github.com/weaviate/weaviate-go-client/weaviate-go-client@weaviate-go-client.x.x
 ```
 
-where `v4.x.x` is the desired go client v4 version, for example `v4.6.0`
+where `weaviate-go-client.x.x` is the desired go client v4 version, for example `v4.6.1`
 
 Add dependency to your `go.mod`:
 
 ```go
-require github.com/weaviate/weaviate-go-client/v4 v4.6.0
+require github.com/weaviate/weaviate-go-client/weaviate-go-client v4.6.1
 ```
 
 Connect to Weaviate on `localhost:8080` and fetch meta information
@@ -27,7 +27,7 @@ import (
   "context"
   "fmt"
 
-  client "github.com/weaviate/weaviate-go-client/v4/weaviate"
+  client "github.com/weaviate/weaviate-go-client/weaviate-go-client/weaviate"
 )
 
 func main() {
