@@ -1,0 +1,26 @@
+linters:
+  disable:
+    - errcheck
+  enable:
+    - misspell
+    - bodyclose
+    - gofumpt
+    - exhaustive
+    - govet
+linters-settings:
+  exhaustive:
+    # Presence of "default" case in switch statements satisfies exhaustiveness,
+    # even if all enum members are not listed.
+    default-signifies-exhaustive: true
+issues:
+  exclude-rules:
+    # Exclude some staticcheck messages
+    - linters:
+        - staticcheck
+      text: "SA1029:"
+    - linters:
+        - staticcheck
+      text: "SA1015:"
+    - linters:
+        - staticcheck
+      text: "SA5011"
