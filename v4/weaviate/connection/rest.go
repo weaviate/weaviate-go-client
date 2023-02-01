@@ -87,7 +87,6 @@ func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
 			}
 		}
 	}()
-
 }
 
 func (con *Connection) addHeaderToRequest(request *http.Request) {

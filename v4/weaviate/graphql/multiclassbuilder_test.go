@@ -8,7 +8,6 @@ import (
 )
 
 func TestMultiClassQueryBuilder(t *testing.T) {
-
 	t.Run("Simple Get", func(t *testing.T) {
 		conMock := &MockRunREST{}
 
@@ -375,7 +374,6 @@ func TestMultiClassQueryBuilder(t *testing.T) {
 			assert.Equal(t, expected, query)
 		})
 	})
-
 }
 
 func TestMultiClassBM25Builder(t *testing.T) {
@@ -399,7 +397,6 @@ func TestMultiClassBM25Builder(t *testing.T) {
 
 	expected := `{Get {Pizza (bm25:{query: "good", properties: ["name","description"]}) {} Risotto (bm25:{query: "best", properties: ["email","password"]}) {}}}`
 	assert.Equal(t, expected, query)
-
 }
 
 func TestMultiClassHybridBuilder(t *testing.T) {
