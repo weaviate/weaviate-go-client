@@ -49,7 +49,7 @@ func (ab *authBase) getIdAndTokenEndpoint(ctx context.Context, con *connection.C
 			// If the response is not json, we assume that this is the case and try unauthenticated access.
 			log.Printf("Auth005: Could not parse Weaviates OIDC configuration, using unauthenticated access. If "+
 				"you added an authorization header yourself it will be unaffected. This can happen if weaviate is "+
-				"miss-configured or you have a proxy inbetween the client and weaviate. You can test this by visiting %v.",
+				"miss-configured or you have a proxy in between the client and weaviate. You can test this by visiting %v.",
 				oidcConfigURL)
 
 			return nil
@@ -147,7 +147,7 @@ func (ro ResourceOwnerPasswordFlow) GetAuthClient(con *connection.Connection) (*
 	// username + password are not saved by the client, so there is no possibility of refreshing the token with a
 	// refresh_token.
 	if token.RefreshToken == "" {
-		log.Printf("Auth002: Your access token is valid for %v and no refresh token was provided.", token.Expiry.Sub(time.Now()))
+		log.Printf("Auth002: Your access token is valid for %v and no refresh token was provided.", time.Until(token.Expiry))
 		return oauth2.NewClient(context.TODO(), oauth2.StaticTokenSource(token)), nil
 	}
 
