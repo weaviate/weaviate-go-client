@@ -7,10 +7,8 @@ on:
     tags:
       - '**'
     paths-ignore:
-      - docs/**
-      - README.rst
-      - LICENSE.md
-      - publishing.md
+      - readme.md
+      - license.md
   pull_request:
 
 jobs:

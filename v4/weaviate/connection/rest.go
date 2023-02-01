@@ -68,7 +68,7 @@ func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
 		return
 	}
 
-	timeToSleep := token.Expiry.Sub(time.Now()) - time.Second/10
+	timeToSleep := time.Until(token.Expiry) - time.Second/10
 	if timeToSleep <= 0 {
 		return
 	}
@@ -87,7 +87,6 @@ func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
 			}
 		}
 	}()
-
 }
 
 func (con *Connection) addHeaderToRequest(request *http.Request) {
@@ -124,7 +123,7 @@ func (con *Connection) createRequest(ctx context.Context, path string,
 		return nil, err
 	}
 	con.addHeaderToRequest(request)
-	request.WithContext(ctx)
+	request = request.WithContext(ctx)
 	return request, nil
 }
 
@@ -170,7 +169,7 @@ func (con *Connection) RunRESTExternal(ctx context.Context, hostAndPath string, 
 		return nil, err
 	}
 	con.addHeaderToRequest(request)
-	request.WithContext(ctx)
+	request = request.WithContext(ctx)
 	response, responseErr := con.httpClient.Do(request)
 	if responseErr != nil {
 		return nil, responseErr

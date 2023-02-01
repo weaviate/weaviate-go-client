@@ -2,7 +2,6 @@ package data
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/go-openapi/strfmt"
@@ -40,7 +39,7 @@ func (validator *Validator) WithProperties(propertySchema models.PropertySchema)
 // Do validate the data object specified in the builder
 // Will return an error if the object is not valid or if there is a different error
 func (validator *Validator) Do(ctx context.Context) error {
-	path := fmt.Sprintf("/objects/validate")
+	path := "/objects/validate"
 	object := models.Object{
 		Class:      validator.className,
 		ID:         strfmt.UUID(validator.uuid),
