@@ -915,7 +915,6 @@ func TestGraphQL_integration(t *testing.T) {
 		require.NotEmpty(t, resp.Get.Pizzas)
 
 		assert.Equal(t, 4, len(resp.Get.Pizzas))
-
 	})
 
 	t.Run("MultiClass Get", func(t *testing.T) {
@@ -1082,7 +1081,6 @@ func TestGraphQL_integration(t *testing.T) {
 			assert.Equal(t, 1, len(pizza))
 			risotto := get["Risotto"].([]interface{})
 			assert.Equal(t, 1, len(risotto))
-
 		})
 
 		t.Run("multiclass with where filter (date)", func(t *testing.T) {

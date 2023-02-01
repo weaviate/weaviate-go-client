@@ -26,4 +26,4 @@ jobs:
           # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
           version: v1.50
           args: --timeout=3m
-          working-directory: v4/weaviate/
+          working-directory: weaviate/
