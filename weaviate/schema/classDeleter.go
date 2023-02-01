@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
 )
 
 // ClassDeleter builder to remove a class from weaviate
@@ -25,5 +25,5 @@ func (cd *ClassDeleter) WithClassName(className string) *ClassDeleter {
 func (cd *ClassDeleter) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/schema/%v", cd.className)
 	responseData, err := cd.connection.RunREST(ctx, path, http.MethodDelete, nil)
-	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)
 }

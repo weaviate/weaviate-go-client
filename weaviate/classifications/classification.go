@@ -1,6 +1,6 @@
 package classifications
 
-import "github.com/semi-technologies/weaviate-go-client/weaviate/connection"
+import "github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 
 // API classifications API
 type API struct {
@@ -26,5 +26,11 @@ func (api *API) Getter() *Getter {
 const KNN = "knn"
 
 // Contextual classification labels a data object with
-// the closest label based on their vector position (which describes the context)
+// the closest label based on their vector position (which describes the context).
+// It can only be used with the text2vec-contextionary vectorizer.
 const Contextual = "text2vec-contextionary"
+
+// ZeroShot classification labels a data object with
+// the closest label based on their vector position (which describes the context)
+// It can be used with any vectorizer or custom vectors.
+const ZeroShot = "zeroshot"

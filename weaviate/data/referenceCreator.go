@@ -2,20 +2,28 @@ package data
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // ReferenceCreator builder to add a reference to the property of a data object
 type ReferenceCreator struct {
 	connection        *connection.Connection
+	className         string
 	uuid              string
 	referenceProperty string
 	referencePayload  *models.SingleRef
+	dbVersionSupport  *util.DBVersionSupport
+}
+
+// WithClassName specifies the class name of the object on which to add the reference
+func (rc *ReferenceCreator) WithClassName(className string) *ReferenceCreator {
+	rc.className = className
+	return rc
 }
 
 // WithID specifies the uuid of the object on which to add the reference
@@ -39,7 +47,7 @@ func (rc *ReferenceCreator) WithReference(referencePayload *models.SingleRef) *R
 
 // Do add the reference specified by the set payload to the object and property specified in the builder.
 func (rc *ReferenceCreator) Do(ctx context.Context) error {
-	path := fmt.Sprintf("/objects/%v/references/%v", rc.uuid, rc.referenceProperty)
+	path := buildReferencesPath(rc.uuid, rc.className, rc.referenceProperty, rc.dbVersionSupport)
 	responseData, responseErr := rc.connection.RunREST(ctx, path, http.MethodPost, *rc.referencePayload)
-	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 }

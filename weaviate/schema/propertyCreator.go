@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // PropertyCreator builder to create a property within a schema class
@@ -33,5 +33,5 @@ func (pc *PropertyCreator) WithProperty(property *models.Property) *PropertyCrea
 func (pc *PropertyCreator) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/schema/%v/properties", pc.className)
 	responseData, err := pc.connection.RunREST(ctx, path, http.MethodPost, pc.property)
-	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)
 }

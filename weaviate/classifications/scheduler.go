@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // Scheduler builder to schedule a classification
@@ -18,9 +19,9 @@ type Scheduler struct {
 	withClassName              string
 	withClassifyProperties     []string
 	withBasedOnProperties      []string
-	withSourceWhereFilter      *models.WhereFilter
-	withTrainingSetWhereFilter *models.WhereFilter
-	withTargetWhereFilter      *models.WhereFilter
+	withSourceWhereFilter      *filters.WhereBuilder
+	withTrainingSetWhereFilter *filters.WhereBuilder
+	withTargetWhereFilter      *filters.WhereBuilder
 	withWaitForCompletion      bool
 	withSettings               interface{}
 }
@@ -50,19 +51,19 @@ func (s *Scheduler) WithBasedOnProperties(basedOnProperties []string) *Scheduler
 }
 
 // WithSourceWhereFilter filter the data objects to be labeled
-func (s *Scheduler) WithSourceWhereFilter(whereFilter *models.WhereFilter) *Scheduler {
+func (s *Scheduler) WithSourceWhereFilter(whereFilter *filters.WhereBuilder) *Scheduler {
 	s.withSourceWhereFilter = whereFilter
 	return s
 }
 
 // WithTrainingSetWhereFilter filter the objects that are used as training data. E.g. in a knn classification
-func (s *Scheduler) WithTrainingSetWhereFilter(whereFilter *models.WhereFilter) *Scheduler {
+func (s *Scheduler) WithTrainingSetWhereFilter(whereFilter *filters.WhereBuilder) *Scheduler {
 	s.withTrainingSetWhereFilter = whereFilter
 	return s
 }
 
 // WithTargetWhereFilter filter the label objects
-func (s *Scheduler) WithTargetWhereFilter(whereFilter *models.WhereFilter) *Scheduler {
+func (s *Scheduler) WithTargetWhereFilter(whereFilter *filters.WhereBuilder) *Scheduler {
 	s.withTargetWhereFilter = whereFilter
 	return s
 }
@@ -81,20 +82,8 @@ func (s *Scheduler) WithWaitForCompletion() *Scheduler {
 
 // Do schedule the classification in weaviate
 func (s *Scheduler) Do(ctx context.Context) (*models.Classification, error) {
-	config := models.Classification{
-		BasedOnProperties:  s.withBasedOnProperties,
-		Class:              s.withClassName,
-		ClassifyProperties: s.withClassifyProperties,
-		Filters: &models.ClassificationFilters{
-			SourceWhere:      s.withSourceWhereFilter,
-			TargetWhere:      s.withTargetWhereFilter,
-			TrainingSetWhere: s.withTrainingSetWhereFilter,
-		},
-		Type:     s.classificationType,
-		Settings: s.withSettings,
-	}
-	responseData, responseErr := s.connection.RunREST(ctx, "/classifications", http.MethodPost, config)
-	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 201)
+	responseData, responseErr := s.connection.RunREST(ctx, "/classifications", http.MethodPost, s.buildConfig())
+	err := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 201)
 	if err != nil {
 		return nil, err
 	}
@@ -127,4 +116,34 @@ func (s *Scheduler) waitForCompletion(ctx context.Context, uuid strfmt.UUID) (*m
 		}
 	}
 	return classification, nil
+}
+
+func (s *Scheduler) buildConfig() *models.Classification {
+	config := &models.Classification{
+		BasedOnProperties:  s.withBasedOnProperties,
+		Class:              s.withClassName,
+		ClassifyProperties: s.withClassifyProperties,
+		Type:               s.classificationType,
+		Settings:           s.withSettings,
+	}
+
+	// if any where filters are present, instantiate
+	// the ClassificationFilters
+	if s.withSourceWhereFilter != nil ||
+		s.withTargetWhereFilter != nil ||
+		s.withTrainingSetWhereFilter != nil {
+		config.Filters = &models.ClassificationFilters{}
+	}
+
+	if s.withSourceWhereFilter != nil {
+		config.Filters.SourceWhere = s.withSourceWhereFilter.Build()
+	}
+	if s.withTargetWhereFilter != nil {
+		config.Filters.TargetWhere = s.withTargetWhereFilter.Build()
+	}
+	if s.withTrainingSetWhereFilter != nil {
+		config.Filters.TrainingSetWhere = s.withTrainingSetWhereFilter.Build()
+	}
+
+	return config
 }

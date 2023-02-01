@@ -2,9 +2,11 @@ package misc
 
 import (
 	"context"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
 	"net/http"
+
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
 )
 
 // OpenIDConfiguration of weaviate
@@ -17,7 +19,8 @@ type OpenIDConfiguration struct {
 
 // ReadyChecker builder to check if weaviate is ready
 type ReadyChecker struct {
-	connection *connection.Connection
+	connection        *connection.Connection
+	dbVersionProvider *util.DBVersionProvider
 }
 
 // Do the ready request
@@ -27,6 +30,7 @@ func (rc *ReadyChecker) Do(ctx context.Context) (bool, error) {
 		return false, except.NewDerivedWeaviateClientError(err)
 	}
 	if response.StatusCode == 200 {
+		rc.dbVersionProvider.Refresh()
 		return true, nil
 	}
 	return false, nil
@@ -34,7 +38,8 @@ func (rc *ReadyChecker) Do(ctx context.Context) (bool, error) {
 
 // LiveChecker builder to check if weaviate is live
 type LiveChecker struct {
-	connection *connection.Connection
+	connection        *connection.Connection
+	dbVersionProvider *util.DBVersionProvider
 }
 
 // Do the LiveChecker request
@@ -44,6 +49,7 @@ func (lc *LiveChecker) Do(ctx context.Context) (bool, error) {
 		return false, except.NewDerivedWeaviateClientError(err)
 	}
 	if response.StatusCode == 200 {
+		lc.dbVersionProvider.Refresh()
 		return true, nil
 	}
 	return false, nil

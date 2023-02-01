@@ -2,27 +2,28 @@ package data
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // Updater builder to update property values in a data object
 type Updater struct {
-	connection     *connection.Connection
-	uuid           string
-	className      string
-	propertySchema models.PropertySchema
-	withMerge      bool
+	connection       *connection.Connection
+	id               string
+	className        string
+	propertySchema   models.PropertySchema
+	withMerge        bool
+	dbVersionSupport *util.DBVersionSupport
 }
 
 // WithID specifies the uuid of the object about to be  updated
 func (updater *Updater) WithID(uuid string) *Updater {
-	updater.uuid = uuid
+	updater.id = uuid
 	return updater
 }
 
@@ -46,7 +47,7 @@ func (updater *Updater) WithMerge() *Updater {
 
 // Do update the data object specified in the builder
 func (updater *Updater) Do(ctx context.Context) error {
-	path := fmt.Sprintf("/objects/%v", updater.uuid)
+	path := buildObjectsUpdatePath(updater.id, updater.className, updater.dbVersionSupport)
 	httpMethod := http.MethodPut
 	expectedStatuscode := 200
 	if updater.withMerge {
@@ -54,13 +55,13 @@ func (updater *Updater) Do(ctx context.Context) error {
 		expectedStatuscode = 204
 	}
 	responseData, responseErr := updater.runUpdate(ctx, path, httpMethod)
-	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, expectedStatuscode)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, expectedStatuscode)
 }
 
 func (updater *Updater) runUpdate(ctx context.Context, path string, httpMethod string) (*connection.ResponseData, error) {
 	object := models.Object{
 		Class:      updater.className,
-		ID:         strfmt.UUID(updater.uuid),
+		ID:         strfmt.UUID(updater.id),
 		Properties: updater.propertySchema,
 	}
 	return updater.connection.RunREST(ctx, path, httpMethod, object)

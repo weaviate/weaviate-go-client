@@ -4,12 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
-// API group for GrapQL
+// API group for GraphQL
 type API struct {
 	connection *connection.Connection
 }
@@ -20,8 +20,16 @@ func New(con *connection.Connection) *API {
 }
 
 // Get queries
-func (api *API) Get() *Get {
-	return &Get{connection: api.connection}
+func (api *API) Get() *GetBuilder {
+	return &GetBuilder{connection: api.connection}
+}
+
+// Get queries with Multiple Class
+func (api *API) MultiClassGet() *MultiClassBuilder {
+	return &MultiClassBuilder{
+		connection:    api.connection,
+		classBuilders: make(map[string]*GetBuilder),
+	}
 }
 
 // Explore queries
@@ -30,8 +38,13 @@ func (api *API) Explore() *Explore {
 }
 
 // Aggregate queries
-func (api *API) Aggregate() *Aggregate {
-	return &Aggregate{connection: api.connection}
+func (api *API) Aggregate() *AggregateBuilder {
+	return &AggregateBuilder{connection: api.connection}
+}
+
+// Raw creates a raw GraphQL query
+func (api *API) Raw() *Raw {
+	return &Raw{connection: api.connection}
 }
 
 // NearTextArgBuilder nearText clause
@@ -39,9 +52,42 @@ func (api *API) NearTextArgBuilder() *NearTextArgumentBuilder {
 	return &NearTextArgumentBuilder{}
 }
 
+// NearObjectArgBuilder nearObject clause
+func (api *API) NearObjectArgBuilder() *NearObjectArgumentBuilder {
+	return &NearObjectArgumentBuilder{}
+}
+
+// NearVectorArgBuilder nearVector clause
+func (api *API) NearVectorArgBuilder() *NearVectorArgumentBuilder {
+	return &NearVectorArgumentBuilder{}
+}
+
+// AskArgBuilder ask clause
+func (api *API) AskArgBuilder() *AskArgumentBuilder {
+	return &AskArgumentBuilder{}
+}
+
+// NearImageArgBuilder nearImage clause
+func (api *API) NearImageArgBuilder() *NearImageArgumentBuilder {
+	return &NearImageArgumentBuilder{}
+}
+
+// GroupArgBuilder nearImage clause
+func (api *API) GroupArgBuilder() *GroupArgumentBuilder {
+	return &GroupArgumentBuilder{}
+}
+
+func (api *API) Bm25ArgBuilder() *BM25ArgumentBuilder {
+	return &BM25ArgumentBuilder{}
+}
+
+func (api *API) HybridArgumentBuilder() *HybridArgumentBuilder {
+	return &HybridArgumentBuilder{}
+}
+
 // rest requests abstraction
 type rest interface {
-	//RunREST request to weaviate
+	// RunREST request to weaviate
 	RunREST(ctx context.Context, path string, restMethod string, requestBody interface{}) (*connection.ResponseData, error)
 }
 
@@ -51,7 +97,7 @@ func runGraphQLQuery(ctx context.Context, rest rest, query string) (*models.Grap
 		Query: query,
 	}
 	responseData, responseErr := rest.RunREST(ctx, "/graphql", http.MethodPost, &gqlQuery)
-	err := except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	err := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}

@@ -2,35 +2,34 @@ package contextionary
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
-	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/stretchr/testify/assert"
+	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 )
 
 func TestContextionary_integration(t *testing.T) {
-
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
-			t.Fail()
+			t.Fatal(err.Error())
 		}
 	})
 
 	t.Run("GET /modules/text2vec-contextionary/concepts/{concept}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 
 		concepts, err := client.C11y().ConceptsGetter().WithConcept("pizzaHawaii").Do(context.Background())
 		assert.Nil(t, err)
-		assert.NotNil(t, concepts.ConcatenatedWord)
-		assert.NotNil(t, concepts.IndividualWords)
+		if assert.NotNil(t, concepts) {
+			assert.NotNil(t, concepts.ConcatenatedWord)
+			assert.NotNil(t, concepts.IndividualWords)
+		}
 	})
 
 	t.Run("POST /modules/text2vec-contextionary/extensions", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 
 		err1 := client.C11y().ExtensionCreator().WithConcept("xoxo").WithDefinition("Hugs and kisses").WithWeight(1.0).Do(context.Background())
 		assert.Nil(t, err1)
@@ -42,8 +41,7 @@ func TestContextionary_integration(t *testing.T) {
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
-			t.Fail()
+			t.Fatal(err.Error())
 		}
 	})
 }

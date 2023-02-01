@@ -5,17 +5,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/weaviate"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/classifications"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
-	"github.com/semi-technologies/weaviate/entities/models"
-	"github.com/semi-technologies/weaviate/usecases/classification"
 	"github.com/stretchr/testify/assert"
+	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/classifications"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
+	"github.com/weaviate/weaviate/entities/models"
+	"github.com/weaviate/weaviate/usecases/classification"
 )
 
 func TestClassifications_integration(t *testing.T) {
-
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -25,25 +24,25 @@ func TestClassifications_integration(t *testing.T) {
 	})
 
 	t.Run("POST /classifications", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		createClassificationClasses(t, client)
 
-		classifyProperties := []string{"taged"}
+		classifyProperties := []string{"tagged"}
 		basedOnProperties := []string{"description"}
 		classification, err := client.Classifications().Scheduler().WithType(classifications.Contextual).WithClassName("Pizza").WithClassifyProperties(classifyProperties).WithBasedOnProperties(basedOnProperties).Do(context.Background())
 		assert.Nil(t, err)
 		assert.Contains(t, classification.BasedOnProperties, "description")
-		assert.Contains(t, classification.ClassifyProperties, "taged")
+		assert.Contains(t, classification.ClassifyProperties, "tagged")
 		classification, err = client.Classifications().Scheduler().WithType(classifications.Contextual).WithClassName("Pizza").WithClassifyProperties(classifyProperties).WithBasedOnProperties(basedOnProperties).WithWaitForCompletion().Do(context.Background())
 		assert.Nil(t, err)
 		assert.Contains(t, classification.BasedOnProperties, "description")
-		assert.Contains(t, classification.ClassifyProperties, "taged")
+		assert.Contains(t, classification.ClassifyProperties, "tagged")
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
 	t.Run("GET /classifications/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		createClassificationClasses(t, client)
 
 		var k int32 = 3
@@ -51,7 +50,7 @@ func TestClassifications_integration(t *testing.T) {
 			WithType(classifications.KNN).
 			WithSettings(&classification.ParamsKNN{K: &k}).
 			WithClassName("Pizza").
-			WithClassifyProperties([]string{"taged"}).
+			WithClassifyProperties([]string{"tagged"}).
 			WithBasedOnProperties([]string{"description"}).
 			Do(context.Background())
 		assert.Nil(t, err)
@@ -96,7 +95,7 @@ func createClassificationClasses(t *testing.T, client *weaviate.Client) {
 	tagProperty := models.Property{
 		DataType:    []string{"Tag"},
 		Description: "tag of pizza",
-		Name:        "taged",
+		Name:        "tagged",
 	}
 	addTagPropertyToPizzaErr := client.Schema().PropertyCreator().WithProperty(&tagProperty).WithClassName("Pizza").Do(context.Background())
 	assert.Nil(t, addTagPropertyToPizzaErr)

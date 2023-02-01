@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // ReferencePayloadBuilder to create references that may be added in a batch
@@ -14,7 +15,9 @@ type ReferencePayloadBuilder struct {
 	fromClassName    string
 	fromPropertyName string
 	fromUUID         string
+	toClassName      string
 	toUUID           string
+	dbVersion        *util.DBVersionSupport
 }
 
 // WithFromClassName name of the class that the reference is added to
@@ -35,6 +38,12 @@ func (rpb *ReferencePayloadBuilder) WithFromID(uuid string) *ReferencePayloadBui
 	return rpb
 }
 
+// WithToClassName class name of the referenced object
+func (rpb *ReferencePayloadBuilder) WithToClassName(className string) *ReferencePayloadBuilder {
+	rpb.toClassName = className
+	return rpb
+}
+
 // WithToID UUID of the referenced object
 func (rpb *ReferencePayloadBuilder) WithToID(uuid string) *ReferencePayloadBuilder {
 	rpb.toUUID = uuid
@@ -44,7 +53,7 @@ func (rpb *ReferencePayloadBuilder) WithToID(uuid string) *ReferencePayloadBuild
 // Payload to be used in a batch request
 func (rpb *ReferencePayloadBuilder) Payload() *models.BatchReference {
 	from := fmt.Sprintf("weaviate://localhost/%v/%v/%v", rpb.fromClassName, rpb.fromUUID, rpb.fromPropertyName)
-	to := fmt.Sprintf("weaviate://localhost/%v", rpb.toUUID)
+	to := util.BuildBeacon(rpb.toUUID, rpb.toClassName, rpb.dbVersion)
 
 	return &models.BatchReference{
 		From: strfmt.URI(from),

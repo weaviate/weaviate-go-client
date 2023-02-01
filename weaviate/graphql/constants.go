@@ -3,17 +3,30 @@ package graphql
 // ExploreFields used in an Explore GraphQL query
 type ExploreFields string
 
-// Certainty includes the certainty that a data object is related to the query concept
-const Certainty ExploreFields = "certainty"
-// Beacon includes the beacon to the found objects
-const Beacon ExploreFields = "beacon"
-// ClassName includes the class name of the found objects
-const ClassName ExploreFields = "className"
+const (
+	// Certainty includes the certainty that a data object is related to the query concept
+	Certainty ExploreFields = "certainty"
 
-// MoveParameters to fine tune Explore queries
-type MoveParameters struct {
-	// Concepts that should be used as base for the movement operation
-	Concepts []string
-	// Force to be applied in the movement operation
-	Force float32
-}
+	// Distance includes the distance that a data object is related to the query concept
+	Distance ExploreFields = "distance"
+
+	// Beacon includes the beacon to the found objects
+	Beacon ExploreFields = "beacon"
+
+	// ClassName includes the class name of the found objects
+	ClassName ExploreFields = "className"
+)
+
+// EmptyObjectStr string representation of an empty object
+const EmptyObjectStr string = "{}"
+
+// SortOrder used in Sort Argument builder
+type SortOrder string
+
+const (
+	// Asc ascending sort order
+	Asc SortOrder = "asc"
+
+	// Desc descending sort order
+	Desc SortOrder = "desc"
+)

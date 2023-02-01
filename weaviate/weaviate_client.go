@@ -1,21 +1,27 @@
 package weaviate
 
 import (
-	"github.com/semi-technologies/weaviate-go-client/weaviate/batch"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/classifications"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/contextionary"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/data"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/graphql"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/misc"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/schema"
+	"context"
 	"net/http"
+
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/backup"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/batch"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/classifications"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/cluster"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/contextionary"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/data"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/misc"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/schema"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
 )
 
 // Config of the client endpoint
 type Config struct {
 	// Host of the weaviate instance; this is a mandatory field.
-	Host   string
+	Host string
 	// Scheme of the weaviate instance; this is a mandatory field.
 	Scheme string
 
@@ -24,20 +30,29 @@ type Config struct {
 	//
 	//  To connect with an authenticated weaviate consider using the client from the golang.org/x/oauth2 module.
 	ConnectionClient *http.Client
+
+	// Headers added for every request
+	Headers map[string]string
+}
+
+func NewConfig(host string, scheme string, authConfig auth.Config, headers map[string]string) (*Config, error) {
+	var client *http.Client
+	var err error
+	if authConfig != nil {
+		tmpCon := connection.NewConnection(scheme, host, nil, headers)
+		client, err = authConfig.GetAuthClient(tmpCon)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &Config{Host: host, Scheme: scheme, Headers: headers, ConnectionClient: client}, nil
 }
 
 // Client implementing the weaviate API
 // Every function represents one API group of weaviate and provides a set of functions and builders to interact with them.
 //
 // The client uses the original data models as provided by weaviate itself.
-// All these models are provided in the sub module "github.com/semi-technologies/weaviate/entities/models"
-//
-// Weaviate has as of major version 0.x.x still a dependency to etcd. For etcd versions < 3.5.0 (not yet released)
-// there might be go mods issues due to the false use of the go mod system by etcd.
-// The issue can be resolved by adding `replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.0.0`
-// to the go.mod file.
-// There are concrete plans to fully remove the etcd dependency from weaviate with v1.0.0. This issue will be resolved
-// with time one way or the other. Please excuse the questionable UX for the moment.
+// All these models are provided in the sub module "github.com/weaviate/weaviate/entities/models"
 type Client struct {
 	connection      *connection.Connection
 	misc            *misc.API
@@ -46,34 +61,47 @@ type Client struct {
 	batch           *batch.API
 	c11y            *contextionary.API
 	classifications *classifications.API
+	backup          *backup.API
 	graphQL         *graphql.API
+	cluster         *cluster.API
 }
 
 // New client from config
 // Every function represents one API group of weaviate and provides a set of functions and builders to interact with them.
 //
 // The client uses the original data models as provided by weaviate itself.
-// All these models are provided in the sub module "github.com/semi-technologies/weaviate/entities/models"
-//
-// Weaviate has as of major version 0.x.x still a dependency to etcd. For etcd versions < 3.5.0 (not yet released)
-// there might be go mods issues due to the false use of the go mod system by etcd.
-// The issue can be resolved by adding `replace github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.0.0`
-// to the go.mod file.
-// There are concrete plans to fully remove the etcd dependency from weaviate with v1.0.0. This issue will be resolved
-// with time one way or the other. Please excuse the questionable UX for the moment.
+// All these models are provided in the sub module "github.com/weaviate/weaviate/entities/models"
 func New(config Config) *Client {
-	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient)
+	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
 
-	return &Client{
+	// some endpoints now require a className namespace.
+	// to determine if this new convention is to be used,
+	// we must check the weaviate server version
+	getVersionFn := func() string {
+		meta, err := misc.New(con, nil).MetaGetter().Do(context.Background())
+		if err == nil {
+			return meta.Version
+		}
+		return ""
+	}
+
+	dbVersionProvider := util.NewDBVersionProvider(getVersionFn)
+	dbVersionSupport := util.NewDBVersionSupport(dbVersionProvider)
+
+	client := &Client{
 		connection:      con,
-		misc:            misc.New(con),
+		misc:            misc.New(con, dbVersionProvider),
 		schema:          schema.New(con),
-		data:            data.New(con),
-		batch:           batch.New(con),
 		c11y:            contextionary.New(con),
 		classifications: classifications.New(con),
 		graphQL:         graphql.New(con),
+		data:            data.New(con, dbVersionSupport),
+		batch:           batch.New(con, dbVersionSupport),
+		backup:          backup.New(con),
+		cluster:         cluster.New(con),
 	}
+
+	return client
 }
 
 // Misc collection group for .well_known and root level API commands
@@ -103,10 +131,20 @@ func (c *Client) C11y() *contextionary.API {
 
 // Classifications API group
 func (c *Client) Classifications() *classifications.API {
-return c.classifications
+	return c.classifications
 }
 
 // GraphQL API group
 func (c *Client) GraphQL() *graphql.API {
-return c.graphQL
+	return c.graphQL
+}
+
+// Backup API group
+func (c *Client) Backup() *backup.API {
+	return c.backup
+}
+
+// Cluster API group
+func (c *Client) Cluster() *cluster.API {
+	return c.cluster
 }

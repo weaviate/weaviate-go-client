@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // ClassCreator builder object to create a schema class
@@ -24,5 +24,5 @@ func (cc *ClassCreator) WithClass(class *models.Class) *ClassCreator {
 // Do create a class in the schema as specified in the builder
 func (cc *ClassCreator) Do(ctx context.Context) error {
 	responseData, err := cc.connection.RunREST(ctx, "/schema", http.MethodPost, cc.class)
-	return except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)
 }

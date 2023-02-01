@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // ExtensionCreator builder for the weaviate contextionary
@@ -41,5 +41,5 @@ func (ec *ExtensionCreator) Do(ctx context.Context) error {
 	}
 	responseData, responseErr := ec.connection.
 		RunREST(ctx, "/modules/text2vec-contextionary/extensions", http.MethodPost, ec.extension)
-	return except.CheckResponnseDataErrorAndStatusCode(responseData, responseErr, 200)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 }

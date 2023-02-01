@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/connection"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/except"
-	"github.com/semi-technologies/weaviate/entities/models"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 // ObjectWrapper wrapping the result of a creation for both actions and things
@@ -20,6 +20,7 @@ type Creator struct {
 	connection     *connection.Connection
 	className      string
 	uuid           string
+	vector         []float32
 	propertySchema models.PropertySchema
 }
 
@@ -42,13 +43,18 @@ func (creator *Creator) WithProperties(propertySchema models.PropertySchema) *Cr
 	return creator
 }
 
+func (creator *Creator) WithVector(vector []float32) *Creator {
+	creator.vector = vector
+	return creator
+}
+
 // Do create the data object as specified in the builder
 func (creator *Creator) Do(ctx context.Context) (*ObjectWrapper, error) {
 	var err error
 	var responseData *connection.ResponseData
 	object, _ := creator.PayloadObject()
 	responseData, err = creator.connection.RunREST(ctx, "/objects", http.MethodPost, object)
-	respErr := except.CheckResponnseDataErrorAndStatusCode(responseData, err, 200)
+	respErr := except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)
 	if respErr != nil {
 		return nil, respErr
 	}
@@ -65,6 +71,7 @@ func (creator *Creator) PayloadObject() (*models.Object, error) {
 	object := models.Object{
 		Class:      creator.className,
 		Properties: creator.propertySchema,
+		Vector:     creator.vector,
 	}
 	if creator.uuid != "" {
 		object.ID = strfmt.UUID(creator.uuid)

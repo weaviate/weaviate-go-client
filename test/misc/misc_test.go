@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/semi-technologies/weaviate-go-client/test/testsuit"
-	"github.com/semi-technologies/weaviate-go-client/weaviate"
-	"github.com/semi-technologies/weaviate-go-client/weaviate/testenv"
 	"github.com/stretchr/testify/assert"
+	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 )
 
 func TestMisc_integration(t *testing.T) {
-
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -22,8 +21,7 @@ func TestMisc_integration(t *testing.T) {
 	})
 
 	t.Run("GET /.well-known/ready", func(t *testing.T) {
-
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
 
 		assert.Nil(t, err)
@@ -31,8 +29,7 @@ func TestMisc_integration(t *testing.T) {
 	})
 
 	t.Run("GET /.well-known/live", func(t *testing.T) {
-
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		isLive, err := client.Misc().LiveChecker().Do(context.Background())
 
 		assert.Nil(t, err)
@@ -40,8 +37,7 @@ func TestMisc_integration(t *testing.T) {
 	})
 
 	t.Run("GET /.well-known/openid-configuration", func(t *testing.T) {
-
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		openIDconfig, err := client.Misc().OpenIDConfigurationGetter().Do(context.Background())
 
 		assert.Nil(t, err)
@@ -49,7 +45,7 @@ func TestMisc_integration(t *testing.T) {
 	})
 
 	t.Run("GET /meta", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(8080, nil)
 		meta, err := client.Misc().MetaGetter().Do(context.Background())
 		assert.Nil(t, err)
 		assert.NotEmpty(t, meta.Version)
@@ -72,7 +68,6 @@ func TestMisc_integration(t *testing.T) {
 			t.Fail()
 		}
 	})
-
 }
 
 func TestMisc_connection_error(t *testing.T) {
