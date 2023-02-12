@@ -861,6 +861,8 @@ github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df/go.mod h1:JP3t17
 github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae/go.mod h1:DD4vA1DwXk04H54A1oHXtwZmA0grkVMdPxx/VGLCah0=
 github.com/weaviate/weaviate v1.17.4-0.20230211110603-8d8f4ec35666 h1:5UXwX2MplV2uOhybDLsHQWUHcwunjdB3kxj4vYqv5bM=
 github.com/weaviate/weaviate v1.17.4-0.20230211110603-8d8f4ec35666/go.mod h1:zk+kMSJQhNV9Fvda1oeqnx8xVVpgzFCkLe9KkmY7Ask=
+github.com/weaviate/weaviate v1.17.4-0.20230211172223-33dfd91508b9 h1:hh3Tgf6ARgJOBx8zuX1Tg5G7gpk2iD/5yuXaza1ZdSU=
+github.com/weaviate/weaviate v1.17.4-0.20230211172223-33dfd91508b9/go.mod h1:zk+kMSJQhNV9Fvda1oeqnx8xVVpgzFCkLe9KkmY7Ask=
 github.com/willf/bitset v1.1.11-0.20200630133818-d5bec3311243/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
 github.com/willf/bitset v1.1.11/go.mod h1:83CECat5yLh5zVOf4P1ErAgKA5UDvKtgyUABdr3+MjI=
 github.com/willf/bloom v2.0.3+incompatible/go.mod h1:MmAltL9pDMNTrvUkxdg0k0q5I0suxmuwp3KbyrZLOZ8=
