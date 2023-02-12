@@ -863,6 +863,12 @@ github.com/weaviate/weaviate v1.17.4-0.20230211110603-8d8f4ec35666 h1:5UXwX2MplV
 github.com/weaviate/weaviate v1.17.4-0.20230211110603-8d8f4ec35666/go.mod h1:zk+kMSJQhNV9Fvda1oeqnx8xVVpgzFCkLe9KkmY7Ask=
 github.com/weaviate/weaviate v1.17.4-0.20230211172223-33dfd91508b9 h1:hh3Tgf6ARgJOBx8zuX1Tg5G7gpk2iD/5yuXaza1ZdSU=
 github.com/weaviate/weaviate v1.17.4-0.20230211172223-33dfd91508b9/go.mod h1:zk+kMSJQhNV9Fvda1oeqnx8xVVpgzFCkLe9KkmY7Ask=
+github.com/weaviate/weaviate v1.17.4-0.20230212102020-d14a4ad4a0ea h1:LS/ode2cR+EzG6hvfxMXZ4rOplU9gxQ9QAWrSoC42Bg=
+github.com/weaviate/weaviate v1.17.4-0.20230212102020-d14a4ad4a0ea/go.mod h1:zk+kMSJQhNV9Fvda1oeqnx8xVVpgzFCkLe9KkmY7Ask=
+github.com/weaviate/weaviate v1.17.4-0.20230212102659-bda1fa726471 h1:A7ojudF7ePJlYn6SlvEf0foxIxWUB20SzMto3A62BTA=
+github.com/weaviate/weaviate v1.17.4-0.20230212102659-bda1fa726471/go.mod h1:zk+kMSJQhNV9Fvda1oeqnx8xVVpgzFCkLe9KkmY7Ask=
+github.com/weaviate/weaviate v1.17.4-0.20230212104056-08cce5341abf h1:Eti6gxSWhS0i0CAO7WKBmx9+8l7tgKRaf7exHAYqAPE=
+github.com/weaviate/weaviate v1.17.4-0.20230212104056-08cce5341abf/go.mod h1:zk+kMSJQhNV9Fvda1oeqnx8xVVpgzFCkLe9KkmY7Ask=
 github.com/willf/bitset v1.1.11-0.20200630133818-d5bec3311243/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
 github.com/willf/bitset v1.1.11/go.mod h1:83CECat5yLh5zVOf4P1ErAgKA5UDvKtgyUABdr3+MjI=
 github.com/willf/bloom v2.0.3+incompatible/go.mod h1:MmAltL9pDMNTrvUkxdg0k0q5I0suxmuwp3KbyrZLOZ8=
