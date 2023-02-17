@@ -92,17 +92,6 @@ func (cc ClientCredentials) GetAuthClient(con *connection.Connection) (*http.Cli
 		return nil, nil // not configured with authentication
 	}
 
-	// remove openid scopes from the scopes returned by weaviate (these are returned by default). These are not accepted
-	// by some providers for client credentials
-	for j := len(cc.WeaviateScopes) - 1; j >= 0; j-- {
-		if cc.WeaviateScopes[j] == "openid" || cc.WeaviateScopes[j] == "email" {
-			if j != len(cc.WeaviateScopes) {
-				cc.WeaviateScopes[j] = cc.WeaviateScopes[len(cc.WeaviateScopes)-1]
-			}
-			cc.WeaviateScopes = cc.WeaviateScopes[:len(cc.WeaviateScopes)-1]
-		}
-	}
-
 	if cc.Scopes == nil {
 		if strings.HasPrefix(cc.TokenEndpoint, "https://login.microsoftonline.com") {
 			cc.Scopes = []string{cc.ClientId + "/.default"}
