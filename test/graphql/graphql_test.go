@@ -217,6 +217,55 @@ func TestGraphQL_integration(t *testing.T) {
 			assert.Nil(t, gqlErr)
 			assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Frutti di Mare", "Hawaii", "Doener"})
 		})
+
+		t.Run("with generative search single result", func(t *testing.T) {
+			gs := graphql.NewGSWithSingleResult("Describe this pizza : {name}")
+
+			resultSet, gqlErr := client.GraphQL().Get().
+				WithClassName("Pizza").
+				WithFields(name).
+				WithGenerativeSearch(gs).
+				Do(context.Background())
+			assert.Nil(t, gqlErr)
+
+			get := resultSet.Data["Get"].(map[string]interface{})
+			pizza := get["Pizza"].([]interface{})
+			assert.Equal(t, 4, len(pizza))
+			for _, pizza := range pizza {
+				_additional := pizza.(map[string]interface{})["_additional"]
+				assert.NotNil(t, _additional)
+
+				generate := _additional.(map[string]interface{})["generate"].(map[string]interface{})
+				generateErr := generate["error"]
+				assert.Nil(t, generateErr)
+				singleResult := generate["singleResult"].(string)
+				assert.NotEmpty(t, singleResult)
+			}
+		})
+
+		t.Run("with generative search grouped result", func(t *testing.T) {
+			gs := graphql.NewGSWithGroupedResult("Describe these pizzas")
+
+			resultSet, gqlErr := client.GraphQL().Get().
+				WithClassName("Pizza").
+				WithFields(name).
+				WithGenerativeSearch(gs).
+				Do(context.Background())
+			assert.Nil(t, gqlErr)
+
+			get := resultSet.Data["Get"].(map[string]interface{})
+			pizza := get["Pizza"].([]interface{})
+			assert.Equal(t, 4, len(pizza))
+
+			_additional := pizza[0].(map[string]interface{})["_additional"]
+			assert.NotNil(t, _additional)
+
+			generate := _additional.(map[string]interface{})["generate"].(map[string]interface{})
+			generateErr := generate["error"]
+			assert.Nil(t, generateErr)
+			singleResult := generate["groupedResult"].(string)
+			assert.NotEmpty(t, singleResult)
+		})
 	})
 
 	t.Run("Explore", func(t *testing.T) {
