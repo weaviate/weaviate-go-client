@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"testing"
 	"time"
 
@@ -219,6 +220,9 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with generative search single result", func(t *testing.T) {
+			if os.Getenv("OPENAI_APIKEY") == "" {
+				t.Skip("No open-ai api key added")
+			}
 			gs := graphql.NewGSWithSingleResult("Describe this pizza : {name}")
 
 			resultSet, gqlErr := client.GraphQL().Get().
@@ -244,6 +248,9 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with generative search grouped result", func(t *testing.T) {
+			if os.Getenv("OPENAI_APIKEY") == "" {
+				t.Skip("No open-ai api key added")
+			}
 			gs := graphql.NewGSWithGroupedResult("Describe these pizzas")
 
 			resultSet, gqlErr := client.GraphQL().Get().
