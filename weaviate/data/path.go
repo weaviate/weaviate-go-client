@@ -2,25 +2,36 @@ package data
 
 import (
 	"fmt"
+	"net/url"
 	"path"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
 )
 
-func buildObjectsGetPath(id, className string, dbVersion *util.DBVersionSupport) string {
-	return buildObjectsPath(id, className, dbVersion, "get")
+type pathComponents struct {
+	id                string
+	class             string
+	dbVersion         *util.DBVersionSupport
+	consistencyLevel  string
+	referenceProperty string
 }
 
-func buildObjectsDeletePath(id, className string, dbVersion *util.DBVersionSupport) string {
-	return buildObjectsPath(id, className, dbVersion, "delete")
+func buildObjectsGetPath(comp pathComponents) string {
+	return buildObjectsPath(comp.id, comp.class, comp.dbVersion, "get")
 }
 
-func buildObjectsCheckPath(id, className string, dbVersion *util.DBVersionSupport) string {
-	return buildObjectsPath(id, className, dbVersion, "check")
+func buildObjectsDeletePath(comp pathComponents) string {
+	path := buildObjectsPath(comp.id, comp.class, comp.dbVersion, "delete")
+	return appendURLParams(path, comp)
 }
 
-func buildObjectsUpdatePath(id, className string, dbVersion *util.DBVersionSupport) string {
-	return buildObjectsPath(id, className, dbVersion, "update")
+func buildObjectsCheckPath(comp pathComponents) string {
+	return buildObjectsPath(comp.id, comp.class, comp.dbVersion, "check")
+}
+
+func buildObjectsUpdatePath(comp pathComponents) string {
+	path := buildObjectsPath(comp.id, comp.class, comp.dbVersion, "update")
+	return appendURLParams(path, comp)
 }
 
 func buildObjectsPath(id, className string, dbVersion *util.DBVersionSupport, action string) string {
@@ -40,15 +51,28 @@ func buildObjectsPath(id, className string, dbVersion *util.DBVersionSupport, ac
 	return p
 }
 
-func buildReferencesPath(id, className, referenceProperty string, dbVersion *util.DBVersionSupport) string {
-	if dbVersion.SupportsClassNameNamespacedEndpoints() {
-		if len(className) > 0 {
-			return fmt.Sprintf("/objects/%v/%v/references/%v", className, id, referenceProperty)
+// func buildReferencesPath(id, className, referenceProperty string, dbVersion *util.DBVersionSupport) string {
+func buildReferencesPath(comp pathComponents) string {
+	if comp.dbVersion.SupportsClassNameNamespacedEndpoints() {
+		if len(comp.class) > 0 {
+			path := fmt.Sprintf("/objects/%v/%v/references/%v", comp.class, comp.id, comp.referenceProperty)
+			return appendURLParams(path, comp)
 		} else {
-			dbVersion.WarnDeprecatedNonClassNameNamespacedEndpointsForReferences()
+			comp.dbVersion.WarnDeprecatedNonClassNameNamespacedEndpointsForReferences()
 		}
-	} else if len(className) > 0 {
-		dbVersion.WarnUsageOfNotSupportedClassNamespacedEndpointsForReferences()
+	} else if len(comp.class) > 0 {
+		comp.dbVersion.WarnUsageOfNotSupportedClassNamespacedEndpointsForReferences()
 	}
-	return fmt.Sprintf("/objects/%v/references/%v", id, referenceProperty)
+	path := fmt.Sprintf("/objects/%v/references/%v", comp.id, comp.referenceProperty)
+	return appendURLParams(path, comp)
+}
+
+func appendURLParams(path string, comp pathComponents) string {
+	u := url.URL{Path: path}
+	if comp.consistencyLevel != "" {
+		params := url.Values{}
+		params.Add("consistency_level", comp.consistencyLevel)
+		u.RawQuery = params.Encode()
+	}
+	return u.String()
 }

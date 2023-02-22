@@ -14,6 +14,7 @@ type Deleter struct {
 	connection       *connection.Connection
 	id               string
 	className        string
+	consistencyLevel string
 	dbVersionSupport *util.DBVersionSupport
 }
 
@@ -29,9 +30,22 @@ func (deleter *Deleter) WithClassName(className string) *Deleter {
 	return deleter
 }
 
+// WithConsistencyLevel determines how many replicas must acknowledge a request
+// before it is considered successful. Mutually exclusive with node_name param.
+// Can be one of 'ALL', 'ONE', or 'QUORUM'.
+func (deleter *Deleter) WithConsistencyLevel(cl string) *Deleter {
+	deleter.consistencyLevel = cl
+	return deleter
+}
+
 // Do delete the specified data object from weaviate
 func (deleter *Deleter) Do(ctx context.Context) error {
-	path := buildObjectsDeletePath(deleter.id, deleter.className, deleter.dbVersionSupport)
+	path := buildObjectsDeletePath(pathComponents{
+		id:               deleter.id,
+		class:            deleter.className,
+		dbVersion:        deleter.dbVersionSupport,
+		consistencyLevel: deleter.consistencyLevel,
+	})
 	responseData, err := deleter.connection.RunREST(ctx, path, http.MethodDelete, nil)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 204)
 }

@@ -110,7 +110,11 @@ func (getter *ObjectsGetter) buildPath() string {
 }
 
 func (getter *ObjectsGetter) getPath() string {
-	return buildObjectsGetPath(getter.id, getter.className, getter.dbVersionSupport)
+	return buildObjectsGetPath(pathComponents{
+		id:        getter.id,
+		class:     getter.className,
+		dbVersion: getter.dbVersionSupport,
+	})
 }
 
 func (getter *ObjectsGetter) buildPathParams() string {

@@ -2,6 +2,7 @@ package batch
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
@@ -11,8 +12,9 @@ import (
 
 // ReferencesBatcher builder to add multiple references in one batch request
 type ReferencesBatcher struct {
-	connection *connection.Connection
-	references []*models.BatchReference
+	connection       *connection.Connection
+	references       []*models.BatchReference
+	consistencyLevel string
 }
 
 // WithReferences adds references to the current batch
@@ -28,9 +30,18 @@ func (rb *ReferencesBatcher) WithReference(reference *models.BatchReference) *Re
 	return rb.WithReferences(reference)
 }
 
+// WithConsistencyLevel determines how many replicas must acknowledge a request
+// before it is considered successful. Mutually exclusive with node_name param.
+// Can be one of 'ALL', 'ONE', or 'QUORUM'.
+func (rb *ReferencesBatcher) WithConsistencyLevel(cl string) *ReferencesBatcher {
+	rb.consistencyLevel = cl
+	return rb
+}
+
 // Do add all the references in the batch to weaviate
 func (rb *ReferencesBatcher) Do(ctx context.Context) ([]models.BatchReferenceResponse, error) {
-	responseData, responseErr := rb.connection.RunREST(ctx, "/batch/references", http.MethodPost, rb.references)
+	path := rb.buildPath()
+	responseData, responseErr := rb.connection.RunREST(ctx, path, http.MethodPost, rb.references)
 	batchErr := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if batchErr != nil {
 		return nil, batchErr
@@ -38,4 +49,12 @@ func (rb *ReferencesBatcher) Do(ctx context.Context) ([]models.BatchReferenceRes
 	var batchResponse []models.BatchReferenceResponse
 	decodeErr := responseData.DecodeBodyIntoTarget(&batchResponse)
 	return batchResponse, decodeErr
+}
+
+func (rb *ReferencesBatcher) buildPath() string {
+	path := "/batch/references"
+	if rb.consistencyLevel != "" {
+		path = fmt.Sprintf("%s?consistency_level=%v", path, rb.consistencyLevel)
+	}
+	return path
 }

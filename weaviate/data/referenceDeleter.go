@@ -17,6 +17,7 @@ type ReferenceDeleter struct {
 	uuid              string
 	referenceProperty string
 	referencePayload  *models.SingleRef
+	consistencyLevel  string
 	dbVersionSupport  *util.DBVersionSupport
 }
 
@@ -44,9 +45,23 @@ func (rr *ReferenceDeleter) WithReference(referencePayload *models.SingleRef) *R
 	return rr
 }
 
+// WithConsistencyLevel determines how many replicas must acknowledge a request
+// before it is considered successful. Mutually exclusive with node_name param.
+// Can be one of 'ALL', 'ONE', or 'QUORUM'.
+func (rr *ReferenceDeleter) WithConsistencyLevel(cl string) *ReferenceDeleter {
+	rr.consistencyLevel = cl
+	return rr
+}
+
 // Do remove the reference defined by the payload set in this builder to the property and object defined in this builder
 func (rr *ReferenceDeleter) Do(ctx context.Context) error {
-	path := buildReferencesPath(rr.uuid, rr.className, rr.referenceProperty, rr.dbVersionSupport)
+	path := buildReferencesPath(pathComponents{
+		id:                rr.uuid,
+		class:             rr.className,
+		dbVersion:         rr.dbVersionSupport,
+		referenceProperty: rr.referenceProperty,
+		consistencyLevel:  rr.consistencyLevel,
+	})
 	responseData, responseErr := rr.connection.RunREST(ctx, path, http.MethodDelete, *rr.referencePayload)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 204)
 }

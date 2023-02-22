@@ -31,7 +31,11 @@ func (checker *Checker) WithClassName(className string) *Checker {
 
 // Do check the specified data object if it exists in weaviate
 func (checker *Checker) Do(ctx context.Context) (bool, error) {
-	path := buildObjectsCheckPath(checker.id, checker.className, checker.dbVersionSupport)
+	path := buildObjectsCheckPath(pathComponents{
+		id:        checker.id,
+		class:     checker.className,
+		dbVersion: checker.dbVersionSupport,
+	})
 	responseData, err := checker.connection.RunREST(ctx, path, http.MethodHead, nil)
 	exists := responseData.StatusCode == 204
 	return exists, except.CheckResponseDataErrorAndStatusCode(responseData, err, 204, 404)

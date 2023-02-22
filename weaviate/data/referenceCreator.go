@@ -17,6 +17,7 @@ type ReferenceCreator struct {
 	uuid              string
 	referenceProperty string
 	referencePayload  *models.SingleRef
+	consistencyLevel  string
 	dbVersionSupport  *util.DBVersionSupport
 }
 
@@ -45,9 +46,24 @@ func (rc *ReferenceCreator) WithReference(referencePayload *models.SingleRef) *R
 	return rc
 }
 
+// WithConsistencyLevel determines how many replicas must acknowledge a request
+// before it is considered successful. Mutually exclusive with node_name param.
+// Can be one of 'ALL', 'ONE', or 'QUORUM'.
+func (rc *ReferenceCreator) WithConsistencyLevel(cl string) *ReferenceCreator {
+	rc.consistencyLevel = cl
+	return rc
+}
+
 // Do add the reference specified by the set payload to the object and property specified in the builder.
 func (rc *ReferenceCreator) Do(ctx context.Context) error {
-	path := buildReferencesPath(rc.uuid, rc.className, rc.referenceProperty, rc.dbVersionSupport)
+	// path := buildReferencesPath(rc.uuid, rc.className, rc.referenceProperty, rc.dbVersionSupport)
+	path := buildReferencesPath(pathComponents{
+		id:                rc.uuid,
+		class:             rc.className,
+		referenceProperty: rc.referenceProperty,
+		dbVersion:         rc.dbVersionSupport,
+		consistencyLevel:  rc.consistencyLevel,
+	})
 	responseData, responseErr := rc.connection.RunREST(ctx, path, http.MethodPost, *rc.referencePayload)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 }

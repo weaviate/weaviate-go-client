@@ -108,7 +108,12 @@ func Test_buildReferencesPath(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := buildReferencesPath(tt.args.id, tt.args.className, tt.args.referenceProperty, tt.args.version); got != tt.want {
+			if got := buildReferencesPath(pathComponents{
+				id:                tt.args.id,
+				class:             tt.args.className,
+				referenceProperty: tt.args.referenceProperty,
+				dbVersion:         tt.args.version,
+			}); got != tt.want {
 				t.Errorf("buildReferencesPath() = %v, want %v", got, tt.want)
 			}
 		})

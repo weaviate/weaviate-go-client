@@ -17,6 +17,7 @@ type ReferenceReplacer struct {
 	uuid              string
 	referenceProperty string
 	referencePayload  *models.MultipleRef
+	consistencyLevel  string
 	dbVersionSupport  *util.DBVersionSupport
 }
 
@@ -44,9 +45,23 @@ func (rr *ReferenceReplacer) WithReferences(referencePayload *models.MultipleRef
 	return rr
 }
 
+// WithConsistencyLevel determines how many replicas must acknowledge a request
+// before it is considered successful. Mutually exclusive with node_name param.
+// Can be one of 'ALL', 'ONE', or 'QUORUM'.
+func (rr *ReferenceReplacer) WithConsistencyLevel(cl string) *ReferenceReplacer {
+	rr.consistencyLevel = cl
+	return rr
+}
+
 // Do replace the references of the in this builder specified data object
 func (rr *ReferenceReplacer) Do(ctx context.Context) error {
-	path := buildReferencesPath(rr.uuid, rr.className, rr.referenceProperty, rr.dbVersionSupport)
+	path := buildReferencesPath(pathComponents{
+		id:                rr.uuid,
+		class:             rr.className,
+		dbVersion:         rr.dbVersionSupport,
+		referenceProperty: rr.referenceProperty,
+		consistencyLevel:  rr.consistencyLevel,
+	})
 	responseData, responseErr := rr.connection.RunREST(ctx, path, http.MethodPut, *rr.referencePayload)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 }
