@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/helpers"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
@@ -124,7 +125,7 @@ func TestBatchDelete_integration(t *testing.T) {
 			WithClassName("Pizza").
 			WithOutput("verbose").
 			WithWhere(where).
-			WithConsistencyLevel("ONE").
+			WithConsistencyLevel(replication.ConsistencyLevel.ONE).
 			Do(context.Background())
 		require.Nil(t, err)
 		require.NotNil(t, resp.Match)

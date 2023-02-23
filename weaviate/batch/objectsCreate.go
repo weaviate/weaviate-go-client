@@ -2,11 +2,11 @@ package batch
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/pathbuilder"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -55,7 +55,7 @@ func (ob *ObjectsBatcher) Do(ctx context.Context) ([]models.ObjectsGetResponse, 
 		Fields:  []string{"ALL"},
 		Objects: ob.objects,
 	}
-	path := ob.buildPath()
+	path := pathbuilder.BatchObjects(pathbuilder.Components{ConsistencyLevel: ob.consistencyLevel})
 	responseData, responseErr := ob.connection.RunREST(ctx, path, http.MethodPost, body)
 	batchErr := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if batchErr != nil {
@@ -65,12 +65,4 @@ func (ob *ObjectsBatcher) Do(ctx context.Context) ([]models.ObjectsGetResponse, 
 	var parsedResponse []models.ObjectsGetResponse
 	parseErr := responseData.DecodeBodyIntoTarget(&parsedResponse)
 	return parsedResponse, parseErr
-}
-
-func (ob *ObjectsBatcher) buildPath() string {
-	path := "/batch/objects"
-	if ob.consistencyLevel != "" {
-		path = fmt.Sprintf("%s?consistency_level=%v", path, ob.consistencyLevel)
-	}
-	return path
 }

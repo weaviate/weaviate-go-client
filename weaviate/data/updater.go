@@ -6,8 +6,9 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/pathbuilder"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -19,7 +20,7 @@ type Updater struct {
 	propertySchema   models.PropertySchema
 	withMerge        bool
 	consistencyLevel string
-	dbVersionSupport *util.DBVersionSupport
+	dbVersionSupport *db.VersionSupport
 }
 
 // WithID specifies the uuid of the object about to be  updated
@@ -56,11 +57,11 @@ func (updater *Updater) WithConsistencyLevel(cl string) *Updater {
 
 // Do update the data object specified in the builder
 func (updater *Updater) Do(ctx context.Context) error {
-	path := buildObjectsUpdatePath(pathComponents{
-		id:               updater.id,
-		class:            updater.className,
-		dbVersion:        updater.dbVersionSupport,
-		consistencyLevel: updater.consistencyLevel,
+	path := pathbuilder.ObjectsUpdate(pathbuilder.Components{
+		ID:               updater.id,
+		Class:            updater.className,
+		DBVersion:        updater.dbVersionSupport,
+		ConsistencyLevel: updater.consistencyLevel,
 	})
 	httpMethod := http.MethodPut
 	expectedStatusCode := 200

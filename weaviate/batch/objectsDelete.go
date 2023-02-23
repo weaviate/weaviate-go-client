@@ -8,6 +8,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/pathbuilder"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -63,7 +64,7 @@ func (ob *ObjectsBatchDeleter) Do(ctx context.Context) (*models.BatchDeleteRespo
 		},
 	}
 
-	path := ob.buildPath()
+	path := pathbuilder.BatchObjects(pathbuilder.Components{ConsistencyLevel: ob.consistencyLevel})
 	responseData, responseErr := ob.connection.RunREST(ctx, path, http.MethodDelete, body)
 	err := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {
@@ -73,12 +74,4 @@ func (ob *ObjectsBatchDeleter) Do(ctx context.Context) (*models.BatchDeleteRespo
 	var parsedResponse models.BatchDeleteResponse
 	parseErr := responseData.DecodeBodyIntoTarget(&parsedResponse)
 	return &parsedResponse, parseErr
-}
-
-func (ob *ObjectsBatchDeleter) buildPath() string {
-	path := "/batch/objects"
-	if ob.consistencyLevel != "" {
-		path = fmt.Sprintf("%s?consistency_level=%v", path, ob.consistencyLevel)
-	}
-	return path
 }

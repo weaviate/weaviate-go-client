@@ -5,8 +5,9 @@ import (
 	"net/http"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/pathbuilder"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -18,7 +19,7 @@ type ReferenceCreator struct {
 	referenceProperty string
 	referencePayload  *models.SingleRef
 	consistencyLevel  string
-	dbVersionSupport  *util.DBVersionSupport
+	dbVersionSupport  *db.VersionSupport
 }
 
 // WithClassName specifies the class name of the object on which to add the reference
@@ -56,13 +57,12 @@ func (rc *ReferenceCreator) WithConsistencyLevel(cl string) *ReferenceCreator {
 
 // Do add the reference specified by the set payload to the object and property specified in the builder.
 func (rc *ReferenceCreator) Do(ctx context.Context) error {
-	// path := buildReferencesPath(rc.uuid, rc.className, rc.referenceProperty, rc.dbVersionSupport)
-	path := buildReferencesPath(pathComponents{
-		id:                rc.uuid,
-		class:             rc.className,
-		referenceProperty: rc.referenceProperty,
-		dbVersion:         rc.dbVersionSupport,
-		consistencyLevel:  rc.consistencyLevel,
+	path := pathbuilder.References(pathbuilder.Components{
+		ID:                rc.uuid,
+		Class:             rc.className,
+		ReferenceProperty: rc.referenceProperty,
+		DBVersion:         rc.dbVersionSupport,
+		ConsistencyLevel:  rc.consistencyLevel,
 	})
 	responseData, responseErr := rc.connection.RunREST(ctx, path, http.MethodPost, *rc.referencePayload)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)

@@ -1,8 +1,12 @@
-package util
+package crossref
 
-import "fmt"
+import (
+	"fmt"
 
-func BuildBeacon(id, className string, dbVersion *DBVersionSupport) string {
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
+)
+
+func BuildBeacon(id, className string, dbVersion *db.VersionSupport) string {
 	if dbVersion.SupportsClassNameNamespacedEndpoints() {
 		if len(className) > 0 {
 			return fmt.Sprintf("weaviate://localhost/%v/%v", className, id)

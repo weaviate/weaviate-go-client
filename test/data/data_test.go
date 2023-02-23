@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 )
@@ -699,7 +700,7 @@ func TestData_integration(t *testing.T) {
 			WithClassName("Pizza").
 			WithID(id1).
 			WithProperties(props1).
-			WithConsistencyLevel("ONE").
+			WithConsistencyLevel(replication.ConsistencyLevel.ONE).
 			Do(context.Background())
 		assert.Nil(t, err1)
 		assert.NotNil(t, resp1.Object)
@@ -707,7 +708,7 @@ func TestData_integration(t *testing.T) {
 			WithClassName("Soup").
 			WithID(id2).
 			WithProperties(props2).
-			WithConsistencyLevel("ALL").
+			WithConsistencyLevel(replication.ConsistencyLevel.ALL).
 			Do(context.Background())
 		assert.Nil(t, err2)
 		assert.NotNil(t, resp2.Object)
@@ -715,7 +716,7 @@ func TestData_integration(t *testing.T) {
 			WithClassName("Soup").
 			WithID(id3).
 			WithProperties(props3).
-			WithConsistencyLevel("QUORUM").
+			WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
 			Do(context.Background())
 		assert.Nil(t, err3)
 		assert.NotNil(t, resp3.Object)
@@ -787,7 +788,7 @@ func TestData_integration(t *testing.T) {
 			WithClassName("Pizza").
 			WithID(id).
 			WithProperties(newProps1).
-			WithConsistencyLevel("ONE").
+			WithConsistencyLevel(replication.ConsistencyLevel.ONE).
 			Do(context.Background())
 		assert.Nil(t, err)
 
@@ -803,7 +804,7 @@ func TestData_integration(t *testing.T) {
 			WithClassName("Pizza").
 			WithID(id).
 			WithProperties(newProps2).
-			WithConsistencyLevel("ALL").
+			WithConsistencyLevel(replication.ConsistencyLevel.ALL).
 			Do(context.Background())
 		assert.Nil(t, err)
 
@@ -819,7 +820,7 @@ func TestData_integration(t *testing.T) {
 			WithClassName("Pizza").
 			WithID(id).
 			WithProperties(newProps3).
-			WithConsistencyLevel("QUORUM").
+			WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
 			Do(context.Background())
 		assert.Nil(t, err)
 
@@ -874,7 +875,7 @@ func TestData_integration(t *testing.T) {
 			WithClassName("Pizza").
 			WithID(id).
 			WithProperties(newProps1).
-			WithConsistencyLevel("ONE").
+			WithConsistencyLevel(replication.ConsistencyLevel.ONE).
 			WithMerge().
 			Do(context.Background())
 		assert.Nil(t, err)
@@ -891,7 +892,7 @@ func TestData_integration(t *testing.T) {
 			WithClassName("Pizza").
 			WithID(id).
 			WithProperties(newProps2).
-			WithConsistencyLevel("ALL").
+			WithConsistencyLevel(replication.ConsistencyLevel.ALL).
 			WithMerge().
 			Do(context.Background())
 		assert.Nil(t, err)
@@ -908,7 +909,7 @@ func TestData_integration(t *testing.T) {
 			WithClassName("Pizza").
 			WithID(id).
 			WithProperties(newProps3).
-			WithConsistencyLevel("QUORUM").
+			WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
 			WithMerge().
 			Do(context.Background())
 		assert.Nil(t, err)
@@ -954,7 +955,7 @@ func TestData_integration(t *testing.T) {
 			WithClassName("Pizza").
 			WithID(id1).
 			WithProperties(props1).
-			WithConsistencyLevel("ONE").
+			WithConsistencyLevel(replication.ConsistencyLevel.ONE).
 			Do(context.Background())
 		assert.Nil(t, err1)
 		assert.NotNil(t, resp1.Object)
@@ -962,7 +963,7 @@ func TestData_integration(t *testing.T) {
 			WithClassName("Soup").
 			WithID(id2).
 			WithProperties(props2).
-			WithConsistencyLevel("ALL").
+			WithConsistencyLevel(replication.ConsistencyLevel.ALL).
 			Do(context.Background())
 		assert.Nil(t, err2)
 		assert.NotNil(t, resp2.Object)
@@ -970,7 +971,7 @@ func TestData_integration(t *testing.T) {
 			WithClassName("Soup").
 			WithID(id3).
 			WithProperties(props3).
-			WithConsistencyLevel("QUORUM").
+			WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
 			Do(context.Background())
 		assert.Nil(t, err3)
 		assert.NotNil(t, resp3.Object)
@@ -983,7 +984,7 @@ func TestData_integration(t *testing.T) {
 		err := client.Data().Deleter().
 			WithClassName(resp1.Object.Class).
 			WithID(resp1.Object.ID.String()).
-			WithConsistencyLevel("ONE").
+			WithConsistencyLevel(replication.ConsistencyLevel.ONE).
 			Do(context.Background())
 		assert.Nil(t, err)
 
@@ -997,7 +998,7 @@ func TestData_integration(t *testing.T) {
 		err = client.Data().Deleter().
 			WithClassName(resp2.Object.Class).
 			WithID(resp2.Object.ID.String()).
-			WithConsistencyLevel("ALL").
+			WithConsistencyLevel(replication.ConsistencyLevel.ALL).
 			Do(context.Background())
 		assert.Nil(t, err)
 
@@ -1011,7 +1012,7 @@ func TestData_integration(t *testing.T) {
 		err = client.Data().Deleter().
 			WithClassName(resp3.Object.Class).
 			WithID(resp3.Object.ID.String()).
-			WithConsistencyLevel("QUORUM").
+			WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
 			Do(context.Background())
 		assert.Nil(t, err)
 

@@ -8,6 +8,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
 )
@@ -110,7 +111,7 @@ func TestData_reference_integration(t *testing.T) {
 			WithID(id1).
 			WithReferenceProperty("otherFoods").
 			WithReference(payload).
-			WithConsistencyLevel("ONE").
+			WithConsistencyLevel(replication.ConsistencyLevel.ONE).
 			Do(context.Background())
 		assert.Nil(t, refErr)
 
@@ -122,7 +123,7 @@ func TestData_reference_integration(t *testing.T) {
 			WithClassName("Soup").WithID(id2).
 			WithReferenceProperty("otherFoods").
 			WithReference(payload).
-			WithConsistencyLevel("ALL").
+			WithConsistencyLevel(replication.ConsistencyLevel.ALL).
 			Do(context.Background())
 		assert.Nil(t, refErr)
 
@@ -134,7 +135,7 @@ func TestData_reference_integration(t *testing.T) {
 			WithClassName("Soup").WithID(id3).
 			WithReferenceProperty("otherFoods").
 			WithReference(payload).
-			WithConsistencyLevel("QUORUM").
+			WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
 			Do(context.Background())
 		assert.Nil(t, refErr)
 
@@ -463,21 +464,21 @@ func TestData_reference_integration(t *testing.T) {
 			WithID(id1).
 			WithReferenceProperty("otherFoods").
 			WithReference(payload1).
-			WithConsistencyLevel("ONE").
+			WithConsistencyLevel(replication.ConsistencyLevel.ONE).
 			Do(context.Background())
 		client.Data().ReferenceDeleter().
 			WithClassName("Soup").
 			WithID(id2).
 			WithReferenceProperty("otherFoods").
 			WithReference(payload2).
-			WithConsistencyLevel("ALL").
+			WithConsistencyLevel(replication.ConsistencyLevel.ALL).
 			Do(context.Background())
 		client.Data().ReferenceDeleter().
 			WithClassName("Soup").
 			WithID(id3).
 			WithReferenceProperty("otherFoods").
 			WithReference(payload2).
-			WithConsistencyLevel("QUORUM").
+			WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
 			Do(context.Background())
 
 		found1, err := client.Data().ObjectsGetter().WithClassName("Pizza").WithID(id1).Do(context.Background())

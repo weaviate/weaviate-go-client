@@ -5,8 +5,9 @@ import (
 	"net/http"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/pathbuilder"
 )
 
 // Deleter builder to delete a data object
@@ -15,7 +16,7 @@ type Deleter struct {
 	id               string
 	className        string
 	consistencyLevel string
-	dbVersionSupport *util.DBVersionSupport
+	dbVersionSupport *db.VersionSupport
 }
 
 // WithID specifies the uuid of the object about to be deleted
@@ -40,11 +41,11 @@ func (deleter *Deleter) WithConsistencyLevel(cl string) *Deleter {
 
 // Do delete the specified data object from weaviate
 func (deleter *Deleter) Do(ctx context.Context) error {
-	path := buildObjectsDeletePath(pathComponents{
-		id:               deleter.id,
-		class:            deleter.className,
-		dbVersion:        deleter.dbVersionSupport,
-		consistencyLevel: deleter.consistencyLevel,
+	path := pathbuilder.ObjectsDelete(pathbuilder.Components{
+		ID:               deleter.id,
+		Class:            deleter.className,
+		DBVersion:        deleter.dbVersionSupport,
+		ConsistencyLevel: deleter.consistencyLevel,
 	})
 	responseData, err := deleter.connection.RunREST(ctx, path, http.MethodDelete, nil)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 204)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
 )
@@ -18,7 +19,7 @@ func TestBatchCreate_integration(t *testing.T) {
 		}
 	})
 
-	t.Run("POST /batch/{type}", func(t *testing.T) {
+	t.Run("POST /batch/objects", func(t *testing.T) {
 		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -83,6 +84,7 @@ func TestBatchCreate_integration(t *testing.T) {
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
+	// Testing batch object creation with tunable consistency
 	t.Run("POST /batch/{objects}?consistency_level={level}", func(t *testing.T) {
 		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
@@ -118,16 +120,16 @@ func TestBatchCreate_integration(t *testing.T) {
 		}
 		classASlice := []*models.Object{classA1, classA2}
 
-		batchResultT, batchErrT := client.Batch().ObjectsBatcher().WithObject(classT1).WithConsistencyLevel("QUORUM").WithObject(classT2).Do(context.Background())
+		batchResultT, batchErrT := client.Batch().ObjectsBatcher().WithObject(classT1).WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).WithObject(classT2).Do(context.Background())
 		assert.Nil(t, batchErrT)
 		assert.NotNil(t, batchResultT)
 		assert.Equal(t, 2, len(batchResultT))
-		batchResultA, batchErrA := client.Batch().ObjectsBatcher().WithConsistencyLevel("ONE").WithObjects(classA1, classA2).Do(context.Background())
+		batchResultA, batchErrA := client.Batch().ObjectsBatcher().WithConsistencyLevel(replication.ConsistencyLevel.ONE).WithObjects(classA1, classA2).Do(context.Background())
 		assert.Nil(t, batchErrA)
 		assert.NotNil(t, batchResultA)
 		assert.Equal(t, 2, len(batchResultA))
 
-		batchResultSlice, batchErrSlice := client.Batch().ObjectsBatcher().WithConsistencyLevel("ALL").WithObjects(classASlice...).Do(context.Background())
+		batchResultSlice, batchErrSlice := client.Batch().ObjectsBatcher().WithConsistencyLevel(replication.ConsistencyLevel.ALL).WithObjects(classASlice...).Do(context.Background())
 		assert.Nil(t, batchErrSlice)
 		assert.NotNil(t, batchResultSlice)
 		assert.Equal(t, 2, len(batchResultSlice))
@@ -223,6 +225,7 @@ func TestBatchCreate_integration(t *testing.T) {
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
+	// Testing batch reference creation with tunable consistency
 	t.Run("POST /batch/references?consistency_level={level}", func(t *testing.T) {
 		client := testsuit.CreateTestClient(8080, nil)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
@@ -237,7 +240,7 @@ func TestBatchCreate_integration(t *testing.T) {
 			},
 		}
 		batchResultT, batchErrT := client.Batch().ObjectsBatcher().
-			WithObject(classT).WithConsistencyLevel("ONE").Do(context.Background())
+			WithObject(classT).WithConsistencyLevel(replication.ConsistencyLevel.ONE).Do(context.Background())
 		assert.Nil(t, batchErrT)
 		assert.NotNil(t, batchResultT)
 		classA := &models.Object{
@@ -249,7 +252,7 @@ func TestBatchCreate_integration(t *testing.T) {
 			},
 		}
 		batchResultA, batchErrA := client.Batch().ObjectsBatcher().
-			WithObject(classA).WithConsistencyLevel("QUORUM").Do(context.Background())
+			WithObject(classA).WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).Do(context.Background())
 		assert.Nil(t, batchErrA)
 		assert.NotNil(t, batchResultA)
 
@@ -271,7 +274,7 @@ func TestBatchCreate_integration(t *testing.T) {
 			WithToClassName("Soup").WithToID("07473b34-0ab2-4120-882d-303d9e13f7af").Payload()
 
 		// Add references in batch
-		referenceBatchResult, err := client.Batch().ReferencesBatcher().WithConsistencyLevel("ALL").
+		referenceBatchResult, err := client.Batch().ReferencesBatcher().WithConsistencyLevel(replication.ConsistencyLevel.ALL).
 			WithReference(refTtoA).WithReference(refTtoT).WithReferences(refAtoT, refAtoA).Do(context.Background())
 		assert.Nil(t, err)
 		assert.NotNil(t, referenceBatchResult)

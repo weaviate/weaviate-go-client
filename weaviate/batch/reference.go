@@ -2,11 +2,11 @@ package batch
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/pathbuilder"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -40,7 +40,7 @@ func (rb *ReferencesBatcher) WithConsistencyLevel(cl string) *ReferencesBatcher 
 
 // Do add all the references in the batch to weaviate
 func (rb *ReferencesBatcher) Do(ctx context.Context) ([]models.BatchReferenceResponse, error) {
-	path := rb.buildPath()
+	path := pathbuilder.BatchReferences(pathbuilder.Components{ConsistencyLevel: rb.consistencyLevel})
 	responseData, responseErr := rb.connection.RunREST(ctx, path, http.MethodPost, rb.references)
 	batchErr := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if batchErr != nil {
@@ -49,12 +49,4 @@ func (rb *ReferencesBatcher) Do(ctx context.Context) ([]models.BatchReferenceRes
 	var batchResponse []models.BatchReferenceResponse
 	decodeErr := responseData.DecodeBodyIntoTarget(&batchResponse)
 	return batchResponse, decodeErr
-}
-
-func (rb *ReferencesBatcher) buildPath() string {
-	path := "/batch/references"
-	if rb.consistencyLevel != "" {
-		path = fmt.Sprintf("%s?consistency_level=%v", path, rb.consistencyLevel)
-	}
-	return path
 }

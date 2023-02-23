@@ -5,8 +5,9 @@ import (
 	"net/http"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/pathbuilder"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -18,7 +19,7 @@ type ReferenceReplacer struct {
 	referenceProperty string
 	referencePayload  *models.MultipleRef
 	consistencyLevel  string
-	dbVersionSupport  *util.DBVersionSupport
+	dbVersionSupport  *db.VersionSupport
 }
 
 // WithClassName specifies the class name of the object about to get its reference replaced
@@ -55,12 +56,12 @@ func (rr *ReferenceReplacer) WithConsistencyLevel(cl string) *ReferenceReplacer 
 
 // Do replace the references of the in this builder specified data object
 func (rr *ReferenceReplacer) Do(ctx context.Context) error {
-	path := buildReferencesPath(pathComponents{
-		id:                rr.uuid,
-		class:             rr.className,
-		dbVersion:         rr.dbVersionSupport,
-		referenceProperty: rr.referenceProperty,
-		consistencyLevel:  rr.consistencyLevel,
+	path := pathbuilder.References(pathbuilder.Components{
+		ID:                rr.uuid,
+		Class:             rr.className,
+		DBVersion:         rr.dbVersionSupport,
+		ReferenceProperty: rr.referenceProperty,
+		ConsistencyLevel:  rr.consistencyLevel,
 	})
 	responseData, responseErr := rr.connection.RunREST(ctx, path, http.MethodPut, *rr.referencePayload)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
