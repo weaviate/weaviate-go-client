@@ -7,8 +7,9 @@ import (
 	"strings"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/pathbuilder"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -22,7 +23,7 @@ type ObjectsGetter struct {
 	limit                int
 	consistencyLevel     string
 	nodeName             string
-	dbVersionSupport     *util.DBVersionSupport
+	dbVersionSupport     *db.VersionSupport
 }
 
 // WithID specifies the uuid of the object that should be retrieved
@@ -110,7 +111,11 @@ func (getter *ObjectsGetter) buildPath() string {
 }
 
 func (getter *ObjectsGetter) getPath() string {
-	return buildObjectsGetPath(getter.id, getter.className, getter.dbVersionSupport)
+	return pathbuilder.ObjectsGet(pathbuilder.Components{
+		ID:        getter.id,
+		Class:     getter.className,
+		DBVersion: getter.dbVersionSupport,
+	})
 }
 
 func (getter *ObjectsGetter) buildPathParams() string {

@@ -3,7 +3,8 @@ package data
 import (
 	"github.com/go-openapi/strfmt"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/crossref"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -13,7 +14,7 @@ type ReferencePayloadBuilder struct {
 	connection       *connection.Connection
 	className        string
 	uuid             string
-	dbVersionSupport *util.DBVersionSupport
+	dbVersionSupport *db.VersionSupport
 }
 
 // WithClassName specifies the class name of the object to be referenced
@@ -30,7 +31,7 @@ func (rpb *ReferencePayloadBuilder) WithID(uuid string) *ReferencePayloadBuilder
 
 // Payload to reference the in the builder specified data object
 func (rpb *ReferencePayloadBuilder) Payload() *models.SingleRef {
-	beacon := util.BuildBeacon(rpb.uuid, rpb.className, rpb.dbVersionSupport)
+	beacon := crossref.BuildBeacon(rpb.uuid, rpb.className, rpb.dbVersionSupport)
 	ref := &models.SingleRef{
 		Beacon: strfmt.URI(beacon),
 	}

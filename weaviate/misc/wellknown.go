@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
 )
 
 // OpenIDConfiguration of weaviate
@@ -20,7 +20,7 @@ type OpenIDConfiguration struct {
 // ReadyChecker builder to check if weaviate is ready
 type ReadyChecker struct {
 	connection        *connection.Connection
-	dbVersionProvider *util.DBVersionProvider
+	dbVersionProvider *db.VersionProvider
 }
 
 // Do the ready request
@@ -39,7 +39,7 @@ func (rc *ReadyChecker) Do(ctx context.Context) (bool, error) {
 // LiveChecker builder to check if weaviate is live
 type LiveChecker struct {
 	connection        *connection.Connection
-	dbVersionProvider *util.DBVersionProvider
+	dbVersionProvider *db.VersionProvider
 }
 
 // Do the LiveChecker request

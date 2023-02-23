@@ -6,8 +6,9 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/pathbuilder"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -18,7 +19,8 @@ type Updater struct {
 	className        string
 	propertySchema   models.PropertySchema
 	withMerge        bool
-	dbVersionSupport *util.DBVersionSupport
+	consistencyLevel string
+	dbVersionSupport *db.VersionSupport
 }
 
 // WithID specifies the uuid of the object about to be  updated
@@ -45,17 +47,30 @@ func (updater *Updater) WithMerge() *Updater {
 	return updater
 }
 
+// WithConsistencyLevel determines how many replicas must acknowledge a request
+// before it is considered successful. Mutually exclusive with node_name param.
+// Can be one of 'ALL', 'ONE', or 'QUORUM'.
+func (updater *Updater) WithConsistencyLevel(cl string) *Updater {
+	updater.consistencyLevel = cl
+	return updater
+}
+
 // Do update the data object specified in the builder
 func (updater *Updater) Do(ctx context.Context) error {
-	path := buildObjectsUpdatePath(updater.id, updater.className, updater.dbVersionSupport)
+	path := pathbuilder.ObjectsUpdate(pathbuilder.Components{
+		ID:               updater.id,
+		Class:            updater.className,
+		DBVersion:        updater.dbVersionSupport,
+		ConsistencyLevel: updater.consistencyLevel,
+	})
 	httpMethod := http.MethodPut
-	expectedStatuscode := 200
+	expectedStatusCode := 200
 	if updater.withMerge {
 		httpMethod = http.MethodPatch
-		expectedStatuscode = 204
+		expectedStatusCode = 204
 	}
 	responseData, responseErr := updater.runUpdate(ctx, path, httpMethod)
-	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, expectedStatuscode)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, expectedStatusCode)
 }
 
 func (updater *Updater) runUpdate(ctx context.Context, path string, httpMethod string) (*connection.ResponseData, error) {

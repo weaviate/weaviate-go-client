@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/helpers"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
@@ -82,6 +83,49 @@ func TestBatchDelete_integration(t *testing.T) {
 			WithClassName("Pizza").
 			WithOutput("verbose").
 			WithWhere(where).
+			Do(context.Background())
+		require.Nil(t, err)
+		require.NotNil(t, resp.Match)
+		assert.Equal(t, "Pizza", resp.Match.Class)
+		assert.Equal(t, where.Build(), resp.Match.Where)
+		assert.Equal(t, expectedResults.Matches, resp.Results.Matches)
+		assert.Equal(t, expectedResults.Failed, resp.Results.Failed)
+		assert.Equal(t, expectedResults.Successful, resp.Results.Successful)
+		assert.Len(t, resp.Results.Objects, 4)
+
+		for _, obj := range resp.Results.Objects {
+			require.NotNil(t, obj.Status)
+			require.NotNil(t, obj.Status)
+			assert.Equal(t, helpers.StringPointer("SUCCESS"), obj.Status)
+			assert.Nil(t, obj.Errors)
+		}
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
+	t.Run("batch delete with consistency level", func(t *testing.T) {
+		client := testsuit.CreateTestClient(8080, nil)
+		testsuit.CreateTestSchemaAndData(t, client)
+
+		nowString := fmt.Sprint(time.Now().UnixNano() / int64(time.Millisecond))
+
+		where := filters.Where().
+			WithOperator(filters.LessThan).
+			WithPath([]string{"_creationTimeUnix"}).
+			WithValueString(nowString)
+
+		expectedResults := &models.BatchDeleteResponseResults{
+			Matches:    4,
+			Failed:     0,
+			Successful: 4,
+			Limit:      10000,
+		}
+
+		resp, err := client.Batch().ObjectsBatchDeleter().
+			WithClassName("Pizza").
+			WithOutput("verbose").
+			WithWhere(where).
+			WithConsistencyLevel(replication.ConsistencyLevel.ONE).
 			Do(context.Background())
 		require.Nil(t, err)
 		require.NotNil(t, resp.Match)

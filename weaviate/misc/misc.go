@@ -2,17 +2,17 @@ package misc
 
 import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 )
 
 // API collection of endpoints that don't fit in other categories
 type API struct {
 	connection        *connection.Connection
-	dbVersionProvider *util.DBVersionProvider
+	dbVersionProvider *db.VersionProvider
 }
 
 // New Misc (meta, .well-known) api group from connection
-func New(con *connection.Connection, dbVersionProvider *util.DBVersionProvider) *API {
+func New(con *connection.Connection, dbVersionProvider *db.VersionProvider) *API {
 	return &API{connection: con, dbVersionProvider: dbVersionProvider}
 }
 

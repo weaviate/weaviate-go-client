@@ -6,6 +6,7 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/pathbuilder"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -17,8 +18,9 @@ type ObjectsBatchRequestBody struct {
 
 // ObjectsBatcher builder to add multiple objects in one batch
 type ObjectsBatcher struct {
-	connection *connection.Connection
-	objects    []*models.Object
+	connection       *connection.Connection
+	objects          []*models.Object
+	consistencyLevel string
 }
 
 // WithObjects adds objects to the batch
@@ -34,6 +36,14 @@ func (ob *ObjectsBatcher) WithObject(object *models.Object) *ObjectsBatcher {
 	return ob.WithObjects(object)
 }
 
+// WithConsistencyLevel determines how many replicas must acknowledge a request
+// before it is considered successful. Mutually exclusive with node_name param.
+// Can be one of 'ALL', 'ONE', or 'QUORUM'.
+func (ob *ObjectsBatcher) WithConsistencyLevel(cl string) *ObjectsBatcher {
+	ob.consistencyLevel = cl
+	return ob
+}
+
 func (ob *ObjectsBatcher) resetObjects() {
 	ob.objects = []*models.Object{}
 }
@@ -45,7 +55,8 @@ func (ob *ObjectsBatcher) Do(ctx context.Context) ([]models.ObjectsGetResponse, 
 		Fields:  []string{"ALL"},
 		Objects: ob.objects,
 	}
-	responseData, responseErr := ob.connection.RunREST(ctx, "/batch/objects", http.MethodPost, body)
+	path := pathbuilder.BatchObjects(pathbuilder.Components{ConsistencyLevel: ob.consistencyLevel})
+	responseData, responseErr := ob.connection.RunREST(ctx, path, http.MethodPost, body)
 	batchErr := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if batchErr != nil {
 		return nil, batchErr

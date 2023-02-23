@@ -2,18 +2,18 @@ package batch
 
 import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
 // API for batch requests
 type API struct {
 	connection       *connection.Connection
-	dbVersionSupport *util.DBVersionSupport
+	dbVersionSupport *db.VersionSupport
 }
 
 // New Batch api group from connection
-func New(con *connection.Connection, dbVersionSupport *util.DBVersionSupport) *API {
+func New(con *connection.Connection, dbVersionSupport *db.VersionSupport) *API {
 	return &API{connection: con, dbVersionSupport: dbVersionSupport}
 }
 

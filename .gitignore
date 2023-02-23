@@ -8,3 +8,4 @@ tmp
 
 vendor/
 .vscode/
+.idea/
