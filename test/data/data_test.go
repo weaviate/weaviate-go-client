@@ -152,12 +152,19 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, soupsErr)
 		assert.Equal(t, 2, len(soups))
 
+		var firstPizzaID string // save for reuse with cursor
 		pizza, pizzaErr := client.Data().ObjectsGetter().WithClassName("Pizza").WithLimit(1).Do(context.Background())
 		assert.Nil(t, pizzaErr)
 		assert.Equal(t, 1, len(pizza))
+		firstPizzaID = pizza[0].ID.String()
 		soup, soupErr := client.Data().ObjectsGetter().WithClassName("Soup").WithLimit(1).Do(context.Background())
 		assert.Nil(t, soupErr)
 		assert.Equal(t, 1, len(soup))
+
+		pizzas, pizzasErr = client.Data().ObjectsGetter().WithClassName("Pizza").
+			WithLimit(10).WithAfter(firstPizzaID).Do(context.Background())
+		assert.Nil(t, pizzasErr)
+		assert.Equal(t, 1, len(pizzas)) // only the other pizza should be left
 
 		testsuit.CleanUpWeaviate(t, client)
 	})

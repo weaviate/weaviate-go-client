@@ -214,7 +214,10 @@ func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client) {
 		},
 		{
 			Class: "Pizza",
-			ID:    "5b6a08ba-1d46-43aa-89cc-8b070790c6f1",
+			// this uuid guarantees that it's the first for cursor tests (otherwise
+			// they might be flaky if the randomly generated ids are sometimes higher
+			// and sometimes lower
+			ID: "00000000-0000-0000-0000-000000000000",
 			Properties: map[string]interface{}{
 				"name":        "Hawaii",
 				"description": "Universally accepted to be the best pizza ever created.",

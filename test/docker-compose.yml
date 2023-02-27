@@ -9,7 +9,7 @@ services:
     - '8080'
     - --scheme
     - http
-    image: semitechnologies/weaviate:1.18.0-alpha.0-71d0b6e
+    image: semitechnologies/weaviate:preview-scroll-through-every-object-in-a-class-using-an-id-cursor-f498597
     ports:
     - 8080:8080
     restart: on-failure:0

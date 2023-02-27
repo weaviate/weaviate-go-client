@@ -17,6 +17,7 @@ import (
 type ObjectsGetter struct {
 	connection           *connection.Connection
 	id                   string
+	after                string
 	className            string
 	additionalProperties []string
 	withLimit            bool
@@ -30,6 +31,15 @@ type ObjectsGetter struct {
 // if omitted a set of objects matching the builder specifications will be retrieved
 func (getter *ObjectsGetter) WithID(id string) *ObjectsGetter {
 	getter.id = id
+	return getter
+}
+
+// WithAfter is part of the Cursor API. It can be used to extract all elements
+// by specfiying the last ID from the previous "page". Cannot be combined with
+// any other filters or search operators other than limit. Requires
+// WithClassName() to be set.
+func (getter *ObjectsGetter) WithAfter(id string) *ObjectsGetter {
+	getter.after = id
 	return getter
 }
 
@@ -141,6 +151,10 @@ func (getter *ObjectsGetter) buildPathParams() string {
 	}
 	if getter.nodeName != "" {
 		pathParams = append(pathParams, fmt.Sprintf("node_name=%v", getter.nodeName))
+	}
+
+	if getter.after != "" {
+		pathParams = append(pathParams, fmt.Sprintf("after=%v", getter.after))
 	}
 
 	if len(pathParams) > 0 {
