@@ -37,7 +37,7 @@ type GetBuilder struct {
 // WithAfter is part of the Cursor API. It can be used to extract all elements
 // by specfiying the last ID from the previous "page". Cannot be combined with
 // any other filters or search operators other than limit. Requires
-// WithClassName() to be set.
+// WithClassName() and WithLimit() to be set.
 func (gb *GetBuilder) WithAfter(id string) *GetBuilder {
 	gb.includesAfter = true
 	gb.after = id
