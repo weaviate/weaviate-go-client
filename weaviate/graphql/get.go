@@ -20,6 +20,8 @@ type GetBuilder struct {
 	limit                int
 	includesOffset       bool
 	offset               int
+	includesAfter        bool
+	after                string
 	withWhereFilter      *filters.WhereBuilder
 	withNearTextFilter   *NearTextArgumentBuilder
 	withNearVectorFilter *NearVectorArgumentBuilder
@@ -30,6 +32,16 @@ type GetBuilder struct {
 	withSort             *SortBuilder
 	withBM25             *BM25ArgumentBuilder
 	withHybrid           *HybridArgumentBuilder
+}
+
+// WithAfter is part of the Cursor API. It can be used to extract all elements
+// by specfiying the last ID from the previous "page". Cannot be combined with
+// any other filters or search operators other than limit. Requires
+// WithClassName() and WithLimit() to be set.
+func (gb *GetBuilder) WithAfter(id string) *GetBuilder {
+	gb.includesAfter = true
+	gb.after = id
+	return gb
 }
 
 // WithClassName that should be queried
@@ -182,6 +194,9 @@ func (gb *GetBuilder) createFilterClause() string {
 	}
 	if gb.includesOffset {
 		filters = append(filters, fmt.Sprintf("offset: %v", gb.offset))
+	}
+	if gb.includesAfter {
+		filters = append(filters, fmt.Sprintf("after: %q", gb.after))
 	}
 	if gb.withSort != nil {
 		filters = append(filters, gb.withSort.build())
