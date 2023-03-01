@@ -5,8 +5,9 @@ import (
 	"net/http"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/pathbuilder"
 )
 
 // Deleter builder to delete a data object
@@ -14,7 +15,8 @@ type Deleter struct {
 	connection       *connection.Connection
 	id               string
 	className        string
-	dbVersionSupport *util.DBVersionSupport
+	consistencyLevel string
+	dbVersionSupport *db.VersionSupport
 }
 
 // WithID specifies the uuid of the object about to be deleted
@@ -29,9 +31,22 @@ func (deleter *Deleter) WithClassName(className string) *Deleter {
 	return deleter
 }
 
+// WithConsistencyLevel determines how many replicas must acknowledge a request
+// before it is considered successful. Mutually exclusive with node_name param.
+// Can be one of 'ALL', 'ONE', or 'QUORUM'.
+func (deleter *Deleter) WithConsistencyLevel(cl string) *Deleter {
+	deleter.consistencyLevel = cl
+	return deleter
+}
+
 // Do delete the specified data object from weaviate
 func (deleter *Deleter) Do(ctx context.Context) error {
-	path := buildObjectsDeletePath(deleter.id, deleter.className, deleter.dbVersionSupport)
+	path := pathbuilder.ObjectsDelete(pathbuilder.Components{
+		ID:               deleter.id,
+		Class:            deleter.className,
+		DBVersion:        deleter.dbVersionSupport,
+		ConsistencyLevel: deleter.consistencyLevel,
+	})
 	responseData, err := deleter.connection.RunREST(ctx, path, http.MethodDelete, nil)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 204)
 }

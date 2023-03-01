@@ -8,15 +8,17 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/pathbuilder"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
 type ObjectsBatchDeleter struct {
-	connection  *connection.Connection
-	className   string
-	dryRun      bool
-	output      string
-	whereFilter *filters.WhereBuilder
+	connection       *connection.Connection
+	className        string
+	dryRun           bool
+	output           string
+	whereFilter      *filters.WhereBuilder
+	consistencyLevel string
 }
 
 func (b *ObjectsBatchDeleter) WithClassName(className string) *ObjectsBatchDeleter {
@@ -39,6 +41,14 @@ func (b *ObjectsBatchDeleter) WithWhere(whereFilter *filters.WhereBuilder) *Obje
 	return b
 }
 
+// WithConsistencyLevel determines how many replicas must acknowledge a request
+// before it is considered successful. Mutually exclusive with node_name param.
+// Can be one of 'ALL', 'ONE', or 'QUORUM'.
+func (b *ObjectsBatchDeleter) WithConsistencyLevel(cl string) *ObjectsBatchDeleter {
+	b.consistencyLevel = cl
+	return b
+}
+
 // Do delete's all the objects which match the builder's filter
 func (ob *ObjectsBatchDeleter) Do(ctx context.Context) (*models.BatchDeleteResponse, error) {
 	if ob.whereFilter == nil {
@@ -54,7 +64,8 @@ func (ob *ObjectsBatchDeleter) Do(ctx context.Context) (*models.BatchDeleteRespo
 		},
 	}
 
-	responseData, responseErr := ob.connection.RunREST(ctx, "/batch/objects", http.MethodDelete, body)
+	path := pathbuilder.BatchObjects(pathbuilder.Components{ConsistencyLevel: ob.consistencyLevel})
+	responseData, responseErr := ob.connection.RunREST(ctx, path, http.MethodDelete, body)
 	err := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {
 		return nil, err

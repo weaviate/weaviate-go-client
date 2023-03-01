@@ -3,11 +3,13 @@ package data
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 )
@@ -150,12 +152,19 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, soupsErr)
 		assert.Equal(t, 2, len(soups))
 
+		var firstPizzaID string // save for reuse with cursor
 		pizza, pizzaErr := client.Data().ObjectsGetter().WithClassName("Pizza").WithLimit(1).Do(context.Background())
 		assert.Nil(t, pizzaErr)
 		assert.Equal(t, 1, len(pizza))
+		firstPizzaID = pizza[0].ID.String()
 		soup, soupErr := client.Data().ObjectsGetter().WithClassName("Soup").WithLimit(1).Do(context.Background())
 		assert.Nil(t, soupErr)
 		assert.Equal(t, 1, len(soup))
+
+		pizzas, pizzasErr = client.Data().ObjectsGetter().WithClassName("Pizza").
+			WithLimit(10).WithAfter(firstPizzaID).Do(context.Background())
+		assert.Nil(t, pizzasErr)
+		assert.Equal(t, 1, len(pizzas)) // only the other pizza should be left
 
 		testsuit.CleanUpWeaviate(t, client)
 	})
@@ -664,6 +673,362 @@ func TestData_integration(t *testing.T) {
 			WithProperties(propertySchemaA).
 			Do(context.Background())
 		assert.NotNil(t, errValidateA)
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
+	t.Run("POST /objects?consistency_level={level}", func(t *testing.T) {
+		client := testsuit.CreateTestClient(8080, nil)
+
+		testsuit.CreateWeaviateTestSchemaFood(t, client)
+
+		var (
+			id1 = "abefd256-8574-442b-9293-9205193737ee"
+			id2 = "565da3b6-60b3-40e5-ba21-e6bfe5dbba91"
+			id3 = "07f15e48-f819-48b3-86e8-12fd8a73546d"
+		)
+
+		var (
+			props1 = map[string]string{
+				"name":        "Hawaii",
+				"description": "Universally accepted to be the best pizza ever created.",
+			}
+			props2 = map[string]string{
+				"name":        "ChickenSoup",
+				"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
+			}
+			props3 = map[string]string{
+				"name":        "Pozole",
+				"description": "Means “hominy” and it is basically a cross between soup and stew. It is a popular and beloved dish throughout Mexico.",
+			}
+		)
+
+		resp1, err1 := client.Data().Creator().
+			WithClassName("Pizza").
+			WithID(id1).
+			WithProperties(props1).
+			WithConsistencyLevel(replication.ConsistencyLevel.ONE).
+			Do(context.Background())
+		assert.Nil(t, err1)
+		assert.NotNil(t, resp1.Object)
+		resp2, err2 := client.Data().Creator().
+			WithClassName("Soup").
+			WithID(id2).
+			WithProperties(props2).
+			WithConsistencyLevel(replication.ConsistencyLevel.ALL).
+			Do(context.Background())
+		assert.Nil(t, err2)
+		assert.NotNil(t, resp2.Object)
+		resp3, err3 := client.Data().Creator().
+			WithClassName("Soup").
+			WithID(id3).
+			WithProperties(props3).
+			WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
+			Do(context.Background())
+		assert.Nil(t, err3)
+		assert.NotNil(t, resp3.Object)
+
+		found1, err1 := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
+			WithID(id1).
+			Do(context.Background())
+		assert.Nil(t, err1)
+		assert.Equal(t, "Pizza", found1[0].Class)
+		assert.Equal(t, "Hawaii", found1[0].Properties.(map[string]interface{})["name"])
+
+		found2, err2 := client.Data().ObjectsGetter().
+			WithClassName("Soup").
+			WithID(id2).
+			Do(context.Background())
+		assert.Nil(t, err2)
+		assert.Equal(t, "Soup", found2[0].Class)
+		assert.Equal(t, "ChickenSoup", found2[0].Properties.(map[string]interface{})["name"])
+
+		found3, err3 := client.Data().ObjectsGetter().
+			WithClassName("Soup").
+			WithID(id3).
+			Do(context.Background())
+		assert.Nil(t, err3)
+		assert.Equal(t, "Soup", found3[0].Class)
+		assert.Equal(t, "Pozole", found3[0].Properties.(map[string]interface{})["name"])
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
+	t.Run("PUT /objects/{className}/{id}?consistency_level={level}", func(t *testing.T) {
+		client := testsuit.CreateTestClient(8080, nil)
+
+		testsuit.CreateWeaviateTestSchemaFood(t, client)
+
+		var (
+			id    = "abefd256-8574-442b-9293-9205193737ee"
+			props = map[string]string{
+				"name":        "Hawaii",
+				"description": "Universally accepted to be the best pizza ever created.",
+			}
+		)
+
+		var (
+			newProps1 = map[string]string{
+				"name":        "Double Pepperoni",
+				"description": "There is no such thing as too much pepperoni.",
+			}
+			newProps2 = map[string]string{
+				"name":        "Four Cheese",
+				"description": "Mozzarella, Aged Havarti, Gorgonzola, Parmigiano-Reggiano. Enough said.",
+			}
+			newProps3 = map[string]string{
+				"name":        "Philly Cheesesteak",
+				"description": "Sliced steak, peppers, onions.",
+			}
+		)
+
+		createResp, createErr := client.Data().Creator().
+			WithClassName("Pizza").
+			WithID(id).
+			WithProperties(props).
+			Do(context.Background())
+		assert.Nil(t, createErr)
+		assert.NotNil(t, createResp.Object)
+
+		err := client.Data().Updater().
+			WithClassName("Pizza").
+			WithID(id).
+			WithProperties(newProps1).
+			WithConsistencyLevel(replication.ConsistencyLevel.ONE).
+			Do(context.Background())
+		assert.Nil(t, err)
+
+		updated1, err := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
+			WithID(id).
+			Do(context.Background())
+		assert.Nil(t, err)
+		assert.Equal(t, "Pizza", updated1[0].Class)
+		assert.Equal(t, newProps1["name"], updated1[0].Properties.(map[string]interface{})["name"])
+
+		err = client.Data().Updater().
+			WithClassName("Pizza").
+			WithID(id).
+			WithProperties(newProps2).
+			WithConsistencyLevel(replication.ConsistencyLevel.ALL).
+			Do(context.Background())
+		assert.Nil(t, err)
+
+		updated2, err := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
+			WithID(id).
+			Do(context.Background())
+		assert.Nil(t, err)
+		assert.Equal(t, "Pizza", updated2[0].Class)
+		assert.Equal(t, newProps2["name"], updated2[0].Properties.(map[string]interface{})["name"])
+
+		err = client.Data().Updater().
+			WithClassName("Pizza").
+			WithID(id).
+			WithProperties(newProps3).
+			WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
+			Do(context.Background())
+		assert.Nil(t, err)
+
+		updated3, err := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
+			WithID(id).
+			Do(context.Background())
+		assert.Nil(t, err)
+		assert.Equal(t, "Pizza", updated2[0].Class)
+		assert.Equal(t, newProps3["name"], updated3[0].Properties.(map[string]interface{})["name"])
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
+	t.Run("PATCH /objects/{className}/{id}?consistency_level={level}", func(t *testing.T) {
+		client := testsuit.CreateTestClient(8080, nil)
+
+		testsuit.CreateWeaviateTestSchemaFood(t, client)
+
+		var (
+			id    = "abefd256-8574-442b-9293-9205193737ee"
+			props = map[string]string{
+				"name":        "Hawaii",
+				"description": "Universally accepted to be the best pizza ever created.",
+			}
+		)
+
+		var (
+			newProps1 = map[string]string{
+				"name":        "Double Pepperoni",
+				"description": "There is no such thing as too much pepperoni.",
+			}
+			newProps2 = map[string]string{
+				"name":        "Four Cheese",
+				"description": "Mozzarella, Aged Havarti, Gorgonzola, Parmigiano-Reggiano. Enough said.",
+			}
+			newProps3 = map[string]string{
+				"name":        "Philly Cheesesteak",
+				"description": "Sliced steak, peppers, onions.",
+			}
+		)
+
+		createResp, createErr := client.Data().Creator().
+			WithClassName("Pizza").
+			WithID(id).
+			WithProperties(props).
+			Do(context.Background())
+		assert.Nil(t, createErr)
+		assert.NotNil(t, createResp.Object)
+
+		err := client.Data().Updater().
+			WithClassName("Pizza").
+			WithID(id).
+			WithProperties(newProps1).
+			WithConsistencyLevel(replication.ConsistencyLevel.ONE).
+			WithMerge().
+			Do(context.Background())
+		assert.Nil(t, err)
+
+		updated1, err := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
+			WithID(id).
+			Do(context.Background())
+		assert.Nil(t, err)
+		assert.Equal(t, "Pizza", updated1[0].Class)
+		assert.Equal(t, newProps1["name"], updated1[0].Properties.(map[string]interface{})["name"])
+
+		err = client.Data().Updater().
+			WithClassName("Pizza").
+			WithID(id).
+			WithProperties(newProps2).
+			WithConsistencyLevel(replication.ConsistencyLevel.ALL).
+			WithMerge().
+			Do(context.Background())
+		assert.Nil(t, err)
+
+		updated2, err := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
+			WithID(id).
+			Do(context.Background())
+		assert.Nil(t, err)
+		assert.Equal(t, "Pizza", updated2[0].Class)
+		assert.Equal(t, newProps2["name"], updated2[0].Properties.(map[string]interface{})["name"])
+
+		err = client.Data().Updater().
+			WithClassName("Pizza").
+			WithID(id).
+			WithProperties(newProps3).
+			WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
+			WithMerge().
+			Do(context.Background())
+		assert.Nil(t, err)
+
+		updated3, err := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
+			WithID(id).
+			Do(context.Background())
+		assert.Nil(t, err)
+		assert.Equal(t, "Pizza", updated2[0].Class)
+		assert.Equal(t, newProps3["name"], updated3[0].Properties.(map[string]interface{})["name"])
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
+	t.Run("DELETE /objects/{className}/{id}?consistency_level={level}", func(t *testing.T) {
+		client := testsuit.CreateTestClient(8080, nil)
+
+		testsuit.CreateWeaviateTestSchemaFood(t, client)
+
+		var (
+			id1 = "abefd256-8574-442b-9293-9205193737ee"
+			id2 = "565da3b6-60b3-40e5-ba21-e6bfe5dbba91"
+			id3 = "07f15e48-f819-48b3-86e8-12fd8a73546d"
+		)
+
+		var (
+			props1 = map[string]string{
+				"name":        "Hawaii",
+				"description": "Universally accepted to be the best pizza ever created.",
+			}
+			props2 = map[string]string{
+				"name":        "ChickenSoup",
+				"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
+			}
+			props3 = map[string]string{
+				"name":        "Pozole",
+				"description": "Means “hominy” and it is basically a cross between soup and stew. It is a popular and beloved dish throughout Mexico.",
+			}
+		)
+
+		resp1, err1 := client.Data().Creator().
+			WithClassName("Pizza").
+			WithID(id1).
+			WithProperties(props1).
+			WithConsistencyLevel(replication.ConsistencyLevel.ONE).
+			Do(context.Background())
+		assert.Nil(t, err1)
+		assert.NotNil(t, resp1.Object)
+		resp2, err2 := client.Data().Creator().
+			WithClassName("Soup").
+			WithID(id2).
+			WithProperties(props2).
+			WithConsistencyLevel(replication.ConsistencyLevel.ALL).
+			Do(context.Background())
+		assert.Nil(t, err2)
+		assert.NotNil(t, resp2.Object)
+		resp3, err3 := client.Data().Creator().
+			WithClassName("Soup").
+			WithID(id3).
+			WithProperties(props3).
+			WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
+			Do(context.Background())
+		assert.Nil(t, err3)
+		assert.NotNil(t, resp3.Object)
+
+		expectedErr := &fault.WeaviateClientError{
+			IsUnexpectedStatusCode: true,
+			StatusCode:             http.StatusNotFound,
+		}
+
+		err := client.Data().Deleter().
+			WithClassName(resp1.Object.Class).
+			WithID(resp1.Object.ID.String()).
+			WithConsistencyLevel(replication.ConsistencyLevel.ONE).
+			Do(context.Background())
+		assert.Nil(t, err)
+
+		found1, err1 := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
+			WithID(id1).
+			Do(context.Background())
+		assert.EqualValues(t, expectedErr, err1)
+		assert.Nil(t, found1)
+
+		err = client.Data().Deleter().
+			WithClassName(resp2.Object.Class).
+			WithID(resp2.Object.ID.String()).
+			WithConsistencyLevel(replication.ConsistencyLevel.ALL).
+			Do(context.Background())
+		assert.Nil(t, err)
+
+		found2, err2 := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
+			WithID(id2).
+			Do(context.Background())
+		assert.EqualValues(t, expectedErr, err2)
+		assert.Nil(t, found2)
+
+		err = client.Data().Deleter().
+			WithClassName(resp3.Object.Class).
+			WithID(resp3.Object.ID.String()).
+			WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
+			Do(context.Background())
+		assert.Nil(t, err)
+
+		found3, err3 := client.Data().ObjectsGetter().
+			WithClassName("Pizza").
+			WithID(id2).
+			Do(context.Background())
+		assert.EqualValues(t, expectedErr, err3)
+		assert.Nil(t, found3)
 
 		testsuit.CleanUpWeaviate(t, client)
 	})

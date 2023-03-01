@@ -2,17 +2,17 @@ package data
 
 import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 )
 
 // API Contains all the builders required to access the weaviate data API
 type API struct {
 	connection       *connection.Connection
-	dbVersionSupport *util.DBVersionSupport
+	dbVersionSupport *db.VersionSupport
 }
 
 // New {semanticKind} api group from connection
-func New(con *connection.Connection, dbVersionSupport *util.DBVersionSupport) *API {
+func New(con *connection.Connection, dbVersionSupport *db.VersionSupport) *API {
 	return &API{connection: con, dbVersionSupport: dbVersionSupport}
 }
 

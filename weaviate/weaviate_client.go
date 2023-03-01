@@ -12,10 +12,10 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/contextionary"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/data"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/misc"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/schema"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
 )
 
 // Config of the client endpoint
@@ -85,8 +85,8 @@ func New(config Config) *Client {
 		return ""
 	}
 
-	dbVersionProvider := util.NewDBVersionProvider(getVersionFn)
-	dbVersionSupport := util.NewDBVersionSupport(dbVersionProvider)
+	dbVersionProvider := db.NewVersionProvider(getVersionFn)
+	dbVersionSupport := db.NewDBVersionSupport(dbVersionProvider)
 
 	client := &Client{
 		connection:      con,

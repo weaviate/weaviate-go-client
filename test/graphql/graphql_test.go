@@ -50,6 +50,17 @@ func TestGraphQL_integration(t *testing.T) {
 			assert.Equal(t, 4, len(pizza))
 		})
 
+		t.Run("get all with cursor", func(t *testing.T) {
+			afterID := "00000000-0000-0000-0000-000000000000"
+			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").
+				WithFields(name).WithAfter(afterID).WithLimit(10).Do(context.Background())
+			assert.Nil(t, gqlErr)
+
+			get := resultSet.Data["Get"].(map[string]interface{})
+			pizza := get["Pizza"].([]interface{})
+			assert.Equal(t, 3, len(pizza)) // 3 instead of 4
+		})
+
 		t.Run("by near object", func(t *testing.T) {
 			withNearObject := client.GraphQL().NearObjectArgBuilder().
 				WithID("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
@@ -72,8 +83,8 @@ func TestGraphQL_integration(t *testing.T) {
 				moveTo := &graphql.MoveParameters{
 					Force: 0.3,
 					Objects: []graphql.MoverObject{
-						{ID: "5b6a08ba-1d46-43aa-89cc-8b070790c6f1"},
-						{Beacon: "weaviate://localhost/5b6a08ba-1d46-43aa-89cc-8b070790c6f1"},
+						{ID: "00000000-0000-0000-0000-000000000000"},
+						{Beacon: "weaviate://localhost/00000000-0000-0000-0000-000000000000"},
 					},
 				}
 				moveAwayFrom := &graphql.MoveParameters{
@@ -109,8 +120,8 @@ func TestGraphQL_integration(t *testing.T) {
 				moveTo := &graphql.MoveParameters{
 					Force: 0.3,
 					Objects: []graphql.MoverObject{
-						{ID: "5b6a08ba-1d46-43aa-89cc-8b070790c6f1"},
-						{Beacon: "weaviate://localhost/5b6a08ba-1d46-43aa-89cc-8b070790c6f1"},
+						{ID: "00000000-0000-0000-0000-000000000000"},
+						{Beacon: "weaviate://localhost/00000000-0000-0000-0000-000000000000"},
 					},
 				}
 				moveAwayFrom := &graphql.MoveParameters{
@@ -1082,8 +1093,8 @@ func TestGraphQL_integration(t *testing.T) {
 				moveTo := &graphql.MoveParameters{
 					Force: 0.3,
 					Objects: []graphql.MoverObject{
-						{ID: "5b6a08ba-1d46-43aa-89cc-8b070790c6f1"},
-						{Beacon: "weaviate://localhost/5b6a08ba-1d46-43aa-89cc-8b070790c6f1"},
+						{ID: "00000000-0000-0000-0000-000000000000"},
+						{Beacon: "weaviate://localhost/00000000-0000-0000-0000-000000000000"},
 					},
 				}
 				moveAwayFrom := &graphql.MoveParameters{
@@ -1120,8 +1131,8 @@ func TestGraphQL_integration(t *testing.T) {
 				moveTo := &graphql.MoveParameters{
 					Force: 0.3,
 					Objects: []graphql.MoverObject{
-						{ID: "5b6a08ba-1d46-43aa-89cc-8b070790c6f1"},
-						{Beacon: "weaviate://localhost/5b6a08ba-1d46-43aa-89cc-8b070790c6f1"},
+						{ID: "00000000-0000-0000-0000-000000000000"},
+						{Beacon: "weaviate://localhost/00000000-0000-0000-0000-000000000000"},
 					},
 				}
 				moveAwayFrom := &graphql.MoveParameters{

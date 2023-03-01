@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/go-openapi/strfmt"
@@ -17,11 +18,12 @@ type ObjectWrapper struct {
 
 // Creator builder to create a data object in weaviate
 type Creator struct {
-	connection     *connection.Connection
-	className      string
-	uuid           string
-	vector         []float32
-	propertySchema models.PropertySchema
+	connection       *connection.Connection
+	className        string
+	uuid             string
+	vector           []float32
+	propertySchema   models.PropertySchema
+	consistencyLevel string
 }
 
 // WithClassName indicates what class the data object is associated with
@@ -48,12 +50,22 @@ func (creator *Creator) WithVector(vector []float32) *Creator {
 	return creator
 }
 
+// WithConsistencyLevel determines how many replicas must acknowledge a request
+// before it is considered successful. Mutually exclusive with node_name param.
+// Can be one of 'ALL', 'ONE', or 'QUORUM'.
+func (creator *Creator) WithConsistencyLevel(cl string) *Creator {
+	creator.consistencyLevel = cl
+	return creator
+}
+
 // Do create the data object as specified in the builder
 func (creator *Creator) Do(ctx context.Context) (*ObjectWrapper, error) {
 	var err error
 	var responseData *connection.ResponseData
 	object, _ := creator.PayloadObject()
-	responseData, err = creator.connection.RunREST(ctx, "/objects", http.MethodPost, object)
+
+	path := creator.buildPath()
+	responseData, err = creator.connection.RunREST(ctx, path, http.MethodPost, object)
 	respErr := except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)
 	if respErr != nil {
 		return nil, respErr
@@ -64,6 +76,14 @@ func (creator *Creator) Do(ctx context.Context) (*ObjectWrapper, error) {
 	return &ObjectWrapper{
 		Object: &resultObject,
 	}, parseErr
+}
+
+func (creator *Creator) buildPath() string {
+	path := "/objects"
+	if creator.consistencyLevel != "" {
+		path = fmt.Sprintf("%s?consistency_level=%v", path, creator.consistencyLevel)
+	}
+	return path
 }
 
 // PayloadObject returns the data object payload which may be used in a batch request

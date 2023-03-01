@@ -5,7 +5,8 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/crossref"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -17,7 +18,7 @@ type ReferencePayloadBuilder struct {
 	fromUUID         string
 	toClassName      string
 	toUUID           string
-	dbVersion        *util.DBVersionSupport
+	dbVersion        *db.VersionSupport
 }
 
 // WithFromClassName name of the class that the reference is added to
@@ -53,7 +54,7 @@ func (rpb *ReferencePayloadBuilder) WithToID(uuid string) *ReferencePayloadBuild
 // Payload to be used in a batch request
 func (rpb *ReferencePayloadBuilder) Payload() *models.BatchReference {
 	from := fmt.Sprintf("weaviate://localhost/%v/%v/%v", rpb.fromClassName, rpb.fromUUID, rpb.fromPropertyName)
-	to := util.BuildBeacon(rpb.toUUID, rpb.toClassName, rpb.dbVersion)
+	to := crossref.BuildBeacon(rpb.toUUID, rpb.toClassName, rpb.dbVersion)
 
 	return &models.BatchReference{
 		From: strfmt.URI(from),

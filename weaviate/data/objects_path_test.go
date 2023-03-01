@@ -5,10 +5,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/util"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/pathbuilder"
 )
 
-func Test_buildObjectPath(t *testing.T) {
+func Test_BuildObjectPath(t *testing.T) {
 	version := "1.17.0"
 
 	tests := []struct {
@@ -55,12 +56,12 @@ func Test_buildObjectPath(t *testing.T) {
 	}
 }
 
-func Test_buildReferencesPath(t *testing.T) {
+func Test_BuildReferencesPath(t *testing.T) {
 	type args struct {
 		id                string
 		className         string
 		referenceProperty string
-		version           *util.DBVersionSupport
+		version           *db.VersionSupport
 	}
 	tests := []struct {
 		name string
@@ -108,8 +109,13 @@ func Test_buildReferencesPath(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := buildReferencesPath(tt.args.id, tt.args.className, tt.args.referenceProperty, tt.args.version); got != tt.want {
-				t.Errorf("buildReferencesPath() = %v, want %v", got, tt.want)
+			if got := pathbuilder.References(pathbuilder.Components{
+				ID:                tt.args.id,
+				Class:             tt.args.className,
+				ReferenceProperty: tt.args.referenceProperty,
+				DBVersion:         tt.args.version,
+			}); got != tt.want {
+				t.Errorf("References() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -127,8 +133,8 @@ func newDBVersionProviderMock(version string) *dbVersionProviderMock {
 	return &dbVersionProviderMock{version}
 }
 
-func newDBVersionSupportForTests(version string) *util.DBVersionSupport {
-	return util.NewDBVersionSupport(newDBVersionProviderMock(version))
+func newDBVersionSupportForTests(version string) *db.VersionSupport {
+	return db.NewDBVersionSupport(newDBVersionProviderMock(version))
 }
 
 func newTestGetter(version string) *ObjectsGetter {

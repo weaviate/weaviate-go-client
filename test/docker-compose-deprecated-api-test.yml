@@ -9,7 +9,6 @@ services:
       - '8080'
       - --scheme
       - http
-    # TODO: temporarily use this version until next release
     image: semitechnologies/weaviate:1.13.2
     ports:
       - 8080:8080
