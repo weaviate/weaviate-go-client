@@ -1,59 +1,50 @@
 package graphql
 
-type GenerativeSearch interface {
-	build() string
-}
+import "fmt"
 
-type singleResult struct {
+type GenerativeSearchBuilder struct {
 	prompt string
+	task   string
 }
 
-type groupedResult struct {
-	task string
+func NewGenerativeSearch() *GenerativeSearchBuilder {
+	return &GenerativeSearchBuilder{}
 }
 
-func NewGSWithSingleResult(prompt string) GenerativeSearch {
-	return &singleResult{prompt: prompt}
+func (gs *GenerativeSearchBuilder) SingleResult(prompt string) *GenerativeSearchBuilder {
+	gs.prompt = prompt
+	return gs
 }
 
-func NewGSWithGroupedResult(task string) GenerativeSearch {
-	return &groupedResult{task: task}
+func (gs *GenerativeSearchBuilder) GroupedResult(task string) *GenerativeSearchBuilder {
+	gs.task = task
+	return gs
 }
 
-func (sr *singleResult) build() string {
-	sr.prompt = "\"\"\"" + sr.prompt + "\"\"\""
-	fields := FieldsBuilder{fields: []Field{
+func (gs *GenerativeSearchBuilder) build() string {
+	resultFields := []Field{}
+	query := ""
+	if gs.prompt != "" {
+		gs.prompt = "\"\"\"" + gs.prompt + "\"\"\""
+		query += fmt.Sprintf("singleResult:{ prompt: %v }", gs.prompt)
+		resultFields = append(resultFields, Field{Name: "singleResult"})
+	}
+	if gs.task != "" {
+		gs.task = "\"\"\"" + gs.task + "\"\"\""
+		query += fmt.Sprintf("groupedResult:{ task: %v }", gs.task)
+		resultFields = append(resultFields, Field{Name: "groupedResult"})
+	}
+	resultFields = append(resultFields, Field{Name: "error"})
+	finalFields := FieldsBuilder{fields: []Field{
 		{
 			Name: "_additional",
 			Fields: []Field{
 				{
-					Name: "generate(singleResult:{ prompt: " + sr.prompt + " })",
-					Fields: []Field{
-						{Name: "singleResult"},
-						{Name: "error"},
-					},
+					Name:   fmt.Sprintf("generate(%v)", query),
+					Fields: resultFields,
 				},
 			},
 		},
 	}}
-	return fields.build()
-}
-
-func (gr *groupedResult) build() string {
-	gr.task = "\"\"\"" + gr.task + "\"\"\""
-	fields := FieldsBuilder{fields: []Field{
-		{
-			Name: "_additional",
-			Fields: []Field{
-				{
-					Name: "generate(groupedResult:{ task: " + gr.task + " })",
-					Fields: []Field{
-						{Name: "groupedResult"},
-						{Name: "error"},
-					},
-				},
-			},
-		},
-	}}
-	return fields.build()
+	return finalFields.build()
 }

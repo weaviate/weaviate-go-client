@@ -30,7 +30,7 @@ type GetBuilder struct {
 	withSort             *SortBuilder
 	withBM25             *BM25ArgumentBuilder
 	withHybrid           *HybridArgumentBuilder
-	withGenerativeSearch GenerativeSearch
+	withGenerativeSearch *GenerativeSearchBuilder
 }
 
 // WithClassName that should be queried
@@ -132,7 +132,7 @@ func (gb *GetBuilder) WithSort(sort ...Sort) *GetBuilder {
 }
 
 // To Use OpenAI to generate a response based on the results
-func (gb *GetBuilder) WithGenerativeSearch(s GenerativeSearch) *GetBuilder {
+func (gb *GetBuilder) WithGenerativeSearch(s *GenerativeSearchBuilder) *GetBuilder {
 	gb.withGenerativeSearch = s
 	return gb
 }

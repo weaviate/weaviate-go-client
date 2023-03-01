@@ -151,8 +151,14 @@ func CleanUpWeaviate(t *testing.T, client *weaviate.Client) {
 func CreateTestClient(port int, connectionClient *http.Client) *weaviate.Client {
 	integrationTestsWithAuth := os.Getenv("INTEGRATION_TESTS_AUTH")
 	openAIApiKey := os.Getenv("OPENAI_APIKEY")
-	var cfg *weaviate.Config
 	wcsPw := os.Getenv("WCS_DUMMY_CI_PW")
+
+	headers := map[string]string{}
+	if openAIApiKey != "" {
+		headers["X-OpenAI-Api-Key"] = openAIApiKey
+	}
+
+	var cfg *weaviate.Config
 	if connectionClient == nil && integrationTestsWithAuth == "auth_enabled" && wcsPw != "" {
 		clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net", Password: wcsPw}
 		var err error
@@ -161,7 +167,7 @@ func CreateTestClient(port int, connectionClient *http.Client) *weaviate.Client 
 			cfg = &weaviate.Config{
 				Host:    "localhost:" + fmt.Sprint(port),
 				Scheme:  "http",
-				Headers: map[string]string{"X-OpenAI-Api-Key": openAIApiKey},
+				Headers: headers,
 			}
 		}
 	} else {
@@ -169,7 +175,7 @@ func CreateTestClient(port int, connectionClient *http.Client) *weaviate.Client 
 			Host:             "localhost:" + fmt.Sprint(port),
 			Scheme:           "http",
 			ConnectionClient: connectionClient,
-			Headers:          map[string]string{"X-OpenAI-Api-Key": openAIApiKey},
+			Headers:          headers,
 		}
 	}
 	client := weaviate.New(*cfg)
