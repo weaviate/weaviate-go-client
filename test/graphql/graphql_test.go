@@ -245,9 +245,9 @@ func TestGraphQL_integration(t *testing.T) {
 			assert.Nil(t, gqlErr)
 
 			get := resultSet.Data["Get"].(map[string]interface{})
-			pizza := get["Pizza"].([]interface{})
-			assert.Equal(t, 4, len(pizza))
-			for _, pizza := range pizza {
+			pizzas := get["Pizza"].([]interface{})
+			assert.Equal(t, 4, len(pizzas))
+			for _, pizza := range pizzas {
 				_additional := pizza.(map[string]interface{})["_additional"]
 				assert.NotNil(t, _additional)
 
@@ -304,10 +304,10 @@ func TestGraphQL_integration(t *testing.T) {
 			assert.Nil(t, gqlErr)
 
 			get := resultSet.Data["Get"].(map[string]interface{})
-			pizza := get["Pizza"].([]interface{})
-			assert.Equal(t, 4, len(pizza))
+			pizzas := get["Pizza"].([]interface{})
+			assert.Equal(t, 4, len(pizzas))
 
-			for _, pizza := range pizza {
+			for _, pizza := range pizzas {
 				_additional := pizza.(map[string]interface{})["_additional"]
 				assert.NotNil(t, _additional)
 
@@ -318,7 +318,7 @@ func TestGraphQL_integration(t *testing.T) {
 				assert.NotEmpty(t, singleResult)
 			}
 
-			_additional := pizza[0].(map[string]interface{})["_additional"]
+			_additional := pizzas[0].(map[string]interface{})["_additional"]
 			assert.NotNil(t, _additional)
 
 			generate := _additional.(map[string]interface{})["generate"].(map[string]interface{})
