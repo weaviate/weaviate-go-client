@@ -32,6 +32,7 @@ type GetBuilder struct {
 	withSort             *SortBuilder
 	withBM25             *BM25ArgumentBuilder
 	withHybrid           *HybridArgumentBuilder
+	withGenerativeSearch *GenerativeSearchBuilder
 }
 
 // WithAfter is part of the Cursor API. It can be used to extract all elements
@@ -142,6 +143,12 @@ func (gb *GetBuilder) WithSort(sort ...Sort) *GetBuilder {
 	return gb
 }
 
+// To Use OpenAI to generate a response based on the results
+func (gb *GetBuilder) WithGenerativeSearch(s *GenerativeSearchBuilder) *GetBuilder {
+	gb.withGenerativeSearch = s
+	return gb
+}
+
 // Do execute the GraphQL query
 func (gb *GetBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, gb.connection, gb.build())
@@ -205,12 +212,14 @@ func (gb *GetBuilder) createFilterClause() string {
 }
 
 func (gb *GetBuilder) createFieldsClause() string {
+	fields := []string{}
 	if len(gb.withFields) > 0 {
-		fields := make([]string, len(gb.withFields))
 		for i := range gb.withFields {
-			fields[i] = gb.withFields[i].build()
+			fields = append(fields, gb.withFields[i].build())
 		}
-		return strings.Join(fields, " ")
 	}
-	return ""
+	if gb.withGenerativeSearch != nil {
+		fields = append(fields, gb.withGenerativeSearch.build())
+	}
+	return strings.Join(fields, " ")
 }
