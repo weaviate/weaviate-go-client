@@ -1,14 +1,12 @@
 package testenv
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v4/test"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 )
 
 // SetupLocalWeaviate creates a local weaviate running on 8080 using docker compose
@@ -20,11 +18,9 @@ import (
 func SetupLocalWeaviate() error {
 	if !isExternalWeaviateRunning() {
 		err := test.SetupWeaviate()
-		if err != nil {
-			return err
-		}
+		return err
 	}
-	return WaitForWeaviate()
+	return nil
 }
 
 // SetupLocalWeaviateDeprecated creates a local weaviate running on 8080 using docker compose
@@ -37,11 +33,9 @@ func SetupLocalWeaviate() error {
 func SetupLocalWeaviateDeprecated() error {
 	if !isExternalWeaviateRunning() {
 		err := test.SetupWeaviateDeprecated()
-		if err != nil {
-			return err
-		}
+		return err
 	}
-	return WaitForWeaviate()
+	return nil
 }
 
 func isExternalWeaviateRunning() bool {
@@ -49,28 +43,6 @@ func isExternalWeaviateRunning() bool {
 	val = strings.ToLower(val)
 	fmt.Printf("\nEXTERNAL_WEAVIATE_RUNNING: %v\n", val)
 	return val == "true"
-}
-
-// WaitForWeaviate waits until weaviate is started up and ready
-// expects weaviat at localhost:8080
-func WaitForWeaviate() error {
-	cfg := weaviate.Config{
-		Host:   "localhost:8080",
-		Scheme: "http",
-	}
-	client := weaviate.New(cfg)
-
-	for i := 0; i < 20; i++ {
-		ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*3)
-		isReady, _ := client.Misc().ReadyChecker().Do(ctx)
-		cancelFunc()
-		if isReady {
-			return nil
-		}
-		fmt.Printf("Weaviate not yet up waiting another 3 seconds. Iteration: %v\n", i)
-		time.Sleep(time.Second * 3)
-	}
-	return fmt.Errorf("Weaviate did not start in time")
 }
 
 // TearDownLocalWeaviate shuts down the locally started weaviate docker compose

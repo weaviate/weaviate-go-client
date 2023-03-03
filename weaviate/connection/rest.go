@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -44,13 +45,39 @@ func NewConnection(scheme string, host string, httpClient *http.Client, headers 
 
 	// shutdown goroutine when connections is cleaned up
 	runtime.SetFinalizer(connection, finalizer)
-
+	connection.WaitForWeaviate()
 	transport, ok := connection.httpClient.Transport.(*oauth2.Transport)
 	if ok {
 		connection.startRefreshGoroutine(transport)
 	}
 
 	return connection
+}
+
+// WaitForWeaviate waits until weaviate is started up and ready
+// expects weaviat at localhost:8080
+func (con *Connection) WaitForWeaviate() error {
+	for i := 0; i < 20; i++ {
+		ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*3)
+		response, err := con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
+		var isReady bool
+		switch {
+		case err != nil:
+			isReady = false
+		case response.StatusCode == 200:
+			isReady = true
+		default:
+			isReady = false
+		}
+
+		cancelFunc()
+		if isReady {
+			return nil
+		}
+		fmt.Printf("Weaviate not yet up waiting another 3 seconds. Iteration: %v\n", i)
+		time.Sleep(time.Second * 3)
+	}
+	return fmt.Errorf("Weaviate did not start in time")
 }
 
 // startRefreshGoroutine starts a background goroutine that periodically refreshes the auth token.
