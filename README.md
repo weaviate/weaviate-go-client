@@ -7,10 +7,10 @@ A go native client for weaviate.
 In order to get the go client v4 issue this command:
 
 ```bash
-$ go get github.com/weaviate/weaviate-go-client/v4 vx.x.x
+$ go get github.com/weaviate/weaviate-go-client/v4@v4.x.x
 ```
 
-where `vx.x.x` is the desired go client v4 version, for example `v4.6.1`
+where `v4.x.x` is the desired go client v4 version, for example `v4.6.1`
 
 Add dependency to your `go.mod`:
 
