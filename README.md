@@ -27,7 +27,7 @@ import (
   "context"
   "fmt"
 
-	client "github.com/weaviate/weaviate-go-client/v4/weaviate"
+  client "github.com/weaviate/weaviate-go-client/v4/weaviate"
 )
 
 func main() {

@@ -27,10 +27,12 @@ if git rev-parse "$VERSION" >/dev/null 2>&1; then
 fi
 
 DIR=$(pwd -P)
-LIB_VER=v4
+GO_MOD_PKG=$(head -n 1 go.mod | sed -r 's/module //g')
+LIB_VER=$(basename $GO_MOD_PKG)
 
+sed -i '' "s/^In order to get the go client .*/In order to get the go client $LIB_VER issue this command:/" README.md
 sed -i '' "s/^$ go get github.com\/weaviate\/weaviate-go-client\/.*/$ go get github.com\/weaviate\/weaviate-go-client\/$LIB_VER@$LIB_VER.x.x/" README.md
-sed -i '' "s/^where \`.*/where \`$LIB_VER.x.x\` is the desired go client v4 version, for example \`$VERSION\`/" README.md
+sed -i '' "s/^where \`.*/where \`$LIB_VER.x.x\` is the desired go client $LIB_VER version, for example \`$VERSION\`/" README.md
 sed -i '' "s/^require github.com\/weaviate\/weaviate-go-client\/.*/require github.com\/weaviate\/weaviate-go-client\/$LIB_VER $VERSION/" README.md
 sed -i '' "s/^  client \"github.com\/weaviate\/weaviate-go-client.*/  client \"github.com\/weaviate\/weaviate-go-client\/$LIB_VER\/weaviate\"/" README.md
 
