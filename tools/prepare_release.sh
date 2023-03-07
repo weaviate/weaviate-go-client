@@ -27,7 +27,7 @@ if git rev-parse "$VERSION" >/dev/null 2>&1; then
 fi
 
 DIR=$(pwd -P)
-LIB_VER=$(basename $DIR)
+LIB_VER=v4
 
 sed -i '' "s/^$ go get github.com\/weaviate\/weaviate-go-client\/.*/$ go get github.com\/weaviate\/weaviate-go-client\/$LIB_VER@$LIB_VER.x.x/" README.md
 sed -i '' "s/^where \`.*/where \`$LIB_VER.x.x\` is the desired go client v4 version, for example \`$VERSION\`/" README.md
