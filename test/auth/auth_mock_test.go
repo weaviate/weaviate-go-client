@@ -68,6 +68,9 @@ func TestAuthMock_NoRefreshToken(t *testing.T) {
 			mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
 				w.Write([]byte(`{}`))
 			})
+			mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte(`{}`))
+			})
 			s := httptest.NewServer(mux)
 			defer s.Close()
 
@@ -111,6 +114,9 @@ func TestAuthMock_RefreshCC(t *testing.T) {
 	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{}`))
 	})
+	mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{}`))
+	})
 	s := httptest.NewServer(mux)
 	defer s.Close()
 
@@ -119,12 +125,12 @@ func TestAuthMock_RefreshCC(t *testing.T) {
 	client := weaviate.New(*cfg)
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 	assert.Nil(t, AuthErr)
-	assert.Equal(t, i, 3) // client does 3 initial calls to token endpoint
+	assert.Equal(t, i, 4) // client does 4 initial calls to token endpoint
 
 	time.Sleep(time.Second * 5)
 	// current token expires, so the oauth client needs to get a new one
 	AuthErr2 := client.Schema().AllDeleter().Do(context.TODO())
-	assert.Equal(t, i, 4)
+	assert.Equal(t, i, 5)
 	assert.Nil(t, AuthErr2)
 }
 
@@ -180,6 +186,9 @@ func TestAuthMock_RefreshUserPWAndToken(t *testing.T) {
 				assert.True(t, time.Now().Sub(tokenRefreshTime).Seconds() < float64(expirationTimeToken))
 				w.Write([]byte(`{}`))
 			})
+			mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte(`{}`))
+			})
 			s := httptest.NewServer(mux)
 			defer s.Close()
 
@@ -212,6 +221,9 @@ func TestAuthMock_CatchAllProxy(t *testing.T) {
 		w.Write([]byte(`NotAValidJsonResponse`))
 	})
 	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{}`))
+	})
+	mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{}`))
 	})
 	s := httptest.NewServer(mux)
@@ -254,6 +266,9 @@ func TestAuthMock_CheckDefaultScopes(t *testing.T) {
 		w.Write([]byte(`{"href": "` + sEndpoints.URL + `/endpoints", "clientId": "DoesNotMatter", "scopes": ["something", "extra"]}`))
 	})
 	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{}`))
+	})
+	mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{}`))
 	})
 	s := httptest.NewServer(mux)
