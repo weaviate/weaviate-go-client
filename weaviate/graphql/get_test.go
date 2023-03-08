@@ -712,7 +712,7 @@ func TestQueryBuilder(t *testing.T) {
 			assert.Equal(t, expected, query)
 
 			filename := "weaviate-logo.png"
-			weaviateLogoURL := "https://raw.githubusercontent.com/semi-technologies/weaviate/19de0956c69b66c5552447e84d016f4fe29d12c9/docs/assets/" + filename
+			weaviateLogoURL := "https://raw.githubusercontent.com/weaviate/weaviate/19de0956c69b66c5552447e84d016f4fe29d12c9/docs/assets/" + filename
 			response, err := http.Get(weaviateLogoURL)
 			require.Nil(t, err)
 
@@ -782,7 +782,7 @@ func TestQueryBuilder(t *testing.T) {
 			assert.Equal(t, expected, query)
 
 			filename := "weaviate-logo.png"
-			weaviateLogoURL := "https://raw.githubusercontent.com/semi-technologies/weaviate/19de0956c69b66c5552447e84d016f4fe29d12c9/docs/assets/" + filename
+			weaviateLogoURL := "https://raw.githubusercontent.com/weaviate/weaviate/19de0956c69b66c5552447e84d016f4fe29d12c9/docs/assets/" + filename
 			response, err := http.Get(weaviateLogoURL)
 			require.Nil(t, err)
 
