@@ -33,6 +33,17 @@ var defaultShardingConfig = map[string]interface{}{
 	"virtualPerPhysical":  float64(128),
 }
 
+var defaultPQConfig = map[string]interface{}{
+	"bitCompression": false,
+	"centroids":      float64(256),
+	"enabled":        false,
+	"encoder": map[string]interface{}{
+		"distribution": "log-normal",
+		"type":         "kmeans",
+	},
+	"segments": float64(0),
+}
+
 var defaultVectorIndexConfig = map[string]interface{}{
 	"cleanupIntervalSeconds": float64(300),
 	"efConstruction":         float64(128),
@@ -45,6 +56,7 @@ var defaultVectorIndexConfig = map[string]interface{}{
 	"dynamicEfMin":           float64(100),
 	"flatSearchCutoff":       float64(40000),
 	"distance":               "cosine",
+	"pq":                     defaultPQConfig,
 }
 
 var defaultReplicationConfig = &models.ReplicationConfig{
