@@ -39,7 +39,10 @@ func NewConfig(host string, scheme string, authConfig auth.Config, headers map[s
 	var client *http.Client
 	var err error
 	if authConfig != nil {
-		tmpCon := connection.NewConnection(scheme, host, nil, headers)
+		tmpCon, ok := connection.NewConnection(scheme, host, nil, headers)
+		if ok != nil {
+			return nil, ok
+		}
 		client, err = authConfig.GetAuthClient(tmpCon)
 		if err != nil {
 			return nil, err
@@ -72,7 +75,7 @@ type Client struct {
 // The client uses the original data models as provided by weaviate itself.
 // All these models are provided in the sub module "github.com/weaviate/weaviate/entities/models"
 func New(config Config) *Client {
-	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
+	con, _ := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
 
 	// some endpoints now require a className namespace.
 	// to determine if this new convention is to be used,
