@@ -212,14 +212,50 @@ func (gb *GetBuilder) createFilterClause() string {
 }
 
 func (gb *GetBuilder) createFieldsClause() string {
-	fields := []string{}
-	if len(gb.withFields) > 0 {
-		for i := range gb.withFields {
-			fields = append(fields, gb.withFields[i].build())
+	if len(gb.withFields) == 0 && gb.withGenerativeSearch == nil {
+		return ""
+	}
+
+	if gb.withGenerativeSearch == nil {
+		return joinFields(gb.withFields)
+	}
+
+	generate := gb.withGenerativeSearch.build()
+	generateAdditional := Field{Name: "_additional", Fields: []Field{generate}}
+
+	if len(gb.withFields) == 0 {
+		return generateAdditional.build()
+	}
+
+	// check if _additional field exists. If missing just add new _additional with generate,
+	// if exists merge generate into present one
+	posAdditional := -1
+	for i := range gb.withFields {
+		if gb.withFields[i].Name == "_additional" {
+			posAdditional = i
+			break
 		}
 	}
-	if gb.withGenerativeSearch != nil {
-		fields = append(fields, gb.withGenerativeSearch.build())
+
+	if posAdditional == -1 {
+		return joinFields(append(gb.withFields, generateAdditional))
 	}
-	return strings.Join(fields, " ")
+
+	mergedAdditional := Field{
+		Name:   "_additional",
+		Fields: append(gb.withFields[posAdditional].Fields, generate),
+	}
+
+	fields := append(gb.withFields[:posAdditional], gb.withFields[posAdditional+1:]...)
+	return joinFields(append(fields, mergedAdditional))
+}
+
+func joinFields(fields []Field) string {
+	strFields := []string{}
+	for i := range fields {
+		if str := strings.TrimSpace(fields[i].build()); len(str) > 0 {
+			strFields = append(strFields, str)
+		}
+	}
+	return strings.Join(strFields, " ")
 }
