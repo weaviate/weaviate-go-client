@@ -17,8 +17,7 @@ import (
 //	due to syncing issues and speeds up the process
 func SetupLocalWeaviate() error {
 	if !isExternalWeaviateRunning() {
-		err := test.SetupWeaviate()
-		return err
+		return test.SetupWeaviate()
 	}
 	return nil
 }
@@ -32,8 +31,7 @@ func SetupLocalWeaviate() error {
 //	due to syncing issues and speeds up the process
 func SetupLocalWeaviateDeprecated() error {
 	if !isExternalWeaviateRunning() {
-		err := test.SetupWeaviateDeprecated()
-		return err
+		return test.SetupWeaviateDeprecated()
 	}
 	return nil
 }

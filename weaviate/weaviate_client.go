@@ -37,11 +37,10 @@ type Config struct {
 
 func NewConfig(host string, scheme string, authConfig auth.Config, headers map[string]string) (*Config, error) {
 	var client *http.Client
-	var err error
 	if authConfig != nil {
-		tmpCon, ok := connection.NewConnection(scheme, host, nil, headers)
-		if ok != nil {
-			return nil, ok
+		tmpCon, err := connection.NewConnection(scheme, host, nil, headers)
+		if err != nil {
+			return nil, err
 		}
 		client, err = authConfig.GetAuthClient(tmpCon)
 		if err != nil {
