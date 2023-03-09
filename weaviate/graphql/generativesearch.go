@@ -1,6 +1,9 @@
 package graphql
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type GenerativeSearchBuilder struct {
 	prompt string
@@ -11,40 +14,42 @@ func NewGenerativeSearch() *GenerativeSearchBuilder {
 	return &GenerativeSearchBuilder{}
 }
 
-func (gs *GenerativeSearchBuilder) SingleResult(prompt string) *GenerativeSearchBuilder {
-	gs.prompt = prompt
-	return gs
+func (gsb *GenerativeSearchBuilder) SingleResult(prompt string) *GenerativeSearchBuilder {
+	gsb.prompt = prompt
+	return gsb
 }
 
-func (gs *GenerativeSearchBuilder) GroupedResult(task string) *GenerativeSearchBuilder {
-	gs.task = task
-	return gs
+func (gsb *GenerativeSearchBuilder) GroupedResult(task string) *GenerativeSearchBuilder {
+	gsb.task = task
+	return gsb
 }
 
-func (gs *GenerativeSearchBuilder) build() string {
-	resultFields := []Field{}
-	query := ""
-	if gs.prompt != "" {
-		gs.prompt = "\"\"\"" + gs.prompt + "\"\"\""
-		query += fmt.Sprintf("singleResult:{ prompt: %v }", gs.prompt)
-		resultFields = append(resultFields, Field{Name: "singleResult"})
+func (gsb *GenerativeSearchBuilder) build() Field {
+	nameParts := []string{}
+	fieldNames := []string{}
+
+	if gsb.prompt != "" {
+		nameParts = append(nameParts, fmt.Sprintf("singleResult:{prompt:\"\"\"%s\"\"\"}", gsb.prompt))
+		fieldNames = append(fieldNames, "singleResult")
 	}
-	if gs.task != "" {
-		gs.task = "\"\"\"" + gs.task + "\"\"\""
-		query += fmt.Sprintf("groupedResult:{ task: %v }", gs.task)
-		resultFields = append(resultFields, Field{Name: "groupedResult"})
+	if gsb.task != "" {
+		nameParts = append(nameParts, fmt.Sprintf("groupedResult:{task:\"\"\"%s\"\"\"}", gsb.task))
+		fieldNames = append(fieldNames, "groupedResult")
 	}
-	resultFields = append(resultFields, Field{Name: "error"})
-	finalFields := FieldsBuilder{fields: []Field{
-		{
-			Name: "_additional",
-			Fields: []Field{
-				{
-					Name:   fmt.Sprintf("generate(%v)", query),
-					Fields: resultFields,
-				},
-			},
-		},
-	}}
-	return finalFields.build()
+
+	if len(nameParts) == 0 {
+		return Field{}
+	}
+
+	fieldNames = append(fieldNames, "error")
+
+	fields := make([]Field, len(fieldNames))
+	for i, fieldName := range fieldNames {
+		fields[i] = Field{Name: fieldName}
+	}
+
+	return Field{
+		Name:   fmt.Sprintf("generate(%s)", strings.Join(nameParts, " ")),
+		Fields: fields,
+	}
 }

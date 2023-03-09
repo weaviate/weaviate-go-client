@@ -72,14 +72,34 @@ func TestQueryBuilder(t *testing.T) {
 		}
 
 		name := Field{Name: "name"}
-
 		gs := NewGenerativeSearch().SingleResult("Describe this pizza : {name}")
+
 		query := builder.WithClassName("Pizza").
 			WithFields(name).
 			WithGenerativeSearch(gs).
 			build()
 
-		expected := `{Get {Pizza  {name _additional{generate(singleResult:{ prompt: """Describe this pizza : {name}""" }){singleResult error}}}}}`
+		expected := `{Get {Pizza  {name _additional{generate(singleResult:{prompt:"""Describe this pizza : {name}"""}){singleResult error}}}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("with generative search single result and additional id", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection: conMock,
+		}
+
+		name := Field{Name: "name"}
+		additionalId := Field{Name: "_additional", Fields: []Field{{Name: "id"}}}
+		gs := NewGenerativeSearch().SingleResult("Describe this pizza : {name}")
+
+		query := builder.WithClassName("Pizza").
+			WithFields(name, additionalId).
+			WithGenerativeSearch(gs).
+			build()
+
+		expected := `{Get {Pizza  {name _additional{id generate(singleResult:{prompt:"""Describe this pizza : {name}"""}){singleResult error}}}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -91,7 +111,6 @@ func TestQueryBuilder(t *testing.T) {
 		}
 
 		name := Field{Name: "name"}
-
 		gs := NewGenerativeSearch().GroupedResult("Why are these pizzas very popular?")
 
 		query := builder.WithClassName("Pizza").
@@ -99,7 +118,27 @@ func TestQueryBuilder(t *testing.T) {
 			WithGenerativeSearch(gs).
 			build()
 
-		expected := `{Get {Pizza  {name _additional{generate(groupedResult:{ task: """Why are these pizzas very popular?""" }){groupedResult error}}}}}`
+		expected := `{Get {Pizza  {name _additional{generate(groupedResult:{task:"""Why are these pizzas very popular?"""}){groupedResult error}}}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("with generative search grouped result and additional id", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection: conMock,
+		}
+
+		name := Field{Name: "name"}
+		additionalId := Field{Name: "_additional", Fields: []Field{{Name: "id"}}}
+		gs := NewGenerativeSearch().GroupedResult("Why are these pizzas very popular?")
+
+		query := builder.WithClassName("Pizza").
+			WithFields(name, additionalId).
+			WithGenerativeSearch(gs).
+			build()
+
+		expected := `{Get {Pizza  {name _additional{id generate(groupedResult:{task:"""Why are these pizzas very popular?"""}){groupedResult error}}}}}`
 		assert.Equal(t, expected, query)
 	})
 
@@ -111,7 +150,6 @@ func TestQueryBuilder(t *testing.T) {
 		}
 
 		name := Field{Name: "name"}
-
 		gs := NewGenerativeSearch().
 			SingleResult("Describe this pizza : {name}").
 			GroupedResult("Why are these pizzas very popular?")
@@ -121,7 +159,29 @@ func TestQueryBuilder(t *testing.T) {
 			WithGenerativeSearch(gs).
 			build()
 
-		expected := `{Get {Pizza  {name _additional{generate(singleResult:{ prompt: """Describe this pizza : {name}""" }groupedResult:{ task: """Why are these pizzas very popular?""" }){singleResult groupedResult error}}}}}`
+		expected := `{Get {Pizza  {name _additional{generate(singleResult:{prompt:"""Describe this pizza : {name}"""} groupedResult:{task:"""Why are these pizzas very popular?"""}){singleResult groupedResult error}}}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("with generative search single result and grouped result and additional id", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection: conMock,
+		}
+
+		name := Field{Name: "name"}
+		additionalId := Field{Name: "_additional", Fields: []Field{{Name: "id"}}}
+		gs := NewGenerativeSearch().
+			SingleResult("Describe this pizza : {name}").
+			GroupedResult("Why are these pizzas very popular?")
+
+		query := builder.WithClassName("Pizza").
+			WithFields(name, additionalId).
+			WithGenerativeSearch(gs).
+			build()
+
+		expected := `{Get {Pizza  {name _additional{id generate(singleResult:{prompt:"""Describe this pizza : {name}"""} groupedResult:{task:"""Why are these pizzas very popular?"""}){singleResult groupedResult error}}}}}`
 		assert.Equal(t, expected, query)
 	})
 
