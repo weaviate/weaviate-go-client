@@ -20,4 +20,11 @@ func TestBM25Builder_build(t *testing.T) {
 		expected := `bm25:{query: "query"}`
 		require.Equal(t, expected, str)
 	})
+
+	t.Run("query with escaping", func(t *testing.T) {
+		bm25 := BM25ArgumentBuilder{}
+		str := bm25.WithQuery("\"I'm a complex string\" says the string").build()
+		expected := `bm25:{query: "\"I'm a complex string\" says the string"}`
+		require.Equal(t, expected, str)
+	})
 }
