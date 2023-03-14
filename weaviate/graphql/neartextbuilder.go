@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -27,7 +28,7 @@ type MoveParameters struct {
 }
 
 func (m *MoveParameters) String() string {
-	concepts := marshalStrings(m.Concepts)
+	concepts, _ := json.Marshal(m.Concepts)
 	ms := make([]string, 0, len(m.Objects))
 	for _, m := range m.Objects {
 		if s := m.String(); s != EmptyObjectStr {
@@ -121,7 +122,7 @@ func (e *NearTextArgumentBuilder) WithAutocorrect(autocorrect bool) *NearTextArg
 // Build build the given clause
 func (e *NearTextArgumentBuilder) build() string {
 	clause := []string{}
-	concepts := marshalStrings(e.concepts)
+	concepts, _ := json.Marshal(e.concepts)
 
 	clause = append(clause, fmt.Sprintf("concepts: %s", concepts))
 	if e.withCertainty {

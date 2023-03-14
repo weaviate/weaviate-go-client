@@ -34,4 +34,12 @@ func TestHybridBuilder_build(t *testing.T) {
 		expected := `hybrid:{query: "query", alpha: 0.6}`
 		require.Equal(t, expected, str)
 	})
+
+	t.Run("query with escaping and alpha", func(t *testing.T) {
+		hybrid := HybridArgumentBuilder{}
+
+		str := hybrid.WithQuery("\"I'm a complex string\" says the string").WithAlpha(0.6).build()
+		expected := `hybrid:{query: "\"I'm a complex string\" says the string", alpha: 0.6}`
+		require.Equal(t, expected, str)
+	})
 }
