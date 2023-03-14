@@ -58,10 +58,9 @@ func NewConnection(scheme string, host string, httpClient *http.Client, headers 
 // expects weaviat at localhost:8080
 func (con *Connection) WaitForWeaviate(startup_period int) error {
 	if startup_period < 0 {
-		return errors.New("startup_period needs to be an integer larger than zero")
+		return errors.New("'startup_period' needs to be an integer larger than zero")
 	}
 
-	var err error
 	for i := 0; i < startup_period; i++ {
 		ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*3)
 		response, err := con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
@@ -73,6 +72,7 @@ func (con *Connection) WaitForWeaviate(startup_period int) error {
 			isReady = true
 		default:
 			isReady = false
+
 		}
 
 		cancelFunc()
@@ -82,7 +82,8 @@ func (con *Connection) WaitForWeaviate(startup_period int) error {
 		fmt.Printf("Weaviate not yet up waiting another second. Iteration: %v\n", i)
 		time.Sleep(time.Second)
 	}
-	return err
+
+	return fmt.Errorf("weaviate did not start up in %d seconds. Either the Weaviate URL %s is wrong or Weaviate did not start up in the interval given in 'startup_period'", startup_period, con.basePath)
 }
 
 // startRefreshGoroutine starts a background goroutine that periodically refreshes the auth token.
