@@ -35,19 +35,38 @@ type Config struct {
 	Headers map[string]string
 }
 
+// Deprecated: This function is unable to wait for Weaviate to start. If you want to use an AuthClient, use
+// AddAuthClient() instead.
 func NewConfig(host string, scheme string, authConfig auth.Config, headers map[string]string) (*Config, error) {
 	var client *http.Client
+	var err error
 	if authConfig != nil {
-		tmpCon, err := connection.NewConnection(scheme, host, nil, headers)
-		if err != nil {
-			return nil, err
-		}
+		tmpCon := connection.NewConnection(scheme, host, nil, headers)
 		client, err = authConfig.GetAuthClient(tmpCon)
 		if err != nil {
 			return nil, err
 		}
 	}
 	return &Config{Host: host, Scheme: scheme, Headers: headers, ConnectionClient: client}, nil
+}
+
+func AddAuthClient(cfg Config, authConfig auth.Config, startup_period int) (Config, error) {
+	if authConfig == nil {
+		return cfg, nil
+	}
+
+	tmpCon := connection.NewConnection(cfg.Scheme, cfg.Host, nil, cfg.Headers)
+	err := tmpCon.WaitForWeaviate(startup_period)
+	if err != nil {
+		return cfg, err
+	}
+
+	client, err := authConfig.GetAuthClient(tmpCon)
+	if err != nil {
+		return cfg, err
+	}
+	cfg.ConnectionClient = client
+	return cfg, nil
 }
 
 // Client implementing the weaviate API
@@ -74,7 +93,7 @@ type Client struct {
 // The client uses the original data models as provided by weaviate itself.
 // All these models are provided in the sub module "github.com/weaviate/weaviate/entities/models"
 func New(config Config) *Client {
-	con, _ := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
+	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
 
 	// some endpoints now require a className namespace.
 	// to determine if this new convention is to be used,
@@ -104,6 +123,11 @@ func New(config Config) *Client {
 	}
 
 	return client
+}
+
+// Waits for Weaviate to start.
+func (c *Client) WaitForWeavaite(startup_period int) error {
+	return c.connection.WaitForWeaviate(startup_period)
 }
 
 // Misc collection group for .well_known and root level API commands

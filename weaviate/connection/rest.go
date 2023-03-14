@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -31,7 +32,7 @@ func finalizer(c *Connection) {
 
 // NewConnection based on scheme://host
 // if httpClient is nil a default client will be used
-func NewConnection(scheme string, host string, httpClient *http.Client, headers map[string]string) (*Connection, error) {
+func NewConnection(scheme string, host string, httpClient *http.Client, headers map[string]string) *Connection {
 	client := httpClient
 	if client == nil {
 		client = &http.Client{}
@@ -45,20 +46,23 @@ func NewConnection(scheme string, host string, httpClient *http.Client, headers 
 
 	// shutdown goroutine when connections is cleaned up
 	runtime.SetFinalizer(connection, finalizer)
-	err := connection.WaitForWeaviate()
 	transport, ok := connection.httpClient.Transport.(*oauth2.Transport)
 	if ok {
 		connection.startRefreshGoroutine(transport)
 	}
 
-	return connection, err
+	return connection
 }
 
 // WaitForWeaviate waits until weaviate is started up and ready
 // expects weaviat at localhost:8080
-func (con *Connection) WaitForWeaviate() error {
+func (con *Connection) WaitForWeaviate(startup_period int) error {
+	if startup_period < 0 {
+		return errors.New("startup_period needs to be an integer larger than zero")
+	}
+
 	var err error
-	for i := 0; i < 20; i++ {
+	for i := 0; i < startup_period; i++ {
 		ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*3)
 		response, err := con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
 		var isReady bool
@@ -75,8 +79,8 @@ func (con *Connection) WaitForWeaviate() error {
 		if isReady {
 			return nil
 		}
-		fmt.Printf("Weaviate not yet up waiting another 3 seconds. Iteration: %v\n", i)
-		time.Sleep(time.Second * 3)
+		fmt.Printf("Weaviate not yet up waiting another second. Iteration: %v\n", i)
+		time.Sleep(time.Second)
 	}
 	return err
 }
