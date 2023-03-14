@@ -27,7 +27,7 @@ func (b *BM25ArgumentBuilder) WithProperties(properties ...string) *BM25Argument
 func (b *BM25ArgumentBuilder) build() string {
 	clause := []string{}
 	if b.query != "" {
-		clause = append(clause, fmt.Sprintf("query: \"%s\"", b.query))
+		clause = append(clause, fmt.Sprintf("query: %q", b.query))
 	}
 	if len(b.properties) > 0 {
 		propStr, err := json.Marshal(b.properties)
