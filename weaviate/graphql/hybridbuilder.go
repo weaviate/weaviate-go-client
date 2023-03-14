@@ -36,7 +36,7 @@ func (h *HybridArgumentBuilder) WithAlpha(alpha float32) *HybridArgumentBuilder 
 func (h *HybridArgumentBuilder) build() string {
 	clause := []string{}
 	if h.query != "" {
-		clause = append(clause, fmt.Sprintf("query: \"%s\"", h.query))
+		clause = append(clause, fmt.Sprintf("query: %q", h.query))
 	}
 	if len(h.vector) > 0 {
 		vectorB, err := json.Marshal(h.vector)
