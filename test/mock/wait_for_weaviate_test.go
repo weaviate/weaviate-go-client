@@ -11,7 +11,7 @@ import (
 )
 
 func TestWaitForWeaviate(t *testing.T) {
-	// Returns the address of the auth server
+	// Tests the WaitForWeaviate function if a connection can be established
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{}`))
@@ -26,7 +26,7 @@ func TestWaitForWeaviate(t *testing.T) {
 }
 
 func TestWaitForWeaviate_NoConnection(t *testing.T) {
-	// Returns the address of the auth server
+	// Tests the WaitForWeaviate function if no connection can be established
 	mux := http.NewServeMux()
 	s := httptest.NewServer(mux)
 	defer s.Close()

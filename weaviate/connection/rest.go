@@ -55,14 +55,13 @@ func NewConnection(scheme string, host string, httpClient *http.Client, headers 
 }
 
 // WaitForWeaviate waits until weaviate is started up and ready
-// expects weaviat at localhost:8080
 func (con *Connection) WaitForWeaviate(startup_period int) error {
 	if startup_period < 0 {
 		return errors.New("'startup_period' needs to be an integer larger than zero")
 	}
 
 	for i := 0; i < startup_period; i++ {
-		ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*3)
+		ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second)
 		response, err := con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
 		var isReady bool
 		switch {
