@@ -179,7 +179,7 @@ func CreateTestClient(port int, connectionClient *http.Client) *weaviate.Client 
 		}
 	}
 	client := weaviate.New(*cfg)
-	client.WaitForWeavaite(20)
+	client.WaitForWeavaite(60)
 	return client
 }
 
