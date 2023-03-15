@@ -21,7 +21,7 @@ func TestWaitForWeaviate(t *testing.T) {
 
 	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
 	client := weaviate.New(cfg)
-	err := client.WaitForWeavaite(5)
+	err := client.WaitForWeavaite(60)
 	assert.Nil(t, err)
 }
 

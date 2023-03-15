@@ -199,7 +199,7 @@ func TestAuthOnWeaviateWithoutAuth(t *testing.T) {
 func TestAuthNoWeaviateOnPort(t *testing.T) {
 	cfg := weaviate.Config{Host: "localhost:" + fmt.Sprint(testsuit.NoWeaviatePort), Scheme: "http"}
 	var err error
-	_, err = weaviate.AddAuthClient(cfg, auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}, 60)
+	_, err = weaviate.AddAuthClient(cfg, auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}, 0)
 	assert.NotNil(t, err)
 }
 
