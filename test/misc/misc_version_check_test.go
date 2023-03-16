@@ -7,10 +7,25 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 )
 
 func TestMisc_version_check(t *testing.T) {
+	cfg := &weaviate.Config{
+		Host:    "localhost:8080",
+		Scheme:  "http",
+		Headers: map[string]string{},
+	}
+
+	client := weaviate.New(*cfg)
+
+	t.Run("Weaviate is not live, perform live check", func(t *testing.T) {
+		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
+		assert.NotNil(t, err)
+		assert.False(t, isReady)
+	})
+
 	t.Run("Start Weaviate", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -18,10 +33,7 @@ func TestMisc_version_check(t *testing.T) {
 			t.Fail()
 		}
 	})
-
-	// needs to be the same client for the whole test
-	client := testsuit.CreateTestClient(8080, nil)
-
+	client.WaitForWeavaite(60)
 	t.Run("Weaviate is live, perform ready check", func(t *testing.T) {
 		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
 		assert.Nil(t, err)
@@ -64,6 +76,21 @@ func TestMisc_version_check(t *testing.T) {
 }
 
 func TestMisc_empty_version_check(t *testing.T) {
+	// needs to be the same client for the whole test
+	cfg := &weaviate.Config{
+		Host:    "localhost:8080",
+		Scheme:  "http",
+		Headers: map[string]string{},
+	}
+
+	client := weaviate.New(*cfg)
+
+	t.Run("Weaviate is not live, perform live check", func(t *testing.T) {
+		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
+		assert.NotNil(t, err)
+		assert.False(t, isReady)
+	})
+
 	t.Run("Start Weaviate", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -71,10 +98,7 @@ func TestMisc_empty_version_check(t *testing.T) {
 			t.Fail()
 		}
 	})
-
-	// needs to be the same client for the whole test
-	client := testsuit.CreateTestClient(8080, nil)
-
+	client.WaitForWeavaite(60)
 	t.Run("Create sample schema food, try to perform queries using /v1/objects?class={className}", func(t *testing.T) {
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 

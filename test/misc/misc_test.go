@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 )
 
@@ -66,5 +67,33 @@ func TestMisc_integration(t *testing.T) {
 			fmt.Printf(err.Error())
 			t.Fail()
 		}
+	})
+}
+
+func TestMisc_connection_error(t *testing.T) {
+	t.Run("ready", func(t *testing.T) {
+		cfg := weaviate.Config{
+			Host:   "localhorst",
+			Scheme: "http",
+		}
+
+		client := weaviate.New(cfg)
+		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
+
+		assert.NotNil(t, err)
+		assert.False(t, isReady)
+	})
+
+	t.Run("live", func(t *testing.T) {
+		cfg := weaviate.Config{
+			Host:   "localhorst",
+			Scheme: "http",
+		}
+
+		client := weaviate.New(cfg)
+		isReady, err := client.Misc().LiveChecker().Do(context.Background())
+
+		assert.NotNil(t, err)
+		assert.False(t, isReady)
 	})
 }
