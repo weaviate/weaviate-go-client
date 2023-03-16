@@ -59,8 +59,10 @@ func (con *Connection) WaitForWeaviate(startup_period int) error {
 	if startup_period < 0 {
 		return errors.New("'startup_period' needs to be an integer larger than zero")
 	}
-
-	for i := 0; i < startup_period; i++ {
+	ticker := time.NewTicker(time.Second)
+	start_time := time.Now()
+	for {
+		t := <-ticker.C
 		ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second)
 		response, err := con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
 		var isReady bool
@@ -78,11 +80,11 @@ func (con *Connection) WaitForWeaviate(startup_period int) error {
 		if isReady {
 			return nil
 		}
-		fmt.Printf("Weaviate not yet up waiting another second. Iteration: %v\n", i)
-		time.Sleep(time.Second)
+		if t.After(start_time.Add(time.Duration(startup_period) * time.Second)) {
+			return fmt.Errorf("weaviate did not start up in %d seconds. Either the Weaviate URL %s is wrong or Weaviate did not start up in the interval given in 'startup_period'", startup_period, con.basePath)
+		}
+		fmt.Printf("Weaviate not yet up waiting another second. Current time: %v\n", t)
 	}
-
-	return fmt.Errorf("weaviate did not start up in %d seconds. Either the Weaviate URL %s is wrong or Weaviate did not start up in the interval given in 'startup_period'", startup_period, con.basePath)
 }
 
 // startRefreshGoroutine starts a background goroutine that periodically refreshes the auth token.
