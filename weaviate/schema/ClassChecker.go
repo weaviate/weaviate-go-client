@@ -2,12 +2,17 @@ package schema
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
 )
 
-// ClassDeleter builder to remove a class from weaviate
+// ClassExistenceChecker builder to check if a class is part of a weaviate schema
 type ClassExistenceChecker struct {
-	schemaAPI *API
-	className string
+	connection *connection.Connection
+	className  string
 }
 
 // WithClassName defines the name of the class that should be checked
@@ -16,8 +21,14 @@ func (cd *ClassExistenceChecker) WithClassName(className string) *ClassExistence
 	return cd
 }
 
-// Do delete the class from the weaviate schema
-func (cd *ClassExistenceChecker) Do(ctx context.Context) bool {
-	_, err := cd.schemaAPI.ClassGetter().WithClassName(cd.className).Do(ctx)
-	return err == nil
+// Do check if the class is part of the weaviate schema
+func (cd *ClassExistenceChecker) Do(ctx context.Context) (bool, error) {
+	responseData, err := cd.connection.RunREST(ctx, fmt.Sprintf("/schema/%s", cd.className), http.MethodGet, nil)
+	if err != nil {
+		return false, except.NewDerivedWeaviateClientError(err)
+	}
+	if responseData.StatusCode == 200 {
+		return true, nil
+	}
+	return false, nil
 }

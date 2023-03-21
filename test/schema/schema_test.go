@@ -225,10 +225,12 @@ func TestSchema_integration(t *testing.T) {
 		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
 		assert.Nil(t, err)
 
-		ok := client.Schema().ClassExistenceChecker().WithClassName("Band").Do(context.Background())
+		ok, err := client.Schema().ClassExistenceChecker().WithClassName("Band").Do(context.Background())
+		assert.Nil(t, err)
 		assert.True(t, ok)
 
-		ok = client.Schema().ClassExistenceChecker().WithClassName("NonExistantClass").Do(context.Background())
+		ok, err = client.Schema().ClassExistenceChecker().WithClassName("NonExistantClass").Do(context.Background())
+		assert.Nil(t, err)
 		assert.False(t, ok)
 
 		// Clean up classes
