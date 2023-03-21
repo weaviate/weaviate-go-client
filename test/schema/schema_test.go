@@ -215,6 +215,27 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, errRm)
 	})
 
+	t.Run("CHECK /schema/{className}", func(t *testing.T) {
+		client := testsuit.CreateTestClient(8080, nil)
+
+		schemaClass := &models.Class{
+			Class: "Band",
+		}
+
+		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
+		assert.Nil(t, err)
+
+		ok := client.Schema().ClassExistenceChecker().WithClassName("Band").Do(context.Background())
+		assert.True(t, ok)
+
+		ok = client.Schema().ClassExistenceChecker().WithClassName("NonExistantClass").Do(context.Background())
+		assert.False(t, ok)
+
+		// Clean up classes
+		errRm := client.Schema().AllDeleter().Do(context.Background())
+		assert.Nil(t, errRm)
+	})
+
 	t.Run("GET /schema/{className}/shards", func(t *testing.T) {
 		client := testsuit.CreateTestClient(8080, nil)
 
