@@ -26,6 +26,13 @@ func (schema *API) ClassGetter() *ClassGetter {
 	}
 }
 
+// ClassExistenceChecker builder to check if a class is part of a weaviate schema
+func (schema *API) ClassExistenceChecker() *ClassExistenceChecker {
+	return &ClassExistenceChecker{
+		connection: schema.connection,
+	}
+}
+
 // ClassCreator builder to create a weaviate schema class
 func (schema *API) ClassCreator() *ClassCreator {
 	return &ClassCreator{

@@ -206,9 +206,32 @@ func TestSchema_integration(t *testing.T) {
 		assert.NotNil(t, bandClass.ModuleConfig)
 		assert.NotNil(t, bandClass.VectorIndexConfig)
 
-		nonExistantClass, getErr := client.Schema().ClassGetter().WithClassName("NonExistantClass").Do(context.Background())
+		nonExistantClass, getErr := client.Schema().ClassGetter().WithClassName("NonExistentClass").Do(context.Background())
 		assert.NotNil(t, getErr)
 		assert.Nil(t, nonExistantClass)
+
+		// Clean up classes
+		errRm := client.Schema().AllDeleter().Do(context.Background())
+		assert.Nil(t, errRm)
+	})
+
+	t.Run("CHECK /schema/{className}", func(t *testing.T) {
+		client := testsuit.CreateTestClient(8080, nil)
+
+		schemaClass := &models.Class{
+			Class: "Band",
+		}
+
+		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
+		assert.Nil(t, err)
+
+		ok, err := client.Schema().ClassExistenceChecker().WithClassName("Band").Do(context.Background())
+		assert.Nil(t, err)
+		assert.True(t, ok)
+
+		ok, err = client.Schema().ClassExistenceChecker().WithClassName("NonExistentClass").Do(context.Background())
+		assert.Nil(t, err)
+		assert.False(t, ok)
 
 		// Clean up classes
 		errRm := client.Schema().AllDeleter().Do(context.Background())
