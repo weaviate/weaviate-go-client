@@ -27,8 +27,8 @@ func (schema *API) ClassGetter() *ClassGetter {
 }
 
 // ClassChecker builder to check if a class is part of a weaviate schema
-func (schema *API) ClassChecker() *ClassChecker {
-	return &ClassChecker{
+func (schema *API) ClassExistenceChecker() *ClassExistenceChecker {
+	return &ClassExistenceChecker{
 		schemaAPI: schema,
 	}
 }
