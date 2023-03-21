@@ -206,7 +206,7 @@ func TestSchema_integration(t *testing.T) {
 		assert.NotNil(t, bandClass.ModuleConfig)
 		assert.NotNil(t, bandClass.VectorIndexConfig)
 
-		nonExistantClass, getErr := client.Schema().ClassGetter().WithClassName("NonExistantClass").Do(context.Background())
+		nonExistantClass, getErr := client.Schema().ClassGetter().WithClassName("NonExistentClass").Do(context.Background())
 		assert.NotNil(t, getErr)
 		assert.Nil(t, nonExistantClass)
 
@@ -229,7 +229,7 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, err)
 		assert.True(t, ok)
 
-		ok, err = client.Schema().ClassExistenceChecker().WithClassName("NonExistantClass").Do(context.Background())
+		ok, err = client.Schema().ClassExistenceChecker().WithClassName("NonExistentClass").Do(context.Background())
 		assert.Nil(t, err)
 		assert.False(t, ok)
 
