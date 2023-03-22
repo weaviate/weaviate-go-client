@@ -55,12 +55,12 @@ func NewConnection(scheme string, host string, httpClient *http.Client, headers 
 }
 
 // WaitForWeaviate waits until weaviate is started up and ready
-func (con *Connection) WaitForWeaviate(startup_period int) error {
-	if startup_period < 0 {
-		return errors.New("'startup_period' needs to be an integer larger than zero")
+func (con *Connection) WaitForWeaviate(startupTimeout time.Duration) error {
+	if startupTimeout < 0 {
+		return errors.New("'startupTimeout' needs to be an integer larger than zero")
 	}
 	ticker := time.NewTicker(time.Second)
-	start_time := time.Now()
+	startTime := time.Now()
 	for {
 		t := <-ticker.C
 		ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second)
@@ -80,10 +80,10 @@ func (con *Connection) WaitForWeaviate(startup_period int) error {
 		if isReady {
 			return nil
 		}
-		if t.After(start_time.Add(time.Duration(startup_period) * time.Second)) {
-			return fmt.Errorf("weaviate did not start up in %d seconds. Either the Weaviate URL %s is wrong or Weaviate did not start up in the interval given in 'startup_period'", startup_period, con.basePath)
+		if t.After(startTime.Add(startupTimeout * time.Second)) {
+			return fmt.Errorf("weaviate did not start up in %d seconds. Either the Weaviate URL %q is wrong or Weaviate did not start up in the interval given in 'startupTimeout'", startupTimeout, con.basePath)
 		}
-		fmt.Printf("Weaviate not yet up waiting another second. Current time: %v\n", t)
+		log.Printf("Weaviate not yet up. Waiting for another second.")
 	}
 }
 

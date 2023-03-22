@@ -3,6 +3,7 @@ package weaviate
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/backup"
@@ -50,13 +51,13 @@ func NewConfig(host string, scheme string, authConfig auth.Config, headers map[s
 	return &Config{Host: host, Scheme: scheme, Headers: headers, ConnectionClient: client}, nil
 }
 
-func AddAuthClient(cfg Config, authConfig auth.Config, startup_period int) (Config, error) {
+func AddAuthClient(cfg Config, authConfig auth.Config, startupTimeout int) (Config, error) {
 	if authConfig == nil {
 		return cfg, nil
 	}
 
 	tmpCon := connection.NewConnection(cfg.Scheme, cfg.Host, nil, cfg.Headers)
-	err := tmpCon.WaitForWeaviate(startup_period)
+	err := tmpCon.WaitForWeaviate(time.Duration(startupTimeout))
 	if err != nil {
 		return cfg, err
 	}
@@ -126,8 +127,8 @@ func New(config Config) *Client {
 }
 
 // Waits for Weaviate to start.
-func (c *Client) WaitForWeavaite(startup_period int) error {
-	return c.connection.WaitForWeaviate(startup_period)
+func (c *Client) WaitForWeavaite(startupTimeout int) error {
+	return c.connection.WaitForWeaviate(time.Duration(startupTimeout))
 }
 
 // Misc collection group for .well_known and root level API commands
