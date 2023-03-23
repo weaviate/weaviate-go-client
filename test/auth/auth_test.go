@@ -279,22 +279,27 @@ func getAccessToken(t *testing.T, weaviateUrl, user, pw string) (string, string)
 }
 
 func TestApiKey(t *testing.T) {
-	tests := []struct {
-		name string
-		key  string
-	}{
-		{name: "a", key: "my-secret-key"},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			url := fmt.Sprintf("http://127.0.0.1:%v", testsuit.WCSPort)
-			headers := map[string]string{}
-			cfg, err := weaviate.NewConfig(url, "http", auth.ApiKeys{ApiKey: tc.key}, headers)
-			assert.Nil(t, err)
+	t.Run(t.Name(), func(t *testing.T) {
+		url := fmt.Sprintf("http://127.0.0.1:%v", testsuit.WCSPort)
+		headers := map[string]string{}
+		cfg, err := weaviate.NewConfig(url, "http", auth.ApiKeys{ApiKey: "my-secret-key"}, headers)
+		assert.Nil(t, err)
 
-			client := weaviate.New(*cfg)
-			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-			assert.Nil(t, AuthErr)
-		})
-	}
+		client := weaviate.New(*cfg)
+		AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+		assert.Nil(t, AuthErr)
+	})
+}
+
+func TestWrongApiKey(t *testing.T) {
+	t.Run(t.Name(), func(t *testing.T) {
+		url := fmt.Sprintf("http://127.0.0.1:%v", testsuit.WCSPort)
+		headers := map[string]string{}
+		cfg, err := weaviate.NewConfig(url, "http", auth.ApiKeys{ApiKey: "wrong_key"}, headers)
+		assert.Nil(t, err)
+
+		client := weaviate.New(*cfg)
+		AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+		assert.NotNil(t, AuthErr)
+	})
 }
