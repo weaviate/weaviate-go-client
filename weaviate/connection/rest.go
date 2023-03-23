@@ -57,7 +57,7 @@ func NewConnection(scheme string, host string, httpClient *http.Client, headers 
 // WaitForWeaviate waits until weaviate is started up and ready
 func (con *Connection) WaitForWeaviate(startupTimeout time.Duration) error {
 	if startupTimeout < 0 {
-		return errors.New("'startupTimeout' needs to be an integer larger than zero")
+		return errors.New("'startupTimeout' needs to be a time.Duration larger than zero")
 	}
 	ticker := time.NewTicker(time.Second)
 	startTime := time.Now()
@@ -80,7 +80,7 @@ func (con *Connection) WaitForWeaviate(startupTimeout time.Duration) error {
 		if isReady {
 			return nil
 		}
-		if t.After(startTime.Add(startupTimeout * time.Second)) {
+		if t.After(startTime.Add(startupTimeout)) {
 			return fmt.Errorf("weaviate did not start up in %d seconds. Either the Weaviate URL %q is wrong or Weaviate did not start up in the interval given in 'startupTimeout'", startupTimeout, con.basePath)
 		}
 		log.Printf("Weaviate not yet up. Waiting for another second.")
