@@ -75,7 +75,7 @@ func TestAuthMock_NoRefreshToken(t *testing.T) {
 			defer s.Close()
 			cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
 			var err error
-			cfg, err = weaviate.AddAuthClient(cfg, tc.authConfig, 5)
+			cfg, err = weaviate.AddAuthClient(cfg, tc.authConfig, 60*time.Second)
 			assert.Nil(t, err)
 			assert.True(t, strings.Contains(buf.String(), "Auth002"))
 
@@ -122,7 +122,7 @@ func TestAuthMock_RefreshCC(t *testing.T) {
 	defer s.Close()
 	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
 	var err error
-	cfg, err = weaviate.AddAuthClient(cfg, auth.ClientCredentials{ClientSecret: "SecretValue"}, 5)
+	cfg, err = weaviate.AddAuthClient(cfg, auth.ClientCredentials{ClientSecret: "SecretValue"}, 60*time.Second)
 	assert.Nil(t, err)
 	client := weaviate.New(cfg)
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
@@ -195,7 +195,7 @@ func TestAuthMock_RefreshUserPWAndToken(t *testing.T) {
 			defer s.Close()
 			cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
 			var err error
-			cfg, err = weaviate.AddAuthClient(cfg, tc.authConfig, 5)
+			cfg, err = weaviate.AddAuthClient(cfg, tc.authConfig, 60*time.Second)
 			assert.Nil(t, err)
 			client := weaviate.New(cfg)
 			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
@@ -233,7 +233,7 @@ func TestAuthMock_CatchAllProxy(t *testing.T) {
 	defer s.Close()
 	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
 	var err error
-	cfg, err = weaviate.AddAuthClient(cfg, nil, 5)
+	cfg, err = weaviate.AddAuthClient(cfg, nil, 60*time.Second)
 	assert.Nil(t, err)
 	client := weaviate.New(cfg)
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
@@ -279,7 +279,7 @@ func TestAuthMock_CheckDefaultScopes(t *testing.T) {
 	defer s.Close()
 	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
 	var err error
-	cfg, err = weaviate.AddAuthClient(cfg, auth.ClientCredentials{ClientSecret: "SecretValue"}, 5)
+	cfg, err = weaviate.AddAuthClient(cfg, auth.ClientCredentials{ClientSecret: "SecretValue"}, 60*time.Second)
 	assert.Nil(t, err)
 	client := weaviate.New(cfg)
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())

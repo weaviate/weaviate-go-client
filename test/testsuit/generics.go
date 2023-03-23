@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/stretchr/testify/assert"
@@ -179,7 +180,7 @@ func CreateTestClient(port int, connectionClient *http.Client) *weaviate.Client 
 		}
 	}
 	client := weaviate.New(*cfg)
-	client.WaitForWeavaite(60)
+	client.WaitForWeavaite(60 * time.Second)
 	return client
 }
 

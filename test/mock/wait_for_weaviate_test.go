@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
@@ -21,7 +22,7 @@ func TestWaitForWeaviate(t *testing.T) {
 
 	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
 	client := weaviate.New(cfg)
-	err := client.WaitForWeavaite(60)
+	err := client.WaitForWeavaite(60 * time.Second)
 	assert.Nil(t, err)
 }
 
@@ -33,6 +34,6 @@ func TestWaitForWeaviate_NoConnection(t *testing.T) {
 
 	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
 	client := weaviate.New(cfg)
-	err := client.WaitForWeavaite(5)
+	err := client.WaitForWeavaite(5 * time.Second)
 	assert.NotNil(t, err)
 }
