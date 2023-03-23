@@ -293,7 +293,7 @@ func TestApiKey(t *testing.T) {
 
 func TestWrongApiKey(t *testing.T) {
 	t.Run(t.Name(), func(t *testing.T) {
-		url := fmt.Sprintf("http://127.0.0.1:%v", testsuit.WCSPort)
+		url := fmt.Sprintf("127.0.0.1:%v", testsuit.WCSPort)
 		headers := map[string]string{}
 		cfg, err := weaviate.NewConfig(url, "http", auth.ApiKeys{ApiKey: "wrong_key"}, headers)
 		assert.Nil(t, err)
