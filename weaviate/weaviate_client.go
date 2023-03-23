@@ -41,19 +41,20 @@ type Config struct {
 func NewConfig(host string, scheme string, authConfig auth.Config, headers map[string]string) (*Config, error) {
 	var client *http.Client
 	var err error
+	var additionalHeaders map[string]string
 	if authConfig != nil {
 		tmpCon := connection.NewConnection(scheme, host, nil, headers)
-		client, err = authConfig.GetAuthClient(tmpCon)
+		client, additionalHeaders, err = authConfig.GetAuthInfo(tmpCon)
 		if err != nil {
 			return nil, err
 		}
-		switch authConfig.(type) {
-		case auth.ApiKeys:
-			apiStruct := authConfig.(auth.ApiKeys)
-			headers["authorization"] = "Bearer " + apiStruct.ApiKey
+		for k, v := range additionalHeaders {
+			headers[k] = v
 		}
+
 	}
 	return &Config{Host: host, Scheme: scheme, Headers: headers, ConnectionClient: client}, nil
+
 }
 
 func AddAuthClient(cfg Config, authConfig auth.Config, startupTimeout time.Duration) (Config, error) {

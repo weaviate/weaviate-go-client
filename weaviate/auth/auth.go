@@ -17,7 +17,7 @@ import (
 const oidcConfigURL = "/.well-known/openid-configuration"
 
 type Config interface {
-	GetAuthClient(con *connection.Connection) (*http.Client, error)
+	GetAuthInfo(con *connection.Connection) (*http.Client, map[string]string, error)
 }
 
 type authBase struct {
@@ -84,12 +84,12 @@ type ClientCredentials struct {
 	authBase
 }
 
-func (cc ClientCredentials) GetAuthClient(con *connection.Connection) (*http.Client, error) {
+func (cc ClientCredentials) GetAuthInfo(con *connection.Connection) (*http.Client, map[string]string, error) {
 	err := cc.getIdAndTokenEndpoint(context.Background(), con)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	} else if cc.ClientId == "" && cc.TokenEndpoint == "" {
-		return nil, nil // not configured with authentication
+		return nil, nil, nil // not configured with authentication
 	}
 
 	if cc.Scopes == nil {
@@ -105,7 +105,7 @@ func (cc ClientCredentials) GetAuthClient(con *connection.Connection) (*http.Cli
 		TokenURL:     cc.TokenEndpoint,
 		Scopes:       cc.Scopes,
 	}
-	return config.Client(context.TODO()), nil
+	return config.Client(context.TODO()), nil, nil
 }
 
 type ResourceOwnerPasswordFlow struct {
@@ -115,12 +115,12 @@ type ResourceOwnerPasswordFlow struct {
 	authBase
 }
 
-func (ro ResourceOwnerPasswordFlow) GetAuthClient(con *connection.Connection) (*http.Client, error) {
+func (ro ResourceOwnerPasswordFlow) GetAuthInfo(con *connection.Connection) (*http.Client, map[string]string, error) {
 	err := ro.getIdAndTokenEndpoint(context.Background(), con)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	} else if ro.ClientId == "" && ro.TokenEndpoint == "" {
-		return nil, nil // not configured with authentication
+		return nil, nil, nil // not configured with authentication
 	}
 
 	if ro.Scopes == nil || len(ro.Scopes) == 0 {
@@ -131,13 +131,13 @@ func (ro ResourceOwnerPasswordFlow) GetAuthClient(con *connection.Connection) (*
 	conf := oauth2.Config{ClientID: ro.ClientId, Endpoint: oauth2.Endpoint{TokenURL: ro.TokenEndpoint}}
 	token, err := conf.PasswordCredentialsToken(context.TODO(), ro.Username, ro.Password)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	// username + password are not saved by the client, so there is no possibility of refreshing the token with a
 	// refresh_token.
 	if token.RefreshToken == "" {
 		log.Printf("Auth002: Your access token is valid for %v and no refresh token was provided.", time.Until(token.Expiry))
-		return oauth2.NewClient(context.TODO(), oauth2.StaticTokenSource(token)), nil
+		return oauth2.NewClient(context.TODO(), oauth2.StaticTokenSource(token)), nil, nil
 	}
 
 	// creat oauth configuration that includes the endpoint and client id as a token source with a refresh token
@@ -147,7 +147,7 @@ func (ro ResourceOwnerPasswordFlow) GetAuthClient(con *connection.Connection) (*
 		AccessToken: token.AccessToken, RefreshToken: token.RefreshToken, Expiry: token.Expiry,
 	})
 
-	return oauth2.NewClient(context.TODO(), tokenSource), nil
+	return oauth2.NewClient(context.TODO(), tokenSource), nil, nil
 }
 
 type BearerToken struct {
@@ -157,24 +157,24 @@ type BearerToken struct {
 	authBase
 }
 
-func (bt BearerToken) GetAuthClient(con *connection.Connection) (*http.Client, error) {
+func (bt BearerToken) GetAuthInfo(con *connection.Connection) (*http.Client, map[string]string, error) {
 	// we don't need these values, but we can check if weaviate is configured with authentication enabled
 	err := bt.getIdAndTokenEndpoint(context.Background(), con)
 	if err == nil && bt.ClientId == "" && len(bt.WeaviateScopes) == 0 && bt.TokenEndpoint == "" {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	// there is no possibility of refreshing the token without a refresh_token.
 	if bt.RefreshToken == "" {
 		log.Printf("Auth002: Your access token is valid for %v and no refresh token was provided.", time.Now().Add(time.Second*time.Duration(bt.ExpiresIn)))
-		return oauth2.NewClient(context.TODO(), oauth2.StaticTokenSource(&oauth2.Token{AccessToken: bt.AccessToken})), nil
+		return oauth2.NewClient(context.TODO(), oauth2.StaticTokenSource(&oauth2.Token{AccessToken: bt.AccessToken})), nil, nil
 	}
 	conf := oauth2.Config{ClientID: bt.ClientId, Endpoint: oauth2.Endpoint{TokenURL: bt.TokenEndpoint}}
 	tokenSource := conf.TokenSource(context.TODO(), &oauth2.Token{
 		AccessToken: bt.AccessToken, RefreshToken: bt.RefreshToken, Expiry: time.Now().Add(time.Second * time.Duration(bt.ExpiresIn)),
 	})
 
-	return oauth2.NewClient(context.TODO(), tokenSource), nil
+	return oauth2.NewClient(context.TODO(), tokenSource), nil, nil
 }
 
 type ApiKeys struct {
@@ -182,6 +182,8 @@ type ApiKeys struct {
 }
 
 // This should never be accessed. Only exist to make ApiKey a part of the Config interface.
-func (api ApiKeys) GetAuthClient(con *connection.Connection) (*http.Client, error) {
-	return &http.Client{}, nil
+func (api ApiKeys) GetAuthInfo(con *connection.Connection) (*http.Client, map[string]string, error) {
+	additional_headers := make(map[string]string)
+	additional_headers["authorization"] = "Bearer " + api.ApiKey
+	return nil, additional_headers, nil
 }
