@@ -80,7 +80,7 @@ func (con *Connection) WaitForWeaviate(startupTimeout time.Duration) error {
 		if isReady {
 			return nil
 		}
-		if t.After(startTime.Add(startupTimeout)) {
+		if t.After(startTime.Add(startupTimeout * time.Second)) {
 			return fmt.Errorf("weaviate did not start up in %d seconds. Either the Weaviate URL %q is wrong or Weaviate did not start up in the interval given in 'startupTimeout'", startupTimeout, con.basePath)
 		}
 		log.Printf("Weaviate not yet up. Waiting for another second.")
