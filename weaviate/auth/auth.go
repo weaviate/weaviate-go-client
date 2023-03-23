@@ -176,3 +176,12 @@ func (bt BearerToken) GetAuthClient(con *connection.Connection) (*http.Client, e
 
 	return oauth2.NewClient(context.TODO(), tokenSource), nil
 }
+
+type APIStruct struct {
+	ApiKey string
+}
+
+// This should never be accessed. Only exist to make ApiKey a part of the Config interface.
+func (api APIStruct) GetAuthClient(con *connection.Connection) (*http.Client, error) {
+	return nil, nil
+}
