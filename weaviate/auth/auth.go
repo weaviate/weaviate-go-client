@@ -181,7 +181,7 @@ type ApiKeys struct {
 	ApiKey string
 }
 
-// This should never be accessed. Only exist to make ApiKey a part of the Config interface.
+// Returns the header used for the authentification.
 func (api ApiKeys) GetAuthInfo(con *connection.Connection) (*http.Client, map[string]string, error) {
 	additional_headers := make(map[string]string)
 	additional_headers["authorization"] = "Bearer " + api.ApiKey

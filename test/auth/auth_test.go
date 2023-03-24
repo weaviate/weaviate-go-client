@@ -279,27 +279,24 @@ func getAccessToken(t *testing.T, weaviateUrl, user, pw string) (string, string)
 }
 
 func TestApiKey(t *testing.T) {
-	t.Run(t.Name(), func(t *testing.T) {
-		url := fmt.Sprintf("127.0.0.1:%v", testsuit.WCSPort)
-		headers := map[string]string{}
-		cfg, err := weaviate.NewConfig(url, "http", auth.ApiKeys{ApiKey: "my-secret-key"}, headers)
-		assert.Nil(t, err)
 
-		client := weaviate.New(*cfg)
-		AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-		assert.Nil(t, AuthErr)
-	})
+	url := fmt.Sprintf("127.0.0.1:%v", testsuit.WCSPort)
+	headers := map[string]string{}
+	cfg, err := weaviate.NewConfig(url, "http", auth.ApiKeys{ApiKey: "my-secret-key"}, headers)
+	assert.Nil(t, err)
+
+	client := weaviate.New(*cfg)
+	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+	assert.Nil(t, AuthErr)
 }
 
 func TestWrongApiKey(t *testing.T) {
-	t.Run(t.Name(), func(t *testing.T) {
-		url := fmt.Sprintf("127.0.0.1:%v", testsuit.WCSPort)
-		headers := map[string]string{}
-		cfg, err := weaviate.NewConfig(url, "http", auth.ApiKeys{ApiKey: "wrong_key"}, headers)
-		assert.Nil(t, err)
+	url := fmt.Sprintf("127.0.0.1:%v", testsuit.WCSPort)
+	headers := map[string]string{}
+	cfg, err := weaviate.NewConfig(url, "http", auth.ApiKeys{ApiKey: "wrong_key"}, headers)
+	assert.Nil(t, err)
 
-		client := weaviate.New(*cfg)
-		AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-		assert.NotNil(t, AuthErr)
-	})
+	client := weaviate.New(*cfg)
+	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+	assert.NotNil(t, AuthErr)
 }

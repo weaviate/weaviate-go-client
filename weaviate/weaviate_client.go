@@ -51,7 +51,6 @@ func NewConfig(host string, scheme string, authConfig auth.Config, headers map[s
 		for k, v := range additionalHeaders {
 			headers[k] = v
 		}
-
 	}
 	return &Config{Host: host, Scheme: scheme, Headers: headers, ConnectionClient: client}, nil
 
