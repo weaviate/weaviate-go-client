@@ -53,7 +53,6 @@ func NewConfig(host string, scheme string, authConfig auth.Config, headers map[s
 		}
 	}
 	return &Config{Host: host, Scheme: scheme, Headers: headers, ConnectionClient: client}, nil
-
 }
 
 func AddAuthClient(cfg Config, authConfig auth.Config, startupTimeout time.Duration) (Config, error) {

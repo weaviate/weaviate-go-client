@@ -279,7 +279,6 @@ func getAccessToken(t *testing.T, weaviateUrl, user, pw string) (string, string)
 }
 
 func TestApiKey(t *testing.T) {
-
 	url := fmt.Sprintf("127.0.0.1:%v", testsuit.WCSPort)
 	headers := map[string]string{}
 	cfg, err := weaviate.NewConfig(url, "http", auth.ApiKeys{ApiKey: "my-secret-key"}, headers)
