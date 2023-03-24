@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
 )
@@ -282,6 +283,26 @@ func TestAuthMock_CheckDefaultScopes(t *testing.T) {
 	cfg, err = weaviate.AddAuthClient(cfg, auth.ClientCredentials{ClientSecret: "SecretValue"}, 60*time.Second)
 	assert.Nil(t, err)
 	client := weaviate.New(cfg)
+	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+	assert.Nil(t, AuthErr)
+}
+
+func TestWithSimpleAuthNoOidcViaApiKey(t *testing.T) {
+	// Simulate a proxy that returns something if a page is not available => no valid json
+	token := "super-secret-key"
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		require.Equal(t, authHeader, "Bearer "+token)
+		w.Write([]byte(`{}`))
+	})
+	s := httptest.NewServer(mux)
+	defer s.Close()
+
+	headers := map[string]string{}
+	cfg, err := weaviate.NewConfig(strings.TrimPrefix(s.URL, "http://"), "http", auth.ApiKeys{ApiKey: token}, headers)
+	assert.Nil(t, err)
+	client := weaviate.New(*cfg)
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 	assert.Nil(t, AuthErr)
 }
