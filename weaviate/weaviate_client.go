@@ -65,10 +65,13 @@ func AddAuthClient(cfg Config, authConfig auth.Config, startupTimeout time.Durat
 	if err != nil {
 		return cfg, err
 	}
-
-	client, err := authConfig.GetAuthClient(tmpCon)
+	var additionalHeaders map[string]string
+	client, additionalHeaders, err := authConfig.GetAuthInfo(tmpCon)
 	if err != nil {
 		return cfg, err
+	}
+	for k, v := range additionalHeaders {
+		cfg.Headers[k] = v
 	}
 	cfg.ConnectionClient = client
 	return cfg, nil

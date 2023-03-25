@@ -296,13 +296,18 @@ func TestWithSimpleAuthNoOidcViaApiKey(t *testing.T) {
 		require.Equal(t, authHeader, "Bearer "+token)
 		w.Write([]byte(`{}`))
 	})
+	mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{}`))
+	})
 	s := httptest.NewServer(mux)
 	defer s.Close()
 
 	headers := map[string]string{}
-	cfg, err := weaviate.NewConfig(strings.TrimPrefix(s.URL, "http://"), "http", auth.ApiKeys{ApiKey: token}, headers)
+	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http", Headers: headers}
+	var err error
+	cfg, err = weaviate.AddAuthClient(cfg, auth.ApiKeys{ApiKey: token}, 60*time.Second)
 	assert.Nil(t, err)
-	client := weaviate.New(*cfg)
+	client := weaviate.New(cfg)
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 	assert.Nil(t, AuthErr)
 }
