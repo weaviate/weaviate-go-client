@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -44,13 +46,56 @@ func NewConnection(scheme string, host string, httpClient *http.Client, headers 
 
 	// shutdown goroutine when connections is cleaned up
 	runtime.SetFinalizer(connection, finalizer)
-
 	transport, ok := connection.httpClient.Transport.(*oauth2.Transport)
 	if ok {
 		connection.startRefreshGoroutine(transport)
 	}
 
 	return connection
+}
+
+// WaitForWeaviate waits until weaviate is started up and ready
+func (con *Connection) WaitForWeaviate(startupTimeout time.Duration) error {
+	if startupTimeout < 0 {
+		return errors.New("'startupTimeout' can not be smaller than zero")
+	} else if startupTimeout == 0 {
+		return nil
+	}
+
+	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second)
+	response, err := con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
+	cancelFunc()
+	if err == nil {
+		if response.StatusCode == 200 {
+			return nil
+		}
+	}
+	ticker := time.NewTicker(time.Second)
+	startTime := time.Now()
+	for {
+		t := <-ticker.C
+		ctx, cancelFunc = context.WithTimeout(context.Background(), time.Second)
+		response, err = con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
+		var isReady bool
+		switch {
+		case err != nil:
+			isReady = false
+		case response.StatusCode == 200:
+			isReady = true
+		default:
+			isReady = false
+
+		}
+
+		cancelFunc()
+		if isReady {
+			return nil
+		}
+		if t.After(startTime.Add(startupTimeout)) {
+			return fmt.Errorf("weaviate did not start up in %s. Either the Weaviate URL %q is wrong or Weaviate did not start up in the interval given in 'startupTimeout'", startupTimeout.String(), con.basePath)
+		}
+		log.Printf("Weaviate not yet up. Waiting for another second.")
+	}
 }
 
 // startRefreshGoroutine starts a background goroutine that periodically refreshes the auth token.

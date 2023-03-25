@@ -3,6 +3,7 @@ package weaviate
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/backup"
@@ -35,6 +36,8 @@ type Config struct {
 	Headers map[string]string
 }
 
+// Deprecated: This function is unable to wait for Weaviate to start. If you want to use an AuthClient, use
+// AddAuthClient() instead.
 func NewConfig(host string, scheme string, authConfig auth.Config, headers map[string]string) (*Config, error) {
 	var client *http.Client
 	var err error
@@ -46,6 +49,25 @@ func NewConfig(host string, scheme string, authConfig auth.Config, headers map[s
 		}
 	}
 	return &Config{Host: host, Scheme: scheme, Headers: headers, ConnectionClient: client}, nil
+}
+
+func AddAuthClient(cfg Config, authConfig auth.Config, startupTimeout time.Duration) (Config, error) {
+	if authConfig == nil {
+		return cfg, nil
+	}
+
+	tmpCon := connection.NewConnection(cfg.Scheme, cfg.Host, nil, cfg.Headers)
+	err := tmpCon.WaitForWeaviate(startupTimeout)
+	if err != nil {
+		return cfg, err
+	}
+
+	client, err := authConfig.GetAuthClient(tmpCon)
+	if err != nil {
+		return cfg, err
+	}
+	cfg.ConnectionClient = client
+	return cfg, nil
 }
 
 // Client implementing the weaviate API
@@ -102,6 +124,11 @@ func New(config Config) *Client {
 	}
 
 	return client
+}
+
+// Waits for Weaviate to start.
+func (c *Client) WaitForWeavaite(startupTimeout time.Duration) error {
+	return c.connection.WaitForWeaviate(startupTimeout)
 }
 
 // Misc collection group for .well_known and root level API commands

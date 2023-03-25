@@ -68,14 +68,18 @@ func TestAuthMock_NoRefreshToken(t *testing.T) {
 			mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
 				w.Write([]byte(`{}`))
 			})
+			mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte(`{}`))
+			})
 			s := httptest.NewServer(mux)
 			defer s.Close()
-
-			cfg, err := weaviate.NewConfig(strings.TrimPrefix(s.URL, "http://"), "http", tc.authConfig, nil)
+			cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
+			var err error
+			cfg, err = weaviate.AddAuthClient(cfg, tc.authConfig, 60*time.Second)
 			assert.Nil(t, err)
 			assert.True(t, strings.Contains(buf.String(), "Auth002"))
 
-			client := weaviate.New(*cfg)
+			client := weaviate.New(cfg)
 			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 			assert.Nil(t, AuthErr)
 		})
@@ -111,15 +115,19 @@ func TestAuthMock_RefreshCC(t *testing.T) {
 	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{}`))
 	})
+	mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{}`))
+	})
 	s := httptest.NewServer(mux)
 	defer s.Close()
-
-	cfg, err := weaviate.NewConfig(strings.TrimPrefix(s.URL, "http://"), "http", auth.ClientCredentials{ClientSecret: "SecretValue"}, nil)
+	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
+	var err error
+	cfg, err = weaviate.AddAuthClient(cfg, auth.ClientCredentials{ClientSecret: "SecretValue"}, 60*time.Second)
 	assert.Nil(t, err)
-	client := weaviate.New(*cfg)
+	client := weaviate.New(cfg)
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 	assert.Nil(t, AuthErr)
-	assert.Equal(t, i, 3) // client does 3 initial calls to token endpoint
+	assert.Equal(t, i, 3) // client does 4 initial calls to token endpoint
 
 	time.Sleep(time.Second * 5)
 	// current token expires, so the oauth client needs to get a new one
@@ -180,12 +188,16 @@ func TestAuthMock_RefreshUserPWAndToken(t *testing.T) {
 				assert.True(t, time.Now().Sub(tokenRefreshTime).Seconds() < float64(expirationTimeToken))
 				w.Write([]byte(`{}`))
 			})
+			mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte(`{}`))
+			})
 			s := httptest.NewServer(mux)
 			defer s.Close()
-
-			cfg, err := weaviate.NewConfig(strings.TrimPrefix(s.URL, "http://"), "http", tc.authConfig, nil)
+			cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
+			var err error
+			cfg, err = weaviate.AddAuthClient(cfg, tc.authConfig, 60*time.Second)
 			assert.Nil(t, err)
-			client := weaviate.New(*cfg)
+			client := weaviate.New(cfg)
 			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 			assert.Nil(t, AuthErr)
 
@@ -214,12 +226,16 @@ func TestAuthMock_CatchAllProxy(t *testing.T) {
 	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{}`))
 	})
+	mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{}`))
+	})
 	s := httptest.NewServer(mux)
 	defer s.Close()
-
-	cfg, err := weaviate.NewConfig(strings.TrimPrefix(s.URL, "http://"), "http", nil, nil)
+	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
+	var err error
+	cfg, err = weaviate.AddAuthClient(cfg, nil, 60*time.Second)
 	assert.Nil(t, err)
-	client := weaviate.New(*cfg)
+	client := weaviate.New(cfg)
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 	assert.Nil(t, AuthErr)
 }
@@ -256,12 +272,16 @@ func TestAuthMock_CheckDefaultScopes(t *testing.T) {
 	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{}`))
 	})
+	mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{}`))
+	})
 	s := httptest.NewServer(mux)
 	defer s.Close()
-
-	cfg, err := weaviate.NewConfig(strings.TrimPrefix(s.URL, "http://"), "http", auth.ClientCredentials{ClientSecret: "SecretValue"}, nil)
+	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
+	var err error
+	cfg, err = weaviate.AddAuthClient(cfg, auth.ClientCredentials{ClientSecret: "SecretValue"}, 60*time.Second)
 	assert.Nil(t, err)
-	client := weaviate.New(*cfg)
+	client := weaviate.New(cfg)
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 	assert.Nil(t, AuthErr)
 }
