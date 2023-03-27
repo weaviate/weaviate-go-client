@@ -279,27 +279,58 @@ func getAccessToken(t *testing.T, weaviateUrl, user, pw string) (string, string)
 }
 
 func TestApiKey(t *testing.T) {
-	url := fmt.Sprintf("127.0.0.1:%v", testsuit.WCSPort)
-	headers := map[string]string{}
-	cfg := weaviate.Config{Host: url, Scheme: "http", Headers: headers}
-	var err error
-	cfg, err = weaviate.AddAuthClient(cfg, auth.ApiKeys{ApiKey: "my-secret-key"}, 60*time.Second)
-	assert.Nil(t, err)
+	tests := []struct {
+		headers map[string]string
+		newConf bool
+	}{
+		{headers: nil, newConf: false},
+		{headers: map[string]string{}, newConf: false},
+		{headers: map[string]string{"Key": "Val"}, newConf: false},
+		{headers: nil, newConf: true},
+		{headers: map[string]string{}, newConf: true},
+		{headers: map[string]string{"Key": "Val"}, newConf: true},
+	}
+	for _, tc := range tests {
+		t.Run("headers", func(t *testing.T) {
+			url := fmt.Sprintf("127.0.0.1:%v", testsuit.WCSPort)
+			authConf := auth.ApiKeys{ApiKey: "my-secret-key"}
+			var cfg weaviate.Config
 
-	client := weaviate.New(cfg)
-	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-	assert.Nil(t, AuthErr)
+			if tc.newConf {
+				cfg2, err := weaviate.NewConfig(url, "http", authConf, nil)
+				assert.Nil(t, err)
+				cfg = *cfg2
+			} else {
+				cfg = weaviate.Config{Host: url, Scheme: "http", Headers: tc.headers}
+				var err error
+				cfg, err = weaviate.AddAuthClient(cfg, authConf, 60*time.Second)
+				assert.Nil(t, err)
+			}
+
+			client := weaviate.New(cfg)
+			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+			assert.Nil(t, AuthErr)
+		})
+	}
 }
 
 func TestWrongApiKey(t *testing.T) {
 	url := fmt.Sprintf("127.0.0.1:%v", testsuit.WCSPort)
-	headers := map[string]string{}
-	cfg := weaviate.Config{Host: url, Scheme: "http", Headers: headers}
-	var err error
-	cfg, err = weaviate.AddAuthClient(cfg, auth.ApiKeys{ApiKey: "wrong_key"}, 60*time.Second)
-	assert.Nil(t, err)
+	tests := []struct {
+		headers map[string]string
+	}{
+		{headers: nil}, {headers: map[string]string{}}, {headers: map[string]string{"Key": "Val"}},
+	}
+	for _, tc := range tests {
+		t.Run("headers", func(t *testing.T) {
+			cfg := weaviate.Config{Host: url, Scheme: "http", Headers: tc.headers}
+			var err error
+			cfg, err = weaviate.AddAuthClient(cfg, auth.ApiKeys{ApiKey: "wrong_key"}, 60*time.Second)
+			assert.Nil(t, err)
 
-	client := weaviate.New(cfg)
-	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-	assert.NotNil(t, AuthErr)
+			client := weaviate.New(cfg)
+			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+			assert.NotNil(t, AuthErr)
+		})
+	}
 }

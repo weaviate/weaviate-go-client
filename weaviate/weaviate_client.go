@@ -48,6 +48,9 @@ func NewConfig(host string, scheme string, authConfig auth.Config, headers map[s
 		if err != nil {
 			return nil, err
 		}
+		if headers == nil {
+			headers = map[string]string{}
+		}
 		for k, v := range additionalHeaders {
 			headers[k] = v
 		}
@@ -65,10 +68,12 @@ func AddAuthClient(cfg Config, authConfig auth.Config, startupTimeout time.Durat
 	if err != nil {
 		return cfg, err
 	}
-	var additionalHeaders map[string]string
 	client, additionalHeaders, err := authConfig.GetAuthInfo(tmpCon)
 	if err != nil {
 		return cfg, err
+	}
+	if cfg.Headers == nil {
+		cfg.Headers = map[string]string{}
 	}
 	for k, v := range additionalHeaders {
 		cfg.Headers[k] = v

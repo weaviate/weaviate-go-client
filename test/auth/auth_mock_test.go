@@ -301,13 +301,24 @@ func TestWithSimpleAuthNoOidcViaApiKey(t *testing.T) {
 	})
 	s := httptest.NewServer(mux)
 	defer s.Close()
+	url := strings.TrimPrefix(s.URL, "http://")
+	authConf := auth.ApiKeys{ApiKey: token}
 
-	headers := map[string]string{}
-	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http", Headers: headers}
-	var err error
-	cfg, err = weaviate.AddAuthClient(cfg, auth.ApiKeys{ApiKey: token}, 60*time.Second)
-	assert.Nil(t, err)
-	client := weaviate.New(cfg)
-	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-	assert.Nil(t, AuthErr)
+	t.Run("AddAuthClient", func(t *testing.T) {
+		cfg := weaviate.Config{Host: url, Scheme: "http", Headers: nil}
+		var err error
+		cfg, err = weaviate.AddAuthClient(cfg, authConf, 60*time.Second)
+		assert.Nil(t, err)
+		client := weaviate.New(cfg)
+		AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+		assert.Nil(t, AuthErr)
+	})
+
+	t.Run("New Config", func(t *testing.T) {
+		cfg, err := weaviate.NewConfig(url, "http", authConf, nil)
+		assert.Nil(t, err)
+		client := weaviate.New(*cfg)
+		AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+		assert.Nil(t, AuthErr)
+	})
 }
