@@ -17,6 +17,8 @@ import (
 	"github.com/weaviate/weaviate/entities/models"
 )
 
+var dockerComposeBackupDir = "/tmp/backups"
+
 func TestBackups_integration(t *testing.T) {
 	if err := testenv.SetupLocalWeaviate(); err != nil {
 		t.Fatalf("failed to setup weaviate: %s", err)
@@ -26,8 +28,10 @@ func TestBackups_integration(t *testing.T) {
 			t.Fatalf("failed to tear down weaviate: %s", err)
 		}
 	}()
-
-	const dockerComposeBackupDir = "/tmp/backups"
+	_, authPw := testsuit.GetPortAndAuthPw()
+	if authPw != "" {
+		dockerComposeBackupDir += "-wcs"
+	}
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	client := testsuit.CreateTestClient()
 	testsuit.CleanUpWeaviate(t, client)

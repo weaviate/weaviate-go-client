@@ -20,7 +20,7 @@ services:
       PERSISTENCE_DATA_PATH: "./data-wcs"
       DEFAULT_VECTORIZER_MODULE: text2vec-contextionary
       ENABLE_MODULES: text2vec-contextionary,backup-filesystem,generative-openai
-      BACKUP_FILESYSTEM_PATH: "/tmp/backups"
+      BACKUP_FILESYSTEM_PATH: "/tmp/backups-wcs"
       CLUSTER_GOSSIP_BIND_PORT: "7108"
       CLUSTER_DATA_BIND_PORT: "7109"
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'false'
