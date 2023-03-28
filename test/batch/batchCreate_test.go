@@ -20,7 +20,7 @@ func TestBatchCreate_integration(t *testing.T) {
 	})
 
 	t.Run("POST /batch/objects", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		// Create some classes to add in a batch
@@ -86,7 +86,7 @@ func TestBatchCreate_integration(t *testing.T) {
 
 	// Testing batch object creation with tunable consistency
 	t.Run("POST /batch/{objects}?consistency_level={level}", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		// Create some classes to add in a batch
@@ -151,7 +151,7 @@ func TestBatchCreate_integration(t *testing.T) {
 	})
 
 	t.Run("POST /batch/references", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create some objects
@@ -227,7 +227,7 @@ func TestBatchCreate_integration(t *testing.T) {
 
 	// Testing batch reference creation with tunable consistency
 	t.Run("POST /batch/references?consistency_level={level}", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create some objects

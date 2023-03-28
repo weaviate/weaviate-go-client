@@ -19,7 +19,7 @@ func TestBatchCreate_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("POST /batch/references", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create some objects

@@ -29,7 +29,7 @@ func TestBackups_integration(t *testing.T) {
 
 	const dockerComposeBackupDir = "/tmp/backups"
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
-	client := testsuit.CreateTestClient(8080, nil)
+	client := testsuit.CreateTestClient()
 	testsuit.CleanUpWeaviate(t, client)
 
 	t.Run("create and restore backup with waiting", func(t *testing.T) {

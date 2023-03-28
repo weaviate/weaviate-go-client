@@ -25,7 +25,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -331,7 +331,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 	t.Run("Explore", func(t *testing.T) {
 		t.Run("with certainty", func(t *testing.T) {
-			client := testsuit.CreateTestClient(8080, nil)
+			client := testsuit.CreateTestClient()
 			testsuit.CreateTestSchemaAndData(t, client)
 			defer testsuit.CleanUpWeaviate(t, client)
 
@@ -372,7 +372,7 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with distance", func(t *testing.T) {
-			client := testsuit.CreateTestClient(8080, nil)
+			client := testsuit.CreateTestClient()
 			testsuit.CreateTestSchemaAndData(t, client)
 			defer testsuit.CleanUpWeaviate(t, client)
 
@@ -414,7 +414,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Aggregate", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -855,7 +855,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get with group filter", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -879,7 +879,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get with creationTimeUnix filters", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -920,7 +920,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get with lastUpdateTimeUnix filters", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -961,7 +961,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get bm25 filter", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -995,7 +995,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get hybrid filter", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1028,7 +1028,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("MultiClass Get", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1302,7 +1302,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("MultiClassGet with group filter", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1331,7 +1331,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("MultiClassGet with creationTimeUnix filters", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1388,7 +1388,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("MultiClassGet with lastUpdateTimeUnix filters", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 

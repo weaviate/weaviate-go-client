@@ -3,6 +3,8 @@ package test
 import (
 	"os"
 	"os/exec"
+
+	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 )
 
 // SetupWeaviate run docker compose up
@@ -12,6 +14,11 @@ func SetupWeaviate() error {
 		"up",
 		"-d",
 	}
+	_, authPw := testsuit.GetPortAndAuthPw()
+	if authPw != "" {
+		arguments = append([]string{"-f docker-compose-wcs.yml"}, arguments...)
+	}
+
 	return command(app, arguments)
 }
 

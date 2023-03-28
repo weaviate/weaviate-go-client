@@ -21,7 +21,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("POST /schema", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
 			Class:               "Band",
@@ -52,7 +52,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("POST /schema", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
 			Class:               "Run",
@@ -80,7 +80,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Delete /schema/{type}", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		schemaClassThing := &models.Class{
 			Class:       "Pizza",
@@ -112,7 +112,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Delete All schema", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		schemaClassThing := &models.Class{
 			Class:       "Pizza",
@@ -137,7 +137,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("POST /schema/{type}/{className}/properties", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		schemaClassThing := &models.Class{
 			Class:       "Pizza",
@@ -178,7 +178,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("GET /schema/{className}", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
 			Class:               "Band",
@@ -216,7 +216,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("CHECK /schema/{className}", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
 			Class: "Band",
@@ -239,7 +239,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("GET /schema/{className}/shards", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		class := &models.Class{
 			Class:               "Article",
@@ -270,7 +270,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("PUT /schema/{className}/shards/{shardName}", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		class := &models.Class{
 			Class:               "ClassOne",
@@ -321,7 +321,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Update all shards convenience method", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		shardCount := 3
 
@@ -391,7 +391,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Create class with BM25 config", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
 			Class:             "Run",
@@ -428,7 +428,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Create class with Stopword config", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
 			Class:             "SpaceThings",
@@ -466,7 +466,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Create class with BM25 and Stopword config", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		schemaClass := &models.Class{
 			Class:               "SpaceThings",
@@ -509,7 +509,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Create class with explicit replication config", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		className := "ReplicationClass"
 
 		schemaClass := &models.Class{
@@ -537,7 +537,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Create class with implicit replication config", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		className := "ReplicationClass"
 
 		schemaClass := &models.Class{
@@ -578,14 +578,14 @@ func TestSchema_errors(t *testing.T) {
 	})
 
 	t.Run("Run Do without setting a class", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		err := client.Schema().ClassCreator().Do(context.Background())
 		assert.NotNil(t, err)
 	})
 
 	t.Run("Fail to add class with property having not supported tokenization", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		pizzaClass := &models.Class{
 			Class:       "Pizza",
@@ -605,7 +605,7 @@ func TestSchema_errors(t *testing.T) {
 	})
 
 	t.Run("Fail to add property having not supported tokenization", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 
 		pizzaClass := &models.Class{
 			Class:       "Pizza",

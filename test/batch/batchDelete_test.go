@@ -25,7 +25,7 @@ func TestBatchDelete_integration(t *testing.T) {
 	})
 
 	t.Run("batch delete dry run", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		where := filters.Where().
@@ -62,7 +62,7 @@ func TestBatchDelete_integration(t *testing.T) {
 	})
 
 	t.Run("batch delete", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		nowString := fmt.Sprint(time.Now().UnixNano() / int64(time.Millisecond))
@@ -104,7 +104,7 @@ func TestBatchDelete_integration(t *testing.T) {
 	})
 
 	t.Run("batch delete with consistency level", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		nowString := fmt.Sprint(time.Now().UnixNano() / int64(time.Millisecond))
@@ -147,7 +147,7 @@ func TestBatchDelete_integration(t *testing.T) {
 	})
 
 	t.Run("batch delete no matches", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		where := filters.Where().
