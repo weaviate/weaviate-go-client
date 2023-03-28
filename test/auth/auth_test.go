@@ -334,3 +334,28 @@ func TestWrongApiKey(t *testing.T) {
 		})
 	}
 }
+
+func TestAuthConfigCheck(t *testing.T) {
+	tests := []struct {
+		port   int
+		exists bool
+	}{
+		{port: testsuit.WCSPort, exists: true}, {port: testsuit.NoAuthPort, exists: false},
+	}
+	for _, tc := range tests {
+		t.Run("oidc config", func(t *testing.T) {
+			url := fmt.Sprintf("127.0.0.1:%v", tc.port)
+
+			cfg := weaviate.Config{Host: url, Scheme: "http"}
+			client := weaviate.New(cfg)
+			openIDconfig, err := client.Misc().OpenIDConfigurationGetter().Do(context.Background())
+			assert.Nil(t, err)
+
+			if tc.exists {
+				assert.NotNil(t, openIDconfig)
+			} else {
+				assert.Nil(t, openIDconfig)
+			}
+		})
+	}
+}

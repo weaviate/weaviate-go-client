@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
@@ -98,8 +100,9 @@ func TestMisc_empty_version_check(t *testing.T) {
 			fmt.Printf(err.Error())
 			t.Fail()
 		}
+		require.Nil(t, client.WaitForWeavaite(60*time.Second))
 	})
-	client.WaitForWeavaite(60 * time.Second)
+
 	t.Run("Create sample schema food, try to perform queries using /v1/objects?class={className}", func(t *testing.T) {
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
