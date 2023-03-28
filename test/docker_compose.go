@@ -16,7 +16,7 @@ func SetupWeaviate() error {
 	}
 	_, authPw := testsuit.GetPortAndAuthPw()
 	if authPw != "" {
-		arguments = append([]string{"-f docker-compose-wcs.yml"}, arguments...)
+		arguments = append([]string{"-f", "docker-compose-wcs.yml"}, arguments...)
 	}
 
 	return command(app, arguments)
@@ -67,6 +67,8 @@ func command(app string, arguments []string) error {
 	cmd := exec.Command(app, arguments...)
 	execDir := mydir + "/../"
 	cmd.Dir = execDir
-	err = cmd.Start()
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
 	return err
 }
