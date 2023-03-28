@@ -48,14 +48,17 @@ jobs:
       - name: Stop Weaviate
         run: ./test/stop_containers.sh
   unit-tests:
-    - uses: actions/checkout@v3
-        - name: Set up Go
-          uses: actions/setup-go@v3
-          with:
-            go-version: 1.19
-            cache: true
-        - name: Run tests
-          run: go test -v ./weaviate/...
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+          cache: true
+      - name: Run tests
+        run: go test -v ./weaviate/...
   tests-deprecated:
     runs-on: ubuntu-latest
     env:
