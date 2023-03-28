@@ -35,12 +35,7 @@ jobs:
         with:
           go-version: 1.19
           cache: true
-      - name: Start Weaviate
-        run: ./test/start_containers.sh
-      - name: Run tests
-        run: go test -v -count 1 -race test/auth/*.go
-      - name: Stop Weaviate
-        run: ./test/stop_containers.sh
+        run: ./tools/run_tests.sh --auth-integration-only
   tests:
     name: Integration
     runs-on: ubuntu-latest
@@ -66,7 +61,7 @@ jobs:
           go-version: 1.19
           cache: true
       - name: Run tests
-        run: ( for pkg in $(go list ./... | grep 'weaviate-go-client/v4/test/' | grep -v 'auth'); do if ! go test -v -count 1 -race "$pkg"; then echo "Test for $pkg failed" >&2; false; exit; fi; done)
+        run: ./tools/run_tests.sh --integration-only
   unit-tests:
     name: Unit tests
     runs-on: ubuntu-latest
@@ -78,7 +73,7 @@ jobs:
           go-version: 1.19
           cache: true
       - name: Run tests
-        run: go test -v ./weaviate/...
+        run: ./tools/run_tests.sh --unit-only
   tests-deprecated:
     runs-on: ubuntu-latest
     env:
@@ -92,5 +87,4 @@ jobs:
           username: ${{secrets.DOCKER_USERNAME}}
           password: ${{secrets.DOCKER_PASSWORD}}
       - name: Run tests
-        run:
-          go test -v -count 1 -race test_deprecated/*.go
+        run: ./tools/run_tests.sh --deprecated-only
