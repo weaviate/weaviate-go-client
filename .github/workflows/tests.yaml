@@ -66,7 +66,7 @@ jobs:
           go-version: 1.19
           cache: true
       - name: Run tests
-        run: ( for pkg in $(go list ./... | grep 'weaviate-go-client/v4/test' | grep -v 'auth'); do if ! go test -v -count 1 -race "$pkg"; then echo "Test for $pkg failed" >&2; false; exit; fi; done)
+        run: ( for pkg in $(go list ./... | grep 'weaviate-go-client/v4/test/' | grep -v 'auth'); do if ! go test -v -count 1 -race "$pkg"; then echo "Test for $pkg failed" >&2; false; exit; fi; done)
   unit-tests:
     name: Unit tests
     runs-on: ubuntu-latest
