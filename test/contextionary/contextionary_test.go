@@ -10,12 +10,14 @@ import (
 )
 
 func TestContextionary_integration(t *testing.T) {
-	t.Run("up", func(t *testing.T) {
-		err := testenv.SetupLocalWeaviate()
-		if err != nil {
-			t.Fatal(err.Error())
+	if err := testenv.SetupLocalWeaviate(); err != nil {
+		t.Fatalf("failed to setup weaviate: %s", err)
+	}
+	defer func() {
+		if err := testenv.TearDownLocalWeaviate(); err != nil {
+			t.Fatalf("failed to tear down weaviate: %s", err)
 		}
-	})
+	}()
 
 	t.Run("GET /modules/text2vec-contextionary/concepts/{concept}", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
@@ -36,12 +38,5 @@ func TestContextionary_integration(t *testing.T) {
 
 		err2 := client.C11y().ExtensionCreator().WithConcept("xoxo").WithDefinition("Hugs and kisses").WithWeight(2.0).Do(context.Background())
 		assert.NotNil(t, err2, "Weight must be between 0 and 1")
-	})
-
-	t.Run("tear down weaviate", func(t *testing.T) {
-		err := testenv.TearDownLocalWeaviate()
-		if err != nil {
-			t.Fatal(err.Error())
-		}
 	})
 }

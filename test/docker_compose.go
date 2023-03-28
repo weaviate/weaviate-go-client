@@ -43,6 +43,6 @@ func command(app string, arguments []string) error {
 	cmd.Dir = execDir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err = cmd.Run()
+	err = cmd.Start()
 	return err
 }
