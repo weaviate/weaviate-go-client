@@ -293,7 +293,7 @@ func TestAuth_ApiKey(t *testing.T) {
 	for _, tc := range tests {
 		t.Run("headers", func(t *testing.T) {
 			url := fmt.Sprintf("127.0.0.1:%v", testsuit.WCSPort)
-			authConf := auth.ApiKeys{ApiKey: "my-secret-key"}
+			authConf := auth.ApiKey{Value: "my-secret-key"}
 			var cfg weaviate.Config
 
 			if tc.newConf {
@@ -325,7 +325,7 @@ func TestAuth_WrongApiKey(t *testing.T) {
 		t.Run("headers", func(t *testing.T) {
 			cfg := weaviate.Config{Host: url, Scheme: "http", Headers: tc.headers}
 			var err error
-			cfg, err = weaviate.AddAuthClient(cfg, auth.ApiKeys{ApiKey: "wrong_key"}, 60*time.Second)
+			cfg, err = weaviate.AddAuthClient(cfg, auth.ApiKey{Value: "wrong_key"}, 60*time.Second)
 			assert.Nil(t, err)
 
 			client := weaviate.New(cfg)

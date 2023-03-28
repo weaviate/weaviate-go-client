@@ -177,13 +177,13 @@ func (bt BearerToken) GetAuthInfo(con *connection.Connection) (*http.Client, map
 	return oauth2.NewClient(context.TODO(), tokenSource), nil, nil
 }
 
-type ApiKeys struct {
-	ApiKey string
+type ApiKey struct {
+	Value string
 }
 
 // Returns the header used for the authentification.
-func (api ApiKeys) GetAuthInfo(con *connection.Connection) (*http.Client, map[string]string, error) {
+func (api ApiKey) GetAuthInfo(con *connection.Connection) (*http.Client, map[string]string, error) {
 	additional_headers := make(map[string]string)
-	additional_headers["authorization"] = "Bearer " + api.ApiKey
+	additional_headers["authorization"] = "Bearer " + api.Value
 	return nil, additional_headers, nil
 }

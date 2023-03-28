@@ -302,7 +302,7 @@ func TestAuthMock_WithSimpleAuthNoOidcViaApiKey(t *testing.T) {
 	s := httptest.NewServer(mux)
 	defer s.Close()
 	url := strings.TrimPrefix(s.URL, "http://")
-	authConf := auth.ApiKeys{ApiKey: token}
+	authConf := auth.ApiKey{Value: token}
 
 	t.Run("AddAuthClient", func(t *testing.T) {
 		cfg := weaviate.Config{Host: url, Scheme: "http", Headers: nil}
