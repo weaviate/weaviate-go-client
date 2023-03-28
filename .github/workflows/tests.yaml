@@ -15,7 +15,7 @@ on:
 
 jobs:
   tests:
-    name: Tests
+    name: Integration
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -48,7 +48,7 @@ jobs:
       - name: Stop Weaviate
         run: ./test/stop_containers.sh
   unit-tests:
-    name: Tests
+    name: Unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
