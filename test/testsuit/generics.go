@@ -179,7 +179,7 @@ func CreateTestClient() *weaviate.Client {
 		var err error
 		cfg, err = weaviate.AddAuthClient(cfg, authConfig, 60*time.Second)
 		if err != nil {
-			log.Printf("Error occured during startup %v")
+			log.Printf("Error occured during startup %v", err)
 		}
 	}
 
