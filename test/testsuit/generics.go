@@ -170,7 +170,7 @@ func CreateTestClient() *weaviate.Client {
 	}
 
 	cfg := weaviate.Config{
-		Host:    "localhost:" + fmt.Sprint(port),
+		Host:    fmt.Sprintf("localhost:%v", port),
 		Scheme:  "http",
 		Headers: headers,
 	}

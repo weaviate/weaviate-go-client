@@ -278,7 +278,7 @@ func getAccessToken(t *testing.T, weaviateUrl, user, pw string) (string, string)
 	return tokens.AccessToken, tokens.RefreshToken
 }
 
-func TestApiKey(t *testing.T) {
+func TestAuth_ApiKey(t *testing.T) {
 	tests := []struct {
 		headers map[string]string
 		newConf bool
@@ -314,7 +314,7 @@ func TestApiKey(t *testing.T) {
 	}
 }
 
-func TestWrongApiKey(t *testing.T) {
+func TestAuth_WrongApiKey(t *testing.T) {
 	url := fmt.Sprintf("127.0.0.1:%v", testsuit.WCSPort)
 	tests := []struct {
 		headers map[string]string
@@ -335,7 +335,7 @@ func TestWrongApiKey(t *testing.T) {
 	}
 }
 
-func TestAuthConfigCheck(t *testing.T) {
+func TestAuth_ConfigCheck(t *testing.T) {
 	tests := []struct {
 		port   int
 		exists bool

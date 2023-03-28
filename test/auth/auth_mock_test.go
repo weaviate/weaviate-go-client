@@ -288,7 +288,7 @@ func TestAuthMock_CheckDefaultScopes(t *testing.T) {
 }
 
 // Test that the correct header is set when using an API Key to authenticate.
-func TestWithSimpleAuthNoOidcViaApiKey(t *testing.T) {
+func TestAuthMock_WithSimpleAuthNoOidcViaApiKey(t *testing.T) {
 	token := "super-secret-key"
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
