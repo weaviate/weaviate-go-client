@@ -21,7 +21,7 @@ jobs:
       matrix:
         auth_integration: [ "auth_enabled", "auth_disabled" ]
     env:
-      EXTERNAL_WEAVIATE_RUNNING: false
+      EXTERNAL_WEAVIATE_RUNNING: true
       AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       OKTA_CLIENT_SECRET: ${{ secrets.OKTA_CLIENT_SECRET }}
       WCS_DUMMY_CI_PW: ${{ secrets.WCS_DUMMY_CI_PW }}
