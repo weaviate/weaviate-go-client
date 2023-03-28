@@ -161,10 +161,12 @@ func CreateTestClient(port int, connectionClient *http.Client) *weaviate.Client 
 
 	var cfg *weaviate.Config
 	if connectionClient == nil && integrationTestsWithAuth == "auth_enabled" && wcsPw != "" {
+		fmt.Print("Auth")
 		clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net", Password: wcsPw}
 		var err error
 		cfg := weaviate.Config{Host: "localhost:" + fmt.Sprint(WCSPort), Scheme: "http"}
 		cfg, err = weaviate.AddAuthClient(cfg, clientCredentialConf, 60)
+		fmt.Print(err)
 		if err != nil {
 			cfg.Host = "localhost:" + fmt.Sprint(port)
 		}
