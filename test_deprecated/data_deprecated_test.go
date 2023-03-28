@@ -1,4 +1,4 @@
-package data
+package test_deprecated
 
 import (
 	"context"
@@ -9,12 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 )
 
 func TestData_integration_deprecated(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
-		err := testenv.SetupLocalWeaviateDeprecated()
+		err := SetupLocalWeaviateDeprecated()
 		if err != nil {
 			fmt.Printf(err.Error())
 			t.Fail()
@@ -22,7 +21,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("POST /{semanticType}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := CreateTestClient()
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -70,7 +69,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("POST vectorizorless class", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := CreateTestClient()
 
 		testsuit.CreateWeaviateTestSchemaWithVectorizorlessClass(t, client)
 
@@ -116,7 +115,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("GET /actions /things", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := CreateTestClient()
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		_, errCreate := client.Data().Creator().WithClassName("Pizza").WithProperties(map[string]string{
@@ -155,7 +154,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("GET underscore properties", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := CreateTestClient()
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -249,7 +248,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("DELETE /{type}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := CreateTestClient()
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -298,7 +297,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("HEAD /{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := CreateTestClient()
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -357,7 +356,7 @@ func TestData_integration_deprecated(t *testing.T) {
 
 	t.Run("PUT /{type}/{id}", func(t *testing.T) {
 		// PUT replaces the object fully
-		client := testsuit.CreateTestClient()
+		client := CreateTestClient()
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -425,7 +424,7 @@ func TestData_integration_deprecated(t *testing.T) {
 
 	t.Run("PATCH(merge) /{type}/{id}", func(t *testing.T) {
 		// PATCH merges the new object with the existing object
-		client := testsuit.CreateTestClient()
+		client := CreateTestClient()
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -492,7 +491,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("POST /{type}/validate", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := CreateTestClient()
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -539,7 +538,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
-		err := testenv.TearDownLocalWeaviateDeprecated()
+		err := TearDownLocalWeaviateDeprecated()
 		if err != nil {
 			fmt.Printf(err.Error())
 			t.Fail()

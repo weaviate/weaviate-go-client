@@ -49,3 +49,18 @@ jobs:
           ( for pkg in $(go list ./... | grep 'weaviate-go-client/v4/test'); do if ! go test -v -count 1 -race "$pkg"; then echo "Test for $pkg failed" >&2; false; exit; fi; done)
       - name: Stop Weaviate
         run: ./test/stop_containers.sh
+  tests-deprecated:
+    runs-on: ubuntu-latest
+    env:
+      EXTERNAL_WEAVIATE_RUNNING: false
+    steps:
+      - uses: actions/checkout@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        with:
+          username: ${{secrets.DOCKER_USERNAME}}
+          password: ${{secrets.DOCKER_PASSWORD}}
+      - name: Run tests
+        run:
+          go test -v -count 1 -race test_deprecated/*.go

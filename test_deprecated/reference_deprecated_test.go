@@ -1,4 +1,4 @@
-package data
+package test_deprecated
 
 import (
 	"context"
@@ -8,13 +8,12 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
 func TestData_reference_integration_deprecated(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
-		err := testenv.SetupLocalWeaviateDeprecated()
+		err := SetupLocalWeaviateDeprecated()
 		if err != nil {
 			fmt.Printf(err.Error())
 			t.Fail()
@@ -22,7 +21,7 @@ func TestData_reference_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("POST /{type}/{id}/references/{propertyName}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := CreateTestClient()
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		propertySchemaT := map[string]string{
@@ -70,7 +69,7 @@ func TestData_reference_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("PUT /{type}/{id}/references/{propertyName}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := CreateTestClient()
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create things with references
@@ -134,7 +133,7 @@ func TestData_reference_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("DELETE /{type}/{id}/references/{propertyName}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := CreateTestClient()
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create things with references
@@ -182,7 +181,7 @@ func TestData_reference_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
-		err := testenv.TearDownLocalWeaviateDeprecated()
+		err := TearDownLocalWeaviateDeprecated()
 		if err != nil {
 			fmt.Printf(err.Error())
 			t.Fail()

@@ -1,4 +1,4 @@
-package batch
+package test_deprecated
 
 import (
 	"context"
@@ -6,20 +6,19 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
 func TestBatchCreate_integration_deprecated(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
-		err := testenv.SetupLocalWeaviateDeprecated()
+		err := SetupLocalWeaviateDeprecated()
 		if err != nil {
 			t.Fatal(err.Error())
 		}
 	})
 
 	t.Run("POST /batch/references", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := CreateTestClient()
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create some objects
@@ -87,7 +86,7 @@ func TestBatchCreate_integration_deprecated(t *testing.T) {
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
-		err := testenv.TearDownLocalWeaviateDeprecated()
+		err := TearDownLocalWeaviateDeprecated()
 		if err != nil {
 			t.Fatal(err.Error())
 		}
