@@ -164,7 +164,7 @@ func CreateTestClient(port int, connectionClient *http.Client) *weaviate.Client 
 		fmt.Print("Auth")
 		clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net", Password: wcsPw}
 		var err error
-		cfg := weaviate.Config{Host: "localhost:" + fmt.Sprint(WCSPort), Scheme: "http"}
+		cfg := weaviate.Config{Host: "localhost:" + fmt.Sprint(WCSPort), Scheme: "http", Headers: headers}
 		cfg, err = weaviate.AddAuthClient(cfg, clientCredentialConf, 60*time.Second)
 		fmt.Print(err)
 		if err != nil {
