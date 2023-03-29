@@ -1,4 +1,11 @@
+#!/usr/bin/env bash
+
 function main() {
+
+  GO_MOD_PKG=$(head -n 1 go.mod | sed -r 's/module //g')
+  LIB_VER=$(basename "$GO_MOD_PKG")
+  PKG_TEST="weaviate-go-client/$LIB_VER/test/"
+
   # This script runs all non-benchmark tests if no CMD switch is given and the respective tests otherwise.
   run_all_tests=true
   run_unit_tests=false
@@ -19,7 +26,7 @@ function main() {
   done
 
   # Jump to root directory
-  cd "$( dirname "${BASH_SOURCE[0]}" )"/..
+  cd "$( dirname "${BASH_SOURCE[0]}" )"/.. || exit
 
   if  $run_unit_tests || $run_all_tests
   then
@@ -54,7 +61,7 @@ function main() {
 }
 
 function run_integration_tests() {
-    for pkg in $(go list ./... | grep 'weaviate-go-client/v4/test/' | grep -v 'auth' ); do
+  for pkg in $(go list ./... | grep "$PKG_TEST" | grep -v 'auth' ); do
       if ! go test -count 1 -race "$pkg"; then
         echo "Test for $pkg failed" >&2
         return 1
