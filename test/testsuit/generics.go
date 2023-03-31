@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/stretchr/testify/assert"
@@ -174,17 +173,17 @@ func CreateTestClient() *weaviate.Client {
 		Scheme:  "http",
 		Headers: headers,
 	}
+	var client *weaviate.Client
+	var err error
 	if wcsPw != "" {
-		authConfig := auth.ResourceOwnerPasswordFlow{Username: "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net", Password: wcsPw}
-		var err error
-		cfg, err = weaviate.AddAuthClient(cfg, authConfig, 60*time.Second)
+		cfg.AuthConfig = auth.ResourceOwnerPasswordFlow{Username: "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net", Password: wcsPw}
+		client, err = weaviate.NewClient(cfg)
 		if err != nil {
 			log.Printf("Error occured during startup %v", err)
 		}
+	} else {
+		client = weaviate.New(cfg)
 	}
-
-	client := weaviate.New(cfg)
-	client.WaitForWeavaite(60 * time.Second)
 	return client
 }
 

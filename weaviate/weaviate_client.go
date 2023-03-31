@@ -35,17 +35,17 @@ type Config struct {
 	ConnectionClient *http.Client
 
 	// Configuration for authentication. Either this option or ConnectionClient can be used
-	AuthConfig *auth.Config
+	AuthConfig auth.Config
 
 	// Headers added for every request
 	Headers map[string]string
 
 	// How long the client should wait for Weaviate to start up
-	startupTimeout time.Duration
+	StartupTimeout time.Duration
 }
 
-// Deprecated: This function is unable to wait for Weaviate to start. If you want to use an AuthClient, use
-// AddAuthClient() instead.
+// Deprecated: This function is unable to wait for Weaviate to start. Use NewClient() instead and add auth.Config to
+// weaviate.Config
 func NewConfig(host string, scheme string, authConfig auth.Config, headers map[string]string) (*Config, error) {
 	var client *http.Client
 	var err error
@@ -64,30 +64,6 @@ func NewConfig(host string, scheme string, authConfig auth.Config, headers map[s
 		}
 	}
 	return &Config{Host: host, Scheme: scheme, Headers: headers, ConnectionClient: client}, nil
-}
-
-func AddAuthClient(cfg Config, authConfig auth.Config, startupTimeout time.Duration) (Config, error) {
-	if authConfig == nil {
-		return cfg, nil
-	}
-
-	tmpCon := connection.NewConnection(cfg.Scheme, cfg.Host, nil, cfg.Headers)
-	err := tmpCon.WaitForWeaviate(startupTimeout)
-	if err != nil {
-		return cfg, err
-	}
-	client, additionalHeaders, err := authConfig.GetAuthInfo(tmpCon)
-	if err != nil {
-		return cfg, err
-	}
-	if cfg.Headers == nil {
-		cfg.Headers = map[string]string{}
-	}
-	for k, v := range additionalHeaders {
-		cfg.Headers[k] = v
-	}
-	cfg.ConnectionClient = client
-	return cfg, nil
 }
 
 // Client implementing the weaviate API
@@ -116,13 +92,12 @@ func NewClient(config Config) (*Client, error) {
 	// if an authentication config is given, we first need to create a temporary connection to fetch some OIDC
 	// infos from Weaviate. This connection is then replaced by the "real" connection
 	if config.AuthConfig != nil {
-		authConf := *(config.AuthConfig)
 		tmpCon := connection.NewConnection(config.Scheme, config.Host, nil, config.Headers)
-		err := tmpCon.WaitForWeaviate(config.startupTimeout)
+		err := tmpCon.WaitForWeaviate(config.StartupTimeout)
 		if err != nil {
 			return nil, err
 		}
-		connectionClient, additionalHeaders, err := authConf.GetAuthInfo(tmpCon)
+		connectionClient, additionalHeaders, err := config.AuthConfig.GetAuthInfo(tmpCon)
 		if err != nil {
 			return nil, err
 		}
@@ -138,7 +113,7 @@ func NewClient(config Config) (*Client, error) {
 
 	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
 
-	if err := con.WaitForWeaviate(config.startupTimeout); err != nil {
+	if err := con.WaitForWeaviate(config.StartupTimeout); err != nil {
 		return nil, err
 	}
 

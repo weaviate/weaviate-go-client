@@ -24,6 +24,7 @@ type authBase struct {
 	ClientId       string
 	WeaviateScopes []string
 	TokenEndpoint  string
+	Config
 }
 
 func (ab *authBase) getIdAndTokenEndpoint(ctx context.Context, con *connection.Connection) error {

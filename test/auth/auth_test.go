@@ -47,11 +47,10 @@ func TestAuth_clientCredential(t *testing.T) {
 		}
 
 		clientCredentialConf := auth.ClientCredentials{ClientSecret: clientSecret, Scopes: tc.scope}
-		cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", tc.port), Scheme: "http"}
-		var err error
-		cfg, err = weaviate.AddAuthClient(cfg, clientCredentialConf, 60*time.Second)
+		cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", tc.port), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: clientCredentialConf}
+		client, err := weaviate.NewClient(cfg)
 		assert.Nil(t, err)
-		client := weaviate.New(cfg)
+
 		AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 		assert.Nil(t, AuthErr)
 	}
@@ -75,11 +74,11 @@ func TestAuth_clientCredential_WrongParameters(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(t.Name(), func(t *testing.T) {
 			clientCredentialConf := auth.ClientCredentials{ClientSecret: tc.secret, Scopes: tc.scope}
-			cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.OktaCCPort), Scheme: "http"}
-			var err error
-			cfg, err = weaviate.AddAuthClient(cfg, clientCredentialConf, 60*time.Second)
+
+			cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.OktaCCPort), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: clientCredentialConf}
+			client, err := weaviate.NewClient(cfg)
 			assert.Nil(t, err)
-			client := weaviate.New(cfg)
+
 			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 			assert.NotNil(t, AuthErr)
 		})
@@ -117,11 +116,11 @@ func TestAuth_UserPW(t *testing.T) {
 				// routine that writes to the log. Otherwise, we'd have a data race between the this goroutine and the
 				// test accessing the buffer.
 				clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: tc.user, Password: pw, Scopes: tc.scope}
-				cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", tc.port), Scheme: "http"}
-				var err error
-				cfg, err = weaviate.AddAuthClient(cfg, clientCredentialConf, 60*time.Second)
+
+				cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", tc.port), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: clientCredentialConf}
+				client, err := weaviate.NewClient(cfg)
 				assert.Nil(t, err)
-				client := weaviate.New(cfg)
+
 				AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 				assert.Nil(t, AuthErr)
 			}
@@ -136,29 +135,24 @@ func TestAuth_UserPW(t *testing.T) {
 
 func TestAuth_UserPW_wrongPW(t *testing.T) {
 	clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}
-	cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.WCSPort), Scheme: "http"}
-	var err error
-	_, err = weaviate.AddAuthClient(cfg, clientCredentialConf, 60*time.Second)
+	cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.WCSPort), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: clientCredentialConf}
+	_, err := weaviate.NewClient(cfg)
 	assert.NotNil(t, err)
 }
 
 func TestNoAuthOnWeaviateWithoutAuth(t *testing.T) {
-	cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.NoAuthPort), Scheme: "http"}
-	var err error
-	cfg, err = weaviate.AddAuthClient(cfg, nil, 60*time.Second)
+	cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.NoAuthPort), Scheme: "http", StartupTimeout: 60 * time.Second}
+	client, err := weaviate.NewClient(cfg)
 	assert.Nil(t, err)
-	client := weaviate.New(cfg)
 
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 	assert.Nil(t, AuthErr)
 }
 
 func TestNoAuthOnWeaviateWithAuth(t *testing.T) {
-	cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.WCSPort), Scheme: "http"}
-	var err error
-	cfg, err = weaviate.AddAuthClient(cfg, nil, 60*time.Second)
+	cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.WCSPort), Scheme: "http", StartupTimeout: 60 * time.Second}
+	client, err := weaviate.NewClient(cfg)
 	assert.Nil(t, err)
-	client := weaviate.New(cfg)
 
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 	assert.NotNil(t, AuthErr)
@@ -184,13 +178,11 @@ func TestAuthOnWeaviateWithoutAuth(t *testing.T) {
 			defer func() {
 				log.SetOutput(os.Stderr)
 			}()
-			cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.NoAuthPort), Scheme: "http"}
-			var err error
-			cfg, err = weaviate.AddAuthClient(cfg, tc.authConfig, 60*time.Second)
+			cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.NoAuthPort), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: tc.authConfig}
+			client, err := weaviate.NewClient(cfg)
 			assert.Nil(t, err)
 			assert.True(t, strings.Contains(buf.String(), "The client was configured to use authentication"))
 
-			client := weaviate.New(cfg)
 			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 			assert.Nil(t, AuthErr)
 		})
@@ -198,9 +190,8 @@ func TestAuthOnWeaviateWithoutAuth(t *testing.T) {
 }
 
 func TestAuthNoWeaviateOnPort(t *testing.T) {
-	cfg := weaviate.Config{Host: "localhost:" + fmt.Sprint(testsuit.NoWeaviatePort), Scheme: "http"}
-	var err error
-	_, err = weaviate.AddAuthClient(cfg, auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}, 0)
+	cfg := weaviate.Config{Host: "localhost:" + fmt.Sprint(testsuit.NoWeaviatePort), Scheme: "http", StartupTimeout: 0 * time.Second, AuthConfig: auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}}
+	_, err := weaviate.NewClient(cfg)
 	assert.NotNil(t, err)
 }
 
@@ -223,12 +214,10 @@ func TestAuthBearerToken(t *testing.T) {
 			url := fmt.Sprintf("localhost:%v", tc.port)
 
 			accessToken, refreshToken := getAccessToken(t, url, tc.user, pw)
-			cfg := weaviate.Config{Host: url, Scheme: "http"}
-			var err error
-			cfg, err = weaviate.AddAuthClient(cfg, auth.BearerToken{AccessToken: accessToken, RefreshToken: refreshToken}, 60*time.Second)
+			cfg := weaviate.Config{Host: url, Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: auth.BearerToken{AccessToken: accessToken, RefreshToken: refreshToken}}
+			client, err := weaviate.NewClient(cfg)
 			assert.Nil(t, err)
 
-			client := weaviate.New(cfg)
 			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 			assert.Nil(t, AuthErr)
 		})
@@ -294,20 +283,20 @@ func TestAuth_ApiKey(t *testing.T) {
 		t.Run("headers", func(t *testing.T) {
 			url := fmt.Sprintf("127.0.0.1:%v", testsuit.WCSPort)
 			authConf := auth.ApiKey{Value: "my-secret-key"}
-			var cfg weaviate.Config
+			var client *weaviate.Client
 
 			if tc.newConf {
-				cfg2, err := weaviate.NewConfig(url, "http", authConf, nil)
+				cfg, err := weaviate.NewConfig(url, "http", authConf, nil)
 				assert.Nil(t, err)
-				cfg = *cfg2
+				client = weaviate.New(*cfg)
+
 			} else {
-				cfg = weaviate.Config{Host: url, Scheme: "http", Headers: tc.headers}
+				cfg := weaviate.Config{Host: url, Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: authConf, Headers: tc.headers}
 				var err error
-				cfg, err = weaviate.AddAuthClient(cfg, authConf, 60*time.Second)
+				client, err = weaviate.NewClient(cfg)
 				assert.Nil(t, err)
 			}
 
-			client := weaviate.New(cfg)
 			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 			assert.Nil(t, AuthErr)
 		})
@@ -323,12 +312,10 @@ func TestAuth_WrongApiKey(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run("headers", func(t *testing.T) {
-			cfg := weaviate.Config{Host: url, Scheme: "http", Headers: tc.headers}
-			var err error
-			cfg, err = weaviate.AddAuthClient(cfg, auth.ApiKey{Value: "wrong_key"}, 60*time.Second)
+			cfg := weaviate.Config{Host: url, Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: auth.ApiKey{Value: "wrong_key"}, Headers: tc.headers}
+			client, err := weaviate.NewClient(cfg)
 			assert.Nil(t, err)
 
-			client := weaviate.New(cfg)
 			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 			assert.NotNil(t, AuthErr)
 		})
