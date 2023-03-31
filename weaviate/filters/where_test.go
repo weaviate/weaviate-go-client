@@ -141,6 +141,11 @@ func TestWhereBuilder_String(t *testing.T) {
 				}),
 			want: "where:{operator: And operands:[{operator: LessThanEqual path: [\"wordCount\"] valueInt: 10},{operator: LessThan path: [\"w1\",\"w2\",\"w3\"] valueString: \"word\"}]}",
 		},
+		{
+			name:    "with null filter",
+			builder: Where().WithPath([]string{"wordCount"}).WithOperator(IsNull).WithValueBoolean(true),
+			want:    "where:{operator: IsNull path: [\"wordCount\"] valueBoolean: true}",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
