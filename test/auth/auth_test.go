@@ -51,8 +51,8 @@ func TestAuth_clientCredential(t *testing.T) {
 		client, err := weaviate.NewClient(cfg)
 		assert.Nil(t, err)
 
-		AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-		assert.Nil(t, AuthErr)
+		authErr := client.Schema().AllDeleter().Do(context.TODO())
+		assert.Nil(t, authErr)
 	}
 }
 
@@ -79,8 +79,8 @@ func TestAuth_clientCredential_WrongParameters(t *testing.T) {
 			client, err := weaviate.NewClient(cfg)
 			assert.Nil(t, err)
 
-			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-			assert.NotNil(t, AuthErr)
+			authErr := client.Schema().AllDeleter().Do(context.TODO())
+			assert.NotNil(t, authErr)
 		})
 	}
 }
@@ -121,8 +121,8 @@ func TestAuth_UserPW(t *testing.T) {
 				client, err := weaviate.NewClient(cfg)
 				assert.Nil(t, err)
 
-				AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-				assert.Nil(t, AuthErr)
+				authErr := client.Schema().AllDeleter().Do(context.TODO())
+				assert.Nil(t, authErr)
 			}
 			runtime.GC()
 
@@ -145,8 +145,8 @@ func TestNoAuthOnWeaviateWithoutAuth(t *testing.T) {
 	client, err := weaviate.NewClient(cfg)
 	assert.Nil(t, err)
 
-	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-	assert.Nil(t, AuthErr)
+	authErr := client.Schema().AllDeleter().Do(context.TODO())
+	assert.Nil(t, authErr)
 }
 
 func TestNoAuthOnWeaviateWithAuth(t *testing.T) {
@@ -154,8 +154,8 @@ func TestNoAuthOnWeaviateWithAuth(t *testing.T) {
 	client, err := weaviate.NewClient(cfg)
 	assert.Nil(t, err)
 
-	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-	assert.NotNil(t, AuthErr)
+	authErr := client.Schema().AllDeleter().Do(context.TODO())
+	assert.NotNil(t, authErr)
 }
 
 // Test that log contains a warning when configuring the client with authentication, but weaviate is configured without
@@ -183,8 +183,8 @@ func TestAuthOnWeaviateWithoutAuth(t *testing.T) {
 			assert.Nil(t, err)
 			assert.True(t, strings.Contains(buf.String(), "The client was configured to use authentication"))
 
-			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-			assert.Nil(t, AuthErr)
+			authErr := client.Schema().AllDeleter().Do(context.TODO())
+			assert.Nil(t, authErr)
 		})
 	}
 }
@@ -218,8 +218,8 @@ func TestAuthBearerToken(t *testing.T) {
 			client, err := weaviate.NewClient(cfg)
 			assert.Nil(t, err)
 
-			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-			assert.Nil(t, AuthErr)
+			authErr := client.Schema().AllDeleter().Do(context.TODO())
+			assert.Nil(t, authErr)
 		})
 	}
 }
@@ -297,8 +297,8 @@ func TestAuth_ApiKey(t *testing.T) {
 				assert.Nil(t, err)
 			}
 
-			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-			assert.Nil(t, AuthErr)
+			authErr := client.Schema().AllDeleter().Do(context.TODO())
+			assert.Nil(t, authErr)
 		})
 	}
 }
@@ -316,8 +316,8 @@ func TestAuth_WrongApiKey(t *testing.T) {
 			client, err := weaviate.NewClient(cfg)
 			assert.Nil(t, err)
 
-			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
-			assert.NotNil(t, AuthErr)
+			authErr := client.Schema().AllDeleter().Do(context.TODO())
+			assert.NotNil(t, authErr)
 		})
 	}
 }
