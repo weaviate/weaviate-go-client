@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
 )
@@ -73,13 +74,12 @@ func TestAuthMock_NoRefreshToken(t *testing.T) {
 			})
 			s := httptest.NewServer(mux)
 			defer s.Close()
-			cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
-			var err error
-			cfg, err = weaviate.AddAuthClient(cfg, tc.authConfig, 60*time.Second)
-			assert.Nil(t, err)
+			cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: tc.authConfig}
+
+			client, err := weaviate.NewClient(cfg)
+			require.Nil(t, err)
 			assert.True(t, strings.Contains(buf.String(), "Auth002"))
 
-			client := weaviate.New(cfg)
 			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 			assert.Nil(t, AuthErr)
 		})
@@ -120,19 +120,18 @@ func TestAuthMock_RefreshCC(t *testing.T) {
 	})
 	s := httptest.NewServer(mux)
 	defer s.Close()
-	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
-	var err error
-	cfg, err = weaviate.AddAuthClient(cfg, auth.ClientCredentials{ClientSecret: "SecretValue"}, 60*time.Second)
+	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: auth.ClientCredentials{ClientSecret: "SecretValue"}}
+	client, err := weaviate.NewClient(cfg)
 	assert.Nil(t, err)
-	client := weaviate.New(cfg)
+
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 	assert.Nil(t, AuthErr)
-	assert.Equal(t, i, 3) // client does 4 initial calls to token endpoint
+	assert.Equal(t, i, 4) // client does 4 initial calls to token endpoint
 
 	time.Sleep(time.Second * 5)
 	// current token expires, so the oauth client needs to get a new one
 	AuthErr2 := client.Schema().AllDeleter().Do(context.TODO())
-	assert.Equal(t, i, 4)
+	assert.Equal(t, i, 5)
 	assert.Nil(t, AuthErr2)
 }
 
@@ -193,11 +192,11 @@ func TestAuthMock_RefreshUserPWAndToken(t *testing.T) {
 			})
 			s := httptest.NewServer(mux)
 			defer s.Close()
-			cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
-			var err error
-			cfg, err = weaviate.AddAuthClient(cfg, tc.authConfig, 60*time.Second)
+
+			cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: tc.authConfig}
+			client, err := weaviate.NewClient(cfg)
 			assert.Nil(t, err)
-			client := weaviate.New(cfg)
+
 			AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 			assert.Nil(t, AuthErr)
 
@@ -231,11 +230,11 @@ func TestAuthMock_CatchAllProxy(t *testing.T) {
 	})
 	s := httptest.NewServer(mux)
 	defer s.Close()
-	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
-	var err error
-	cfg, err = weaviate.AddAuthClient(cfg, nil, 60*time.Second)
+
+	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: nil}
+	client, err := weaviate.NewClient(cfg)
 	assert.Nil(t, err)
-	client := weaviate.New(cfg)
+
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 	assert.Nil(t, AuthErr)
 }
@@ -277,11 +276,46 @@ func TestAuthMock_CheckDefaultScopes(t *testing.T) {
 	})
 	s := httptest.NewServer(mux)
 	defer s.Close()
-	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http"}
-	var err error
-	cfg, err = weaviate.AddAuthClient(cfg, auth.ClientCredentials{ClientSecret: "SecretValue"}, 60*time.Second)
+
+	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: auth.ClientCredentials{ClientSecret: "SecretValue"}}
+	client, err := weaviate.NewClient(cfg)
 	assert.Nil(t, err)
-	client := weaviate.New(cfg)
+
 	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
 	assert.Nil(t, AuthErr)
+}
+
+// Test that the correct header is set when using an API Key to authenticate.
+func TestAuthMock_WithSimpleAuthNoOidcViaApiKey(t *testing.T) {
+	token := "super-secret-key"
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		require.Equal(t, authHeader, "Bearer "+token)
+		w.Write([]byte(`{}`))
+	})
+	mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{}`))
+	})
+	s := httptest.NewServer(mux)
+	defer s.Close()
+	url := strings.TrimPrefix(s.URL, "http://")
+	authConf := auth.ApiKey{Value: token}
+
+	t.Run("NewClient", func(t *testing.T) {
+		cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: authConf}
+		client, err := weaviate.NewClient(cfg)
+		assert.Nil(t, err)
+
+		AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+		assert.Nil(t, AuthErr)
+	})
+
+	t.Run("deprecated new Config", func(t *testing.T) {
+		cfg, err := weaviate.NewConfig(url, "http", authConf, nil)
+		assert.Nil(t, err)
+		client := weaviate.New(*cfg)
+		AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+		assert.Nil(t, AuthErr)
+	})
 }

@@ -3,6 +3,8 @@ package test
 import (
 	"os"
 	"os/exec"
+
+	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 )
 
 // SetupWeaviate run docker compose up
@@ -12,6 +14,11 @@ func SetupWeaviate() error {
 		"up",
 		"-d",
 	}
+	_, authPw := testsuit.GetPortAndAuthPw()
+	if authPw != "" {
+		arguments = append([]string{"-f", "docker-compose-wcs.yml"}, arguments...)
+	}
+
 	return command(app, arguments)
 }
 
@@ -19,32 +26,6 @@ func SetupWeaviate() error {
 func TearDownWeaviate() error {
 	app := "docker-compose"
 	arguments := []string{
-		"down",
-		"--remove-orphans",
-	}
-	return command(app, arguments)
-}
-
-// SetupWeaviateDeprecated run docker compose up
-// for pre-v1.14 backwards compatibility tests
-func SetupWeaviateDeprecated() error {
-	app := "docker-compose"
-	arguments := []string{
-		"-f",
-		"docker-compose-deprecated-api-test.yml",
-		"up",
-		"-d",
-	}
-	return command(app, arguments)
-}
-
-// TearDownWeaviateDeprecated run docker-compose down
-// for pre-v1.14 backwards compatibility tests
-func TearDownWeaviateDeprecated() error {
-	app := "docker-compose"
-	arguments := []string{
-		"-f",
-		"docker-compose-deprecated-api-test.yml",
 		"down",
 		"--remove-orphans",
 	}
@@ -60,6 +41,8 @@ func command(app string, arguments []string) error {
 	cmd := exec.Command(app, arguments...)
 	execDir := mydir + "/../"
 	cmd.Dir = execDir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	err = cmd.Start()
 	return err
 }

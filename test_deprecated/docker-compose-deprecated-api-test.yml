@@ -6,12 +6,12 @@ services:
       - --host
       - 0.0.0.0
       - --port
-      - '8080'
+      - '8089'
       - --scheme
       - http
     image: semitechnologies/weaviate:1.13.2
     ports:
-      - 8080:8080
+      - 8089:8089
     restart: on-failure:0
     environment:
       LOG_LEVEL: "debug"

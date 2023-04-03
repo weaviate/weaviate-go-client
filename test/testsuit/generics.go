@@ -3,10 +3,9 @@ package testsuit
 import (
 	"context"
 	"fmt"
-	"net/http"
+	"log"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/stretchr/testify/assert"
@@ -23,6 +22,17 @@ const (
 	WCSPort        = 8085
 	NoWeaviatePort = 8888
 )
+
+func GetPortAndAuthPw() (int, string) {
+	integrationTestsWithAuth := os.Getenv("INTEGRATION_TESTS_AUTH")
+	wcsPw := os.Getenv("WCS_DUMMY_CI_PW")
+	authEnabled := integrationTestsWithAuth == "auth_enabled" && wcsPw != ""
+	port := NoAuthPort
+	if authEnabled {
+		port = WCSPort
+	}
+	return port, wcsPw
+}
 
 // CreateWeaviateTestSchemaFood creates a class for each semantic type (Pizza and Soup)
 // and adds some primitive properties (name and description)
@@ -149,38 +159,31 @@ func CleanUpWeaviate(t *testing.T, client *weaviate.Client) {
 }
 
 // CreateTestClient running on local host 8080
-func CreateTestClient(port int, connectionClient *http.Client) *weaviate.Client {
-	integrationTestsWithAuth := os.Getenv("INTEGRATION_TESTS_AUTH")
-	openAIApiKey := os.Getenv("OPENAI_APIKEY")
-	wcsPw := os.Getenv("WCS_DUMMY_CI_PW")
+func CreateTestClient() *weaviate.Client {
+	port, wcsPw := GetPortAndAuthPw()
 
+	openAIApiKey := os.Getenv("OPENAI_APIKEY")
 	headers := map[string]string{}
 	if openAIApiKey != "" {
 		headers["X-OpenAI-Api-Key"] = openAIApiKey
 	}
 
-	var cfg *weaviate.Config
-	if connectionClient == nil && integrationTestsWithAuth == "auth_enabled" && wcsPw != "" {
-		clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net", Password: wcsPw}
-		var err error
-		cfg, err = weaviate.NewConfig("localhost:"+fmt.Sprint(WCSPort), "http", clientCredentialConf, nil)
+	cfg := weaviate.Config{
+		Host:    fmt.Sprintf("localhost:%v", port),
+		Scheme:  "http",
+		Headers: headers,
+	}
+	var client *weaviate.Client
+	var err error
+	if wcsPw != "" {
+		cfg.AuthConfig = auth.ResourceOwnerPasswordFlow{Username: "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net", Password: wcsPw}
+		client, err = weaviate.NewClient(cfg)
 		if err != nil {
-			cfg = &weaviate.Config{
-				Host:    "localhost:" + fmt.Sprint(port),
-				Scheme:  "http",
-				Headers: headers,
-			}
+			log.Printf("Error occured during startup %v", err)
 		}
 	} else {
-		cfg = &weaviate.Config{
-			Host:             "localhost:" + fmt.Sprint(port),
-			Scheme:           "http",
-			ConnectionClient: connectionClient,
-			Headers:          headers,
-		}
+		client = weaviate.New(cfg)
 	}
-	client := weaviate.New(*cfg)
-	client.WaitForWeavaite(60 * time.Second)
 	return client
 }
 

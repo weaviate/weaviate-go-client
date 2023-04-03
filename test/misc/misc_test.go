@@ -21,7 +21,7 @@ func TestMisc_integration(t *testing.T) {
 	})
 
 	t.Run("GET /.well-known/ready", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
 
 		assert.Nil(t, err)
@@ -29,23 +29,15 @@ func TestMisc_integration(t *testing.T) {
 	})
 
 	t.Run("GET /.well-known/live", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		isLive, err := client.Misc().LiveChecker().Do(context.Background())
 
 		assert.Nil(t, err)
 		assert.True(t, isLive)
 	})
 
-	t.Run("GET /.well-known/openid-configuration", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
-		openIDconfig, err := client.Misc().OpenIDConfigurationGetter().Do(context.Background())
-
-		assert.Nil(t, err)
-		assert.Nil(t, openIDconfig)
-	})
-
 	t.Run("GET /meta", func(t *testing.T) {
-		client := testsuit.CreateTestClient(8080, nil)
+		client := testsuit.CreateTestClient()
 		meta, err := client.Misc().MetaGetter().Do(context.Background())
 		assert.Nil(t, err)
 		assert.NotEmpty(t, meta.Version)

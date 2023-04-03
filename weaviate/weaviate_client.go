@@ -2,6 +2,7 @@ package weaviate
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
@@ -30,44 +31,39 @@ type Config struct {
 	//  If omitted a default will be used. The default is not able to handle authenticated requests.
 	//
 	//  To connect with an authenticated weaviate consider using the client from the golang.org/x/oauth2 module.
+	// Either this option or AuthConfig can be used
 	ConnectionClient *http.Client
+
+	// Configuration for authentication. Either this option or ConnectionClient can be used
+	AuthConfig auth.Config
 
 	// Headers added for every request
 	Headers map[string]string
+
+	// How long the client should wait for Weaviate to start up
+	StartupTimeout time.Duration
 }
 
-// Deprecated: This function is unable to wait for Weaviate to start. If you want to use an AuthClient, use
-// AddAuthClient() instead.
+// Deprecated: This function is unable to wait for Weaviate to start. Use NewClient() instead and add auth.Config to
+// weaviate.Config
 func NewConfig(host string, scheme string, authConfig auth.Config, headers map[string]string) (*Config, error) {
 	var client *http.Client
 	var err error
+	var additionalHeaders map[string]string
 	if authConfig != nil {
 		tmpCon := connection.NewConnection(scheme, host, nil, headers)
-		client, err = authConfig.GetAuthClient(tmpCon)
+		client, additionalHeaders, err = authConfig.GetAuthInfo(tmpCon)
 		if err != nil {
 			return nil, err
 		}
+		if headers == nil {
+			headers = map[string]string{}
+		}
+		for k, v := range additionalHeaders {
+			headers[k] = v
+		}
 	}
 	return &Config{Host: host, Scheme: scheme, Headers: headers, ConnectionClient: client}, nil
-}
-
-func AddAuthClient(cfg Config, authConfig auth.Config, startupTimeout time.Duration) (Config, error) {
-	if authConfig == nil {
-		return cfg, nil
-	}
-
-	tmpCon := connection.NewConnection(cfg.Scheme, cfg.Host, nil, cfg.Headers)
-	err := tmpCon.WaitForWeaviate(startupTimeout)
-	if err != nil {
-		return cfg, err
-	}
-
-	client, err := authConfig.GetAuthClient(tmpCon)
-	if err != nil {
-		return cfg, err
-	}
-	cfg.ConnectionClient = client
-	return cfg, nil
 }
 
 // Client implementing the weaviate API
@@ -86,6 +82,69 @@ type Client struct {
 	backup          *backup.API
 	graphQL         *graphql.API
 	cluster         *cluster.API
+}
+
+func NewClient(config Config) (*Client, error) {
+	if config.AuthConfig != nil && config.ConnectionClient != nil {
+		return nil, errors.New("only AuthConfig or ConnectionClient can be given in the config")
+	}
+
+	// if an authentication config is given, we first need to create a temporary connection to fetch some OIDC
+	// infos from Weaviate. This connection is then replaced by the "real" connection
+	if config.AuthConfig != nil {
+		tmpCon := connection.NewConnection(config.Scheme, config.Host, nil, config.Headers)
+		err := tmpCon.WaitForWeaviate(config.StartupTimeout)
+		if err != nil {
+			return nil, err
+		}
+		connectionClient, additionalHeaders, err := config.AuthConfig.GetAuthInfo(tmpCon)
+		if err != nil {
+			return nil, err
+		}
+		config.ConnectionClient = connectionClient
+		if config.Headers == nil {
+			config.Headers = map[string]string{}
+		}
+		for k, v := range additionalHeaders {
+			config.Headers[k] = v
+		}
+
+	}
+
+	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
+
+	if err := con.WaitForWeaviate(config.StartupTimeout); err != nil {
+		return nil, err
+	}
+
+	// some endpoints now require a className namespace.
+	// to determine if this new convention is to be used,
+	// we must check the weaviate server version
+	getVersionFn := func() string {
+		meta, err := misc.New(con, nil).MetaGetter().Do(context.Background())
+		if err == nil {
+			return meta.Version
+		}
+		return ""
+	}
+
+	dbVersionProvider := db.NewVersionProvider(getVersionFn)
+	dbVersionSupport := db.NewDBVersionSupport(dbVersionProvider)
+
+	client := &Client{
+		connection:      con,
+		misc:            misc.New(con, dbVersionProvider),
+		schema:          schema.New(con),
+		c11y:            contextionary.New(con),
+		classifications: classifications.New(con),
+		graphQL:         graphql.New(con),
+		data:            data.New(con, dbVersionSupport),
+		batch:           batch.New(con, dbVersionSupport),
+		backup:          backup.New(con),
+		cluster:         cluster.New(con),
+	}
+
+	return client, nil
 }
 
 // New client from config
