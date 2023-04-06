@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
+	"net/url"
+	"strconv"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
@@ -116,7 +117,7 @@ func (getter *ObjectsGetter) objectList(ctx context.Context) (*connection.Respon
 
 func (getter *ObjectsGetter) buildPath() string {
 	basePath := getter.getPath()
-	pathParams := getter.buildPathParams()
+	pathParams := getter.buildPathParams().Encode()
 	return fmt.Sprintf("%s%v", basePath, pathParams)
 }
 
@@ -128,50 +129,30 @@ func (getter *ObjectsGetter) getPath() string {
 	})
 }
 
-func (getter *ObjectsGetter) buildPathParams() string {
-	pathParams := make([]string, 0)
+func (getter *ObjectsGetter) buildPathParams() url.Values {
+	pathParams := url.Values{}
 
-	additionalParams := buildAdditionalParams(getter.additionalProperties)
-	if len(additionalParams) > 0 {
-		pathParams = append(pathParams, additionalParams)
-	}
+	pathParams["include"] = getter.additionalProperties
 	if getter.withLimit {
-		pathParams = append(pathParams, fmt.Sprintf("limit=%v", getter.limit))
+		pathParams.Set("limit", strconv.Itoa(getter.limit))
 	}
 	if len(getter.id) == 0 && len(getter.className) > 0 {
 		if getter.dbVersionSupport.SupportsClassNameNamespacedEndpoints() {
-			pathParams = append(pathParams, fmt.Sprintf("class=%v", getter.className))
-		} else {
-			getter.dbVersionSupport.WarnNotSupportedClassParameterInEndpointsForObjects()
+			pathParams.Set("class", getter.className)
 		}
+		getter.dbVersionSupport.WarnNotSupportedClassParameterInEndpointsForObjects()
+
 	}
 
 	if getter.consistencyLevel != "" {
-		pathParams = append(pathParams, fmt.Sprintf("consistency_level=%v", getter.consistencyLevel))
+		pathParams.Set("consistency_level", getter.consistencyLevel)
 	}
 	if getter.nodeName != "" {
-		pathParams = append(pathParams, fmt.Sprintf("node_name=%v", getter.nodeName))
+		pathParams.Set("node_name", getter.nodeName)
 	}
 
 	if getter.after != "" {
-		pathParams = append(pathParams, fmt.Sprintf("after=%v", getter.after))
+		pathParams.Set("after", getter.after)
 	}
-
-	if len(pathParams) > 0 {
-		return fmt.Sprintf("?%v", strings.Join(pathParams, "&"))
-	}
-	return ""
-}
-
-// buildAdditionalParams build the query URL parameters for the requested underscore properties
-func buildAdditionalParams(additionalProperties []string) string {
-	selectedProperties := make([]string, 0)
-	selectedProperties = append(selectedProperties, additionalProperties...)
-
-	params := strings.Join(selectedProperties, ",")
-	if len(params) > 0 {
-		params = fmt.Sprintf("include=%v", params)
-	}
-
-	return params
+	return pathParams
 }
