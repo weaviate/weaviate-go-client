@@ -2,7 +2,6 @@ package data
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -116,9 +115,10 @@ func (getter *ObjectsGetter) objectList(ctx context.Context) (*connection.Respon
 }
 
 func (getter *ObjectsGetter) buildPath() string {
-	basePath := getter.getPath()
-	pathParams := getter.buildPathParams().Encode()
-	return fmt.Sprintf("%s%v", basePath, pathParams)
+	var path_url url.URL
+	path_url.Path = getter.getPath()
+	path_url.RawQuery = getter.buildPathParams().Encode()
+	return path_url.String()
 }
 
 func (getter *ObjectsGetter) getPath() string {
