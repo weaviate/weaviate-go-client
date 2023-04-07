@@ -115,10 +115,12 @@ func (getter *ObjectsGetter) objectList(ctx context.Context) (*connection.Respon
 }
 
 func (getter *ObjectsGetter) buildPath() string {
-	var path_url url.URL
-	path_url.Path = getter.getPath()
-	path_url.RawQuery = getter.buildPathParams().Encode()
-	return path_url.String()
+	endpoint := getter.getPath()
+	query := getter.buildPathParams().Encode()
+	if query == "" {
+		return endpoint
+	}
+	return endpoint + "?" + query
 }
 
 func (getter *ObjectsGetter) getPath() string {
