@@ -1,6 +1,8 @@
 package fault
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // WeaviateClientError is returned if the client experienced an error.
 //
@@ -16,5 +18,9 @@ type WeaviateClientError struct {
 
 // Error message of the unexpected status code error
 func (uce *WeaviateClientError) Error() string {
-	return fmt.Sprintf("status code: %v, error: %v", uce.StatusCode, uce.Msg)
+	msg := uce.Msg
+	if uce.DerivedFromError != nil {
+		msg = fmt.Sprintf("%s: %v", uce.Msg, uce.DerivedFromError)
+	}
+	return fmt.Sprintf("status code: %v, error: %v", uce.StatusCode, msg)
 }
