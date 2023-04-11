@@ -166,6 +166,17 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, pizzasErr)
 		assert.Equal(t, 1, len(pizzas)) // only the other pizza should be left
 
+		secondPizzaID := pizzas[0].ID.String()
+
+		pizzas_offset, pizzaErr := client.Data().ObjectsGetter().WithClassName("Pizza").WithOffset(0).Do(context.Background())
+		assert.Nil(t, pizzaErr)
+		assert.Equal(t, 2, len(pizzas_offset))
+
+		pizzas_offset, pizzaErr = client.Data().ObjectsGetter().WithClassName("Pizza").WithOffset(1).Do(context.Background())
+		assert.Nil(t, pizzaErr)
+		assert.Equal(t, 1, len(pizzas_offset))
+		assert.Equal(t, secondPizzaID, pizzas_offset[0].ID.String())
+
 		testsuit.CleanUpWeaviate(t, client)
 	})
 

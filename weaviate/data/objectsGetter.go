@@ -23,6 +23,7 @@ type ObjectsGetter struct {
 	additionalProperties []string
 	withLimit            bool
 	limit                int
+	offset               int
 	consistencyLevel     string
 	nodeName             string
 	dbVersionSupport     *db.VersionSupport
@@ -66,6 +67,12 @@ func (getter *ObjectsGetter) WithAdditional(additional string) *ObjectsGetter {
 func (getter *ObjectsGetter) WithLimit(limit int) *ObjectsGetter {
 	getter.withLimit = true
 	getter.limit = limit
+	return getter
+}
+
+// WithLimit of results
+func (getter *ObjectsGetter) WithOffset(offset int) *ObjectsGetter {
+	getter.offset = offset
 	return getter
 }
 
@@ -141,6 +148,9 @@ func (getter *ObjectsGetter) buildPathParams() url.Values {
 	}
 	if getter.withLimit {
 		pathParams.Set("limit", strconv.Itoa(getter.limit))
+	}
+	if getter.offset > 0 {
+		pathParams.Set("offset", strconv.Itoa(getter.offset))
 	}
 	if len(getter.id) == 0 && len(getter.className) > 0 {
 		if getter.dbVersionSupport.SupportsClassNameNamespacedEndpoints() {
