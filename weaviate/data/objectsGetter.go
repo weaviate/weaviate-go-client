@@ -137,7 +137,7 @@ func (getter *ObjectsGetter) buildPathParams() url.Values {
 
 	additionalParams := getter.additionalProperties
 	if len(additionalParams) > 0 {
-		pathParams.Add("include", strings.Join(additionalParams, ","))
+		pathParams.Set("include", strings.Join(additionalParams, ","))
 	}
 	if getter.withLimit {
 		pathParams.Set("limit", strconv.Itoa(getter.limit))
