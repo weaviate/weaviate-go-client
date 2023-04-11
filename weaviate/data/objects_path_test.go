@@ -38,7 +38,7 @@ func Test_BuildObjectPath(t *testing.T) {
 				WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
 				WithAdditional("classification").
 				WithVector(),
-			expectedPath: "/objects/SomeClass/123?include=classification,vector&consistency_level=QUORUM",
+			expectedPath: "/objects/SomeClass/123?consistency_level=QUORUM&include=classification%2Cvector",
 		},
 		{
 			name: "with node name and with vector and classification",
@@ -47,7 +47,7 @@ func Test_BuildObjectPath(t *testing.T) {
 				WithNodeName("node1").
 				WithAdditional("classification").
 				WithVector(),
-			expectedPath: "/objects/SomeClass/123?include=classification,vector&node_name=node1",
+			expectedPath: "/objects/SomeClass/123?include=classification%2Cvector&node_name=node1",
 		},
 	}
 

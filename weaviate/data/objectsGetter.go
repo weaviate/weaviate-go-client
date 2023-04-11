@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
@@ -134,7 +135,10 @@ func (getter *ObjectsGetter) getPath() string {
 func (getter *ObjectsGetter) buildPathParams() url.Values {
 	pathParams := url.Values{}
 
-	pathParams["include"] = getter.additionalProperties
+	additionalParams := getter.additionalProperties
+	if len(additionalParams) > 0 {
+		pathParams.Add("include", strings.Join(additionalParams, ","))
+	}
 	if getter.withLimit {
 		pathParams.Set("limit", strconv.Itoa(getter.limit))
 	}
