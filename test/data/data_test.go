@@ -177,6 +177,10 @@ func TestData_integration(t *testing.T) {
 		assert.Equal(t, 1, len(pizzas_offset))
 		assert.Equal(t, secondPizzaID, pizzas_offset[0].ID.String())
 
+		pizzas_offset, pizzaErr = client.Data().ObjectsGetter().WithClassName("Pizza").WithOffset(5).Do(context.Background())
+		assert.Nil(t, pizzaErr)
+		assert.Equal(t, 0, len(pizzas_offset))
+
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
