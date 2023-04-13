@@ -70,7 +70,7 @@ func (getter *ObjectsGetter) WithLimit(limit int) *ObjectsGetter {
 	return getter
 }
 
-// WithLimit of results
+// WithOffset of results
 func (getter *ObjectsGetter) WithOffset(offset int) *ObjectsGetter {
 	getter.offset = offset
 	return getter

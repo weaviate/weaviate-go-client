@@ -123,7 +123,7 @@ func TestData_integration(t *testing.T) {
 	t.Run("GET /actions /things", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
-
+		// create two pizzas and two soups
 		_, errCreate := client.Data().Creator().WithClassName("Pizza").WithProperties(map[string]string{
 			"name":        "Margherita",
 			"description": "plain",
@@ -166,17 +166,20 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, pizzasErr)
 		assert.Equal(t, 1, len(pizzas)) // only the other pizza should be left
 
-		secondPizzaID := pizzas[0].ID.String()
+		secondPizzaID := pizzas[0].ID.String() // save the id of the second pizza
 
+		// WithOffset(0) should work the same as not using an offset
 		pizzas_offset, pizzaErr := client.Data().ObjectsGetter().WithClassName("Pizza").WithOffset(0).Do(context.Background())
 		assert.Nil(t, pizzaErr)
 		assert.Equal(t, 2, len(pizzas_offset))
 
+		// WithOffset(1) should only return the second pizza
 		pizzas_offset, pizzaErr = client.Data().ObjectsGetter().WithClassName("Pizza").WithOffset(1).Do(context.Background())
 		assert.Nil(t, pizzaErr)
 		assert.Equal(t, 1, len(pizzas_offset))
 		assert.Equal(t, secondPizzaID, pizzas_offset[0].ID.String())
 
+		// WithOffset(5) should not return any pizzas
 		pizzas_offset, pizzaErr = client.Data().ObjectsGetter().WithClassName("Pizza").WithOffset(5).Do(context.Background())
 		assert.Nil(t, pizzaErr)
 		assert.Equal(t, 0, len(pizzas_offset))
