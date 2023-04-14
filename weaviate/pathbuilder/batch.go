@@ -1,11 +1,16 @@
 package pathbuilder
 
-import "fmt"
+import (
+	"fmt"
+	"net/url"
+)
 
 func BatchObjects(comp Components) string {
 	path := "/batch/objects"
 	if comp.ConsistencyLevel != "" {
-		path = fmt.Sprintf("%s?consistency_level=%v", path, comp.ConsistencyLevel)
+		pathParams := url.Values{}
+		pathParams.Set("consistency_level", comp.ConsistencyLevel)
+		path = fmt.Sprintf("%s?%v", path, pathParams.Encode())
 	}
 	return path
 }
@@ -13,7 +18,9 @@ func BatchObjects(comp Components) string {
 func BatchReferences(comp Components) string {
 	path := "/batch/references"
 	if comp.ConsistencyLevel != "" {
-		path = fmt.Sprintf("%s?consistency_level=%v", path, comp.ConsistencyLevel)
+		pathParams := url.Values{}
+		pathParams.Set("consistency_level", comp.ConsistencyLevel)
+		path = fmt.Sprintf("%s?%v", path, pathParams.Encode())
 	}
 	return path
 }

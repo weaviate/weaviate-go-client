@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
@@ -81,7 +82,9 @@ func (creator *Creator) Do(ctx context.Context) (*ObjectWrapper, error) {
 func (creator *Creator) buildPath() string {
 	path := "/objects"
 	if creator.consistencyLevel != "" {
-		path = fmt.Sprintf("%s?consistency_level=%v", path, creator.consistencyLevel)
+		pathParams := url.Values{}
+		pathParams.Set("consistency_level", creator.consistencyLevel)
+		path = fmt.Sprintf("%s?%v", path, pathParams.Encode())
 	}
 	return path
 }
