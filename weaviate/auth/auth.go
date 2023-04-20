@@ -21,7 +21,7 @@ type Config interface {
 }
 
 type authBase struct {
-	ClientId       string
+	ClientID       string
 	WeaviateScopes []string
 	TokenEndpoint  string
 	Config
@@ -73,7 +73,7 @@ func (ab *authBase) getIdAndTokenEndpoint(ctx context.Context, con *connection.C
 	if !ok {
 		return errors.New("could not parse token_endpoint from OIDC response")
 	}
-	ab.ClientId = cfg.ClientID
+	ab.ClientID = cfg.ClientID
 	ab.WeaviateScopes = cfg.Scopes
 	ab.TokenEndpoint = tokenEndpoint
 	return nil
@@ -89,19 +89,19 @@ func (cc ClientCredentials) GetAuthInfo(con *connection.Connection) (*http.Clien
 	err := cc.getIdAndTokenEndpoint(context.Background(), con)
 	if err != nil {
 		return nil, nil, err
-	} else if cc.ClientId == "" && cc.TokenEndpoint == "" {
+	} else if cc.ClientID == "" && cc.TokenEndpoint == "" {
 		return nil, nil, nil // not configured with authentication
 	}
 
 	if cc.Scopes == nil {
 		if strings.HasPrefix(cc.TokenEndpoint, "https://login.microsoftonline.com") {
-			cc.Scopes = []string{cc.ClientId + "/.default"}
+			cc.Scopes = []string{cc.ClientID + "/.default"}
 		}
 	}
 	cc.Scopes = append(cc.Scopes, cc.WeaviateScopes...)
 
 	config := clientcredentials.Config{
-		ClientID:     cc.ClientId,
+		ClientID:     cc.ClientID,
 		ClientSecret: cc.ClientSecret,
 		TokenURL:     cc.TokenEndpoint,
 		Scopes:       cc.Scopes,
@@ -120,7 +120,7 @@ func (ro ResourceOwnerPasswordFlow) GetAuthInfo(con *connection.Connection) (*ht
 	err := ro.getIdAndTokenEndpoint(context.Background(), con)
 	if err != nil {
 		return nil, nil, err
-	} else if ro.ClientId == "" && ro.TokenEndpoint == "" {
+	} else if ro.ClientID == "" && ro.TokenEndpoint == "" {
 		return nil, nil, nil // not configured with authentication
 	}
 
@@ -129,7 +129,7 @@ func (ro ResourceOwnerPasswordFlow) GetAuthInfo(con *connection.Connection) (*ht
 	}
 	ro.Scopes = append(ro.Scopes, ro.WeaviateScopes...)
 
-	conf := oauth2.Config{ClientID: ro.ClientId, Endpoint: oauth2.Endpoint{TokenURL: ro.TokenEndpoint}}
+	conf := oauth2.Config{ClientID: ro.ClientID, Endpoint: oauth2.Endpoint{TokenURL: ro.TokenEndpoint}}
 	token, err := conf.PasswordCredentialsToken(context.TODO(), ro.Username, ro.Password)
 	if err != nil {
 		return nil, nil, err
@@ -143,7 +143,7 @@ func (ro ResourceOwnerPasswordFlow) GetAuthInfo(con *connection.Connection) (*ht
 
 	// creat oauth configuration that includes the endpoint and client id as a token source with a refresh token
 	// (if available), then the client can auto refresh the token
-	confRefresh := oauth2.Config{ClientID: ro.ClientId, Endpoint: oauth2.Endpoint{TokenURL: ro.TokenEndpoint}}
+	confRefresh := oauth2.Config{ClientID: ro.ClientID, Endpoint: oauth2.Endpoint{TokenURL: ro.TokenEndpoint}}
 	tokenSource := confRefresh.TokenSource(context.TODO(), &oauth2.Token{
 		AccessToken: token.AccessToken, RefreshToken: token.RefreshToken, Expiry: token.Expiry,
 	})
@@ -155,14 +155,20 @@ type BearerToken struct {
 	AccessToken  string
 	RefreshToken string
 	ExpiresIn    uint
+	// ClientIDOverride is optional. If set, it will override the client_id set in the OIDC config
+	ClientIDOverride string
 	authBase
 }
 
 func (bt BearerToken) GetAuthInfo(con *connection.Connection) (*http.Client, map[string]string, error) {
 	// we don't need these values, but we can check if weaviate is configured with authentication enabled
 	err := bt.getIdAndTokenEndpoint(context.Background(), con)
-	if err == nil && bt.ClientId == "" && len(bt.WeaviateScopes) == 0 && bt.TokenEndpoint == "" {
+	if err == nil && bt.ClientID == "" && len(bt.WeaviateScopes) == 0 && bt.TokenEndpoint == "" {
 		return nil, nil, nil
+	}
+
+	if bt.ClientIDOverride != "" {
+		bt.ClientID = bt.ClientIDOverride
 	}
 
 	// there is no possibility of refreshing the token without a refresh_token.
@@ -170,7 +176,7 @@ func (bt BearerToken) GetAuthInfo(con *connection.Connection) (*http.Client, map
 		log.Printf("Auth002: Your access token is valid for %v and no refresh token was provided.", time.Now().Add(time.Second*time.Duration(bt.ExpiresIn)))
 		return oauth2.NewClient(context.TODO(), oauth2.StaticTokenSource(&oauth2.Token{AccessToken: bt.AccessToken})), nil, nil
 	}
-	conf := oauth2.Config{ClientID: bt.ClientId, Endpoint: oauth2.Endpoint{TokenURL: bt.TokenEndpoint}}
+	conf := oauth2.Config{ClientID: bt.ClientID, Endpoint: oauth2.Endpoint{TokenURL: bt.TokenEndpoint}}
 	tokenSource := conf.TokenSource(context.TODO(), &oauth2.Token{
 		AccessToken: bt.AccessToken, RefreshToken: bt.RefreshToken, Expiry: time.Now().Add(time.Second * time.Duration(bt.ExpiresIn)),
 	})
