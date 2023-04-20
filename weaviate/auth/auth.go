@@ -157,6 +157,8 @@ type BearerToken struct {
 	ExpiresIn    uint
 	// ClientIDOverride is optional. If set, it will override the client_id set in the OIDC config
 	ClientIDOverride string
+	// ClientSecret is optional. If set, it will add the secret for oauth2 config
+	ClientSecret string
 	authBase
 }
 
@@ -177,6 +179,12 @@ func (bt BearerToken) GetAuthInfo(con *connection.Connection) (*http.Client, map
 		return oauth2.NewClient(context.TODO(), oauth2.StaticTokenSource(&oauth2.Token{AccessToken: bt.AccessToken})), nil, nil
 	}
 	conf := oauth2.Config{ClientID: bt.ClientID, Endpoint: oauth2.Endpoint{TokenURL: bt.TokenEndpoint}}
+
+	// Add secret if defined
+	if bt.ClientSecret != "" {
+		conf.ClientSecret = bt.ClientSecret
+	}
+
 	tokenSource := conf.TokenSource(context.TODO(), &oauth2.Token{
 		AccessToken: bt.AccessToken, RefreshToken: bt.RefreshToken, Expiry: time.Now().Add(time.Second * time.Duration(bt.ExpiresIn)),
 	})
