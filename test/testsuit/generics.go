@@ -179,7 +179,7 @@ func CreateTestClient() *weaviate.Client {
 		cfg.AuthConfig = auth.ResourceOwnerPasswordFlow{Username: "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net", Password: wcsPw}
 		client, err = weaviate.NewClient(cfg)
 		if err != nil {
-			log.Printf("Error occured during startup %v", err)
+			log.Printf("Error occurred during startup %v", err)
 		}
 	} else {
 		client = weaviate.New(cfg)
@@ -311,4 +311,123 @@ func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client) {
 
 	_, thingsErr := thingsBatcher.Do(context.Background())
 	assert.Nil(t, thingsErr)
+}
+
+func CreateWeaviateTestSchemaDocumentPassage(t *testing.T, client *weaviate.Client) {
+	document := &models.Class{
+		Class: "Document",
+		Properties: []*models.Property{
+			{
+				Name:     "title",
+				DataType: []string{"text"},
+			},
+		},
+		InvertedIndexConfig: &models.InvertedIndexConfig{IndexTimestamps: true},
+	}
+	passage := &models.Class{
+		Class: "Passage",
+		Properties: []*models.Property{
+			{
+				Name:     "content",
+				DataType: []string{"text"},
+			},
+			{
+				Name:     "type",
+				DataType: []string{"text"},
+			},
+			{
+				Name:     "ofDocument",
+				DataType: []string{"Document"},
+			},
+		},
+	}
+	err := client.Schema().ClassCreator().WithClass(document).Do(context.Background())
+	assert.Nil(t, err)
+	err = client.Schema().ClassCreator().WithClass(passage).Do(context.Background())
+	assert.Nil(t, err)
+}
+
+func CreateTestDocumentAndPassageSchemaAndData(t *testing.T, client *weaviate.Client) {
+	CreateWeaviateTestSchemaDocumentPassage(t, client)
+
+	documentIDs := []string{
+		"00000000-0000-0000-0000-00000000000a",
+		"00000000-0000-0000-0000-00000000000b",
+		"00000000-0000-0000-0000-00000000000c",
+		"00000000-0000-0000-0000-00000000000d",
+	}
+	passageIDs := []string{
+		"00000000-0000-0000-0000-000000000001",
+		"00000000-0000-0000-0000-000000000002",
+		"00000000-0000-0000-0000-000000000003",
+		"00000000-0000-0000-0000-000000000004",
+		"00000000-0000-0000-0000-000000000005",
+		"00000000-0000-0000-0000-000000000006",
+		"00000000-0000-0000-0000-000000000007",
+		"00000000-0000-0000-0000-000000000008",
+		"00000000-0000-0000-0000-000000000009",
+		"00000000-0000-0000-0000-000000000010",
+		"00000000-0000-0000-0000-000000000011",
+		"00000000-0000-0000-0000-000000000012",
+		"00000000-0000-0000-0000-000000000013",
+		"00000000-0000-0000-0000-000000000014",
+		"00000000-0000-0000-0000-000000000015",
+		"00000000-0000-0000-0000-000000000016",
+		"00000000-0000-0000-0000-000000000017",
+		"00000000-0000-0000-0000-000000000018",
+		"00000000-0000-0000-0000-000000000019",
+		"00000000-0000-0000-0000-000000000020",
+	}
+	// Create documents
+	documents := make([]*models.Object, len(documentIDs))
+	for i, docID := range documentIDs {
+		documents[i] = &models.Object{
+			ID:    strfmt.UUID(docID),
+			Class: "Document",
+			Properties: map[string]interface{}{
+				"title": fmt.Sprintf("Title of the document %v", i),
+			},
+		}
+	}
+	// Create passages
+	passages := make([]*models.Object, len(passageIDs))
+	for i, passageID := range passageIDs {
+		passages[i] = &models.Object{
+			ID:    strfmt.UUID(passageID),
+			Class: "Passage",
+			Properties: map[string]interface{}{
+				"content": fmt.Sprintf("Passage content %v", i),
+				"type":    "document-passage",
+			},
+		}
+	}
+
+	batcher := client.Batch().ObjectsBatcher()
+	for _, document := range documents {
+		batcher.WithObject(document)
+	}
+	for _, passage := range passages {
+		batcher.WithObject(passage)
+	}
+	_, err := batcher.Do(context.Background())
+	assert.Nil(t, err)
+
+	createReferences := func(t *testing.T, client *weaviate.Client,
+		document *models.Object, passages []*models.Object,
+	) {
+		ref := client.Data().ReferencePayloadBuilder().
+			WithID(document.ID.String()).WithClassName(document.Class).Payload()
+		for _, passage := range passages {
+			err := client.Data().ReferenceCreator().
+				WithID(passage.ID.String()).
+				WithClassName(passage.Class).
+				WithReferenceProperty("ofDocument").
+				WithReference(ref).
+				Do(context.TODO())
+			assert.Nil(t, err)
+		}
+	}
+
+	createReferences(t, client, documents[0], passages[:10])
+	createReferences(t, client, documents[1], passages[10:14])
 }
