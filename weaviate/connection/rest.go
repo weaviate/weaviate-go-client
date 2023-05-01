@@ -113,21 +113,26 @@ func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
 		return
 	}
 
-	timeToSleep := time.Until(token.Expiry) - time.Second/10
-	if timeToSleep <= 0 {
+	if time.Until(token.Expiry) <= 0 {
 		return
 	}
-	ticker := time.NewTicker(timeToSleep)
+
+	timeToSleep := time.Until(token.Expiry) - time.Second*30
+	if timeToSleep > 0 {
+		time.Sleep(timeToSleep)
+	}
+	ticker := time.NewTicker(time.Second)
 	go func() {
 		for {
 			select {
 			case <-con.doneCh:
 				return
 			case <-ticker.C:
-				_, err = con.RunREST(context.TODO(), "/meta", http.MethodGet, nil)
+				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*5)
+				_, err = con.RunREST(ctx, "/meta", http.MethodGet, nil)
+				cancelFunc()
 				if err != nil {
 					log.Printf("Error during token refresh, rest request: %v", err)
-					return
 				}
 			}
 		}
