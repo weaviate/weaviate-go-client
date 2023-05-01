@@ -208,6 +208,59 @@ func TestAuthMock_RefreshUserPWAndToken(t *testing.T) {
 	}
 }
 
+func TestAuthMock_RefreshTokenTimeout(t *testing.T) {
+	expirationTimeToken := uint(31)
+	expirationTimeRefreshToken := 2
+	authConfig := auth.BearerToken{AccessToken: AccessToken, ExpiresIn: expirationTimeToken, RefreshToken: RefreshToken}
+
+	// endpoint for access tokens
+	muxToken := http.NewServeMux()
+	muxToken.HandleFunc("/meta", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(
+			fmt.Sprintf(`{"access_token": "%v", "expires_in": %v, "refresh_token": "%v", "refresh_expires_in" :  %v}`,
+				AccessToken, expirationTimeToken, RefreshToken, expirationTimeRefreshToken)))
+	})
+
+	sToken := httptest.NewServer(muxToken)
+	defer sToken.Close()
+
+	// provides all endpoints
+	muxEndpoints := http.NewServeMux()
+	muxEndpoints.HandleFunc("/endpoints", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(fmt.Sprintf(`{"token_endpoint": "` + sToken.URL + `/auth"}`)))
+	})
+	sEndpoints := httptest.NewServer(muxEndpoints)
+	defer sEndpoints.Close()
+
+	// Returns the address of the auth server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"href": "` + sEndpoints.URL + `/endpoints", "clientId": "DoesNotMatter"}`))
+	})
+	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
+		// Access Token cannot be expired
+		w.Write([]byte(`{}`))
+	})
+	mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{}`))
+	})
+	s := httptest.NewServer(mux)
+	defer s.Close()
+
+	cfg := weaviate.Config{Host: strings.TrimPrefix(s.URL, "http://"), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: authConfig}
+	client, err := weaviate.NewClient(cfg)
+	assert.Nil(t, err)
+
+	AuthErr := client.Schema().AllDeleter().Do(context.TODO())
+	assert.Nil(t, AuthErr)
+
+	// access and refresh token expired, so the client needs to refresh automatically in the background
+	time.Sleep(time.Second * 120)
+	AuthErr2 := client.Schema().AllDeleter().Do(context.TODO())
+	assert.Nil(t, AuthErr2)
+}
+
 // Test that the client can handle situations in which a proxy returns a catchall page for all requests
 func TestAuthMock_CatchAllProxy(t *testing.T) {
 	// write log to buffer
