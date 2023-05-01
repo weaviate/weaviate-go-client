@@ -209,13 +209,21 @@ func TestAuthMock_RefreshUserPWAndToken(t *testing.T) {
 }
 
 func TestAuthMock_RefreshTokenTimeout(t *testing.T) {
+	tokenRefreshTime := time.Now()
 	expirationTimeToken := uint(31)
 	expirationTimeRefreshToken := 2
 	authConfig := auth.BearerToken{AccessToken: AccessToken, ExpiresIn: expirationTimeToken, RefreshToken: RefreshToken}
+	firstTime := true
+	pointerFirstTime := &firstTime
 
 	// endpoint for access tokens
 	muxToken := http.NewServeMux()
-	muxToken.HandleFunc("/meta", func(w http.ResponseWriter, r *http.Request) {
+	muxToken.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
+		if *pointerFirstTime {
+			time.Sleep(6 * time.Second)
+		}
+		*pointerFirstTime = false
+		tokenRefreshTime = time.Now() // update time when the tokens where refreshed the last time
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(
 			fmt.Sprintf(`{"access_token": "%v", "expires_in": %v, "refresh_token": "%v", "refresh_expires_in" :  %v}`,
@@ -239,7 +247,7 @@ func TestAuthMock_RefreshTokenTimeout(t *testing.T) {
 		w.Write([]byte(`{"href": "` + sEndpoints.URL + `/endpoints", "clientId": "DoesNotMatter"}`))
 	})
 	mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
-		// Access Token cannot be expired
+		assert.True(t, time.Since(tokenRefreshTime).Seconds() < float64(expirationTimeToken))
 		w.Write([]byte(`{}`))
 	})
 	mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {
@@ -256,7 +264,7 @@ func TestAuthMock_RefreshTokenTimeout(t *testing.T) {
 	assert.Nil(t, AuthErr)
 
 	// access and refresh token expired, so the client needs to refresh automatically in the background
-	time.Sleep(time.Second * 120)
+	time.Sleep(time.Second * 30)
 	AuthErr2 := client.Schema().AllDeleter().Do(context.TODO())
 	assert.Nil(t, AuthErr2)
 }
