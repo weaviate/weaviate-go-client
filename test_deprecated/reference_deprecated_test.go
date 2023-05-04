@@ -22,7 +22,7 @@ func TestData_reference_integration_deprecated(t *testing.T) {
 
 	t.Run("POST /{type}/{id}/references/{propertyName}", func(t *testing.T) {
 		client := CreateTestClient()
-		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
+		testsuit.CreateWeaviateTestSchemaFoodWithReferencePropertyDeprecated(t, client)
 
 		propertySchemaT := map[string]string{
 			"name":        "Hawaii",
@@ -70,7 +70,7 @@ func TestData_reference_integration_deprecated(t *testing.T) {
 
 	t.Run("PUT /{type}/{id}/references/{propertyName}", func(t *testing.T) {
 		client := CreateTestClient()
-		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
+		testsuit.CreateWeaviateTestSchemaFoodWithReferencePropertyDeprecated(t, client)
 
 		// Create things with references
 		propertySchemaT := map[string]string{
@@ -134,7 +134,7 @@ func TestData_reference_integration_deprecated(t *testing.T) {
 
 	t.Run("DELETE /{type}/{id}/references/{propertyName}", func(t *testing.T) {
 		client := CreateTestClient()
-		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
+		testsuit.CreateWeaviateTestSchemaFoodWithReferencePropertyDeprecated(t, client)
 
 		// Create things with references
 		propertySchemaT := map[string]string{

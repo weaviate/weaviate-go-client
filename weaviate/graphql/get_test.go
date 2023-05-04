@@ -933,3 +933,20 @@ func TestHybridBuilder(t *testing.T) {
 	expected := `{Get {Pizza (hybrid:{query: "query", vector: [1,2,3], alpha: 0.6}) {}}}`
 	assert.Equal(t, expected, query)
 }
+
+func TestGroupByBuilder(t *testing.T) {
+	conMock := &MockRunREST{}
+
+	builder := GetBuilder{
+		connection:           conMock,
+		includesFilterClause: false,
+	}
+
+	groupBy := &GroupByArgumentBuilder{}
+	groupBy.WithPath([]string{"property"}).WithGroups(1).WithObjectsPerGroup(2)
+
+	query := builder.WithClassName("Pizza").WithGroupBy(groupBy).build()
+
+	expected := `{Get {Pizza (groupBy:{path:["property"] groups:1 objectsPerGroup:2}) {}}}`
+	assert.Equal(t, expected, query)
+}

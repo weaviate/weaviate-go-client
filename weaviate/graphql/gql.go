@@ -85,6 +85,11 @@ func (api *API) HybridArgumentBuilder() *HybridArgumentBuilder {
 	return &HybridArgumentBuilder{}
 }
 
+// GroupByArgBuilder groupBy clause
+func (api *API) GroupByArgBuilder() *GroupByArgumentBuilder {
+	return &GroupByArgumentBuilder{}
+}
+
 // rest requests abstraction
 type rest interface {
 	// RunREST request to weaviate

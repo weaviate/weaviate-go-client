@@ -33,6 +33,7 @@ type GetBuilder struct {
 	withBM25             *BM25ArgumentBuilder
 	withHybrid           *HybridArgumentBuilder
 	withGenerativeSearch *GenerativeSearchBuilder
+	withGroupBy          *GroupByArgumentBuilder
 }
 
 // WithAfter is part of the Cursor API. It can be used to extract all elements
@@ -149,6 +150,13 @@ func (gb *GetBuilder) WithGenerativeSearch(s *GenerativeSearchBuilder) *GetBuild
 	return gb
 }
 
+// WithGroupBy to perform group by operation
+func (gb *GetBuilder) WithGroupBy(groupBy *GroupByArgumentBuilder) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.withGroupBy = groupBy
+	return gb
+}
+
 // Do execute the GraphQL query
 func (gb *GetBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, gb.connection, gb.build())
@@ -207,6 +215,9 @@ func (gb *GetBuilder) createFilterClause() string {
 	}
 	if gb.withSort != nil {
 		filters = append(filters, gb.withSort.build())
+	}
+	if gb.withGroupBy != nil {
+		filters = append(filters, gb.withGroupBy.build())
 	}
 	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
 }
