@@ -13,6 +13,7 @@ type WeaviateClientError struct {
 	IsUnexpectedStatusCode bool
 	StatusCode             int
 	Msg                    string
+	UsefulError            string
 	DerivedFromError       error
 }
 
