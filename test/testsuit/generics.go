@@ -37,6 +37,14 @@ func GetPortAndAuthPw() (int, string) {
 // CreateWeaviateTestSchemaFood creates a class for each semantic type (Pizza and Soup)
 // and adds some primitive properties (name and description)
 func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
+	createWeaviateTestSchemaFood(t, client, false)
+}
+
+func CreateWeaviateTestSchemaFoodDeprecated(t *testing.T, client *weaviate.Client) {
+	createWeaviateTestSchemaFood(t, client, true)
+}
+
+func createWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client, isDeprecated bool) {
 	schemaClassThing := &models.Class{
 		Class:               "Pizza",
 		Description:         "A delicious religion like food and arguably the best export of Italy.",
@@ -57,8 +65,12 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
 	assert.Nil(t, errA)
 	errI := client.Schema().ClassCreator().WithClass(schemaClassItem).Do(context.Background())
 	assert.Nil(t, errI)
+	namePropertyDataType := []string{"text"}
+	if isDeprecated {
+		namePropertyDataType = []string{"string"}
+	}
 	nameProperty := &models.Property{
-		DataType:    []string{"string"},
+		DataType:    namePropertyDataType,
 		Description: "name",
 		Name:        "name",
 	}
@@ -110,6 +122,14 @@ func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
 }
 
 func CreateWeaviateTestSchemaWithVectorizorlessClass(t *testing.T, client *weaviate.Client) {
+	createWeaviateTestSchemaWithVectorizorlessClass(t, client, false)
+}
+
+func CreateWeaviateTestSchemaWithVectorizorlessClassDeprecated(t *testing.T, client *weaviate.Client) {
+	createWeaviateTestSchemaWithVectorizorlessClass(t, client, true)
+}
+
+func createWeaviateTestSchemaWithVectorizorlessClass(t *testing.T, client *weaviate.Client, isDeprecated bool) {
 	vectorizorlessClass := &models.Class{
 		Class:       "Donut",
 		Description: "A type of leavened fried dough commonly covered with glaze and sprinkles.",
@@ -119,8 +139,12 @@ func CreateWeaviateTestSchemaWithVectorizorlessClass(t *testing.T, client *weavi
 	err := client.Schema().ClassCreator().WithClass(vectorizorlessClass).Do(context.Background())
 	assert.Nil(t, err)
 
+	namePropertyDataType := []string{"text"}
+	if isDeprecated {
+		namePropertyDataType = []string{"string"}
+	}
 	nameProperty := &models.Property{
-		DataType:    []string{"string"},
+		DataType:    namePropertyDataType,
 		Description: "name",
 		Name:        "name",
 	}
@@ -137,9 +161,17 @@ func CreateWeaviateTestSchemaWithVectorizorlessClass(t *testing.T, client *weavi
 	assert.Nil(t, propErr2)
 }
 
-// CreateWeaviateTestSchemaFoodWithReferenceProperty create the testing schema with a reference field otherFoods on both classes
 func CreateWeaviateTestSchemaFoodWithReferenceProperty(t *testing.T, client *weaviate.Client) {
-	CreateWeaviateTestSchemaFood(t, client)
+	createWeaviateTestSchemaFoodWithReferenceProperty(t, client, false)
+}
+
+func CreateWeaviateTestSchemaFoodWithReferencePropertyDeprecated(t *testing.T, client *weaviate.Client) {
+	createWeaviateTestSchemaFoodWithReferenceProperty(t, client, true)
+}
+
+// CreateWeaviateTestSchemaFoodWithReferenceProperty create the testing schema with a reference field otherFoods on both classes
+func createWeaviateTestSchemaFoodWithReferenceProperty(t *testing.T, client *weaviate.Client, isDeprecated bool) {
+	createWeaviateTestSchemaFood(t, client, isDeprecated)
 	referenceProperty := &models.Property{
 		DataType:    []string{"Pizza", "Soup"},
 		Description: "reference to other foods",
@@ -205,9 +237,17 @@ func ParseReferenceResponseToStruct(t *testing.T, reference interface{}) models.
 	return out
 }
 
-// CreateTestSchemaAndData with a few pizzas and soups
 func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client) {
-	CreateWeaviateTestSchemaFood(t, client)
+	createTestSchemaAndData(t, client, false)
+}
+
+func CreateTestSchemaAndDataDeprecated(t *testing.T, client *weaviate.Client) {
+	createTestSchemaAndData(t, client, true)
+}
+
+// CreateTestSchemaAndData with a few pizzas and soups
+func createTestSchemaAndData(t *testing.T, client *weaviate.Client, isDeprecated bool) {
+	createWeaviateTestSchemaFood(t, client, isDeprecated)
 
 	// Create pizzas
 	menuPizza := []*models.Object{

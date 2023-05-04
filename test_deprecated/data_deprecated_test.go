@@ -23,7 +23,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	t.Run("POST /{semanticType}", func(t *testing.T) {
 		client := CreateTestClient()
 
-		testsuit.CreateWeaviateTestSchemaFood(t, client)
+		testsuit.CreateWeaviateTestSchemaFoodDeprecated(t, client)
 
 		propertySchemaT := map[string]string{
 			"name":        "Hawaii",
@@ -116,7 +116,7 @@ func TestData_integration_deprecated(t *testing.T) {
 
 	t.Run("GET /actions /things", func(t *testing.T) {
 		client := CreateTestClient()
-		testsuit.CreateWeaviateTestSchemaFood(t, client)
+		testsuit.CreateWeaviateTestSchemaFoodDeprecated(t, client)
 
 		_, errCreate := client.Data().Creator().WithClassName("Pizza").WithProperties(map[string]string{
 			"name":        "Margherita",
@@ -156,7 +156,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	t.Run("GET underscore properties", func(t *testing.T) {
 		client := CreateTestClient()
 
-		testsuit.CreateWeaviateTestSchemaFood(t, client)
+		testsuit.CreateWeaviateTestSchemaFoodDeprecated(t, client)
 
 		propertySchemaT := map[string]string{
 			"name":        "Hawaii",
@@ -250,7 +250,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	t.Run("DELETE /{type}", func(t *testing.T) {
 		client := CreateTestClient()
 
-		testsuit.CreateWeaviateTestSchemaFood(t, client)
+		testsuit.CreateWeaviateTestSchemaFoodDeprecated(t, client)
 
 		propertySchemaT := map[string]string{
 			"name":        "Hawaii",
@@ -299,7 +299,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	t.Run("HEAD /{id}", func(t *testing.T) {
 		client := CreateTestClient()
 
-		testsuit.CreateWeaviateTestSchemaFood(t, client)
+		testsuit.CreateWeaviateTestSchemaFoodDeprecated(t, client)
 
 		objTID := "abefd256-8574-442b-9293-9205193737ee"
 		propertySchemaT := map[string]string{
@@ -358,7 +358,7 @@ func TestData_integration_deprecated(t *testing.T) {
 		// PUT replaces the object fully
 		client := CreateTestClient()
 
-		testsuit.CreateWeaviateTestSchemaFood(t, client)
+		testsuit.CreateWeaviateTestSchemaFoodDeprecated(t, client)
 
 		propertySchemaT := map[string]string{
 			"name":        "Random",
@@ -426,7 +426,7 @@ func TestData_integration_deprecated(t *testing.T) {
 		// PATCH merges the new object with the existing object
 		client := CreateTestClient()
 
-		testsuit.CreateWeaviateTestSchemaFood(t, client)
+		testsuit.CreateWeaviateTestSchemaFoodDeprecated(t, client)
 
 		propertySchemaT := map[string]string{
 			"name":        "Hawaii",
@@ -493,7 +493,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	t.Run("POST /{type}/validate", func(t *testing.T) {
 		client := CreateTestClient()
 
-		testsuit.CreateWeaviateTestSchemaFood(t, client)
+		testsuit.CreateWeaviateTestSchemaFoodDeprecated(t, client)
 
 		propertySchemaT := map[string]string{
 			"name":        "Hawaii",
