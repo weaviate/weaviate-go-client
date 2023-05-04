@@ -154,7 +154,7 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, errA)
 
 		newProperty := &models.Property{
-			DataType:    []string{"string"},
+			DataType:    []string{"text"},
 			Description: "name",
 			Name:        "name",
 		}
