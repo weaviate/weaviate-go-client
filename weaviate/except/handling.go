@@ -22,7 +22,7 @@ func NewDerivedWeaviateClientError(err error) *fault.WeaviateClientError {
 		IsUnexpectedStatusCode: false,
 		StatusCode:             -1,
 		Msg:                    "check the DerivedFromError field for more information",
-		UsefulError:			err.Error(),
+		UsefulError:            err.Error(),
 		DerivedFromError:       err,
 	}
 }
