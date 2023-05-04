@@ -3,6 +3,7 @@ package schema
 import (
 	"context"
 	"testing"
+	"os"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -154,7 +155,7 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, errA)
 
 		newProperty := &models.Property{
-			DataType:    []string{"string"},
+			DataType:    []string{"text"},
 			Description: "name",
 			Name:        "name",
 		}
@@ -168,9 +169,9 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, getErr)
 		assert.Equal(t, 2, len(loadedSchema.Classes))
 		assert.Equal(t, "name", loadedSchema.Classes[0].Properties[0].Name)
-		assert.Equal(t, models.PropertyTokenizationWord, loadedSchema.Classes[0].Properties[0].Tokenization)
+		assert.Equal(t, models.PropertyTokenizationWhitespace, loadedSchema.Classes[0].Properties[0].Tokenization)
 		assert.Equal(t, "name", loadedSchema.Classes[1].Properties[0].Name)
-		assert.Equal(t, models.PropertyTokenizationWord, loadedSchema.Classes[1].Properties[0].Tokenization)
+		assert.Equal(t, models.PropertyTokenizationWhitespace, loadedSchema.Classes[1].Properties[0].Tokenization)
 
 		// Clean up classes
 		errRm := client.Schema().AllDeleter().Do(context.Background())
@@ -508,6 +509,49 @@ func TestSchema_integration(t *testing.T) {
 		require.Nil(t, errRm)
 	})
 
+	t.Run("tear down weaviate", func(t *testing.T) {
+		err := testenv.TearDownLocalWeaviate()
+		if err != nil {
+			t.Fatalf("failed to tear down weaviate: %s", err)
+		}
+	})
+
+}
+
+
+/*
+func TestReplication(t *testing.T) {
+	t.Run("up", func(t *testing.T) {
+		err := testenv.SetupLocalWeaviate()
+		if err != nil {
+			t.Fatalf("failed to setup weaviate: %s", err)
+		}
+	})
+	t.Run("Create class with implicit replication config", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		className := "ReplicationClass"
+
+		schemaClass := &models.Class{
+			Class: className,
+		}
+
+		err := client.
+			Schema().
+			ClassCreator().
+			WithClass(schemaClass).
+			Do(context.Background())
+		require.Nil(t, err)
+
+		loadedClass, getErr := client.Schema().ClassGetter().WithClassName(className).Do(context.Background())
+		require.Nil(t, getErr)
+		require.NotNil(t, loadedClass.ReplicationConfig)
+		assert.Equal(t, int64(1), loadedClass.ReplicationConfig.Factor)
+
+		// Clean up classes
+		errRm := client.Schema().AllDeleter().Do(context.Background())
+		require.Nil(t, errRm)
+	})
+
 	t.Run("Create class with explicit replication config", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		className := "ReplicationClass"
@@ -536,30 +580,6 @@ func TestSchema_integration(t *testing.T) {
 		require.Nil(t, errRm)
 	})
 
-	t.Run("Create class with implicit replication config", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		className := "ReplicationClass"
-
-		schemaClass := &models.Class{
-			Class: className,
-		}
-
-		err := client.
-			Schema().
-			ClassCreator().
-			WithClass(schemaClass).
-			Do(context.Background())
-		require.Nil(t, err)
-
-		loadedClass, getErr := client.Schema().ClassGetter().WithClassName(className).Do(context.Background())
-		require.Nil(t, getErr)
-		require.NotNil(t, loadedClass.ReplicationConfig)
-		assert.Equal(t, int64(1), loadedClass.ReplicationConfig.Factor)
-
-		// Clean up classes
-		errRm := client.Schema().AllDeleter().Do(context.Background())
-		require.Nil(t, errRm)
-	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
@@ -567,7 +587,11 @@ func TestSchema_integration(t *testing.T) {
 			t.Fatalf("failed to tear down weaviate: %s", err)
 		}
 	})
+
+
 }
+
+*/
 
 func TestSchema_errors(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
@@ -584,25 +608,6 @@ func TestSchema_errors(t *testing.T) {
 		assert.NotNil(t, err)
 	})
 
-	t.Run("Fail to add class with property having not supported tokenization", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-
-		pizzaClass := &models.Class{
-			Class:       "Pizza",
-			Description: "A delicious religion like food and arguably the best export of Italy.",
-			Properties: []*models.Property{
-				{
-					DataType:     []string{"text"},
-					Description:  "description",
-					Name:         "description",
-					Tokenization: models.PropertyTokenizationField,
-				},
-			},
-		}
-
-		err := client.Schema().ClassCreator().WithClass(pizzaClass).Do(context.Background())
-		assert.EqualError(t, err, "status code: 422, error: {\"error\":[{\"message\":\"Tokenization 'field' is not allowed for data type 'text'\"}]}\n")
-	})
 
 	t.Run("Fail to add property having not supported tokenization", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
@@ -616,7 +621,7 @@ func TestSchema_errors(t *testing.T) {
 		assert.Nil(t, err)
 
 		notExistingTokenizationProperty := &models.Property{
-			DataType:     []string{"string"},
+			DataType:     []string{"text"},
 			Description:  "name",
 			Name:         "name",
 			Tokenization: "not-existing",

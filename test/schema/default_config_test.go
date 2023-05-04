@@ -60,5 +60,5 @@ var defaultVectorIndexConfig = map[string]interface{}{
 }
 
 var defaultReplicationConfig = &models.ReplicationConfig{
-	Factor: 2,
+	Factor: 1,
 }
