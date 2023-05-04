@@ -2,9 +2,6 @@ module github.com/weaviate/weaviate-go-client/v4
 
 go 1.16
 
-replace (
-github.com/weaviate/weaviate v1.19.0 => ../weaviate
-)
 require (
 	github.com/go-openapi/strfmt v0.21.3
 	github.com/stretchr/testify v1.8.2
