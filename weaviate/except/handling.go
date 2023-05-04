@@ -21,7 +21,7 @@ func NewDerivedWeaviateClientError(err error) *fault.WeaviateClientError {
 	return &fault.WeaviateClientError{
 		IsUnexpectedStatusCode: false,
 		StatusCode:             -1,
-		Msg:                    "wrapped error:"+err.Error(),
+		Msg:                    "weaviate error:"+err.Error(),
 		DerivedFromError:       err,
 	}
 }
