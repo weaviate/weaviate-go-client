@@ -83,9 +83,9 @@ func createClassificationClasses(t *testing.T, client *weaviate.Client) {
 		Description: "tag for a pizza",
 		Properties: []*models.Property{
 			{
-				DataType:    []string{"text"},
-				Description: "name",
-				Name:        "name",
+				DataType:     []string{"text"},
+				Description:  "name",
+				Name:         "name",
 				Tokenization: "whitespace",
 			},
 		},

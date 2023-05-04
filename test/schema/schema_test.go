@@ -2,8 +2,8 @@ package schema
 
 import (
 	"context"
-	"testing"
 	"os"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -515,9 +515,7 @@ func TestSchema_integration(t *testing.T) {
 			t.Fatalf("failed to tear down weaviate: %s", err)
 		}
 	})
-
 }
-
 
 /*
 func TestReplication(t *testing.T) {
@@ -607,7 +605,6 @@ func TestSchema_errors(t *testing.T) {
 		err := client.Schema().ClassCreator().Do(context.Background())
 		assert.NotNil(t, err)
 	})
-
 
 	t.Run("Fail to add property having not supported tokenization", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
