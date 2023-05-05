@@ -59,12 +59,10 @@ func TestData_uuid(t *testing.T) {
 		createWeaviateTestSchemaUuid(t, client)
 
 		propertySchemaT := map[string]string{
-			"uuid":        "565da3b6-60b3-40e5-ba21-e6bfe5dbba91",
-			
+			"uuid": "565da3b6-60b3-40e5-ba21-e6bfe5dbba91",
 		}
 		propertySchemaA := map[string][]string{
-			"uuidArray":        []string{ "565da3b6-60b3-40e5-ba21-e6bfe5dbba92", "565da3b6-60b3-40e5-ba21-e6bfe5dbba93" },
-			
+			"uuidArray": {"565da3b6-60b3-40e5-ba21-e6bfe5dbba92", "565da3b6-60b3-40e5-ba21-e6bfe5dbba93"},
 		}
 
 		wrapperT, errCreateT := client.Data().Creator().
@@ -82,8 +80,6 @@ func TestData_uuid(t *testing.T) {
 		assert.Nil(t, errCreateA)
 		assert.NotNil(t, wrapperA.Object)
 
-
-
 		objectT, objErrT := client.Data().ObjectsGetter().
 			WithClassName("UserUUIDTest").
 			WithID("abefd256-8574-442b-9293-9205193737ee").
@@ -97,15 +93,13 @@ func TestData_uuid(t *testing.T) {
 
 		assert.Equal(t, "UserUUIDTest", objectT[0].Class)
 		valuesT := objectT[0].Properties.(map[string]interface{})
-		assert.Equal(t,  "565da3b6-60b3-40e5-ba21-e6bfe5dbba91", valuesT["uuid"])
+		assert.Equal(t, "565da3b6-60b3-40e5-ba21-e6bfe5dbba91", valuesT["uuid"])
 		assert.Equal(t, "UserUUIDTest", objectA[0].Class)
 		valuesA := objectA[0].Properties.(map[string]interface{})
 		var compData []interface{}
 		compData = append(compData, "565da3b6-60b3-40e5-ba21-e6bfe5dbba92")
 		compData = append(compData, "565da3b6-60b3-40e5-ba21-e6bfe5dbba93")
 		assert.Equal(t, compData, valuesA["uuidArray"])
-
-
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
