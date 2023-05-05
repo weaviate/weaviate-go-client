@@ -2,7 +2,6 @@ package schema
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -517,8 +516,9 @@ func TestSchema_integration(t *testing.T) {
 	})
 }
 
-/*
+
 func TestReplication(t *testing.T) {
+	t.Skip("skipping replication tests for now")
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -589,7 +589,7 @@ func TestReplication(t *testing.T) {
 
 }
 
-*/
+
 
 func TestSchema_errors(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
