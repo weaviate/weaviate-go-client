@@ -28,6 +28,9 @@ function main() {
   # Jump to root directory
   cd "$( dirname "${BASH_SOURCE[0]}" )"/.. || exit
 
+  # Start containers to support unit tests
+  ./test/start_containers.sh
+
   if  $run_unit_tests || $run_all_tests
   then
     echo_green "Run all unit tests..."
