@@ -159,6 +159,7 @@ func (gb *GetBuilder) WithGroupBy(groupBy *GroupByArgumentBuilder) *GetBuilder {
 }
 
 func (gb *GetBuilder) WithConsistencyLevel(lvl string) *GetBuilder {
+	gb.includesFilterClause = true
 	gb.consistencyLevel = lvl
 	return gb
 }

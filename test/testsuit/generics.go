@@ -250,8 +250,8 @@ func WithReplication(cls *models.Class) {
 }
 
 // CreateTestSchemaAndData with a few pizzas and soups
-func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client) {
-	createTestSchemaAndData(t, client, false)
+func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client, opts ...schemaOptions) {
+	createTestSchemaAndData(t, client, false, opts...)
 }
 
 func CreateTestSchemaAndDataDeprecated(t *testing.T, client *weaviate.Client) {
@@ -259,8 +259,8 @@ func CreateTestSchemaAndDataDeprecated(t *testing.T, client *weaviate.Client) {
 }
 
 // CreateTestSchemaAndData with a few pizzas and soups
-func createTestSchemaAndData(t *testing.T, client *weaviate.Client, isDeprecated bool) {
-	createWeaviateTestSchemaFood(t, client, isDeprecated)
+func createTestSchemaAndData(t *testing.T, client *weaviate.Client, isDeprecated bool, opts ...schemaOptions) {
+	createWeaviateTestSchemaFood(t, client, isDeprecated, opts...)
 
 	// Create pizzas
 	menuPizza := []*models.Object{
