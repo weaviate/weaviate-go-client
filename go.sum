@@ -1052,8 +1052,8 @@ github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f/go.mod h1:DD4vA1
 github.com/weaviate/contextionary v1.2.1/go.mod h1:nIEM3Gq1BzTZLuY+Pl7t8hD3eR6VAU43fRdZTEZ9LRY=
 github.com/weaviate/sroar v0.0.0-20230210105426-26108af5465d h1:bULMGmIS786YSmm/SssAmwu86y4saMoHhvuL0u7pWLc=
 github.com/weaviate/sroar v0.0.0-20230210105426-26108af5465d/go.mod h1:bJUcu8a/7XKOeaCWZtSjuBogUGReUiwJTyGSvcAjDzQ=
-github.com/weaviate/weaviate v1.19.0-beta.1.0.20230503104113-7d8a670648e4 h1:CRlDFTtxmAlNTLomzfRpTZ+1CcgI+1p/RMhYYEgf2ps=
-github.com/weaviate/weaviate v1.19.0-beta.1.0.20230503104113-7d8a670648e4/go.mod h1:hvgLEEiZx0gQNEDLNgPGssk8UQjc/CDxZv2Dd5SYgs8=
+github.com/weaviate/weaviate v1.19.0 h1:JKmScZZ5VWVESCkji37bT1cNFCCRIZrne7ENoRHT1vM=
+github.com/weaviate/weaviate v1.19.0/go.mod h1:hvgLEEiZx0gQNEDLNgPGssk8UQjc/CDxZv2Dd5SYgs8=
 github.com/willf/bitset v1.1.10/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
 github.com/willf/bitset v1.1.11-0.20200630133818-d5bec3311243/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
 github.com/willf/bitset v1.1.11 h1:N7Z7E9UvjW+sGsEl7k/SJrvY2reP1A07MrGuCjIOjRE=
