@@ -9,10 +9,113 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
+	"github.com/weaviate/weaviate/entities/models"
 )
+
+func createWeaviateTestSchemaUuid(t *testing.T, client *weaviate.Client) {
+	schemaClassThing := &models.Class{
+		Class:               "UserUUIDTest",
+		Description:         "A useruuid",
+		InvertedIndexConfig: &models.InvertedIndexConfig{IndexTimestamps: true},
+	}
+
+	errT := client.Schema().ClassCreator().WithClass(schemaClassThing).Do(context.Background())
+	assert.Nil(t, errT)
+	uuidPropertyDataType := []string{"uuid"}
+	uuidArrayPropertyDataType := []string{"uuid[]"}
+	UserUUIDTest := &models.Property{
+		DataType:    uuidPropertyDataType,
+		Description: "uuid",
+		Name:        "uuid",
+	}
+	uuidArrayProperty := &models.Property{
+		DataType:    uuidArrayPropertyDataType,
+		Description: "uuid array",
+		Name:        "uuidArray",
+	}
+
+	propErrT1 := client.Schema().PropertyCreator().WithClassName("UserUUIDTest").WithProperty(UserUUIDTest).Do(context.Background())
+	assert.Nil(t, propErrT1)
+	propErrA1 := client.Schema().PropertyCreator().WithClassName("UserUUIDTest").WithProperty(uuidArrayProperty).Do(context.Background())
+	assert.Nil(t, propErrA1)
+}
+
+func TestData_uuid(t *testing.T) {
+	t.Run("up", func(t *testing.T) {
+		err := testenv.SetupLocalWeaviate()
+		if err != nil {
+			fmt.Printf(err.Error())
+			t.Fail()
+		}
+	})
+
+	t.Run("POST /{semanticType}", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+
+		createWeaviateTestSchemaUuid(t, client)
+
+		propertySchemaT := map[string]string{
+			"uuid":        "565da3b6-60b3-40e5-ba21-e6bfe5dbba91",
+			
+		}
+		propertySchemaA := map[string][]string{
+			"uuidArray":        []string{ "565da3b6-60b3-40e5-ba21-e6bfe5dbba92", "565da3b6-60b3-40e5-ba21-e6bfe5dbba93" },
+			
+		}
+
+		wrapperT, errCreateT := client.Data().Creator().
+			WithClassName("UserUUIDTest").
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			WithProperties(propertySchemaT).
+			Do(context.Background())
+		assert.Nil(t, errCreateT)
+		assert.NotNil(t, wrapperT.Object)
+		wrapperA, errCreateA := client.Data().Creator().
+			WithClassName("UserUUIDTest").
+			WithID("abefd256-8574-442b-9293-9205193737ef").
+			WithProperties(propertySchemaA).
+			Do(context.Background())
+		assert.Nil(t, errCreateA)
+		assert.NotNil(t, wrapperA.Object)
+
+
+
+		objectT, objErrT := client.Data().ObjectsGetter().
+			WithClassName("UserUUIDTest").
+			WithID("abefd256-8574-442b-9293-9205193737ee").
+			Do(context.Background())
+		assert.Nil(t, objErrT)
+		objectA, objErrA := client.Data().ObjectsGetter().
+			WithClassName("UserUUIDTest").
+			WithID("abefd256-8574-442b-9293-9205193737ef").
+			Do(context.Background())
+		assert.Nil(t, objErrA)
+
+		assert.Equal(t, "UserUUIDTest", objectT[0].Class)
+		valuesT := objectT[0].Properties.(map[string]interface{})
+		assert.Equal(t,  "565da3b6-60b3-40e5-ba21-e6bfe5dbba91", valuesT["uuid"])
+		assert.Equal(t, "UserUUIDTest", objectA[0].Class)
+		valuesA := objectA[0].Properties.(map[string]interface{})
+		var compData []interface{}
+		compData = append(compData, "565da3b6-60b3-40e5-ba21-e6bfe5dbba92")
+		compData = append(compData, "565da3b6-60b3-40e5-ba21-e6bfe5dbba93")
+		assert.Equal(t, compData, valuesA["uuidArray"])
+
+
+	})
+
+	t.Run("tear down weaviate", func(t *testing.T) {
+		err := testenv.TearDownLocalWeaviate()
+		if err != nil {
+			fmt.Printf(err.Error())
+			t.Fail()
+		}
+	})
+}
 
 func TestData_integration(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
