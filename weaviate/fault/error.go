@@ -20,7 +20,7 @@ type WeaviateClientError struct {
 func (uce *WeaviateClientError) Error() string {
 	msg := uce.Msg
 	if uce.DerivedFromError != nil {
-		msg = fmt.Sprintf("%s: %v", uce.Msg, uce.DerivedFromError)
+		msg = fmt.Sprintf("%s: %s", uce.Msg, uce.DerivedFromError.Error())
 	}
 	return fmt.Sprintf("status code: %v, error: %v", uce.StatusCode, msg)
 }

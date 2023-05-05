@@ -36,35 +36,39 @@ func GetPortAndAuthPw() (int, string) {
 
 // CreateWeaviateTestSchemaFood creates a class for each semantic type (Pizza and Soup)
 // and adds some primitive properties (name and description)
-func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client) {
-	createWeaviateTestSchemaFood(t, client, false)
+func CreateWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client, opts ...schemaOptions) {
+	createWeaviateTestSchemaFood(t, client, false, opts...)
 }
 
 func CreateWeaviateTestSchemaFoodDeprecated(t *testing.T, client *weaviate.Client) {
 	createWeaviateTestSchemaFood(t, client, true)
 }
 
-func createWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client, isDeprecated bool) {
-	schemaClassThing := &models.Class{
-		Class:               "Pizza",
-		Description:         "A delicious religion like food and arguably the best export of Italy.",
-		InvertedIndexConfig: &models.InvertedIndexConfig{IndexTimestamps: true},
+func createWeaviateTestSchemaFood(t *testing.T, client *weaviate.Client, isDeprecated bool, opts ...schemaOptions) {
+	classes := []*models.Class{
+		{
+			Class:               "Pizza",
+			Description:         "A delicious religion like food and arguably the best export of Italy.",
+			InvertedIndexConfig: &models.InvertedIndexConfig{IndexTimestamps: true},
+		},
+		{
+			Class:       "Soup",
+			Description: "Mostly water based brew of sustenance for humans.",
+		},
+		{
+			Class:               "Risotto",
+			Description:         "Risotto is a northern Italian rice dish cooked with broth.",
+			InvertedIndexConfig: &models.InvertedIndexConfig{IndexTimestamps: true},
+		},
 	}
-	schemaClassAction := &models.Class{
-		Class:       "Soup",
-		Description: "Mostly water based brew of sustenance for humans.",
+
+	for _, class := range classes {
+		for _, opt := range opts {
+			opt(class)
+		}
+		err := client.Schema().ClassCreator().WithClass(class).Do(context.Background())
+		assert.Nil(t, err)
 	}
-	schemaClassItem := &models.Class{
-		Class:               "Risotto",
-		Description:         "Risotto is a northern Italian rice dish cooked with broth.",
-		InvertedIndexConfig: &models.InvertedIndexConfig{IndexTimestamps: true},
-	}
-	errT := client.Schema().ClassCreator().WithClass(schemaClassThing).Do(context.Background())
-	assert.Nil(t, errT)
-	errA := client.Schema().ClassCreator().WithClass(schemaClassAction).Do(context.Background())
-	assert.Nil(t, errA)
-	errI := client.Schema().ClassCreator().WithClass(schemaClassItem).Do(context.Background())
-	assert.Nil(t, errI)
 	namePropertyDataType := []string{"text"}
 	if isDeprecated {
 		namePropertyDataType = []string{"string"}
@@ -237,8 +241,17 @@ func ParseReferenceResponseToStruct(t *testing.T, reference interface{}) models.
 	return out
 }
 
-func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client) {
-	createTestSchemaAndData(t, client, false)
+type schemaOptions func(*models.Class)
+
+func WithReplication(cls *models.Class) {
+	cls.ReplicationConfig = &models.ReplicationConfig{
+		Factor: 2,
+	}
+}
+
+// CreateTestSchemaAndData with a few pizzas and soups
+func CreateTestSchemaAndData(t *testing.T, client *weaviate.Client, opts ...schemaOptions) {
+	createTestSchemaAndData(t, client, false, opts...)
 }
 
 func CreateTestSchemaAndDataDeprecated(t *testing.T, client *weaviate.Client) {
@@ -246,8 +259,8 @@ func CreateTestSchemaAndDataDeprecated(t *testing.T, client *weaviate.Client) {
 }
 
 // CreateTestSchemaAndData with a few pizzas and soups
-func createTestSchemaAndData(t *testing.T, client *weaviate.Client, isDeprecated bool) {
-	createWeaviateTestSchemaFood(t, client, isDeprecated)
+func createTestSchemaAndData(t *testing.T, client *weaviate.Client, isDeprecated bool, opts ...schemaOptions) {
+	createWeaviateTestSchemaFood(t, client, isDeprecated, opts...)
 
 	// Create pizzas
 	menuPizza := []*models.Object{

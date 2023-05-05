@@ -22,6 +22,7 @@ type GetBuilder struct {
 	offset               int
 	includesAfter        bool
 	after                string
+	consistencyLevel     string
 	withWhereFilter      *filters.WhereBuilder
 	withNearTextFilter   *NearTextArgumentBuilder
 	withNearVectorFilter *NearVectorArgumentBuilder
@@ -157,6 +158,12 @@ func (gb *GetBuilder) WithGroupBy(groupBy *GroupByArgumentBuilder) *GetBuilder {
 	return gb
 }
 
+func (gb *GetBuilder) WithConsistencyLevel(lvl string) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.consistencyLevel = lvl
+	return gb
+}
+
 // Do execute the GraphQL query
 func (gb *GetBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, gb.connection, gb.build())
@@ -203,6 +210,9 @@ func (gb *GetBuilder) createFilterClause() string {
 	}
 	if gb.withGroupFilter != nil {
 		filters = append(filters, gb.withGroupFilter.build())
+	}
+	if gb.consistencyLevel != "" {
+		filters = append(filters, fmt.Sprintf("consistencyLevel: %s", gb.consistencyLevel))
 	}
 	if gb.includesLimit {
 		filters = append(filters, fmt.Sprintf("limit: %v", gb.limit))

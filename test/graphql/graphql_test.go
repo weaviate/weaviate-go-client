@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
@@ -1548,6 +1550,63 @@ func TestGraphQL_integration(t *testing.T) {
 			assert.Equal(t, groupsOrder[i], groupedBy)
 			assert.ElementsMatch(t, expectedGroups[groupedBy], ids)
 		}
+	})
+
+	t.Run("query with consistency level", func(t *testing.T) {
+		ctx := context.Background()
+		client := weaviate.New(weaviate.Config{
+			Host:   "localhost:8087",
+			Scheme: "http",
+		})
+		fields := []graphql.Field{
+			{
+				Name: "name",
+			},
+			{
+				Name: "_additional",
+				Fields: []graphql.Field{
+					{
+						Name: "isConsistent",
+					},
+				},
+			},
+		}
+
+		testsuit.CreateTestSchemaAndData(t, client, testsuit.WithReplication)
+		defer testsuit.CleanUpWeaviate(t, client)
+
+		t.Run("All", func(t *testing.T) {
+			resp, err := client.GraphQL().Get().
+				WithClassName("Pizza").
+				WithFields(fields...).
+				WithConsistencyLevel(replication.ConsistencyLevel.ALL).
+				Do(ctx)
+			require.Nil(t, err)
+			require.NotNil(t, resp)
+			require.Empty(t, resp.Errors)
+		})
+
+		t.Run("Quorum", func(t *testing.T) {
+			resp, err := client.GraphQL().Get().
+				WithClassName("Pizza").
+				WithFields(fields...).
+				WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
+				Do(ctx)
+			require.Nil(t, err)
+			require.NotNil(t, resp)
+			require.Empty(t, resp.Errors)
+		})
+
+		t.Run("One", func(t *testing.T) {
+			resp, err := client.GraphQL().Get().
+				WithClassName("Pizza").
+				WithFields(fields...).
+				WithConsistencyLevel(replication.ConsistencyLevel.ONE).
+				Do(ctx)
+			require.Nil(t, err)
+			require.NotNil(t, resp)
+			require.Empty(t, resp.Errors)
+		})
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
