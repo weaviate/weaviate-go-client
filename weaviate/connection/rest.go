@@ -121,6 +121,11 @@ func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
 	if timeToSleep > 0 {
 		time.Sleep(timeToSleep)
 	}
+
+	_, err = con.RunREST(context.TODO(), "/meta", http.MethodGet, nil)
+	if err == nil {
+		return
+	}
 	ticker := time.NewTicker(time.Second)
 	go func() {
 		for {
