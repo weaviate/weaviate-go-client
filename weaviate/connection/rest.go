@@ -107,38 +107,37 @@ func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
 		log.Printf("Error during token refresh, getting token: %v", err)
 		return
 	}
+
+	if !token.Valid() {
+		log.Printf("Requested token was not valid")
+		return
+	}
+
 	// there is no point in manual refreshing if there is no refresh token. Note that this is the default with client
 	// credentials
 	if token.RefreshToken == "" {
 		return
 	}
 
-	if time.Until(token.Expiry) <= 0 {
-		return
-	}
-
-	timeToSleep := time.Until(token.Expiry) - time.Second*30
-	if timeToSleep > 0 {
-		time.Sleep(timeToSleep)
-	}
-
-	_, err = con.RunREST(context.TODO(), "/meta", http.MethodGet, nil)
-	if err == nil {
-		return
-	}
-	ticker := time.NewTicker(time.Second)
 	go func() {
 		for {
-			select {
-			case <-con.doneCh:
+			timeToSleep := time.Until(token.Expiry) - time.Second*10
+			if timeToSleep > 0 {
+				time.Sleep(timeToSleep)
+			}
+			token, err = transport.Source.Token()
+
+			if !token.Valid() {
+				log.Printf("Requested token was not valid. Stop requesting new access token.")
 				return
-			case <-ticker.C:
-				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*5)
-				_, err = con.RunREST(ctx, "/meta", http.MethodGet, nil)
-				cancelFunc()
-				if err != nil {
-					log.Printf("Error during token refresh, rest request: %v", err)
-				}
+			}
+			if <-con.doneCh {
+				return
+			}
+
+			if err != nil {
+				log.Printf("Error during token refresh, getting token: %v", err)
+				time.Sleep(time.Second)
 			}
 		}
 	}()
