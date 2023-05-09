@@ -108,7 +108,7 @@ func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
 		return
 	}
 
-	if !token.Valid() {
+	if time.Until(token.Expiry) < 0 {
 		log.Printf("Requested token was not valid")
 		return
 	}
@@ -127,7 +127,7 @@ func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
 			}
 			token, err = transport.Source.Token()
 
-			if !token.Valid() {
+			if time.Until(token.Expiry) < 0 {
 				log.Printf("Requested token was not valid. Stop requesting new access token.")
 				return
 			}
