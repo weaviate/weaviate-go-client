@@ -109,7 +109,7 @@ func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
 	}
 
 	if time.Until(token.Expiry) < 0 {
-		log.Printf("Requested token was not valid")
+		log.Printf("Requested token is expired")
 		return
 	}
 
