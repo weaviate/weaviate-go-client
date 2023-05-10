@@ -130,16 +130,14 @@ func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
 					time.Sleep(timeToSleep)
 				}
 				token, err = transport.Source.Token()
-
-				if time.Until(token.Expiry) < 0 {
-					log.Printf("Requested token was not valid. Stop requesting new access token.")
-					return
-				}
 				if err != nil {
 					log.Printf("Error during token refresh, getting token: %v", err)
 				}
+				if time.Until(token.Expiry) < 0 {
+					log.Printf("Requested token is expired. Stop requesting new access token.")
+					return
+				}
 				time.Sleep(time.Second)
-
 			}
 		}
 	}()

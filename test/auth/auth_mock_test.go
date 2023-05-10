@@ -158,13 +158,14 @@ func TestAuthMock_RefreshUserPWAndToken(t *testing.T) {
 			muxToken := http.NewServeMux()
 			muxToken.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
 				// refresh token cannot be expired
+				log.Printf("%v", time.Since(tokenRefreshTime).Seconds())
 				assert.True(t, time.Since(tokenRefreshTime).Seconds() < float64(expirationTimeRefreshToken))
 
 				tokenRefreshTime = time.Now() // update time when the tokens where refreshed the last time
 				w.Header().Set("Content-Type", "application/json")
 				w.Write([]byte(
 					fmt.Sprintf(`{"access_token": "%v", "expires_in": %v, "refresh_token": "%v", "refresh_expires_in" :  %v}`,
-						AccessToken, expirationTimeToken, RefreshToken, expirationTimeRefreshToken)))
+						AccessToken, uint(12), RefreshToken, expirationTimeRefreshToken)))
 			})
 			sToken := httptest.NewServer(muxToken)
 			defer sToken.Close()
