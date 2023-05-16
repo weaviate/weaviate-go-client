@@ -119,25 +119,31 @@ func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
 		return
 	}
 
+	timeToSleep := time.Until(token.Expiry) - time.Second*10
+	if timeToSleep > 0 {
+		time.Sleep(timeToSleep)
+	}
+
 	go func() {
 		for {
 			select {
 			case <-con.doneCh:
 				return
 			default:
-				timeToSleep := time.Until(token.Expiry) - time.Second*10
-				if timeToSleep > 0 {
-					time.Sleep(timeToSleep)
-				}
 				token, err = transport.Source.Token()
-				if err != nil {
-					log.Printf("Error during token refresh, getting token: %v", err)
-				}
 				if time.Until(token.Expiry) < 0 {
 					log.Printf("Requested token is expired. Stop requesting new access token.")
 					return
 				}
-				time.Sleep(time.Second)
+				if err != nil {
+					log.Printf("Error during token refresh, getting token: %v", err)
+					time.Sleep(time.Second)
+				} else {
+					timeToSleep = time.Until(token.Expiry) - time.Second*10
+					if timeToSleep > 0 {
+						time.Sleep(timeToSleep)
+					}
+				}
 			}
 		}
 	}()
