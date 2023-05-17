@@ -140,6 +140,7 @@ func TestAuthMock_RefreshCC(t *testing.T) {
 func TestAuthMock_RefreshUserPWAndToken(t *testing.T) {
 	expirationTimeRefreshToken := 3
 	initialExpirationTimeToken := uint(2)
+	// higher expiration time to check if the go routine correctly sleeps until the token almost expires
 	expirationTimeToken := uint(12)
 	tests := []struct {
 		name       string
