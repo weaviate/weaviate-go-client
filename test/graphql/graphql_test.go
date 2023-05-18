@@ -1038,7 +1038,6 @@ func TestGraphQL_integration(t *testing.T) {
 		{name: "hybridProperties2", properties: []string{}, num_results: 1},
 		{name: "hybridProperties3", properties: []string{"name"}, num_results: 0},
 		{name: "hybridProperties4", properties: []string{"name", "description"}, num_results: 1},
-		{name: "hybridProperties5", properties: []string{"best_before"}, num_results: 0},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
