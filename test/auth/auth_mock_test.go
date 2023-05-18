@@ -139,7 +139,9 @@ func TestAuthMock_RefreshCC(t *testing.T) {
 // times.
 func TestAuthMock_RefreshUserPWAndToken(t *testing.T) {
 	expirationTimeRefreshToken := 3
-	expirationTimeToken := uint(2)
+	initialExpirationTimeToken := uint(2)
+	// higher expiration time to check if the go routine correctly sleeps until the token almost expires
+	expirationTimeToken := uint(12)
 	tests := []struct {
 		name       string
 		authConfig auth.Config
@@ -147,7 +149,7 @@ func TestAuthMock_RefreshUserPWAndToken(t *testing.T) {
 	}{
 		{name: "User/PW", authConfig: auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}},
 		{name: "Bearer token", authConfig: auth.BearerToken{
-			AccessToken: AccessToken, ExpiresIn: expirationTimeToken, RefreshToken: RefreshToken,
+			AccessToken: AccessToken, ExpiresIn: initialExpirationTimeToken, RefreshToken: RefreshToken,
 		}},
 	}
 
@@ -158,7 +160,7 @@ func TestAuthMock_RefreshUserPWAndToken(t *testing.T) {
 			muxToken := http.NewServeMux()
 			muxToken.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
 				// refresh token cannot be expired
-				assert.True(t, time.Now().Sub(tokenRefreshTime).Seconds() < float64(expirationTimeRefreshToken))
+				assert.True(t, time.Since(tokenRefreshTime).Seconds() < float64(expirationTimeRefreshToken))
 
 				tokenRefreshTime = time.Now() // update time when the tokens where refreshed the last time
 				w.Header().Set("Content-Type", "application/json")
@@ -184,7 +186,7 @@ func TestAuthMock_RefreshUserPWAndToken(t *testing.T) {
 			})
 			mux.HandleFunc("/v1/schema", func(w http.ResponseWriter, r *http.Request) {
 				// Access Token cannot be expired
-				assert.True(t, time.Now().Sub(tokenRefreshTime).Seconds() < float64(expirationTimeToken))
+				assert.True(t, time.Since(tokenRefreshTime).Seconds() < float64(expirationTimeToken))
 				w.Write([]byte(`{}`))
 			})
 			mux.HandleFunc("/v1/.well-known/ready", func(w http.ResponseWriter, r *http.Request) {

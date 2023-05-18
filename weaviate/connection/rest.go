@@ -107,27 +107,42 @@ func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
 		log.Printf("Error during token refresh, getting token: %v", err)
 		return
 	}
+
+	if time.Until(token.Expiry) < 0 {
+		log.Printf("Requested token is expired")
+		return
+	}
+
 	// there is no point in manual refreshing if there is no refresh token. Note that this is the default with client
 	// credentials
 	if token.RefreshToken == "" {
 		return
 	}
 
-	timeToSleep := time.Until(token.Expiry) - time.Second/10
-	if timeToSleep <= 0 {
-		return
+	timeToSleep := time.Until(token.Expiry) - time.Second*10
+	if timeToSleep > 0 {
+		time.Sleep(timeToSleep)
 	}
-	ticker := time.NewTicker(timeToSleep)
+
 	go func() {
 		for {
 			select {
 			case <-con.doneCh:
 				return
-			case <-ticker.C:
-				_, err = con.RunREST(context.TODO(), "/meta", http.MethodGet, nil)
-				if err != nil {
-					log.Printf("Error during token refresh, rest request: %v", err)
+			default:
+				token, err = transport.Source.Token()
+				if time.Until(token.Expiry) < 0 {
+					log.Printf("Requested token is expired. Stop requesting new access token.")
 					return
+				}
+				if err != nil {
+					log.Printf("Error during token refresh, getting token: %v", err)
+					time.Sleep(time.Second)
+				} else {
+					timeToSleep = time.Until(token.Expiry) - time.Second*10
+					if timeToSleep > 0 {
+						time.Sleep(timeToSleep)
+					}
 				}
 			}
 		}
