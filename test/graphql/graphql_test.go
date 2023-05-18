@@ -1029,6 +1029,52 @@ func TestGraphQL_integration(t *testing.T) {
 		assert.Equal(t, 4, len(resp.Get.Pizzas))
 	})
 
+	tests := []struct {
+		name        string
+		properties  []string
+		num_results int
+	}{
+		{name: "Get hybrid Properties nil", properties: nil, num_results: 1},
+		{name: "Get hybrid Properties empty", properties: []string{}, num_results: 1},
+		{name: "Get hybrid Properties name", properties: []string{"name"}, num_results: 0},
+		{name: "Get hybrid Properties name,description", properties: []string{"name", "description"}, num_results: 1},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			testsuit.CreateTestSchemaAndData(t, client)
+			defer testsuit.CleanUpWeaviate(t, client)
+
+			hybrid := client.GraphQL().HybridArgumentBuilder().WithQuery("mussels").WithAlpha(0.0).WithProperties(tc.properties)
+
+			fields := []graphql.Field{
+				{Name: "name"},
+				{Name: "description"},
+				{Name: "best_before"},
+			}
+
+			result, err := client.GraphQL().Get().
+				WithClassName("Pizza").
+				WithFields(fields...).
+				WithHybrid(hybrid).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.Nil(t, result.Errors)
+			require.NotNil(t, result)
+			require.NotNil(t, result.Data)
+
+			b, err := json.Marshal(result.Data)
+			require.Nil(t, err)
+
+			var resp GetPizzaResponse
+			err = json.Unmarshal(b, &resp)
+			require.Nil(t, err)
+
+			assert.Equal(t, tc.num_results, len(resp.Get.Pizzas))
+		})
+	}
+
 	t.Run("MultiClass Get", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)

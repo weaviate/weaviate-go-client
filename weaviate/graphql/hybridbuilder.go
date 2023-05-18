@@ -7,10 +7,11 @@ import (
 )
 
 type HybridArgumentBuilder struct {
-	query     string
-	vector    []float32
-	withAlpha bool
-	alpha     float32
+	query      string
+	vector     []float32
+	withAlpha  bool
+	alpha      float32
+	properties []string
 }
 
 // WithQuery the search string
@@ -32,6 +33,12 @@ func (h *HybridArgumentBuilder) WithAlpha(alpha float32) *HybridArgumentBuilder 
 	return h
 }
 
+// WithProperties. The properties which are searched. Can be omitted.
+func (h *HybridArgumentBuilder) WithProperties(properties []string) *HybridArgumentBuilder {
+	h.properties = properties
+	return h
+}
+
 // Build build the given clause
 func (h *HybridArgumentBuilder) build() string {
 	clause := []string{}
@@ -47,6 +54,14 @@ func (h *HybridArgumentBuilder) build() string {
 	}
 	if h.withAlpha {
 		clause = append(clause, fmt.Sprintf("alpha: %v", h.alpha))
+	}
+
+	if len(h.properties) > 0 {
+		props, err := json.Marshal(h.properties)
+		if err != nil {
+			panic(fmt.Errorf("failed to unmarshal hybrid properties: %s", err))
+		}
+		clause = append(clause, fmt.Sprintf("properties: %v", string(props)))
 	}
 	return fmt.Sprintf("hybrid:{%v}", strings.Join(clause, ", "))
 }
