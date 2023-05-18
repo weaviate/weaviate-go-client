@@ -33,6 +33,7 @@ func (h *HybridArgumentBuilder) WithAlpha(alpha float32) *HybridArgumentBuilder 
 	return h
 }
 
+// WithProperties. The properties which are searched. Can be omitted.
 func (h *HybridArgumentBuilder) WithProperties(properties []string) *HybridArgumentBuilder {
 	h.properties = properties
 	return h
