@@ -24,3 +24,8 @@ func (uce *WeaviateClientError) Error() string {
 	}
 	return fmt.Sprintf("status code: %v, error: %v", uce.StatusCode, msg)
 }
+
+// GoString makes WeaviateClientError satisfy the GoStringer interface. This allows the correct display when using the formatting %#v, used in assert.Nil().
+func (uce *WeaviateClientError) GoString() string {
+	return uce.Error()
+}
