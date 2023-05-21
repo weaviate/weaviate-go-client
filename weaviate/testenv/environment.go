@@ -61,24 +61,32 @@ func checkReady(initCtx context.Context, url string) error {
 //	`EXTERNAL_WEAVIATE_RUNNING` should be set if all tests are supposed to be run in a test suit.
 //	This prevents unnecessary starting and stopping of the docker-compose which prevents errors
 //	due to syncing issues and speeds up the process
-func SetupLocalWeaviate() error {
+func SetupLocalWeaviateWaitForStartup(waitForWeaviateStartup bool) error {
 	if !isExternalWeaviateRunning() {
 		if err := test.SetupWeaviate(); err != nil {
 			return err
 		}
-		return waitForStartup(context.TODO(), "localhost:8080", 1*time.Second)
+		if waitForWeaviateStartup {
+			return waitForStartup(context.TODO(), "localhost:8080", 1*time.Second)
+		}
+		return nil
 	}
 	return nil
+}
+
+func SetupLocalWeaviate() error {
+	return SetupLocalWeaviateWaitForStartup(true)
 }
 
 func isExternalWeaviateRunning() bool {
 	val := os.Getenv("EXTERNAL_WEAVIATE_RUNNING")
 	val = strings.ToLower(val)
+	isExternalWeaviateRunning := val == "true"
 
 	err := checkReady(context.TODO(), "localhost:8080")
 	isRunning := err == nil
 
-	return val == "true" || isRunning
+	return isExternalWeaviateRunning || isRunning
 }
 
 // TearDownLocalWeaviate shuts down the locally started weaviate docker compose
@@ -89,6 +97,10 @@ func TearDownLocalWeaviate() error {
 	if isExternalWeaviateRunning() {
 		return nil
 	}
+	return TearDownLocalWeaviateForcefully()
+}
+
+func TearDownLocalWeaviateForcefully() error {
 	err := test.TearDownWeaviate()
 	time.Sleep(time.Second * 3) // Add some delay to make sure the command was executed before the program exits
 	return err
