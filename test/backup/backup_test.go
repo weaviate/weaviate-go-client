@@ -28,8 +28,8 @@ func TestBackups_integration(t *testing.T) {
 			t.Fatalf("failed to tear down weaviate: %s", err)
 		}
 	}()
-	_, authPw := testsuit.GetPortAndAuthPw()
-	if authPw != "" {
+	_, _, authEnabled := testsuit.GetPortAndAuthPw()
+	if authEnabled {
 		dockerComposeBackupDir += "-wcs"
 	}
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
