@@ -24,9 +24,11 @@ func TestBackups_integration(t *testing.T) {
 		t.Fatalf("failed to setup weaviate: %s", err)
 	}
 	defer func() {
+		fmt.Printf("TestBackups_integration TEAR DOWN START\n")
 		if err := testenv.TearDownLocalWeaviate(); err != nil {
 			t.Fatalf("failed to tear down weaviate: %s", err)
 		}
+		fmt.Printf("TestBackups_integration TEAR DOWN STOP\n")
 	}()
 	_, _, authEnabled := testsuit.GetPortAndAuthPw()
 	if authEnabled {

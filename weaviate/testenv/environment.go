@@ -1,13 +1,59 @@
 package testenv
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v4/test"
 )
+
+func waitForStartup(ctx context.Context, url string, interval time.Duration) error {
+	t := time.NewTicker(interval)
+	defer t.Stop()
+	expired := ctx.Done()
+	var lastErr error
+	for {
+		select {
+		case <-t.C:
+			lastErr = checkReady(ctx, url)
+			if lastErr == nil {
+				return nil
+			}
+		case <-expired:
+			return fmt.Errorf("init context expired before remote was ready: %w", lastErr)
+		}
+	}
+}
+
+func checkReady(initCtx context.Context, url string) error {
+	// spawn a new context (derived on the overall context) which is used to
+	// consider an individual request timed out
+	requestCtx, cancel := context.WithTimeout(initCtx, 500*time.Millisecond)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(requestCtx, http.MethodGet,
+		fmt.Sprintf("http://%s/v1/.well-known/ready", url), nil)
+	if err != nil {
+		return fmt.Errorf("create check ready request: %w", err)
+	}
+
+	httpClient := &http.Client{}
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("send check ready request: %w", err)
+	}
+
+	defer res.Body.Close()
+	if res.StatusCode > 299 {
+		return fmt.Errorf("not ready: status %d", res.StatusCode)
+	}
+
+	return nil
+}
 
 // SetupLocalWeaviate creates a local weaviate running on 8080 using docker compose
 // Will only wait for it to be reachable if env `EXTERNAL_WEAVIATE_RUNNING` is set to True.
@@ -17,7 +63,10 @@ import (
 //	due to syncing issues and speeds up the process
 func SetupLocalWeaviate() error {
 	if !isExternalWeaviateRunning() {
-		return test.SetupWeaviate()
+		if err := test.SetupWeaviate(); err != nil {
+			return err
+		}
+		return waitForStartup(context.TODO(), "localhost:8080", 1*time.Second)
 	}
 	return nil
 }
@@ -25,8 +74,11 @@ func SetupLocalWeaviate() error {
 func isExternalWeaviateRunning() bool {
 	val := os.Getenv("EXTERNAL_WEAVIATE_RUNNING")
 	val = strings.ToLower(val)
-	fmt.Printf("\nEXTERNAL_WEAVIATE_RUNNING: %v\n", val)
-	return val == "true"
+
+	err := checkReady(context.TODO(), "localhost:8080")
+	isRunning := err == nil
+
+	return val == "true" || isRunning
 }
 
 // TearDownLocalWeaviate shuts down the locally started weaviate docker compose
