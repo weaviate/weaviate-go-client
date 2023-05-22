@@ -131,7 +131,7 @@ func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
 				return
 			default:
 				token, err = transport.Source.Token()
-				if time.Until(token.Expiry) < 0 {
+				if token == nil || time.Until(token.Expiry) < 0 {
 					log.Printf("Requested token is expired. Stop requesting new access token.")
 					return
 				}
