@@ -123,6 +123,25 @@ func TestQueryBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
+	t.Run("with generative search grouped result with properties", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection: conMock,
+		}
+
+		name := Field{Name: "name"}
+		gs := NewGenerativeSearch().GroupedResult("Why are these pizzas very popular?", "title", "description")
+
+		query := builder.WithClassName("Pizza").
+			WithFields(name).
+			WithGenerativeSearch(gs).
+			build()
+
+		expected := `{Get {Pizza  {name _additional{generate(groupedResult:{task:"""Why are these pizzas very popular?""",properties:["title","description"]}){groupedResult error}}}}}`
+		assert.Equal(t, expected, query)
+	})
+
 	t.Run("with generative search grouped result and additional id", func(t *testing.T) {
 		conMock := &MockRunREST{}
 
