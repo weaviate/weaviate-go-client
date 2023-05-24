@@ -14,8 +14,8 @@ func SetupWeaviate() error {
 		"up",
 		"-d",
 	}
-	_, authPw := testsuit.GetPortAndAuthPw()
-	if authPw != "" {
+	_, _, authEnabled := testsuit.GetPortAndAuthPw()
+	if authEnabled {
 		arguments = append([]string{"-f", "docker-compose-wcs.yml"}, arguments...)
 	}
 

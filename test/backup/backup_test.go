@@ -24,12 +24,14 @@ func TestBackups_integration(t *testing.T) {
 		t.Fatalf("failed to setup weaviate: %s", err)
 	}
 	defer func() {
+		fmt.Printf("TestBackups_integration TEAR DOWN START\n")
 		if err := testenv.TearDownLocalWeaviate(); err != nil {
 			t.Fatalf("failed to tear down weaviate: %s", err)
 		}
+		fmt.Printf("TestBackups_integration TEAR DOWN STOP\n")
 	}()
-	_, authPw := testsuit.GetPortAndAuthPw()
-	if authPw != "" {
+	_, _, authEnabled := testsuit.GetPortAndAuthPw()
+	if authEnabled {
 		dockerComposeBackupDir += "-wcs"
 	}
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))

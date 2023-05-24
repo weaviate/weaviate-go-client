@@ -3,15 +3,15 @@ version: '3.4'
 services:
   weaviate:
     command:
-    - --host
-    - 0.0.0.0
-    - --port
-    - '8080'
-    - --scheme
-    - http
-    image: semitechnologies/weaviate:1.19.0
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8080'
+      - --scheme
+      - http
+    image: semitechnologies/weaviate:1.19.5
     ports:
-    - 8080:8080
+      - 8080:8080
     restart: on-failure:0
     environment:
       LOG_LEVEL: "debug"
@@ -22,8 +22,8 @@ services:
       DEFAULT_VECTORIZER_MODULE: text2vec-contextionary
       ENABLE_MODULES: text2vec-contextionary,backup-filesystem,generative-openai
       BACKUP_FILESYSTEM_PATH: "/tmp/backups"
-      CLUSTER_GOSSIP_BIND_PORT: "7100" 
-      CLUSTER_DATA_BIND_PORT: "7101" 
+      CLUSTER_GOSSIP_BIND_PORT: "7100"
+      CLUSTER_DATA_BIND_PORT: "7101"
   contextionary:
     image: semitechnologies/contextionary:en0.16.0-v1.2.0
     ports:

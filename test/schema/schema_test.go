@@ -168,9 +168,9 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, getErr)
 		assert.Equal(t, 2, len(loadedSchema.Classes))
 		assert.Equal(t, "name", loadedSchema.Classes[0].Properties[0].Name)
-		assert.Equal(t, models.PropertyTokenizationWhitespace, loadedSchema.Classes[0].Properties[0].Tokenization)
+		assert.Equal(t, models.PropertyTokenizationWord, loadedSchema.Classes[0].Properties[0].Tokenization)
 		assert.Equal(t, "name", loadedSchema.Classes[1].Properties[0].Name)
-		assert.Equal(t, models.PropertyTokenizationWhitespace, loadedSchema.Classes[1].Properties[0].Tokenization)
+		assert.Equal(t, models.PropertyTokenizationWord, loadedSchema.Classes[1].Properties[0].Tokenization)
 
 		// Clean up classes
 		errRm := client.Schema().AllDeleter().Do(context.Background())
@@ -516,7 +516,6 @@ func TestSchema_integration(t *testing.T) {
 	})
 }
 
-
 func TestReplication(t *testing.T) {
 	t.Skip("skipping replication tests for now")
 	t.Run("up", func(t *testing.T) {
@@ -578,7 +577,6 @@ func TestReplication(t *testing.T) {
 		require.Nil(t, errRm)
 	})
 
-
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
@@ -586,10 +584,7 @@ func TestReplication(t *testing.T) {
 		}
 	})
 
-
 }
-
-
 
 func TestSchema_errors(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
@@ -626,7 +621,7 @@ func TestSchema_errors(t *testing.T) {
 
 		err = client.Schema().PropertyCreator().WithClassName("Pizza").
 			WithProperty(notExistingTokenizationProperty).Do(context.Background())
-		assert.EqualError(t, err, `status code: 422, error: {"code":606,"message":"tokenization in body should be one of [word field]"}`)
+		assert.EqualError(t, err, `status code: 422, error: {"code":606,"message":"tokenization in body should be one of [word lowercase whitespace field]"}`)
 
 		notSupportedTokenizationProperty1 := &models.Property{
 			DataType:     []string{"text"},
@@ -637,7 +632,8 @@ func TestSchema_errors(t *testing.T) {
 
 		err = client.Schema().PropertyCreator().WithClassName("Pizza").
 			WithProperty(notSupportedTokenizationProperty1).Do(context.Background())
-		assert.EqualError(t, err, "status code: 422, error: {\"error\":[{\"message\":\"Tokenization 'field' is not allowed for data type 'text'\"}]}\n")
+		// Since v1.19 tokenization field is supported for data type text
+		assert.Nil(t, err)
 
 		notSupportedTokenizationProperty2 := &models.Property{
 			DataType:     []string{"int[]"},
@@ -648,7 +644,7 @@ func TestSchema_errors(t *testing.T) {
 
 		err = client.Schema().PropertyCreator().WithClassName("Pizza").
 			WithProperty(notSupportedTokenizationProperty2).Do(context.Background())
-		assert.EqualError(t, err, "status code: 422, error: {\"error\":[{\"message\":\"Tokenization 'word' is not allowed for data type 'int[]'\"}]}\n")
+		assert.EqualError(t, err, "status code: 422, error: {\"error\":[{\"message\":\"Tokenization is not allowed for data type 'int[]'\"}]}\n")
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {

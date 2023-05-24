@@ -10,7 +10,7 @@ services:
       - --scheme
       - http
       - --write-timeout=600s
-    image: semitechnologies/weaviate:preview-group-by-arbitrary-prop-including-ref-return-top-k-per-group-77fe35f
+    image: semitechnologies/weaviate:1.19.5
     ports:
       - 8083:8083
     restart: on-failure:0
@@ -26,4 +26,3 @@ services:
       AUTHORIZATION_ADMINLIST_USERS: 'test@test.de'
       AUTHENTICATION_OIDC_SCOPES: 'openid,email'
 ...
-

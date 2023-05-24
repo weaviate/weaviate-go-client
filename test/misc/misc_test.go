@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
@@ -13,7 +14,7 @@ import (
 
 func TestMisc_integration(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
-		err := testenv.SetupLocalWeaviate()
+		err := testenv.SetupLocalWeaviateWaitForStartup(false)
 		if err != nil {
 			fmt.Printf(err.Error())
 			t.Fail()
@@ -72,9 +73,9 @@ func TestMisc_connection_error(t *testing.T) {
 		client := weaviate.New(cfg)
 		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
 
-		assert.NotNil(t, err)
+		require.NotNil(t, err)
 		assert.False(t, isReady)
-		assert.EqualError(t, err, "status code: -1, error: check the DerivedFromError field for more information: Get \"http://localhorst/v1/.well-known/ready\": dial tcp: lookup localhorst: no such host")
+		assert.Contains(t, err.Error(), "status code: -1, error: check the DerivedFromError field for more information: Get \"http://localhorst/v1/.well-known/ready\": dial tcp: lookup localhorst:")
 	})
 
 	t.Run("live", func(t *testing.T) {
@@ -86,8 +87,8 @@ func TestMisc_connection_error(t *testing.T) {
 		client := weaviate.New(cfg)
 		isReady, err := client.Misc().LiveChecker().Do(context.Background())
 
-		assert.NotNil(t, err)
+		require.NotNil(t, err)
 		assert.False(t, isReady)
-		assert.EqualError(t, err, "status code: -1, error: check the DerivedFromError field for more information: Get \"http://localhorst/v1/.well-known/live\": dial tcp: lookup localhorst: no such host")
+		assert.Contains(t, err.Error(), "status code: -1, error: check the DerivedFromError field for more information: Get \"http://localhorst/v1/.well-known/live\": dial tcp: lookup localhorst:")
 	})
 }

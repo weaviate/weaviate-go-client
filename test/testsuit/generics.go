@@ -23,7 +23,7 @@ const (
 	NoWeaviatePort = 8888
 )
 
-func GetPortAndAuthPw() (int, string) {
+func GetPortAndAuthPw() (int, string, bool) {
 	integrationTestsWithAuth := os.Getenv("INTEGRATION_TESTS_AUTH")
 	wcsPw := os.Getenv("WCS_DUMMY_CI_PW")
 	authEnabled := integrationTestsWithAuth == "auth_enabled" && wcsPw != ""
@@ -31,7 +31,7 @@ func GetPortAndAuthPw() (int, string) {
 	if authEnabled {
 		port = WCSPort
 	}
-	return port, wcsPw
+	return port, wcsPw, authEnabled
 }
 
 // CreateWeaviateTestSchemaFood creates a class for each semantic type (Pizza and Soup)
@@ -196,7 +196,7 @@ func CleanUpWeaviate(t *testing.T, client *weaviate.Client) {
 
 // CreateTestClient running on local host 8080
 func CreateTestClient() *weaviate.Client {
-	port, wcsPw := GetPortAndAuthPw()
+	port, wcsPw, authEnabled := GetPortAndAuthPw()
 
 	openAIApiKey := os.Getenv("OPENAI_APIKEY")
 	headers := map[string]string{}
@@ -211,7 +211,7 @@ func CreateTestClient() *weaviate.Client {
 	}
 	var client *weaviate.Client
 	var err error
-	if wcsPw != "" {
+	if authEnabled {
 		cfg.AuthConfig = auth.ResourceOwnerPasswordFlow{Username: "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net", Password: wcsPw}
 		client, err = weaviate.NewClient(cfg)
 		if err != nil {

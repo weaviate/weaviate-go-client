@@ -28,21 +28,22 @@ function main() {
   # Jump to root directory
   cd "$( dirname "${BASH_SOURCE[0]}" )"/.. || exit
 
-  # Start containers to support unit tests
-  ./test/start_containers.sh
-
   if  $run_unit_tests || $run_all_tests
   then
     echo_green "Run all unit tests..."
-    go test -v ./weaviate/...
-    echo_green "Unit tests successful"
+    go test -v -count 1 ./weaviate/...
+    exit_code=$?
+    check_exit_code "unit tests" $exit_code
   fi
 
   if $run_integration_tests || $run_all_tests
   then
     echo_green "Run all integration tests..."
-    run_integration_tests  "$@"
-    echo_green "integration tests successful"
+    ./test/start_containers.sh
+    run_integration_tests "$@"
+    exit_code=$?
+    ./test/stop_containers.sh
+    check_exit_code "Integration tests" $exit_code
   fi
 
   if $run_auth_integration_tests || $run_all_tests
@@ -50,28 +51,39 @@ function main() {
     echo_green "Run all auth integration tests..."
     ./test/start_containers.sh
     go test -v -count 1 -race test/auth/*.go
+    exit_code=$?
     ./test/stop_containers.sh
-    echo_green "auth integration tests successful"
+    check_exit_code "Auth integration tests" $exit_code
   fi
 
   if $run_deprecated_tests || $run_all_tests
   then
     echo_green "Run all deprecated tests..."
     go test -v -count 1 -race test_deprecated/*.go
-    echo_green "deprecated tests successful"
+    exit_code=$?
+    check_exit_code "Deprecated tests" $exit_code
   fi
-  echo "Done!"
+
+  echo_green "Done!"
 }
 
 function run_integration_tests() {
   for pkg in $(go list ./... | grep "$PKG_TEST" | grep -v 'auth' ); do
-      if ! go test -count 1 -race "$pkg"; then
-        echo "Test for $pkg failed" >&2
-        return 1
-      fi
-    done
+    if ! go test -v -count 1 -race "$pkg"; then
+      echo "Test for $pkg failed" >&2
+      return 1
+    fi
+  done
 }
 
+function check_exit_code() {
+  if [ $2 -eq 0 ]; then
+    echo_green "$1 successful"
+  else
+    echo_red "$1 failed"
+    exit $2
+  fi
+}
 
 function echo_green() {
   green='\033[0;32m'
@@ -79,5 +91,10 @@ function echo_green() {
   echo -e "${green}${*}${nc}"
 }
 
+function echo_red() {
+  red='\033[0;31m'
+  nc='\033[0m'
+  echo -e "${red}${*}${nc}"
+}
 
 main "$@"

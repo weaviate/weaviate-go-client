@@ -15,6 +15,14 @@ import (
 )
 
 func TestMisc_version_check(t *testing.T) {
+	t.Run("tear down weaviate", func(t *testing.T) {
+		err := testenv.TearDownLocalWeaviateForcefully()
+		if err != nil {
+			fmt.Printf(err.Error())
+			t.Fail()
+		}
+	})
+
 	cfg := &weaviate.Config{
 		Host:    "localhost:8080",
 		Scheme:  "http",
@@ -30,7 +38,7 @@ func TestMisc_version_check(t *testing.T) {
 	})
 
 	t.Run("Start Weaviate", func(t *testing.T) {
-		err := testenv.SetupLocalWeaviate()
+		err := testenv.SetupLocalWeaviateWaitForStartup(false)
 		if err != nil {
 			fmt.Printf(err.Error())
 			t.Fail()
@@ -79,6 +87,13 @@ func TestMisc_version_check(t *testing.T) {
 }
 
 func TestMisc_empty_version_check(t *testing.T) {
+	t.Run("tear down weaviate", func(t *testing.T) {
+		err := testenv.TearDownLocalWeaviateForcefully()
+		if err != nil {
+			fmt.Printf(err.Error())
+			t.Fail()
+		}
+	})
 	// needs to be the same client for the whole test
 	cfg := &weaviate.Config{
 		Host:    "localhost:8080",
