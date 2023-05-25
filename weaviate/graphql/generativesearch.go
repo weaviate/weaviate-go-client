@@ -1,13 +1,15 @@
 package graphql
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
 
 type GenerativeSearchBuilder struct {
-	prompt string
-	task   string
+	prompt     string
+	task       string
+	properties []string
 }
 
 func NewGenerativeSearch() *GenerativeSearchBuilder {
@@ -19,8 +21,9 @@ func (gsb *GenerativeSearchBuilder) SingleResult(prompt string) *GenerativeSearc
 	return gsb
 }
 
-func (gsb *GenerativeSearchBuilder) GroupedResult(task string) *GenerativeSearchBuilder {
+func (gsb *GenerativeSearchBuilder) GroupedResult(task string, properties ...string) *GenerativeSearchBuilder {
 	gsb.task = task
+	gsb.properties = properties
 	return gsb
 }
 
@@ -32,8 +35,16 @@ func (gsb *GenerativeSearchBuilder) build() Field {
 		nameParts = append(nameParts, fmt.Sprintf("singleResult:{prompt:\"\"\"%s\"\"\"}", gsb.prompt))
 		fieldNames = append(fieldNames, "singleResult")
 	}
-	if gsb.task != "" {
-		nameParts = append(nameParts, fmt.Sprintf("groupedResult:{task:\"\"\"%s\"\"\"}", gsb.task))
+	if gsb.task != "" || len(gsb.properties) > 0 {
+		argParts := []string{}
+		if gsb.task != "" {
+			argParts = append(argParts, fmt.Sprintf("task:\"\"\"%s\"\"\"", gsb.task))
+		}
+		if len(gsb.properties) > 0 {
+			properties, _ := json.Marshal(gsb.properties)
+			argParts = append(argParts, fmt.Sprintf("properties:%v", string(properties)))
+		}
+		nameParts = append(nameParts, fmt.Sprintf("groupedResult:{%s}", strings.Join(argParts, ",")))
 		fieldNames = append(fieldNames, "groupedResult")
 	}
 

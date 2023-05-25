@@ -234,11 +234,11 @@ func TestGraphQL_integration(t *testing.T) {
 
 		t.Run("generative OpenAI", func(t *testing.T) {
 			t.Skip("skipping all generative OpenAI tests due to OpenAI API being unstable")
-			t.Run("with generative search single result", func(t *testing.T) {
-				if os.Getenv("OPENAI_APIKEY") == "" {
-					t.Skip("No open-ai api key added")
-				}
+			if os.Getenv("OPENAI_APIKEY") == "" {
+				t.Skip("No open-ai api key added")
+			}
 
+			t.Run("with generative search single result", func(t *testing.T) {
 				gs := graphql.NewGenerativeSearch().SingleResult("Describe this pizza : {name}")
 
 				resultSet, gqlErr := client.GraphQL().Get().
@@ -264,10 +264,6 @@ func TestGraphQL_integration(t *testing.T) {
 			})
 
 			t.Run("with generative search grouped result", func(t *testing.T) {
-				if os.Getenv("OPENAI_APIKEY") == "" {
-					t.Skip("No open-ai api key added")
-				}
-
 				gs := graphql.NewGenerativeSearch().GroupedResult("Describe these pizzas")
 
 				resultSet, gqlErr := client.GraphQL().Get().
@@ -292,11 +288,6 @@ func TestGraphQL_integration(t *testing.T) {
 			})
 
 			t.Run("with generative search single result and grouped result", func(t *testing.T) {
-				t.Skip("this test is unstable due to OpenAI API, skipping")
-				if os.Getenv("OPENAI_APIKEY") == "" {
-					t.Skip("No open-ai api key added")
-				}
-
 				gs := graphql.NewGenerativeSearch().
 					SingleResult("Describe this pizza : {name}").
 					GroupedResult("Describe these pizzas")
@@ -324,6 +315,30 @@ func TestGraphQL_integration(t *testing.T) {
 				}
 
 				_additional := pizzas[0].(map[string]interface{})["_additional"]
+				assert.NotNil(t, _additional)
+
+				generate := _additional.(map[string]interface{})["generate"].(map[string]interface{})
+				generateErr := generate["error"]
+				assert.Nil(t, generateErr)
+				groupedResult := generate["groupedResult"].(string)
+				assert.NotEmpty(t, groupedResult)
+			})
+
+			t.Run("with generative search grouped result with properties", func(t *testing.T) {
+				gs := graphql.NewGenerativeSearch().GroupedResult("Describe these pizzas", "title", "description")
+
+				resultSet, gqlErr := client.GraphQL().Get().
+					WithClassName("Pizza").
+					WithFields(name).
+					WithGenerativeSearch(gs).
+					Do(context.Background())
+				assert.Nil(t, gqlErr)
+
+				get := resultSet.Data["Get"].(map[string]interface{})
+				pizza := get["Pizza"].([]interface{})
+				assert.Equal(t, 4, len(pizza))
+
+				_additional := pizza[0].(map[string]interface{})["_additional"]
 				assert.NotNil(t, _additional)
 
 				generate := _additional.(map[string]interface{})["generate"].(map[string]interface{})
