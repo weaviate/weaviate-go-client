@@ -687,9 +687,7 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 			},
 		}
 
-		err := client.
-			Schema().
-			ClassCreator().
+		err := client.Schema().ClassCreator().
 			WithClass(schemaClass).
 			Do(context.Background())
 		require.Nil(t, err)
@@ -699,10 +697,6 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 		require.NotNil(t, loadedClass.MultiTenancyConfig)
 		assert.Equal(t, true, loadedClass.MultiTenancyConfig.Enabled)
 		assert.Equal(t, tenantKey, loadedClass.MultiTenancyConfig.TenantKey)
-
-		// Clean up classes
-		err = client.Schema().AllDeleter().Do(context.Background())
-		require.Nil(t, err)
 	})
 
 	t.Run("class with multi tenancy config disabled", func(t *testing.T) {
@@ -728,9 +722,7 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 			},
 		}
 
-		err := client.
-			Schema().
-			ClassCreator().
+		err := client.Schema().ClassCreator().
 			WithClass(schemaClass).
 			Do(context.Background())
 		require.Nil(t, err)
@@ -740,10 +732,6 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 		require.NotNil(t, loadedClass.MultiTenancyConfig)
 		assert.Equal(t, false, loadedClass.MultiTenancyConfig.Enabled)
 		assert.Equal(t, tenantKey, loadedClass.MultiTenancyConfig.TenantKey)
-
-		// Clean up classes
-		err = client.Schema().AllDeleter().Do(context.Background())
-		require.Nil(t, err)
 	})
 
 	t.Run("class with multi tenancy config but missing tenant", func(t *testing.T) {
@@ -768,9 +756,7 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 			},
 		}
 
-		err := client.
-			Schema().
-			ClassCreator().
+		err := client.Schema().ClassCreator().
 			WithClass(schemaClass).
 			Do(context.Background())
 		require.NotNil(t, err)
@@ -782,10 +768,6 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 		require.NotNil(t, err)
 		clientErr = err.(*fault.WeaviateClientError)
 		assert.Equal(t, 404, clientErr.StatusCode)
-
-		// Clean up classes
-		err = client.Schema().AllDeleter().Do(context.Background())
-		require.Nil(t, err)
 	})
 
 	t.Run("class with multi tenancy config but missing tenant property", func(t *testing.T) {
@@ -807,9 +789,7 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 			},
 		}
 
-		err := client.
-			Schema().
-			ClassCreator().
+		err := client.Schema().ClassCreator().
 			WithClass(schemaClass).
 			Do(context.Background())
 		require.NotNil(t, err)
@@ -821,10 +801,6 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 		require.NotNil(t, err)
 		clientErr = err.(*fault.WeaviateClientError)
 		assert.Equal(t, 404, clientErr.StatusCode)
-
-		// Clean up classes
-		err = client.Schema().AllDeleter().Do(context.Background())
-		require.Nil(t, err)
 	})
 
 	t.Run("class with without multi tenancy config", func(t *testing.T) {
@@ -841,9 +817,7 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 			},
 		}
 
-		err := client.
-			Schema().
-			ClassCreator().
+		err := client.Schema().ClassCreator().
 			WithClass(schemaClass).
 			Do(context.Background())
 		require.Nil(t, err)
@@ -851,9 +825,137 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 		loadedClass, err := client.Schema().ClassGetter().WithClassName(className).Do(context.Background())
 		require.Nil(t, err)
 		assert.Nil(t, loadedClass.MultiTenancyConfig)
+	})
 
-		// Clean up classes
-		err = client.Schema().AllDeleter().Do(context.Background())
+	t.Run("clean up classes", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		err := client.Schema().AllDeleter().Do(context.Background())
+		require.Nil(t, err)
+	})
+
+	t.Run("tear down weaviate", func(t *testing.T) {
+		err := testenv.TearDownLocalWeaviate()
+		if err != nil {
+			t.Fatalf("failed to tear down weaviate: %s", err)
+		}
+	})
+}
+
+func TestSchema_Tenants(t *testing.T) {
+	t.Run("start weaviate", func(t *testing.T) {
+		err := testenv.SetupLocalWeaviate()
+		if err != nil {
+			t.Fatalf("failed to setup weaviate: %s", err)
+		}
+	})
+
+	t.Run("adds tenants to multi tenancy class", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		className := "MultiTenantClass"
+		tenantKey := "tenantName"
+
+		t.Run("creates multi tenant class", func(t *testing.T) {
+			schemaClass := &models.Class{
+				Class: className,
+				Properties: []*models.Property{
+					{
+						Name:     tenantKey,
+						DataType: schema.DataTypeText.PropString(),
+					},
+					{
+						Name:     "someProperty",
+						DataType: schema.DataTypeText.PropString(),
+					},
+				},
+				MultiTenancyConfig: &models.MultiTenancyConfig{
+					Enabled:   true,
+					TenantKey: tenantKey,
+				},
+			}
+
+			err := client.Schema().
+				ClassCreator().
+				WithClass(schemaClass).
+				Do(context.Background())
+			require.Nil(t, err)
+		})
+
+		t.Run("adds single tenant", func(t *testing.T) {
+			tenant := models.Tenant{
+				Name: "tenantNo1",
+			}
+
+			err := client.Schema().TenantCreator().
+				WithClassName(className).
+				WithTenants(tenant).
+				Do(context.Background())
+			require.Nil(t, err)
+		})
+
+		t.Run("adds multiple tenant", func(t *testing.T) {
+			tenants := []models.Tenant{
+				{
+					Name: "tenantNo2",
+				},
+				{
+					Name: "tenantNo3",
+				},
+			}
+
+			err := client.Schema().TenantCreator().
+				WithClassName(className).
+				WithTenants(tenants...).
+				Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("does not add tenants to non-multi tenancy class", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		className := "NonMultiTenantClass"
+
+		t.Run("creates non-multi tenant class", func(t *testing.T) {
+			schemaClass := &models.Class{
+				Class: className,
+				Properties: []*models.Property{
+					{
+						Name:     "someProperty",
+						DataType: schema.DataTypeText.PropString(),
+					},
+				},
+			}
+
+			err := client.Schema().
+				ClassCreator().
+				WithClass(schemaClass).
+				Do(context.Background())
+			require.Nil(t, err)
+		})
+
+		t.Run("fails adding tenants", func(t *testing.T) {
+			tenants := []models.Tenant{
+				{
+					Name: "tenantNo1",
+				},
+				{
+					Name: "tenantNo2",
+				},
+			}
+
+			err := client.Schema().TenantCreator().
+				WithClassName(className).
+				WithTenants(tenants...).
+				Do(context.Background())
+			require.NotNil(t, err)
+			clientErr := err.(*fault.WeaviateClientError)
+			assert.Equal(t, 422, clientErr.StatusCode)
+			assert.Contains(t, clientErr.Msg, "multi-tenancy is not enabled for class")
+		})
+	})
+
+	t.Run("clean up classes", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		err := client.Schema().AllDeleter().Do(context.Background())
 		require.Nil(t, err)
 	})
 
