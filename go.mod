@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/go-openapi/strfmt v0.21.3
 	github.com/stretchr/testify v1.8.2
-	github.com/weaviate/weaviate v1.19.0
+	github.com/weaviate/weaviate v1.19.7-0.20230608173246-1e258e976450
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
 )
 
@@ -63,7 +63,7 @@ require (
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
-	gonum.org/v1/gonum v0.9.1 // indirect
+	gonum.org/v1/gonum v0.12.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
