@@ -10,7 +10,7 @@ import (
 	"github.com/weaviate/weaviate/entities/schema"
 )
 
-const tenantKey = "tenantName"
+const TenantKey = "tenantName"
 
 // ##### SCHEMA #####
 
@@ -33,15 +33,15 @@ func CreateSchemaFood(t *testing.T, client *weaviate.Client) {
 }
 
 func CreateSchemaPizzaForTenants(t *testing.T, client *weaviate.Client) {
-	createSchema(t, client, classPizzaForTenants(tenantKey))
+	createSchema(t, client, classPizzaForTenants(TenantKey))
 }
 
 func CreateSchemaSoupForTenants(t *testing.T, client *weaviate.Client) {
-	createSchema(t, client, classSoupForTenants(tenantKey))
+	createSchema(t, client, classSoupForTenants(TenantKey))
 }
 
 func CreateSchemaRisottoForTenants(t *testing.T, client *weaviate.Client) {
-	createSchema(t, client, classRisottoForTenants(tenantKey))
+	createSchema(t, client, classRisottoForTenants(TenantKey))
 }
 
 func CreateSchemaFoodForTenants(t *testing.T, client *weaviate.Client) {
@@ -210,7 +210,7 @@ func createData(t *testing.T, client *weaviate.Client, objects []*models.Object)
 }
 
 func CreateDataPizzaForTenants(t *testing.T, client *weaviate.Client, tenantNames ...string) {
-	createDataForTenants(t, client, tenantNames, func() []*models.Object {
+	createDataForTenants(t, client, TenantKey, tenantNames, func() []*models.Object {
 		return []*models.Object{
 			objectPizzaQuattroFormaggi(),
 			objectPizzaFruttiDiMare(),
@@ -221,7 +221,7 @@ func CreateDataPizzaForTenants(t *testing.T, client *weaviate.Client, tenantName
 }
 
 func CreateDataSoupForTenants(t *testing.T, client *weaviate.Client, tenantNames ...string) {
-	createDataForTenants(t, client, tenantNames, func() []*models.Object {
+	createDataForTenants(t, client, TenantKey, tenantNames, func() []*models.Object {
 		return []*models.Object{
 			objectSoupChicken(),
 			objectSoupBeautiful(),
@@ -230,7 +230,7 @@ func CreateDataSoupForTenants(t *testing.T, client *weaviate.Client, tenantNames
 }
 
 func CreateDataRisottoForTenants(t *testing.T, client *weaviate.Client, tenantNames ...string) {
-	createDataForTenants(t, client, tenantNames, func() []*models.Object {
+	createDataForTenants(t, client, TenantKey, tenantNames, func() []*models.Object {
 		return []*models.Object{
 			objectRisottoRisiEBisi(),
 			objectRisottoAllaPilota(),
@@ -240,7 +240,7 @@ func CreateDataRisottoForTenants(t *testing.T, client *weaviate.Client, tenantNa
 }
 
 func CreateDataFoodForTenants(t *testing.T, client *weaviate.Client, tenantNames ...string) {
-	createDataForTenants(t, client, tenantNames, func() []*models.Object {
+	createDataForTenants(t, client, TenantKey, tenantNames, func() []*models.Object {
 		return []*models.Object{
 			objectPizzaQuattroFormaggi(),
 			objectPizzaFruttiDiMare(),
@@ -257,8 +257,8 @@ func CreateDataFoodForTenants(t *testing.T, client *weaviate.Client, tenantNames
 	})
 }
 
-func createDataForTenants(t *testing.T, client *weaviate.Client, tenantNames []string,
-	objectsSupplier func() []*models.Object,
+func createDataForTenants(t *testing.T, client *weaviate.Client, tenantKey string,
+	tenantNames []string, objectsSupplier func() []*models.Object,
 ) {
 	for _, name := range tenantNames {
 		objects := objectsSupplier()
