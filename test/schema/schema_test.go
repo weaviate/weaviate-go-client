@@ -876,6 +876,7 @@ func TestSchema_Tenants(t *testing.T) {
 			err := client.Schema().ClassCreator().
 				WithClass(schemaClass).
 				Do(context.Background())
+
 			require.Nil(t, err)
 		})
 
@@ -888,6 +889,7 @@ func TestSchema_Tenants(t *testing.T) {
 				WithClassName(className).
 				WithTenants(tenant).
 				Do(context.Background())
+
 			require.Nil(t, err)
 		})
 
@@ -905,6 +907,7 @@ func TestSchema_Tenants(t *testing.T) {
 				WithClassName(className).
 				WithTenants(tenants...).
 				Do(context.Background())
+
 			require.Nil(t, err)
 		})
 	})
@@ -928,6 +931,7 @@ func TestSchema_Tenants(t *testing.T) {
 				ClassCreator().
 				WithClass(schemaClass).
 				Do(context.Background())
+
 			require.Nil(t, err)
 		})
 
@@ -945,6 +949,7 @@ func TestSchema_Tenants(t *testing.T) {
 				WithClassName(className).
 				WithTenants(tenants...).
 				Do(context.Background())
+
 			require.NotNil(t, err)
 			clientErr := err.(*fault.WeaviateClientError)
 			assert.Equal(t, 422, clientErr.StatusCode)

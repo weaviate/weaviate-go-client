@@ -425,5 +425,6 @@ func createTenants(t *testing.T, client *weaviate.Client, className string, tena
 		WithClassName(className).
 		WithTenants(tenants...).
 		Do(context.Background())
+
 	require.Nil(t, err)
 }

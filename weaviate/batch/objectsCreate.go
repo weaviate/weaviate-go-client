@@ -45,7 +45,7 @@ func (ob *ObjectsBatcher) WithConsistencyLevel(cl string) *ObjectsBatcher {
 	return ob
 }
 
-// WithTenantKey sets tenant objects should be created for
+// WithTenantKey sets tenant, objects should be created for
 func (ob *ObjectsBatcher) WithTenantKey(tenantKey string) *ObjectsBatcher {
 	ob.tenantKey = tenantKey
 	return ob
