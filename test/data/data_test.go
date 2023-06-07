@@ -1440,6 +1440,305 @@ func TestData_MultiTenancy(t *testing.T) {
 		})
 	})
 
+	t.Run("updates objects of multi tenant class", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		className := "Soup"
+		tenantKey := "tenantName"
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+		testsuit.CreateDataSoupForTenants(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			err := client.Data().Updater().
+				WithClassName(className).
+				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+				WithProperties(map[string]interface{}{
+					"name":        "ChickenSoup",
+					"description": fmt.Sprintf("updated ChickenSoup description [%s]", tenant),
+					"price":       float32(2.1),
+					tenantKey:     tenant,
+				}).
+				WithTenantKey(tenant).
+				Do(context.Background())
+
+			require.Nil(t, err)
+
+			err = client.Data().Updater().
+				WithClassName(className).
+				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+				WithProperties(map[string]interface{}{
+					"name":        "Beautiful",
+					"description": fmt.Sprintf("updated Beautiful description [%s]", tenant),
+					"price":       float32(2.2),
+					tenantKey:     tenant,
+				}).
+				WithTenantKey(tenant).
+				Do(context.Background())
+
+			require.Nil(t, err)
+		}
+
+		// TODO check updated
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails updating objects of multi tenant class without tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		className := "Soup"
+		tenantKey := "tenantName"
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+		testsuit.CreateDataSoupForTenants(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			err := client.Data().Updater().
+				WithClassName(className).
+				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+				WithProperties(map[string]interface{}{
+					"name":        "ChickenSoup",
+					"description": fmt.Sprintf("updated ChickenSoup description [%s]", tenant),
+					"price":       float32(2.1),
+					tenantKey:     tenant,
+				}).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			clientErr := err.(*fault.WeaviateClientError)
+			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+			assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+
+			err = client.Data().Updater().
+				WithClassName(className).
+				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+				WithProperties(map[string]interface{}{
+					"name":        "Beautiful",
+					"description": fmt.Sprintf("updated Beautiful description [%s]", tenant),
+					"price":       float32(2.2),
+					tenantKey:     tenant,
+				}).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			clientErr = err.(*fault.WeaviateClientError)
+			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+			assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+		}
+
+		// TODO check not updated
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails updating objects of multi tenant class without tenant prop", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		className := "Soup"
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+		testsuit.CreateDataSoupForTenants(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			err := client.Data().Updater().
+				WithClassName(className).
+				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+				WithProperties(map[string]interface{}{
+					"name":        "ChickenSoup",
+					"description": fmt.Sprintf("updated ChickenSoup description [%s]", tenant),
+					"price":       float32(2.1),
+				}).
+				WithTenantKey(tenant).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			clientErr := err.(*fault.WeaviateClientError)
+			assert.Equal(t, 422, clientErr.StatusCode)
+			assert.Contains(t, clientErr.Msg, "conflicts with object body value")
+
+			err = client.Data().Updater().
+				WithClassName(className).
+				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+				WithProperties(map[string]interface{}{
+					"name":        "Beautiful",
+					"description": fmt.Sprintf("updated Beautiful description [%s]", tenant),
+					"price":       float32(2.2),
+				}).
+				WithTenantKey(tenant).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			clientErr = err.(*fault.WeaviateClientError)
+			assert.Equal(t, 422, clientErr.StatusCode)
+			assert.Contains(t, clientErr.Msg, "conflicts with object body value")
+		}
+
+		// TODO check not updated
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("merges objects of multi tenant class", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		className := "Soup"
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+		testsuit.CreateDataSoupForTenants(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			err := client.Data().Updater().
+				WithClassName(className).
+				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+				WithProperties(map[string]interface{}{
+					"description": fmt.Sprintf("merged ChickenSoup description [%s]", tenant),
+				}).
+				WithTenantKey(tenant).
+				WithMerge().
+				Do(context.Background())
+
+			require.Nil(t, err)
+
+			err = client.Data().Updater().
+				WithClassName(className).
+				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+				WithProperties(map[string]interface{}{
+					"description": fmt.Sprintf("merged Beautiful description [%s]", tenant),
+				}).
+				WithTenantKey(tenant).
+				WithMerge().
+				Do(context.Background())
+
+			require.Nil(t, err)
+		}
+
+		// TODO check merged
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails merging objects of multi tenant class without tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		className := "Soup"
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+		testsuit.CreateDataSoupForTenants(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			err := client.Data().Updater().
+				WithClassName(className).
+				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+				WithProperties(map[string]interface{}{
+					"description": fmt.Sprintf("merged ChickenSoup description [%s]", tenant),
+				}).
+				WithMerge().
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			clientErr := err.(*fault.WeaviateClientError)
+			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+			assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+
+			err = client.Data().Updater().
+				WithClassName(className).
+				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+				WithProperties(map[string]interface{}{
+					"description": fmt.Sprintf("merged Beautiful description [%s]", tenant),
+				}).
+				WithMerge().
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			clientErr = err.(*fault.WeaviateClientError)
+			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+			assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+		}
+
+		// TODO check not merged
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails merging objects of multi tenant class with different tenant prop", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		className := "Soup"
+		tenantKey := "tenantName"
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+		testsuit.CreateDataSoupForTenants(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			err := client.Data().Updater().
+				WithClassName(className).
+				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+				WithProperties(map[string]interface{}{
+					"description": fmt.Sprintf("merged ChickenSoup description [%s]", tenant),
+					tenantKey:     tenant + "Different",
+				}).
+				WithTenantKey(tenant).
+				WithMerge().
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			clientErr := err.(*fault.WeaviateClientError)
+			assert.Equal(t, 422, clientErr.StatusCode)
+			assert.Contains(t, clientErr.Msg, "is immutable")
+
+			err = client.Data().Updater().
+				WithClassName(className).
+				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+				WithProperties(map[string]interface{}{
+					"description": fmt.Sprintf("merged Beautiful description [%s]", tenant),
+					tenantKey:     tenant + "Different",
+				}).
+				WithTenantKey(tenant).
+				WithMerge().
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			clientErr = err.(*fault.WeaviateClientError)
+			assert.Equal(t, 422, clientErr.StatusCode)
+			assert.Contains(t, clientErr.Msg, "is immutable")
+		}
+
+		// TODO check not merged
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
