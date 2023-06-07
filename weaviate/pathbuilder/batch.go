@@ -24,10 +24,17 @@ func BatchObjects(comp Components) string {
 
 func BatchReferences(comp Components) string {
 	path := "/batch/references"
+	pathParams := url.Values{}
+
 	if comp.ConsistencyLevel != "" {
-		pathParams := url.Values{}
 		pathParams.Set("consistency_level", comp.ConsistencyLevel)
+	}
+	if comp.TenantKey != "" {
+		pathParams.Set("tenant_key", comp.TenantKey)
+	}
+	if len(pathParams) > 0 {
 		path = fmt.Sprintf("%s?%v", path, pathParams.Encode())
 	}
+
 	return path
 }

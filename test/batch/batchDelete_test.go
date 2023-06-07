@@ -185,24 +185,6 @@ func TestBatchDelete_integration(t *testing.T) {
 }
 
 func TestBatchDelete_MultiTenancy(t *testing.T) {
-	idsByClass := map[string][]string{
-		"Pizza": {
-			"10523cdd-15a2-42f4-81fa-267fe92f7cd6",
-			"927dd3ac-e012-4093-8007-7799cc7e81e4",
-			"00000000-0000-0000-0000-000000000000",
-			"5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
-		},
-		"Soup": {
-			"8c156d37-81aa-4ce9-a811-621e2702b825",
-			"27351361-2898-4d1a-aad7-1ca48253eb0b",
-		},
-		"Risotto": {
-			"da751a25-f573-4715-a893-e607b2de0ba4",
-			"10c2ee44-7d58-42be-9d64-5766883ca8cb",
-			"696bf381-7f98-40a4-bcad-841780e00e0e",
-		},
-	}
-
 	t.Run("setup weaviate", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -219,7 +201,7 @@ func TestBatchDelete_MultiTenancy(t *testing.T) {
 		testsuit.CreateDataFoodForTenants(t, client, tenants...)
 
 		for _, tenant := range tenants {
-			for className, ids := range idsByClass {
+			for className, ids := range testsuit.IdsByClass {
 				resp, err := client.Batch().ObjectsBatchDeleter().
 					WithClassName(className).
 					WithWhere(filters.Where().
@@ -240,7 +222,7 @@ func TestBatchDelete_MultiTenancy(t *testing.T) {
 
 		t.Run("check deleted", func(t *testing.T) {
 			for _, tenant := range tenants {
-				for className, ids := range idsByClass {
+				for className, ids := range testsuit.IdsByClass {
 					for _, id := range ids {
 						exists, err := client.Data().Checker().
 							WithID(id).
@@ -270,7 +252,7 @@ func TestBatchDelete_MultiTenancy(t *testing.T) {
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants...)
 
-		for className := range idsByClass {
+		for className := range testsuit.IdsByClass {
 			resp, err := client.Batch().ObjectsBatchDeleter().
 				WithClassName(className).
 				WithWhere(filters.Where().
@@ -289,7 +271,7 @@ func TestBatchDelete_MultiTenancy(t *testing.T) {
 
 		t.Run("check not deleted", func(t *testing.T) {
 			for _, tenant := range tenants {
-				for className, ids := range idsByClass {
+				for className, ids := range testsuit.IdsByClass {
 					for _, id := range ids {
 						exists, err := client.Data().Checker().
 							WithID(id).
@@ -319,7 +301,7 @@ func TestBatchDelete_MultiTenancy(t *testing.T) {
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants...)
 
-		for className := range idsByClass {
+		for className := range testsuit.IdsByClass {
 			resp, err := client.Batch().ObjectsBatchDeleter().
 				WithClassName(className).
 				WithWhere(filters.Where().
@@ -339,7 +321,7 @@ func TestBatchDelete_MultiTenancy(t *testing.T) {
 
 		t.Run("check not deleted", func(t *testing.T) {
 			for _, tenant := range tenants {
-				for className, ids := range idsByClass {
+				for className, ids := range testsuit.IdsByClass {
 					for _, id := range ids {
 						exists, err := client.Data().Checker().
 							WithID(id).
