@@ -1431,6 +1431,66 @@ func TestData_MultiTenancy(t *testing.T) {
 		})
 	})
 
+	t.Run("checks objects of multi tenant class", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaFoodForTenants(t, client)
+		testsuit.CreateTenantsFood(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			for className, ids := range idsByClass {
+				for _, id := range ids {
+					exists, err := client.Data().Checker().
+						WithID(id).
+						WithClassName(className).
+						WithTenantKey(tenant).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.True(t, exists)
+				}
+			}
+		}
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails checking objects of multi tenant class without tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaFoodForTenants(t, client)
+		testsuit.CreateTenantsFood(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+
+		for className, ids := range idsByClass {
+			for _, id := range ids {
+				exists, err := client.Data().Checker().
+					WithID(id).
+					WithClassName(className).
+					Do(context.Background())
+
+				require.NotNil(t, err)
+				clientErr := err.(*fault.WeaviateClientError)
+				assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+				assert.Empty(t, clientErr.Msg)
+				assert.False(t, exists)
+			}
+		}
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
 	t.Run("deletes objects from multi tenant class", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		tenants := []string{"tenantNo1", "tenantNo2"}
