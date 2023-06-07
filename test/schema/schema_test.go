@@ -873,8 +873,7 @@ func TestSchema_Tenants(t *testing.T) {
 				},
 			}
 
-			err := client.Schema().
-				ClassCreator().
+			err := client.Schema().ClassCreator().
 				WithClass(schemaClass).
 				Do(context.Background())
 			require.Nil(t, err)

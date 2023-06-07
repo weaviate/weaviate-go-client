@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
@@ -1146,6 +1147,188 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, found3)
 
 		testsuit.CleanUpWeaviate(t, client)
+	})
+
+	t.Run("tear down weaviate", func(t *testing.T) {
+		err := testenv.TearDownLocalWeaviate()
+		if err != nil {
+			fmt.Printf(err.Error())
+			t.Fail()
+		}
+	})
+}
+
+func TestData_tenantKey(t *testing.T) {
+	t.Run("start weaviate", func(t *testing.T) {
+		err := testenv.SetupLocalWeaviate()
+		if err != nil {
+			t.Fatalf("failed to setup weaviate: %s", err)
+		}
+	})
+
+	t.Run("adds objects to multi tenant class", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		className := "Pizza"
+		tenantKey := "tenantName"
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			wrap, err := client.Data().Creator().
+				WithClassName(className).
+				WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
+				WithProperties(map[string]interface{}{
+					"name":        "Quattro Formaggi",
+					"description": "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
+					"price":       float32(1.1),
+					"best_before": "2022-05-03T12:04:40+02:00",
+					tenantKey:     tenant,
+				}).
+				WithTenantKey(tenant).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, wrap)
+			require.NotNil(t, wrap.Object)
+			assert.Equal(t, wrap.Object.ID, strfmt.UUID("10523cdd-15a2-42f4-81fa-267fe92f7cd6"))
+			assert.Equal(t, wrap.Object.Properties.(map[string]interface{})["name"], "Quattro Formaggi")
+			assert.Equal(t, wrap.Object.Properties.(map[string]interface{})[tenantKey], tenant)
+
+			wrap, err = client.Data().Creator().
+				WithClassName(className).
+				WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
+				WithProperties(map[string]interface{}{
+					"name":        "Frutti di Mare",
+					"description": "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
+					"price":       float32(1.2),
+					"best_before": "2022-05-05T07:16:30+02:00",
+					tenantKey:     tenant,
+				}).
+				WithTenantKey(tenant).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, wrap)
+			require.NotNil(t, wrap.Object)
+			assert.Equal(t, wrap.Object.ID, strfmt.UUID("927dd3ac-e012-4093-8007-7799cc7e81e4"))
+			assert.Equal(t, wrap.Object.Properties.(map[string]interface{})["name"], "Frutti di Mare")
+			assert.Equal(t, wrap.Object.Properties.(map[string]interface{})[tenantKey], tenant)
+		}
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails adding objects to multi tenant class without tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		className := "Pizza"
+		tenantKey := "tenantName"
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			wrap, err := client.Data().Creator().
+				WithClassName(className).
+				WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
+				WithProperties(map[string]interface{}{
+					"name":        "Quattro Formaggi",
+					"description": "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
+					"price":       float32(1.1),
+					"best_before": "2022-05-03T12:04:40+02:00",
+					tenantKey:     tenant,
+				}).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			clientErr := err.(*fault.WeaviateClientError)
+			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+			assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+			require.Nil(t, wrap)
+
+			wrap, err = client.Data().Creator().
+				WithClassName(className).
+				WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
+				WithProperties(map[string]interface{}{
+					"name":        "Frutti di Mare",
+					"description": "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
+					"price":       float32(1.2),
+					"best_before": "2022-05-05T07:16:30+02:00",
+					tenantKey:     tenant,
+				}).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			clientErr = err.(*fault.WeaviateClientError)
+			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+			assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+			require.Nil(t, wrap)
+		}
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails adding objects to multi tenant class without tenant prop", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		className := "Pizza"
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			wrap, err := client.Data().Creator().
+				WithClassName(className).
+				WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
+				WithProperties(map[string]interface{}{
+					"name":        "Quattro Formaggi",
+					"description": "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
+					"price":       float32(1.1),
+					"best_before": "2022-05-03T12:04:40+02:00",
+				}).
+				WithTenantKey(tenant).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			clientErr := err.(*fault.WeaviateClientError)
+			assert.Equal(t, 422, clientErr.StatusCode)
+			assert.Contains(t, clientErr.Msg, "conflicts with object body value")
+			require.Nil(t, wrap)
+
+			wrap, err = client.Data().Creator().
+				WithClassName(className).
+				WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
+				WithProperties(map[string]interface{}{
+					"name":        "Frutti di Mare",
+					"description": "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
+					"price":       float32(1.2),
+					"best_before": "2022-05-05T07:16:30+02:00",
+				}).
+				WithTenantKey(tenant).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			clientErr = err.(*fault.WeaviateClientError)
+			assert.Equal(t, 422, clientErr.StatusCode)
+			assert.Contains(t, clientErr.Msg, "conflicts with object body value")
+			require.Nil(t, wrap)
+		}
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {

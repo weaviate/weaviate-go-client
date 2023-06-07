@@ -25,6 +25,7 @@ type Creator struct {
 	vector           []float32
 	propertySchema   models.PropertySchema
 	consistencyLevel string
+	tenantKey        string
 }
 
 // WithClassName indicates what class the data object is associated with
@@ -59,6 +60,12 @@ func (creator *Creator) WithConsistencyLevel(cl string) *Creator {
 	return creator
 }
 
+// WithTenantKey sets tenant object should be created for
+func (c *Creator) WithTenantKey(tenantKey string) *Creator {
+	c.tenantKey = tenantKey
+	return c
+}
+
 // Do create the data object as specified in the builder
 func (creator *Creator) Do(ctx context.Context) (*ObjectWrapper, error) {
 	var err error
@@ -81,11 +88,19 @@ func (creator *Creator) Do(ctx context.Context) (*ObjectWrapper, error) {
 
 func (creator *Creator) buildPath() string {
 	path := "/objects"
+	pathParams := url.Values{}
+
 	if creator.consistencyLevel != "" {
-		pathParams := url.Values{}
 		pathParams.Set("consistency_level", creator.consistencyLevel)
+	}
+	if creator.tenantKey != "" {
+		pathParams.Set("tenant_key", creator.tenantKey)
+	}
+
+	if len(pathParams) > 0 {
 		path = fmt.Sprintf("%s?%v", path, pathParams.Encode())
 	}
+
 	return path
 }
 
