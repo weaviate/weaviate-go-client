@@ -657,7 +657,7 @@ func TestSchema_errors(t *testing.T) {
 }
 
 func TestSchema_MultiTenancyConfig(t *testing.T) {
-	t.Run("start weaviate", func(t *testing.T) {
+	t.Run("setup weaviate", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
 			t.Fatalf("failed to setup weaviate: %s", err)
@@ -842,7 +842,7 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 }
 
 func TestSchema_Tenants(t *testing.T) {
-	t.Run("start weaviate", func(t *testing.T) {
+	t.Run("setup weaviate", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
 			t.Fatalf("failed to setup weaviate: %s", err)

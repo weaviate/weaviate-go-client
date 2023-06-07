@@ -1159,7 +1159,7 @@ func TestData_integration(t *testing.T) {
 }
 
 func TestData_tenantKey(t *testing.T) {
-	t.Run("start weaviate", func(t *testing.T) {
+	t.Run("setup weaviate", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
 			t.Fatalf("failed to setup weaviate: %s", err)
@@ -1334,8 +1334,7 @@ func TestData_tenantKey(t *testing.T) {
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
-			t.Fail()
+			t.Fatalf("failed to tear down weaviate: %s", err)
 		}
 	})
 }

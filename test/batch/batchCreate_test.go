@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
@@ -307,6 +308,267 @@ func TestBatchCreate_integration(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
 			t.Fatal(err.Error())
+		}
+	})
+}
+
+func TestBatchCreate_tenantKey(t *testing.T) {
+	t.Run("setup weaviate", func(t *testing.T) {
+		err := testenv.SetupLocalWeaviate()
+		if err != nil {
+			t.Fatalf("failed to setup weaviate: %s", err)
+		}
+	})
+
+	t.Run("adds objects to multi tenant class", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenantKey := "tenantName"
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			resp, err := client.Batch().ObjectsBatcher().
+				WithObjects(
+					&models.Object{
+						Class: "Pizza",
+						ID:    "10523cdd-15a2-42f4-81fa-267fe92f7cd6",
+						Properties: map[string]interface{}{
+							"name":        "Quattro Formaggi",
+							"description": "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
+							"price":       float32(1.1),
+							"best_before": "2022-05-03T12:04:40+02:00",
+							tenantKey:     tenant,
+						},
+					},
+					&models.Object{
+						Class: "Pizza",
+						ID:    "927dd3ac-e012-4093-8007-7799cc7e81e4",
+						Properties: map[string]interface{}{
+							"name":        "Frutti di Mare",
+							"description": "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
+							"price":       float32(1.2),
+							"best_before": "2022-05-05T07:16:30+02:00",
+							tenantKey:     tenant,
+						},
+					},
+					&models.Object{
+						Class: "Soup",
+						ID:    "8c156d37-81aa-4ce9-a811-621e2702b825",
+						Properties: map[string]interface{}{
+							"name":        "ChickenSoup",
+							"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
+							"price":       float32(2.1),
+							tenantKey:     tenant,
+						},
+					},
+					&models.Object{
+						Class: "Soup",
+						ID:    "27351361-2898-4d1a-aad7-1ca48253eb0b",
+						Properties: map[string]interface{}{
+							"name":        "Beautiful",
+							"description": "Putting the game of letter soups to a whole new level.",
+							"price":       float32(2.2),
+							tenantKey:     tenant,
+						},
+					}).
+				WithTenantKey(tenant).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, resp)
+			assert.Len(t, resp, 4)
+
+			found1 := false
+			found2 := false
+			found3 := false
+			found4 := false
+			for i := range resp {
+				switch resp[i].ID {
+				case "10523cdd-15a2-42f4-81fa-267fe92f7cd6":
+					assert.Equal(t, "Pizza", resp[i].Class)
+					assert.Equal(t, "Quattro Formaggi", resp[i].Properties.(map[string]interface{})["name"])
+					assert.Equal(t, tenant, resp[i].Properties.(map[string]interface{})[tenantKey])
+					found1 = true
+				case "927dd3ac-e012-4093-8007-7799cc7e81e4":
+					assert.Equal(t, "Pizza", resp[i].Class)
+					assert.Equal(t, "Frutti di Mare", resp[i].Properties.(map[string]interface{})["name"])
+					assert.Equal(t, tenant, resp[i].Properties.(map[string]interface{})[tenantKey])
+					found2 = true
+				case "8c156d37-81aa-4ce9-a811-621e2702b825":
+					assert.Equal(t, "Soup", resp[i].Class)
+					assert.Equal(t, "ChickenSoup", resp[i].Properties.(map[string]interface{})["name"])
+					assert.Equal(t, tenant, resp[i].Properties.(map[string]interface{})[tenantKey])
+					found3 = true
+				case "27351361-2898-4d1a-aad7-1ca48253eb0b":
+					assert.Equal(t, "Soup", resp[i].Class)
+					assert.Equal(t, "Beautiful", resp[i].Properties.(map[string]interface{})["name"])
+					assert.Equal(t, tenant, resp[i].Properties.(map[string]interface{})[tenantKey])
+					found4 = true
+				}
+			}
+			assert.True(t, found1)
+			assert.True(t, found2)
+			assert.True(t, found3)
+			assert.True(t, found4)
+		}
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails adding objects to multi tenant class without tenant key", func(t *testing.T) {
+		t.Skip("should fail?")
+
+		client := testsuit.CreateTestClient()
+		tenantKey := "tenantName"
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			resp, err := client.Batch().ObjectsBatcher().
+				WithObjects(
+					&models.Object{
+						Class: "Pizza",
+						ID:    "10523cdd-15a2-42f4-81fa-267fe92f7cd6",
+						Properties: map[string]interface{}{
+							"name":        "Quattro Formaggi",
+							"description": "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
+							"price":       float32(1.1),
+							"best_before": "2022-05-03T12:04:40+02:00",
+							tenantKey:     tenant,
+						},
+					},
+					&models.Object{
+						Class: "Pizza",
+						ID:    "927dd3ac-e012-4093-8007-7799cc7e81e4",
+						Properties: map[string]interface{}{
+							"name":        "Frutti di Mare",
+							"description": "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
+							"price":       float32(1.2),
+							"best_before": "2022-05-05T07:16:30+02:00",
+							tenantKey:     tenant,
+						},
+					},
+					&models.Object{
+						Class: "Soup",
+						ID:    "8c156d37-81aa-4ce9-a811-621e2702b825",
+						Properties: map[string]interface{}{
+							"name":        "ChickenSoup",
+							"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
+							"price":       float32(2.1),
+							tenantKey:     tenant,
+						},
+					},
+					&models.Object{
+						Class: "Soup",
+						ID:    "27351361-2898-4d1a-aad7-1ca48253eb0b",
+						Properties: map[string]interface{}{
+							"name":        "Beautiful",
+							"description": "Putting the game of letter soups to a whole new level.",
+							"price":       float32(2.2),
+							tenantKey:     tenant,
+						},
+					}).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, resp)
+			assert.Len(t, resp, 4)
+
+			// TODO should not add objects
+		}
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails adding objects to multi tenant class without tenant prop", func(t *testing.T) {
+		t.Skip("should fail?")
+
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			resp, err := client.Batch().ObjectsBatcher().
+				WithObjects(
+					&models.Object{
+						Class: "Pizza",
+						ID:    "10523cdd-15a2-42f4-81fa-267fe92f7cd6",
+						Properties: map[string]interface{}{
+							"name":        "Quattro Formaggi",
+							"description": "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
+							"price":       float32(1.1),
+							"best_before": "2022-05-03T12:04:40+02:00",
+						},
+					},
+					&models.Object{
+						Class: "Pizza",
+						ID:    "927dd3ac-e012-4093-8007-7799cc7e81e4",
+						Properties: map[string]interface{}{
+							"name":        "Frutti di Mare",
+							"description": "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
+							"price":       float32(1.2),
+							"best_before": "2022-05-05T07:16:30+02:00",
+						},
+					},
+					&models.Object{
+						Class: "Soup",
+						ID:    "8c156d37-81aa-4ce9-a811-621e2702b825",
+						Properties: map[string]interface{}{
+							"name":        "ChickenSoup",
+							"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
+							"price":       float32(2.1),
+						},
+					},
+					&models.Object{
+						Class: "Soup",
+						ID:    "27351361-2898-4d1a-aad7-1ca48253eb0b",
+						Properties: map[string]interface{}{
+							"name":        "Beautiful",
+							"description": "Putting the game of letter soups to a whole new level.",
+							"price":       float32(2.2),
+						},
+					}).
+				WithTenantKey(tenant).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, resp)
+			assert.Len(t, resp, 4)
+
+			// TODO should not add objects
+		}
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("tear down weaviate", func(t *testing.T) {
+		err := testenv.TearDownLocalWeaviate()
+		if err != nil {
+			t.Fatalf("failed to tear down weaviate: %s", err)
 		}
 	})
 }

@@ -21,6 +21,7 @@ type ObjectsBatcher struct {
 	connection       *connection.Connection
 	objects          []*models.Object
 	consistencyLevel string
+	tenantKey        string
 }
 
 // WithObjects adds objects to the batch
@@ -44,6 +45,12 @@ func (ob *ObjectsBatcher) WithConsistencyLevel(cl string) *ObjectsBatcher {
 	return ob
 }
 
+// WithTenantKey sets tenant objects should be created for
+func (ob *ObjectsBatcher) WithTenantKey(tenantKey string) *ObjectsBatcher {
+	ob.tenantKey = tenantKey
+	return ob
+}
+
 func (ob *ObjectsBatcher) resetObjects() {
 	ob.objects = []*models.Object{}
 }
@@ -55,7 +62,10 @@ func (ob *ObjectsBatcher) Do(ctx context.Context) ([]models.ObjectsGetResponse, 
 		Fields:  []string{"ALL"},
 		Objects: ob.objects,
 	}
-	path := pathbuilder.BatchObjects(pathbuilder.Components{ConsistencyLevel: ob.consistencyLevel})
+	path := pathbuilder.BatchObjects(pathbuilder.Components{
+		ConsistencyLevel: ob.consistencyLevel,
+		TenantKey:        ob.tenantKey,
+	})
 	responseData, responseErr := ob.connection.RunREST(ctx, path, http.MethodPost, body)
 	batchErr := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if batchErr != nil {
