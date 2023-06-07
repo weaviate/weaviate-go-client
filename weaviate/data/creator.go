@@ -60,7 +60,7 @@ func (creator *Creator) WithConsistencyLevel(cl string) *Creator {
 	return creator
 }
 
-// WithTenantKey sets tenant object should be created for
+// WithTenantKey sets tenant, object should be created for
 func (c *Creator) WithTenantKey(tenantKey string) *Creator {
 	c.tenantKey = tenantKey
 	return c

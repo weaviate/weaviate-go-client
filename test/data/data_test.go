@@ -1158,7 +1158,25 @@ func TestData_integration(t *testing.T) {
 	})
 }
 
-func TestData_tenantKey(t *testing.T) {
+func TestData_MultiTenancy(t *testing.T) {
+	idsByClass := map[string][]string{
+		"Pizza": {
+			"10523cdd-15a2-42f4-81fa-267fe92f7cd6",
+			"927dd3ac-e012-4093-8007-7799cc7e81e4",
+			"00000000-0000-0000-0000-000000000000",
+			"5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
+		},
+		"Soup": {
+			"8c156d37-81aa-4ce9-a811-621e2702b825",
+			"27351361-2898-4d1a-aad7-1ca48253eb0b",
+		},
+		"Risotto": {
+			"da751a25-f573-4715-a893-e607b2de0ba4",
+			"10c2ee44-7d58-42be-9d64-5766883ca8cb",
+			"696bf381-7f98-40a4-bcad-841780e00e0e",
+		},
+	}
+
 	t.Run("setup weaviate", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -1322,6 +1340,97 @@ func TestData_tenantKey(t *testing.T) {
 			assert.Equal(t, 422, clientErr.StatusCode)
 			assert.Contains(t, clientErr.Msg, "conflicts with object body value")
 			require.Nil(t, wrap)
+		}
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("deletes objects from multi tenant class", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaFoodForTenants(t, client)
+		testsuit.CreateTenantsFood(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			for className, ids := range idsByClass {
+				for _, id := range ids {
+					err := client.Data().Deleter().
+						WithID(id).
+						WithClassName(className).
+						WithTenantKey(tenant).
+						Do(context.Background())
+
+					require.Nil(t, err)
+				}
+			}
+		}
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails deleting objects from multi tenant class without tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaFoodForTenants(t, client)
+		testsuit.CreateTenantsFood(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+
+		for className, ids := range idsByClass {
+			for _, id := range ids {
+				err := client.Data().Deleter().
+					WithID(id).
+					WithClassName(className).
+					Do(context.Background())
+
+				require.NotNil(t, err)
+				clientErr := err.(*fault.WeaviateClientError)
+				assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+				assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+			}
+		}
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("deletes objects from non-mt class when tenant key given", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+
+		testsuit.CreateSchemaFood(t, client)
+		testsuit.CreateDataFood(t, client)
+
+		for className, ids := range idsByClass {
+			for _, id := range ids {
+				err := client.Data().Deleter().
+					WithID(id).
+					WithClassName(className).
+					WithTenantKey("nonExistingTenant").
+					Do(context.Background())
+
+				require.Nil(t, err)
+
+				exists, err := client.Data().Checker().
+					WithClassName(className).
+					WithID(id).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				assert.False(t, exists)
+			}
 		}
 
 		t.Run("clean up classes", func(t *testing.T) {

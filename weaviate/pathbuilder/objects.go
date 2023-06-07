@@ -60,10 +60,17 @@ func References(comp Components) string {
 
 func appendURLParams(path string, comp Components) string {
 	u := url.URL{Path: path}
+	params := url.Values{}
+
 	if comp.ConsistencyLevel != "" {
-		params := url.Values{}
 		params.Add("consistency_level", comp.ConsistencyLevel)
+	}
+	if comp.TenantKey != "" {
+		params.Add("tenant_key", comp.TenantKey)
+	}
+	if len(params) > 0 {
 		u.RawQuery = params.Encode()
 	}
+
 	return u.String()
 }

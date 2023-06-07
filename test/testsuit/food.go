@@ -200,7 +200,13 @@ func CreateDataFood(t *testing.T, client *weaviate.Client) {
 }
 
 func createData(t *testing.T, client *weaviate.Client, objects []*models.Object) {
-	// TODO batcher
+	resp, err := client.Batch().ObjectsBatcher().
+		WithObjects(objects...).
+		Do(context.Background())
+
+	require.Nil(t, err)
+	require.NotNil(t, resp)
+	require.Len(t, resp, len(objects))
 }
 
 func CreateDataPizzaForTenants(t *testing.T, client *weaviate.Client, tenantNames ...string) {
@@ -254,16 +260,22 @@ func CreateDataFoodForTenants(t *testing.T, client *weaviate.Client, tenantNames
 func createDataForTenants(t *testing.T, client *weaviate.Client, tenantNames []string,
 	objectsSupplier func() []*models.Object,
 ) {
-	objects := []*models.Object{}
 	for _, name := range tenantNames {
-		for _, object := range objectsSupplier() {
+		objects := objectsSupplier()
+		for _, object := range objects {
 			props := object.Properties.(map[string]interface{})
 			props[tenantKey] = name
-
-			objects = append(objects, object)
 		}
+
+		resp, err := client.Batch().ObjectsBatcher().
+			WithObjects(objects...).
+			WithTenantKey(name).
+			Do(context.Background())
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		require.Len(t, resp, len(objects))
 	}
-	createData(t, client, objects)
 }
 
 // ##### OBJECTS #####
