@@ -1302,7 +1302,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 	})
 
 	t.Run("replaces references between multi tenant classes", func(t *testing.T) {
-		t.Skip("should replace refs")
+		t.Skip("should replace references")
 
 		client := testsuit.CreateTestClient()
 		tenants := []string{"tenantNo1", "tenantNo2"}
@@ -1816,6 +1816,965 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 
 					require.NotNil(t, err)
 					assert.False(t, exists)
+				}
+			})
+
+			t.Run("clean up classes", func(t *testing.T) {
+				client := testsuit.CreateTestClient()
+				err := client.Schema().AllDeleter().Do(context.Background())
+				require.Nil(t, err)
+			})
+		})
+	})
+
+	t.Run("adds references between mt and non-mt classes", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenantPizza := "tenantPizza"
+		tenantSoup := "tenantSoup"
+		pizzaIds := testsuit.IdsByClass["Pizza"]
+		soupIds := testsuit.IdsByClass["Soup"]
+
+		t.Run("src mt, dest non-mt", func(t *testing.T) {
+			testsuit.CreateSchemaPizza(t, client)
+			testsuit.CreateDataPizza(t, client)
+
+			testsuit.CreateSchemaSoupForTenants(t, client)
+			testsuit.CreateTenantsSoup(t, client, tenantSoup)
+			testsuit.CreateDataSoupForTenants(t, client, tenantSoup)
+
+			t.Run("create ref property", func(t *testing.T) {
+				err := client.Schema().PropertyCreator().
+					WithClassName("Soup").
+					WithProperty(&models.Property{
+						Name:     "relatedToPizza",
+						DataType: []string{"Pizza"},
+					}).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			})
+
+			for _, soupId := range soupIds {
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+
+					err := client.Data().ReferenceCreator().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithReferenceProperty("relatedToPizza").
+						WithReference(ref).
+						WithTenantKey(tenantSoup).
+						Do(context.Background())
+
+					require.Nil(t, err)
+				}
+			}
+
+			t.Run("check refs exist", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithTenantKey(tenantSoup).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Len(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"].([]interface{}),
+						len(pizzaIds))
+				}
+			})
+
+			t.Run("clean up classes", func(t *testing.T) {
+				client := testsuit.CreateTestClient()
+				err := client.Schema().AllDeleter().Do(context.Background())
+				require.Nil(t, err)
+			})
+		})
+
+		t.Run("src non-mt, dest mt", func(t *testing.T) {
+			testsuit.CreateSchemaPizzaForTenants(t, client)
+			testsuit.CreateTenantsPizza(t, client, tenantPizza)
+			testsuit.CreateDataPizzaForTenants(t, client, tenantPizza)
+
+			testsuit.CreateSchemaSoup(t, client)
+			testsuit.CreateDataSoup(t, client)
+
+			t.Run("create ref property", func(t *testing.T) {
+				err := client.Schema().PropertyCreator().
+					WithClassName("Soup").
+					WithProperty(&models.Property{
+						Name:     "relatedToPizza",
+						DataType: []string{"Pizza"},
+					}).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			})
+
+			for _, soupId := range soupIds {
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+
+					err := client.Data().ReferenceCreator().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithReferenceProperty("relatedToPizza").
+						WithReference(ref).
+						WithTenantKey(tenantPizza).
+						Do(context.Background())
+
+					require.Nil(t, err)
+				}
+			}
+
+			t.Run("check refs exist", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Len(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"].([]interface{}),
+						len(pizzaIds))
+				}
+			})
+
+			t.Run("clean up classes", func(t *testing.T) {
+				client := testsuit.CreateTestClient()
+				err := client.Schema().AllDeleter().Do(context.Background())
+				require.Nil(t, err)
+			})
+		})
+	})
+
+	t.Run("fails adding references between mt and non-mt classes without tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenantPizza := "tenantPizza"
+		tenantSoup := "tenantSoup"
+		pizzaIds := testsuit.IdsByClass["Pizza"]
+		soupIds := testsuit.IdsByClass["Soup"]
+
+		t.Run("src mt, dest non-mt", func(t *testing.T) {
+			testsuit.CreateSchemaPizza(t, client)
+			testsuit.CreateDataPizza(t, client)
+
+			testsuit.CreateSchemaSoupForTenants(t, client)
+			testsuit.CreateTenantsSoup(t, client, tenantSoup)
+			testsuit.CreateDataSoupForTenants(t, client, tenantSoup)
+
+			t.Run("create ref property", func(t *testing.T) {
+				err := client.Schema().PropertyCreator().
+					WithClassName("Soup").
+					WithProperty(&models.Property{
+						Name:     "relatedToPizza",
+						DataType: []string{"Pizza"},
+					}).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			})
+
+			for _, soupId := range soupIds {
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+
+					err := client.Data().ReferenceCreator().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithReferenceProperty("relatedToPizza").
+						WithReference(ref).
+						Do(context.Background())
+
+					require.NotNil(t, err)
+					clientErr := err.(*fault.WeaviateClientError)
+					assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+					assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+				}
+			}
+
+			t.Run("check refs do not exist", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithTenantKey(tenantSoup).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Nil(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"])
+				}
+			})
+
+			t.Run("clean up classes", func(t *testing.T) {
+				client := testsuit.CreateTestClient()
+				err := client.Schema().AllDeleter().Do(context.Background())
+				require.Nil(t, err)
+			})
+		})
+
+		t.Run("src non-mt, dest mt", func(t *testing.T) {
+			testsuit.CreateSchemaPizzaForTenants(t, client)
+			testsuit.CreateTenantsPizza(t, client, tenantPizza)
+			testsuit.CreateDataPizzaForTenants(t, client, tenantPizza)
+
+			testsuit.CreateSchemaSoup(t, client)
+			testsuit.CreateDataSoup(t, client)
+
+			t.Run("create ref property", func(t *testing.T) {
+				err := client.Schema().PropertyCreator().
+					WithClassName("Soup").
+					WithProperty(&models.Property{
+						Name:     "relatedToPizza",
+						DataType: []string{"Pizza"},
+					}).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			})
+
+			for _, soupId := range soupIds {
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+
+					err := client.Data().ReferenceCreator().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithReferenceProperty("relatedToPizza").
+						WithReference(ref).
+						Do(context.Background())
+
+					require.NotNil(t, err)
+					clientErr := err.(*fault.WeaviateClientError)
+					assert.Equal(t, 422, clientErr.StatusCode)
+					assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+				}
+			}
+
+			t.Run("check refs do not exist", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Nil(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"])
+				}
+			})
+
+			t.Run("clean up classes", func(t *testing.T) {
+				client := testsuit.CreateTestClient()
+				err := client.Schema().AllDeleter().Do(context.Background())
+				require.Nil(t, err)
+			})
+		})
+	})
+
+	t.Run("fails adding references between mt and non-mt classes with non existing tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenantPizza := "tenantPizza"
+		tenantSoup := "tenantSoup"
+		pizzaIds := testsuit.IdsByClass["Pizza"]
+		soupIds := testsuit.IdsByClass["Soup"]
+
+		t.Run("src mt, dest non-mt", func(t *testing.T) {
+			testsuit.CreateSchemaPizza(t, client)
+			testsuit.CreateDataPizza(t, client)
+
+			testsuit.CreateSchemaSoupForTenants(t, client)
+			testsuit.CreateTenantsSoup(t, client, tenantSoup)
+			testsuit.CreateDataSoupForTenants(t, client, tenantSoup)
+
+			t.Run("create ref property", func(t *testing.T) {
+				err := client.Schema().PropertyCreator().
+					WithClassName("Soup").
+					WithProperty(&models.Property{
+						Name:     "relatedToPizza",
+						DataType: []string{"Pizza"},
+					}).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			})
+
+			for _, soupId := range soupIds {
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+
+					err := client.Data().ReferenceCreator().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithReferenceProperty("relatedToPizza").
+						WithReference(ref).
+						WithTenantKey("nonExistingTenant").
+						Do(context.Background())
+
+					require.NotNil(t, err)
+					clientErr := err.(*fault.WeaviateClientError)
+					assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+					assert.Contains(t, clientErr.Msg, "no tenant found with key")
+				}
+			}
+
+			t.Run("check refs do not exist", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithTenantKey(tenantSoup).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Nil(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"])
+				}
+			})
+
+			t.Run("clean up classes", func(t *testing.T) {
+				client := testsuit.CreateTestClient()
+				err := client.Schema().AllDeleter().Do(context.Background())
+				require.Nil(t, err)
+			})
+		})
+
+		t.Run("src non-mt, dest mt", func(t *testing.T) {
+			testsuit.CreateSchemaPizzaForTenants(t, client)
+			testsuit.CreateTenantsPizza(t, client, tenantPizza)
+			testsuit.CreateDataPizzaForTenants(t, client, tenantPizza)
+
+			testsuit.CreateSchemaSoup(t, client)
+			testsuit.CreateDataSoup(t, client)
+
+			t.Run("create ref property", func(t *testing.T) {
+				err := client.Schema().PropertyCreator().
+					WithClassName("Soup").
+					WithProperty(&models.Property{
+						Name:     "relatedToPizza",
+						DataType: []string{"Pizza"},
+					}).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			})
+
+			for _, soupId := range soupIds {
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+
+					err := client.Data().ReferenceCreator().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithReferenceProperty("relatedToPizza").
+						WithReference(ref).
+						WithTenantKey("nonExistingTenant").
+						Do(context.Background())
+
+					require.NotNil(t, err)
+					clientErr := err.(*fault.WeaviateClientError)
+					assert.Equal(t, 422, clientErr.StatusCode)
+					assert.Contains(t, clientErr.Msg, "no tenant found with ke")
+				}
+			}
+
+			t.Run("check refs do not exist", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Nil(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"])
+				}
+			})
+
+			t.Run("clean up classes", func(t *testing.T) {
+				client := testsuit.CreateTestClient()
+				err := client.Schema().AllDeleter().Do(context.Background())
+				require.Nil(t, err)
+			})
+		})
+	})
+
+	t.Run("fails adding references between mt and non-mt classes with non matching tenants", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenantPizzaData := "tenantPizza1"
+		tenantPizzaNoData := "tenantPizza2"
+		pizzaIds := testsuit.IdsByClass["Pizza"]
+		soupIds := testsuit.IdsByClass["Soup"]
+
+		t.Run("src non-mt, dest mt", func(t *testing.T) {
+			testsuit.CreateSchemaPizzaForTenants(t, client)
+			testsuit.CreateTenantsPizza(t, client, tenantPizzaData, tenantPizzaNoData)
+			testsuit.CreateDataPizzaForTenants(t, client, tenantPizzaData)
+
+			testsuit.CreateSchemaSoup(t, client)
+			testsuit.CreateDataSoup(t, client)
+
+			t.Run("create ref property", func(t *testing.T) {
+				err := client.Schema().PropertyCreator().
+					WithClassName("Soup").
+					WithProperty(&models.Property{
+						Name:     "relatedToPizza",
+						DataType: []string{"Pizza"},
+					}).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			})
+
+			for _, soupId := range soupIds {
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+
+					err := client.Data().ReferenceCreator().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithReferenceProperty("relatedToPizza").
+						WithReference(ref).
+						WithTenantKey(tenantPizzaNoData).
+						Do(context.Background())
+
+					require.NotNil(t, err)
+					clientErr := err.(*fault.WeaviateClientError)
+					assert.Equal(t, 422, clientErr.StatusCode)
+					assert.Contains(t, clientErr.Msg, "no object with id")
+				}
+			}
+
+			t.Run("check refs do not exist", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Nil(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"])
+				}
+			})
+
+			t.Run("clean up classes", func(t *testing.T) {
+				client := testsuit.CreateTestClient()
+				err := client.Schema().AllDeleter().Do(context.Background())
+				require.Nil(t, err)
+			})
+		})
+	})
+
+	t.Run("replaces references between mt and non-mt classes", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenantPizza := "tenantPizza"
+		tenantSoup := "tenantSoup"
+		pizzaIds := testsuit.IdsByClass["Pizza"]
+		soupIds := testsuit.IdsByClass["Soup"]
+
+		t.Run("src mt, dest non-mt", func(t *testing.T) {
+			t.Skip("should add references")
+
+			testsuit.CreateSchemaPizza(t, client)
+			testsuit.CreateDataPizza(t, client)
+
+			testsuit.CreateSchemaSoupForTenants(t, client)
+			testsuit.CreateTenantsSoup(t, client, tenantSoup)
+			testsuit.CreateDataSoupForTenants(t, client, tenantSoup)
+
+			t.Run("create ref property", func(t *testing.T) {
+				err := client.Schema().PropertyCreator().
+					WithClassName("Soup").
+					WithProperty(&models.Property{
+						Name:     "relatedToPizza",
+						DataType: []string{"Pizza"},
+					}).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			})
+
+			for _, soupId := range soupIds {
+				var refs models.MultipleRef
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+					refs = append(refs, ref)
+				}
+
+				err := client.Data().ReferenceReplacer().
+					WithClassName("Soup").
+					WithID(soupId).
+					WithReferenceProperty("relatedToPizza").
+					WithReferences(&refs).
+					WithTenantKey(tenantSoup).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			}
+
+			t.Run("check refs exist", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithTenantKey(tenantSoup).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Len(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"].([]interface{}),
+						len(pizzaIds))
+				}
+			})
+
+			t.Run("clean up classes", func(t *testing.T) {
+				client := testsuit.CreateTestClient()
+				err := client.Schema().AllDeleter().Do(context.Background())
+				require.Nil(t, err)
+			})
+		})
+
+		t.Run("src non-mt, dest mt", func(t *testing.T) {
+			t.Skip("should add references")
+
+			testsuit.CreateSchemaPizzaForTenants(t, client)
+			testsuit.CreateTenantsPizza(t, client, tenantPizza)
+			testsuit.CreateDataPizzaForTenants(t, client, tenantPizza)
+
+			testsuit.CreateSchemaSoup(t, client)
+			testsuit.CreateDataSoup(t, client)
+
+			t.Run("create ref property", func(t *testing.T) {
+				err := client.Schema().PropertyCreator().
+					WithClassName("Soup").
+					WithProperty(&models.Property{
+						Name:     "relatedToPizza",
+						DataType: []string{"Pizza"},
+					}).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			})
+
+			for _, soupId := range soupIds {
+				var refs models.MultipleRef
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+					refs = append(refs, ref)
+				}
+
+				err := client.Data().ReferenceReplacer().
+					WithClassName("Soup").
+					WithID(soupId).
+					WithReferenceProperty("relatedToPizza").
+					WithReferences(&refs).
+					WithTenantKey(tenantPizza).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			}
+
+			t.Run("check refs exist", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Len(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"].([]interface{}),
+						len(pizzaIds))
+				}
+			})
+
+			t.Run("clean up classes", func(t *testing.T) {
+				client := testsuit.CreateTestClient()
+				err := client.Schema().AllDeleter().Do(context.Background())
+				require.Nil(t, err)
+			})
+		})
+	})
+
+	t.Run("fails replacing references between mt and non-mt classes without tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenantPizza := "tenantPizza"
+		tenantSoup := "tenantSoup"
+		pizzaIds := testsuit.IdsByClass["Pizza"]
+		soupIds := testsuit.IdsByClass["Soup"]
+
+		t.Run("src mt, dest non-mt", func(t *testing.T) {
+			testsuit.CreateSchemaPizza(t, client)
+			testsuit.CreateDataPizza(t, client)
+
+			testsuit.CreateSchemaSoupForTenants(t, client)
+			testsuit.CreateTenantsSoup(t, client, tenantSoup)
+			testsuit.CreateDataSoupForTenants(t, client, tenantSoup)
+
+			t.Run("create ref property", func(t *testing.T) {
+				err := client.Schema().PropertyCreator().
+					WithClassName("Soup").
+					WithProperty(&models.Property{
+						Name:     "relatedToPizza",
+						DataType: []string{"Pizza"},
+					}).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			})
+
+			for _, soupId := range soupIds {
+				var refs models.MultipleRef
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+					refs = append(refs, ref)
+				}
+
+				err := client.Data().ReferenceReplacer().
+					WithClassName("Soup").
+					WithID(soupId).
+					WithReferenceProperty("relatedToPizza").
+					WithReferences(&refs).
+					Do(context.Background())
+
+				require.NotNil(t, err)
+				clientErr := err.(*fault.WeaviateClientError)
+				assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+				assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+			}
+
+			t.Run("check refs do not exist", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithTenantKey(tenantSoup).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Nil(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"])
+				}
+			})
+
+			t.Run("clean up classes", func(t *testing.T) {
+				client := testsuit.CreateTestClient()
+				err := client.Schema().AllDeleter().Do(context.Background())
+				require.Nil(t, err)
+			})
+		})
+
+		t.Run("src non-mt, dest mt", func(t *testing.T) {
+			testsuit.CreateSchemaPizzaForTenants(t, client)
+			testsuit.CreateTenantsPizza(t, client, tenantPizza)
+			testsuit.CreateDataPizzaForTenants(t, client, tenantPizza)
+
+			testsuit.CreateSchemaSoup(t, client)
+			testsuit.CreateDataSoup(t, client)
+
+			t.Run("create ref property", func(t *testing.T) {
+				err := client.Schema().PropertyCreator().
+					WithClassName("Soup").
+					WithProperty(&models.Property{
+						Name:     "relatedToPizza",
+						DataType: []string{"Pizza"},
+					}).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			})
+
+			for _, soupId := range soupIds {
+				var refs models.MultipleRef
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+					refs = append(refs, ref)
+				}
+
+				err := client.Data().ReferenceReplacer().
+					WithClassName("Soup").
+					WithID(soupId).
+					WithReferenceProperty("relatedToPizza").
+					WithReferences(&refs).
+					Do(context.Background())
+
+				require.NotNil(t, err)
+				clientErr := err.(*fault.WeaviateClientError)
+				assert.Equal(t, 422, clientErr.StatusCode)
+				assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+			}
+
+			t.Run("check refs do not exist", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Nil(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"])
+				}
+			})
+
+			t.Run("clean up classes", func(t *testing.T) {
+				client := testsuit.CreateTestClient()
+				err := client.Schema().AllDeleter().Do(context.Background())
+				require.Nil(t, err)
+			})
+		})
+	})
+
+	t.Run("fails replacing references between mt and non-mt classes with non existing tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenantPizza := "tenantPizza"
+		tenantSoup := "tenantSoup"
+		pizzaIds := testsuit.IdsByClass["Pizza"]
+		soupIds := testsuit.IdsByClass["Soup"]
+
+		t.Run("src mt, dest non-mt", func(t *testing.T) {
+			testsuit.CreateSchemaPizza(t, client)
+			testsuit.CreateDataPizza(t, client)
+
+			testsuit.CreateSchemaSoupForTenants(t, client)
+			testsuit.CreateTenantsSoup(t, client, tenantSoup)
+			testsuit.CreateDataSoupForTenants(t, client, tenantSoup)
+
+			t.Run("create ref property", func(t *testing.T) {
+				err := client.Schema().PropertyCreator().
+					WithClassName("Soup").
+					WithProperty(&models.Property{
+						Name:     "relatedToPizza",
+						DataType: []string{"Pizza"},
+					}).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			})
+
+			for _, soupId := range soupIds {
+				var refs models.MultipleRef
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+					refs = append(refs, ref)
+				}
+
+				err := client.Data().ReferenceReplacer().
+					WithClassName("Soup").
+					WithID(soupId).
+					WithReferenceProperty("relatedToPizza").
+					WithReferences(&refs).
+					WithTenantKey("nonExistingTenant").
+					Do(context.Background())
+
+				require.NotNil(t, err)
+				clientErr := err.(*fault.WeaviateClientError)
+				assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+				// TODO invalid message (~ no tenant found)
+				assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+			}
+
+			t.Run("check refs do not exist", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithTenantKey(tenantSoup).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Nil(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"])
+				}
+			})
+
+			t.Run("clean up classes", func(t *testing.T) {
+				client := testsuit.CreateTestClient()
+				err := client.Schema().AllDeleter().Do(context.Background())
+				require.Nil(t, err)
+			})
+		})
+
+		t.Run("src non-mt, dest mt", func(t *testing.T) {
+			testsuit.CreateSchemaPizzaForTenants(t, client)
+			testsuit.CreateTenantsPizza(t, client, tenantPizza)
+			testsuit.CreateDataPizzaForTenants(t, client, tenantPizza)
+
+			testsuit.CreateSchemaSoup(t, client)
+			testsuit.CreateDataSoup(t, client)
+
+			t.Run("create ref property", func(t *testing.T) {
+				err := client.Schema().PropertyCreator().
+					WithClassName("Soup").
+					WithProperty(&models.Property{
+						Name:     "relatedToPizza",
+						DataType: []string{"Pizza"},
+					}).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			})
+
+			for _, soupId := range soupIds {
+				var refs models.MultipleRef
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+					refs = append(refs, ref)
+				}
+
+				err := client.Data().ReferenceReplacer().
+					WithClassName("Soup").
+					WithID(soupId).
+					WithReferenceProperty("relatedToPizza").
+					WithReferences(&refs).
+					WithTenantKey("nonExistingTenant").
+					Do(context.Background())
+
+				require.NotNil(t, err)
+				clientErr := err.(*fault.WeaviateClientError)
+				assert.Equal(t, 422, clientErr.StatusCode)
+				assert.Contains(t, clientErr.Msg, "no tenant found with key")
+			}
+
+			t.Run("check refs do not exist", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Nil(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"])
+				}
+			})
+
+			t.Run("clean up classes", func(t *testing.T) {
+				client := testsuit.CreateTestClient()
+				err := client.Schema().AllDeleter().Do(context.Background())
+				require.Nil(t, err)
+			})
+		})
+	})
+
+	t.Run("fails replacing references between mt and non-mt classes with non matching tenants", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenantPizzaData := "tenantPizza1"
+		tenantPizzaNoData := "tenantPizza2"
+		pizzaIds := testsuit.IdsByClass["Pizza"]
+		soupIds := testsuit.IdsByClass["Soup"]
+
+		t.Run("src non-mt, dest mt", func(t *testing.T) {
+			testsuit.CreateSchemaPizzaForTenants(t, client)
+			testsuit.CreateTenantsPizza(t, client, tenantPizzaData, tenantPizzaNoData)
+			testsuit.CreateDataPizzaForTenants(t, client, tenantPizzaData)
+
+			testsuit.CreateSchemaSoup(t, client)
+			testsuit.CreateDataSoup(t, client)
+
+			t.Run("create ref property", func(t *testing.T) {
+				err := client.Schema().PropertyCreator().
+					WithClassName("Soup").
+					WithProperty(&models.Property{
+						Name:     "relatedToPizza",
+						DataType: []string{"Pizza"},
+					}).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			})
+
+			for _, soupId := range soupIds {
+				var refs models.MultipleRef
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+					refs = append(refs, ref)
+				}
+
+				err := client.Data().ReferenceReplacer().
+					WithClassName("Soup").
+					WithID(soupId).
+					WithReferenceProperty("relatedToPizza").
+					WithReferences(&refs).
+					WithTenantKey(tenantPizzaNoData).
+					Do(context.Background())
+
+				require.NotNil(t, err)
+				clientErr := err.(*fault.WeaviateClientError)
+				assert.Equal(t, 422, clientErr.StatusCode)
+				assert.Contains(t, clientErr.Msg, "no object with id")
+			}
+
+			t.Run("check refs do not exist", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Nil(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"])
 				}
 			})
 
