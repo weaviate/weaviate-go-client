@@ -1314,7 +1314,9 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		tenantPizza := "tenantPizza"
 		tenantSoup := "tenantSoup"
-
+		soupIds := testsuit.IdsByClass["Soup"]
+		pizzaIds := testsuit.IdsByClass["Pizza"]
+		
 		t.Run("with src tenant", func(t *testing.T) {
 			t.Skip("refs should not be created")
 			testsuit.CreateSchemaPizzaForTenants(t, client)
@@ -1337,14 +1339,13 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 				require.Nil(t, err)
 			})
 
-			pizzaIds := testsuit.IdsByClass["Pizza"]
 			rpb := client.Batch().ReferencePayloadBuilder().
 				WithFromClassName("Soup").
 				WithFromRefProp("relatedToPizza").
 				WithToClassName("Pizza")
 
 			references := []*models.BatchReference{}
-			for _, soupId := range testsuit.IdsByClass["Soup"] {
+			for _, soupId := range soupIds {
 				rpb.WithFromID(soupId)
 				for _, pizzaId := range pizzaIds {
 					references = append(references, rpb.WithToID(pizzaId).Payload())
@@ -1370,7 +1371,7 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 			}
 
 			t.Run("check refs do not exist", func(t *testing.T) {
-				for _, soupId := range testsuit.IdsByClass["Soup"] {
+				for _, soupId := range soupIds {
 					objects, err := client.Data().ObjectsGetter().
 						WithClassName("Soup").
 						WithID(soupId).
@@ -1382,6 +1383,30 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 					require.Len(t, objects, 1)
 					// TODO should have no refs
 					assert.Nil(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"])
+				}
+			})
+
+			t.Run("check new objects were not created", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					exists, err := client.Data().Checker().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithTenantKey(tenantPizza).
+						Do(context.Background())
+
+					require.NotNil(t, err)
+					assert.False(t, exists)
+				}
+
+				for _, pizzaId := range pizzaIds {
+					exists, err := client.Data().Checker().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						WithTenantKey(tenantSoup).
+						Do(context.Background())
+
+					require.NotNil(t, err)
+					assert.False(t, exists)
 				}
 			})
 
@@ -1413,14 +1438,13 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 				require.Nil(t, err)
 			})
 
-			pizzaIds := testsuit.IdsByClass["Pizza"]
 			rpb := client.Batch().ReferencePayloadBuilder().
 				WithFromClassName("Soup").
 				WithFromRefProp("relatedToPizza").
 				WithToClassName("Pizza")
 
 			references := []*models.BatchReference{}
-			for _, soupId := range testsuit.IdsByClass["Soup"] {
+			for _, soupId := range soupIds {
 				rpb.WithFromID(soupId)
 				for _, pizzaId := range pizzaIds {
 					references = append(references, rpb.WithToID(pizzaId).Payload())
@@ -1445,7 +1469,7 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 			}
 
 			t.Run("check refs do not exist", func(t *testing.T) {
-				for _, soupId := range testsuit.IdsByClass["Soup"] {
+				for _, soupId := range soupIds {
 					objects, err := client.Data().ObjectsGetter().
 						WithClassName("Soup").
 						WithID(soupId).
@@ -1456,6 +1480,30 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 					require.NotNil(t, objects)
 					require.Len(t, objects, 1)
 					assert.Nil(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"])
+				}
+			})
+
+			t.Run("check new objects were not created", func(t *testing.T) {
+				for _, soupId := range soupIds {
+					exists, err := client.Data().Checker().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithTenantKey(tenantPizza).
+						Do(context.Background())
+
+					require.NotNil(t, err)
+					assert.False(t, exists)
+				}
+
+				for _, pizzaId := range pizzaIds {
+					exists, err := client.Data().Checker().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						WithTenantKey(tenantSoup).
+						Do(context.Background())
+
+					require.NotNil(t, err)
+					assert.False(t, exists)
 				}
 			})
 
