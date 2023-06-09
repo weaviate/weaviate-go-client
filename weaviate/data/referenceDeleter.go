@@ -56,9 +56,9 @@ func (rr *ReferenceDeleter) WithConsistencyLevel(cl string) *ReferenceDeleter {
 }
 
 // WithTenantKey sets tenant, reference should be deleted from
-func (rr *ReferenceDeleter) WithTenantKey(tenantKey string) *ReferenceDeleter {
-	rr.tenantKey = tenantKey
-	return rr
+func (rd *ReferenceDeleter) WithTenantKey(tenantKey string) *ReferenceDeleter {
+	rd.tenantKey = tenantKey
+	return rd
 }
 
 // Do remove the reference defined by the payload set in this builder to the property and object defined in this builder
