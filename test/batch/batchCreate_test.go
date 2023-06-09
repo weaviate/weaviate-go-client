@@ -415,6 +415,46 @@ func TestBatchCreate_MultiTenancy(t *testing.T) {
 			assert.True(t, found4)
 		}
 
+		t.Run("check objects exist", func(t *testing.T) {
+			for _, tenant := range tenants {
+				exists, err := client.Data().Checker().
+					WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.True(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.True(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+					WithClassName("Soup").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.True(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+					WithClassName("Soup").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.True(t, exists)
+			}
+		})
+
 		t.Run("clean up classes", func(t *testing.T) {
 			client := testsuit.CreateTestClient()
 			err := client.Schema().AllDeleter().Do(context.Background())
@@ -423,8 +463,6 @@ func TestBatchCreate_MultiTenancy(t *testing.T) {
 	})
 
 	t.Run("fails adding objects to multi tenant class without tenant key", func(t *testing.T) {
-		t.Skip("should fail?")
-
 		client := testsuit.CreateTestClient()
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
@@ -483,11 +521,179 @@ func TestBatchCreate_MultiTenancy(t *testing.T) {
 			require.Nil(t, err)
 			require.NotNil(t, resp)
 			assert.Len(t, resp, 4)
-
-			// TODO should not add objects
-
-			assert.Nil(t, resp[0])
+			for i := range resp {
+				require.NotNil(t, resp[i])
+				require.NotNil(t, resp[i].Result)
+				// TODO should be failed?
+				// require.NotNil(t, resp[i].Result.Status)
+				// assert.Equal(t, "FAILED", *resp[i].Result.Status)
+				require.NotNil(t, resp[i].Result.Errors)
+				require.NotNil(t, resp[i].Result.Errors.Error)
+				require.Len(t, resp[i].Result.Errors.Error, 1)
+				assert.Contains(t, resp[i].Result.Errors.Error[0].Message, "has multi-tenancy enabled")
+			}
 		}
+
+		t.Run("check objects do not exist", func(t *testing.T) {
+			for _, tenant := range tenants {
+				exists, err := client.Data().Checker().
+					WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+					WithClassName("Soup").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+					WithClassName("Soup").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+			}
+		})
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails adding objects to multi tenant class with non existing tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			resp, err := client.Batch().ObjectsBatcher().
+				WithObjects(
+					&models.Object{
+						Class: "Pizza",
+						ID:    "10523cdd-15a2-42f4-81fa-267fe92f7cd6",
+						Properties: map[string]interface{}{
+							"name":             "Quattro Formaggi",
+							"description":      "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
+							"price":            float32(1.1),
+							"best_before":      "2022-05-03T12:04:40+02:00",
+							testsuit.TenantKey: tenant,
+						},
+					},
+					&models.Object{
+						Class: "Pizza",
+						ID:    "927dd3ac-e012-4093-8007-7799cc7e81e4",
+						Properties: map[string]interface{}{
+							"name":             "Frutti di Mare",
+							"description":      "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
+							"price":            float32(1.2),
+							"best_before":      "2022-05-05T07:16:30+02:00",
+							testsuit.TenantKey: tenant,
+						},
+					},
+					&models.Object{
+						Class: "Soup",
+						ID:    "8c156d37-81aa-4ce9-a811-621e2702b825",
+						Properties: map[string]interface{}{
+							"name":             "ChickenSoup",
+							"description":      "Used by humans when their inferior genetics are attacked by microscopic organisms.",
+							"price":            float32(2.1),
+							testsuit.TenantKey: tenant,
+						},
+					},
+					&models.Object{
+						Class: "Soup",
+						ID:    "27351361-2898-4d1a-aad7-1ca48253eb0b",
+						Properties: map[string]interface{}{
+							"name":             "Beautiful",
+							"description":      "Putting the game of letter soups to a whole new level.",
+							"price":            float32(2.2),
+							testsuit.TenantKey: tenant,
+						},
+					}).
+				WithTenantKey("nonExistingTenant").
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, resp)
+			assert.Len(t, resp, 4)
+			for i := range resp {
+				require.NotNil(t, resp[i])
+				require.NotNil(t, resp[i].Result)
+				// TODO should be failed?
+				// require.NotNil(t, resp[i].Result.Status)
+				// assert.Equal(t, "FAILED", *resp[i].Result.Status)
+				require.NotNil(t, resp[i].Result.Errors)
+				require.NotNil(t, resp[i].Result.Errors.Error)
+				require.Len(t, resp[i].Result.Errors.Error, 1)
+				// TODO inconsistent msg
+				assert.Contains(t, resp[i].Result.Errors.Error[0].Message, "object does not belong to tenant")
+			}
+		}
+
+		t.Run("check objects do not exist", func(t *testing.T) {
+			for _, tenant := range tenants {
+				exists, err := client.Data().Checker().
+					WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+					WithClassName("Soup").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+					WithClassName("Soup").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+			}
+		})
 
 		t.Run("clean up classes", func(t *testing.T) {
 			client := testsuit.CreateTestClient()
@@ -497,8 +703,6 @@ func TestBatchCreate_MultiTenancy(t *testing.T) {
 	})
 
 	t.Run("fails adding objects to multi tenant class without tenant prop", func(t *testing.T) {
-		t.Skip("should fail?")
-
 		client := testsuit.CreateTestClient()
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
@@ -554,11 +758,299 @@ func TestBatchCreate_MultiTenancy(t *testing.T) {
 			require.Nil(t, err)
 			require.NotNil(t, resp)
 			assert.Len(t, resp, 4)
-
-			// TODO should not add objects
-
-			assert.Nil(t, resp[0])
+			for i := range resp {
+				require.NotNil(t, resp[i])
+				require.NotNil(t, resp[i].Result)
+				// TODO should be failed?
+				// require.NotNil(t, resp[i].Result.Status)
+				// assert.Equal(t, "FAILED", *resp[i].Result.Status)
+				require.NotNil(t, resp[i].Result.Errors)
+				require.NotNil(t, resp[i].Result.Errors.Error)
+				require.Len(t, resp[i].Result.Errors.Error, 1)
+				// TODO inconsistent msg
+				assert.Contains(t, resp[i].Result.Errors.Error[0].Message, "object does not belong to tenant")
+			}
 		}
+
+		t.Run("check objects do not exist", func(t *testing.T) {
+			for _, tenant := range tenants {
+				exists, err := client.Data().Checker().
+					WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+					WithClassName("Soup").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+					WithClassName("Soup").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+			}
+		})
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails adding objects to multi tenant class with non existing tenant prop", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			resp, err := client.Batch().ObjectsBatcher().
+				WithObjects(
+					&models.Object{
+						Class: "Pizza",
+						ID:    "10523cdd-15a2-42f4-81fa-267fe92f7cd6",
+						Properties: map[string]interface{}{
+							"name":             "Quattro Formaggi",
+							"description":      "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
+							"price":            float32(1.1),
+							"best_before":      "2022-05-03T12:04:40+02:00",
+							testsuit.TenantKey: "nonExistingTenant",
+						},
+					},
+					&models.Object{
+						Class: "Pizza",
+						ID:    "927dd3ac-e012-4093-8007-7799cc7e81e4",
+						Properties: map[string]interface{}{
+							"name":             "Frutti di Mare",
+							"description":      "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
+							"price":            float32(1.2),
+							"best_before":      "2022-05-05T07:16:30+02:00",
+							testsuit.TenantKey: "nonExistingTenant",
+						},
+					},
+					&models.Object{
+						Class: "Soup",
+						ID:    "8c156d37-81aa-4ce9-a811-621e2702b825",
+						Properties: map[string]interface{}{
+							"name":             "ChickenSoup",
+							"description":      "Used by humans when their inferior genetics are attacked by microscopic organisms.",
+							"price":            float32(2.1),
+							testsuit.TenantKey: "nonExistingTenant",
+						},
+					},
+					&models.Object{
+						Class: "Soup",
+						ID:    "27351361-2898-4d1a-aad7-1ca48253eb0b",
+						Properties: map[string]interface{}{
+							"name":             "Beautiful",
+							"description":      "Putting the game of letter soups to a whole new level.",
+							"price":            float32(2.2),
+							testsuit.TenantKey: "nonExistingTenant",
+						},
+					}).
+				WithTenantKey(tenant).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, resp)
+			assert.Len(t, resp, 4)
+			for i := range resp {
+				require.NotNil(t, resp[i])
+				require.NotNil(t, resp[i].Result)
+				// TODO should be failed?
+				// require.NotNil(t, resp[i].Result.Status)
+				// assert.Equal(t, "FAILED", *resp[i].Result.Status)
+				require.NotNil(t, resp[i].Result.Errors)
+				require.NotNil(t, resp[i].Result.Errors.Error)
+				require.Len(t, resp[i].Result.Errors.Error, 1)
+				// TODO inconsistent msg
+				assert.Contains(t, resp[i].Result.Errors.Error[0].Message, "object does not belong to tenant")
+			}
+		}
+
+		t.Run("check objects do not exist", func(t *testing.T) {
+			for _, tenant := range tenants {
+				exists, err := client.Data().Checker().
+					WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+					WithClassName("Soup").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+					WithClassName("Soup").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+			}
+		})
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails adding objects to multi tenant class with non matching tenant prop", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+
+		resp, err := client.Batch().ObjectsBatcher().
+			WithObjects(
+				&models.Object{
+					Class: "Pizza",
+					ID:    "10523cdd-15a2-42f4-81fa-267fe92f7cd6",
+					Properties: map[string]interface{}{
+						"name":             "Quattro Formaggi",
+						"description":      "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
+						"price":            float32(1.1),
+						"best_before":      "2022-05-03T12:04:40+02:00",
+						testsuit.TenantKey: tenants[1],
+					},
+				},
+				&models.Object{
+					Class: "Pizza",
+					ID:    "927dd3ac-e012-4093-8007-7799cc7e81e4",
+					Properties: map[string]interface{}{
+						"name":             "Frutti di Mare",
+						"description":      "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
+						"price":            float32(1.2),
+						"best_before":      "2022-05-05T07:16:30+02:00",
+						testsuit.TenantKey: tenants[1],
+					},
+				},
+				&models.Object{
+					Class: "Soup",
+					ID:    "8c156d37-81aa-4ce9-a811-621e2702b825",
+					Properties: map[string]interface{}{
+						"name":             "ChickenSoup",
+						"description":      "Used by humans when their inferior genetics are attacked by microscopic organisms.",
+						"price":            float32(2.1),
+						testsuit.TenantKey: tenants[1],
+					},
+				},
+				&models.Object{
+					Class: "Soup",
+					ID:    "27351361-2898-4d1a-aad7-1ca48253eb0b",
+					Properties: map[string]interface{}{
+						"name":             "Beautiful",
+						"description":      "Putting the game of letter soups to a whole new level.",
+						"price":            float32(2.2),
+						testsuit.TenantKey: tenants[1],
+					},
+				}).
+			WithTenantKey(tenants[0]).
+			Do(context.Background())
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Len(t, resp, 4)
+		for i := range resp {
+			require.NotNil(t, resp[i])
+			require.NotNil(t, resp[i].Result)
+			// TODO should be failed?
+			// require.NotNil(t, resp[i].Result.Status)
+			// assert.Equal(t, "FAILED", *resp[i].Result.Status)
+			require.NotNil(t, resp[i].Result.Errors)
+			require.NotNil(t, resp[i].Result.Errors.Error)
+			require.Len(t, resp[i].Result.Errors.Error, 1)
+			// TODO inconsistent msg
+			assert.Contains(t, resp[i].Result.Errors.Error[0].Message, "object does not belong to tenant")
+		}
+
+		t.Run("check objects do not exist", func(t *testing.T) {
+			for _, tenant := range tenants {
+				exists, err := client.Data().Checker().
+					WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+					WithClassName("Soup").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+
+				exists, err = client.Data().Checker().
+					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+					WithClassName("Soup").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.False(t, exists)
+			}
+		})
 
 		t.Run("clean up classes", func(t *testing.T) {
 			client := testsuit.CreateTestClient()
@@ -629,10 +1121,16 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 
 			require.Nil(t, err)
 			require.NotNil(t, resp)
-			require.Len(t, resp, len(references))
+			assert.Len(t, resp, len(references))
+			for i := range resp {
+				require.NotNil(t, resp[i].Result)
+				require.NotNil(t, resp[i].Result.Status)
+				assert.Equal(t, "SUCCESS", *resp[i].Result.Status)
+				assert.Nil(t, resp[i].Result.Errors)
+			}
 		}
 
-		t.Run("check refs", func(t *testing.T) {
+		t.Run("check refs exist", func(t *testing.T) {
 			for _, tenant := range tenants {
 				for _, soupId := range testsuit.IdsByClass["Soup"] {
 					objects, err := client.Data().ObjectsGetter().
@@ -700,16 +1198,95 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
-		require.Len(t, resp, len(references))
+		assert.Len(t, resp, len(references))
 		for i := range resp {
-			assert.NotNil(t, resp[i].Result)
+			require.NotNil(t, resp[i].Result)
+			require.NotNil(t, resp[i].Result.Status)
 			// TODO should be failed?
 			// assert.Equal(t, "FAILED", *resp[i].Result.Status)
-			// assert.NotNil(t, resp[i].Result.Errors)
-			// assert.NotNil(t, resp[i].Result.Errors.Error)
+			// require.NotNil(t, resp[i].Result.Errors)
 		}
 
-		t.Run("check refs", func(t *testing.T) {
+		t.Run("check refs do not exist", func(t *testing.T) {
+			for _, tenant := range tenants {
+				for _, soupId := range testsuit.IdsByClass["Soup"] {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithTenantKey(tenant).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Nil(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"])
+				}
+			}
+		})
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails adding references between multi tenant classes with non existing tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+		testsuit.CreateDataPizzaForTenants(t, client, tenants...)
+		testsuit.CreateDataSoupForTenants(t, client, tenants...)
+
+		t.Run("create ref property", func(t *testing.T) {
+			err := client.Schema().PropertyCreator().
+				WithClassName("Soup").
+				WithProperty(&models.Property{
+					Name:     "relatedToPizza",
+					DataType: []string{"Pizza"},
+				}).
+				Do(context.Background())
+
+			require.Nil(t, err)
+		})
+
+		pizzaIds := testsuit.IdsByClass["Pizza"]
+		rpb := client.Batch().ReferencePayloadBuilder().
+			WithFromClassName("Soup").
+			WithFromRefProp("relatedToPizza").
+			WithToClassName("Pizza")
+
+		references := []*models.BatchReference{}
+		for _, soupId := range testsuit.IdsByClass["Soup"] {
+			rpb.WithFromID(soupId)
+			for _, pizzaId := range pizzaIds {
+				references = append(references, rpb.WithToID(pizzaId).Payload())
+			}
+		}
+
+		resp, err := client.Batch().ReferencesBatcher().
+			WithReferences(references...).
+			WithTenantKey("nonExistingTenant").
+			Do(context.Background())
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Len(t, resp, len(references))
+		for i := range resp {
+			require.NotNil(t, resp[i].Result)
+			require.NotNil(t, resp[i].Result.Status)
+			assert.Equal(t, "FAILED", *resp[i].Result.Status)
+			require.NotNil(t, resp[i].Result.Errors)
+			require.NotNil(t, resp[i].Result.Errors.Error)
+			require.Len(t, resp[i].Result.Errors.Error, 1)
+			assert.Contains(t, resp[i].Result.Errors.Error[0].Message, "no tenant found with key")
+		}
+
+		t.Run("check refs do not exist", func(t *testing.T) {
 			for _, tenant := range tenants {
 				for _, soupId := range testsuit.IdsByClass["Soup"] {
 					objects, err := client.Data().ObjectsGetter().
@@ -783,14 +1360,16 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 			require.NotNil(t, resp)
 			require.Len(t, resp, len(references))
 			for i := range resp {
-				assert.NotNil(t, resp[i].Result)
-				// TODO should be failed?
+				require.NotNil(t, resp[i].Result)
+				// TODO should be failed with error msg
 				assert.Equal(t, "FAILED", *resp[i].Result.Status)
-				// assert.NotNil(t, resp[i].Result.Errors)
-				// assert.NotNil(t, resp[i].Result.Errors.Error)
+				require.NotNil(t, resp[i].Result.Errors)
+				require.NotNil(t, resp[i].Result.Errors.Error)
+				require.Len(t, resp[i].Result.Errors.Error, 1)
+				// assert.Contains(t, resp[i].Result.Errors.Error[0].Message, "some error")
 			}
 
-			t.Run("check refs", func(t *testing.T) {
+			t.Run("check refs do not exist", func(t *testing.T) {
 				for _, soupId := range testsuit.IdsByClass["Soup"] {
 					objects, err := client.Data().ObjectsGetter().
 						WithClassName("Soup").
@@ -855,17 +1434,17 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 
 			require.Nil(t, err)
 			require.NotNil(t, resp)
-			require.Len(t, resp, len(references))
+			assert.Len(t, resp, len(references))
 			for i := range resp {
-				assert.NotNil(t, resp[i].Result)
+				require.NotNil(t, resp[i].Result)
 				assert.Equal(t, "FAILED", *resp[i].Result.Status)
-				assert.NotNil(t, resp[i].Result.Errors)
-				assert.NotNil(t, resp[i].Result.Errors.Error)
-				assert.Len(t, resp[i].Result.Errors.Error, 1)
+				require.NotNil(t, resp[i].Result.Errors)
+				require.NotNil(t, resp[i].Result.Errors.Error)
+				require.Len(t, resp[i].Result.Errors.Error, 1)
 				assert.Contains(t, resp[i].Result.Errors.Error[0].Message, "no tenant found with key")
 			}
 
-			t.Run("check refs", func(t *testing.T) {
+			t.Run("check refs do not exist", func(t *testing.T) {
 				for _, soupId := range testsuit.IdsByClass["Soup"] {
 					objects, err := client.Data().ObjectsGetter().
 						WithClassName("Soup").
