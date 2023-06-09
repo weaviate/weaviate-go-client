@@ -919,6 +919,387 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		})
 	})
 
+	t.Run("deletes references between multi tenant classes", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+		pizzaIds := testsuit.IdsByClass["Pizza"]
+		soupIds := testsuit.IdsByClass["Soup"]
+
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+		testsuit.CreateDataPizzaForTenants(t, client, tenants...)
+		testsuit.CreateDataSoupForTenants(t, client, tenants...)
+
+		t.Run("create ref property", func(t *testing.T) {
+			err := client.Schema().PropertyCreator().
+				WithClassName("Soup").
+				WithProperty(&models.Property{
+					Name:     "relatedToPizza",
+					DataType: []string{"Pizza"},
+				}).
+				Do(context.Background())
+
+			require.Nil(t, err)
+		})
+
+		t.Run("create refs", func(t *testing.T) {
+			rpb := client.Batch().ReferencePayloadBuilder().
+				WithFromClassName("Soup").
+				WithFromRefProp("relatedToPizza").
+				WithToClassName("Pizza")
+
+			for _, tenant := range tenants {
+				references := []*models.BatchReference{}
+
+				for _, soupId := range soupIds {
+					rpb.WithFromID(soupId)
+					for _, pizzaId := range pizzaIds {
+						references = append(references, rpb.WithToID(pizzaId).Payload())
+					}
+				}
+
+				_, err := client.Batch().ReferencesBatcher().
+					WithReferences(references...).
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			}
+		})
+
+		for _, tenant := range tenants {
+			for _, soupId := range soupIds {
+				refsLeft := len(pizzaIds)
+
+				for _, pizzaId := range pizzaIds {
+					ref := client.Data().ReferencePayloadBuilder().
+						WithClassName("Pizza").
+						WithID(pizzaId).
+						Payload()
+
+					err := client.Data().ReferenceDeleter().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithReferenceProperty("relatedToPizza").
+						WithReference(ref).
+						WithTenantKey(tenant).
+						Do(context.Background())
+
+					require.Nil(t, err)
+
+					t.Run("check refs left", func(t *testing.T) {
+						refsLeft--
+						objects, err := client.Data().ObjectsGetter().
+							WithClassName("Soup").
+							WithID(soupId).
+							WithTenantKey(tenant).
+							Do(context.Background())
+
+						require.Nil(t, err)
+						require.NotNil(t, objects)
+						require.Len(t, objects, 1)
+						assert.Len(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"].([]interface{}),
+							refsLeft)
+					})
+				}
+			}
+		}
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails deleting references between multi tenant classes without tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+		pizzaIds := testsuit.IdsByClass["Pizza"]
+		soupIds := testsuit.IdsByClass["Soup"]
+
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+		testsuit.CreateDataPizzaForTenants(t, client, tenants...)
+		testsuit.CreateDataSoupForTenants(t, client, tenants...)
+
+		t.Run("create ref property", func(t *testing.T) {
+			err := client.Schema().PropertyCreator().
+				WithClassName("Soup").
+				WithProperty(&models.Property{
+					Name:     "relatedToPizza",
+					DataType: []string{"Pizza"},
+				}).
+				Do(context.Background())
+
+			require.Nil(t, err)
+		})
+
+		t.Run("create refs", func(t *testing.T) {
+			rpb := client.Batch().ReferencePayloadBuilder().
+				WithFromClassName("Soup").
+				WithFromRefProp("relatedToPizza").
+				WithToClassName("Pizza")
+
+			for _, tenant := range tenants {
+				references := []*models.BatchReference{}
+
+				for _, soupId := range soupIds {
+					rpb.WithFromID(soupId)
+					for _, pizzaId := range pizzaIds {
+						references = append(references, rpb.WithToID(pizzaId).Payload())
+					}
+				}
+
+				_, err := client.Batch().ReferencesBatcher().
+					WithReferences(references...).
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			}
+		})
+
+		for _, soupId := range soupIds {
+			for _, pizzaId := range pizzaIds {
+				ref := client.Data().ReferencePayloadBuilder().
+					WithClassName("Pizza").
+					WithID(pizzaId).
+					Payload()
+
+				err := client.Data().ReferenceDeleter().
+					WithClassName("Soup").
+					WithID(soupId).
+					WithReferenceProperty("relatedToPizza").
+					WithReference(ref).
+					Do(context.Background())
+
+				require.NotNil(t, err)
+				clientErr := err.(*fault.WeaviateClientError)
+				assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+				assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+			}
+		}
+
+		t.Run("check refs left", func(t *testing.T) {
+			for _, tenant := range tenants {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithTenantKey(tenant).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Len(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"].([]interface{}),
+						len(pizzaIds))
+				}
+			}
+		})
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails deleting references between multi tenant classes with non existing tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+		pizzaIds := testsuit.IdsByClass["Pizza"]
+		soupIds := testsuit.IdsByClass["Soup"]
+
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+		testsuit.CreateDataPizzaForTenants(t, client, tenants...)
+		testsuit.CreateDataSoupForTenants(t, client, tenants...)
+
+		t.Run("create ref property", func(t *testing.T) {
+			err := client.Schema().PropertyCreator().
+				WithClassName("Soup").
+				WithProperty(&models.Property{
+					Name:     "relatedToPizza",
+					DataType: []string{"Pizza"},
+				}).
+				Do(context.Background())
+
+			require.Nil(t, err)
+		})
+
+		t.Run("create refs", func(t *testing.T) {
+			rpb := client.Batch().ReferencePayloadBuilder().
+				WithFromClassName("Soup").
+				WithFromRefProp("relatedToPizza").
+				WithToClassName("Pizza")
+
+			for _, tenant := range tenants {
+				references := []*models.BatchReference{}
+
+				for _, soupId := range soupIds {
+					rpb.WithFromID(soupId)
+					for _, pizzaId := range pizzaIds {
+						references = append(references, rpb.WithToID(pizzaId).Payload())
+					}
+				}
+
+				_, err := client.Batch().ReferencesBatcher().
+					WithReferences(references...).
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+			}
+		})
+
+		for _, soupId := range soupIds {
+			for _, pizzaId := range pizzaIds {
+				ref := client.Data().ReferencePayloadBuilder().
+					WithClassName("Pizza").
+					WithID(pizzaId).
+					Payload()
+
+				err := client.Data().ReferenceDeleter().
+					WithClassName("Soup").
+					WithID(soupId).
+					WithReferenceProperty("relatedToPizza").
+					WithReference(ref).
+					WithTenantKey("nonExistingTenant").
+					Do(context.Background())
+
+				require.NotNil(t, err)
+				clientErr := err.(*fault.WeaviateClientError)
+				assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+				assert.Contains(t, clientErr.Msg, "no tenant found with key")
+			}
+		}
+
+		t.Run("check refs left", func(t *testing.T) {
+			for _, tenant := range tenants {
+				for _, soupId := range soupIds {
+					objects, err := client.Data().ObjectsGetter().
+						WithClassName("Soup").
+						WithID(soupId).
+						WithTenantKey(tenant).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.NotNil(t, objects)
+					require.Len(t, objects, 1)
+					assert.Len(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"].([]interface{}),
+						len(pizzaIds))
+				}
+			}
+		})
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails deleting references between multi tenant classes with non matching tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+		pizzaIds := testsuit.IdsByClass["Pizza"]
+		soupIds := testsuit.IdsByClass["Soup"]
+
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateSchemaSoupForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+		testsuit.CreateTenantsSoup(t, client, tenants...)
+		testsuit.CreateDataPizzaForTenants(t, client, tenants[0])
+		testsuit.CreateDataSoupForTenants(t, client, tenants[0])
+
+		t.Run("create ref property", func(t *testing.T) {
+			err := client.Schema().PropertyCreator().
+				WithClassName("Soup").
+				WithProperty(&models.Property{
+					Name:     "relatedToPizza",
+					DataType: []string{"Pizza"},
+				}).
+				Do(context.Background())
+
+			require.Nil(t, err)
+		})
+
+		t.Run("create refs", func(t *testing.T) {
+			rpb := client.Batch().ReferencePayloadBuilder().
+				WithFromClassName("Soup").
+				WithFromRefProp("relatedToPizza").
+				WithToClassName("Pizza")
+
+			references := []*models.BatchReference{}
+
+			for _, soupId := range soupIds {
+				rpb.WithFromID(soupId)
+				for _, pizzaId := range pizzaIds {
+					references = append(references, rpb.WithToID(pizzaId).Payload())
+				}
+			}
+
+			_, err := client.Batch().ReferencesBatcher().
+				WithReferences(references...).
+				WithTenantKey(tenants[0]).
+				Do(context.Background())
+
+			require.Nil(t, err)
+		})
+
+		for _, soupId := range soupIds {
+			for _, pizzaId := range pizzaIds {
+				ref := client.Data().ReferencePayloadBuilder().
+					WithClassName("Pizza").
+					WithID(pizzaId).
+					Payload()
+
+				err := client.Data().ReferenceDeleter().
+					WithClassName("Soup").
+					WithID(soupId).
+					WithReferenceProperty("relatedToPizza").
+					WithReference(ref).
+					WithTenantKey(tenants[1]).
+					Do(context.Background())
+
+				require.NotNil(t, err)
+				clientErr := err.(*fault.WeaviateClientError)
+				assert.Equal(t, 404, clientErr.StatusCode)
+				assert.Empty(t, clientErr.Msg)
+			}
+		}
+
+		t.Run("check refs left", func(t *testing.T) {
+			for _, soupId := range soupIds {
+				objects, err := client.Data().ObjectsGetter().
+					WithClassName("Soup").
+					WithID(soupId).
+					WithTenantKey(tenants[0]).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.NotNil(t, objects)
+				require.Len(t, objects, 1)
+				assert.Len(t, objects[0].Properties.(map[string]interface{})["relatedToPizza"].([]interface{}),
+					len(pizzaIds))
+			}
+		})
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {

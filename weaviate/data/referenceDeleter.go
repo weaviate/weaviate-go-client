@@ -19,6 +19,7 @@ type ReferenceDeleter struct {
 	referenceProperty string
 	referencePayload  *models.SingleRef
 	consistencyLevel  string
+	tenantKey         string
 	dbVersionSupport  *db.VersionSupport
 }
 
@@ -54,6 +55,12 @@ func (rr *ReferenceDeleter) WithConsistencyLevel(cl string) *ReferenceDeleter {
 	return rr
 }
 
+// WithTenantKey sets tenant, reference should be deleted from
+func (rr *ReferenceDeleter) WithTenantKey(tenantKey string) *ReferenceDeleter {
+	rr.tenantKey = tenantKey
+	return rr
+}
+
 // Do remove the reference defined by the payload set in this builder to the property and object defined in this builder
 func (rr *ReferenceDeleter) Do(ctx context.Context) error {
 	path := pathbuilder.References(pathbuilder.Components{
@@ -62,6 +69,7 @@ func (rr *ReferenceDeleter) Do(ctx context.Context) error {
 		DBVersion:         rr.dbVersionSupport,
 		ReferenceProperty: rr.referenceProperty,
 		ConsistencyLevel:  rr.consistencyLevel,
+		TenantKey:         rr.tenantKey,
 	})
 	responseData, responseErr := rr.connection.RunREST(ctx, path, http.MethodDelete, *rr.referencePayload)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 204)

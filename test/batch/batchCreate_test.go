@@ -1099,6 +1099,7 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 		})
 
 		pizzaIds := testsuit.IdsByClass["Pizza"]
+		soupIds := testsuit.IdsByClass["Soup"]
 		rpb := client.Batch().ReferencePayloadBuilder().
 			WithFromClassName("Soup").
 			WithFromRefProp("relatedToPizza").
@@ -1107,7 +1108,7 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 		for _, tenant := range tenants {
 			references := []*models.BatchReference{}
 
-			for _, soupId := range testsuit.IdsByClass["Soup"] {
+			for _, soupId := range soupIds {
 				rpb.WithFromID(soupId)
 				for _, pizzaId := range pizzaIds {
 					references = append(references, rpb.WithToID(pizzaId).Payload())
@@ -1132,7 +1133,7 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 
 		t.Run("check refs exist", func(t *testing.T) {
 			for _, tenant := range tenants {
-				for _, soupId := range testsuit.IdsByClass["Soup"] {
+				for _, soupId := range soupIds {
 					objects, err := client.Data().ObjectsGetter().
 						WithClassName("Soup").
 						WithID(soupId).
