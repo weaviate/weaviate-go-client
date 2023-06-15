@@ -19,6 +19,7 @@ type ObjectsBatchDeleter struct {
 	output           string
 	whereFilter      *filters.WhereBuilder
 	consistencyLevel string
+	tenantKey        string
 }
 
 func (b *ObjectsBatchDeleter) WithClassName(className string) *ObjectsBatchDeleter {
@@ -49,10 +50,16 @@ func (b *ObjectsBatchDeleter) WithConsistencyLevel(cl string) *ObjectsBatchDelet
 	return b
 }
 
+// WithTenantKey sets tenant, objects should be deleted from
+func (b *ObjectsBatchDeleter) WithTenantKey(tenantKey string) *ObjectsBatchDeleter {
+	b.tenantKey = tenantKey
+	return b
+}
+
 // Do delete's all the objects which match the builder's filter
 func (ob *ObjectsBatchDeleter) Do(ctx context.Context) (*models.BatchDeleteResponse, error) {
 	if ob.whereFilter == nil {
-		return nil, fmt.Errorf("filter must be set prior to deletion, use WithFilter")
+		return nil, fmt.Errorf("filter must be set prior to deletion, use WithWhere")
 	}
 
 	body := &models.BatchDelete{
@@ -64,7 +71,10 @@ func (ob *ObjectsBatchDeleter) Do(ctx context.Context) (*models.BatchDeleteRespo
 		},
 	}
 
-	path := pathbuilder.BatchObjects(pathbuilder.Components{ConsistencyLevel: ob.consistencyLevel})
+	path := pathbuilder.BatchObjects(pathbuilder.Components{
+		ConsistencyLevel: ob.consistencyLevel,
+		TenantKey:        ob.tenantKey,
+	})
 	responseData, responseErr := ob.connection.RunREST(ctx, path, http.MethodDelete, body)
 	err := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {

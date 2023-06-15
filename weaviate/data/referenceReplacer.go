@@ -19,6 +19,7 @@ type ReferenceReplacer struct {
 	referenceProperty string
 	referencePayload  *models.MultipleRef
 	consistencyLevel  string
+	tenantKey         string
 	dbVersionSupport  *db.VersionSupport
 }
 
@@ -54,6 +55,12 @@ func (rr *ReferenceReplacer) WithConsistencyLevel(cl string) *ReferenceReplacer 
 	return rr
 }
 
+// WithTenantKey sets tenant, reference should be replaced for
+func (rr *ReferenceReplacer) WithTenantKey(tenantKey string) *ReferenceReplacer {
+	rr.tenantKey = tenantKey
+	return rr
+}
+
 // Do replace the references of the in this builder specified data object
 func (rr *ReferenceReplacer) Do(ctx context.Context) error {
 	path := pathbuilder.References(pathbuilder.Components{
@@ -62,6 +69,7 @@ func (rr *ReferenceReplacer) Do(ctx context.Context) error {
 		DBVersion:         rr.dbVersionSupport,
 		ReferenceProperty: rr.referenceProperty,
 		ConsistencyLevel:  rr.consistencyLevel,
+		TenantKey:         rr.tenantKey,
 	})
 	responseData, responseErr := rr.connection.RunREST(ctx, path, http.MethodPut, *rr.referencePayload)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)

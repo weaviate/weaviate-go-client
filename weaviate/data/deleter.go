@@ -16,6 +16,7 @@ type Deleter struct {
 	id               string
 	className        string
 	consistencyLevel string
+	tenantKey        string
 	dbVersionSupport *db.VersionSupport
 }
 
@@ -39,6 +40,12 @@ func (deleter *Deleter) WithConsistencyLevel(cl string) *Deleter {
 	return deleter
 }
 
+// WithTenantKey sets tenant, object should be deleted from
+func (d *Deleter) WithTenantKey(tenantKey string) *Deleter {
+	d.tenantKey = tenantKey
+	return d
+}
+
 // Do delete the specified data object from weaviate
 func (deleter *Deleter) Do(ctx context.Context) error {
 	path := pathbuilder.ObjectsDelete(pathbuilder.Components{
@@ -46,6 +53,7 @@ func (deleter *Deleter) Do(ctx context.Context) error {
 		Class:            deleter.className,
 		DBVersion:        deleter.dbVersionSupport,
 		ConsistencyLevel: deleter.consistencyLevel,
+		TenantKey:        deleter.tenantKey,
 	})
 	responseData, err := deleter.connection.RunREST(ctx, path, http.MethodDelete, nil)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 204)

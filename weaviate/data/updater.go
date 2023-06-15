@@ -20,6 +20,7 @@ type Updater struct {
 	propertySchema   models.PropertySchema
 	withMerge        bool
 	consistencyLevel string
+	tenantKey        string
 	dbVersionSupport *db.VersionSupport
 }
 
@@ -55,6 +56,12 @@ func (updater *Updater) WithConsistencyLevel(cl string) *Updater {
 	return updater
 }
 
+// WithTenantKey sets tenant, object should be updated for
+func (u *Updater) WithTenantKey(tenantKey string) *Updater {
+	u.tenantKey = tenantKey
+	return u
+}
+
 // Do update the data object specified in the builder
 func (updater *Updater) Do(ctx context.Context) error {
 	path := pathbuilder.ObjectsUpdate(pathbuilder.Components{
@@ -62,6 +69,7 @@ func (updater *Updater) Do(ctx context.Context) error {
 		Class:            updater.className,
 		DBVersion:        updater.dbVersionSupport,
 		ConsistencyLevel: updater.consistencyLevel,
+		TenantKey:        updater.tenantKey,
 	})
 	httpMethod := http.MethodPut
 	expectedStatusCode := 200

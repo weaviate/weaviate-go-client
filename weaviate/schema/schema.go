@@ -82,3 +82,10 @@ func (schema *API) ShardsUpdater() *ShardsUpdater {
 		connection: schema.connection,
 	}
 }
+
+// TenantCreator builder to add tenants to Class
+func (schema *API) TenantCreator() *TenantCreator {
+	return &TenantCreator{
+		connection: schema.connection,
+	}
+}

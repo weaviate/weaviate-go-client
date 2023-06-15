@@ -15,6 +15,7 @@ type ReferencesBatcher struct {
 	connection       *connection.Connection
 	references       []*models.BatchReference
 	consistencyLevel string
+	tenantKey        string
 }
 
 // WithReferences adds references to the current batch
@@ -38,9 +39,18 @@ func (rb *ReferencesBatcher) WithConsistencyLevel(cl string) *ReferencesBatcher 
 	return rb
 }
 
+// WithTenantKey sets tenant, reference should be created for
+func (rb *ReferencesBatcher) WithTenantKey(tenantKey string) *ReferencesBatcher {
+	rb.tenantKey = tenantKey
+	return rb
+}
+
 // Do add all the references in the batch to weaviate
 func (rb *ReferencesBatcher) Do(ctx context.Context) ([]models.BatchReferenceResponse, error) {
-	path := pathbuilder.BatchReferences(pathbuilder.Components{ConsistencyLevel: rb.consistencyLevel})
+	path := pathbuilder.BatchReferences(pathbuilder.Components{
+		ConsistencyLevel: rb.consistencyLevel,
+		TenantKey:        rb.tenantKey,
+	})
 	responseData, responseErr := rb.connection.RunREST(ctx, path, http.MethodPost, rb.references)
 	batchErr := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if batchErr != nil {

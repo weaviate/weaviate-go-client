@@ -11,6 +11,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/test/helpers"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
@@ -179,6 +180,275 @@ func TestBatchDelete_integration(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
 			t.Fatal(err.Error())
+		}
+	})
+}
+
+func TestBatchDelete_MultiTenancy(t *testing.T) {
+	t.Run("setup weaviate", func(t *testing.T) {
+		err := testenv.SetupLocalWeaviate()
+		if err != nil {
+			t.Fatalf("failed to setup weaviate: %s", err)
+		}
+	})
+
+	t.Run("deletes objects from multi tenant class", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaFoodForTenants(t, client)
+		testsuit.CreateTenantsFood(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			for className, ids := range testsuit.IdsByClass {
+				resp, err := client.Batch().ObjectsBatchDeleter().
+					WithClassName(className).
+					WithWhere(filters.Where().
+						WithOperator(filters.Like).
+						WithPath([]string{"name"}).
+						WithValueText("*")).
+					WithOutput("minimal").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.NotNil(t, resp)
+				require.NotNil(t, resp.Results)
+				assert.Equal(t, int64(len(ids)), resp.Results.Matches)
+				assert.Equal(t, int64(len(ids)), resp.Results.Successful)
+			}
+		}
+
+		t.Run("check deleted", func(t *testing.T) {
+			for _, tenant := range tenants {
+				for className, ids := range testsuit.IdsByClass {
+					for _, id := range ids {
+						exists, err := client.Data().Checker().
+							WithID(id).
+							WithClassName(className).
+							WithTenantKey(tenant).
+							Do(context.Background())
+
+						require.Nil(t, err)
+						require.False(t, exists)
+					}
+				}
+			}
+		})
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails deleting objects from multi tenant class without tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaFoodForTenants(t, client)
+		testsuit.CreateTenantsFood(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+
+		for className := range testsuit.IdsByClass {
+			resp, err := client.Batch().ObjectsBatchDeleter().
+				WithClassName(className).
+				WithWhere(filters.Where().
+					WithOperator(filters.Like).
+					WithPath([]string{"name"}).
+					WithValueText("*")).
+				WithOutput("minimal").
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			clientErr := err.(*fault.WeaviateClientError)
+			assert.Equal(t, 422, clientErr.StatusCode)
+			assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+			require.Nil(t, resp)
+		}
+
+		t.Run("check not deleted", func(t *testing.T) {
+			for _, tenant := range tenants {
+				for className, ids := range testsuit.IdsByClass {
+					for _, id := range ids {
+						exists, err := client.Data().Checker().
+							WithID(id).
+							WithClassName(className).
+							WithTenantKey(tenant).
+							Do(context.Background())
+
+						require.Nil(t, err)
+						require.True(t, exists)
+					}
+				}
+			}
+		})
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails deleting objects from multi tenant class with non existing tenant key", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaFoodForTenants(t, client)
+		testsuit.CreateTenantsFood(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+
+		for className := range testsuit.IdsByClass {
+			resp, err := client.Batch().ObjectsBatchDeleter().
+				WithClassName(className).
+				WithWhere(filters.Where().
+					WithOperator(filters.Like).
+					WithPath([]string{"name"}).
+					WithValueText("*")).
+				WithOutput("minimal").
+				WithTenantKey("nonExistingTenant").
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			clientErr := err.(*fault.WeaviateClientError)
+			assert.Equal(t, 500, clientErr.StatusCode)
+			assert.Contains(t, clientErr.Msg, "has no physical shard")
+			require.Nil(t, resp)
+		}
+
+		t.Run("check not deleted", func(t *testing.T) {
+			for _, tenant := range tenants {
+				for className, ids := range testsuit.IdsByClass {
+					for _, id := range ids {
+						exists, err := client.Data().Checker().
+							WithID(id).
+							WithClassName(className).
+							WithTenantKey(tenant).
+							Do(context.Background())
+
+						require.Nil(t, err)
+						require.True(t, exists)
+					}
+				}
+			}
+		})
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("deletes objects from multi tenant class with matching filter", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaFoodForTenants(t, client)
+		testsuit.CreateTenantsFood(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+
+		for _, tenant := range tenants {
+			for className, ids := range testsuit.IdsByClass {
+				resp, err := client.Batch().ObjectsBatchDeleter().
+					WithClassName(className).
+					WithWhere(filters.Where().
+						WithOperator(filters.Equal).
+						WithPath([]string{testsuit.TenantKey}).
+						WithValueText(tenant)).
+					WithOutput("minimal").
+					WithTenantKey(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.NotNil(t, resp)
+				require.NotNil(t, resp.Results)
+				assert.Equal(t, int64(len(ids)), resp.Results.Matches)
+				assert.Equal(t, int64(len(ids)), resp.Results.Successful)
+			}
+		}
+
+		t.Run("check deleted", func(t *testing.T) {
+			for _, tenant := range tenants {
+				for className, ids := range testsuit.IdsByClass {
+					for _, id := range ids {
+						exists, err := client.Data().Checker().
+							WithID(id).
+							WithClassName(className).
+							WithTenantKey(tenant).
+							Do(context.Background())
+
+						require.Nil(t, err)
+						require.False(t, exists)
+					}
+				}
+			}
+		})
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("does not delete objects from multi tenant class with non matching filter", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		tenants := []string{"tenantNo1", "tenantNo2"}
+
+		testsuit.CreateSchemaFoodForTenants(t, client)
+		testsuit.CreateTenantsFood(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+
+		for className := range testsuit.IdsByClass {
+			resp, err := client.Batch().ObjectsBatchDeleter().
+				WithClassName(className).
+				WithWhere(filters.Where().
+					WithOperator(filters.Equal).
+					WithPath([]string{testsuit.TenantKey}).
+					WithValueText(tenants[1])).
+				WithOutput("minimal").
+				WithTenantKey(tenants[0]).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, resp)
+			require.NotNil(t, resp.Results)
+			assert.Equal(t, int64(0), resp.Results.Matches)
+			assert.Equal(t, int64(0), resp.Results.Successful)
+		}
+
+		t.Run("check not deleted", func(t *testing.T) {
+			for _, tenant := range tenants {
+				for className, ids := range testsuit.IdsByClass {
+					for _, id := range ids {
+						exists, err := client.Data().Checker().
+							WithID(id).
+							WithClassName(className).
+							WithTenantKey(tenant).
+							Do(context.Background())
+
+						require.Nil(t, err)
+						require.True(t, exists)
+					}
+				}
+			}
+		})
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("tear down weaviate", func(t *testing.T) {
+		err := testenv.TearDownLocalWeaviate()
+		if err != nil {
+			t.Fatalf("failed to tear down weaviate: %s", err)
 		}
 	})
 }
