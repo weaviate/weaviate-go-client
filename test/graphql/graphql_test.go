@@ -1681,3 +1681,279 @@ func TestGraphQL_integration(t *testing.T) {
 		}
 	})
 }
+
+func TestGraphQL_MultiTenancy(t *testing.T) {
+	t.Run("setup weaviate", func(t *testing.T) {
+		err := testenv.SetupLocalWeaviate()
+		if err != nil {
+			t.Fatalf("failed to setup weaviate: %s", err)
+		}
+	})
+
+	t.Run("GraphQL Get", func(t *testing.T) {
+		tenant1 := "tenantNo1"
+		tenant2 := "tenantNo2"
+		client := testsuit.CreateTestClient()
+
+		assertGetContainsIds := func(t *testing.T, response *models.GraphQLResponse,
+			className string, expectedIds []string,
+		) {
+			require.NotNil(t, response)
+			assert.Nil(t, response.Errors)
+			require.NotNil(t, response.Data)
+
+			get := response.Data["Get"].(map[string]interface{})
+			objects := get[className].([]interface{})
+			require.Len(t, objects, len(expectedIds))
+
+			ids := []string{}
+			for i := range objects {
+				ids = append(ids, objects[i].(map[string]interface{})["_additional"].(map[string]interface{})["id"].(string))
+			}
+			assert.ElementsMatch(t, expectedIds, ids)
+		}
+
+		t.Run("add data", func(t *testing.T) {
+			testsuit.CreateSchemaPizzaForTenants(t, client)
+			testsuit.CreateTenantsPizza(t, client, tenant1, tenant2)
+			testsuit.CreateDataPizzaQuattroFormaggiForTenants(t, client, tenant1)
+			testsuit.CreateDataPizzaFruttiDiMareForTenants(t, client, tenant1)
+			testsuit.CreateDataPizzaHawaiiForTenants(t, client, tenant2)
+			testsuit.CreateDataPizzaDoenerForTenants(t, client, tenant2)
+		})
+
+		t.Run("get all data for tenant", func(t *testing.T) {
+			expectedIdsByTenant := map[string][]string{
+				tenant1: {
+					testsuit.PIZZA_QUATTRO_FORMAGGI_ID,
+					testsuit.PIZZA_FRUTTI_DI_MARE_ID,
+				},
+				tenant2: {
+					testsuit.PIZZA_HAWAII_ID,
+					testsuit.PIZZA_DOENER_ID,
+				},
+			}
+
+			for tenant, expectedIds := range expectedIdsByTenant {
+				resp, err := client.GraphQL().Get().
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					WithFields(graphql.Field{
+						Name:   "_additional",
+						Fields: []graphql.Field{{Name: "id"}},
+					}).
+					Do(context.Background())
+
+				assert.Nil(t, err)
+				assertGetContainsIds(t, resp, "Pizza", expectedIds)
+			}
+		})
+
+		t.Run("get limited data for tenant", func(t *testing.T) {
+			expectedIdsByTenant := map[string][]string{
+				tenant1: {
+					testsuit.PIZZA_QUATTRO_FORMAGGI_ID,
+				},
+				tenant2: {
+					testsuit.PIZZA_HAWAII_ID,
+				},
+			}
+
+			for tenant, expectedIds := range expectedIdsByTenant {
+				resp, err := client.GraphQL().Get().
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					WithLimit(1).
+					WithFields(graphql.Field{
+						Name:   "_additional",
+						Fields: []graphql.Field{{Name: "id"}},
+					}).
+					Do(context.Background())
+
+				assert.Nil(t, err)
+				assertGetContainsIds(t, resp, "Pizza", expectedIds)
+			}
+		})
+
+		t.Run("get filtered data for tenant", func(t *testing.T) {
+			expectedIdsByTenant := map[string][]string{
+				tenant1: {},
+				tenant2: {
+					testsuit.PIZZA_DOENER_ID,
+				},
+			}
+			where := filters.Where().
+				WithPath([]string{"price"}).
+				WithOperator(filters.GreaterThan).
+				WithValueNumber(1.3)
+
+			for tenant, expectedIds := range expectedIdsByTenant {
+				resp, err := client.GraphQL().Get().
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					WithWhere(where).
+					WithFields(graphql.Field{
+						Name:   "_additional",
+						Fields: []graphql.Field{{Name: "id"}},
+					}).
+					Do(context.Background())
+
+				assert.Nil(t, err)
+				assertGetContainsIds(t, resp, "Pizza", expectedIds)
+			}
+		})
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("GraphQL Aggregate", func(t *testing.T) {
+		tenant1 := "tenantNo1"
+		tenant2 := "tenantNo2"
+		client := testsuit.CreateTestClient()
+
+		assertAggregateNumFieldHasValues := func(t *testing.T, response *models.GraphQLResponse,
+			className string, fieldName string, expectedAggValues map[string]*float64,
+		) {
+			require.NotNil(t, response)
+			assert.Nil(t, response.Errors)
+			require.NotNil(t, response.Data)
+
+			agg := response.Data["Aggregate"].(map[string]interface{})
+			objects := agg[className].([]interface{})
+			require.Len(t, objects, 1)
+			obj := objects[0].(map[string]interface{})[fieldName].(map[string]interface{})
+
+			for name, value := range expectedAggValues {
+				if value == nil {
+					assert.Nil(t, obj[name])
+				} else {
+					assert.Equal(t, *value, obj[name])
+				}
+			}
+		}
+		ptr := func(f float64) *float64 {
+			return &f
+		}
+
+		t.Run("add data", func(t *testing.T) {
+			testsuit.CreateSchemaPizzaForTenants(t, client)
+			testsuit.CreateTenantsPizza(t, client, tenant1, tenant2)
+			testsuit.CreateDataPizzaQuattroFormaggiForTenants(t, client, tenant1)
+			testsuit.CreateDataPizzaFruttiDiMareForTenants(t, client, tenant1)
+			testsuit.CreateDataPizzaHawaiiForTenants(t, client, tenant2)
+			testsuit.CreateDataPizzaDoenerForTenants(t, client, tenant2)
+		})
+
+		t.Run("aggregate all data for tenant", func(t *testing.T) {
+			expectedAggValuesByTenant := map[string]map[string]*float64{
+				tenant1: {
+					"count":   ptr(2),
+					"maximum": ptr(1.2),
+					"minimum": ptr(1.1),
+					"median":  ptr(1.15),
+					"mean":    ptr(1.15),
+					"mode":    ptr(1.1),
+					"sum":     ptr(2.3),
+				},
+				tenant2: {
+					"count":   ptr(2),
+					"maximum": ptr(1.4),
+					"minimum": ptr(1.3),
+					"median":  ptr(1.35),
+					"mean":    ptr(1.35),
+					"mode":    ptr(1.3),
+					"sum":     ptr(2.7),
+				},
+			}
+
+			for tenant, expectedAggValues := range expectedAggValuesByTenant {
+				resp, err := client.GraphQL().Aggregate().
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					WithFields(graphql.Field{
+						Name: "price",
+						Fields: []graphql.Field{
+							{Name: "count"},
+							{Name: "maximum"},
+							{Name: "minimum"},
+							{Name: "median"},
+							{Name: "mean"},
+							{Name: "mode"},
+							{Name: "sum"},
+						},
+					}).
+					Do(context.Background())
+
+				assert.Nil(t, err)
+				assertAggregateNumFieldHasValues(t, resp, "Pizza", "price", expectedAggValues)
+			}
+		})
+
+		t.Run("aggregate filtered data for tenant", func(t *testing.T) {
+			expectedAggValuesByTenant := map[string]map[string]*float64{
+				tenant1: {
+					"count":   ptr(0),
+					"maximum": nil,
+					"minimum": nil,
+					"median":  nil,
+					"mean":    nil,
+					"mode":    nil,
+					"sum":     nil,
+				},
+				tenant2: {
+					"count":   ptr(1),
+					"maximum": ptr(1.4),
+					"minimum": ptr(1.4),
+					"median":  ptr(1.4),
+					"mean":    ptr(1.4),
+					"mode":    ptr(1.4),
+					"sum":     ptr(1.4),
+				},
+			}
+			where := filters.Where().
+				WithPath([]string{"price"}).
+				WithOperator(filters.GreaterThan).
+				WithValueNumber(1.3)
+
+			for tenant, expectedAggValues := range expectedAggValuesByTenant {
+				resp, err := client.GraphQL().Aggregate().
+					WithClassName("Pizza").
+					WithTenantKey(tenant).
+					WithWhere(where).
+					WithFields(graphql.Field{
+						Name: "price",
+						Fields: []graphql.Field{
+							{Name: "count"},
+							{Name: "maximum"},
+							{Name: "minimum"},
+							{Name: "median"},
+							{Name: "mean"},
+							{Name: "mode"},
+							{Name: "sum"},
+						},
+					}).
+					Do(context.Background())
+
+				assert.Nil(t, err)
+				assertAggregateNumFieldHasValues(t, resp, "Pizza", "price", expectedAggValues)
+			}
+		})
+
+		t.Run("clean up classes", func(t *testing.T) {
+			client := testsuit.CreateTestClient()
+			err := client.Schema().AllDeleter().Do(context.Background())
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("tear down weaviate", func(t *testing.T) {
+		err := testenv.TearDownLocalWeaviate()
+		if err != nil {
+			t.Fatalf("failed to tear down weaviate: %s", err)
+		}
+	})
+}

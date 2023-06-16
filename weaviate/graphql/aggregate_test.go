@@ -504,4 +504,41 @@ func TestAggregateBuilder(t *testing.T) {
 			assert.NotEmpty(t, query, "Check that there is no panic if query is not validly build")
 		})
 	})
+
+	t.Run("tenantKey", func(t *testing.T) {
+		builder := AggregateBuilder{connection: &MockRunREST{}}
+		meta := Field{
+			Name:   "meta",
+			Fields: []Field{{Name: "count"}},
+		}
+
+		query := builder.WithClassName("Pizza").
+			WithTenantKey("TenantNo1").
+			WithFields(meta).
+			build()
+
+		expected := `{Aggregate{Pizza(tenantKey: "TenantNo1"){meta{count}}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("tenantKey and where", func(t *testing.T) {
+		builder := AggregateBuilder{connection: &MockRunREST{}}
+		meta := Field{
+			Name:   "meta",
+			Fields: []Field{{Name: "count"}},
+		}
+		where := filters.Where().
+			WithPath([]string{"name"}).
+			WithOperator(filters.Equal).
+			WithValueText("Hawaii")
+
+		query := builder.WithClassName("Pizza").
+			WithTenantKey("TenantNo1").
+			WithWhere(where).
+			WithFields(meta).
+			build()
+
+		expected := `{Aggregate{Pizza(tenantKey: "TenantNo1", where:{operator: Equal path: ["name"] valueText: "Hawaii"}){meta{count}}}}`
+		assert.Equal(t, expected, query)
+	})
 }

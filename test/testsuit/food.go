@@ -11,22 +11,33 @@ import (
 )
 
 const TenantKey = "tenantName"
+const (
+	PIZZA_QUATTRO_FORMAGGI_ID = "10523cdd-15a2-42f4-81fa-267fe92f7cd6"
+	PIZZA_FRUTTI_DI_MARE_ID   = "927dd3ac-e012-4093-8007-7799cc7e81e4"
+	PIZZA_HAWAII_ID           = "00000000-0000-0000-0000-000000000000"
+	PIZZA_DOENER_ID           = "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"
+	SOUP_CHICKENSOUP_ID       = "8c156d37-81aa-4ce9-a811-621e2702b825"
+	SOUP_BEAUTIFUL_ID         = "27351361-2898-4d1a-aad7-1ca48253eb0b"
+	RISOTTO_RISI_E_BISI_ID    = "da751a25-f573-4715-a893-e607b2de0ba4"
+	RISOTTO_ALLA_PILOTA_ID    = "10c2ee44-7d58-42be-9d64-5766883ca8cb"
+	RISOTTO_AL_NERO_DI_SEPPIA = "696bf381-7f98-40a4-bcad-841780e00e0e"
+)
 
 var IdsByClass = map[string][]string{
 	"Pizza": {
-		"10523cdd-15a2-42f4-81fa-267fe92f7cd6",
-		"927dd3ac-e012-4093-8007-7799cc7e81e4",
-		"00000000-0000-0000-0000-000000000000",
-		"5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
+		PIZZA_QUATTRO_FORMAGGI_ID,
+		PIZZA_FRUTTI_DI_MARE_ID,
+		PIZZA_HAWAII_ID,
+		PIZZA_DOENER_ID,
 	},
 	"Soup": {
-		"8c156d37-81aa-4ce9-a811-621e2702b825",
-		"27351361-2898-4d1a-aad7-1ca48253eb0b",
+		SOUP_CHICKENSOUP_ID,
+		SOUP_BEAUTIFUL_ID,
 	},
 	"Risotto": {
-		"da751a25-f573-4715-a893-e607b2de0ba4",
-		"10c2ee44-7d58-42be-9d64-5766883ca8cb",
-		"696bf381-7f98-40a4-bcad-841780e00e0e",
+		RISOTTO_RISI_E_BISI_ID,
+		RISOTTO_ALLA_PILOTA_ID,
+		RISOTTO_AL_NERO_DI_SEPPIA,
 	},
 }
 
@@ -227,6 +238,38 @@ func createData(t *testing.T, client *weaviate.Client, objects []*models.Object)
 	require.Len(t, resp, len(objects))
 }
 
+func CreateDataPizzaQuattroFormaggiForTenants(t *testing.T, client *weaviate.Client, tenantNames ...string) {
+	createDataForTenants(t, client, TenantKey, tenantNames, func() []*models.Object {
+		return []*models.Object{
+			objectPizzaQuattroFormaggi(),
+		}
+	})
+}
+
+func CreateDataPizzaFruttiDiMareForTenants(t *testing.T, client *weaviate.Client, tenantNames ...string) {
+	createDataForTenants(t, client, TenantKey, tenantNames, func() []*models.Object {
+		return []*models.Object{
+			objectPizzaFruttiDiMare(),
+		}
+	})
+}
+
+func CreateDataPizzaHawaiiForTenants(t *testing.T, client *weaviate.Client, tenantNames ...string) {
+	createDataForTenants(t, client, TenantKey, tenantNames, func() []*models.Object {
+		return []*models.Object{
+			objectPizzaHawaii(),
+		}
+	})
+}
+
+func CreateDataPizzaDoenerForTenants(t *testing.T, client *weaviate.Client, tenantNames ...string) {
+	createDataForTenants(t, client, TenantKey, tenantNames, func() []*models.Object {
+		return []*models.Object{
+			objectPizzaDoener(),
+		}
+	})
+}
+
 func CreateDataPizzaForTenants(t *testing.T, client *weaviate.Client, tenantNames ...string) {
 	createDataForTenants(t, client, TenantKey, tenantNames, func() []*models.Object {
 		return []*models.Object{
@@ -301,7 +344,7 @@ func createDataForTenants(t *testing.T, client *weaviate.Client, tenantKey strin
 func objectPizzaQuattroFormaggi() *models.Object {
 	return &models.Object{
 		Class: "Pizza",
-		ID:    "10523cdd-15a2-42f4-81fa-267fe92f7cd6",
+		ID:    PIZZA_QUATTRO_FORMAGGI_ID,
 		Properties: map[string]interface{}{
 			"name":        "Quattro Formaggi",
 			"description": "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
@@ -314,7 +357,7 @@ func objectPizzaQuattroFormaggi() *models.Object {
 func objectPizzaFruttiDiMare() *models.Object {
 	return &models.Object{
 		Class: "Pizza",
-		ID:    "927dd3ac-e012-4093-8007-7799cc7e81e4",
+		ID:    PIZZA_FRUTTI_DI_MARE_ID,
 		Properties: map[string]interface{}{
 			"name":        "Frutti di Mare",
 			"description": "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
@@ -330,7 +373,7 @@ func objectPizzaHawaii() *models.Object {
 		// this uuid guarantees that it's the first for cursor tests (otherwise
 		// they might be flaky if the randomly generated ids are sometimes higher
 		// and sometimes lower
-		ID: "00000000-0000-0000-0000-000000000000",
+		ID: PIZZA_HAWAII_ID,
 		Properties: map[string]interface{}{
 			"name":        "Hawaii",
 			"description": "Universally accepted to be the best pizza ever created.",
@@ -342,7 +385,7 @@ func objectPizzaHawaii() *models.Object {
 func objectPizzaDoener() *models.Object {
 	return &models.Object{
 		Class: "Pizza",
-		ID:    "5b6a08ba-1d46-43aa-89cc-8b070790c6f2",
+		ID:    PIZZA_DOENER_ID,
 		Properties: map[string]interface{}{
 			"name":        "Doener",
 			"description": "A innovation, some say revolution, in the pizza industry.",
@@ -354,7 +397,7 @@ func objectPizzaDoener() *models.Object {
 func objectSoupChicken() *models.Object {
 	return &models.Object{
 		Class: "Soup",
-		ID:    "8c156d37-81aa-4ce9-a811-621e2702b825",
+		ID:    SOUP_CHICKENSOUP_ID,
 		Properties: map[string]interface{}{
 			"name":        "ChickenSoup",
 			"description": "Used by humans when their inferior genetics are attacked by microscopic organisms.",
@@ -366,7 +409,7 @@ func objectSoupChicken() *models.Object {
 func objectSoupBeautiful() *models.Object {
 	return &models.Object{
 		Class: "Soup",
-		ID:    "27351361-2898-4d1a-aad7-1ca48253eb0b",
+		ID:    SOUP_BEAUTIFUL_ID,
 		Properties: map[string]interface{}{
 			"name":        "Beautiful",
 			"description": "Putting the game of letter soups to a whole new level.",
@@ -378,7 +421,7 @@ func objectSoupBeautiful() *models.Object {
 func objectRisottoRisiEBisi() *models.Object {
 	return &models.Object{
 		Class: "Risotto",
-		ID:    "da751a25-f573-4715-a893-e607b2de0ba4",
+		ID:    RISOTTO_RISI_E_BISI_ID,
 		Properties: map[string]interface{}{
 			"name":        "Risi e bisi",
 			"description": "A Veneto spring dish.",
@@ -391,7 +434,7 @@ func objectRisottoRisiEBisi() *models.Object {
 func objectRisottoAllaPilota() *models.Object {
 	return &models.Object{
 		Class: "Risotto",
-		ID:    "10c2ee44-7d58-42be-9d64-5766883ca8cb",
+		ID:    RISOTTO_ALLA_PILOTA_ID,
 		Properties: map[string]interface{}{
 			"name":        "Risotto alla pilota",
 			"description": "A specialty of Mantua, made with sausage, pork, and Parmesan cheese.",
@@ -404,7 +447,7 @@ func objectRisottoAllaPilota() *models.Object {
 func objectRisottoAlNeroDiSeppia() *models.Object {
 	return &models.Object{
 		Class: "Risotto",
-		ID:    "696bf381-7f98-40a4-bcad-841780e00e0e",
+		ID:    RISOTTO_AL_NERO_DI_SEPPIA,
 		Properties: map[string]interface{}{
 			"name":        "Risotto al nero di seppia",
 			"description": "A specialty of the Veneto region, made with cuttlefish cooked with their ink-sacs intact, leaving the risotto black .",
