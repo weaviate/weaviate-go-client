@@ -351,6 +351,8 @@ github.com/weaviate/weaviate v1.19.7-0.20230606190227-319d7ace67dd h1:sp0XO2tdpy
 github.com/weaviate/weaviate v1.19.7-0.20230606190227-319d7ace67dd/go.mod h1:vc45/epxFfGd999viC4evRBbhSAZATAXFMR0H1vDPj0=
 github.com/weaviate/weaviate v1.19.7-0.20230608173246-1e258e976450 h1:6XEIpGM0ovoCUMJIHh54uQsJFldby7f7de7MUxeXupw=
 github.com/weaviate/weaviate v1.19.7-0.20230608173246-1e258e976450/go.mod h1:vc45/epxFfGd999viC4evRBbhSAZATAXFMR0H1vDPj0=
+github.com/weaviate/weaviate v1.19.9-0.20230614191336-dc13fa74fd2d h1:5aeB3oBXQ7XC4dOljSVDoylXOJEb5WmSttaTxmzmSkI=
+github.com/weaviate/weaviate v1.19.9-0.20230614191336-dc13fa74fd2d/go.mod h1:vc45/epxFfGd999viC4evRBbhSAZATAXFMR0H1vDPj0=
 github.com/willf/bitset v1.1.10/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
 github.com/willf/bitset v1.1.11 h1:N7Z7E9UvjW+sGsEl7k/SJrvY2reP1A07MrGuCjIOjRE=
 github.com/willf/bitset v1.1.11/go.mod h1:83CECat5yLh5zVOf4P1ErAgKA5UDvKtgyUABdr3+MjI=

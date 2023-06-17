@@ -16,6 +16,7 @@ type AggregateBuilder struct {
 	className                 string
 	includesFilterClause      bool // true if brackets behind class is needed
 	groupByClausePropertyName string
+	tenantKey                 string
 	withWhereFilter           *filters.WhereBuilder
 	withNearVectorFilter      *NearVectorArgumentBuilder
 	withNearObjectFilter      *NearObjectArgumentBuilder
@@ -105,6 +106,13 @@ func (ab *AggregateBuilder) WithNearImage(nearImage *NearImageArgumentBuilder) *
 	return ab
 }
 
+// WithTenantKey to indicate which tenant aggregated objects belong to
+func (ab *AggregateBuilder) WithTenantKey(tenantKey string) *AggregateBuilder {
+	ab.includesFilterClause = true
+	ab.tenantKey = tenantKey
+	return ab
+}
+
 // Do execute the aggregation query
 func (ab *AggregateBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, ab.connection, ab.build())
@@ -113,6 +121,9 @@ func (ab *AggregateBuilder) Do(ctx context.Context) (*models.GraphQLResponse, er
 func (ab *AggregateBuilder) createFilterClause() string {
 	if ab.includesFilterClause {
 		filters := []string{}
+		if ab.tenantKey != "" {
+			filters = append(filters, fmt.Sprintf("tenantKey: %q", ab.tenantKey))
+		}
 		if len(ab.groupByClausePropertyName) > 0 {
 			filters = append(filters, fmt.Sprintf(`groupBy: "%v"`, ab.groupByClausePropertyName))
 		}

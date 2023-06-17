@@ -65,6 +65,37 @@ func TestQueryBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
+	t.Run("tenantKey", func(t *testing.T) {
+		builder := GetBuilder{connection: &MockRunREST{}}
+		name := Field{Name: "name"}
+
+		query := builder.WithClassName("Pizza").
+			WithTenantKey("TenantNo1").
+			WithFields(name).
+			build()
+
+		expected := `{Get {Pizza (tenantKey: "TenantNo1") {name}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("tenantKey and where", func(t *testing.T) {
+		builder := GetBuilder{connection: &MockRunREST{}}
+		name := Field{Name: "name"}
+		where := filters.Where().
+			WithPath([]string{"name"}).
+			WithOperator(filters.Equal).
+			WithValueText("Hawaii")
+
+		query := builder.WithClassName("Pizza").
+			WithTenantKey("TenantNo1").
+			WithWhere(where).
+			WithFields(name).
+			build()
+
+		expected := `{Get {Pizza (tenantKey: "TenantNo1", where:{operator: Equal path: ["name"] valueText: "Hawaii"}) {name}}}`
+		assert.Equal(t, expected, query)
+	})
+
 	t.Run("with generative search single result", func(t *testing.T) {
 		conMock := &MockRunREST{}
 

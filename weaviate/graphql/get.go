@@ -23,6 +23,7 @@ type GetBuilder struct {
 	includesAfter        bool
 	after                string
 	consistencyLevel     string
+	tenantKey            string
 	withWhereFilter      *filters.WhereBuilder
 	withNearTextFilter   *NearTextArgumentBuilder
 	withNearVectorFilter *NearVectorArgumentBuilder
@@ -164,6 +165,13 @@ func (gb *GetBuilder) WithConsistencyLevel(lvl string) *GetBuilder {
 	return gb
 }
 
+// WithTenantKey to indicate which tenant fetched objects belong to
+func (gb *GetBuilder) WithTenantKey(tenantKey string) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.tenantKey = tenantKey
+	return gb
+}
+
 // Do execute the GraphQL query
 func (gb *GetBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, gb.connection, gb.build())
@@ -184,6 +192,9 @@ func (gb *GetBuilder) build() string {
 
 func (gb *GetBuilder) createFilterClause() string {
 	filters := []string{}
+	if gb.tenantKey != "" {
+		filters = append(filters, fmt.Sprintf("tenantKey: %q", gb.tenantKey))
+	}
 	if gb.withWhereFilter != nil {
 		filters = append(filters, gb.withWhereFilter.String())
 	}
