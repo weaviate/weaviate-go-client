@@ -4,8 +4,8 @@ go 1.19
 
 require (
 	github.com/go-openapi/strfmt v0.21.3
-	github.com/stretchr/testify v1.8.2
-	github.com/weaviate/weaviate v1.19.9-0.20230614191336-dc13fa74fd2d
+	github.com/stretchr/testify v1.8.4
+	github.com/weaviate/weaviate v1.19.12-0.20230705121804-dc9b87202868
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
 )
 
@@ -52,7 +52,7 @@ require (
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	github.com/tailor-inc/graphql v0.1.0 // indirect
+	github.com/tailor-inc/graphql v0.4.1 // indirect
 	github.com/weaviate/sroar v0.0.0-20230210105426-26108af5465d // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	github.com/willf/bloom v2.0.3+incompatible // indirect

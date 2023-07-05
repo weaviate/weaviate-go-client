@@ -9,7 +9,7 @@ services:
       - '8085'
       - --scheme
       - http
-    image: semitechnologies/weaviate:preview-multi-tenancy-support-for-gql-aggregate-queries-2216131
+    image: semitechnologies/weaviate:1.20.0-prealpha-dc9b872
     ports:
       - 8085:8085
     restart: on-failure:0
