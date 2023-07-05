@@ -119,12 +119,12 @@ func (con *Connection) startRefreshGoroutine(transport *oauth2.Transport) {
 		return
 	}
 
-	timeToSleep := time.Until(token.Expiry) - time.Second*10
-	if timeToSleep > 0 {
-		time.Sleep(timeToSleep)
-	}
-
 	go func() {
+		// initial sleep before requesting a token
+		timeToSleep := time.Until(token.Expiry) - time.Second*10
+		if timeToSleep > 0 {
+			time.Sleep(timeToSleep)
+		}
 		for {
 			select {
 			case <-con.doneCh:
