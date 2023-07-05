@@ -18,6 +18,7 @@ type ReferencePayloadBuilder struct {
 	fromUUID         string
 	toClassName      string
 	toUUID           string
+	tenant           string
 	dbVersion        *db.VersionSupport
 }
 
@@ -51,13 +52,20 @@ func (rpb *ReferencePayloadBuilder) WithToID(uuid string) *ReferencePayloadBuild
 	return rpb
 }
 
+// WithTenant specifies tenant of referenced objects
+func (rpb *ReferencePayloadBuilder) WithTenant(tenant string) *ReferencePayloadBuilder {
+	rpb.tenant = tenant
+	return rpb
+}
+
 // Payload to be used in a batch request
 func (rpb *ReferencePayloadBuilder) Payload() *models.BatchReference {
 	from := fmt.Sprintf("weaviate://localhost/%v/%v/%v", rpb.fromClassName, rpb.fromUUID, rpb.fromPropertyName)
 	to := crossref.BuildBeacon(rpb.toUUID, rpb.toClassName, rpb.dbVersion)
 
 	return &models.BatchReference{
-		From: strfmt.URI(from),
-		To:   strfmt.URI(to),
+		From:   strfmt.URI(from),
+		To:     strfmt.URI(to),
+		Tenant: rpb.tenant,
 	}
 }

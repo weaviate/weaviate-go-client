@@ -16,7 +16,7 @@ type Checker struct {
 	connection       *connection.Connection
 	id               string
 	className        string
-	tenantKey        string
+	tenant           string
 	dbVersionSupport *db.VersionSupport
 }
 
@@ -32,9 +32,9 @@ func (checker *Checker) WithClassName(className string) *Checker {
 	return checker
 }
 
-// WithTenantKey sets tenant, object should be checked for
-func (c *Checker) WithTenantKey(tenantKey string) *Checker {
-	c.tenantKey = tenantKey
+// WithTenant sets tenant, object should be checked for
+func (c *Checker) WithTenant(tenant string) *Checker {
+	c.tenant = tenant
 	return c
 }
 
@@ -64,8 +64,8 @@ func (c *Checker) getPath() string {
 
 func (c *Checker) buildPathParams() url.Values {
 	pathParams := url.Values{}
-	if c.tenantKey != "" {
-		pathParams.Set("tenant_key", c.tenantKey)
+	if c.tenant != "" {
+		pathParams.Set("tenant", c.tenant)
 	}
 	return pathParams
 }

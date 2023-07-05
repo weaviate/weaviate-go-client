@@ -10,7 +10,7 @@ import (
 	"github.com/weaviate/weaviate/entities/models"
 )
 
-// TenantCreator builder object to create a tenants
+// TenantCreator builder object to create tenants
 type TenantCreator struct {
 	connection *connection.Connection
 	className  string

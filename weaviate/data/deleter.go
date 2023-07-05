@@ -16,7 +16,7 @@ type Deleter struct {
 	id               string
 	className        string
 	consistencyLevel string
-	tenantKey        string
+	tenant           string
 	dbVersionSupport *db.VersionSupport
 }
 
@@ -40,9 +40,9 @@ func (deleter *Deleter) WithConsistencyLevel(cl string) *Deleter {
 	return deleter
 }
 
-// WithTenantKey sets tenant, object should be deleted from
-func (d *Deleter) WithTenantKey(tenantKey string) *Deleter {
-	d.tenantKey = tenantKey
+// WithTenant sets tenant, object should be deleted from
+func (d *Deleter) WithTenant(tenant string) *Deleter {
+	d.tenant = tenant
 	return d
 }
 
@@ -53,7 +53,7 @@ func (deleter *Deleter) Do(ctx context.Context) error {
 		Class:            deleter.className,
 		DBVersion:        deleter.dbVersionSupport,
 		ConsistencyLevel: deleter.consistencyLevel,
-		TenantKey:        deleter.tenantKey,
+		Tenant:           deleter.tenant,
 	})
 	responseData, err := deleter.connection.RunREST(ctx, path, http.MethodDelete, nil)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 204)

@@ -20,7 +20,7 @@ type Updater struct {
 	propertySchema   models.PropertySchema
 	withMerge        bool
 	consistencyLevel string
-	tenantKey        string
+	tenant           string
 	dbVersionSupport *db.VersionSupport
 }
 
@@ -56,9 +56,9 @@ func (updater *Updater) WithConsistencyLevel(cl string) *Updater {
 	return updater
 }
 
-// WithTenantKey sets tenant, object should be updated for
-func (u *Updater) WithTenantKey(tenantKey string) *Updater {
-	u.tenantKey = tenantKey
+// WithTenant sets tenant, object should be updated for
+func (u *Updater) WithTenant(tenant string) *Updater {
+	u.tenant = tenant
 	return u
 }
 
@@ -69,7 +69,6 @@ func (updater *Updater) Do(ctx context.Context) error {
 		Class:            updater.className,
 		DBVersion:        updater.dbVersionSupport,
 		ConsistencyLevel: updater.consistencyLevel,
-		TenantKey:        updater.tenantKey,
 	})
 	httpMethod := http.MethodPut
 	expectedStatusCode := 200
@@ -86,6 +85,7 @@ func (updater *Updater) runUpdate(ctx context.Context, path string, httpMethod s
 		Class:      updater.className,
 		ID:         strfmt.UUID(updater.id),
 		Properties: updater.propertySchema,
+		Tenant:     updater.tenant,
 	}
 	return updater.connection.RunREST(ctx, path, httpMethod, object)
 }
