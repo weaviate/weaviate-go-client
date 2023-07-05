@@ -41,7 +41,8 @@ var defaultPQConfig = map[string]interface{}{
 		"distribution": "log-normal",
 		"type":         "kmeans",
 	},
-	"segments": float64(0),
+	"segments":      float64(0),
+	"trainingLimit": float64(100_000),
 }
 
 var defaultVectorIndexConfig = map[string]interface{}{
@@ -61,4 +62,8 @@ var defaultVectorIndexConfig = map[string]interface{}{
 
 var defaultReplicationConfig = &models.ReplicationConfig{
 	Factor: 1,
+}
+
+var defaultMultiTenancyConfig = &models.MultiTenancyConfig{
+	Enabled: false,
 }

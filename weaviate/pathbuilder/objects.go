@@ -65,8 +65,8 @@ func appendURLParams(path string, comp Components) string {
 	if comp.ConsistencyLevel != "" {
 		params.Add("consistency_level", comp.ConsistencyLevel)
 	}
-	if comp.TenantKey != "" {
-		params.Add("tenant_key", comp.TenantKey)
+	if comp.Tenant != "" {
+		params.Add("tenant", comp.Tenant)
 	}
 	if len(params) > 0 {
 		u.RawQuery = params.Encode()

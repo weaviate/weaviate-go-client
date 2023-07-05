@@ -19,58 +19,58 @@ type ReferenceDeleter struct {
 	referenceProperty string
 	referencePayload  *models.SingleRef
 	consistencyLevel  string
-	tenantKey         string
+	tenant            string
 	dbVersionSupport  *db.VersionSupport
 }
 
 // WithClassName specifies the class name of the object on which the reference will be deleted
-func (rr *ReferenceDeleter) WithClassName(className string) *ReferenceDeleter {
-	rr.className = className
-	return rr
+func (rd *ReferenceDeleter) WithClassName(className string) *ReferenceDeleter {
+	rd.className = className
+	return rd
 }
 
 // WithID specifies the uuid of the object on which the reference will be deleted
-func (rr *ReferenceDeleter) WithID(uuid string) *ReferenceDeleter {
-	rr.uuid = uuid
-	return rr
+func (rd *ReferenceDeleter) WithID(uuid string) *ReferenceDeleter {
+	rd.uuid = uuid
+	return rd
 }
 
 // WithReferenceProperty specifies the property on which the reference should be deleted
-func (rr *ReferenceDeleter) WithReferenceProperty(propertyName string) *ReferenceDeleter {
-	rr.referenceProperty = propertyName
-	return rr
+func (rd *ReferenceDeleter) WithReferenceProperty(propertyName string) *ReferenceDeleter {
+	rd.referenceProperty = propertyName
+	return rd
 }
 
 // WithReference specifies reference payload of the reference about to be deleted
-func (rr *ReferenceDeleter) WithReference(referencePayload *models.SingleRef) *ReferenceDeleter {
-	rr.referencePayload = referencePayload
-	return rr
+func (rd *ReferenceDeleter) WithReference(referencePayload *models.SingleRef) *ReferenceDeleter {
+	rd.referencePayload = referencePayload
+	return rd
 }
 
 // WithConsistencyLevel determines how many replicas must acknowledge a request
 // before it is considered successful. Mutually exclusive with node_name param.
 // Can be one of 'ALL', 'ONE', or 'QUORUM'.
-func (rr *ReferenceDeleter) WithConsistencyLevel(cl string) *ReferenceDeleter {
-	rr.consistencyLevel = cl
-	return rr
+func (rd *ReferenceDeleter) WithConsistencyLevel(cl string) *ReferenceDeleter {
+	rd.consistencyLevel = cl
+	return rd
 }
 
-// WithTenantKey sets tenant, reference should be deleted from
-func (rd *ReferenceDeleter) WithTenantKey(tenantKey string) *ReferenceDeleter {
-	rd.tenantKey = tenantKey
+// WithTenant specifies tenant of referenced objects
+func (rd *ReferenceDeleter) WithTenant(tenant string) *ReferenceDeleter {
+	rd.tenant = tenant
 	return rd
 }
 
 // Do remove the reference defined by the payload set in this builder to the property and object defined in this builder
-func (rr *ReferenceDeleter) Do(ctx context.Context) error {
+func (rd *ReferenceDeleter) Do(ctx context.Context) error {
 	path := pathbuilder.References(pathbuilder.Components{
-		ID:                rr.uuid,
-		Class:             rr.className,
-		DBVersion:         rr.dbVersionSupport,
-		ReferenceProperty: rr.referenceProperty,
-		ConsistencyLevel:  rr.consistencyLevel,
-		TenantKey:         rr.tenantKey,
+		ID:                rd.uuid,
+		Class:             rd.className,
+		DBVersion:         rd.dbVersionSupport,
+		ReferenceProperty: rd.referenceProperty,
+		ConsistencyLevel:  rd.consistencyLevel,
+		Tenant:            rd.tenant,
 	})
-	responseData, responseErr := rr.connection.RunREST(ctx, path, http.MethodDelete, *rr.referencePayload)
+	responseData, responseErr := rd.connection.RunREST(ctx, path, http.MethodDelete, *rd.referencePayload)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 204)
 }

@@ -83,9 +83,23 @@ func (schema *API) ShardsUpdater() *ShardsUpdater {
 	}
 }
 
-// TenantCreator builder to add tenants to Class
-func (schema *API) TenantCreator() *TenantCreator {
-	return &TenantCreator{
+// TenantsCreator builder to add tenants to Class
+func (schema *API) TenantsCreator() *TenantsCreator {
+	return &TenantsCreator{
+		connection: schema.connection,
+	}
+}
+
+// TenantsDeleter builder to delete tenants from Class
+func (schema *API) TenantsDeleter() *TenantsDeleter {
+	return &TenantsDeleter{
+		connection: schema.connection,
+	}
+}
+
+// TenantsGetter builder to get tenants of Class
+func (schema *API) TenantsGetter() *TenantsGetter {
+	return &TenantsGetter{
 		connection: schema.connection,
 	}
 }

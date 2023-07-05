@@ -7,6 +7,6 @@ type Components struct {
 	Class             string
 	DBVersion         *db.VersionSupport
 	ConsistencyLevel  string
-	TenantKey         string
+	Tenant            string
 	ReferenceProperty string
 }
