@@ -42,4 +42,20 @@ func TestHybridBuilder_build(t *testing.T) {
 		expected := `hybrid:{query: "\"I'm a complex string\" says the string", alpha: 0.6}`
 		require.Equal(t, expected, str)
 	})
+
+	t.Run("query with fusion type Ranked", func(t *testing.T) {
+		hybrid := HybridArgumentBuilder{}
+
+		str := hybrid.WithQuery("some query").WithFusionType(Ranked).build()
+		expected := `hybrid:{query: "some query", fusionType: rankedFusion}`
+		require.Equal(t, expected, str)
+	})
+
+	t.Run("query with fusion type Relative Score", func(t *testing.T) {
+		hybrid := HybridArgumentBuilder{}
+
+		str := hybrid.WithQuery("some query").WithFusionType(RelativeScore).build()
+		expected := `hybrid:{query: "some query", fusionType: relativeScoreFusion}`
+		require.Equal(t, expected, str)
+	})
 }

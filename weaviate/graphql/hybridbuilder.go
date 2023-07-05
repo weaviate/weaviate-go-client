@@ -6,12 +6,21 @@ import (
 	"strings"
 )
 
+type FusionType string
+
+// Ranked FusionType operator
+const Ranked FusionType = "rankedFusion"
+
+// RelativeScore FusionType operator
+const RelativeScore FusionType = "relativeScoreFusion"
+
 type HybridArgumentBuilder struct {
 	query      string
 	vector     []float32
 	withAlpha  bool
 	alpha      float32
 	properties []string
+	fusionType FusionType
 }
 
 // WithQuery the search string
@@ -33,9 +42,15 @@ func (h *HybridArgumentBuilder) WithAlpha(alpha float32) *HybridArgumentBuilder 
 	return h
 }
 
-// WithProperties. The properties which are searched. Can be omitted.
+// WithProperties The properties which are searched. Can be omitted.
 func (h *HybridArgumentBuilder) WithProperties(properties []string) *HybridArgumentBuilder {
 	h.properties = properties
+	return h
+}
+
+// WithFusionType sets the fusion type to be used. Can be omitted.
+func (h *HybridArgumentBuilder) WithFusionType(fusionType FusionType) *HybridArgumentBuilder {
+	h.fusionType = fusionType
 	return h
 }
 
@@ -63,5 +78,10 @@ func (h *HybridArgumentBuilder) build() string {
 		}
 		clause = append(clause, fmt.Sprintf("properties: %v", string(props)))
 	}
+
+	if h.fusionType != "" {
+		clause = append(clause, fmt.Sprintf("fusionType: %s", h.fusionType))
+	}
+
 	return fmt.Sprintf("hybrid:{%v}", strings.Join(clause, ", "))
 }
