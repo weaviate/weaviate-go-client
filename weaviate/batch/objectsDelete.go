@@ -19,7 +19,7 @@ type ObjectsBatchDeleter struct {
 	output           string
 	whereFilter      *filters.WhereBuilder
 	consistencyLevel string
-	tenantKey        string
+	tenant           string
 }
 
 func (b *ObjectsBatchDeleter) WithClassName(className string) *ObjectsBatchDeleter {
@@ -50,9 +50,9 @@ func (b *ObjectsBatchDeleter) WithConsistencyLevel(cl string) *ObjectsBatchDelet
 	return b
 }
 
-// WithTenantKey sets tenant, objects should be deleted from
-func (b *ObjectsBatchDeleter) WithTenantKey(tenantKey string) *ObjectsBatchDeleter {
-	b.tenantKey = tenantKey
+// WithTenant sets tenant, objects should be deleted from
+func (b *ObjectsBatchDeleter) WithTenant(tenant string) *ObjectsBatchDeleter {
+	b.tenant = tenant
 	return b
 }
 
@@ -73,7 +73,7 @@ func (ob *ObjectsBatchDeleter) Do(ctx context.Context) (*models.BatchDeleteRespo
 
 	path := pathbuilder.BatchObjects(pathbuilder.Components{
 		ConsistencyLevel: ob.consistencyLevel,
-		TenantKey:        ob.tenantKey,
+		Tenant:           ob.tenant,
 	})
 	responseData, responseErr := ob.connection.RunREST(ctx, path, http.MethodDelete, body)
 	err := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)

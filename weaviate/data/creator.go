@@ -25,7 +25,7 @@ type Creator struct {
 	vector           []float32
 	propertySchema   models.PropertySchema
 	consistencyLevel string
-	tenantKey        string
+	tenant           string
 }
 
 // WithClassName indicates what class the data object is associated with
@@ -60,9 +60,9 @@ func (creator *Creator) WithConsistencyLevel(cl string) *Creator {
 	return creator
 }
 
-// WithTenantKey sets tenant, object should be created for
-func (c *Creator) WithTenantKey(tenantKey string) *Creator {
-	c.tenantKey = tenantKey
+// WithTenant sets tenant, object should be created for
+func (c *Creator) WithTenant(tenant string) *Creator {
+	c.tenant = tenant
 	return c
 }
 
@@ -93,9 +93,6 @@ func (creator *Creator) buildPath() string {
 	if creator.consistencyLevel != "" {
 		pathParams.Set("consistency_level", creator.consistencyLevel)
 	}
-	if creator.tenantKey != "" {
-		pathParams.Set("tenant_key", creator.tenantKey)
-	}
 
 	if len(pathParams) > 0 {
 		path = fmt.Sprintf("%s?%v", path, pathParams.Encode())
@@ -110,6 +107,7 @@ func (creator *Creator) PayloadObject() (*models.Object, error) {
 		Class:      creator.className,
 		Properties: creator.propertySchema,
 		Vector:     creator.vector,
+		Tenant:     creator.tenant,
 	}
 	if creator.uuid != "" {
 		object.ID = strfmt.UUID(creator.uuid)

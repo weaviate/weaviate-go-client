@@ -11,11 +11,17 @@ import (
 
 type NodesStatusGetter struct {
 	connection *connection.Connection
+	class      string
 }
 
 // Do get the nodes endpoint
 func (nsg *NodesStatusGetter) Do(ctx context.Context) (*models.NodesStatusResponse, error) {
-	responseData, responseErr := nsg.connection.RunREST(ctx, "/nodes", http.MethodGet, nil)
+	path := "/nodes"
+	if nsg.class != "" {
+		path += "/" + nsg.class
+	}
+
+	responseData, responseErr := nsg.connection.RunREST(ctx, path, http.MethodGet, nil)
 	err := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {
 		return nil, err
@@ -23,4 +29,9 @@ func (nsg *NodesStatusGetter) Do(ctx context.Context) (*models.NodesStatusRespon
 	var nodesStatus models.NodesStatusResponse
 	parseErr := responseData.DecodeBodyIntoTarget(&nodesStatus)
 	return &nodesStatus, parseErr
+}
+
+func (nsg *NodesStatusGetter) WithClass(className string) *NodesStatusGetter {
+	nsg.class = className
+	return nsg
 }

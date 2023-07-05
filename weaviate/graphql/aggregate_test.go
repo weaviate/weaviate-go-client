@@ -505,7 +505,7 @@ func TestAggregateBuilder(t *testing.T) {
 		})
 	})
 
-	t.Run("tenantKey", func(t *testing.T) {
+	t.Run("tenant", func(t *testing.T) {
 		builder := AggregateBuilder{connection: &MockRunREST{}}
 		meta := Field{
 			Name:   "meta",
@@ -513,15 +513,15 @@ func TestAggregateBuilder(t *testing.T) {
 		}
 
 		query := builder.WithClassName("Pizza").
-			WithTenantKey("TenantNo1").
+			WithTenant("TenantNo1").
 			WithFields(meta).
 			build()
 
-		expected := `{Aggregate{Pizza(tenantKey: "TenantNo1"){meta{count}}}}`
+		expected := `{Aggregate{Pizza(tenant: "TenantNo1"){meta{count}}}}`
 		assert.Equal(t, expected, query)
 	})
 
-	t.Run("tenantKey and where", func(t *testing.T) {
+	t.Run("tenant and where", func(t *testing.T) {
 		builder := AggregateBuilder{connection: &MockRunREST{}}
 		meta := Field{
 			Name:   "meta",
@@ -533,12 +533,12 @@ func TestAggregateBuilder(t *testing.T) {
 			WithValueText("Hawaii")
 
 		query := builder.WithClassName("Pizza").
-			WithTenantKey("TenantNo1").
+			WithTenant("TenantNo1").
 			WithWhere(where).
 			WithFields(meta).
 			build()
 
-		expected := `{Aggregate{Pizza(tenantKey: "TenantNo1", where:{operator: Equal path: ["name"] valueText: "Hawaii"}){meta{count}}}}`
+		expected := `{Aggregate{Pizza(tenant: "TenantNo1", where:{operator: Equal path: ["name"] valueText: "Hawaii"}){meta{count}}}}`
 		assert.Equal(t, expected, query)
 	})
 }

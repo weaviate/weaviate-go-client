@@ -1683,6 +1683,12 @@ func TestGraphQL_integration(t *testing.T) {
 }
 
 func TestGraphQL_MultiTenancy(t *testing.T) {
+	cleanup := func() {
+		client := testsuit.CreateTestClient()
+		err := client.Schema().AllDeleter().Do(context.Background())
+		require.Nil(t, err)
+	}
+
 	t.Run("setup weaviate", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -1691,6 +1697,8 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 	})
 
 	t.Run("GraphQL Get", func(t *testing.T) {
+		defer cleanup()
+
 		tenant1 := "tenantNo1"
 		tenant2 := "tenantNo2"
 		client := testsuit.CreateTestClient()
@@ -1737,7 +1745,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 			for tenant, expectedIds := range expectedIdsByTenant {
 				resp, err := client.GraphQL().Get().
 					WithClassName("Pizza").
-					WithTenantKey(tenant).
+					WithTenant(tenant).
 					WithFields(graphql.Field{
 						Name:   "_additional",
 						Fields: []graphql.Field{{Name: "id"}},
@@ -1762,7 +1770,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 			for tenant, expectedIds := range expectedIdsByTenant {
 				resp, err := client.GraphQL().Get().
 					WithClassName("Pizza").
-					WithTenantKey(tenant).
+					WithTenant(tenant).
 					WithLimit(1).
 					WithFields(graphql.Field{
 						Name:   "_additional",
@@ -1790,7 +1798,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 			for tenant, expectedIds := range expectedIdsByTenant {
 				resp, err := client.GraphQL().Get().
 					WithClassName("Pizza").
-					WithTenantKey(tenant).
+					WithTenant(tenant).
 					WithWhere(where).
 					WithFields(graphql.Field{
 						Name:   "_additional",
@@ -1802,15 +1810,11 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 				assertGetContainsIds(t, resp, "Pizza", expectedIds)
 			}
 		})
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
 	})
 
 	t.Run("GraphQL Aggregate", func(t *testing.T) {
+		defer cleanup()
+
 		tenant1 := "tenantNo1"
 		tenant2 := "tenantNo2"
 		client := testsuit.CreateTestClient()
@@ -1873,7 +1877,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 			for tenant, expectedAggValues := range expectedAggValuesByTenant {
 				resp, err := client.GraphQL().Aggregate().
 					WithClassName("Pizza").
-					WithTenantKey(tenant).
+					WithTenant(tenant).
 					WithFields(graphql.Field{
 						Name: "price",
 						Fields: []graphql.Field{
@@ -1922,7 +1926,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 			for tenant, expectedAggValues := range expectedAggValuesByTenant {
 				resp, err := client.GraphQL().Aggregate().
 					WithClassName("Pizza").
-					WithTenantKey(tenant).
+					WithTenant(tenant).
 					WithWhere(where).
 					WithFields(graphql.Field{
 						Name: "price",
@@ -1941,12 +1945,6 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 				assert.Nil(t, err)
 				assertAggregateNumFieldHasValues(t, resp, "Pizza", "price", expectedAggValues)
 			}
-		})
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
 		})
 	})
 

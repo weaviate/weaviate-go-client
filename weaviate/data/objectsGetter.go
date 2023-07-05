@@ -25,7 +25,7 @@ type ObjectsGetter struct {
 	limit                int
 	offset               int
 	consistencyLevel     string
-	tenantKey            string
+	tenant               string
 	nodeName             string
 	dbVersionSupport     *db.VersionSupport
 }
@@ -86,9 +86,9 @@ func (getter *ObjectsGetter) WithConsistencyLevel(cl string) *ObjectsGetter {
 	return getter
 }
 
-// WithTenantKey sets tenant, object should be fetched for
-func (g *ObjectsGetter) WithTenantKey(tenantKey string) *ObjectsGetter {
-	g.tenantKey = tenantKey
+// WithTenant sets tenant, object should be fetched for
+func (g *ObjectsGetter) WithTenant(tenant string) *ObjectsGetter {
+	g.tenant = tenant
 	return g
 }
 
@@ -170,8 +170,8 @@ func (getter *ObjectsGetter) buildPathParams() url.Values {
 	if getter.consistencyLevel != "" {
 		pathParams.Set("consistency_level", getter.consistencyLevel)
 	}
-	if getter.tenantKey != "" {
-		pathParams.Set("tenant_key", getter.tenantKey)
+	if getter.tenant != "" {
+		pathParams.Set("tenant", getter.tenant)
 	}
 	if getter.nodeName != "" {
 		pathParams.Set("node_name", getter.nodeName)

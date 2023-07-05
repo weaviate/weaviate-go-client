@@ -15,7 +15,7 @@ import (
 func TestClusterNodes_integration(t *testing.T) {
 	const (
 		expectedWeaviateVersion = "1.20.0-prealpha"
-		expectedWeaviateGitHash = "2216131"
+		expectedWeaviateGitHash = "dc9b872"
 	)
 
 	t.Run("up", func(t *testing.T) {
@@ -79,6 +79,15 @@ func TestClusterNodes_integration(t *testing.T) {
 				t.Fatalf("unexpected class name")
 			}
 		}
+
+		// query only for one class
+		nodesStatusSingleClass, err := client.Cluster().NodesStatusGetter().WithClass("Pizza").Do(context.Background())
+		require.Nil(t, err)
+		assert.Len(t, nodesStatusSingleClass.Nodes, 1)
+		nodeStatusSingleClass := nodesStatusSingleClass.Nodes[0]
+
+		assert.Equal(t, int64(4), nodeStatusSingleClass.Stats.ObjectCount)
+		assert.Equal(t, int64(1), nodeStatusSingleClass.Stats.ShardCount)
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {

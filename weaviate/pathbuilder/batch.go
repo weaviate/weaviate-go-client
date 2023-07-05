@@ -12,8 +12,8 @@ func BatchObjects(comp Components) string {
 	if comp.ConsistencyLevel != "" {
 		queryParams.Set("consistency_level", comp.ConsistencyLevel)
 	}
-	if comp.TenantKey != "" {
-		queryParams.Set("tenant_key", comp.TenantKey)
+	if comp.Tenant != "" {
+		queryParams.Set("tenant", comp.Tenant)
 	}
 	if len(queryParams) > 0 {
 		path = fmt.Sprintf("%s?%v", path, queryParams.Encode())
@@ -28,9 +28,6 @@ func BatchReferences(comp Components) string {
 
 	if comp.ConsistencyLevel != "" {
 		pathParams.Set("consistency_level", comp.ConsistencyLevel)
-	}
-	if comp.TenantKey != "" {
-		pathParams.Set("tenant_key", comp.TenantKey)
 	}
 	if len(pathParams) > 0 {
 		path = fmt.Sprintf("%s?%v", path, pathParams.Encode())

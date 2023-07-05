@@ -19,7 +19,7 @@ type ReferenceCreator struct {
 	referenceProperty string
 	referencePayload  *models.SingleRef
 	consistencyLevel  string
-	tenantKey         string
+	tenant            string
 	dbVersionSupport  *db.VersionSupport
 }
 
@@ -32,6 +32,12 @@ func (rc *ReferenceCreator) WithClassName(className string) *ReferenceCreator {
 // WithID specifies the uuid of the object on which to add the reference
 func (rc *ReferenceCreator) WithID(uuid string) *ReferenceCreator {
 	rc.uuid = uuid
+	return rc
+}
+
+// WithTenant specifies tenant of referenced objects
+func (rc *ReferenceCreator) WithTenant(tenant string) *ReferenceCreator {
+	rc.tenant = tenant
 	return rc
 }
 
@@ -56,12 +62,6 @@ func (rc *ReferenceCreator) WithConsistencyLevel(cl string) *ReferenceCreator {
 	return rc
 }
 
-// WithTenantKey sets tenant, reference should be created for
-func (rc *ReferenceCreator) WithTenantKey(tenantKey string) *ReferenceCreator {
-	rc.tenantKey = tenantKey
-	return rc
-}
-
 // Do add the reference specified by the set payload to the object and property specified in the builder.
 func (rc *ReferenceCreator) Do(ctx context.Context) error {
 	path := pathbuilder.References(pathbuilder.Components{
@@ -70,7 +70,7 @@ func (rc *ReferenceCreator) Do(ctx context.Context) error {
 		ReferenceProperty: rc.referenceProperty,
 		DBVersion:         rc.dbVersionSupport,
 		ConsistencyLevel:  rc.consistencyLevel,
-		TenantKey:         rc.tenantKey,
+		Tenant:            rc.tenant,
 	})
 	responseData, responseErr := rc.connection.RunREST(ctx, path, http.MethodPost, *rc.referencePayload)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
