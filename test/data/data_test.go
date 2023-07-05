@@ -1159,6 +1159,12 @@ func TestData_integration(t *testing.T) {
 }
 
 func TestData_MultiTenancy(t *testing.T) {
+	cleanup := func() {
+		client := testsuit.CreateTestClient()
+		err := client.Schema().AllDeleter().Do(context.Background())
+		require.Nil(t, err)
+	}
+
 	t.Run("setup weaviate", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
@@ -1166,463 +1172,255 @@ func TestData_MultiTenancy(t *testing.T) {
 		}
 	})
 
-	t.Run("adds objects to multi tenant class", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+	t.Run("creates objects of MT class", func(t *testing.T) {
+		defer cleanup()
+
 		className := "Pizza"
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
+		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaPizzaForTenants(t, client)
 		testsuit.CreateTenantsPizza(t, client, tenants...)
 
 		for _, tenant := range tenants {
 			wrap, err := client.Data().Creator().
 				WithClassName(className).
-				WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
-				WithProperties(map[string]interface{}{
-					"name":             "Quattro Formaggi",
-					"description":      "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
-					"price":            float32(1.1),
-					"best_before":      "2022-05-03T12:04:40+02:00",
-					testsuit.TenantKey: tenant,
-				}).
-				WithTenantKey(tenant).
-				Do(context.Background())
-
-			require.Nil(t, err)
-			require.NotNil(t, wrap)
-			require.NotNil(t, wrap.Object)
-			assert.Equal(t, strfmt.UUID("10523cdd-15a2-42f4-81fa-267fe92f7cd6"), wrap.Object.ID)
-			assert.Equal(t, "Quattro Formaggi", wrap.Object.Properties.(map[string]interface{})["name"])
-			assert.Equal(t, tenant, wrap.Object.Properties.(map[string]interface{})[testsuit.TenantKey])
-
-			wrap, err = client.Data().Creator().
-				WithClassName(className).
-				WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
-				WithProperties(map[string]interface{}{
-					"name":             "Frutti di Mare",
-					"description":      "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
-					"price":            float32(1.2),
-					"best_before":      "2022-05-05T07:16:30+02:00",
-					testsuit.TenantKey: tenant,
-				}).
-				WithTenantKey(tenant).
-				Do(context.Background())
-
-			require.Nil(t, err)
-			require.NotNil(t, wrap)
-			require.NotNil(t, wrap.Object)
-			assert.Equal(t, strfmt.UUID("927dd3ac-e012-4093-8007-7799cc7e81e4"), wrap.Object.ID)
-			assert.Equal(t, "Frutti di Mare", wrap.Object.Properties.(map[string]interface{})["name"])
-			assert.Equal(t, tenant, wrap.Object.Properties.(map[string]interface{})[testsuit.TenantKey])
-		}
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("fails adding objects to multi tenant class without tenant key", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		className := "Pizza"
-		tenants := []string{"tenantNo1", "tenantNo2"}
-
-		testsuit.CreateSchemaPizzaForTenants(t, client)
-		testsuit.CreateTenantsPizza(t, client, tenants...)
-
-		for _, tenant := range tenants {
-			wrap, err := client.Data().Creator().
-				WithClassName(className).
-				WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
-				WithProperties(map[string]interface{}{
-					"name":             "Quattro Formaggi",
-					"description":      "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
-					"price":            float32(1.1),
-					"best_before":      "2022-05-03T12:04:40+02:00",
-					testsuit.TenantKey: tenant,
-				}).
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr := err.(*fault.WeaviateClientError)
-			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-			assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
-			require.Nil(t, wrap)
-
-			wrap, err = client.Data().Creator().
-				WithClassName(className).
-				WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
-				WithProperties(map[string]interface{}{
-					"name":             "Frutti di Mare",
-					"description":      "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
-					"price":            float32(1.2),
-					"best_before":      "2022-05-05T07:16:30+02:00",
-					testsuit.TenantKey: tenant,
-				}).
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr = err.(*fault.WeaviateClientError)
-			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-			assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
-			require.Nil(t, wrap)
-		}
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("fails adding objects to multi tenant class with non existing tenant key", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		className := "Pizza"
-		tenants := []string{"tenantNo1", "tenantNo2"}
-
-		testsuit.CreateSchemaPizzaForTenants(t, client)
-		testsuit.CreateTenantsPizza(t, client, tenants...)
-
-		for _, tenant := range tenants {
-			wrap, err := client.Data().Creator().
-				WithClassName(className).
-				WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
-				WithProperties(map[string]interface{}{
-					"name":             "Quattro Formaggi",
-					"description":      "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
-					"price":            float32(1.1),
-					"best_before":      "2022-05-03T12:04:40+02:00",
-					testsuit.TenantKey: tenant,
-				}).
-				WithTenantKey("nonExistingTenant").
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr := err.(*fault.WeaviateClientError)
-			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-			assert.Contains(t, clientErr.Msg, "no tenant found with key")
-			require.Nil(t, wrap)
-
-			wrap, err = client.Data().Creator().
-				WithClassName(className).
-				WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
-				WithProperties(map[string]interface{}{
-					"name":             "Frutti di Mare",
-					"description":      "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
-					"price":            float32(1.2),
-					"best_before":      "2022-05-05T07:16:30+02:00",
-					testsuit.TenantKey: tenant,
-				}).
-				WithTenantKey("nonExistingTenant").
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr = err.(*fault.WeaviateClientError)
-			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-			assert.Contains(t, clientErr.Msg, "no tenant found with key")
-			require.Nil(t, wrap)
-		}
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("fails adding objects to multi tenant class without tenant prop", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		className := "Pizza"
-		tenants := []string{"tenantNo1", "tenantNo2"}
-
-		testsuit.CreateSchemaPizzaForTenants(t, client)
-		testsuit.CreateTenantsPizza(t, client, tenants...)
-
-		for _, tenant := range tenants {
-			wrap, err := client.Data().Creator().
-				WithClassName(className).
-				WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
+				WithID(testsuit.PIZZA_QUATTRO_FORMAGGI_ID).
 				WithProperties(map[string]interface{}{
 					"name":        "Quattro Formaggi",
 					"description": "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
 					"price":       float32(1.1),
 					"best_before": "2022-05-03T12:04:40+02:00",
 				}).
-				WithTenantKey(tenant).
+				WithTenant(tenant).
 				Do(context.Background())
 
-			require.NotNil(t, err)
-			clientErr := err.(*fault.WeaviateClientError)
-			assert.Equal(t, 422, clientErr.StatusCode)
-			assert.Contains(t, clientErr.Msg, "conflicts with object body value")
-			require.Nil(t, wrap)
+			require.Nil(t, err)
+			require.NotNil(t, wrap)
+			require.NotNil(t, wrap.Object)
+			assert.Equal(t, strfmt.UUID(testsuit.PIZZA_QUATTRO_FORMAGGI_ID), wrap.Object.ID)
+			assert.Equal(t, "Quattro Formaggi", wrap.Object.Properties.(map[string]interface{})["name"])
+			assert.Equal(t, tenant, wrap.Object.Tenant)
 
 			wrap, err = client.Data().Creator().
 				WithClassName(className).
-				WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
+				WithID(testsuit.PIZZA_FRUTTI_DI_MARE_ID).
 				WithProperties(map[string]interface{}{
 					"name":        "Frutti di Mare",
 					"description": "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
 					"price":       float32(1.2),
 					"best_before": "2022-05-05T07:16:30+02:00",
 				}).
-				WithTenantKey(tenant).
+				WithTenant(tenant).
 				Do(context.Background())
 
-			require.NotNil(t, err)
-			clientErr = err.(*fault.WeaviateClientError)
-			assert.Equal(t, 422, clientErr.StatusCode)
-			assert.Contains(t, clientErr.Msg, "conflicts with object body value")
-			require.Nil(t, wrap)
+			require.Nil(t, err)
+			require.NotNil(t, wrap)
+			require.NotNil(t, wrap.Object)
+			assert.Equal(t, strfmt.UUID(testsuit.PIZZA_FRUTTI_DI_MARE_ID), wrap.Object.ID)
+			assert.Equal(t, "Frutti di Mare", wrap.Object.Properties.(map[string]interface{})["name"])
+			assert.Equal(t, tenant, wrap.Object.Tenant)
 		}
 
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
+		t.Run("verify created", func(t *testing.T) {
+			for _, tenant := range tenants {
+				for _, id := range []string{
+					testsuit.PIZZA_QUATTRO_FORMAGGI_ID,
+					testsuit.PIZZA_FRUTTI_DI_MARE_ID,
+				} {
+					exists, err := client.Data().Checker().
+						WithID(id).
+						WithClassName(className).
+						WithTenant(tenant).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.True(t, exists)
+				}
+			}
 		})
 	})
 
-	t.Run("fails adding objects to multi tenant class with non existing tenant prop", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+	t.Run("fails creating objects of MT class without tenant", func(t *testing.T) {
+		defer cleanup()
+
 		className := "Pizza"
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
-		testsuit.CreateSchemaPizzaForTenants(t, client)
-		testsuit.CreateTenantsPizza(t, client, tenants...)
-
-		for _, tenant := range tenants {
-			wrap, err := client.Data().Creator().
-				WithClassName(className).
-				WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
-				WithProperties(map[string]interface{}{
-					"name":             "Quattro Formaggi",
-					"description":      "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
-					"price":            float32(1.1),
-					"best_before":      "2022-05-03T12:04:40+02:00",
-					testsuit.TenantKey: "nonExistingTenant",
-				}).
-				WithTenantKey(tenant).
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr := err.(*fault.WeaviateClientError)
-			assert.Equal(t, 422, clientErr.StatusCode)
-			assert.Contains(t, clientErr.Msg, "conflicts with object body value")
-			require.Nil(t, wrap)
-
-			wrap, err = client.Data().Creator().
-				WithClassName(className).
-				WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
-				WithProperties(map[string]interface{}{
-					"name":             "Frutti di Mare",
-					"description":      "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
-					"price":            float32(1.2),
-					"best_before":      "2022-05-05T07:16:30+02:00",
-					testsuit.TenantKey: "nonExistingTenant",
-				}).
-				WithTenantKey(tenant).
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr = err.(*fault.WeaviateClientError)
-			assert.Equal(t, 422, clientErr.StatusCode)
-			assert.Contains(t, clientErr.Msg, "conflicts with object body value")
-			require.Nil(t, wrap)
-		}
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("fails adding objects to multi tenant class with non matching tenant prop", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
-		className := "Pizza"
-		tenants := []string{"tenantNo1", "tenantNo2"}
-
 		testsuit.CreateSchemaPizzaForTenants(t, client)
 		testsuit.CreateTenantsPizza(t, client, tenants...)
 
 		wrap, err := client.Data().Creator().
 			WithClassName(className).
-			WithID("10523cdd-15a2-42f4-81fa-267fe92f7cd6").
+			WithID(testsuit.PIZZA_QUATTRO_FORMAGGI_ID).
 			WithProperties(map[string]interface{}{
-				"name":             "Quattro Formaggi",
-				"description":      "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
-				"price":            float32(1.1),
-				"best_before":      "2022-05-03T12:04:40+02:00",
-				testsuit.TenantKey: tenants[1],
+				"name":        "Quattro Formaggi",
+				"description": "Pizza quattro formaggi Italian: [ˈkwattro forˈmaddʒi] (four cheese pizza) is a variety of pizza in Italian cuisine that is topped with a combination of four kinds of cheese, usually melted together, with (rossa, red) or without (bianca, white) tomato sauce. It is popular worldwide, including in Italy,[1] and is one of the iconic items from pizzerias's menus.",
+				"price":       float32(1.1),
+				"best_before": "2022-05-03T12:04:40+02:00",
 			}).
-			WithTenantKey(tenants[0]).
 			Do(context.Background())
 
 		require.NotNil(t, err)
 		clientErr := err.(*fault.WeaviateClientError)
 		assert.Equal(t, 422, clientErr.StatusCode)
-		assert.Contains(t, clientErr.Msg, "conflicts with object body value")
+		assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled, but request was without tenant")
 		require.Nil(t, wrap)
 
 		wrap, err = client.Data().Creator().
 			WithClassName(className).
-			WithID("927dd3ac-e012-4093-8007-7799cc7e81e4").
+			WithID(testsuit.PIZZA_FRUTTI_DI_MARE_ID).
 			WithProperties(map[string]interface{}{
-				"name":             "Frutti di Mare",
-				"description":      "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
-				"price":            float32(1.2),
-				"best_before":      "2022-05-05T07:16:30+02:00",
-				testsuit.TenantKey: tenants[0],
+				"name":        "Frutti di Mare",
+				"description": "Frutti di Mare is an Italian type of pizza that may be served with scampi, mussels or squid. It typically lacks cheese, with the seafood being served atop a tomato sauce.",
+				"price":       float32(1.2),
+				"best_before": "2022-05-05T07:16:30+02:00",
 			}).
-			WithTenantKey(tenants[1]).
 			Do(context.Background())
 
 		require.NotNil(t, err)
 		clientErr = err.(*fault.WeaviateClientError)
 		assert.Equal(t, 422, clientErr.StatusCode)
-		assert.Contains(t, clientErr.Msg, "conflicts with object body value")
+		assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled, but request was without tenant")
 		require.Nil(t, wrap)
 
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
+		t.Run("verify not created", func(t *testing.T) {
+			for _, tenant := range tenants {
+				for _, id := range []string{
+					testsuit.PIZZA_QUATTRO_FORMAGGI_ID,
+					testsuit.PIZZA_FRUTTI_DI_MARE_ID,
+				} {
+					exists, err := client.Data().Checker().
+						WithID(id).
+						WithClassName(className).
+						WithTenant(tenant).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.False(t, exists)
+				}
+			}
 		})
 	})
 
-	t.Run("gets objects of multi tenant class", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+	t.Run("gets objects of MT class", func(t *testing.T) {
+		defer cleanup()
+
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
+		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+
+		extractIds := func(objs []*models.Object) []string {
+			ids := make([]string, len(objs))
+			for i, obj := range objs {
+				ids[i] = obj.ID.String()
+			}
+			return ids
+		}
 
 		for _, tenant := range tenants {
 			for className, ids := range testsuit.IdsByClass {
 				for _, id := range ids {
+					t.Run("single object by class+id", func(t *testing.T) {
+						objects, err := client.Data().ObjectsGetter().
+							WithID(id).
+							WithClassName(className).
+							WithTenant(tenant).
+							Do(context.Background())
+
+						require.Nil(t, err)
+						require.NotNil(t, objects)
+						require.Len(t, objects, 1)
+						assert.Equal(t, strfmt.UUID(id), objects[0].ID)
+						assert.Equal(t, tenant, objects[0].Tenant)
+					})
+				}
+
+				t.Run("list objects by class", func(t *testing.T) {
 					objects, err := client.Data().ObjectsGetter().
-						WithID(id).
 						WithClassName(className).
-						WithTenantKey(tenant).
+						WithTenant(tenant).
 						Do(context.Background())
 
 					require.Nil(t, err)
 					require.NotNil(t, objects)
-					require.Len(t, objects, 1)
-					assert.Equal(t, strfmt.UUID(id), objects[0].ID)
-					assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				}
-
-				// TODO fix, returns all
-				// objects, err := client.Data().ObjectsGetter().
-				// 	WithClassName(className).
-				// 	WithTenantKey(tenant).
-				// 	Do(context.Background())
-
-				// require.Nil(t, err)
-				// require.NotNil(t, objects)
-				// require.Len(t, objects, len(ids))
+					require.Len(t, objects, len(ids))
+					assert.ElementsMatch(t, ids, extractIds(objects))
+				})
 			}
-		}
 
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
+			t.Run("list all objects", func(t *testing.T) {
+				objects, err := client.Data().ObjectsGetter().
+					WithTenant(tenant).
+					Do(context.Background())
+
+				require.Nil(t, err)
+				require.NotNil(t, objects)
+				require.Len(t, objects, len(testsuit.AllIds))
+				assert.ElementsMatch(t, testsuit.AllIds, extractIds(objects))
+			})
+		}
 	})
 
-	t.Run("fails getting objects of multi tenant class without tenant key", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+	t.Run("fails getting objects of MT class without tenant", func(t *testing.T) {
+		defer cleanup()
+
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
+		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants...)
 
 		for className, ids := range testsuit.IdsByClass {
 			for _, id := range ids {
+				t.Run("single object by class+id", func(t *testing.T) {
+					objects, err := client.Data().ObjectsGetter().
+						WithID(id).
+						WithClassName(className).
+						Do(context.Background())
+
+					require.NotNil(t, err)
+					clientErr := err.(*fault.WeaviateClientError)
+					assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+					assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled, but request was without tenant")
+					assert.Nil(t, objects)
+				})
+			}
+
+			t.Run("list objects by class", func(t *testing.T) {
 				objects, err := client.Data().ObjectsGetter().
-					WithID(id).
 					WithClassName(className).
 					Do(context.Background())
 
 				require.NotNil(t, err)
 				clientErr := err.(*fault.WeaviateClientError)
 				assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-				assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
-				require.Nil(t, objects)
-			}
-
-			// TODO fix, returns all
-			// objects, err := client.Data().ObjectsGetter().
-			// 	WithClassName(className).
-			// 	Do(context.Background())
-
-			// require.NotNil(t, err)
-			// clientErr := err.(*fault.WeaviateClientError)
-			// assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-			// assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
-			// require.Nil(t, objects)
+				assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled, but request was without tenant")
+				assert.Nil(t, objects)
+			})
 		}
 
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
+		t.Run("list all objects", func(t *testing.T) {
+			objects, err := client.Data().ObjectsGetter().
+				Do(context.Background())
+
 			require.Nil(t, err)
+			require.NotNil(t, objects)
+			assert.Len(t, objects, 0)
 		})
 	})
 
-	t.Run("fails getting objects of multi tenant class with non existing tenant key", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+	t.Run("checks objects of MT class", func(t *testing.T) {
+		defer cleanup()
+
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
-		testsuit.CreateSchemaFoodForTenants(t, client)
-		testsuit.CreateTenantsFood(t, client, tenants...)
-		testsuit.CreateDataFoodForTenants(t, client, tenants...)
-
-		for className, ids := range testsuit.IdsByClass {
-			for _, id := range ids {
-				objects, err := client.Data().ObjectsGetter().
-					WithID(id).
-					WithClassName(className).
-					WithTenantKey("nonExistingTenant").
-					Do(context.Background())
-
-				require.NotNil(t, err)
-				clientErr := err.(*fault.WeaviateClientError)
-				assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-				assert.Contains(t, clientErr.Msg, "no tenant found with key")
-				require.Nil(t, objects)
-			}
-
-			// TODO fix, returns all
-			// objects, err := client.Data().ObjectsGetter().
-			// 	WithClassName(className).
-			// 	WithTenantKey("nonExistingTenant").
-			// 	Do(context.Background())
-
-			// require.NotNil(t, err)
-			// clientErr := err.(*fault.WeaviateClientError)
-			// assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-			// assert.Contains(t, clientErr.Msg, "no tenant found with key")
-			// require.Nil(t, objects)
-		}
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("checks objects of multi tenant class", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
-		tenants := []string{"tenantNo1", "tenantNo2"}
-
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants...)
@@ -1633,7 +1431,7 @@ func TestData_MultiTenancy(t *testing.T) {
 					exists, err := client.Data().Checker().
 						WithID(id).
 						WithClassName(className).
-						WithTenantKey(tenant).
+						WithTenant(tenant).
 						Do(context.Background())
 
 					require.Nil(t, err)
@@ -1641,18 +1439,14 @@ func TestData_MultiTenancy(t *testing.T) {
 				}
 			}
 		}
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
 	})
 
-	t.Run("fails checking objects of multi tenant class without tenant key", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+	t.Run("fails checking objects of MT class without tenant", func(t *testing.T) {
+		defer cleanup()
+
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
+		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants...)
@@ -1667,84 +1461,68 @@ func TestData_MultiTenancy(t *testing.T) {
 				require.NotNil(t, err)
 				clientErr := err.(*fault.WeaviateClientError)
 				assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-				// TODO should have message?
-				// assert.Contains(t, clientErr.Msg, "missing error")
+				assert.Empty(t, clientErr.Msg)             // no body in HEAD
 				assert.False(t, exists)
 			}
 		}
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
 	})
 
-	t.Run("fails checking objects of multi tenant class with non existing tenant key", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+	t.Run("deletes objects from MT class", func(t *testing.T) {
+		defer cleanup()
+
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
-		testsuit.CreateSchemaFoodForTenants(t, client)
-		testsuit.CreateTenantsFood(t, client, tenants...)
-		testsuit.CreateDataFoodForTenants(t, client, tenants...)
-
-		for className, ids := range testsuit.IdsByClass {
-			for _, id := range ids {
-				exists, err := client.Data().Checker().
-					WithID(id).
-					WithClassName(className).
-					WithTenantKey("nonExistingTenant").
-					Do(context.Background())
-
-				require.NotNil(t, err)
-				clientErr := err.(*fault.WeaviateClientError)
-				assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-				// TODO should have message?
-				// assert.Contains(t, clientErr.Msg, "missing error")
-				assert.False(t, exists)
-			}
-		}
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("deletes objects from multi tenant class", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
-		tenants := []string{"tenantNo1", "tenantNo2"}
-
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants...)
 
 		for _, tenant := range tenants {
 			for className, ids := range testsuit.IdsByClass {
+				expectedLeft := len(ids)
+
 				for _, id := range ids {
 					err := client.Data().Deleter().
 						WithID(id).
 						WithClassName(className).
-						WithTenantKey(tenant).
+						WithTenant(tenant).
 						Do(context.Background())
 
 					require.Nil(t, err)
+					expectedLeft--
+
+					t.Run("verify deleted", func(t *testing.T) {
+						exists, err := client.Data().Checker().
+							WithID(id).
+							WithClassName(className).
+							WithTenant(tenant).
+							Do(context.Background())
+
+						require.Nil(t, err)
+						require.False(t, exists)
+					})
+
+					t.Run("verify left", func(t *testing.T) {
+						objects, err := client.Data().ObjectsGetter().
+							WithClassName(className).
+							WithTenant(tenant).
+							Do(context.Background())
+
+						require.Nil(t, err)
+						require.NotNil(t, objects)
+						assert.Len(t, objects, expectedLeft)
+					})
 				}
 			}
 		}
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
 	})
 
-	t.Run("fails deleting objects from multi tenant class without tenant key", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+	t.Run("fails deleting objects from MT class without tenant", func(t *testing.T) {
+		defer cleanup()
+
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
+		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants...)
@@ -1759,161 +1537,43 @@ func TestData_MultiTenancy(t *testing.T) {
 				require.NotNil(t, err)
 				clientErr := err.(*fault.WeaviateClientError)
 				assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-				assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
+				assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled, but request was without tenant")
+
+				t.Run("verify not deleted", func(t *testing.T) {
+					for _, tenant := range tenants {
+						exists, err := client.Data().Checker().
+							WithID(id).
+							WithClassName(className).
+							WithTenant(tenant).
+							Do(context.Background())
+
+						require.Nil(t, err)
+						require.True(t, exists)
+					}
+				})
 			}
 		}
 
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("fails deleting objects from multi tenant class with non existing tenant key", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		tenants := []string{"tenantNo1", "tenantNo2"}
-
-		testsuit.CreateSchemaFoodForTenants(t, client)
-		testsuit.CreateTenantsFood(t, client, tenants...)
-		testsuit.CreateDataFoodForTenants(t, client, tenants...)
-
-		for className, ids := range testsuit.IdsByClass {
-			for _, id := range ids {
-				err := client.Data().Deleter().
-					WithID(id).
-					WithClassName(className).
-					WithTenantKey("nonExistingTenant").
-					Do(context.Background())
-
-				require.NotNil(t, err)
-				clientErr := err.(*fault.WeaviateClientError)
-				assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-				assert.Contains(t, clientErr.Msg, "no tenant found with key")
-			}
-		}
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("deletes objects from non-mt class when tenant key given", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-
-		testsuit.CreateSchemaFood(t, client)
-		testsuit.CreateDataFood(t, client)
-
-		for className, ids := range testsuit.IdsByClass {
-			for _, id := range ids {
-				err := client.Data().Deleter().
-					WithID(id).
-					WithClassName(className).
-					WithTenantKey("nonExistingTenant").
-					Do(context.Background())
-
-				require.Nil(t, err)
-
-				exists, err := client.Data().Checker().
-					WithClassName(className).
-					WithID(id).
-					Do(context.Background())
-
-				require.Nil(t, err)
-				assert.False(t, exists)
-			}
-		}
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("updates objects of multi tenant class", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		className := "Soup"
-		tenants := []string{"tenantNo1", "tenantNo2"}
-
-		testsuit.CreateSchemaSoupForTenants(t, client)
-		testsuit.CreateTenantsSoup(t, client, tenants...)
-		testsuit.CreateDataSoupForTenants(t, client, tenants...)
-
-		for _, tenant := range tenants {
-			err := client.Data().Updater().
-				WithClassName(className).
-				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
-				WithProperties(map[string]interface{}{
-					"name":             "ChickenSoup",
-					"description":      fmt.Sprintf("updated ChickenSoup description [%s]", tenant),
-					"price":            float32(2.1),
-					testsuit.TenantKey: tenant,
-				}).
-				WithTenantKey(tenant).
-				Do(context.Background())
-
-			require.Nil(t, err)
-
-			err = client.Data().Updater().
-				WithClassName(className).
-				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
-				WithProperties(map[string]interface{}{
-					"name":             "Beautiful",
-					"description":      fmt.Sprintf("updated Beautiful description [%s]", tenant),
-					"price":            float32(2.2),
-					testsuit.TenantKey: tenant,
-				}).
-				WithTenantKey(tenant).
-				Do(context.Background())
-
-			require.Nil(t, err)
-		}
-
-		t.Run("check updated", func(t *testing.T) {
+		t.Run("verify not deleted", func(t *testing.T) {
 			for _, tenant := range tenants {
 				objects, err := client.Data().ObjectsGetter().
-					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
-					WithClassName(className).
-					WithTenantKey(tenant).
+					WithTenant(tenant).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
-				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, fmt.Sprintf("updated ChickenSoup description [%s]", tenant),
-					objects[0].Properties.(map[string]interface{})["description"])
-
-				objects, err = client.Data().ObjectsGetter().
-					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
-					WithClassName(className).
-					WithTenantKey(tenant).
-					Do(context.Background())
-
-				require.Nil(t, err)
-				require.NotNil(t, objects)
-				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, fmt.Sprintf("updated Beautiful description [%s]", tenant),
-					objects[0].Properties.(map[string]interface{})["description"])
+				assert.Len(t, objects, len(testsuit.AllIds))
 			}
-		})
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
 		})
 	})
 
-	t.Run("fails updating objects of multi tenant class without tenant key", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+	t.Run("updates objects of MT class", func(t *testing.T) {
+		defer cleanup()
+
 		className := "Soup"
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
+		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
 		testsuit.CreateDataSoupForTenants(t, client, tenants...)
@@ -1921,403 +1581,141 @@ func TestData_MultiTenancy(t *testing.T) {
 		for _, tenant := range tenants {
 			err := client.Data().Updater().
 				WithClassName(className).
-				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
-				WithProperties(map[string]interface{}{
-					"name":             "ChickenSoup",
-					"description":      fmt.Sprintf("updated ChickenSoup description [%s]", tenant),
-					"price":            float32(2.1),
-					testsuit.TenantKey: tenant,
-				}).
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr := err.(*fault.WeaviateClientError)
-			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-			assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
-
-			err = client.Data().Updater().
-				WithClassName(className).
-				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
-				WithProperties(map[string]interface{}{
-					"name":             "Beautiful",
-					"description":      fmt.Sprintf("updated Beautiful description [%s]", tenant),
-					"price":            float32(2.2),
-					testsuit.TenantKey: tenant,
-				}).
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr = err.(*fault.WeaviateClientError)
-			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-			assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
-		}
-
-		t.Run("check not updated", func(t *testing.T) {
-			for _, tenant := range tenants {
-				objects, err := client.Data().ObjectsGetter().
-					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
-					WithClassName(className).
-					WithTenantKey(tenant).
-					Do(context.Background())
-
-				require.Nil(t, err)
-				require.NotNil(t, objects)
-				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, "Used by humans when their inferior genetics are attacked by microscopic organisms.",
-					objects[0].Properties.(map[string]interface{})["description"])
-
-				objects, err = client.Data().ObjectsGetter().
-					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
-					WithClassName(className).
-					WithTenantKey(tenant).
-					Do(context.Background())
-
-				require.Nil(t, err)
-				require.NotNil(t, objects)
-				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, "Putting the game of letter soups to a whole new level.",
-					objects[0].Properties.(map[string]interface{})["description"])
-			}
-		})
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("fails updating objects of multi tenant class with non existing tenant key", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		className := "Soup"
-		tenants := []string{"tenantNo1", "tenantNo2"}
-
-		testsuit.CreateSchemaSoupForTenants(t, client)
-		testsuit.CreateTenantsSoup(t, client, tenants...)
-		testsuit.CreateDataSoupForTenants(t, client, tenants...)
-
-		for _, tenant := range tenants {
-			err := client.Data().Updater().
-				WithClassName(className).
-				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
-				WithProperties(map[string]interface{}{
-					"name":             "ChickenSoup",
-					"description":      fmt.Sprintf("updated ChickenSoup description [%s]", tenant),
-					"price":            float32(2.1),
-					testsuit.TenantKey: tenant,
-				}).
-				WithTenantKey("nonExistingTenant").
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr := err.(*fault.WeaviateClientError)
-			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-			assert.Contains(t, clientErr.Msg, "no tenant found with key")
-
-			err = client.Data().Updater().
-				WithClassName(className).
-				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
-				WithProperties(map[string]interface{}{
-					"name":             "Beautiful",
-					"description":      fmt.Sprintf("updated Beautiful description [%s]", tenant),
-					"price":            float32(2.2),
-					testsuit.TenantKey: tenant,
-				}).
-				WithTenantKey("nonExistingTenant").
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr = err.(*fault.WeaviateClientError)
-			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-			assert.Contains(t, clientErr.Msg, "no tenant found with key")
-		}
-
-		t.Run("check not updated", func(t *testing.T) {
-			for _, tenant := range tenants {
-				objects, err := client.Data().ObjectsGetter().
-					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
-					WithClassName(className).
-					WithTenantKey(tenant).
-					Do(context.Background())
-
-				require.Nil(t, err)
-				require.NotNil(t, objects)
-				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, "Used by humans when their inferior genetics are attacked by microscopic organisms.",
-					objects[0].Properties.(map[string]interface{})["description"])
-
-				objects, err = client.Data().ObjectsGetter().
-					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
-					WithClassName(className).
-					WithTenantKey(tenant).
-					Do(context.Background())
-
-				require.Nil(t, err)
-				require.NotNil(t, objects)
-				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, "Putting the game of letter soups to a whole new level.",
-					objects[0].Properties.(map[string]interface{})["description"])
-			}
-		})
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("fails updating objects of multi tenant class without tenant prop", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		className := "Soup"
-		tenants := []string{"tenantNo1", "tenantNo2"}
-
-		testsuit.CreateSchemaSoupForTenants(t, client)
-		testsuit.CreateTenantsSoup(t, client, tenants...)
-		testsuit.CreateDataSoupForTenants(t, client, tenants...)
-
-		for _, tenant := range tenants {
-			err := client.Data().Updater().
-				WithClassName(className).
-				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+				WithID(testsuit.SOUP_CHICKENSOUP_ID).
 				WithProperties(map[string]interface{}{
 					"name":        "ChickenSoup",
 					"description": fmt.Sprintf("updated ChickenSoup description [%s]", tenant),
 					"price":       float32(2.1),
 				}).
-				WithTenantKey(tenant).
+				WithTenant(tenant).
 				Do(context.Background())
 
-			require.NotNil(t, err)
-			clientErr := err.(*fault.WeaviateClientError)
-			assert.Equal(t, 422, clientErr.StatusCode)
-			assert.Contains(t, clientErr.Msg, "conflicts with object body value")
+			require.Nil(t, err)
 
 			err = client.Data().Updater().
 				WithClassName(className).
-				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+				WithID(testsuit.SOUP_BEAUTIFUL_ID).
 				WithProperties(map[string]interface{}{
 					"name":        "Beautiful",
 					"description": fmt.Sprintf("updated Beautiful description [%s]", tenant),
 					"price":       float32(2.2),
 				}).
-				WithTenantKey(tenant).
+				WithTenant(tenant).
 				Do(context.Background())
 
-			require.NotNil(t, err)
-			clientErr = err.(*fault.WeaviateClientError)
-			assert.Equal(t, 422, clientErr.StatusCode)
-			assert.Contains(t, clientErr.Msg, "conflicts with object body value")
+			require.Nil(t, err)
 		}
 
-		t.Run("check not updated", func(t *testing.T) {
+		t.Run("verify updated", func(t *testing.T) {
 			for _, tenant := range tenants {
 				objects, err := client.Data().ObjectsGetter().
-					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+					WithID(testsuit.SOUP_CHICKENSOUP_ID).
 					WithClassName(className).
-					WithTenantKey(tenant).
+					WithTenant(tenant).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, "Used by humans when their inferior genetics are attacked by microscopic organisms.",
+				assert.Equal(t, tenant, objects[0].Tenant)
+				assert.Equal(t, fmt.Sprintf("updated ChickenSoup description [%s]", tenant),
 					objects[0].Properties.(map[string]interface{})["description"])
 
 				objects, err = client.Data().ObjectsGetter().
-					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+					WithID(testsuit.SOUP_BEAUTIFUL_ID).
 					WithClassName(className).
-					WithTenantKey(tenant).
+					WithTenant(tenant).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, "Putting the game of letter soups to a whole new level.",
+				assert.Equal(t, tenant, objects[0].Tenant)
+				assert.Equal(t, fmt.Sprintf("updated Beautiful description [%s]", tenant),
 					objects[0].Properties.(map[string]interface{})["description"])
 			}
 		})
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
 	})
 
-	t.Run("fails updating objects of multi tenant class with non existing tenant prop", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+	t.Run("fails updating objects of MT class without tenant", func(t *testing.T) {
+		defer cleanup()
+
 		className := "Soup"
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
-		testsuit.CreateSchemaSoupForTenants(t, client)
-		testsuit.CreateTenantsSoup(t, client, tenants...)
-		testsuit.CreateDataSoupForTenants(t, client, tenants...)
-
-		for _, tenant := range tenants {
-			err := client.Data().Updater().
-				WithClassName(className).
-				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
-				WithProperties(map[string]interface{}{
-					"name":             "ChickenSoup",
-					"description":      fmt.Sprintf("updated ChickenSoup description [%s]", tenant),
-					"price":            float32(2.1),
-					testsuit.TenantKey: "nonExistingTenant",
-				}).
-				WithTenantKey(tenant).
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr := err.(*fault.WeaviateClientError)
-			assert.Equal(t, 422, clientErr.StatusCode)
-			assert.Contains(t, clientErr.Msg, "is immutable")
-
-			err = client.Data().Updater().
-				WithClassName(className).
-				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
-				WithProperties(map[string]interface{}{
-					"name":             "Beautiful",
-					"description":      fmt.Sprintf("updated Beautiful description [%s]", tenant),
-					"price":            float32(2.2),
-					testsuit.TenantKey: "nonExistingTenant",
-				}).
-				WithTenantKey(tenant).
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr = err.(*fault.WeaviateClientError)
-			assert.Equal(t, 422, clientErr.StatusCode)
-			assert.Contains(t, clientErr.Msg, "is immutable")
-		}
-
-		t.Run("check not updated", func(t *testing.T) {
-			for _, tenant := range tenants {
-				objects, err := client.Data().ObjectsGetter().
-					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
-					WithClassName(className).
-					WithTenantKey(tenant).
-					Do(context.Background())
-
-				require.Nil(t, err)
-				require.NotNil(t, objects)
-				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, "Used by humans when their inferior genetics are attacked by microscopic organisms.",
-					objects[0].Properties.(map[string]interface{})["description"])
-
-				objects, err = client.Data().ObjectsGetter().
-					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
-					WithClassName(className).
-					WithTenantKey(tenant).
-					Do(context.Background())
-
-				require.Nil(t, err)
-				require.NotNil(t, objects)
-				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, "Putting the game of letter soups to a whole new level.",
-					objects[0].Properties.(map[string]interface{})["description"])
-			}
-		})
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("fails updating objects of multi tenant class with non matching tenant prop", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
-		className := "Soup"
-		tenants := []string{"tenantNo1", "tenantNo2"}
-
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
 		testsuit.CreateDataSoupForTenants(t, client, tenants...)
 
 		err := client.Data().Updater().
 			WithClassName(className).
-			WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+			WithID(testsuit.SOUP_CHICKENSOUP_ID).
 			WithProperties(map[string]interface{}{
-				"name":             "ChickenSoup",
-				"description":      fmt.Sprintf("updated ChickenSoup description [%s]", tenants[0]),
-				"price":            float32(2.1),
-				testsuit.TenantKey: tenants[1],
+				"name":        "ChickenSoup",
+				"description": "updated ChickenSoup description",
+				"price":       float32(2.1),
 			}).
-			WithTenantKey(tenants[0]).
 			Do(context.Background())
 
 		require.NotNil(t, err)
 		clientErr := err.(*fault.WeaviateClientError)
-		assert.Equal(t, 422, clientErr.StatusCode)
-		assert.Contains(t, clientErr.Msg, "is immutable")
+		assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+		assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled, but request was without tenant")
 
 		err = client.Data().Updater().
 			WithClassName(className).
-			WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+			WithID(testsuit.SOUP_BEAUTIFUL_ID).
 			WithProperties(map[string]interface{}{
-				"name":             "Beautiful",
-				"description":      fmt.Sprintf("updated Beautiful description [%s]", tenants[1]),
-				"price":            float32(2.2),
-				testsuit.TenantKey: tenants[0],
+				"name":        "Beautiful",
+				"description": "updated Beautiful description",
+				"price":       float32(2.2),
 			}).
-			WithTenantKey(tenants[1]).
 			Do(context.Background())
 
 		require.NotNil(t, err)
 		clientErr = err.(*fault.WeaviateClientError)
-		assert.Equal(t, 422, clientErr.StatusCode)
-		assert.Contains(t, clientErr.Msg, "is immutable")
+		assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+		assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled, but request was without tenant")
 
-		t.Run("check not updated", func(t *testing.T) {
+		t.Run("verify not updated", func(t *testing.T) {
 			for _, tenant := range tenants {
 				objects, err := client.Data().ObjectsGetter().
-					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+					WithID(testsuit.SOUP_CHICKENSOUP_ID).
 					WithClassName(className).
-					WithTenantKey(tenant).
+					WithTenant(tenant).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
+				assert.Equal(t, tenant, objects[0].Tenant)
 				assert.Equal(t, "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 					objects[0].Properties.(map[string]interface{})["description"])
 
 				objects, err = client.Data().ObjectsGetter().
-					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+					WithID(testsuit.SOUP_BEAUTIFUL_ID).
 					WithClassName(className).
-					WithTenantKey(tenant).
+					WithTenant(tenant).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
+				assert.Equal(t, tenant, objects[0].Tenant)
 				assert.Equal(t, "Putting the game of letter soups to a whole new level.",
 					objects[0].Properties.(map[string]interface{})["description"])
 			}
 		})
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
 	})
 
-	t.Run("merges objects of multi tenant class", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+	t.Run("merges objects of MT class", func(t *testing.T) {
+		defer cleanup()
+
 		className := "Soup"
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
+		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
 		testsuit.CreateDataSoupForTenants(t, client, tenants...)
@@ -2325,11 +1723,11 @@ func TestData_MultiTenancy(t *testing.T) {
 		for _, tenant := range tenants {
 			err := client.Data().Updater().
 				WithClassName(className).
-				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+				WithID(testsuit.SOUP_CHICKENSOUP_ID).
 				WithProperties(map[string]interface{}{
 					"description": fmt.Sprintf("merged ChickenSoup description [%s]", tenant),
 				}).
-				WithTenantKey(tenant).
+				WithTenant(tenant).
 				WithMerge().
 				Do(context.Background())
 
@@ -2337,363 +1735,115 @@ func TestData_MultiTenancy(t *testing.T) {
 
 			err = client.Data().Updater().
 				WithClassName(className).
-				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+				WithID(testsuit.SOUP_BEAUTIFUL_ID).
 				WithProperties(map[string]interface{}{
 					"description": fmt.Sprintf("merged Beautiful description [%s]", tenant),
 				}).
-				WithTenantKey(tenant).
+				WithTenant(tenant).
 				WithMerge().
 				Do(context.Background())
 
 			require.Nil(t, err)
 		}
 
-		t.Run("check merged", func(t *testing.T) {
+		t.Run("verify merged", func(t *testing.T) {
 			for _, tenant := range tenants {
 				objects, err := client.Data().ObjectsGetter().
-					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+					WithID(testsuit.SOUP_CHICKENSOUP_ID).
 					WithClassName(className).
-					WithTenantKey(tenant).
+					WithTenant(tenant).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
+				assert.Equal(t, tenant, objects[0].Tenant)
 				assert.Equal(t, fmt.Sprintf("merged ChickenSoup description [%s]", tenant),
 					objects[0].Properties.(map[string]interface{})["description"])
 
 				objects, err = client.Data().ObjectsGetter().
-					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+					WithID(testsuit.SOUP_BEAUTIFUL_ID).
 					WithClassName(className).
-					WithTenantKey(tenant).
+					WithTenant(tenant).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
+				assert.Equal(t, tenant, objects[0].Tenant)
 				assert.Equal(t, fmt.Sprintf("merged Beautiful description [%s]", tenant),
 					objects[0].Properties.(map[string]interface{})["description"])
 			}
 		})
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
 	})
 
-	t.Run("fails merging objects of multi tenant class without tenant key", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+	t.Run("fails merging objects of MT class without tenant", func(t *testing.T) {
+		defer cleanup()
+
 		className := "Soup"
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
-		testsuit.CreateSchemaSoupForTenants(t, client)
-		testsuit.CreateTenantsSoup(t, client, tenants...)
-		testsuit.CreateDataSoupForTenants(t, client, tenants...)
-
-		for _, tenant := range tenants {
-			err := client.Data().Updater().
-				WithClassName(className).
-				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
-				WithProperties(map[string]interface{}{
-					"description": fmt.Sprintf("merged ChickenSoup description [%s]", tenant),
-				}).
-				WithMerge().
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr := err.(*fault.WeaviateClientError)
-			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-			assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
-
-			err = client.Data().Updater().
-				WithClassName(className).
-				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
-				WithProperties(map[string]interface{}{
-					"description": fmt.Sprintf("merged Beautiful description [%s]", tenant),
-				}).
-				WithMerge().
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr = err.(*fault.WeaviateClientError)
-			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-			assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled")
-		}
-
-		t.Run("check not merged", func(t *testing.T) {
-			for _, tenant := range tenants {
-				objects, err := client.Data().ObjectsGetter().
-					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
-					WithClassName(className).
-					WithTenantKey(tenant).
-					Do(context.Background())
-
-				require.Nil(t, err)
-				require.NotNil(t, objects)
-				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, "Used by humans when their inferior genetics are attacked by microscopic organisms.",
-					objects[0].Properties.(map[string]interface{})["description"])
-
-				objects, err = client.Data().ObjectsGetter().
-					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
-					WithClassName(className).
-					WithTenantKey(tenant).
-					Do(context.Background())
-
-				require.Nil(t, err)
-				require.NotNil(t, objects)
-				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, "Putting the game of letter soups to a whole new level.",
-					objects[0].Properties.(map[string]interface{})["description"])
-			}
-		})
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("fails merging objects of multi tenant class with non existing tenant key", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
-		className := "Soup"
-		tenants := []string{"tenantNo1", "tenantNo2"}
-
-		testsuit.CreateSchemaSoupForTenants(t, client)
-		testsuit.CreateTenantsSoup(t, client, tenants...)
-		testsuit.CreateDataSoupForTenants(t, client, tenants...)
-
-		for _, tenant := range tenants {
-			err := client.Data().Updater().
-				WithClassName(className).
-				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
-				WithProperties(map[string]interface{}{
-					"description": fmt.Sprintf("merged ChickenSoup description [%s]", tenant),
-				}).
-				WithMerge().
-				WithTenantKey("nonExistingTenant").
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr := err.(*fault.WeaviateClientError)
-			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-			assert.Contains(t, clientErr.Msg, "no tenant found with key")
-
-			err = client.Data().Updater().
-				WithClassName(className).
-				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
-				WithProperties(map[string]interface{}{
-					"description": fmt.Sprintf("merged Beautiful description [%s]", tenant),
-				}).
-				WithMerge().
-				WithTenantKey("nonExistingTenant").
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr = err.(*fault.WeaviateClientError)
-			assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
-			assert.Contains(t, clientErr.Msg, "no tenant found with key")
-		}
-
-		t.Run("check not merged", func(t *testing.T) {
-			for _, tenant := range tenants {
-				objects, err := client.Data().ObjectsGetter().
-					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
-					WithClassName(className).
-					WithTenantKey(tenant).
-					Do(context.Background())
-
-				require.Nil(t, err)
-				require.NotNil(t, objects)
-				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, "Used by humans when their inferior genetics are attacked by microscopic organisms.",
-					objects[0].Properties.(map[string]interface{})["description"])
-
-				objects, err = client.Data().ObjectsGetter().
-					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
-					WithClassName(className).
-					WithTenantKey(tenant).
-					Do(context.Background())
-
-				require.Nil(t, err)
-				require.NotNil(t, objects)
-				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, "Putting the game of letter soups to a whole new level.",
-					objects[0].Properties.(map[string]interface{})["description"])
-			}
-		})
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("fails merging objects of multi tenant class with non existing tenant prop", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		className := "Soup"
-		tenants := []string{"tenantNo1", "tenantNo2"}
-
-		testsuit.CreateSchemaSoupForTenants(t, client)
-		testsuit.CreateTenantsSoup(t, client, tenants...)
-		testsuit.CreateDataSoupForTenants(t, client, tenants...)
-
-		for _, tenant := range tenants {
-			err := client.Data().Updater().
-				WithClassName(className).
-				WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
-				WithProperties(map[string]interface{}{
-					"description":      fmt.Sprintf("merged ChickenSoup description [%s]", tenant),
-					testsuit.TenantKey: "nonExistingTenant",
-				}).
-				WithTenantKey(tenant).
-				WithMerge().
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr := err.(*fault.WeaviateClientError)
-			assert.Equal(t, 422, clientErr.StatusCode)
-			assert.Contains(t, clientErr.Msg, "is immutable")
-
-			err = client.Data().Updater().
-				WithClassName(className).
-				WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
-				WithProperties(map[string]interface{}{
-					"description":      fmt.Sprintf("merged Beautiful description [%s]", tenant),
-					testsuit.TenantKey: "nonExistingTenant",
-				}).
-				WithTenantKey(tenant).
-				WithMerge().
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			clientErr = err.(*fault.WeaviateClientError)
-			assert.Equal(t, 422, clientErr.StatusCode)
-			assert.Contains(t, clientErr.Msg, "is immutable")
-		}
-
-		t.Run("check not merged", func(t *testing.T) {
-			for _, tenant := range tenants {
-				objects, err := client.Data().ObjectsGetter().
-					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
-					WithClassName(className).
-					WithTenantKey(tenant).
-					Do(context.Background())
-
-				require.Nil(t, err)
-				require.NotNil(t, objects)
-				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, "Used by humans when their inferior genetics are attacked by microscopic organisms.",
-					objects[0].Properties.(map[string]interface{})["description"])
-
-				objects, err = client.Data().ObjectsGetter().
-					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
-					WithClassName(className).
-					WithTenantKey(tenant).
-					Do(context.Background())
-
-				require.Nil(t, err)
-				require.NotNil(t, objects)
-				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
-				assert.Equal(t, "Putting the game of letter soups to a whole new level.",
-					objects[0].Properties.(map[string]interface{})["description"])
-			}
-		})
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
-		})
-	})
-
-	t.Run("fails merging objects of multi tenant class with non matching tenant prop", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
-		className := "Soup"
-		tenants := []string{"tenantNo1", "tenantNo2"}
-
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
 		testsuit.CreateDataSoupForTenants(t, client, tenants...)
 
 		err := client.Data().Updater().
 			WithClassName(className).
-			WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+			WithID(testsuit.SOUP_CHICKENSOUP_ID).
 			WithProperties(map[string]interface{}{
-				"description":      fmt.Sprintf("merged ChickenSoup description [%s]", tenants[0]),
-				testsuit.TenantKey: tenants[1],
+				"description": "merged ChickenSoup description",
 			}).
-			WithTenantKey(tenants[0]).
 			WithMerge().
 			Do(context.Background())
 
 		require.NotNil(t, err)
 		clientErr := err.(*fault.WeaviateClientError)
-		assert.Equal(t, 422, clientErr.StatusCode)
-		assert.Contains(t, clientErr.Msg, "is immutable")
+		assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+		assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled, but request was without tenant")
 
 		err = client.Data().Updater().
 			WithClassName(className).
-			WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+			WithID(testsuit.SOUP_BEAUTIFUL_ID).
 			WithProperties(map[string]interface{}{
-				"description":      fmt.Sprintf("merged Beautiful description [%s]", tenants[1]),
-				testsuit.TenantKey: tenants[0],
+				"description": "merged Beautiful description",
 			}).
-			WithTenantKey(tenants[1]).
 			WithMerge().
 			Do(context.Background())
 
 		require.NotNil(t, err)
 		clientErr = err.(*fault.WeaviateClientError)
-		assert.Equal(t, 422, clientErr.StatusCode)
-		assert.Contains(t, clientErr.Msg, "is immutable")
+		assert.Equal(t, 500, clientErr.StatusCode) // TODO 422?
+		assert.Contains(t, clientErr.Msg, "has multi-tenancy enabled, but request was without tenant")
 
-		t.Run("check not merged", func(t *testing.T) {
+		t.Run("verify not merged", func(t *testing.T) {
 			for _, tenant := range tenants {
 				objects, err := client.Data().ObjectsGetter().
-					WithID("8c156d37-81aa-4ce9-a811-621e2702b825").
+					WithID(testsuit.SOUP_CHICKENSOUP_ID).
 					WithClassName(className).
-					WithTenantKey(tenant).
+					WithTenant(tenant).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
+				assert.Equal(t, tenant, objects[0].Tenant)
 				assert.Equal(t, "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 					objects[0].Properties.(map[string]interface{})["description"])
 
 				objects, err = client.Data().ObjectsGetter().
-					WithID("27351361-2898-4d1a-aad7-1ca48253eb0b").
+					WithID(testsuit.SOUP_BEAUTIFUL_ID).
 					WithClassName(className).
-					WithTenantKey(tenant).
+					WithTenant(tenant).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Properties.(map[string]interface{})[testsuit.TenantKey])
+				assert.Equal(t, tenant, objects[0].Tenant)
 				assert.Equal(t, "Putting the game of letter soups to a whole new level.",
 					objects[0].Properties.(map[string]interface{})["description"])
 			}
-		})
-
-		t.Run("clean up classes", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
-			err := client.Schema().AllDeleter().Do(context.Background())
-			require.Nil(t, err)
 		})
 	})
 
