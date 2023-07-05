@@ -290,6 +290,22 @@ func TestQueryBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
+	t.Run("Autocut Get", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection:           conMock,
+			includesFilterClause: false,
+		}
+
+		name := Field{Name: "name"}
+
+		query := builder.WithClassName("Pizza").WithFields(name).WithAutocut(2).build()
+
+		expected := "{Get {Pizza (autocut: 2) {name}}}"
+		assert.Equal(t, expected, query)
+	})
+
 	t.Run("Limit And Offset Get", func(t *testing.T) {
 		conMock := &MockRunREST{}
 

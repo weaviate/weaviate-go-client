@@ -18,6 +18,8 @@ type GetBuilder struct {
 	includesFilterClause bool // true if brackets behind class is needed
 	includesLimit        bool
 	limit                int
+	autocut              int
+	includesAutocut      bool
 	includesOffset       bool
 	offset               int
 	includesAfter        bool
@@ -80,6 +82,14 @@ func (gb *GetBuilder) WithOffset(offset int) *GetBuilder {
 	gb.includesFilterClause = true
 	gb.includesOffset = true
 	gb.offset = offset
+	return gb
+}
+
+// WithAutocut of objects in the result set
+func (gb *GetBuilder) WithAutocut(autocut int) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.includesAutocut = true
+	gb.autocut = autocut
 	return gb
 }
 
@@ -227,6 +237,9 @@ func (gb *GetBuilder) createFilterClause() string {
 	}
 	if gb.includesLimit {
 		filters = append(filters, fmt.Sprintf("limit: %v", gb.limit))
+	}
+	if gb.includesAutocut {
+		filters = append(filters, fmt.Sprintf("autocut: %v", gb.autocut))
 	}
 	if gb.includesOffset {
 		filters = append(filters, fmt.Sprintf("offset: %v", gb.offset))
