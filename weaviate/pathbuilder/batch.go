@@ -29,9 +29,6 @@ func BatchReferences(comp Components) string {
 	if comp.ConsistencyLevel != "" {
 		pathParams.Set("consistency_level", comp.ConsistencyLevel)
 	}
-	// if comp.Tenant != "" {
-	// 	pathParams.Set("tenant", comp.Tenant)
-	// }
 	if len(pathParams) > 0 {
 		path = fmt.Sprintf("%s?%v", path, pathParams.Encode())
 	}

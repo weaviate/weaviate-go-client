@@ -16,19 +16,19 @@ type TenantsDeleter struct {
 	tenants    []string
 }
 
-// WithClassName specifies the class that tenants will be added to
+// WithClassName specifies the class that tenants will be deleted from
 func (td *TenantsDeleter) WithClassName(className string) *TenantsDeleter {
 	td.className = className
 	return td
 }
 
-// WithTenants specifies tenants that will be added to the class
+// WithTenants specifies tenants that will be deleted from the class
 func (td *TenantsDeleter) WithTenants(tenants ...string) *TenantsDeleter {
 	td.tenants = tenants
 	return td
 }
 
-// Add tenants to the class specified in the builder
+// Deletes tenants from the class specified in the builder
 func (td *TenantsDeleter) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/schema/%v/tenants", td.className)
 	responseData, err := td.connection.RunREST(ctx, path, http.MethodDelete, td.tenants)
