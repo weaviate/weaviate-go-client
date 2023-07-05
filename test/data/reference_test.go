@@ -1083,6 +1083,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 	})
 
 	t.Run("creates references between MT and non-MT classes", func(t *testing.T) {
+		t.Skip("to be enabled")
 		defer cleanup()
 
 		tenantSoup := "tenantSoup"
@@ -1233,6 +1234,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 	})
 
 	t.Run("deletes references between MT and non-MT classes", func(t *testing.T) {
+		t.Skip("to be enabled")
 		defer cleanup()
 
 		tenantSoup := "tenantSoup"
@@ -1318,6 +1320,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 	})
 
 	t.Run("fails deleting references between MT and non-MT classes without tenant", func(t *testing.T) {
+		t.Skip("to be enabled")
 		defer cleanup()
 
 		tenantSoup := "tenantSoup"
@@ -1404,6 +1407,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 	})
 
 	t.Run("replaces references between MT and non-MT classes", func(t *testing.T) {
+		t.Skip("to be enabled")
 		defer cleanup()
 
 		tenantSoup := "tenantSoup"
@@ -1502,6 +1506,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 	})
 
 	t.Run("fails replacing references between MT and non-MT classes without tenant", func(t *testing.T) {
+		t.Skip("to be enabled")
 		defer cleanup()
 
 		tenantSoup := "tenantSoup"

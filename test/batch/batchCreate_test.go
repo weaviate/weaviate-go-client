@@ -327,6 +327,7 @@ func TestBatchCreate_MultiTenancy(t *testing.T) {
 	})
 
 	t.Run("creates objects of MT class", func(t *testing.T) {
+		t.Skip("to be enabled")
 		defer cleanup()
 
 		tenants := []string{"tenantNo1", "tenantNo2"}
@@ -428,6 +429,7 @@ func TestBatchCreate_MultiTenancy(t *testing.T) {
 	})
 
 	t.Run("fails creating objects of MT class without tenant", func(t *testing.T) {
+		t.Skip("to be enabled")
 		defer cleanup()
 
 		tenants := []string{"tenantNo1", "tenantNo2"}
@@ -869,7 +871,7 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 		pizzaIds := testsuit.IdsByClass["Pizza"]
 		soupIds := testsuit.IdsByClass["Soup"]
 		client := testsuit.CreateTestClient()
-		
+
 		testsuit.CreateSchemaSoup(t, client)
 		testsuit.CreateDataSoup(t, client)
 

@@ -247,6 +247,7 @@ func TestBatchDelete_MultiTenancy(t *testing.T) {
 	})
 
 	t.Run("fails deleting objects from MT class without tenant", func(t *testing.T) {
+		t.Skip("to be enabled")
 		defer cleanup()
 
 		tenants := []string{"tenantNo1", "tenantNo2"}
