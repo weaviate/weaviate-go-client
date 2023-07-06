@@ -9,7 +9,7 @@ services:
       - '8085'
       - --scheme
       - http
-    image: semitechnologies/weaviate:1.20.0-prealpha-dc9b872
+    image: semitechnologies/weaviate:1.20.0-prealpha-85b5f0f
     ports:
       - 8085:8085
     restart: on-failure:0
