@@ -5,8 +5,8 @@ go 1.19
 require (
 	github.com/go-openapi/strfmt v0.21.3
 	github.com/stretchr/testify v1.8.4
-	github.com/weaviate/weaviate v1.19.12-0.20230705121804-dc9b87202868
-	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
+	github.com/weaviate/weaviate v1.19.13-0.20230706120536-85b5f0f4fa43
+	golang.org/x/oauth2 v0.4.0
 )
 
 require (
@@ -16,7 +16,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-openapi/analysis v0.21.2 // indirect
 	github.com/go-openapi/errors v0.20.3 // indirect

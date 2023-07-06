@@ -162,9 +162,9 @@ func (getter *ObjectsGetter) buildPathParams() url.Values {
 	if len(getter.id) == 0 && len(getter.className) > 0 {
 		if getter.dbVersionSupport.SupportsClassNameNamespacedEndpoints() {
 			pathParams.Set("class", getter.className)
+		} else {
+			getter.dbVersionSupport.WarnNotSupportedClassParameterInEndpointsForObjects()
 		}
-		getter.dbVersionSupport.WarnNotSupportedClassParameterInEndpointsForObjects()
-
 	}
 
 	if getter.consistencyLevel != "" {
