@@ -35,7 +35,11 @@ func main() {
     Scheme: "http",
     Host:   "localhost:8080",
   }
-  c := client.New(config)
+  c, err := client.NewClient(config)
+  if err != nil {
+    fmt.Printf("Error occurred %v", err)
+    return
+  }
   metaGetter := c.Misc().MetaGetter()
   meta, err := metaGetter.Do(context.Background())
   if err != nil {
