@@ -9,7 +9,7 @@ services:
       - '8085'
       - --scheme
       - http
-    image: semitechnologies/weaviate:1.20.0
+    image: semitechnologies/weaviate:preview-adds-activity-status-to-get-tenant-s-body-2a66654
     ports:
       - 8085:8085
     restart: on-failure:0
