@@ -201,12 +201,15 @@ func TestBatchDelete_MultiTenancy(t *testing.T) {
 	t.Run("deletes objects from MT class", func(t *testing.T) {
 		defer cleanup()
 
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
-		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
 
 		for _, tenant := range tenants {
 			for className, ids := range testsuit.IdsByClass {
@@ -217,7 +220,7 @@ func TestBatchDelete_MultiTenancy(t *testing.T) {
 						WithPath([]string{"name"}).
 						WithValueText("*")).
 					WithOutput("minimal").
-					WithTenant(tenant).
+					WithTenant(tenant.Name).
 					Do(context.Background())
 
 				require.Nil(t, err)
@@ -235,7 +238,7 @@ func TestBatchDelete_MultiTenancy(t *testing.T) {
 						exists, err := client.Data().Checker().
 							WithID(id).
 							WithClassName(className).
-							WithTenant(tenant).
+							WithTenant(tenant.Name).
 							Do(context.Background())
 
 						require.Nil(t, err)
@@ -249,12 +252,15 @@ func TestBatchDelete_MultiTenancy(t *testing.T) {
 	t.Run("fails deleting objects from MT class without tenant", func(t *testing.T) {
 		defer cleanup()
 
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
-		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
 
 		for className := range testsuit.IdsByClass {
 			resp, err := client.Batch().ObjectsBatchDeleter().
@@ -280,7 +286,7 @@ func TestBatchDelete_MultiTenancy(t *testing.T) {
 						exists, err := client.Data().Checker().
 							WithID(id).
 							WithClassName(className).
-							WithTenant(tenant).
+							WithTenant(tenant.Name).
 							Do(context.Background())
 
 						require.Nil(t, err)

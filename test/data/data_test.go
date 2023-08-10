@@ -1176,7 +1176,10 @@ func TestData_MultiTenancy(t *testing.T) {
 		defer cleanup()
 
 		className := "Pizza"
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaPizzaForTenants(t, client)
@@ -1192,7 +1195,7 @@ func TestData_MultiTenancy(t *testing.T) {
 					"price":       float32(1.1),
 					"best_before": "2022-05-03T12:04:40+02:00",
 				}).
-				WithTenant(tenant).
+				WithTenant(tenant.Name).
 				Do(context.Background())
 
 			require.Nil(t, err)
@@ -1200,7 +1203,7 @@ func TestData_MultiTenancy(t *testing.T) {
 			require.NotNil(t, wrap.Object)
 			assert.Equal(t, strfmt.UUID(testsuit.PIZZA_QUATTRO_FORMAGGI_ID), wrap.Object.ID)
 			assert.Equal(t, "Quattro Formaggi", wrap.Object.Properties.(map[string]interface{})["name"])
-			assert.Equal(t, tenant, wrap.Object.Tenant)
+			assert.Equal(t, tenant.Name, wrap.Object.Tenant)
 
 			wrap, err = client.Data().Creator().
 				WithClassName(className).
@@ -1211,7 +1214,7 @@ func TestData_MultiTenancy(t *testing.T) {
 					"price":       float32(1.2),
 					"best_before": "2022-05-05T07:16:30+02:00",
 				}).
-				WithTenant(tenant).
+				WithTenant(tenant.Name).
 				Do(context.Background())
 
 			require.Nil(t, err)
@@ -1219,7 +1222,7 @@ func TestData_MultiTenancy(t *testing.T) {
 			require.NotNil(t, wrap.Object)
 			assert.Equal(t, strfmt.UUID(testsuit.PIZZA_FRUTTI_DI_MARE_ID), wrap.Object.ID)
 			assert.Equal(t, "Frutti di Mare", wrap.Object.Properties.(map[string]interface{})["name"])
-			assert.Equal(t, tenant, wrap.Object.Tenant)
+			assert.Equal(t, tenant.Name, wrap.Object.Tenant)
 		}
 
 		t.Run("verify created", func(t *testing.T) {
@@ -1231,7 +1234,7 @@ func TestData_MultiTenancy(t *testing.T) {
 					exists, err := client.Data().Checker().
 						WithID(id).
 						WithClassName(className).
-						WithTenant(tenant).
+						WithTenant(tenant.Name).
 						Do(context.Background())
 
 					require.Nil(t, err)
@@ -1245,7 +1248,10 @@ func TestData_MultiTenancy(t *testing.T) {
 		defer cleanup()
 
 		className := "Pizza"
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaPizzaForTenants(t, client)
@@ -1294,7 +1300,7 @@ func TestData_MultiTenancy(t *testing.T) {
 					exists, err := client.Data().Checker().
 						WithID(id).
 						WithClassName(className).
-						WithTenant(tenant).
+						WithTenant(tenant.Name).
 						Do(context.Background())
 
 					require.Nil(t, err)
@@ -1307,12 +1313,15 @@ func TestData_MultiTenancy(t *testing.T) {
 	t.Run("gets objects of MT class", func(t *testing.T) {
 		defer cleanup()
 
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
-		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
 
 		extractIds := func(objs []*models.Object) []string {
 			ids := make([]string, len(objs))
@@ -1329,21 +1338,21 @@ func TestData_MultiTenancy(t *testing.T) {
 						objects, err := client.Data().ObjectsGetter().
 							WithID(id).
 							WithClassName(className).
-							WithTenant(tenant).
+							WithTenant(tenant.Name).
 							Do(context.Background())
 
 						require.Nil(t, err)
 						require.NotNil(t, objects)
 						require.Len(t, objects, 1)
 						assert.Equal(t, strfmt.UUID(id), objects[0].ID)
-						assert.Equal(t, tenant, objects[0].Tenant)
+						assert.Equal(t, tenant.Name, objects[0].Tenant)
 					})
 				}
 
 				t.Run("list objects by class", func(t *testing.T) {
 					objects, err := client.Data().ObjectsGetter().
 						WithClassName(className).
-						WithTenant(tenant).
+						WithTenant(tenant.Name).
 						Do(context.Background())
 
 					require.Nil(t, err)
@@ -1355,7 +1364,7 @@ func TestData_MultiTenancy(t *testing.T) {
 
 			t.Run("list all objects", func(t *testing.T) {
 				objects, err := client.Data().ObjectsGetter().
-					WithTenant(tenant).
+					WithTenant(tenant.Name).
 					Do(context.Background())
 
 				require.Nil(t, err)
@@ -1369,12 +1378,15 @@ func TestData_MultiTenancy(t *testing.T) {
 	t.Run("fails getting objects of MT class without tenant", func(t *testing.T) {
 		defer cleanup()
 
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
-		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
 
 		for className, ids := range testsuit.IdsByClass {
 			for _, id := range ids {
@@ -1418,12 +1430,15 @@ func TestData_MultiTenancy(t *testing.T) {
 	t.Run("checks objects of MT class", func(t *testing.T) {
 		defer cleanup()
 
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
-		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
 
 		for _, tenant := range tenants {
 			for className, ids := range testsuit.IdsByClass {
@@ -1431,7 +1446,7 @@ func TestData_MultiTenancy(t *testing.T) {
 					exists, err := client.Data().Checker().
 						WithID(id).
 						WithClassName(className).
-						WithTenant(tenant).
+						WithTenant(tenant.Name).
 						Do(context.Background())
 
 					require.Nil(t, err)
@@ -1444,12 +1459,15 @@ func TestData_MultiTenancy(t *testing.T) {
 	t.Run("fails checking objects of MT class without tenant", func(t *testing.T) {
 		defer cleanup()
 
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
-		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
 
 		for className, ids := range testsuit.IdsByClass {
 			for _, id := range ids {
@@ -1470,12 +1488,15 @@ func TestData_MultiTenancy(t *testing.T) {
 	t.Run("deletes objects from MT class", func(t *testing.T) {
 		defer cleanup()
 
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
-		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
 
 		for _, tenant := range tenants {
 			for className, ids := range testsuit.IdsByClass {
@@ -1485,7 +1506,7 @@ func TestData_MultiTenancy(t *testing.T) {
 					err := client.Data().Deleter().
 						WithID(id).
 						WithClassName(className).
-						WithTenant(tenant).
+						WithTenant(tenant.Name).
 						Do(context.Background())
 
 					require.Nil(t, err)
@@ -1495,7 +1516,7 @@ func TestData_MultiTenancy(t *testing.T) {
 						exists, err := client.Data().Checker().
 							WithID(id).
 							WithClassName(className).
-							WithTenant(tenant).
+							WithTenant(tenant.Name).
 							Do(context.Background())
 
 						require.Nil(t, err)
@@ -1505,7 +1526,7 @@ func TestData_MultiTenancy(t *testing.T) {
 					t.Run("verify left", func(t *testing.T) {
 						objects, err := client.Data().ObjectsGetter().
 							WithClassName(className).
-							WithTenant(tenant).
+							WithTenant(tenant.Name).
 							Do(context.Background())
 
 						require.Nil(t, err)
@@ -1520,12 +1541,15 @@ func TestData_MultiTenancy(t *testing.T) {
 	t.Run("fails deleting objects from MT class without tenant", func(t *testing.T) {
 		defer cleanup()
 
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
-		testsuit.CreateDataFoodForTenants(t, client, tenants...)
+		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
 
 		for className, ids := range testsuit.IdsByClass {
 			for _, id := range ids {
@@ -1544,7 +1568,7 @@ func TestData_MultiTenancy(t *testing.T) {
 						exists, err := client.Data().Checker().
 							WithID(id).
 							WithClassName(className).
-							WithTenant(tenant).
+							WithTenant(tenant.Name).
 							Do(context.Background())
 
 						require.Nil(t, err)
@@ -1557,7 +1581,7 @@ func TestData_MultiTenancy(t *testing.T) {
 		t.Run("verify not deleted", func(t *testing.T) {
 			for _, tenant := range tenants {
 				objects, err := client.Data().ObjectsGetter().
-					WithTenant(tenant).
+					WithTenant(tenant.Name).
 					Do(context.Background())
 
 				require.Nil(t, err)
@@ -1571,12 +1595,15 @@ func TestData_MultiTenancy(t *testing.T) {
 		defer cleanup()
 
 		className := "Soup"
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
-		testsuit.CreateDataSoupForTenants(t, client, tenants...)
+		testsuit.CreateDataSoupForTenants(t, client, tenants.Names()...)
 
 		for _, tenant := range tenants {
 			err := client.Data().Updater().
@@ -1587,7 +1614,7 @@ func TestData_MultiTenancy(t *testing.T) {
 					"description": fmt.Sprintf("updated ChickenSoup description [%s]", tenant),
 					"price":       float32(2.1),
 				}).
-				WithTenant(tenant).
+				WithTenant(tenant.Name).
 				Do(context.Background())
 
 			require.Nil(t, err)
@@ -1600,7 +1627,7 @@ func TestData_MultiTenancy(t *testing.T) {
 					"description": fmt.Sprintf("updated Beautiful description [%s]", tenant),
 					"price":       float32(2.2),
 				}).
-				WithTenant(tenant).
+				WithTenant(tenant.Name).
 				Do(context.Background())
 
 			require.Nil(t, err)
@@ -1611,26 +1638,26 @@ func TestData_MultiTenancy(t *testing.T) {
 				objects, err := client.Data().ObjectsGetter().
 					WithID(testsuit.SOUP_CHICKENSOUP_ID).
 					WithClassName(className).
-					WithTenant(tenant).
+					WithTenant(tenant.Name).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Tenant)
+				assert.Equal(t, tenant.Name, objects[0].Tenant)
 				assert.Equal(t, fmt.Sprintf("updated ChickenSoup description [%s]", tenant),
 					objects[0].Properties.(map[string]interface{})["description"])
 
 				objects, err = client.Data().ObjectsGetter().
 					WithID(testsuit.SOUP_BEAUTIFUL_ID).
 					WithClassName(className).
-					WithTenant(tenant).
+					WithTenant(tenant.Name).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Tenant)
+				assert.Equal(t, tenant.Name, objects[0].Tenant)
 				assert.Equal(t, fmt.Sprintf("updated Beautiful description [%s]", tenant),
 					objects[0].Properties.(map[string]interface{})["description"])
 			}
@@ -1641,12 +1668,15 @@ func TestData_MultiTenancy(t *testing.T) {
 		defer cleanup()
 
 		className := "Soup"
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
-		testsuit.CreateDataSoupForTenants(t, client, tenants...)
+		testsuit.CreateDataSoupForTenants(t, client, tenants.Names()...)
 
 		err := client.Data().Updater().
 			WithClassName(className).
@@ -1683,26 +1713,26 @@ func TestData_MultiTenancy(t *testing.T) {
 				objects, err := client.Data().ObjectsGetter().
 					WithID(testsuit.SOUP_CHICKENSOUP_ID).
 					WithClassName(className).
-					WithTenant(tenant).
+					WithTenant(tenant.Name).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Tenant)
+				assert.Equal(t, tenant.Name, objects[0].Tenant)
 				assert.Equal(t, "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 					objects[0].Properties.(map[string]interface{})["description"])
 
 				objects, err = client.Data().ObjectsGetter().
 					WithID(testsuit.SOUP_BEAUTIFUL_ID).
 					WithClassName(className).
-					WithTenant(tenant).
+					WithTenant(tenant.Name).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Tenant)
+				assert.Equal(t, tenant.Name, objects[0].Tenant)
 				assert.Equal(t, "Putting the game of letter soups to a whole new level.",
 					objects[0].Properties.(map[string]interface{})["description"])
 			}
@@ -1713,12 +1743,15 @@ func TestData_MultiTenancy(t *testing.T) {
 		defer cleanup()
 
 		className := "Soup"
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
-		testsuit.CreateDataSoupForTenants(t, client, tenants...)
+		testsuit.CreateDataSoupForTenants(t, client, tenants.Names()...)
 
 		for _, tenant := range tenants {
 			err := client.Data().Updater().
@@ -1727,7 +1760,7 @@ func TestData_MultiTenancy(t *testing.T) {
 				WithProperties(map[string]interface{}{
 					"description": fmt.Sprintf("merged ChickenSoup description [%s]", tenant),
 				}).
-				WithTenant(tenant).
+				WithTenant(tenant.Name).
 				WithMerge().
 				Do(context.Background())
 
@@ -1739,7 +1772,7 @@ func TestData_MultiTenancy(t *testing.T) {
 				WithProperties(map[string]interface{}{
 					"description": fmt.Sprintf("merged Beautiful description [%s]", tenant),
 				}).
-				WithTenant(tenant).
+				WithTenant(tenant.Name).
 				WithMerge().
 				Do(context.Background())
 
@@ -1751,26 +1784,26 @@ func TestData_MultiTenancy(t *testing.T) {
 				objects, err := client.Data().ObjectsGetter().
 					WithID(testsuit.SOUP_CHICKENSOUP_ID).
 					WithClassName(className).
-					WithTenant(tenant).
+					WithTenant(tenant.Name).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Tenant)
+				assert.Equal(t, tenant.Name, objects[0].Tenant)
 				assert.Equal(t, fmt.Sprintf("merged ChickenSoup description [%s]", tenant),
 					objects[0].Properties.(map[string]interface{})["description"])
 
 				objects, err = client.Data().ObjectsGetter().
 					WithID(testsuit.SOUP_BEAUTIFUL_ID).
 					WithClassName(className).
-					WithTenant(tenant).
+					WithTenant(tenant.Name).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Tenant)
+				assert.Equal(t, tenant.Name, objects[0].Tenant)
 				assert.Equal(t, fmt.Sprintf("merged Beautiful description [%s]", tenant),
 					objects[0].Properties.(map[string]interface{})["description"])
 			}
@@ -1781,12 +1814,15 @@ func TestData_MultiTenancy(t *testing.T) {
 		defer cleanup()
 
 		className := "Soup"
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
-		testsuit.CreateDataSoupForTenants(t, client, tenants...)
+		testsuit.CreateDataSoupForTenants(t, client, tenants.Names()...)
 
 		err := client.Data().Updater().
 			WithClassName(className).
@@ -1821,26 +1857,26 @@ func TestData_MultiTenancy(t *testing.T) {
 				objects, err := client.Data().ObjectsGetter().
 					WithID(testsuit.SOUP_CHICKENSOUP_ID).
 					WithClassName(className).
-					WithTenant(tenant).
+					WithTenant(tenant.Name).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Tenant)
+				assert.Equal(t, tenant.Name, objects[0].Tenant)
 				assert.Equal(t, "Used by humans when their inferior genetics are attacked by microscopic organisms.",
 					objects[0].Properties.(map[string]interface{})["description"])
 
 				objects, err = client.Data().ObjectsGetter().
 					WithID(testsuit.SOUP_BEAUTIFUL_ID).
 					WithClassName(className).
-					WithTenant(tenant).
+					WithTenant(tenant.Name).
 					Do(context.Background())
 
 				require.Nil(t, err)
 				require.NotNil(t, objects)
 				require.Len(t, objects, 1)
-				assert.Equal(t, tenant, objects[0].Tenant)
+				assert.Equal(t, tenant.Name, objects[0].Tenant)
 				assert.Equal(t, "Putting the game of letter soups to a whole new level.",
 					objects[0].Properties.(map[string]interface{})["description"])
 			}

@@ -787,6 +787,7 @@ func TestSchema_Tenants(t *testing.T) {
 	})
 
 	className := "Pizza"
+	ctx := context.Background()
 
 	t.Run("adds tenants to MT class", func(t *testing.T) {
 		defer cleanup()
@@ -802,7 +803,7 @@ func TestSchema_Tenants(t *testing.T) {
 			err := client.Schema().TenantsCreator().
 				WithClassName(className).
 				WithTenants(tenant).
-				Do(context.Background())
+				Do(ctx)
 
 			require.Nil(t, err)
 		})
@@ -816,7 +817,7 @@ func TestSchema_Tenants(t *testing.T) {
 			err := client.Schema().TenantsCreator().
 				WithClassName(className).
 				WithTenants(tenants...).
-				Do(context.Background())
+				Do(ctx)
 
 			require.Nil(t, err)
 		})
@@ -836,7 +837,7 @@ func TestSchema_Tenants(t *testing.T) {
 		err := client.Schema().TenantsCreator().
 			WithClassName(className).
 			WithTenants(tenants...).
-			Do(context.Background())
+			Do(ctx)
 
 		require.NotNil(t, err)
 		clientErr := err.(*fault.WeaviateClientError)
@@ -847,7 +848,10 @@ func TestSchema_Tenants(t *testing.T) {
 	t.Run("gets tenants of MT class", func(t *testing.T) {
 		defer cleanup()
 
-		tenants := []string{"tenantNo1", "tenantNo2"}
+		tenants := testsuit.Tenants{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaPizzaForTenants(t, client)
@@ -855,16 +859,12 @@ func TestSchema_Tenants(t *testing.T) {
 
 		gotTenants, err := client.Schema().TenantsGetter().
 			WithClassName(className).
-			Do(context.Background())
+			Do(ctx)
 
 		require.Nil(t, err)
 		require.Len(t, gotTenants, len(tenants))
 
-		names := make([]string, len(tenants))
-		for i, tenant := range gotTenants {
-			names[i] = tenant.Name
-		}
-		assert.ElementsMatch(t, tenants, names)
+		assert.ElementsMatch(t, tenants.Names(), testsuit.Tenants(gotTenants).Names())
 	})
 
 	t.Run("fails getting tenants from non-MT class", func(t *testing.T) {
@@ -875,7 +875,7 @@ func TestSchema_Tenants(t *testing.T) {
 
 		gotTenants, err := client.Schema().TenantsGetter().
 			WithClassName(className).
-			Do(context.Background())
+			Do(ctx)
 
 		require.NotNil(t, err)
 		clientErr := err.(*fault.WeaviateClientError)
@@ -887,7 +887,11 @@ func TestSchema_Tenants(t *testing.T) {
 	t.Run("deletes tenants from MT class", func(t *testing.T) {
 		defer cleanup()
 
-		tenants := []string{"tenantNo1", "tenantNo2", "tenantNo3"}
+		tenants := []models.Tenant{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+			{Name: "tenantNo3"},
+		}
 
 		client := testsuit.CreateTestClient()
 		testsuit.CreateSchemaPizzaForTenants(t, client)
@@ -896,8 +900,8 @@ func TestSchema_Tenants(t *testing.T) {
 		t.Run("does not error on deleting non existent tenant", func(t *testing.T) {
 			err := client.Schema().TenantsDeleter().
 				WithClassName(className).
-				WithTenants(tenants[0], "nonExistentTenant").
-				Do(context.Background())
+				WithTenants(tenants[0].Name, "nonExistentTenant").
+				Do(ctx)
 
 			require.Nil(t, err)
 		})
@@ -905,8 +909,8 @@ func TestSchema_Tenants(t *testing.T) {
 		t.Run("deletes multiple tenants", func(t *testing.T) {
 			err := client.Schema().TenantsDeleter().
 				WithClassName(className).
-				WithTenants(tenants[1:]...).
-				Do(context.Background())
+				WithTenants(tenants[1].Name, tenants[2].Name).
+				Do(ctx)
 
 			require.Nil(t, err)
 		})
@@ -923,12 +927,254 @@ func TestSchema_Tenants(t *testing.T) {
 		err := client.Schema().TenantsDeleter().
 			WithClassName(className).
 			WithTenants(tenants...).
-			Do(context.Background())
+			Do(ctx)
 
 		require.NotNil(t, err)
 		clientErr := err.(*fault.WeaviateClientError)
 		assert.Equal(t, 422, clientErr.StatusCode)
 		assert.Contains(t, clientErr.Msg, "multi-tenancy is not enabled for class")
+	})
+
+	t.Run("updates tenants of MT class", func(t *testing.T) {
+		defer cleanup()
+
+		tenants := []models.Tenant{
+			{Name: "tenantNo1"},
+			{Name: "tenantNo2"},
+		}
+
+		client := testsuit.CreateTestClient()
+		testsuit.CreateSchemaPizzaForTenants(t, client)
+		testsuit.CreateTenantsPizza(t, client, tenants...)
+
+		t.Run("fails updating not existent tenant", func(t *testing.T) {
+			err := client.Schema().TenantsUpdater().
+				WithClassName(className).
+				WithTenants(models.Tenant{
+					Name:           "nonExistentTenant",
+					ActivityStatus: models.TenantActivityStatusCOLD,
+				}).Do(ctx)
+
+			require.NotNil(t, err)
+			clientErr := err.(*fault.WeaviateClientError)
+			assert.Equal(t, 422, clientErr.StatusCode)
+			assert.Contains(t, clientErr.Msg, "not found")
+		})
+
+		t.Run("updates existent tenants", func(t *testing.T) {
+			err := client.Schema().TenantsUpdater().
+				WithClassName(className).
+				WithTenants(
+					models.Tenant{
+						Name:           tenants[0].Name,
+						ActivityStatus: models.TenantActivityStatusCOLD,
+					},
+					models.Tenant{
+						Name:           tenants[1].Name,
+						ActivityStatus: models.TenantActivityStatusCOLD,
+					},
+				).Do(ctx)
+
+			require.Nil(t, err)
+		})
+	})
+
+	t.Run("fails updating tenants of non-MT class", func(t *testing.T) {
+		defer cleanup()
+
+		tenants := []models.Tenant{
+			{
+				Name:           "tenantNo1",
+				ActivityStatus: models.TenantActivityStatusCOLD,
+			},
+			{
+				Name:           "tenantNo2",
+				ActivityStatus: models.TenantActivityStatusCOLD,
+			},
+		}
+
+		client := testsuit.CreateTestClient()
+		testsuit.CreateSchemaPizza(t, client)
+
+		err := client.Schema().TenantsUpdater().
+			WithClassName(className).
+			WithTenants(tenants...).
+			Do(ctx)
+
+		require.NotNil(t, err)
+		clientErr := err.(*fault.WeaviateClientError)
+		assert.Equal(t, 422, clientErr.StatusCode)
+		assert.Contains(t, clientErr.Msg, "multi-tenancy is not enabled for class")
+	})
+
+	t.Run("tear down weaviate", func(t *testing.T) {
+		err := testenv.TearDownLocalWeaviate()
+		if err != nil {
+			t.Fatalf("failed to tear down weaviate: %s", err)
+		}
+	})
+}
+
+func TestSchema_TenantsActivationDeactivation(t *testing.T) {
+	cleanup := func() {
+		client := testsuit.CreateTestClient()
+		err := client.Schema().AllDeleter().Do(context.Background())
+		require.Nil(t, err)
+	}
+
+	t.Run("setup weaviate", func(t *testing.T) {
+		err := testenv.SetupLocalWeaviate()
+		if err != nil {
+			t.Fatalf("failed to setup weaviate: %s", err)
+		}
+	})
+
+	t.Run("deactivate / activate journey", func(t *testing.T) {
+		defer cleanup()
+
+		tenants := testsuit.Tenants{
+			{
+				Name: "tenantNo1",
+				// default status HOT
+			},
+			{
+				Name:           "tenantNo2",
+				ActivityStatus: models.TenantActivityStatusHOT,
+			},
+			{
+				Name:           "tenantNo3",
+				ActivityStatus: models.TenantActivityStatusCOLD,
+			},
+		}
+		className := "Pizza"
+		ctx := context.Background()
+		ids := testsuit.IdsByClass[className]
+
+		client := testsuit.CreateTestClient()
+
+		assertTenantActive := func(t *testing.T, tenantName string) {
+			gotTenants, err := client.Schema().TenantsGetter().
+				WithClassName(className).
+				Do(ctx)
+			require.Nil(t, err)
+			require.NotEmpty(t, gotTenants)
+
+			byName := testsuit.Tenants(gotTenants).ByName(tenantName)
+			require.NotNil(t, byName)
+			require.Equal(t, models.TenantActivityStatusHOT, byName.ActivityStatus)
+
+			objects, err := client.Data().ObjectsGetter().
+				WithClassName(className).
+				WithTenant(tenantName).
+				Do(ctx)
+
+			require.Nil(t, err)
+			require.NotNil(t, objects)
+			require.Len(t, objects, len(ids))
+		}
+		assertTenantInactive := func(t *testing.T, tenantName string) {
+			gotTenants, err := client.Schema().TenantsGetter().
+				WithClassName(className).
+				Do(ctx)
+			require.Nil(t, err)
+			require.NotEmpty(t, gotTenants)
+
+			byName := testsuit.Tenants(gotTenants).ByName(tenantName)
+			require.NotNil(t, byName)
+			require.Equal(t, models.TenantActivityStatusCOLD, byName.ActivityStatus)
+
+			objects, err := client.Data().ObjectsGetter().
+				WithClassName(className).
+				WithTenant(tenantName).
+				Do(ctx)
+
+			require.NotNil(t, err)
+			require.Nil(t, objects)
+			clientErr := err.(*fault.WeaviateClientError)
+			assert.Equal(t, 422, clientErr.StatusCode)
+			assert.Contains(t, clientErr.Msg, "tenant not active")
+		}
+
+		t.Run("create tenants (1,2,3), populate active tenants (1,2)", func(t *testing.T) {
+			testsuit.CreateSchemaPizzaForTenants(t, client)
+			testsuit.CreateTenantsPizza(t, client, tenants...)
+			testsuit.CreateDataPizzaForTenants(t, client, tenants[:2].Names()...)
+
+			assertTenantActive(t, tenants[0].Name)
+			assertTenantActive(t, tenants[1].Name)
+			assertTenantInactive(t, tenants[2].Name)
+		})
+
+		t.Run("deactivate tenant (1)", func(t *testing.T) {
+			err := client.Schema().TenantsUpdater().
+				WithClassName(className).
+				WithTenants(models.Tenant{
+					Name:           tenants[0].Name,
+					ActivityStatus: models.TenantActivityStatusCOLD,
+				}).
+				Do(ctx)
+			require.Nil(t, err)
+
+			assertTenantInactive(t, tenants[0].Name)
+			assertTenantActive(t, tenants[1].Name)
+			assertTenantInactive(t, tenants[2].Name)
+		})
+
+		t.Run("activate and populate tenant (3)", func(t *testing.T) {
+			err := client.Schema().TenantsUpdater().
+				WithClassName(className).
+				WithTenants(models.Tenant{
+					Name:           tenants[2].Name,
+					ActivityStatus: models.TenantActivityStatusHOT,
+				}).
+				Do(ctx)
+			require.Nil(t, err)
+
+			testsuit.CreateDataPizzaForTenants(t, client, tenants[2].Name)
+
+			assertTenantInactive(t, tenants[0].Name)
+			assertTenantActive(t, tenants[1].Name)
+			assertTenantActive(t, tenants[2].Name)
+		})
+
+		t.Run("activate tenant (1)", func(t *testing.T) {
+			err := client.Schema().TenantsUpdater().
+				WithClassName(className).
+				WithTenants(models.Tenant{
+					Name:           tenants[0].Name,
+					ActivityStatus: models.TenantActivityStatusHOT,
+				}).
+				Do(ctx)
+			require.Nil(t, err)
+
+			assertTenantActive(t, tenants[0].Name)
+			assertTenantActive(t, tenants[1].Name)
+			assertTenantActive(t, tenants[2].Name)
+		})
+
+		t.Run("deactivate tenant (2)", func(t *testing.T) {
+			err := client.Schema().TenantsUpdater().
+				WithClassName(className).
+				WithTenants(models.Tenant{
+					Name:           tenants[1].Name,
+					ActivityStatus: models.TenantActivityStatusCOLD,
+				}).
+				Do(ctx)
+			require.Nil(t, err)
+
+			assertTenantActive(t, tenants[0].Name)
+			assertTenantInactive(t, tenants[1].Name)
+			assertTenantActive(t, tenants[2].Name)
+		})
+
+		t.Run("delete tenants", func(t *testing.T) {
+			err := client.Schema().TenantsDeleter().
+				WithClassName(className).
+				WithTenants(tenants.Names()...).
+				Do(ctx)
+
+			require.Nil(t, err)
+		})
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {

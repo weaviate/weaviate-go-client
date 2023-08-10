@@ -90,6 +90,12 @@ func (schema *API) TenantsCreator() *TenantsCreator {
 	}
 }
 
+func (schema *API) TenantsUpdater() *TenantsUpdater {
+	return &TenantsUpdater{
+		connection: schema.connection,
+	}
+}
+
 // TenantsDeleter builder to delete tenants from Class
 func (schema *API) TenantsDeleter() *TenantsDeleter {
 	return &TenantsDeleter{
