@@ -1699,8 +1699,8 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 	t.Run("GraphQL Get", func(t *testing.T) {
 		defer cleanup()
 
-		tenant1 := "tenantNo1"
-		tenant2 := "tenantNo2"
+		tenant1 := models.Tenant{Name: "tenantNo1"}
+		tenant2 := models.Tenant{Name: "tenantNo2"}
 		client := testsuit.CreateTestClient()
 
 		assertGetContainsIds := func(t *testing.T, response *models.GraphQLResponse,
@@ -1724,19 +1724,19 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 		t.Run("add data", func(t *testing.T) {
 			testsuit.CreateSchemaPizzaForTenants(t, client)
 			testsuit.CreateTenantsPizza(t, client, tenant1, tenant2)
-			testsuit.CreateDataPizzaQuattroFormaggiForTenants(t, client, tenant1)
-			testsuit.CreateDataPizzaFruttiDiMareForTenants(t, client, tenant1)
-			testsuit.CreateDataPizzaHawaiiForTenants(t, client, tenant2)
-			testsuit.CreateDataPizzaDoenerForTenants(t, client, tenant2)
+			testsuit.CreateDataPizzaQuattroFormaggiForTenants(t, client, tenant1.Name)
+			testsuit.CreateDataPizzaFruttiDiMareForTenants(t, client, tenant1.Name)
+			testsuit.CreateDataPizzaHawaiiForTenants(t, client, tenant2.Name)
+			testsuit.CreateDataPizzaDoenerForTenants(t, client, tenant2.Name)
 		})
 
 		t.Run("get all data for tenant", func(t *testing.T) {
 			expectedIdsByTenant := map[string][]string{
-				tenant1: {
+				tenant1.Name: {
 					testsuit.PIZZA_QUATTRO_FORMAGGI_ID,
 					testsuit.PIZZA_FRUTTI_DI_MARE_ID,
 				},
-				tenant2: {
+				tenant2.Name: {
 					testsuit.PIZZA_HAWAII_ID,
 					testsuit.PIZZA_DOENER_ID,
 				},
@@ -1759,10 +1759,10 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 
 		t.Run("get limited data for tenant", func(t *testing.T) {
 			expectedIdsByTenant := map[string][]string{
-				tenant1: {
+				tenant1.Name: {
 					testsuit.PIZZA_QUATTRO_FORMAGGI_ID,
 				},
-				tenant2: {
+				tenant2.Name: {
 					testsuit.PIZZA_HAWAII_ID,
 				},
 			}
@@ -1785,8 +1785,8 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 
 		t.Run("get filtered data for tenant", func(t *testing.T) {
 			expectedIdsByTenant := map[string][]string{
-				tenant1: {},
-				tenant2: {
+				tenant1.Name: {},
+				tenant2.Name: {
 					testsuit.PIZZA_DOENER_ID,
 				},
 			}
@@ -1815,8 +1815,8 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 	t.Run("GraphQL Aggregate", func(t *testing.T) {
 		defer cleanup()
 
-		tenant1 := "tenantNo1"
-		tenant2 := "tenantNo2"
+		tenant1 := models.Tenant{Name: "tenantNo1"}
+		tenant2 := models.Tenant{Name: "tenantNo2"}
 		client := testsuit.CreateTestClient()
 
 		assertAggregateNumFieldHasValues := func(t *testing.T, response *models.GraphQLResponse,
@@ -1846,15 +1846,15 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 		t.Run("add data", func(t *testing.T) {
 			testsuit.CreateSchemaPizzaForTenants(t, client)
 			testsuit.CreateTenantsPizza(t, client, tenant1, tenant2)
-			testsuit.CreateDataPizzaQuattroFormaggiForTenants(t, client, tenant1)
-			testsuit.CreateDataPizzaFruttiDiMareForTenants(t, client, tenant1)
-			testsuit.CreateDataPizzaHawaiiForTenants(t, client, tenant2)
-			testsuit.CreateDataPizzaDoenerForTenants(t, client, tenant2)
+			testsuit.CreateDataPizzaQuattroFormaggiForTenants(t, client, tenant1.Name)
+			testsuit.CreateDataPizzaFruttiDiMareForTenants(t, client, tenant1.Name)
+			testsuit.CreateDataPizzaHawaiiForTenants(t, client, tenant2.Name)
+			testsuit.CreateDataPizzaDoenerForTenants(t, client, tenant2.Name)
 		})
 
 		t.Run("aggregate all data for tenant", func(t *testing.T) {
 			expectedAggValuesByTenant := map[string]map[string]*float64{
-				tenant1: {
+				tenant1.Name: {
 					"count":   ptr(2),
 					"maximum": ptr(1.2),
 					"minimum": ptr(1.1),
@@ -1863,7 +1863,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 					"mode":    ptr(1.1),
 					"sum":     ptr(2.3),
 				},
-				tenant2: {
+				tenant2.Name: {
 					"count":   ptr(2),
 					"maximum": ptr(1.4),
 					"minimum": ptr(1.3),
@@ -1899,7 +1899,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 
 		t.Run("aggregate filtered data for tenant", func(t *testing.T) {
 			expectedAggValuesByTenant := map[string]map[string]*float64{
-				tenant1: {
+				tenant1.Name: {
 					"count":   ptr(0),
 					"maximum": nil,
 					"minimum": nil,
@@ -1908,7 +1908,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 					"mode":    nil,
 					"sum":     nil,
 				},
-				tenant2: {
+				tenant2.Name: {
 					"count":   ptr(1),
 					"maximum": ptr(1.4),
 					"minimum": ptr(1.4),
