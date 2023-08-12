@@ -17,15 +17,15 @@ type WhereBuilder struct {
 	operator         WhereOperator
 	path             []string
 	withValueInt     bool
-	valueInt         int64
+	valueInt         []int64
 	withValueNumber  bool
-	valueNumber      float64
+	valueNumber      []float64
 	withValueBoolean bool
-	valueBoolean     bool
-	valueString      string
-	valueText        string
+	valueBoolean     []bool
+	valueString      []string
+	valueText        []string
 	withValueDate    bool
-	valueDate        time.Time
+	valueDate        []time.Time
 	valueGeoRange    *GeoCoordinatesParameter
 }
 
@@ -47,40 +47,40 @@ func (b *WhereBuilder) WithOperands(operands []*WhereBuilder) *WhereBuilder {
 }
 
 // WithValueInt the int value in where filter
-func (b *WhereBuilder) WithValueInt(valueInt int64) *WhereBuilder {
+func (b *WhereBuilder) WithValueInt(valueInt ...int64) *WhereBuilder {
 	b.withValueInt = true
 	b.valueInt = valueInt
 	return b
 }
 
 // WithValueNumber the number value in where filter
-func (b *WhereBuilder) WithValueNumber(valueNumber float64) *WhereBuilder {
+func (b *WhereBuilder) WithValueNumber(valueNumber ...float64) *WhereBuilder {
 	b.withValueNumber = true
 	b.valueNumber = valueNumber
 	return b
 }
 
 // WithValueBoolean the boolean value in where filter
-func (b *WhereBuilder) WithValueBoolean(valueBoolean bool) *WhereBuilder {
+func (b *WhereBuilder) WithValueBoolean(valueBoolean ...bool) *WhereBuilder {
 	b.withValueBoolean = true
 	b.valueBoolean = valueBoolean
 	return b
 }
 
 // WithValueString the string value in where filter
-func (b *WhereBuilder) WithValueString(valueString string) *WhereBuilder {
+func (b *WhereBuilder) WithValueString(valueString ...string) *WhereBuilder {
 	b.valueString = valueString
 	return b
 }
 
 // WithValueText the string value in where filter
-func (b *WhereBuilder) WithValueText(valueText string) *WhereBuilder {
+func (b *WhereBuilder) WithValueText(valueText ...string) *WhereBuilder {
 	b.valueText = valueText
 	return b
 }
 
 // WithValueDate the date value in where filter
-func (b *WhereBuilder) WithValueDate(valueDate time.Time) *WhereBuilder {
+func (b *WhereBuilder) WithValueDate(valueDate ...time.Time) *WhereBuilder {
 	b.withValueDate = true
 	b.valueDate = valueDate
 	return b
@@ -100,23 +100,50 @@ func (b *WhereBuilder) Build() *models.WhereFilter {
 	}
 
 	if b.withValueInt {
-		whereFilter.ValueInt = &b.valueInt
+		if len(b.valueInt) > 1 || b.isContainsOperator() {
+			whereFilter.ValueIntArray = b.valueInt
+		} else {
+			whereFilter.ValueInt = &b.valueInt[0]
+		}
 	}
 	if b.withValueNumber {
-		whereFilter.ValueNumber = &b.valueNumber
+		if len(b.valueNumber) > 1 || b.isContainsOperator() {
+			whereFilter.ValueNumberArray = b.valueNumber
+		} else {
+			whereFilter.ValueNumber = &b.valueNumber[0]
+		}
 	}
 	if b.withValueBoolean {
-		whereFilter.ValueBoolean = &b.valueBoolean
+		if len(b.valueBoolean) > 1 || b.isContainsOperator() {
+			whereFilter.ValueBooleanArray = b.valueBoolean
+		} else {
+			whereFilter.ValueBoolean = &b.valueBoolean[0]
+		}
 	}
 	if len(b.valueString) > 0 {
-		whereFilter.ValueString = &b.valueString
+		if len(b.valueString) > 1 || b.isContainsOperator() {
+			whereFilter.ValueStringArray = b.valueString
+		} else {
+			whereFilter.ValueString = &b.valueString[0]
+		}
 	}
 	if len(b.valueText) > 0 {
-		whereFilter.ValueText = &b.valueText
+		if len(b.valueText) > 1 || b.isContainsOperator() {
+			whereFilter.ValueTextArray = b.valueText
+		} else {
+			whereFilter.ValueText = &b.valueText[0]
+		}
 	}
 	if b.withValueDate {
-		formattedDate := b.valueDate.Format(time.RFC3339Nano)
-		whereFilter.ValueDate = &formattedDate
+		formattedDates := make([]string, len(b.valueDate))
+		for i := range b.valueDate {
+			formattedDates[i] = b.valueDate[i].Format(time.RFC3339Nano)
+		}
+		if len(formattedDates) > 1 || b.isContainsOperator() {
+			whereFilter.ValueDateArray = formattedDates
+		} else {
+			whereFilter.ValueDate = &formattedDates[0]
+		}
 	}
 	if b.valueGeoRange != nil {
 		whereFilter.ValueGeoRange = buildWhereFilterGeoRange(b.valueGeoRange)
@@ -128,6 +155,10 @@ func (b *WhereBuilder) Build() *models.WhereFilter {
 	}
 
 	return whereFilter
+}
+
+func (b *WhereBuilder) isContainsOperator() bool {
+	return b.operator == ContainsAll || b.operator == ContainsAny
 }
 
 // String formats the where builder as a string for GQL queries
@@ -148,22 +179,22 @@ func (b *WhereBuilder) string() string {
 		clause = append(clause, fmt.Sprintf("path: [%v]", strings.Join(path, ",")))
 	}
 	if b.withValueInt {
-		clause = append(clause, fmt.Sprintf("valueInt: %v", b.valueInt))
+		clause = append(clause, fmt.Sprintf("valueInt: %s", formatValues(b.valueInt, b.operator)))
 	}
 	if b.withValueNumber {
-		clause = append(clause, fmt.Sprintf("valueNumber: %v", b.valueNumber))
+		clause = append(clause, fmt.Sprintf("valueNumber: %s", formatValues(b.valueNumber, b.operator)))
 	}
 	if b.withValueBoolean {
-		clause = append(clause, fmt.Sprintf("valueBoolean: %v", b.valueBoolean))
+		clause = append(clause, fmt.Sprintf("valueBoolean: %s", formatValues(b.valueBoolean, b.operator)))
 	}
 	if len(b.valueString) > 0 {
-		clause = append(clause, fmt.Sprintf("valueString: \"%s\"", b.valueString))
+		clause = append(clause, fmt.Sprintf("valueString: %s", formatValues(b.valueString, b.operator)))
 	}
 	if len(b.valueText) > 0 {
-		clause = append(clause, fmt.Sprintf("valueText: \"%s\"", b.valueText))
+		clause = append(clause, fmt.Sprintf("valueText: %s", formatValues(b.valueText, b.operator)))
 	}
 	if b.withValueDate {
-		clause = append(clause, fmt.Sprintf("valueDate: \"%s\"", b.valueDate.Format(time.RFC3339Nano)))
+		clause = append(clause, fmt.Sprintf("valueDate: %s", formatValues(b.valueDate, b.operator)))
 	}
 	if b.valueGeoRange != nil {
 		clause = append(clause, fmt.Sprintf("valueGeoRange: {geoCoordinates:{latitude:%v,longitude:%v},distance:{max:%v}}",
@@ -191,4 +222,23 @@ func buildWhereFilterGeoRange(in *GeoCoordinatesParameter) *models.WhereFilterGe
 	}
 
 	return out
+}
+
+func formatValues[T any](values []T, operator WhereOperator) string {
+	clause := make([]string, len(values))
+	for i, value := range values {
+		switch val := any(value).(type) {
+		case string:
+			clause[i] = fmt.Sprintf("%q", val)
+		case time.Time:
+			clause[i] = fmt.Sprintf("%q", val.Format(time.RFC3339Nano))
+		default:
+			clause[i] = fmt.Sprintf("%v", val)
+		}
+	}
+	formattedValues := strings.Join(clause, ",")
+	if len(values) > 1 || operator == ContainsAll || operator == ContainsAny {
+		return fmt.Sprintf("[%s]", formattedValues)
+	}
+	return formattedValues
 }

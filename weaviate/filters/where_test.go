@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/weaviate/weaviate-go-client/v4/test/helpers"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -43,29 +42,29 @@ func TestWhereBuilder_BuildOperandsRecursively(t *testing.T) {
 	expected := &models.WhereFilter{
 		Operator:    "Equal",
 		Path:        []string{"id"},
-		ValueString: helpers.StringPointer("123"),
+		ValueString: ptString("123"),
 		Operands: []*models.WhereFilter{
 			{
 				Operator:    "Equal",
 				Path:        []string{"size"},
-				ValueString: helpers.StringPointer("large"),
+				ValueString: ptString("large"),
 				Operands: []*models.WhereFilter{
 					{
 						Operator:    "Equal",
 						Path:        []string{"color"},
-						ValueString: helpers.StringPointer("green"),
+						ValueString: ptString("green"),
 					},
 					{
 						Operator:    "LessThan",
 						Path:        []string{"price"},
-						ValueNumber: helpers.Float64Pointer(23.99),
+						ValueNumber: ptFloat64(23.99),
 					},
 				},
 			},
 			{
 				Operator:    "Equal",
 				Path:        []string{"countryOfOrigin"},
-				ValueString: helpers.StringPointer("Taiwan"),
+				ValueString: ptString("Taiwan"),
 			},
 		},
 	}
@@ -75,6 +74,7 @@ func TestWhereBuilder_BuildOperandsRecursively(t *testing.T) {
 
 func TestWhereBuilder_String(t *testing.T) {
 	now := time.Now()
+	nowPlus1hour := now.Add(time.Duration(1 * time.Hour))
 	tests := []struct {
 		name    string
 		builder *WhereBuilder
@@ -146,6 +146,46 @@ func TestWhereBuilder_String(t *testing.T) {
 			builder: Where().WithPath([]string{"wordCount"}).WithOperator(IsNull).WithValueBoolean(true),
 			want:    "where:{operator: IsNull path: [\"wordCount\"] valueBoolean: true}",
 		},
+		{
+			name:    "with: path operator.ContainsAny text",
+			builder: Where().WithPath([]string{"id"}).WithOperator(ContainsAny).WithValueText("txt1", "txt2", "txt3"),
+			want:    "where:{operator: ContainsAny path: [\"id\"] valueText: [\"txt1\",\"txt2\",\"txt3\"]}",
+		},
+		{
+			name:    "with: path operator.ContainsAny string",
+			builder: Where().WithPath([]string{"id"}).WithOperator(ContainsAny).WithValueString("txt1", "txt2", "txt3"),
+			want:    "where:{operator: ContainsAny path: [\"id\"] valueString: [\"txt1\",\"txt2\",\"txt3\"]}",
+		},
+		{
+			name:    "with: path operator.ContainsAll int",
+			builder: Where().WithPath([]string{"id"}).WithOperator(ContainsAll).WithValueInt(1, 2, 3),
+			want:    "where:{operator: ContainsAll path: [\"id\"] valueInt: [1,2,3]}",
+		},
+		{
+			name:    "with: path operator.ContainsAll number",
+			builder: Where().WithPath([]string{"id"}).WithOperator(ContainsAll).WithValueNumber(1.1, 2.1, 3.1),
+			want:    "where:{operator: ContainsAll path: [\"id\"] valueNumber: [1.1,2.1,3.1]}",
+		},
+		{
+			name:    "with: path operator.ContainsAll boolean",
+			builder: Where().WithPath([]string{"id"}).WithOperator(ContainsAll).WithValueBoolean(true, false),
+			want:    "where:{operator: ContainsAll path: [\"id\"] valueBoolean: [true,false]}",
+		},
+		{
+			name:    "with: path operator.ContainsAll date",
+			builder: Where().WithPath([]string{"id"}).WithOperator(ContainsAll).WithValueDate(now, nowPlus1hour),
+			want: fmt.Sprintf("where:{operator: ContainsAll path: [\"id\"] valueDate: [\"%s\",\"%s\"]}",
+				now.Format(time.RFC3339Nano), nowPlus1hour.Format(time.RFC3339Nano)),
+		},
+		{
+			name: "with: operands with multiple path and Contains operator",
+			builder: Where().WithOperator(And).
+				WithOperands([]*WhereBuilder{
+					Where().WithPath([]string{"wordCount"}).WithOperator(ContainsAll).WithValueInt(1, 2),
+					Where().WithPath([]string{"w1", "w2", "w3"}).WithOperator(ContainsAny).WithValueString("word", "sentence"),
+				}),
+			want: "where:{operator: And operands:[{operator: ContainsAll path: [\"wordCount\"] valueInt: [1,2]},{operator: ContainsAny path: [\"w1\",\"w2\",\"w3\"] valueString: [\"word\",\"sentence\"]}]}",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -199,4 +239,12 @@ func TestWhereBuilder_NestedOperands(t *testing.T) {
 	whereString := where.String()
 	// then
 	assert.Equal(t, expected, whereString)
+}
+
+func ptString(in string) *string {
+	return &in
+}
+
+func ptFloat64(in float64) *float64 {
+	return &in
 }

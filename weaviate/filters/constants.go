@@ -39,6 +39,12 @@ const WithinGeoRange WhereOperator = "WithinGeoRange"
 // IsNull where operator
 const IsNull WhereOperator = "IsNull"
 
+// ContainsAny where operator
+const ContainsAny WhereOperator = "ContainsAny"
+
+// ContainsAll where operator
+const ContainsAll WhereOperator = "ContainsAll"
+
 // GeoCoordinatesParameter parameters in where filter
 type GeoCoordinatesParameter struct {
 	Latitude, Longitude, MaxDistance float32
