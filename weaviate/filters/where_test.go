@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/weaviate/weaviate-go-client/v4/test/helpers"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -42,29 +43,29 @@ func TestWhereBuilder_BuildOperandsRecursively(t *testing.T) {
 	expected := &models.WhereFilter{
 		Operator:    "Equal",
 		Path:        []string{"id"},
-		ValueString: ptString("123"),
+		ValueString: helpers.StringPointer("123"),
 		Operands: []*models.WhereFilter{
 			{
 				Operator:    "Equal",
 				Path:        []string{"size"},
-				ValueString: ptString("large"),
+				ValueString: helpers.StringPointer("large"),
 				Operands: []*models.WhereFilter{
 					{
 						Operator:    "Equal",
 						Path:        []string{"color"},
-						ValueString: ptString("green"),
+						ValueString: helpers.StringPointer("green"),
 					},
 					{
 						Operator:    "LessThan",
 						Path:        []string{"price"},
-						ValueNumber: ptFloat64(23.99),
+						ValueNumber: helpers.Float64Pointer(23.99),
 					},
 				},
 			},
 			{
 				Operator:    "Equal",
 				Path:        []string{"countryOfOrigin"},
-				ValueString: ptString("Taiwan"),
+				ValueString: helpers.StringPointer("Taiwan"),
 			},
 		},
 	}
@@ -239,12 +240,4 @@ func TestWhereBuilder_NestedOperands(t *testing.T) {
 	whereString := where.String()
 	// then
 	assert.Equal(t, expected, whereString)
-}
-
-func ptString(in string) *string {
-	return &in
-}
-
-func ptFloat64(in float64) *float64 {
-	return &in
 }
