@@ -9,7 +9,7 @@ services:
       - '8080'
       - --scheme
       - http
-    image: semitechnologies/weaviate:preview-adds-activity-status-to-get-tenant-s-body-2a66654
+    image: semitechnologies/weaviate:preview-containsany-containsall-filter-operators-5713a16
     ports:
       - 8080:8080
     restart: on-failure:0
