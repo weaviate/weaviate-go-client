@@ -100,38 +100,38 @@ func (b *WhereBuilder) Build() *models.WhereFilter {
 	}
 
 	if b.withValueInt {
-		if len(b.valueInt) > 1 || b.isContainsOperator() {
-			whereFilter.ValueIntArray = b.valueInt
-		} else {
+		if len(b.valueInt) == 1 && !b.isContainsOperator() {
 			whereFilter.ValueInt = &b.valueInt[0]
+		} else {
+			whereFilter.ValueIntArray = b.valueInt
 		}
 	}
 	if b.withValueNumber {
-		if len(b.valueNumber) > 1 || b.isContainsOperator() {
-			whereFilter.ValueNumberArray = b.valueNumber
-		} else {
+		if len(b.valueNumber) == 1 && !b.isContainsOperator() {
 			whereFilter.ValueNumber = &b.valueNumber[0]
+		} else {
+			whereFilter.ValueNumberArray = b.valueNumber
 		}
 	}
 	if b.withValueBoolean {
-		if len(b.valueBoolean) > 1 || b.isContainsOperator() {
-			whereFilter.ValueBooleanArray = b.valueBoolean
-		} else {
+		if len(b.valueBoolean) == 1 && !b.isContainsOperator() {
 			whereFilter.ValueBoolean = &b.valueBoolean[0]
+		} else {
+			whereFilter.ValueBooleanArray = b.valueBoolean
 		}
 	}
 	if len(b.valueString) > 0 {
-		if len(b.valueString) > 1 || b.isContainsOperator() {
-			whereFilter.ValueStringArray = b.valueString
-		} else {
+		if len(b.valueString) == 1 && !b.isContainsOperator() {
 			whereFilter.ValueString = &b.valueString[0]
+		} else {
+			whereFilter.ValueStringArray = b.valueString
 		}
 	}
 	if len(b.valueText) > 0 {
-		if len(b.valueText) > 1 || b.isContainsOperator() {
-			whereFilter.ValueTextArray = b.valueText
-		} else {
+		if len(b.valueText) == 1 && !b.isContainsOperator() {
 			whereFilter.ValueText = &b.valueText[0]
+		} else {
+			whereFilter.ValueTextArray = b.valueText
 		}
 	}
 	if b.withValueDate {
@@ -139,10 +139,10 @@ func (b *WhereBuilder) Build() *models.WhereFilter {
 		for i := range b.valueDate {
 			formattedDates[i] = b.valueDate[i].Format(time.RFC3339Nano)
 		}
-		if len(formattedDates) > 1 || b.isContainsOperator() {
-			whereFilter.ValueDateArray = formattedDates
-		} else {
+		if len(formattedDates) == 1 && !b.isContainsOperator() {
 			whereFilter.ValueDate = &formattedDates[0]
+		} else {
+			whereFilter.ValueDateArray = formattedDates
 		}
 	}
 	if b.valueGeoRange != nil {
