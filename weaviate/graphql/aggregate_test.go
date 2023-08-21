@@ -542,3 +542,100 @@ func TestAggregateBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 }
+
+func TestAggregate_NearMedia(t *testing.T) {
+	fieldMeta := Field{
+		Name:   "meta",
+		Fields: []Field{{Name: "count"}},
+	}
+
+	t.Run("NearImage", func(t *testing.T) {
+		nearImage := (&NearImageArgumentBuilder{}).
+			WithImage("iVBORw0KGgoAAAANS").
+			WithCertainty(0.5)
+
+		query := (&AggregateBuilder{}).
+			WithClassName("PizzaImage").
+			WithFields(fieldMeta).
+			WithNearImage(nearImage).
+			build()
+
+		expected := `{Aggregate{PizzaImage(nearImage:{image: "iVBORw0KGgoAAAANS" certainty: 0.5}){meta{count}}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("NearAudio", func(t *testing.T) {
+		nearAudio := (&NearAudioArgumentBuilder{}).
+			WithAudio("iVBORw0KGgoAAAANS").
+			WithCertainty(0.5)
+
+		query := (&AggregateBuilder{}).
+			WithClassName("PizzaAudio").
+			WithFields(fieldMeta).
+			WithNearAudio(nearAudio).
+			build()
+
+		expected := `{Aggregate{PizzaAudio(nearAudio:{audio: "iVBORw0KGgoAAAANS" certainty: 0.5}){meta{count}}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("NearVideo", func(t *testing.T) {
+		nearVideo := (&NearVideoArgumentBuilder{}).
+			WithVideo("iVBORw0KGgoAAAANS").
+			WithCertainty(0.5)
+
+		query := (&AggregateBuilder{}).
+			WithClassName("PizzaVideo").
+			WithFields(fieldMeta).
+			WithNearVideo(nearVideo).
+			build()
+
+		expected := `{Aggregate{PizzaVideo(nearVideo:{video: "iVBORw0KGgoAAAANS" certainty: 0.5}){meta{count}}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("NearDepth", func(t *testing.T) {
+		nearDepth := (&NearDepthArgumentBuilder{}).
+			WithDepth("iVBORw0KGgoAAAANS").
+			WithCertainty(0.5)
+
+		query := (&AggregateBuilder{}).
+			WithClassName("PizzaDepth").
+			WithFields(fieldMeta).
+			WithNearDepth(nearDepth).
+			build()
+
+		expected := `{Aggregate{PizzaDepth(nearDepth:{depth: "iVBORw0KGgoAAAANS" certainty: 0.5}){meta{count}}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("NearThermal", func(t *testing.T) {
+		nearThermal := (&NearThermalArgumentBuilder{}).
+			WithThermal("iVBORw0KGgoAAAANS").
+			WithCertainty(0.5)
+
+		query := (&AggregateBuilder{}).
+			WithClassName("PizzaThermal").
+			WithFields(fieldMeta).
+			WithNearThermal(nearThermal).
+			build()
+
+		expected := `{Aggregate{PizzaThermal(nearThermal:{thermal: "iVBORw0KGgoAAAANS" certainty: 0.5}){meta{count}}}}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("NearImu", func(t *testing.T) {
+		nearImu := (&NearImuArgumentBuilder{}).
+			WithImu("iVBORw0KGgoAAAANS").
+			WithCertainty(0.5)
+
+		query := (&AggregateBuilder{}).
+			WithClassName("PizzaImu").
+			WithFields(fieldMeta).
+			WithNearImu(nearImu).
+			build()
+
+		expected := `{Aggregate{PizzaImu(nearIMU:{imu: "iVBORw0KGgoAAAANS" certainty: 0.5}){meta{count}}}}`
+		assert.Equal(t, expected, query)
+	})
+}

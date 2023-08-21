@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
@@ -23,6 +24,11 @@ type AggregateBuilder struct {
 	withNearTextFilter        *NearTextArgumentBuilder
 	withAsk                   *AskArgumentBuilder
 	withNearImage             *NearImageArgumentBuilder
+	withNearAudio             *NearAudioArgumentBuilder
+	withNearVideo             *NearVideoArgumentBuilder
+	withNearDepth             *NearDepthArgumentBuilder
+	withNearThermal           *NearThermalArgumentBuilder
+	withNearImu               *NearImuArgumentBuilder
 	includesObjectLimit       bool
 	objectLimit               int
 	includesLimit             bool
@@ -106,6 +112,41 @@ func (ab *AggregateBuilder) WithNearImage(nearImage *NearImageArgumentBuilder) *
 	return ab
 }
 
+// WithNearAudio adds nearAudio to clause
+func (ab *AggregateBuilder) WithNearAudio(nearAudio *NearAudioArgumentBuilder) *AggregateBuilder {
+	ab.includesFilterClause = true
+	ab.withNearAudio = nearAudio
+	return ab
+}
+
+// WithNearVideo adds nearVideo to clause
+func (ab *AggregateBuilder) WithNearVideo(nearVideo *NearVideoArgumentBuilder) *AggregateBuilder {
+	ab.includesFilterClause = true
+	ab.withNearVideo = nearVideo
+	return ab
+}
+
+// WithNearDepth adds nearDepth to clause
+func (ab *AggregateBuilder) WithNearDepth(nearDepth *NearDepthArgumentBuilder) *AggregateBuilder {
+	ab.includesFilterClause = true
+	ab.withNearDepth = nearDepth
+	return ab
+}
+
+// WithNearThermal adds nearThermal to clause
+func (ab *AggregateBuilder) WithNearThermal(nearThermal *NearThermalArgumentBuilder) *AggregateBuilder {
+	ab.includesFilterClause = true
+	ab.withNearThermal = nearThermal
+	return ab
+}
+
+// WithNearImu adds nearIMU to clause
+func (ab *AggregateBuilder) WithNearImu(nearImu *NearImuArgumentBuilder) *AggregateBuilder {
+	ab.includesFilterClause = true
+	ab.withNearImu = nearImu
+	return ab
+}
+
 // WithTenant to indicate which tenant aggregated objects belong to
 func (ab *AggregateBuilder) WithTenant(tenant string) *AggregateBuilder {
 	ab.includesFilterClause = true
@@ -130,20 +171,14 @@ func (ab *AggregateBuilder) createFilterClause() string {
 		if ab.withWhereFilter != nil {
 			filters = append(filters, ab.withWhereFilter.String())
 		}
-		if ab.withNearTextFilter != nil {
-			filters = append(filters, ab.withNearTextFilter.build())
-		}
-		if ab.withNearVectorFilter != nil {
-			filters = append(filters, ab.withNearVectorFilter.build())
-		}
-		if ab.withNearObjectFilter != nil {
-			filters = append(filters, ab.withNearObjectFilter.build())
-		}
-		if ab.withAsk != nil {
-			filters = append(filters, ab.withAsk.build())
-		}
-		if ab.withNearImage != nil {
-			filters = append(filters, ab.withNearImage.build())
+		for _, b := range []argumentBuilder{
+			ab.withAsk, ab.withNearTextFilter, ab.withNearObjectFilter, ab.withNearVectorFilter, ab.withNearImage,
+			ab.withNearAudio, ab.withNearVideo, ab.withNearDepth, ab.withNearThermal, ab.withNearImu,
+		} {
+			bVal := reflect.ValueOf(b)
+			if bVal.Kind() == reflect.Ptr && !bVal.IsNil() {
+				filters = append(filters, b.build())
+			}
 		}
 		if ab.includesObjectLimit {
 			filters = append(filters, fmt.Sprintf("objectLimit: %d", ab.objectLimit))

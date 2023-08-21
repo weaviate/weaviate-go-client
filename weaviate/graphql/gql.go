@@ -72,6 +72,31 @@ func (api *API) NearImageArgBuilder() *NearImageArgumentBuilder {
 	return &NearImageArgumentBuilder{}
 }
 
+// NearImageArgBuilder nearImage clause
+func (api *API) NearAudioArgBuilder() *NearAudioArgumentBuilder {
+	return &NearAudioArgumentBuilder{}
+}
+
+// NearImageArgBuilder nearImage clause
+func (api *API) NearVideoArgBuilder() *NearVideoArgumentBuilder {
+	return &NearVideoArgumentBuilder{}
+}
+
+// NearImageArgBuilder nearImage clause
+func (api *API) NearDepthArgBuilder() *NearDepthArgumentBuilder {
+	return &NearDepthArgumentBuilder{}
+}
+
+// NearImageArgBuilder nearImage clause
+func (api *API) NearThermalArgBuilder() *NearThermalArgumentBuilder {
+	return &NearThermalArgumentBuilder{}
+}
+
+// NearImageArgBuilder nearImage clause
+func (api *API) NearImuArgBuilder() *NearImuArgumentBuilder {
+	return &NearImuArgumentBuilder{}
+}
+
 // GroupArgBuilder nearImage clause
 func (api *API) GroupArgBuilder() *GroupArgumentBuilder {
 	return &GroupArgumentBuilder{}
