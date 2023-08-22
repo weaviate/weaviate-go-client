@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/weaviate/weaviate/entities/models"
@@ -22,6 +23,11 @@ type Explore struct {
 	withNearText         *NearTextArgumentBuilder
 	withAsk              *AskArgumentBuilder
 	withNearImage        *NearImageArgumentBuilder
+	withNearAudio        *NearAudioArgumentBuilder
+	withNearVideo        *NearVideoArgumentBuilder
+	withNearDepth        *NearDepthArgumentBuilder
+	withNearThermal      *NearThermalArgumentBuilder
+	withNearImu          *NearImuArgumentBuilder
 }
 
 // WithNearText adds nearText to clause
@@ -49,6 +55,41 @@ func (e *Explore) WithAsk(ask *AskArgumentBuilder) *Explore {
 func (e *Explore) WithNearImage(nearImage *NearImageArgumentBuilder) *Explore {
 	e.includesFilterClause = true
 	e.withNearImage = nearImage
+	return e
+}
+
+// WithNearAudio adds nearAudio to clause
+func (e *Explore) WithNearAudio(nearAudio *NearAudioArgumentBuilder) *Explore {
+	e.includesFilterClause = true
+	e.withNearAudio = nearAudio
+	return e
+}
+
+// WithNearVideo adds nearVideo to clause
+func (e *Explore) WithNearVideo(nearVideo *NearVideoArgumentBuilder) *Explore {
+	e.includesFilterClause = true
+	e.withNearVideo = nearVideo
+	return e
+}
+
+// WithNearDepth adds nearDepth to clause
+func (e *Explore) WithNearDepth(nearDepth *NearDepthArgumentBuilder) *Explore {
+	e.includesFilterClause = true
+	e.withNearDepth = nearDepth
+	return e
+}
+
+// WithNearThermal adds nearThermal to clause
+func (e *Explore) WithNearThermal(nearThermal *NearThermalArgumentBuilder) *Explore {
+	e.includesFilterClause = true
+	e.withNearThermal = nearThermal
+	return e
+}
+
+// WithNearImu adds nearIMU to clause
+func (e *Explore) WithNearImu(nearImu *NearImuArgumentBuilder) *Explore {
+	e.includesFilterClause = true
+	e.withNearImu = nearImu
 	return e
 }
 
@@ -84,20 +125,14 @@ func (e *Explore) WithOffset(offset int) *Explore {
 func (e *Explore) createFilterClause() string {
 	if e.includesFilterClause {
 		filters := []string{}
-		if e.withNearText != nil {
-			filters = append(filters, e.withNearText.build())
-		}
-		if e.withNearObject != nil {
-			filters = append(filters, e.withNearObject.build())
-		}
-		if e.withAsk != nil {
-			filters = append(filters, e.withAsk.build())
-		}
-		if e.withNearImage != nil {
-			filters = append(filters, e.withNearImage.build())
-		}
-		if e.withNearVector != nil {
-			filters = append(filters, e.withNearVector.build())
+		for _, b := range []argumentBuilder{
+			e.withAsk, e.withNearText, e.withNearObject, e.withNearVector, e.withNearImage,
+			e.withNearAudio, e.withNearVideo, e.withNearDepth, e.withNearThermal, e.withNearImu,
+		} {
+			bVal := reflect.ValueOf(b)
+			if bVal.Kind() == reflect.Ptr && !bVal.IsNil() {
+				filters = append(filters, b.build())
+			}
 		}
 		if e.includesLimit {
 			filters = append(filters, fmt.Sprintf("limit: %v", e.limit))

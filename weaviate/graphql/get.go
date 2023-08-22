@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
@@ -32,7 +33,12 @@ type GetBuilder struct {
 	withNearObjectFilter *NearObjectArgumentBuilder
 	withGroupFilter      *GroupArgumentBuilder
 	withAskFilter        *AskArgumentBuilder
-	withNearImageFilter  *NearImageArgumentBuilder
+	withNearImage        *NearImageArgumentBuilder
+	withNearAudio        *NearAudioArgumentBuilder
+	withNearVideo        *NearVideoArgumentBuilder
+	withNearDepth        *NearDepthArgumentBuilder
+	withNearThermal      *NearThermalArgumentBuilder
+	withNearImu          *NearImuArgumentBuilder
 	withSort             *SortBuilder
 	withBM25             *BM25ArgumentBuilder
 	withHybrid           *HybridArgumentBuilder
@@ -114,10 +120,45 @@ func (gb *GetBuilder) WithNearText(nearText *NearTextArgumentBuilder) *GetBuilde
 	return gb
 }
 
-// WithNearObject clause to find close objects
+// WithNearImage clause to find close objects
 func (gb *GetBuilder) WithNearImage(nearImage *NearImageArgumentBuilder) *GetBuilder {
 	gb.includesFilterClause = true
-	gb.withNearImageFilter = nearImage
+	gb.withNearImage = nearImage
+	return gb
+}
+
+// WithNearAudio clause to find close objects
+func (gb *GetBuilder) WithNearAudio(nearAudio *NearAudioArgumentBuilder) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.withNearAudio = nearAudio
+	return gb
+}
+
+// WithNearVideo clause to find close objects
+func (gb *GetBuilder) WithNearVideo(nearVideo *NearVideoArgumentBuilder) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.withNearVideo = nearVideo
+	return gb
+}
+
+// WithNearDepth clause to find close objects
+func (gb *GetBuilder) WithNearDepth(nearDepth *NearDepthArgumentBuilder) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.withNearDepth = nearDepth
+	return gb
+}
+
+// WithNearImage clause to find close objects
+func (gb *GetBuilder) WithNearThermal(nearThermal *NearThermalArgumentBuilder) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.withNearThermal = nearThermal
+	return gb
+}
+
+// WithNearImage clause to find close objects
+func (gb *GetBuilder) WithNearImu(nearImu *NearImuArgumentBuilder) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.withNearImu = nearImu
 	return gb
 }
 
@@ -208,29 +249,15 @@ func (gb *GetBuilder) createFilterClause() string {
 	if gb.withWhereFilter != nil {
 		filters = append(filters, gb.withWhereFilter.String())
 	}
-	if gb.withNearTextFilter != nil {
-		filters = append(filters, gb.withNearTextFilter.build())
-	}
-	if gb.withBM25 != nil {
-		filters = append(filters, gb.withBM25.build())
-	}
-	if gb.withHybrid != nil {
-		filters = append(filters, gb.withHybrid.build())
-	}
-	if gb.withNearVectorFilter != nil {
-		filters = append(filters, gb.withNearVectorFilter.build())
-	}
-	if gb.withNearObjectFilter != nil {
-		filters = append(filters, gb.withNearObjectFilter.build())
-	}
-	if gb.withAskFilter != nil {
-		filters = append(filters, gb.withAskFilter.build())
-	}
-	if gb.withNearImageFilter != nil {
-		filters = append(filters, gb.withNearImageFilter.build())
-	}
-	if gb.withGroupFilter != nil {
-		filters = append(filters, gb.withGroupFilter.build())
+	for _, b := range []argumentBuilder{
+		gb.withBM25, gb.withHybrid, gb.withAskFilter, gb.withNearTextFilter, gb.withNearObjectFilter,
+		gb.withNearVectorFilter, gb.withNearImage, gb.withNearAudio, gb.withNearVideo, gb.withNearDepth,
+		gb.withNearThermal, gb.withNearImu, gb.withGroupFilter, gb.withSort, gb.withGroupBy,
+	} {
+		bVal := reflect.ValueOf(b)
+		if bVal.Kind() == reflect.Ptr && !bVal.IsNil() {
+			filters = append(filters, b.build())
+		}
 	}
 	if gb.consistencyLevel != "" {
 		filters = append(filters, fmt.Sprintf("consistencyLevel: %s", gb.consistencyLevel))
@@ -246,12 +273,6 @@ func (gb *GetBuilder) createFilterClause() string {
 	}
 	if gb.includesAfter {
 		filters = append(filters, fmt.Sprintf("after: %q", gb.after))
-	}
-	if gb.withSort != nil {
-		filters = append(filters, gb.withSort.build())
-	}
-	if gb.withGroupBy != nil {
-		filters = append(filters, gb.withGroupBy.build())
 	}
 	return fmt.Sprintf("(%s)", strings.Join(filters, ", "))
 }

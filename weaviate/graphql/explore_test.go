@@ -613,3 +613,89 @@ func TestExploreBuilder(t *testing.T) {
 		})
 	})
 }
+
+func TestExpore_NearMedia(t *testing.T) {
+	t.Run("NearImage", func(t *testing.T) {
+		nearImage := (&NearImageArgumentBuilder{}).
+			WithImage("iVBORw0KGgoAAAANS").
+			WithCertainty(0.5)
+
+		query := (&Explore{}).
+			WithFields(ClassName, Beacon, Certainty, Distance).
+			WithNearImage(nearImage).
+			build()
+
+		expected := `{Explore(nearImage:{image: "iVBORw0KGgoAAAANS" certainty: 0.5}){className beacon certainty distance }}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("NearAudio", func(t *testing.T) {
+		nearAudio := (&NearAudioArgumentBuilder{}).
+			WithAudio("iVBORw0KGgoAAAANS").
+			WithCertainty(0.5)
+
+		query := (&Explore{}).
+			WithFields(ClassName, Beacon, Certainty, Distance).
+			WithNearAudio(nearAudio).
+			build()
+
+		expected := `{Explore(nearAudio:{audio: "iVBORw0KGgoAAAANS" certainty: 0.5}){className beacon certainty distance }}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("NearVideo", func(t *testing.T) {
+		nearVideo := (&NearVideoArgumentBuilder{}).
+			WithVideo("iVBORw0KGgoAAAANS").
+			WithCertainty(0.5)
+
+		query := (&Explore{}).
+			WithFields(ClassName, Beacon, Certainty, Distance).
+			WithNearVideo(nearVideo).
+			build()
+
+		expected := `{Explore(nearVideo:{video: "iVBORw0KGgoAAAANS" certainty: 0.5}){className beacon certainty distance }}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("NearDepth", func(t *testing.T) {
+		nearDepth := (&NearDepthArgumentBuilder{}).
+			WithDepth("iVBORw0KGgoAAAANS").
+			WithCertainty(0.5)
+
+		query := (&Explore{}).
+			WithFields(ClassName, Beacon, Certainty, Distance).
+			WithNearDepth(nearDepth).
+			build()
+
+		expected := `{Explore(nearDepth:{depth: "iVBORw0KGgoAAAANS" certainty: 0.5}){className beacon certainty distance }}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("NearThermal", func(t *testing.T) {
+		nearThermal := (&NearThermalArgumentBuilder{}).
+			WithThermal("iVBORw0KGgoAAAANS").
+			WithCertainty(0.5)
+
+		query := (&Explore{}).
+			WithFields(ClassName, Beacon, Certainty, Distance).
+			WithNearThermal(nearThermal).
+			build()
+
+		expected := `{Explore(nearThermal:{thermal: "iVBORw0KGgoAAAANS" certainty: 0.5}){className beacon certainty distance }}`
+		assert.Equal(t, expected, query)
+	})
+
+	t.Run("NearImu", func(t *testing.T) {
+		nearImu := (&NearImuArgumentBuilder{}).
+			WithImu("iVBORw0KGgoAAAANS").
+			WithCertainty(0.5)
+
+		query := (&Explore{}).
+			WithFields(ClassName, Beacon, Certainty, Distance).
+			WithNearImu(nearImu).
+			build()
+
+		expected := `{Explore(nearIMU:{imu: "iVBORw0KGgoAAAANS" certainty: 0.5}){className beacon certainty distance }}`
+		assert.Equal(t, expected, query)
+	})
+}
