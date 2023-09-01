@@ -40,6 +40,13 @@ func (schema *API) ClassCreator() *ClassCreator {
 	}
 }
 
+// ClassUpdater builder to update a weaviate schema class
+func (schema *API) ClassUpdater() *ClassUpdater {
+	return &ClassUpdater{
+		connection: schema.connection,
+	}
+}
+
 // ClassDeleter builder to delete a weaviate schema class
 func (schema *API) ClassDeleter() *ClassDeleter {
 	return &ClassDeleter{

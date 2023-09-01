@@ -117,6 +117,57 @@ func TestSchema_integration(t *testing.T) {
 		assert.Equal(t, 0, len(loadedSchema.Classes))
 	})
 
+	t.Run("PUT /schema", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+
+		schemaClass := &models.Class{
+			Class:               "Run",
+			Description:         "Running from the fuzz",
+			VectorIndexType:     "hnsw",
+			InvertedIndexConfig: defaultInvertedIndexConfig,
+			ModuleConfig:        defaultModuleConfig,
+			ShardingConfig:      defaultShardingConfig,
+			VectorIndexConfig:   defaultVectorIndexConfig,
+			ReplicationConfig:   defaultReplicationConfig,
+		}
+
+		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
+		assert.Nil(t, err)
+
+		// Now update the class
+		err = client.Schema().ClassUpdater().WithClass(&models.Class{
+			Class: schemaClass.Class,
+			VectorIndexConfig: map[string]interface{}{
+				"ef": 42,
+			},
+		}).Do(context.Background())
+
+		assert.Nil(t, err)
+
+		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())
+		assert.Nil(t, getErr)
+		assert.Equal(t, 1, len(loadedSchema.Classes))
+
+		vectorIndexConfig := loadedSchema.Classes[0].VectorIndexConfig.(map[string]interface{})
+		assert.Equal(t, float64(42), vectorIndexConfig["ef"].(float64))
+
+		// With Class name missing
+		err = client.Schema().ClassUpdater().WithClass(&models.Class{
+			VectorIndexConfig: map[string]interface{}{
+				"ef": 42,
+			},
+		}).Do(context.Background())
+		assert.Error(t, err)
+
+		// Without WithClass
+		err = client.Schema().ClassUpdater().Do(context.Background())
+		assert.Error(t, err)
+
+		// Clean up classes
+		errRm := client.Schema().AllDeleter().Do(context.Background())
+		assert.Nil(t, errRm)
+	})
+
 	t.Run("Delete All schema", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 
