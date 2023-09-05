@@ -15,8 +15,8 @@ import (
 type ObjectsBatchDeleter struct {
 	connection       *connection.Connection
 	className        string
-	dryRun           bool
-	output           string
+	dryRun           *bool
+	output           *string
 	whereFilter      *filters.WhereBuilder
 	consistencyLevel string
 	tenant           string
@@ -28,12 +28,12 @@ func (b *ObjectsBatchDeleter) WithClassName(className string) *ObjectsBatchDelet
 }
 
 func (b *ObjectsBatchDeleter) WithDryRun(dryRun bool) *ObjectsBatchDeleter {
-	b.dryRun = dryRun
+	b.dryRun = &dryRun
 	return b
 }
 
 func (b *ObjectsBatchDeleter) WithOutput(output string) *ObjectsBatchDeleter {
-	b.output = output
+	b.output = &output
 	return b
 }
 
@@ -63,8 +63,8 @@ func (ob *ObjectsBatchDeleter) Do(ctx context.Context) (*models.BatchDeleteRespo
 	}
 
 	body := &models.BatchDelete{
-		DryRun: &ob.dryRun,
-		Output: &ob.output,
+		DryRun: ob.dryRun,
+		Output: ob.output,
 		Match: &models.BatchDeleteMatch{
 			Class: ob.className,
 			Where: ob.whereFilter.Build(),
