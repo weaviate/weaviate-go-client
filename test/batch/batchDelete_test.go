@@ -62,6 +62,67 @@ func TestBatchDelete_integration(t *testing.T) {
 		testsuit.CleanUpWeaviate(t, client)
 	})
 
+	t.Run("batch delete dry run and no output setting", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		testsuit.CreateTestSchemaAndData(t, client)
+
+		where := filters.Where().
+			WithOperator(filters.Equal).
+			WithPath([]string{"id"}).
+			WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
+
+		expectedResults := &models.BatchDeleteResponseResults{
+			Matches:    1,
+			Failed:     0,
+			Successful: 0,
+			Limit:      10000,
+			Objects:    nil,
+		}
+
+		resp, err := client.Batch().ObjectsBatchDeleter().
+			WithClassName("Pizza").
+			WithDryRun(true).
+			WithWhere(where).
+			Do(context.Background())
+		require.Nil(t, err)
+		require.NotNil(t, resp.Match)
+		assert.Equal(t, "Pizza", resp.Match.Class)
+		assert.Equal(t, where.Build(), resp.Match.Where)
+		assert.Equal(t, expectedResults, resp.Results)
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
+	t.Run("batch delete dry run and no output setting and no dry run", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		testsuit.CreateTestSchemaAndData(t, client)
+
+		where := filters.Where().
+			WithOperator(filters.Equal).
+			WithPath([]string{"id"}).
+			WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
+
+		expectedResults := &models.BatchDeleteResponseResults{
+			Matches:    1,
+			Failed:     0,
+			Successful: 1,
+			Limit:      10000,
+			Objects:    nil,
+		}
+
+		resp, err := client.Batch().ObjectsBatchDeleter().
+			WithClassName("Pizza").
+			WithWhere(where).
+			Do(context.Background())
+		require.Nil(t, err)
+		require.NotNil(t, resp.Match)
+		assert.Equal(t, "Pizza", resp.Match.Class)
+		assert.Equal(t, where.Build(), resp.Match.Where)
+		assert.Equal(t, expectedResults, resp.Results)
+
+		testsuit.CleanUpWeaviate(t, client)
+	})
+
 	t.Run("batch delete", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestSchemaAndData(t, client)
