@@ -19,6 +19,7 @@ type ObjectsBatchRequestBody struct {
 // ObjectsBatcher builder to add multiple objects in one batch
 type ObjectsBatcher struct {
 	connection       *connection.Connection
+	grpcClient       *connection.GrpcClient
 	objects          []*models.Object
 	consistencyLevel string
 }
@@ -51,6 +52,13 @@ func (ob *ObjectsBatcher) resetObjects() {
 // Do add all the objects in the builder to weaviate
 func (ob *ObjectsBatcher) Do(ctx context.Context) ([]models.ObjectsGetResponse, error) {
 	defer ob.resetObjects()
+	if ob.grpcClient != nil {
+		return ob.runGRPC(ctx)
+	}
+	return ob.runREST(ctx)
+}
+
+func (ob *ObjectsBatcher) runREST(ctx context.Context) ([]models.ObjectsGetResponse, error) {
 	body := ObjectsBatchRequestBody{
 		Fields:  []string{"ALL"},
 		Objects: ob.objects,
@@ -67,4 +75,8 @@ func (ob *ObjectsBatcher) Do(ctx context.Context) ([]models.ObjectsGetResponse, 
 	var parsedResponse []models.ObjectsGetResponse
 	parseErr := responseData.DecodeBodyIntoTarget(&parsedResponse)
 	return parsedResponse, parseErr
+}
+
+func (ob *ObjectsBatcher) runGRPC(ctx context.Context) ([]models.ObjectsGetResponse, error) {
+	return ob.grpcClient.BatchObjects(ctx, ob.objects, ob.consistencyLevel)
 }

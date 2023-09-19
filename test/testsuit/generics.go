@@ -9,9 +9,11 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
 	"github.com/weaviate/weaviate/entities/models"
+	"github.com/weaviate/weaviate/entities/schema"
 )
 
 const (
@@ -483,4 +485,190 @@ func CreateTestDocumentAndPassageSchemaAndData(t *testing.T, client *weaviate.Cl
 
 	createReferences(t, client, documents[0], passages[:10])
 	createReferences(t, client, documents[1], passages[10:14])
+}
+
+func AllPropertiesSchemaCreate(t *testing.T, client *weaviate.Client, className string) {
+	class := &models.Class{
+		Class: className,
+		Properties: []*models.Property{
+			{
+				Name:     "color",
+				DataType: []string{schema.DataTypeText.String()},
+			},
+			{
+				Name:     "colors",
+				DataType: []string{schema.DataTypeTextArray.String()},
+			},
+			{
+				Name:     "author",
+				DataType: []string{schema.DataTypeString.String()},
+			},
+			{
+				Name:     "authors",
+				DataType: []string{schema.DataTypeStringArray.String()},
+			},
+			{
+				Name:     "number",
+				DataType: []string{schema.DataTypeNumber.String()},
+			},
+			{
+				Name:     "numbers",
+				DataType: []string{schema.DataTypeNumberArray.String()},
+			},
+			{
+				Name:     "int",
+				DataType: []string{schema.DataTypeInt.String()},
+			},
+			{
+				Name:     "ints",
+				DataType: []string{schema.DataTypeIntArray.String()},
+			},
+			{
+				Name:     "date",
+				DataType: []string{schema.DataTypeDate.String()},
+			},
+			{
+				Name:     "dates",
+				DataType: []string{schema.DataTypeDateArray.String()},
+			},
+			{
+				Name:     "bool",
+				DataType: []string{schema.DataTypeBoolean.String()},
+			},
+			{
+				Name:     "bools",
+				DataType: []string{schema.DataTypeBooleanArray.String()},
+			},
+			{
+				Name:     "uuid",
+				DataType: []string{schema.DataTypeUUID.String()},
+			},
+			{
+				Name:     "uuids",
+				DataType: []string{schema.DataTypeUUIDArray.String()},
+			},
+		},
+	}
+	err := client.Schema().ClassCreator().WithClass(class).Do(context.TODO())
+	require.Nil(t, err)
+}
+
+type AllProperties struct {
+	ID1, ID2, ID3 string
+	IDs           []string
+	Authors       []string
+	AuthorsArray  [][]string
+	Colors        []string
+	ColorssArray  [][]string
+	Numbers       []float64
+	NumbersArray  [][]float64
+	Ints          []int64
+	IntsArray     [][]int64
+	Uuids         []string
+	UuidsArray    [][]string
+	Dates         []string
+	DatesArray    [][]string
+	Bools         []bool
+	BoolsArray    [][]bool
+}
+
+func AllPropertiesData() AllProperties {
+	id1 := "00000000-0000-0000-0000-000000000001"
+	id2 := "00000000-0000-0000-0000-000000000002"
+	id3 := "00000000-0000-0000-0000-000000000003"
+	return AllProperties{
+		ID1:     id1,
+		ID2:     id2,
+		ID3:     id3,
+		IDs:     []string{id1, id2, id3},
+		Authors: []string{"John", "Jenny", "Joseph"},
+		AuthorsArray: [][]string{
+			{"John", "Jenny", "Joseph"},
+			{"John", "Jenny"},
+			{"John"},
+		},
+		Colors: []string{"red", "blue", "green"},
+		ColorssArray: [][]string{
+			{"red", "blue", "green"},
+			{"red", "blue"},
+			{"red"},
+		},
+		Numbers: []float64{1.1, 2.2, 3.3},
+		NumbersArray: [][]float64{
+			{1.1, 2.2, 3.3},
+			{1.1, 2.2},
+			{1.1},
+		},
+		Ints: []int64{1, 2, 3},
+		IntsArray: [][]int64{
+			{1, 2, 3},
+			{1, 2},
+			{1},
+		},
+		Uuids: []string{id1, id2, id3},
+		UuidsArray: [][]string{
+			{id1, id2, id3},
+			{id1, id2},
+			{id1},
+		},
+		Dates: []string{"2009-11-01T23:00:00Z", "2009-11-02T23:00:00Z", "2009-11-03T23:00:00Z"},
+		DatesArray: [][]string{
+			{"2009-11-01T23:00:00Z", "2009-11-02T23:00:00Z", "2009-11-03T23:00:00Z"},
+			{"2009-11-01T23:00:00Z", "2009-11-02T23:00:00Z"},
+			{"2009-11-01T23:00:00Z"},
+		},
+		Bools: []bool{true, false, true},
+		BoolsArray: [][]bool{
+			{true, false, true},
+			{true, false},
+			{true},
+		},
+	}
+}
+
+func AllPropertiesObjects(className string) []*models.Object {
+	data := AllPropertiesData()
+	id1 := data.ID1
+	id2 := data.ID2
+	id3 := data.ID3
+	ids := []string{id1, id2, id3}
+
+	authors := data.Authors
+	authorsArray := data.AuthorsArray
+	colors := data.Colors
+	colorssArray := data.ColorssArray
+	numbers := data.Numbers
+	numbersArray := data.NumbersArray
+	ints := data.Ints
+	intsArray := data.IntsArray
+	uuids := data.Uuids
+	uuidsArray := data.UuidsArray
+	dates := data.Dates
+	datesArray := data.DatesArray
+	bools := data.Bools
+	boolsArray := data.BoolsArray
+	objects := make([]*models.Object, len(ids))
+	for i, id := range ids {
+		objects[i] = &models.Object{
+			Class: className,
+			ID:    strfmt.UUID(id),
+			Properties: map[string]interface{}{
+				"color":   colors[i],
+				"colors":  colorssArray[i],
+				"author":  authors[i],
+				"authors": authorsArray[i],
+				"number":  numbers[i],
+				"numbers": numbersArray[i],
+				"int":     ints[i],
+				"ints":    intsArray[i],
+				"uuid":    uuids[i],
+				"uuids":   uuidsArray[i],
+				"date":    dates[i],
+				"dates":   datesArray[i],
+				"bool":    bools[i],
+				"bools":   boolsArray[i],
+			},
+		}
+	}
+	return objects
 }

@@ -17,7 +17,6 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
-	"github.com/weaviate/weaviate/entities/schema"
 )
 
 func TestGraphQL_integration(t *testing.T) {
@@ -1951,9 +1950,8 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 
 		t.Run("ContainsAny and ContainsAll", func(t *testing.T) {
 			className := "WhereTest"
-			id1 := "00000000-0000-0000-0000-000000000001"
-			id2 := "00000000-0000-0000-0000-000000000002"
-			id3 := "00000000-0000-0000-0000-000000000003"
+			data := testsuit.AllPropertiesData()
+			id1, id2, id3 := data.ID1, data.ID2, data.ID3
 			ids := []string{id1, id2, id3}
 
 			cleanup := func() {
@@ -1963,114 +1961,24 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 
 			t.Run("create class", func(t *testing.T) {
 				cleanup()
-				class := &models.Class{
-					Class: className,
-					Properties: []*models.Property{
-						{
-							Name:     "color",
-							DataType: []string{schema.DataTypeText.String()},
-						},
-						{
-							Name:     "colors",
-							DataType: []string{schema.DataTypeTextArray.String()},
-						},
-						{
-							Name:     "author",
-							DataType: []string{schema.DataTypeString.String()},
-						},
-						{
-							Name:     "authors",
-							DataType: []string{schema.DataTypeStringArray.String()},
-						},
-						{
-							Name:     "number",
-							DataType: []string{schema.DataTypeNumber.String()},
-						},
-						{
-							Name:     "numbers",
-							DataType: []string{schema.DataTypeNumberArray.String()},
-						},
-						{
-							Name:     "int",
-							DataType: []string{schema.DataTypeInt.String()},
-						},
-						{
-							Name:     "ints",
-							DataType: []string{schema.DataTypeIntArray.String()},
-						},
-						{
-							Name:     "date",
-							DataType: []string{schema.DataTypeDate.String()},
-						},
-						{
-							Name:     "dates",
-							DataType: []string{schema.DataTypeDateArray.String()},
-						},
-						{
-							Name:     "bool",
-							DataType: []string{schema.DataTypeBoolean.String()},
-						},
-						{
-							Name:     "bools",
-							DataType: []string{schema.DataTypeBooleanArray.String()},
-						},
-						{
-							Name:     "uuid",
-							DataType: []string{schema.DataTypeUUID.String()},
-						},
-						{
-							Name:     "uuids",
-							DataType: []string{schema.DataTypeUUIDArray.String()},
-						},
-					},
-				}
-				err := client.Schema().ClassCreator().WithClass(class).Do(context.TODO())
-				require.Nil(t, err)
+				testsuit.AllPropertiesSchemaCreate(t, client, className)
 			})
 
 			t.Run("insert data", func(t *testing.T) {
-				authors := []string{"John", "Jenny", "Joseph"}
-				authorsArray := [][]string{
-					{"John", "Jenny", "Joseph"},
-					{"John", "Jenny"},
-					{"John"},
-				}
-				colors := []string{"red", "blue", "green"}
-				colorssArray := [][]string{
-					{"red", "blue", "green"},
-					{"red", "blue"},
-					{"red"},
-				}
-				numbers := []float64{1.1, 2.2, 3.3}
-				numbersArray := [][]float64{
-					{1.1, 2.2, 3.3},
-					{1.1, 2.2},
-					{1.1},
-				}
-				ints := []int64{1, 2, 3}
-				intsArray := [][]int64{
-					{1, 2, 3},
-					{1, 2},
-					{1},
-				}
-				uuids := []string{id1, id2, id3}
-				uuidsArray := [][]string{
-					{id1, id2, id3},
-					{id1, id2},
-					{id1},
-				}
-				dates := []string{"2009-11-01T23:00:00Z", "2009-11-02T23:00:00Z", "2009-11-03T23:00:00Z"}
-				datesArray := [][]string{
-					{"2009-11-01T23:00:00Z", "2009-11-02T23:00:00Z", "2009-11-03T23:00:00Z"},
-					{"2009-11-01T23:00:00Z", "2009-11-02T23:00:00Z"},
-					{"2009-11-01T23:00:00Z"},
-				}
-				bools := []bool{true, false, true}
-				boolsArray := [][]bool{
-					{true, false, true},
-					{true, false},
-					{true},
-				}
+				authors := data.Authors
+				authorsArray := data.AuthorsArray
+				colors := data.Colors
+				colorssArray := data.ColorssArray
+				numbers := data.Numbers
+				numbersArray := data.NumbersArray
+				ints := data.Ints
+				intsArray := data.IntsArray
+				uuids := data.Uuids
+				uuidsArray := data.UuidsArray
+				dates := data.Dates
+				datesArray := data.DatesArray
+				bools := data.Bools
+				boolsArray := data.BoolsArray
 				for i, id := range ids {
 					_, err := client.Data().Creator().
 						WithClassName(className).

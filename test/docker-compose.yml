@@ -9,9 +9,10 @@ services:
       - '8080'
       - --scheme
       - http
-    image: semitechnologies/weaviate:preview-nested-objects-a7c1867
+    image: semitechnologies/weaviate:1.22.0-rc.0
     ports:
       - 8080:8080
+      - 50051:50051
     restart: on-failure:0
     environment:
       LOG_LEVEL: "debug"
