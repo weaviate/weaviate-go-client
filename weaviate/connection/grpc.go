@@ -86,70 +86,144 @@ func (c *GrpcClient) getProperties(properties models.PropertySchema) (*pb.BatchO
 	}
 	var result *pb.BatchObject_Properties
 	if len(props) > 0 {
-		nonRefProperties := map[string]interface{}{}
-		numberArrayProperties := []*pb.NumberArrayProperties{}
-		intArrayProperties := []*pb.IntArrayProperties{}
-		textArrayProperties := []*pb.TextArrayProperties{}
-		booleanArrayProperties := []*pb.BooleanArrayProperties{}
-		for name, value := range props {
-			switch v := value.(type) {
-			case bool, int, int32, int64, uint, uint32, uint64, float32, float64, string:
-				nonRefProperties[name] = v
-			case []string:
-				textArrayProperties = append(textArrayProperties, &pb.TextArrayProperties{
-					PropName: name, Values: v,
-				})
-			case []bool:
-				booleanArrayProperties = append(booleanArrayProperties, &pb.BooleanArrayProperties{
-					PropName: name, Values: v,
-				})
-			case []int, []int32, []int64, []uint, []uint32, []uint64:
-				var values []int64
-				switch vv := v.(type) {
-				case []int:
-					values = toInt64Array[int](vv)
-				case []int32:
-					values = toInt64Array[int32](vv)
-				case []int64:
-					values = vv
-				case []uint:
-					values = toInt64Array[uint](vv)
-				case []uint32:
-					values = toInt64Array[uint32](vv)
-				case []uint64:
-					values = toInt64Array[uint64](vv)
-				}
-				intArrayProperties = append(intArrayProperties, &pb.IntArrayProperties{
-					PropName: name, Values: values,
-				})
-			case []float32, []float64:
-				var values []float64
-				switch vv := v.(type) {
-				case []float32:
-					for i := range vv {
-						values = append(values, float64(vv[i]))
-					}
-				case []float64:
-					values = vv
-				}
-				numberArrayProperties = append(numberArrayProperties, &pb.NumberArrayProperties{
-					PropName: name, Values: values,
-				})
-			}
-			nonRefPropsStruct, err := structpb.NewStruct(nonRefProperties)
-			if err != nil {
-				return nil, fmt.Errorf("object properties: %w", err)
-			}
-			result = &pb.BatchObject_Properties{
-				NonRefProperties:       nonRefPropsStruct,
-				TextArrayProperties:    textArrayProperties,
-				IntArrayProperties:     intArrayProperties,
-				NumberArrayProperties:  numberArrayProperties,
-				BooleanArrayProperties: booleanArrayProperties,
-			}
+		nonRefPropsStruct, numberArrayProperties, intArrayProperties, textArrayProperties,
+			booleanArrayProperties, objectProperties, objectArrayProperties, err := c.extractProperties(props)
+		if err != nil {
+			return nil, err
+		}
+		result = &pb.BatchObject_Properties{
+			NonRefProperties:       nonRefPropsStruct,
+			TextArrayProperties:    textArrayProperties,
+			IntArrayProperties:     intArrayProperties,
+			NumberArrayProperties:  numberArrayProperties,
+			BooleanArrayProperties: booleanArrayProperties,
+			ObjectProperties:       objectProperties,
+			ObjectArrayProperties:  objectArrayProperties,
 		}
 	}
 	return result, nil
+}
+
+func (c *GrpcClient) extractProperties(properties map[string]interface{}) (nonRefProperties *structpb.Struct,
+	numberArrayProperties []*pb.NumberArrayProperties,
+	intArrayProperties []*pb.IntArrayProperties,
+	textArrayProperties []*pb.TextArrayProperties,
+	booleanArrayProperties []*pb.BooleanArrayProperties,
+	objectProperties []*pb.ObjectProperties,
+	objectArrayProperties []*pb.ObjectArrayProperties,
+	err error,
+) {
+	nonRefPropertiesMap := map[string]interface{}{}
+	numberArrayProperties = []*pb.NumberArrayProperties{}
+	intArrayProperties = []*pb.IntArrayProperties{}
+	textArrayProperties = []*pb.TextArrayProperties{}
+	booleanArrayProperties = []*pb.BooleanArrayProperties{}
+	objectProperties = []*pb.ObjectProperties{}
+	objectArrayProperties = []*pb.ObjectArrayProperties{}
+	for name, value := range properties {
+		switch v := value.(type) {
+		case bool, int, int32, int64, uint, uint32, uint64, float32, float64, string:
+			nonRefPropertiesMap[name] = v
+		case []string:
+			textArrayProperties = append(textArrayProperties, &pb.TextArrayProperties{
+				PropName: name, Values: v,
+			})
+		case []bool:
+			booleanArrayProperties = append(booleanArrayProperties, &pb.BooleanArrayProperties{
+				PropName: name, Values: v,
+			})
+		case []int, []int32, []int64, []uint, []uint32, []uint64:
+			var values []int64
+			switch vv := v.(type) {
+			case []int:
+				values = toInt64Array[int](vv)
+			case []int32:
+				values = toInt64Array[int32](vv)
+			case []int64:
+				values = vv
+			case []uint:
+				values = toInt64Array[uint](vv)
+			case []uint32:
+				values = toInt64Array[uint32](vv)
+			case []uint64:
+				values = toInt64Array[uint64](vv)
+			}
+			intArrayProperties = append(intArrayProperties, &pb.IntArrayProperties{
+				PropName: name, Values: values,
+			})
+		case []float32, []float64:
+			var values []float64
+			switch vv := v.(type) {
+			case []float32:
+				for i := range vv {
+					values = append(values, float64(vv[i]))
+				}
+			case []float64:
+				values = vv
+			}
+			numberArrayProperties = append(numberArrayProperties, &pb.NumberArrayProperties{
+				PropName: name, Values: values,
+			})
+		case map[string]interface{}:
+			// Object Property
+			nonRefProps, numberArrayProps, intArrayProps,
+				textArrayProps, booleanArrayProps, objectProps, objectArrayProps, objPropErr := c.extractProperties(v)
+			if objPropErr != nil {
+				err = fmt.Errorf("object properties: object property: %w", objPropErr)
+				return
+			}
+			objectPropertiesValue := &pb.ObjectPropertiesValue{
+				NonRefProperties:       nonRefProps,
+				NumberArrayProperties:  numberArrayProps,
+				IntArrayProperties:     intArrayProps,
+				TextArrayProperties:    textArrayProps,
+				BooleanArrayProperties: booleanArrayProps,
+				ObjectProperties:       objectProps,
+				ObjectArrayProperties:  objectArrayProps,
+			}
+			objectProperties = append(objectProperties, &pb.ObjectProperties{
+				PropName: name,
+				Value:    objectPropertiesValue,
+			})
+		case []interface{}:
+			// Object Array Property
+			objectArrayPropertiesValues := []*pb.ObjectPropertiesValue{}
+			for _, objArrVal := range v {
+				switch objArrValTyped := objArrVal.(type) {
+				case map[string]interface{}:
+					nonRefProps, numberArrayProps, intArrayProps,
+						textArrayProps, booleanArrayProps, objectProps, objectArrayProps, objPropErr := c.extractProperties(objArrValTyped)
+					if objPropErr != nil {
+						err = fmt.Errorf("object properties: object array property: %w", objPropErr)
+						return
+					}
+					objectPropertiesValue := &pb.ObjectPropertiesValue{
+						NonRefProperties:       nonRefProps,
+						NumberArrayProperties:  numberArrayProps,
+						IntArrayProperties:     intArrayProps,
+						TextArrayProperties:    textArrayProps,
+						BooleanArrayProperties: booleanArrayProps,
+						ObjectProperties:       objectProps,
+						ObjectArrayProperties:  objectArrayProps,
+					}
+					objectArrayPropertiesValues = append(objectArrayPropertiesValues, objectPropertiesValue)
+				default:
+					err = fmt.Errorf("object properties: object array property: unsupported type: %T", objArrVal)
+					return
+				}
+			}
+			objectArrayProperties = append(objectArrayProperties, &pb.ObjectArrayProperties{
+				PropName: name,
+				Values:   objectArrayPropertiesValues,
+			})
+		}
+		nonRefProperties, err = structpb.NewStruct(nonRefPropertiesMap)
+		if err != nil {
+			err = fmt.Errorf("object properties: %w", err)
+			return
+		}
+	}
+	return
 }
 
 func (c *GrpcClient) getConsistencyLevel(consistencyLevel string) *pb.ConsistencyLevel {
