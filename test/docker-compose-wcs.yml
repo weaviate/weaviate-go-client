@@ -9,7 +9,7 @@ services:
       - '8085'
       - --scheme
       - http
-    image: semitechnologies/weaviate:1.22.0-rc.0
+    image: semitechnologies/weaviate:preview-fix-grpc-batch-api-autoschema-77dcea7
     ports:
       - 8085:8085
     restart: on-failure:0

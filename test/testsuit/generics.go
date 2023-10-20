@@ -626,7 +626,7 @@ func AllPropertiesData() AllProperties {
 	}
 }
 
-func AllPropertiesObjects(className string) []*models.Object {
+func AllPropertiesDataAsMap() []map[string]interface{} {
 	data := AllPropertiesData()
 	id1 := data.ID1
 	id2 := data.ID2
@@ -636,7 +636,7 @@ func AllPropertiesObjects(className string) []*models.Object {
 	authors := data.Authors
 	authorsArray := data.AuthorsArray
 	colors := data.Colors
-	colorssArray := data.ColorssArray
+	colorsArray := data.ColorssArray
 	numbers := data.Numbers
 	numbersArray := data.NumbersArray
 	ints := data.Ints
@@ -647,28 +647,121 @@ func AllPropertiesObjects(className string) []*models.Object {
 	datesArray := data.DatesArray
 	bools := data.Bools
 	boolsArray := data.BoolsArray
-	objects := make([]*models.Object, len(ids))
-	for i, id := range ids {
-		objects[i] = &models.Object{
-			Class: className,
-			ID:    strfmt.UUID(id),
-			Properties: map[string]interface{}{
-				"color":   colors[i],
-				"colors":  colorssArray[i],
-				"author":  authors[i],
-				"authors": authorsArray[i],
-				"number":  numbers[i],
-				"numbers": numbersArray[i],
-				"int":     ints[i],
-				"ints":    intsArray[i],
-				"uuid":    uuids[i],
-				"uuids":   uuidsArray[i],
-				"date":    dates[i],
-				"dates":   datesArray[i],
-				"bool":    bools[i],
-				"bools":   boolsArray[i],
+	properties := make([]map[string]interface{}, len(ids))
+	for i := range ids {
+		properties[i] = map[string]interface{}{
+			"color":   colors[i],
+			"colors":  colorsArray[i],
+			"author":  authors[i],
+			"authors": authorsArray[i],
+			"number":  numbers[i],
+			"numbers": numbersArray[i],
+			"int":     ints[i],
+			"ints":    intsArray[i],
+			"uuid":    uuids[i],
+			"uuids":   uuidsArray[i],
+			"date":    dates[i],
+			"dates":   datesArray[i],
+			"bool":    bools[i],
+			"bools":   boolsArray[i],
+		}
+	}
+	return properties
+}
+
+func AllPropertiesDataWithNestedObjectsAsMap() []map[string]interface{} {
+	properties := AllPropertiesDataAsMap()
+	for i := range properties {
+		properties[i]["json"] = map[string]interface{}{
+			"firstName":   "Stacey",
+			"lastName":    "Spears",
+			"proffession": "Accountant",
+			"birthdate":   "2011-05-05T07:16:30+02:00",
+			"phoneNumber": map[string]interface{}{
+				"input":                  "020 1555444",
+				"defaultCountry":         "nl",
+				"internationalFormatted": "+31 20 1555444",
+				"countryCode":            31,
+				"national":               201555444,
+				"nationalFormatted":      "020 1555444",
+				"valid":                  true,
+			},
+			"location": map[string]interface{}{
+				"latitude":  51.366667,
+				"longitude": 5.9,
 			},
 		}
 	}
+	return properties
+}
+
+func AllPropertiesDataWithNestedArrayObjectsAsMap() []map[string]interface{} {
+	properties := AllPropertiesDataWithNestedObjectsAsMap()
+	for i := range properties {
+		properties[i]["people"] = []interface{}{
+			map[string]interface{}{
+				"firstName":   "Robert",
+				"lastName":    "Junior",
+				"proffession": "Accountant",
+				"birthdate":   "2002-05-05T07:16:30+02:00",
+				"phoneNumber": map[string]interface{}{
+					"input":          "020 1234567",
+					"defaultCountry": "nl",
+				},
+				"location": map[string]interface{}{
+					"latitude":  52.366667,
+					"longitude": 4.9,
+				},
+			},
+			map[string]interface{}{
+				"firstName":   "Steven",
+				"lastName":    "Spears",
+				"proffession": "Accountant",
+				"birthdate":   "2009-05-05T07:16:30+02:00",
+				"phoneNumber": map[string]interface{}{
+					"input":          "020 1555444",
+					"defaultCountry": "nl",
+				},
+				"location": map[string]interface{}{
+					"latitude":  51.366667,
+					"longitude": 5.9,
+				},
+			},
+		}
+	}
+	return properties
+}
+
+func allPropertiesObjects(className string, properties []map[string]interface{}) []*models.Object {
+	data := AllPropertiesData()
+	id1 := data.ID1
+	id2 := data.ID2
+	id3 := data.ID3
+	ids := []string{id1, id2, id3}
+
+	objects := make([]*models.Object, len(ids))
+	for i, id := range ids {
+		objects[i] = &models.Object{
+			Class:      className,
+			ID:         strfmt.UUID(id),
+			Properties: properties[i],
+		}
+	}
 	return objects
+}
+
+func AllPropertiesObjectsWithData(className string, properties []map[string]interface{}) []*models.Object {
+	return allPropertiesObjects(className, properties)
+}
+
+func AllPropertiesObjects(className string) []*models.Object {
+	return allPropertiesObjects(className, AllPropertiesDataAsMap())
+}
+
+func AllPropertiesObjectsWithNested(className string) []*models.Object {
+	return allPropertiesObjects(className, AllPropertiesDataWithNestedObjectsAsMap())
+}
+
+func AllPropertiesObjectsWithNestedArray(className string) []*models.Object {
+	return allPropertiesObjects(className, AllPropertiesDataWithNestedArrayObjectsAsMap())
 }
