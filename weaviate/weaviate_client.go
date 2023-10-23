@@ -16,6 +16,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/data"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/grpc"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/misc"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/schema"
 )
@@ -42,11 +43,16 @@ type Config struct {
 
 	// How long the client should wait for Weaviate to start up
 	StartupTimeout time.Duration
+
+	// gRPC configuration
+	GrpcConfig grpc.Config
 }
 
 // Deprecated: This function is unable to wait for Weaviate to start. Use NewClient() instead and add auth.Config to
 // weaviate.Config
-func NewConfig(host string, scheme string, authConfig auth.Config, headers map[string]string) (*Config, error) {
+func NewConfig(host string, scheme string, authConfig auth.Config,
+	headers map[string]string, grpcConfig ...grpc.Config,
+) (*Config, error) {
 	var client *http.Client
 	var err error
 	var additionalHeaders map[string]string
@@ -63,7 +69,12 @@ func NewConfig(host string, scheme string, authConfig auth.Config, headers map[s
 			headers[k] = v
 		}
 	}
-	return &Config{Host: host, Scheme: scheme, Headers: headers, ConnectionClient: client}, nil
+	var grpcConf grpc.Config
+	if len(grpcConfig) > 0 {
+		grpcConf = grpcConfig[0]
+	}
+
+	return &Config{Host: host, Scheme: scheme, Headers: headers, ConnectionClient: client, GrpcConfig: grpcConf}, nil
 }
 
 // Client implementing the weaviate API
@@ -73,6 +84,7 @@ func NewConfig(host string, scheme string, authConfig auth.Config, headers map[s
 // All these models are provided in the sub module "github.com/weaviate/weaviate/entities/models"
 type Client struct {
 	connection      *connection.Connection
+	grpcClient      *connection.GrpcClient
 	misc            *misc.API
 	schema          *schema.API
 	data            *data.API
@@ -117,6 +129,11 @@ func NewClient(config Config) (*Client, error) {
 		return nil, err
 	}
 
+	grpcClient, err := createGrpcClient(config)
+	if err != nil {
+		panic(err)
+	}
+
 	// some endpoints now require a className namespace.
 	// to determine if this new convention is to be used,
 	// we must check the weaviate server version
@@ -133,13 +150,14 @@ func NewClient(config Config) (*Client, error) {
 
 	client := &Client{
 		connection:      con,
+		grpcClient:      grpcClient,
 		misc:            misc.New(con, dbVersionProvider),
 		schema:          schema.New(con),
 		c11y:            contextionary.New(con),
 		classifications: classifications.New(con),
 		graphQL:         graphql.New(con),
 		data:            data.New(con, dbVersionSupport),
-		batch:           batch.New(con, dbVersionSupport),
+		batch:           batch.New(con, grpcClient, dbVersionSupport),
 		backup:          backup.New(con),
 		cluster:         cluster.New(con),
 	}
@@ -155,6 +173,11 @@ func NewClient(config Config) (*Client, error) {
 func New(config Config) *Client {
 	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
 
+	grpcClient, err := createGrpcClient(config)
+	if err != nil {
+		panic(err)
+	}
+
 	// some endpoints now require a className namespace.
 	// to determine if this new convention is to be used,
 	// we must check the weaviate server version
@@ -171,13 +194,14 @@ func New(config Config) *Client {
 
 	client := &Client{
 		connection:      con,
+		grpcClient:      grpcClient,
 		misc:            misc.New(con, dbVersionProvider),
 		schema:          schema.New(con),
 		c11y:            contextionary.New(con),
 		classifications: classifications.New(con),
 		graphQL:         graphql.New(con),
 		data:            data.New(con, dbVersionSupport),
-		batch:           batch.New(con, dbVersionSupport),
+		batch:           batch.New(con, grpcClient, dbVersionSupport),
 		backup:          backup.New(con),
 		cluster:         cluster.New(con),
 	}
@@ -233,4 +257,19 @@ func (c *Client) Backup() *backup.API {
 // Cluster API group
 func (c *Client) Cluster() *cluster.API {
 	return c.cluster
+}
+
+func createGrpcClient(config Config) (*connection.GrpcClient, error) {
+	scheme := config.Scheme
+	if config.GrpcConfig.Scheme != "" {
+		scheme = config.GrpcConfig.Scheme
+	}
+	host := config.Host
+	if config.GrpcConfig.Host != "" {
+		host = config.GrpcConfig.Host
+	}
+	if config.GrpcConfig.Enabled {
+		return connection.NewGrpcClient(scheme, host, config.Headers)
+	}
+	return nil, nil
 }

@@ -9,18 +9,20 @@ import (
 // API for batch requests
 type API struct {
 	connection       *connection.Connection
+	grpcClient       *connection.GrpcClient
 	dbVersionSupport *db.VersionSupport
 }
 
 // New Batch api group from connection
-func New(con *connection.Connection, dbVersionSupport *db.VersionSupport) *API {
-	return &API{connection: con, dbVersionSupport: dbVersionSupport}
+func New(con *connection.Connection, grpcClient *connection.GrpcClient, dbVersionSupport *db.VersionSupport) *API {
+	return &API{connection: con, grpcClient: grpcClient, dbVersionSupport: dbVersionSupport}
 }
 
 // ObjectsBatcher get a builder to create objects in a batch
 func (batch *API) ObjectsBatcher() *ObjectsBatcher {
 	return &ObjectsBatcher{
 		connection: batch.connection,
+		grpcClient: batch.grpcClient,
 	}
 }
 

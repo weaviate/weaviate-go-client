@@ -10,7 +10,7 @@ services:
       - --scheme
       - http
       - --write-timeout=600s
-    image: semitechnologies/weaviate:preview-nested-objects-a7c1867
+    image: semitechnologies/weaviate:preview-fix-grpc-batch-api-autoschema-77dcea7
     ports:
       - 8082:8082
     restart: on-failure:0
