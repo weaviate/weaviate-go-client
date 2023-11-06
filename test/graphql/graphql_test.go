@@ -876,6 +876,64 @@ func TestGraphQL_integration(t *testing.T) {
 				assert.Equal(t, objectLimit, resp.Aggregate.Pizza[0].Meta.Count)
 			})
 		})
+
+		t.Run("with hybrid", func(t *testing.T) {
+			t.Run("with where also", func(t *testing.T) {
+				where := filters.Where().
+					WithPath([]string{"id"}).
+					WithOperator(filters.Equal).
+					WithValueString("5b6a08ba-1d46-43aa-89cc-8b070790c6f2")
+
+				hybrid := client.GraphQL().HybridArgumentBuilder().WithQuery("toast")
+
+				resultSet, gqlErr := client.GraphQL().
+					Aggregate().
+					WithFields(meta).
+					WithWhere(where).
+					WithHybrid(hybrid).
+					WithClassName("Pizza").
+					Do(context.Background())
+
+				assert.Nil(t, gqlErr)
+				assert.NotNil(t, resultSet)
+				assert.Empty(t, resultSet.Errors)
+			})
+
+			t.Run("with just hybrid", func(t *testing.T) {
+				hybrid := client.GraphQL().HybridArgumentBuilder().
+					WithQuery("toast").WithAlpha(0.6)
+
+				resultSet, gqlErr := client.GraphQL().
+					Aggregate().
+					WithFields(meta).
+					WithHybrid(hybrid).
+					WithClassName("Pizza").
+					Do(context.Background())
+
+				assert.Nil(t, gqlErr)
+				assert.NotNil(t, resultSet)
+				assert.Empty(t, resultSet.Errors)
+			})
+
+			t.Run("with hybrid and nearText", func(t *testing.T) {
+				hybrid := client.GraphQL().HybridArgumentBuilder().WithQuery("toast")
+
+				nearText := client.GraphQL().NearTextArgBuilder().
+					WithConcepts([]string{"toast"}).WithCertainty(0.7)
+
+				resultSet, gqlErr := client.GraphQL().
+					Aggregate().
+					WithFields(meta).
+					WithHybrid(hybrid).
+					WithNearText(nearText).
+					WithClassName("Pizza").
+					Do(context.Background())
+
+				assert.Nil(t, gqlErr)
+				assert.NotNil(t, resultSet)
+				assert.Empty(t, resultSet.Errors)
+			})
+		})
 	})
 
 	t.Run("Get with group filter", func(t *testing.T) {
