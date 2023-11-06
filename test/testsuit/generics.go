@@ -22,6 +22,7 @@ const (
 	OktaCCPort     = 8082
 	OktaUsersPort  = 8083
 	WCSPort        = 8085
+	WCSGRPCPort    = 50056
 	NoWeaviatePort = 8888
 )
 
