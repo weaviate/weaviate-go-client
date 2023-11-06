@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/go-openapi/strfmt v0.21.3
 	github.com/stretchr/testify v1.8.4
-	github.com/weaviate/weaviate v1.22.0-rc.0
+	github.com/weaviate/weaviate v1.22.2
 	golang.org/x/oauth2 v0.8.0
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.30.0

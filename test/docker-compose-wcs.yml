@@ -9,9 +9,10 @@ services:
       - '8085'
       - --scheme
       - http
-    image: semitechnologies/weaviate:preview-fix-grpc-batch-api-autoschema-77dcea7
+    image: semitechnologies/weaviate:1.22.2
     ports:
       - 8085:8085
+      - 50056:50051
     restart: on-failure:0
     environment:
       LOG_LEVEL: "debug"

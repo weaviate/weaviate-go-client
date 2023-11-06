@@ -36,7 +36,7 @@ func (c *GrpcClient) BatchObjects(ctx context.Context, objects []*models.Object,
 	if err != nil {
 		return nil, err
 	}
-	reply, err := c.client.BatchObjects(ctx, batchRequest, c.getOptions()...)
+	reply, err := c.client.BatchObjects(c.ctxWithHeaders(ctx), batchRequest, c.getOptions()...)
 	return c.parseReply(reply, objects), err
 }
 
@@ -51,13 +51,15 @@ func (c *GrpcClient) getBatchRequest(objects []*models.Object, consistencyLevel 
 	}, nil
 }
 
-func (c *GrpcClient) getOptions() []grpc.CallOption {
-	var opts []grpc.CallOption
+func (c *GrpcClient) ctxWithHeaders(ctx context.Context) context.Context {
 	if len(c.headers) > 0 {
-		md := metadata.New(c.headers)
-		opts = append(opts, grpc.Header(&md))
+		return metadata.NewOutgoingContext(ctx, metadata.New(c.headers))
 	}
-	return opts
+	return ctx
+}
+
+func (c *GrpcClient) getOptions() []grpc.CallOption {
+	return []grpc.CallOption{}
 }
 
 func (c *GrpcClient) getBatchObjects(objects []*models.Object) ([]*pb.BatchObject, error) {
