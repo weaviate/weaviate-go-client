@@ -488,7 +488,17 @@ func CreateTestDocumentAndPassageSchemaAndData(t *testing.T, client *weaviate.Cl
 	createReferences(t, client, documents[1], passages[10:14])
 }
 
-func AllPropertiesSchemaCreate(t *testing.T, client *weaviate.Client, className string) {
+const (
+	AllProperties_RefClass     = "RefClass"
+	AllProperties_RefClass2    = "RefClass2"
+	AllProperties_RefID1       = "a0000000-0000-0000-0000-000000000001"
+	AllProperties_RefID2       = "a0000000-0000-0000-0000-000000000002"
+	AllProperties_RefID3       = "a0000000-0000-0000-0000-000000000003"
+	AllProperties_hasRefClass  = "hasRefClass"
+	AllProperties_hasRefClass2 = "hasRefClass2"
+)
+
+func AllPropertiesSchemaCreate(t *testing.T, client *weaviate.Client, className string, withCrossRefs bool) {
 	class := &models.Class{
 		Class: className,
 		Properties: []*models.Property{
@@ -550,6 +560,60 @@ func AllPropertiesSchemaCreate(t *testing.T, client *weaviate.Client, className 
 			},
 		},
 	}
+
+	if withCrossRefs {
+		refIDs := []string{AllProperties_RefID1, AllProperties_RefID2, AllProperties_RefID3}
+		refProperties := []string{"science-fiction", "novel", "fantasy"}
+		createRefClass := func(t *testing.T, className string) {
+			refClass := &models.Class{
+				Class: className,
+				Properties: []*models.Property{
+					{
+						Name:     "category",
+						DataType: []string{schema.DataTypeText.String()},
+					},
+				},
+			}
+			err := client.Schema().ClassCreator().WithClass(refClass).Do(context.TODO())
+			require.Nil(t, err)
+		}
+		createRefObjects := func(t *testing.T, className string) {
+			refObjects := make([]*models.Object, len(refIDs))
+			for i := range refObjects {
+				refObjects[i] = &models.Object{
+					Class: className,
+					ID:    strfmt.UUID(refIDs[i]),
+					Properties: map[string]interface{}{
+						"category": refProperties[i],
+					},
+				}
+			}
+
+			resp, err := client.Batch().ObjectsBatcher().WithObjects(refObjects...).Do(context.TODO())
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			require.Len(t, resp, len(refIDs))
+		}
+
+		for _, refClassName := range []string{AllProperties_RefClass, AllProperties_RefClass2} {
+			createRefClass(t, refClassName)
+			createRefObjects(t, refClassName)
+		}
+
+		refProps := []*models.Property{
+			{
+				Name:     AllProperties_hasRefClass,
+				DataType: []string{AllProperties_RefClass},
+			},
+			{
+				Name:     AllProperties_hasRefClass2,
+				DataType: []string{AllProperties_RefClass, AllProperties_RefClass2},
+			},
+		}
+
+		class.Properties = append(class.Properties, refProps...)
+	}
+
 	err := client.Schema().ClassCreator().WithClass(class).Do(context.TODO())
 	require.Nil(t, err)
 }
@@ -670,6 +734,31 @@ func AllPropertiesDataAsMap() []map[string]interface{} {
 	return properties
 }
 
+func AllPropertiesDataWithCrossReferencesAsMap() []map[string]interface{} {
+	return allPropertiesDataWithCrossReferencesAsMap(AllPropertiesDataAsMap())
+}
+
+func allPropertiesDataWithCrossReferencesAsMap(properties []map[string]interface{}) []map[string]interface{} {
+	// add properties
+	// cross references can be declared as []map[string]interface{} or []map[string]string
+	for i := range properties {
+		properties[i][AllProperties_hasRefClass] = []map[string]interface{}{
+			{
+				"beacon": fmt.Sprintf("weaviate://localhost/%s/%s", AllProperties_RefClass, AllProperties_RefID1),
+			},
+		}
+		properties[i][AllProperties_hasRefClass2] = []map[string]string{
+			{
+				"beacon": fmt.Sprintf("weaviate://localhost/%s/%s", AllProperties_RefClass, AllProperties_RefID2),
+			},
+			{
+				"beacon": fmt.Sprintf("weaviate://localhost/%s/%s", AllProperties_RefClass2, AllProperties_RefID3),
+			},
+		}
+	}
+	return properties
+}
+
 func AllPropertiesDataWithNestedObjectsAsMap() []map[string]interface{} {
 	properties := AllPropertiesDataAsMap()
 	for i := range properties {
@@ -731,6 +820,10 @@ func AllPropertiesDataWithNestedArrayObjectsAsMap() []map[string]interface{} {
 		}
 	}
 	return properties
+}
+
+func AllPropertiesDataWithCrossReferencesWithNestedArrayObjectsAsMap() []map[string]interface{} {
+	return allPropertiesDataWithCrossReferencesAsMap(AllPropertiesDataWithNestedArrayObjectsAsMap())
 }
 
 func allPropertiesObjects(className string, properties []map[string]interface{}) []*models.Object {

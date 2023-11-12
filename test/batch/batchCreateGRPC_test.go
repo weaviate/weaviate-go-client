@@ -35,9 +35,10 @@ func TestBatchCreate_gRPC_integration(t *testing.T) {
 
 	t.Run("gRPC batch import", func(t *testing.T) {
 		tests := []struct {
-			name       string
-			className  string
-			properties []map[string]interface{}
+			name          string
+			className     string
+			properties    []map[string]interface{}
+			withCrossRefs bool
 		}{
 			{
 				name:       "all primitive properties",
@@ -54,6 +55,18 @@ func TestBatchCreate_gRPC_integration(t *testing.T) {
 				className:  "AllPropertiesWithNestedArray",
 				properties: testsuit.AllPropertiesDataWithNestedArrayObjectsAsMap(),
 			},
+			{
+				name:          "all primitive properties with cross references (single and multi ref types)",
+				className:     "AllPropertiesWithCrossRefs",
+				properties:    testsuit.AllPropertiesDataWithCrossReferencesAsMap(),
+				withCrossRefs: true,
+			},
+			{
+				name:          "all primitive properties with cross references (single and multi ref types) with nested and nested array objects",
+				className:     "AllPropertiesWithCrossRefs",
+				properties:    testsuit.AllPropertiesDataWithCrossReferencesWithNestedArrayObjectsAsMap(),
+				withCrossRefs: true,
+			},
 		}
 		for _, tt := range tests {
 			className := tt.className
@@ -63,7 +76,7 @@ func TestBatchCreate_gRPC_integration(t *testing.T) {
 			err := client.Schema().AllDeleter().Do(context.Background())
 			require.Nil(t, err)
 
-			testsuit.AllPropertiesSchemaCreate(t, client, className)
+			testsuit.AllPropertiesSchemaCreate(t, client, className, tt.withCrossRefs)
 
 			batchResultSlice, batchErrSlice := client.Batch().ObjectsBatcher().WithObjects(objects...).Do(context.Background())
 			assert.Nil(t, batchErrSlice)
@@ -83,7 +96,10 @@ func TestBatchCreate_gRPC_integration(t *testing.T) {
 				require.True(t, ok)
 				require.NotNil(t, props)
 				properties := data[i]
-				assert.Equal(t, len(props), len(properties))
+				require.Equal(t, len(props), len(properties))
+				for propName := range properties {
+					assert.NotNil(t, props[propName])
+				}
 			}
 		}
 	})

@@ -8,6 +8,7 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/weaviate/weaviate/entities/models"
+	"github.com/weaviate/weaviate/entities/schema/crossref"
 	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -89,7 +90,8 @@ func (c *GrpcClient) getProperties(properties models.PropertySchema) (*pb.BatchO
 	var result *pb.BatchObject_Properties
 	if len(props) > 0 {
 		nonRefPropsStruct, numberArrayProperties, intArrayProperties, textArrayProperties,
-			booleanArrayProperties, objectProperties, objectArrayProperties, err := c.extractProperties(props)
+			booleanArrayProperties, objectProperties, objectArrayProperties,
+			singleTargetRefProps, multiTargetRefProps, err := c.extractProperties(props, true)
 		if err != nil {
 			return nil, err
 		}
@@ -101,18 +103,22 @@ func (c *GrpcClient) getProperties(properties models.PropertySchema) (*pb.BatchO
 			BooleanArrayProperties: booleanArrayProperties,
 			ObjectProperties:       objectProperties,
 			ObjectArrayProperties:  objectArrayProperties,
+			SingleTargetRefProps:   singleTargetRefProps,
+			MultiTargetRefProps:    multiTargetRefProps,
 		}
 	}
 	return result, nil
 }
 
-func (c *GrpcClient) extractProperties(properties map[string]interface{}) (nonRefProperties *structpb.Struct,
+func (c *GrpcClient) extractProperties(properties map[string]interface{}, rootLevel bool) (nonRefProperties *structpb.Struct,
 	numberArrayProperties []*pb.NumberArrayProperties,
 	intArrayProperties []*pb.IntArrayProperties,
 	textArrayProperties []*pb.TextArrayProperties,
 	booleanArrayProperties []*pb.BooleanArrayProperties,
 	objectProperties []*pb.ObjectProperties,
 	objectArrayProperties []*pb.ObjectArrayProperties,
+	singleTargetRefProps []*pb.BatchObject_SingleTargetRefProps,
+	multiTargetRefProps []*pb.BatchObject_MultiTargetRefProps,
 	err error,
 ) {
 	nonRefPropertiesMap := map[string]interface{}{}
@@ -122,6 +128,8 @@ func (c *GrpcClient) extractProperties(properties map[string]interface{}) (nonRe
 	booleanArrayProperties = []*pb.BooleanArrayProperties{}
 	objectProperties = []*pb.ObjectProperties{}
 	objectArrayProperties = []*pb.ObjectArrayProperties{}
+	singleTargetRefProps = []*pb.BatchObject_SingleTargetRefProps{}
+	multiTargetRefProps = []*pb.BatchObject_MultiTargetRefProps{}
 	for name, value := range properties {
 		switch v := value.(type) {
 		case bool, int, int32, int64, uint, uint32, uint64, float32, float64, string:
@@ -169,7 +177,7 @@ func (c *GrpcClient) extractProperties(properties map[string]interface{}) (nonRe
 		case map[string]interface{}:
 			// Object Property
 			nonRefProps, numberArrayProps, intArrayProps,
-				textArrayProps, booleanArrayProps, objectProps, objectArrayProps, objPropErr := c.extractProperties(v)
+				textArrayProps, booleanArrayProps, objectProps, objectArrayProps, _, _, objPropErr := c.extractProperties(v, false)
 			if objPropErr != nil {
 				err = fmt.Errorf("object properties: object property: %w", objPropErr)
 				return
@@ -187,6 +195,46 @@ func (c *GrpcClient) extractProperties(properties map[string]interface{}) (nonRe
 				PropName: name,
 				Value:    objectPropertiesValue,
 			})
+		case []map[string]interface{}:
+			// it's a cross ref
+			if rootLevel {
+				crossRefs := map[string][]string{}
+				var crossRefsErr error
+				for i := range v {
+					if len(v[i]) == 1 {
+						valueString, ok := v[i]["beacon"].(string)
+						if !ok {
+							err = fmt.Errorf("cross-reference property has no beacon field")
+							return
+						}
+						crossRefs, crossRefsErr = c.extractCrossRefs(crossRefs, valueString)
+						if crossRefsErr != nil {
+							err = fmt.Errorf("cross-reference property: %w", crossRefsErr)
+							return
+						}
+					}
+				}
+				singleRefProps, multiRefProps := c.getCrossRefs(name, crossRefs)
+				singleTargetRefProps = append(singleTargetRefProps, singleRefProps...)
+				multiTargetRefProps = append(multiTargetRefProps, multiRefProps...)
+			}
+		case []map[string]string:
+			if rootLevel {
+				crossRefs := map[string][]string{}
+				var crossRefsErr error
+				for i := range v {
+					if len(v[i]) == 1 {
+						crossRefs, crossRefsErr = c.extractCrossRefs(crossRefs, v[i]["beacon"])
+						if crossRefsErr != nil {
+							err = fmt.Errorf("cross-reference property: %w", crossRefsErr)
+							return
+						}
+					}
+				}
+				singleRefProps, multiRefProps := c.getCrossRefs(name, crossRefs)
+				singleTargetRefProps = append(singleTargetRefProps, singleRefProps...)
+				multiTargetRefProps = append(multiTargetRefProps, multiRefProps...)
+			}
 		case []interface{}:
 			// Object Array Property
 			objectArrayPropertiesValues := []*pb.ObjectPropertiesValue{}
@@ -194,7 +242,7 @@ func (c *GrpcClient) extractProperties(properties map[string]interface{}) (nonRe
 				switch objArrValTyped := objArrVal.(type) {
 				case map[string]interface{}:
 					nonRefProps, numberArrayProps, intArrayProps,
-						textArrayProps, booleanArrayProps, objectProps, objectArrayProps, objPropErr := c.extractProperties(objArrValTyped)
+						textArrayProps, booleanArrayProps, objectProps, objectArrayProps, _, _, objPropErr := c.extractProperties(objArrValTyped, false)
 					if objPropErr != nil {
 						err = fmt.Errorf("object properties: object array property: %w", objPropErr)
 						return
@@ -226,6 +274,42 @@ func (c *GrpcClient) extractProperties(properties map[string]interface{}) (nonRe
 		}
 	}
 	return
+}
+
+func (c *GrpcClient) extractCrossRefs(crossRefs map[string][]string, beacon string) (map[string][]string, error) {
+	cref, err := crossref.Parse(beacon)
+	if err != nil {
+		return nil, err
+	}
+	_, ok := crossRefs[cref.Class]
+	if !ok {
+		crossRefs[cref.Class] = []string{cref.TargetID.String()}
+	} else {
+		crossRefs[cref.Class] = append(crossRefs[cref.Class], cref.TargetID.String())
+	}
+	return crossRefs, nil
+}
+
+func (c *GrpcClient) getCrossRefs(propName string, crossRefs map[string][]string) ([]*pb.BatchObject_SingleTargetRefProps, []*pb.BatchObject_MultiTargetRefProps) {
+	singleTargetRefProps := []*pb.BatchObject_SingleTargetRefProps{}
+	multiTargetRefProps := []*pb.BatchObject_MultiTargetRefProps{}
+	if len(crossRefs) == 1 {
+		for key := range crossRefs {
+			singleTargetRefProps = append(singleTargetRefProps, &pb.BatchObject_SingleTargetRefProps{
+				PropName: propName,
+				Uuids:    crossRefs[key],
+			})
+		}
+	} else {
+		for key := range crossRefs {
+			multiTargetRefProps = append(multiTargetRefProps, &pb.BatchObject_MultiTargetRefProps{
+				PropName:         propName,
+				Uuids:            crossRefs[key],
+				TargetCollection: key,
+			})
+		}
+	}
+	return singleTargetRefProps, multiTargetRefProps
 }
 
 func (c *GrpcClient) getConsistencyLevel(consistencyLevel string) *pb.ConsistencyLevel {
