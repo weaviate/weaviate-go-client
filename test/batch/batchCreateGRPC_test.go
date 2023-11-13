@@ -23,9 +23,8 @@ func TestBatchCreate_gRPC_integration(t *testing.T) {
 	cfg := weaviate.Config{
 		Host:   fmt.Sprintf("localhost:%v", port),
 		Scheme: "http",
-		GrpcConfig: grpc.Config{
-			Enabled: true,
-			Host:    "localhost:50051",
+		GrpcConfig: &grpc.Config{
+			Host: "localhost:50051",
 		},
 	}
 	client, err := weaviate.NewClient(cfg)

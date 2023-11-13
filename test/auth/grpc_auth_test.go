@@ -23,7 +23,7 @@ func TestAuth_ApiKey_gRPC(t *testing.T) {
 		Scheme:         "http",
 		StartupTimeout: 60 * time.Second,
 		AuthConfig:     auth.ApiKey{Value: "my-secret-key"},
-		GrpcConfig:     grpc.Config{Enabled: true, Host: fmt.Sprintf("127.0.0.1:%v", testsuit.WCSGRPCPort)},
+		GrpcConfig:     &grpc.Config{Host: fmt.Sprintf("127.0.0.1:%v", testsuit.WCSGRPCPort)},
 	}
 	client, err := weaviate.NewClient(cfg)
 	require.NoError(t, err)
