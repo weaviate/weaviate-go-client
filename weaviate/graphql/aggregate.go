@@ -29,6 +29,7 @@ type AggregateBuilder struct {
 	withNearDepth             *NearDepthArgumentBuilder
 	withNearThermal           *NearThermalArgumentBuilder
 	withNearImu               *NearImuArgumentBuilder
+	withHybrid                *HybridArgumentBuilder
 	includesObjectLimit       bool
 	objectLimit               int
 	includesLimit             bool
@@ -147,6 +148,13 @@ func (ab *AggregateBuilder) WithNearImu(nearImu *NearImuArgumentBuilder) *Aggreg
 	return ab
 }
 
+// WithHybrid to combine multiple searches
+func (ab *AggregateBuilder) WithHybrid(hybrid *HybridArgumentBuilder) *AggregateBuilder {
+	ab.includesFilterClause = true
+	ab.withHybrid = hybrid
+	return ab
+}
+
 // WithTenant to indicate which tenant aggregated objects belong to
 func (ab *AggregateBuilder) WithTenant(tenant string) *AggregateBuilder {
 	ab.includesFilterClause = true
@@ -173,7 +181,7 @@ func (ab *AggregateBuilder) createFilterClause() string {
 		}
 		for _, b := range []argumentBuilder{
 			ab.withAsk, ab.withNearTextFilter, ab.withNearObjectFilter, ab.withNearVectorFilter, ab.withNearImage,
-			ab.withNearAudio, ab.withNearVideo, ab.withNearDepth, ab.withNearThermal, ab.withNearImu,
+			ab.withNearAudio, ab.withNearVideo, ab.withNearDepth, ab.withNearThermal, ab.withNearImu, ab.withHybrid,
 		} {
 			bVal := reflect.ValueOf(b)
 			if bVal.Kind() == reflect.Ptr && !bVal.IsNil() {
