@@ -22,8 +22,8 @@ type GrpcClient struct {
 	headers map[string]string
 }
 
-func NewGrpcClient(scheme, host string, headers map[string]string) (*GrpcClient, error) {
-	client, err := createClient(scheme, host)
+func NewGrpcClient(host string, secured bool, headers map[string]string) (*GrpcClient, error) {
+	client, err := createClient(host, secured)
 	if err != nil {
 		return nil, fmt.Errorf("create grpc client: %w", err)
 	}
@@ -368,10 +368,10 @@ func toInt64Array[T int | int32 | int64 | uint | uint32 | uint64](arr []T) []int
 	return result
 }
 
-func createClient(scheme, host string) (pb.WeaviateClient, error) {
+func createClient(host string, secured bool) (pb.WeaviateClient, error) {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithBlock())
-	if scheme == "https" || strings.HasSuffix(host, ":443") {
+	if secured || strings.HasSuffix(host, ":443") {
 		tlsConfig := &tls.Config{
 			InsecureSkipVerify: true,
 		}
@@ -379,18 +379,18 @@ func createClient(scheme, host string) (pb.WeaviateClient, error) {
 	} else {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
-	conn, err := grpc.Dial(getAddress(scheme, host), opts...)
+	conn, err := grpc.Dial(getAddress(host, secured), opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial: %w", err)
 	}
 	return pb.NewWeaviateClient(conn), nil
 }
 
-func getAddress(scheme, host string) string {
+func getAddress(host string, secured bool) string {
 	if strings.Contains(host, ":") {
 		return host
 	}
-	if scheme == "https" {
+	if secured {
 		return fmt.Sprintf("%s:443", host)
 	}
 	return fmt.Sprintf("%s:80", host)

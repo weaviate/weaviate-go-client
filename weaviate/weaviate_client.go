@@ -45,13 +45,13 @@ type Config struct {
 	StartupTimeout time.Duration
 
 	// gRPC configuration
-	GrpcConfig grpc.Config
+	GrpcConfig *grpc.Config
 }
 
 // Deprecated: This function is unable to wait for Weaviate to start. Use NewClient() instead and add auth.Config to
 // weaviate.Config
 func NewConfig(host string, scheme string, authConfig auth.Config,
-	headers map[string]string, grpcConfig ...grpc.Config,
+	headers map[string]string, grpcConfig ...*grpc.Config,
 ) (*Config, error) {
 	var client *http.Client
 	var err error
@@ -69,8 +69,8 @@ func NewConfig(host string, scheme string, authConfig auth.Config,
 			headers[k] = v
 		}
 	}
-	var grpcConf grpc.Config
-	if len(grpcConfig) > 0 {
+	var grpcConf *grpc.Config
+	if len(grpcConfig) > 0 && grpcConfig[0] != nil {
 		grpcConf = grpcConfig[0]
 	}
 
@@ -260,16 +260,8 @@ func (c *Client) Cluster() *cluster.API {
 }
 
 func createGrpcClient(config Config) (*connection.GrpcClient, error) {
-	scheme := config.Scheme
-	if config.GrpcConfig.Scheme != "" {
-		scheme = config.GrpcConfig.Scheme
-	}
-	host := config.Host
-	if config.GrpcConfig.Host != "" {
-		host = config.GrpcConfig.Host
-	}
-	if config.GrpcConfig.Enabled {
-		return connection.NewGrpcClient(scheme, host, config.Headers)
+	if config.GrpcConfig != nil {
+		return connection.NewGrpcClient(config.GrpcConfig.Host, config.GrpcConfig.Secured, config.Headers)
 	}
 	return nil, nil
 }
