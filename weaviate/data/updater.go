@@ -17,8 +17,10 @@ type Updater struct {
 	connection       *connection.Connection
 	id               string
 	className        string
+	vector           []float32
 	propertySchema   models.PropertySchema
 	withMerge        bool
+	withVector       bool
 	consistencyLevel string
 	tenant           string
 	dbVersionSupport *db.VersionSupport
@@ -33,6 +35,13 @@ func (updater *Updater) WithID(uuid string) *Updater {
 // WithClassName specifies the class of the object about to be updated
 func (updater *Updater) WithClassName(className string) *Updater {
 	updater.className = className
+	return updater
+}
+
+// WithVector specifies the vector of the object about to be updated
+func (updater *Updater) WithVector(vector []float32) *Updater {
+	updater.vector = vector
+	updater.withVector = true
 	return updater
 }
 
@@ -86,6 +95,10 @@ func (updater *Updater) runUpdate(ctx context.Context, path string, httpMethod s
 		ID:         strfmt.UUID(updater.id),
 		Properties: updater.propertySchema,
 		Tenant:     updater.tenant,
+	}
+	// If vector is specified, add it to the object
+	if updater.withVector {
+		object.Vector = updater.vector
 	}
 	return updater.connection.RunREST(ctx, path, httpMethod, object)
 }
