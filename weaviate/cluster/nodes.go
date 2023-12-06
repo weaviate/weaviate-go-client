@@ -12,6 +12,7 @@ import (
 type NodesStatusGetter struct {
 	connection *connection.Connection
 	class      string
+	output     string
 }
 
 // Do get the nodes endpoint
@@ -19,6 +20,9 @@ func (nsg *NodesStatusGetter) Do(ctx context.Context) (*models.NodesStatusRespon
 	path := "/nodes"
 	if nsg.class != "" {
 		path += "/" + nsg.class
+	}
+	if nsg.output != "" {
+		path += "?output=" + nsg.output
 	}
 
 	responseData, responseErr := nsg.connection.RunREST(ctx, path, http.MethodGet, nil)
@@ -33,5 +37,12 @@ func (nsg *NodesStatusGetter) Do(ctx context.Context) (*models.NodesStatusRespon
 
 func (nsg *NodesStatusGetter) WithClass(className string) *NodesStatusGetter {
 	nsg.class = className
+	return nsg
+}
+
+// WithOutput specifies nodes status response verbosity.
+// Can be "minimal" or "verbose", defaults to "minimal".
+func (nsg *NodesStatusGetter) WithOutput(output string) *NodesStatusGetter {
+	nsg.output = output
 	return nsg
 }

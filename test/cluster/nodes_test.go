@@ -10,12 +10,13 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
+	"github.com/weaviate/weaviate/entities/verbosity"
 )
 
 func TestClusterNodes_integration(t *testing.T) {
 	const (
-		expectedWeaviateVersion = "1.22.2"
-		expectedWeaviateGitHash = "b94b00a"
+		expectedWeaviateVersion = "1.23.0-rc.0"
+		expectedWeaviateGitHash = "977af56"
 	)
 
 	t.Run("up", func(t *testing.T) {
@@ -50,7 +51,8 @@ func TestClusterNodes_integration(t *testing.T) {
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
-		nodesStatus, err := client.Cluster().NodesStatusGetter().Do(context.Background())
+		nodesStatus, err := client.Cluster().NodesStatusGetter().
+			WithOutput(verbosity.OutputVerbose).Do(context.Background())
 
 		require.Nil(t, err)
 		require.NotNil(t, nodesStatus)
@@ -81,13 +83,16 @@ func TestClusterNodes_integration(t *testing.T) {
 		}
 
 		// query only for one class
-		nodesStatusSingleClass, err := client.Cluster().NodesStatusGetter().WithClass("Pizza").Do(context.Background())
+		nodesStatusSingleClass, err := client.Cluster().NodesStatusGetter().
+			WithClass("Pizza").Do(context.Background())
 		require.Nil(t, err)
 		assert.Len(t, nodesStatusSingleClass.Nodes, 1)
 		nodeStatusSingleClass := nodesStatusSingleClass.Nodes[0]
 
 		assert.Equal(t, int64(4), nodeStatusSingleClass.Stats.ObjectCount)
 		assert.Equal(t, int64(1), nodeStatusSingleClass.Stats.ShardCount)
+		// minimal output is default, which should not contain shards
+		assert.Nil(t, nodeStatusSingleClass.Shards)
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
