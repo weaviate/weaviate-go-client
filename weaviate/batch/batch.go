@@ -15,7 +15,11 @@ type API struct {
 
 // New Batch api group from connection
 func New(con *connection.Connection, grpcClient *connection.GrpcClient, dbVersionSupport *db.VersionSupport) *API {
-	return &API{connection: con, grpcClient: grpcClient, dbVersionSupport: dbVersionSupport}
+	return &API{
+		connection:       con,
+		grpcClient:       grpcClient,
+		dbVersionSupport: dbVersionSupport,
+	}
 }
 
 // ObjectsBatcher get a builder to create objects in a batch
