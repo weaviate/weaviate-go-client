@@ -75,7 +75,7 @@ func TestMisc_connection_error(t *testing.T) {
 
 		require.NotNil(t, err)
 		assert.False(t, isReady)
-		assert.Contains(t, err.Error(), "status code: -1, error: check the DerivedFromError field for more information: Get \"http://localhorst/v1/.well-known/ready\": dial tcp: lookup localhorst:")
+		assert.Contains(t, err.Error(), "status code: -1, error: check the DerivedFromError field for more information: Get \"http://localhorst/v1/.well-known/ready\": dial tcp: lookup localhorst")
 	})
 
 	t.Run("live", func(t *testing.T) {
@@ -89,6 +89,6 @@ func TestMisc_connection_error(t *testing.T) {
 
 		require.NotNil(t, err)
 		assert.False(t, isReady)
-		assert.Contains(t, err.Error(), "status code: -1, error: check the DerivedFromError field for more information: Get \"http://localhorst/v1/.well-known/live\": dial tcp: lookup localhorst:")
+		assert.Contains(t, err.Error(), "status code: -1, error: check the DerivedFromError field for more information: Get \"http://localhorst/v1/.well-known/live\": dial tcp: lookup localhorst")
 	})
 }

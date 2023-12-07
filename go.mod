@@ -2,8 +2,6 @@ module github.com/weaviate/weaviate-go-client/v4
 
 go 1.21
 
-toolchain go1.21.3
-
 require (
 	github.com/go-openapi/strfmt v0.21.3
 	github.com/stretchr/testify v1.8.4
