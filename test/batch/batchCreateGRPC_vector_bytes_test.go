@@ -67,10 +67,10 @@ func TestBatchCreate_gRPC_vector_bytes_field(t *testing.T) {
 				err = client.Schema().ClassCreator().WithClass(class).Do(ctx)
 				require.NoError(t, err)
 				// perform batch import
-				id := "00000000-0000-0000-0000-000000000001"
+				id := strfmt.UUID("00000000-0000-0000-0000-000000000001")
 				vector := models.C11yVector{0.11, 0.22, 0.33, 0.123, -0.900009, -0.0000000001}
 				object := &models.Object{
-					ID:    strfmt.UUID(id),
+					ID:    id,
 					Class: className,
 					Properties: map[string]interface{}{
 						"name": "some name",
@@ -83,12 +83,12 @@ func TestBatchCreate_gRPC_vector_bytes_field(t *testing.T) {
 				assert.Equal(t, 1, len(batchResponse))
 				// get object
 				objs, err := client.Data().ObjectsGetter().
-					WithClassName(className).WithID(id).WithVector().
+					WithClassName(className).WithID(id.String()).WithVector().
 					Do(ctx)
 				require.NoError(t, err)
 				require.NotEmpty(t, objs)
 				require.Len(t, objs, 1)
-				assert.Equal(t, id, objs[0].ID.String())
+				assert.Equal(t, id, objs[0].ID)
 				assert.Equal(t, vector, objs[0].Vector)
 			})
 		})
