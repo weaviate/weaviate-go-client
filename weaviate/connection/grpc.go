@@ -7,9 +7,11 @@ import (
 	"strings"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate/entities/models"
 	"github.com/weaviate/weaviate/entities/schema/crossref"
 	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
+	"github.com/weaviate/weaviate/usecases/byteops"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -18,16 +20,19 @@ import (
 )
 
 type GrpcClient struct {
-	client  pb.WeaviateClient
-	headers map[string]string
+	client             pb.WeaviateClient
+	headers            map[string]string
+	gRPCVersionSupport *db.GRPCVersionSupport
 }
 
-func NewGrpcClient(host string, secured bool, headers map[string]string) (*GrpcClient, error) {
+func NewGrpcClient(host string, secured bool, headers map[string]string,
+	gRPCVersionSupport *db.GRPCVersionSupport,
+) (*GrpcClient, error) {
 	client, err := createClient(host, secured)
 	if err != nil {
 		return nil, fmt.Errorf("create grpc client: %w", err)
 	}
-	return &GrpcClient{client, headers}, nil
+	return &GrpcClient{client, headers, gRPCVersionSupport}, nil
 }
 
 func (c *GrpcClient) BatchObjects(ctx context.Context, objects []*models.Object,
@@ -76,6 +81,13 @@ func (c *GrpcClient) getBatchObjects(objects []*models.Object) ([]*pb.BatchObjec
 			Vector:     obj.Vector,
 			Tenant:     obj.Tenant,
 			Properties: properties,
+		}
+		if obj.Vector != nil {
+			if c.gRPCVersionSupport.SupportsVectorBytesField() {
+				batchObject.VectorBytes = byteops.Float32ToByteVector(obj.Vector)
+			} else {
+				batchObject.Vector = obj.Vector
+			}
 		}
 		result[i] = batchObject
 	}

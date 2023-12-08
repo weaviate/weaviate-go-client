@@ -129,11 +129,6 @@ func NewClient(config Config) (*Client, error) {
 		return nil, err
 	}
 
-	grpcClient, err := createGrpcClient(config)
-	if err != nil {
-		panic(err)
-	}
-
 	// some endpoints now require a className namespace.
 	// to determine if this new convention is to be used,
 	// we must check the weaviate server version
@@ -147,6 +142,12 @@ func NewClient(config Config) (*Client, error) {
 
 	dbVersionProvider := db.NewVersionProvider(getVersionFn)
 	dbVersionSupport := db.NewDBVersionSupport(dbVersionProvider)
+	grpcVersionSupport := db.NewGRPCVersionSupport(dbVersionProvider)
+
+	grpcClient, err := createGrpcClient(config, grpcVersionSupport)
+	if err != nil {
+		panic(err)
+	}
 
 	client := &Client{
 		connection:      con,
@@ -173,11 +174,6 @@ func NewClient(config Config) (*Client, error) {
 func New(config Config) *Client {
 	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
 
-	grpcClient, err := createGrpcClient(config)
-	if err != nil {
-		panic(err)
-	}
-
 	// some endpoints now require a className namespace.
 	// to determine if this new convention is to be used,
 	// we must check the weaviate server version
@@ -191,6 +187,12 @@ func New(config Config) *Client {
 
 	dbVersionProvider := db.NewVersionProvider(getVersionFn)
 	dbVersionSupport := db.NewDBVersionSupport(dbVersionProvider)
+	gRPCVersionSupport := db.NewGRPCVersionSupport(dbVersionProvider)
+
+	grpcClient, err := createGrpcClient(config, gRPCVersionSupport)
+	if err != nil {
+		panic(err)
+	}
 
 	client := &Client{
 		connection:      con,
@@ -259,9 +261,9 @@ func (c *Client) Cluster() *cluster.API {
 	return c.cluster
 }
 
-func createGrpcClient(config Config) (*connection.GrpcClient, error) {
+func createGrpcClient(config Config, gRPCVersionSupport *db.GRPCVersionSupport) (*connection.GrpcClient, error) {
 	if config.GrpcConfig != nil {
-		return connection.NewGrpcClient(config.GrpcConfig.Host, config.GrpcConfig.Secured, config.Headers)
+		return connection.NewGrpcClient(config.GrpcConfig.Host, config.GrpcConfig.Secured, config.Headers, gRPCVersionSupport)
 	}
 	return nil, nil
 }
