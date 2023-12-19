@@ -7,7 +7,7 @@ require (
 	github.com/go-openapi/strfmt v0.21.3
 	github.com/stretchr/testify v1.8.4
 	github.com/testcontainers/testcontainers-go v0.26.0
-	github.com/weaviate/weaviate v1.23.0-rc.0
+	github.com/weaviate/weaviate v1.23.0
 	golang.org/x/oauth2 v0.11.0
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
