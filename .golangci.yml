@@ -17,6 +17,10 @@ issues:
     # Exclude some staticcheck messages
     - linters:
         - staticcheck
+      path: weaviate/connection/grpc.go
+      text: 'SA1019' # TODO: remove this once deprecated gRPC fields are removed from API
+    - linters:
+        - staticcheck
       text: "SA1029:"
     - linters:
         - staticcheck

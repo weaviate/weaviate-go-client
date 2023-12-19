@@ -86,6 +86,7 @@ func (c *GrpcClient) getBatchObjects(objects []*models.Object) ([]*pb.BatchObjec
 			if c.gRPCVersionSupport.SupportsVectorBytesField() {
 				batchObject.VectorBytes = byteops.Float32ToByteVector(obj.Vector)
 			} else {
+				// We fall back to vector field for backward compatibility reasons
 				batchObject.Vector = obj.Vector
 			}
 		}

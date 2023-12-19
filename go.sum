@@ -280,8 +280,8 @@ github.com/tklauser/numcpus v0.6.1 h1:ng9scYS7az0Bk4OZLvrNXNSAO2Pxr1XXRAPyjhIx+F
 github.com/tklauser/numcpus v0.6.1/go.mod h1:1XfjsgE2zo8GVw7POkMbHENHzVg3GzmoZ9fESEdAacY=
 github.com/weaviate/sroar v0.0.0-20230210105426-26108af5465d h1:bULMGmIS786YSmm/SssAmwu86y4saMoHhvuL0u7pWLc=
 github.com/weaviate/sroar v0.0.0-20230210105426-26108af5465d/go.mod h1:bJUcu8a/7XKOeaCWZtSjuBogUGReUiwJTyGSvcAjDzQ=
-github.com/weaviate/weaviate v1.23.0-rc.0 h1:g+bFiaOcUdxQADX6PH6QPPqdHEi3C37cI0Lzw5cakvs=
-github.com/weaviate/weaviate v1.23.0-rc.0/go.mod h1:afludwbcyIZa9HEBELvHNb8zjH+KcjcW/jb4SZ5C2T4=
+github.com/weaviate/weaviate v1.23.0 h1:OYJ34YSGLsSK92KfJlN/+AYWTSOS/Hzn3UkNNWqZ5F4=
+github.com/weaviate/weaviate v1.23.0/go.mod h1:afludwbcyIZa9HEBELvHNb8zjH+KcjcW/jb4SZ5C2T4=
 github.com/willf/bitset v1.1.10/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
 github.com/willf/bitset v1.1.11 h1:N7Z7E9UvjW+sGsEl7k/SJrvY2reP1A07MrGuCjIOjRE=
 github.com/willf/bitset v1.1.11/go.mod h1:83CECat5yLh5zVOf4P1ErAgKA5UDvKtgyUABdr3+MjI=
