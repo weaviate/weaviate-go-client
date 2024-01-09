@@ -48,3 +48,29 @@ func (s *API) RestoreStatusGetter() *BackupRestoreStatusGetter {
 		connection: s.connection,
 	}
 }
+
+var (
+	// BackupConfigCompressionLevelDefaultCompression captures enum value "DefaultCompression"
+	BackupConfigCompressionLevelDefaultCompression string = "DefaultCompression"
+
+	// BackupConfigCompressionLevelBestSpeed captures enum value "BestSpeed"
+	BackupConfigCompressionLevelBestSpeed string = "BestSpeed"
+
+	// BackupConfigCompressionLevelBestCompression captures enum value "BestCompression"
+	BackupConfigCompressionLevelBestCompression string = "BestCompression"
+)
+
+// Compression is the compression configuration.
+type Compression struct {
+	// Level is one of DefaultCompression, BestSpeed, BestCompression
+	Level string
+
+	// ChunkSize represents the desired size for chunks between 1 - 512  MB
+	// However, during compression, the chunk size might
+	// slightly deviate from this value, being either slightly
+	// below or above the specified size
+	ChunkSize int
+
+	// CPUPercentage desired CPU core utilization (1%-80%), default: 50%
+	CPUPercentage int
+}

@@ -13,6 +13,14 @@ import (
 
 const waitTimeoutCreate = time.Second
 
+var (
+	compressions = []string{
+		models.BackupConfigCompressionLevelDefaultCompression,
+		models.BackupConfigCompressionLevelBestSpeed,
+		models.BackupConfigCompressionLevelBestCompression,
+	}
+)
+
 type BackupCreator struct {
 	connection        *connection.Connection
 	statusGetter      *BackupCreateStatusGetter
@@ -21,6 +29,12 @@ type BackupCreator struct {
 	backend           string
 	backupID          string
 	waitForCompletion bool
+	compression       Compression
+}
+
+func (c *BackupCreator) WithCompressionConfig(compression Compression) *BackupCreator {
+	c.compression = compression
+	return c
 }
 
 func (c *BackupCreator) WithIncludeClassNames(classNames ...string) *BackupCreator {
@@ -56,6 +70,11 @@ func (c *BackupCreator) Do(ctx context.Context) (*models.BackupCreateResponse, e
 		ID:      c.backupID,
 		Include: c.includeClasses,
 		Exclude: c.excludeClasses,
+		Config: &models.BackupConfig{
+			CPUPercentage:    int64(c.compression.CPUPercentage),
+			ChunkSize:        int64(c.compression.ChunkSize),
+			CompressionLevel: &c.compression.Level,
+		},
 	}
 
 	if c.waitForCompletion {

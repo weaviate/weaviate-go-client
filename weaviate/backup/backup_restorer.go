@@ -21,6 +21,12 @@ type BackupRestorer struct {
 	backend           string
 	backupID          string
 	waitForCompletion bool
+	cpuPercentage     int
+}
+
+func (c *BackupRestorer) WithCPUPercentage(cpu int) *BackupRestorer {
+	c.cpuPercentage = cpu
+	return c
 }
 
 func (c *BackupRestorer) WithIncludeClassNames(classNames ...string) *BackupRestorer {
@@ -55,6 +61,9 @@ func (r *BackupRestorer) Do(ctx context.Context) (*models.BackupRestoreResponse,
 	payload := models.BackupRestoreRequest{
 		Include: r.includeClasses,
 		Exclude: r.excludeClasses,
+		Config: &models.BackupConfig{
+			CPUPercentage: int64(r.cpuPercentage),
+		},
 	}
 
 	if r.waitForCompletion {

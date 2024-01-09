@@ -252,6 +252,30 @@ func TestBackups_integration(t *testing.T) {
 			}
 		})
 
+		t.Run("create backup with configuration", func(t *testing.T) {
+			createResponse, err := client.Backup().Creator().
+				WithIncludeClassNames(className).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithWaitForCompletion(true).
+				WithCompressionConfig(backup.Compression{
+					Level:         backup.BackupConfigCompressionLevelBestSpeed,
+					ChunkSize:     128,
+					CPUPercentage: 50,
+				}).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, createResponse)
+			assert.Equal(t, backupID, createResponse.ID)
+			assert.Len(t, createResponse.Classes, 1)
+			assert.Contains(t, createResponse.Classes, className)
+			assert.Equal(t, dockerComposeBackupDir+"/"+backupID, createResponse.Path)
+			assert.Equal(t, backup.BACKEND_FILESYSTEM, createResponse.Backend)
+			assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse.Status)
+			assert.Empty(t, createResponse.Error)
+		})
+
 		t.Run("check data again exist", func(t *testing.T) {
 			assertAllPizzasExist(t, client)
 		})
@@ -327,6 +351,26 @@ func TestBackups_integration(t *testing.T) {
 				WithIncludeClassNames(pizzaClassName).
 				WithBackend(backend).
 				WithBackupID(backupID).
+				WithWaitForCompletion(true).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, restoreResponse)
+			assert.Equal(t, backupID, restoreResponse.ID)
+			assert.Len(t, restoreResponse.Classes, 1)
+			assert.Contains(t, restoreResponse.Classes, pizzaClassName)
+			assert.Equal(t, dockerComposeBackupDir+"/"+backupID, restoreResponse.Path)
+			assert.Equal(t, backup.BACKEND_FILESYSTEM, restoreResponse.Backend)
+			assert.Equal(t, models.BackupRestoreResponseStatusSUCCESS, *restoreResponse.Status)
+			assert.Empty(t, restoreResponse.Error)
+		})
+
+		t.Run("restore backup", func(t *testing.T) {
+			restoreResponse, err := client.Backup().Restorer().
+				WithIncludeClassNames(pizzaClassName).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithCPUPercentage(50).
 				WithWaitForCompletion(true).
 				Do(context.Background())
 
