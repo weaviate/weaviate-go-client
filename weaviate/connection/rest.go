@@ -253,15 +253,14 @@ type ResponseData struct {
 	StatusCode int
 }
 
-// DecodeBodyIntoTarget unmarshall body into target var
+// DecodeBodyIntoTarget unmarshal body into target var
 // successful if err is nil
 func (rd *ResponseData) DecodeBodyIntoTarget(target interface{}) error {
-	err := json.Unmarshal(rd.Body, target)
-	if err != nil {
+	if err := json.Unmarshal(rd.Body, target); err != nil {
 		return &fault.WeaviateClientError{
 			IsUnexpectedStatusCode: false,
 			StatusCode:             -1,
-			Msg:                    "failed to parse resonse data check DerivedFromError field for more information",
+			Msg:                    "failed to parse response data check DerivedFromError field for more information",
 			DerivedFromError:       err,
 		}
 	}

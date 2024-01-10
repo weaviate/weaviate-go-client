@@ -50,20 +50,20 @@ func TestBackups_integration(t *testing.T) {
 			assertAllPizzasExist(t, client)
 		})
 
-		// t.Run("invalid create backup configuration", func(t *testing.T) {
-		// 	createResponse, err := client.Backup().Creator().
-		// 		WithIncludeClassNames(className).
-		// 		WithBackend(backend).
-		// 		WithBackupID(backupID).
-		// 		WithWaitForCompletion(true).
-		// 		WithCompressionConfig(backup.Compression{
-		// 			CPUPercentage: 150,
-		// 		}).
-		// 		Do(context.Background())
+		t.Run("invalid create backup configuration", func(t *testing.T) {
+			createResponse, err := client.Backup().Creator().
+				WithIncludeClassNames(className).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithWaitForCompletion(true).
+				WithCompressionConfig(backup.Compression{
+					CPUPercentage: 150,
+				}).
+				Do(context.Background())
 
-		// 	require.NotNil(t, err)
-		// 	require.Nil(t, createResponse)
-		// })
+			require.NotNil(t, err)
+			require.Nil(t, createResponse)
+		})
 
 		t.Run("create backup", func(t *testing.T) {
 			createResponse, err := client.Backup().Creator().

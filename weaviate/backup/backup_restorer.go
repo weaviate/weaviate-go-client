@@ -24,19 +24,19 @@ type BackupRestorer struct {
 	cpuPercentage     int
 }
 
-func (c *BackupRestorer) WithCPUPercentage(cpu int) *BackupRestorer {
-	c.cpuPercentage = cpu
-	return c
+func (r *BackupRestorer) WithCPUPercentage(cpu int) *BackupRestorer {
+	r.cpuPercentage = cpu
+	return r
 }
 
-func (c *BackupRestorer) WithIncludeClassNames(classNames ...string) *BackupRestorer {
-	c.includeClasses = classNames
-	return c
+func (r *BackupRestorer) WithIncludeClassNames(classNames ...string) *BackupRestorer {
+	r.includeClasses = classNames
+	return r
 }
 
-func (c *BackupRestorer) WithExcludeClassNames(classNames ...string) *BackupRestorer {
-	c.excludeClasses = classNames
-	return c
+func (r *BackupRestorer) WithExcludeClassNames(classNames ...string) *BackupRestorer {
+	r.excludeClasses = classNames
+	return r
 }
 
 // WithBackend specifies the backend backup should be restored from

@@ -9,7 +9,7 @@ services:
       - '8085'
       - --scheme
       - http
-    image: semitechnologies/weaviate:1.23.0
+    image: semitechnologies/weaviate:1.23.2-07ff7ce
     ports:
       - 8085:8085
       - 50056:50051
