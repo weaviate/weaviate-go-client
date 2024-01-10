@@ -24,6 +24,11 @@ func (s *API) Creator() *BackupCreator {
 	return &BackupCreator{
 		connection:   s.connection,
 		statusGetter: s.CreateStatusGetter(),
+		compression: Compression{
+			CPUPercentage: 50,
+			ChunkSize:     128,
+			Level:         BackupConfigCompressionLevelDefaultCompression,
+		},
 	}
 }
 
@@ -37,8 +42,9 @@ func (s *API) CreateStatusGetter() *BackupCreateStatusGetter {
 // Restorer creates restorer builder
 func (s *API) Restorer() *BackupRestorer {
 	return &BackupRestorer{
-		connection:   s.connection,
-		statusGetter: s.RestoreStatusGetter(),
+		connection:    s.connection,
+		statusGetter:  s.RestoreStatusGetter(),
+		cpuPercentage: 50,
 	}
 }
 

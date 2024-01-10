@@ -62,7 +62,8 @@ func (r *BackupRestorer) Do(ctx context.Context) (*models.BackupRestoreResponse,
 		Include: r.includeClasses,
 		Exclude: r.excludeClasses,
 		Config: &models.BackupConfig{
-			CPUPercentage: int64(r.cpuPercentage),
+			CPUPercentage:    int64(r.cpuPercentage),
+			CompressionLevel: &BackupConfigCompressionLevelDefaultCompression,
 		},
 	}
 
