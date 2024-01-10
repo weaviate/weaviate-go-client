@@ -15,8 +15,8 @@ import (
 
 func TestClusterNodes_integration(t *testing.T) {
 	const (
-		expectedWeaviateVersion = "1.23.0"
-		expectedWeaviateGitHash = "bbf8c87"
+		expectedWeaviateVersion = "1.23.2"
+		expectedWeaviateGitHash = "07ff7ce"
 	)
 
 	t.Run("up", func(t *testing.T) {
