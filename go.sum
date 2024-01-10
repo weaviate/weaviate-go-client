@@ -280,10 +280,12 @@ github.com/tklauser/numcpus v0.6.1 h1:ng9scYS7az0Bk4OZLvrNXNSAO2Pxr1XXRAPyjhIx+F
 github.com/tklauser/numcpus v0.6.1/go.mod h1:1XfjsgE2zo8GVw7POkMbHENHzVg3GzmoZ9fESEdAacY=
 github.com/weaviate/sroar v0.0.0-20230210105426-26108af5465d h1:bULMGmIS786YSmm/SssAmwu86y4saMoHhvuL0u7pWLc=
 github.com/weaviate/sroar v0.0.0-20230210105426-26108af5465d/go.mod h1:bJUcu8a/7XKOeaCWZtSjuBogUGReUiwJTyGSvcAjDzQ=
-github.com/weaviate/weaviate v1.23.2-0.20240107133701-583689303911 h1:kYIQrD4i28RLql5j+rs3rl7iLsFDvi5lx+jMHi2CdJs=
-github.com/weaviate/weaviate v1.23.2-0.20240107133701-583689303911/go.mod h1:fPAmoYOhLvA2WICYsE/OMmVucaqcaxG5Zl3x7ztHAUM=
 github.com/weaviate/weaviate v1.23.2-0.20240109125825-3cf2a2735953 h1:NpxQnExiqu4Ra0JvMNEyuU/h5ojc0xk8xFurRlOGkws=
 github.com/weaviate/weaviate v1.23.2-0.20240109125825-3cf2a2735953/go.mod h1:fPAmoYOhLvA2WICYsE/OMmVucaqcaxG5Zl3x7ztHAUM=
+github.com/weaviate/weaviate v1.23.2 h1:5vfj4bmueee3jq26Q0AUO+9iU9u0wWYEmAJ4tgAAfPM=
+github.com/weaviate/weaviate v1.23.2/go.mod h1:afludwbcyIZa9HEBELvHNb8zjH+KcjcW/jb4SZ5C2T4=
+github.com/weaviate/weaviate v1.23.3-0.20240110102355-07ff7cec5c9a h1:uLiskV9ZOL8L5eQmI9a5ef7UqO9dmIph4rTmz2eYA5c=
+github.com/weaviate/weaviate v1.23.3-0.20240110102355-07ff7cec5c9a/go.mod h1:fPAmoYOhLvA2WICYsE/OMmVucaqcaxG5Zl3x7ztHAUM=
 github.com/willf/bitset v1.1.10/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
 github.com/willf/bitset v1.1.11 h1:N7Z7E9UvjW+sGsEl7k/SJrvY2reP1A07MrGuCjIOjRE=
 github.com/willf/bitset v1.1.11/go.mod h1:83CECat5yLh5zVOf4P1ErAgKA5UDvKtgyUABdr3+MjI=

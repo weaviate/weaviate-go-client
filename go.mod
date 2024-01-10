@@ -7,7 +7,6 @@ require (
 	github.com/go-openapi/strfmt v0.21.3
 	github.com/stretchr/testify v1.8.4
 	github.com/testcontainers/testcontainers-go v0.26.0
-	github.com/weaviate/weaviate v1.23.2-0.20240109125825-3cf2a2735953
 	golang.org/x/oauth2 v0.11.0
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
@@ -87,6 +86,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/weaviate/sroar v0.0.0-20230210105426-26108af5465d // indirect
+	github.com/weaviate/weaviate v1.23.3-0.20240110102355-07ff7cec5c9a // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	github.com/willf/bloom v2.0.3+incompatible // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
