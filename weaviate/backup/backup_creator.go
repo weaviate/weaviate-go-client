@@ -13,14 +13,6 @@ import (
 
 const waitTimeoutCreate = time.Second
 
-var (
-	compressions = []string{
-		models.BackupConfigCompressionLevelDefaultCompression,
-		models.BackupConfigCompressionLevelBestSpeed,
-		models.BackupConfigCompressionLevelBestCompression,
-	}
-)
-
 type BackupCreator struct {
 	connection        *connection.Connection
 	statusGetter      *BackupCreateStatusGetter
