@@ -110,4 +110,14 @@ func TestNearThermal(t *testing.T) {
 		expected := `nearThermal:{}`
 		assert.Equal(t, expected, nearThermal)
 	})
+
+	t.Run("from base64 with targetVectors", func(t *testing.T) {
+		nearThermal := (&NearThermalArgumentBuilder{}).
+			WithThermal("iVBORw0KGgoAAAANS").
+			WithTargetVectors("targetVector").
+			build()
+
+		expected := `nearThermal:{thermal: "iVBORw0KGgoAAAANS" targetVectors: ["targetVector"]}`
+		assert.Equal(t, expected, nearThermal)
+	})
 }

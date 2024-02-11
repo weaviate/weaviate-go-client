@@ -110,4 +110,14 @@ func TestNearVideo(t *testing.T) {
 		expected := `nearVideo:{}`
 		assert.Equal(t, expected, nearVideo)
 	})
+
+	t.Run("from base64 with targetVectors", func(t *testing.T) {
+		nearVideo := (&NearVideoArgumentBuilder{}).
+			WithVideo("iVBORw0KGgoAAAANS").
+			WithTargetVectors("targetVector").
+			build()
+
+		expected := `nearVideo:{video: "iVBORw0KGgoAAAANS" targetVectors: ["targetVector"]}`
+		assert.Equal(t, expected, nearVideo)
+	})
 }

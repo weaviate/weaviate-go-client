@@ -78,6 +78,7 @@ type NearTextArgumentBuilder struct {
 	moveAwayFrom    *MoveParameters
 	withAutocorrect bool
 	autocorrect     bool
+	targetVectors   []string
 }
 
 // WithConcepts the result is based on
@@ -119,6 +120,14 @@ func (e *NearTextArgumentBuilder) WithAutocorrect(autocorrect bool) *NearTextArg
 	return e
 }
 
+// WithTargetVectors target vector name
+func (e *NearTextArgumentBuilder) WithTargetVectors(targetVectors ...string) *NearTextArgumentBuilder {
+	if len(targetVectors) > 0 {
+		e.targetVectors = targetVectors
+	}
+	return e
+}
+
 // Build build the given clause
 func (e *NearTextArgumentBuilder) build() string {
 	clause := []string{}
@@ -139,6 +148,10 @@ func (e *NearTextArgumentBuilder) build() string {
 	}
 	if e.withAutocorrect {
 		clause = append(clause, fmt.Sprintf("autocorrect: %v", e.autocorrect))
+	}
+	if len(e.targetVectors) > 0 {
+		targetVectors, _ := json.Marshal(e.targetVectors)
+		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}
 	return fmt.Sprintf("nearText:{%v}", strings.Join(clause, " "))
 }

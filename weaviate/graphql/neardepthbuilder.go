@@ -5,12 +5,13 @@ import (
 )
 
 type NearDepthArgumentBuilder struct {
-	depth        string
-	depthReader  io.Reader
-	hasCertainty bool
-	certainty    float32
-	hasDistance  bool
-	distance     float32
+	depth         string
+	depthReader   io.Reader
+	hasCertainty  bool
+	certainty     float32
+	hasDistance   bool
+	distance      float32
+	targetVectors []string
 }
 
 // WithDepth base64 encoded depth
@@ -39,13 +40,22 @@ func (b *NearDepthArgumentBuilder) WithDistance(distance float32) *NearDepthArgu
 	return b
 }
 
+// WithTargetVectors target vector name
+func (b *NearDepthArgumentBuilder) WithTargetVectors(targetVectors ...string) *NearDepthArgumentBuilder {
+	if len(targetVectors) > 0 {
+		b.targetVectors = targetVectors
+	}
+	return b
+}
+
 // Build build the given clause
 func (b *NearDepthArgumentBuilder) build() string {
 	builder := &nearMediaArgumentBuilder{
-		mediaName:  "nearDepth",
-		mediaField: "depth",
-		data:       b.depth,
-		dataReader: b.depthReader,
+		mediaName:     "nearDepth",
+		mediaField:    "depth",
+		data:          b.depth,
+		dataReader:    b.depthReader,
+		targetVectors: b.targetVectors,
 	}
 	if b.hasCertainty {
 		builder.withCertainty(b.certainty)

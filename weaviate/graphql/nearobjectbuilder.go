@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -12,6 +13,7 @@ type NearObjectArgumentBuilder struct {
 	certainty     float32
 	withDistance  bool
 	distance      float32
+	targetVectors []string
 }
 
 // WithID the id of the object
@@ -40,6 +42,14 @@ func (e *NearObjectArgumentBuilder) WithDistance(distance float32) *NearObjectAr
 	return e
 }
 
+// WithTargetVectors target vector name
+func (e *NearObjectArgumentBuilder) WithTargetVectors(targetVectors ...string) *NearObjectArgumentBuilder {
+	if len(targetVectors) > 0 {
+		e.targetVectors = targetVectors
+	}
+	return e
+}
+
 // Build build the given clause
 func (e *NearObjectArgumentBuilder) build() string {
 	clause := []string{}
@@ -54,6 +64,10 @@ func (e *NearObjectArgumentBuilder) build() string {
 	}
 	if e.withDistance {
 		clause = append(clause, fmt.Sprintf("distance: %v", e.distance))
+	}
+	if len(e.targetVectors) > 0 {
+		targetVectors, _ := json.Marshal(e.targetVectors)
+		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}
 	return fmt.Sprintf("nearObject:{%s}", strings.Join(clause, " "))
 }
