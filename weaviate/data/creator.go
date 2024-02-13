@@ -23,6 +23,7 @@ type Creator struct {
 	className        string
 	uuid             string
 	vector           []float32
+	vectors          models.Vectors
 	propertySchema   models.PropertySchema
 	consistencyLevel string
 	tenant           string
@@ -49,6 +50,11 @@ func (creator *Creator) WithProperties(propertySchema models.PropertySchema) *Cr
 
 func (creator *Creator) WithVector(vector []float32) *Creator {
 	creator.vector = vector
+	return creator
+}
+
+func (creator *Creator) WithVectors(vectors models.Vectors) *Creator {
+	creator.vectors = vectors
 	return creator
 }
 
@@ -107,6 +113,7 @@ func (creator *Creator) PayloadObject() (*models.Object, error) {
 		Class:      creator.className,
 		Properties: creator.propertySchema,
 		Vector:     creator.vector,
+		Vectors:    creator.vectors,
 		Tenant:     creator.tenant,
 	}
 	if creator.uuid != "" {

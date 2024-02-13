@@ -18,9 +18,11 @@ type Updater struct {
 	id               string
 	className        string
 	vector           []float32
+	vectors          models.Vectors
 	propertySchema   models.PropertySchema
 	withMerge        bool
 	withVector       bool
+	withVectors      bool
 	consistencyLevel string
 	tenant           string
 	dbVersionSupport *db.VersionSupport
@@ -42,6 +44,13 @@ func (updater *Updater) WithClassName(className string) *Updater {
 func (updater *Updater) WithVector(vector []float32) *Updater {
 	updater.vector = vector
 	updater.withVector = true
+	return updater
+}
+
+// WithVectors specifies target vectors of the object about to be updated
+func (updater *Updater) WithVectors(vectors models.Vectors) *Updater {
+	updater.vectors = vectors
+	updater.withVectors = true
 	return updater
 }
 
@@ -99,6 +108,10 @@ func (updater *Updater) runUpdate(ctx context.Context, path string, httpMethod s
 	// If vector is specified, add it to the object
 	if updater.withVector {
 		object.Vector = updater.vector
+	}
+	// If vectors are specified, add them to the object
+	if updater.withVectors {
+		object.Vectors = updater.vectors
 	}
 	return updater.connection.RunREST(ctx, path, httpMethod, object)
 }
