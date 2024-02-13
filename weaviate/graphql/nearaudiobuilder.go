@@ -42,26 +42,26 @@ func (b *NearAudioArgumentBuilder) WithDistance(distance float32) *NearAudioArgu
 
 // WithTargetVectors target vector name
 func (b *NearAudioArgumentBuilder) WithTargetVectors(targetVectors ...string) *NearAudioArgumentBuilder {
-	if len(targetVectors) > 0 {
-		b.targetVectors = targetVectors
-	}
+	b.targetVectors = targetVectors
 	return b
 }
 
 // Build build the given clause
 func (b *NearAudioArgumentBuilder) build() string {
 	builder := &nearMediaArgumentBuilder{
-		mediaName:     "nearAudio",
-		mediaField:    "audio",
-		data:          b.audio,
-		dataReader:    b.audioReader,
-		targetVectors: b.targetVectors,
+		mediaName:  "nearAudio",
+		mediaField: "audio",
+		data:       b.audio,
+		dataReader: b.audioReader,
 	}
 	if b.hasCertainty {
 		builder.withCertainty(b.certainty)
 	}
 	if b.hasDistance {
 		builder.withDistance(b.distance)
+	}
+	if len(b.targetVectors) > 0 {
+		builder.withTargetVectors(b.targetVectors...)
 	}
 	return builder.build()
 }

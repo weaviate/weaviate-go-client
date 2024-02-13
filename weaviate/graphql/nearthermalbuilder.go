@@ -42,9 +42,7 @@ func (b *NearThermalArgumentBuilder) WithDistance(distance float32) *NearThermal
 
 // WithTargetVectors target vector name
 func (b *NearThermalArgumentBuilder) WithTargetVectors(targetVectors ...string) *NearThermalArgumentBuilder {
-	if len(targetVectors) > 0 {
-		b.targetVectors = targetVectors
-	}
+	b.targetVectors = targetVectors
 	return b
 }
 
@@ -62,6 +60,9 @@ func (b *NearThermalArgumentBuilder) build() string {
 	}
 	if b.hasDistance {
 		builder.withDistance(b.distance)
+	}
+	if len(b.targetVectors) > 0 {
+		builder.withTargetVectors(b.targetVectors...)
 	}
 	return builder.build()
 }

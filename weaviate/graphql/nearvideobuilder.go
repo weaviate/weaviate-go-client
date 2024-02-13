@@ -42,26 +42,26 @@ func (b *NearVideoArgumentBuilder) WithDistance(distance float32) *NearVideoArgu
 
 // WithTargetVectors target vector name
 func (b *NearVideoArgumentBuilder) WithTargetVectors(targetVectors ...string) *NearVideoArgumentBuilder {
-	if len(targetVectors) > 0 {
-		b.targetVectors = targetVectors
-	}
+	b.targetVectors = targetVectors
 	return b
 }
 
 // Build build the given clause
 func (b *NearVideoArgumentBuilder) build() string {
 	builder := &nearMediaArgumentBuilder{
-		mediaName:     "nearVideo",
-		mediaField:    "video",
-		data:          b.video,
-		dataReader:    b.videoReader,
-		targetVectors: b.targetVectors,
+		mediaName:  "nearVideo",
+		mediaField: "video",
+		data:       b.video,
+		dataReader: b.videoReader,
 	}
 	if b.hasCertainty {
 		builder.withCertainty(b.certainty)
 	}
 	if b.hasDistance {
 		builder.withDistance(b.distance)
+	}
+	if len(b.targetVectors) > 0 {
+		builder.withTargetVectors(b.targetVectors...)
 	}
 	return builder.build()
 }
