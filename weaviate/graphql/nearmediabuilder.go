@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -12,14 +13,15 @@ type argumentBuilder interface {
 }
 
 type nearMediaArgumentBuilder struct {
-	mediaName    string
-	mediaField   string
-	data         string
-	dataReader   io.Reader
-	hasCertainty bool
-	certainty    float32
-	hasDistance  bool
-	distance     float32
+	mediaName     string
+	mediaField    string
+	data          string
+	dataReader    io.Reader
+	hasCertainty  bool
+	certainty     float32
+	hasDistance   bool
+	distance      float32
+	targetVectors []string
 }
 
 func (b *nearMediaArgumentBuilder) withCertainty(certainty float32) *nearMediaArgumentBuilder {
@@ -31,6 +33,13 @@ func (b *nearMediaArgumentBuilder) withCertainty(certainty float32) *nearMediaAr
 func (b *nearMediaArgumentBuilder) withDistance(distance float32) *nearMediaArgumentBuilder {
 	b.hasDistance = true
 	b.distance = distance
+	return b
+}
+
+func (b *nearMediaArgumentBuilder) withTargetVectors(targetVectors ...string) *nearMediaArgumentBuilder {
+	if len(targetVectors) > 0 {
+		b.targetVectors = targetVectors
+	}
 	return b
 }
 
@@ -60,6 +69,10 @@ func (b *nearMediaArgumentBuilder) build() string {
 	}
 	if b.hasDistance {
 		clause = append(clause, fmt.Sprintf("distance: %v", b.distance))
+	}
+	if len(b.targetVectors) > 0 {
+		targetVectors, _ := json.Marshal(b.targetVectors)
+		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}
 	return fmt.Sprintf("%s:{%s}", b.mediaName, strings.Join(clause, " "))
 }

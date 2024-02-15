@@ -23,4 +23,14 @@ func Test_Neartextbuilder(t *testing.T) {
 		expected := `nearText:{concepts: ["\"I'm a complex concept\" says the string","simple concept"] moveAwayFrom: {concepts: ["Extra quotes: \" ':","no quotes"] force: 0}}`
 		require.Equal(t, expected, str)
 	})
+
+	t.Run("concepts with escaping with targetVectors", func(t *testing.T) {
+		nt := NearTextArgumentBuilder{}
+
+		str := nt.WithConcepts([]string{"\"I'm a complex concept\" says the string", "simple concept"}).
+			WithTargetVectors("targetVector").
+			build()
+		expected := `nearText:{concepts: ["\"I'm a complex concept\" says the string","simple concept"] targetVectors: ["targetVector"]}`
+		require.Equal(t, expected, str)
+	})
 }

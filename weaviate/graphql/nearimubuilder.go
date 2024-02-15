@@ -5,12 +5,13 @@ import (
 )
 
 type NearImuArgumentBuilder struct {
-	imu          string
-	imuReader    io.Reader
-	hasCertainty bool
-	certainty    float32
-	hasDistance  bool
-	distance     float32
+	imu           string
+	imuReader     io.Reader
+	hasCertainty  bool
+	certainty     float32
+	hasDistance   bool
+	distance      float32
+	targetVectors []string
 }
 
 // WithImu base64 encoded imu
@@ -39,19 +40,29 @@ func (b *NearImuArgumentBuilder) WithDistance(distance float32) *NearImuArgument
 	return b
 }
 
+// WithTargetVectors target vector name
+func (b *NearImuArgumentBuilder) WithTargetVectors(targetVectors ...string) *NearImuArgumentBuilder {
+	b.targetVectors = targetVectors
+	return b
+}
+
 // Build build the given clause
 func (b *NearImuArgumentBuilder) build() string {
 	builder := &nearMediaArgumentBuilder{
-		mediaName:  "nearIMU",
-		mediaField: "imu",
-		data:       b.imu,
-		dataReader: b.imuReader,
+		mediaName:     "nearIMU",
+		mediaField:    "imu",
+		data:          b.imu,
+		dataReader:    b.imuReader,
+		targetVectors: b.targetVectors,
 	}
 	if b.hasCertainty {
 		builder.withCertainty(b.certainty)
 	}
 	if b.hasDistance {
 		builder.withDistance(b.distance)
+	}
+	if len(b.targetVectors) > 0 {
+		builder.withTargetVectors(b.targetVectors...)
 	}
 	return builder.build()
 }

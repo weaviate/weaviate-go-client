@@ -110,4 +110,14 @@ func TestNearDepth(t *testing.T) {
 		expected := `nearDepth:{}`
 		assert.Equal(t, expected, nearDepth)
 	})
+
+	t.Run("from base64 with targetVectors", func(t *testing.T) {
+		nearDepth := (&NearDepthArgumentBuilder{}).
+			WithDepth("iVBORw0KGgoAAAANS").
+			WithTargetVectors("targetVector").
+			build()
+
+		expected := `nearDepth:{depth: "iVBORw0KGgoAAAANS" targetVectors: ["targetVector"]}`
+		assert.Equal(t, expected, nearDepth)
+	})
 }

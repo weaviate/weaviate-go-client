@@ -5,12 +5,13 @@ import (
 )
 
 type NearVideoArgumentBuilder struct {
-	video        string
-	videoReader  io.Reader
-	hasCertainty bool
-	certainty    float32
-	hasDistance  bool
-	distance     float32
+	video         string
+	videoReader   io.Reader
+	hasCertainty  bool
+	certainty     float32
+	hasDistance   bool
+	distance      float32
+	targetVectors []string
 }
 
 // WithVideo base64 encoded video
@@ -39,6 +40,12 @@ func (b *NearVideoArgumentBuilder) WithDistance(distance float32) *NearVideoArgu
 	return b
 }
 
+// WithTargetVectors target vector name
+func (b *NearVideoArgumentBuilder) WithTargetVectors(targetVectors ...string) *NearVideoArgumentBuilder {
+	b.targetVectors = targetVectors
+	return b
+}
+
 // Build build the given clause
 func (b *NearVideoArgumentBuilder) build() string {
 	builder := &nearMediaArgumentBuilder{
@@ -52,6 +59,9 @@ func (b *NearVideoArgumentBuilder) build() string {
 	}
 	if b.hasDistance {
 		builder.withDistance(b.distance)
+	}
+	if len(b.targetVectors) > 0 {
+		builder.withTargetVectors(b.targetVectors...)
 	}
 	return builder.build()
 }

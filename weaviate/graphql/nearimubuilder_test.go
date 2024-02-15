@@ -110,4 +110,14 @@ func TestNearImu(t *testing.T) {
 		expected := `nearIMU:{}`
 		assert.Equal(t, expected, nearImu)
 	})
+
+	t.Run("from base64 with targetVectors", func(t *testing.T) {
+		nearImu := (&NearImuArgumentBuilder{}).
+			WithImu("iVBORw0KGgoAAAANS").
+			WithTargetVectors("targetVector").
+			build()
+
+		expected := `nearIMU:{imu: "iVBORw0KGgoAAAANS" targetVectors: ["targetVector"]}`
+		assert.Equal(t, expected, nearImu)
+	})
 }

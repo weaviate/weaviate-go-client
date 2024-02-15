@@ -110,4 +110,14 @@ func TestNearImage(t *testing.T) {
 		expected := `nearImage:{}`
 		assert.Equal(t, expected, nearImage)
 	})
+
+	t.Run("from base64 with targetVectors", func(t *testing.T) {
+		nearImage := (&NearImageArgumentBuilder{}).
+			WithImage("iVBORw0KGgoAAAANS").
+			WithTargetVectors("targetVector").
+			build()
+
+		expected := `nearImage:{image: "iVBORw0KGgoAAAANS" targetVectors: ["targetVector"]}`
+		assert.Equal(t, expected, nearImage)
+	})
 }

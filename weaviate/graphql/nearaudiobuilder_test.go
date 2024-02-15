@@ -110,4 +110,14 @@ func TestNearAudio(t *testing.T) {
 		expected := `nearAudio:{}`
 		assert.Equal(t, expected, nearAudio)
 	})
+
+	t.Run("from base64 with targetVectors", func(t *testing.T) {
+		nearAudio := (&NearAudioArgumentBuilder{}).
+			WithAudio("data:audio/mp4;base64,iVBORw0KGgoAAAANS").
+			WithTargetVectors("targetVector").
+			build()
+
+		expected := `nearAudio:{audio: "iVBORw0KGgoAAAANS" targetVectors: ["targetVector"]}`
+		assert.Equal(t, expected, nearAudio)
+	})
 }
