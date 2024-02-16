@@ -1961,7 +1961,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 
 			t.Run("create class", func(t *testing.T) {
 				cleanup()
-				testsuit.AllPropertiesSchemaCreate(t, client, className, false)
+				testsuit.AllPropertiesSchemaCreate(t, client, className, false, false)
 			})
 
 			t.Run("insert data", func(t *testing.T) {

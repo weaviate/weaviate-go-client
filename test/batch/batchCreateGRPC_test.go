@@ -34,10 +34,11 @@ func TestBatchCreate_gRPC_integration(t *testing.T) {
 
 	t.Run("gRPC batch import", func(t *testing.T) {
 		tests := []struct {
-			name          string
-			className     string
-			properties    []map[string]interface{}
-			withCrossRefs bool
+			name                string
+			className           string
+			properties          []map[string]interface{}
+			withCrossRefs       bool
+			withMultipleVectors bool
 		}{
 			{
 				name:       "all primitive properties",
@@ -66,6 +67,13 @@ func TestBatchCreate_gRPC_integration(t *testing.T) {
 				properties:    testsuit.AllPropertiesDataWithCrossReferencesWithNestedArrayObjectsAsMap(),
 				withCrossRefs: true,
 			},
+			{
+				name:                "all primitive properties with cross references (single and multi ref types) with nested with nested array objects and with multiple vectorizers configuration",
+				className:           "AllPropertiesWithCrossRefsAndMultipleVectorizers",
+				properties:          testsuit.AllPropertiesDataWithCrossReferencesWithNestedArrayObjectsAsMap(),
+				withCrossRefs:       true,
+				withMultipleVectors: true,
+			},
 		}
 		for _, tt := range tests {
 			className := tt.className
@@ -75,7 +83,7 @@ func TestBatchCreate_gRPC_integration(t *testing.T) {
 			err := client.Schema().AllDeleter().Do(context.Background())
 			require.Nil(t, err)
 
-			testsuit.AllPropertiesSchemaCreate(t, client, className, tt.withCrossRefs)
+			testsuit.AllPropertiesSchemaCreate(t, client, className, tt.withCrossRefs, tt.withMultipleVectors)
 
 			batchResultSlice, batchErrSlice := client.Batch().ObjectsBatcher().WithObjects(objects...).Do(context.Background())
 			assert.Nil(t, batchErrSlice)
@@ -86,6 +94,7 @@ func TestBatchCreate_gRPC_integration(t *testing.T) {
 				objs, err := client.Data().ObjectsGetter().
 					WithID(objects[i].ID.String()).
 					WithClassName(objects[i].Class).
+					WithVector().
 					Do(context.Background())
 				require.NoError(t, err)
 				require.Len(t, objs, 1)
@@ -98,6 +107,9 @@ func TestBatchCreate_gRPC_integration(t *testing.T) {
 				require.Equal(t, len(props), len(properties))
 				for propName := range properties {
 					assert.NotNil(t, props[propName])
+				}
+				if tt.withMultipleVectors {
+					assert.Len(t, obj.Vectors, 2)
 				}
 			}
 		}

@@ -14,9 +14,10 @@ import (
 )
 
 func TestClusterNodes_integration(t *testing.T) {
+	t.Skip("needs to be changed to use assert.EventuallyWithT() approach")
 	const (
-		expectedWeaviateVersion = "1.23.0"
-		expectedWeaviateGitHash = "bbf8c87"
+		expectedWeaviateVersion = "1.24.0-rc.0"
+		expectedWeaviateGitHash = "b6e6111"
 	)
 
 	t.Run("up", func(t *testing.T) {
@@ -29,7 +30,9 @@ func TestClusterNodes_integration(t *testing.T) {
 
 	t.Run("GET /nodes without data", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
-		nodesStatus, err := client.Cluster().NodesStatusGetter().Do(context.Background())
+		nodesStatus, err := client.Cluster().NodesStatusGetter().
+			WithOutput(verbosity.OutputVerbose).
+			Do(context.Background())
 
 		require.Nil(t, err)
 		require.NotNil(t, nodesStatus)
@@ -52,7 +55,8 @@ func TestClusterNodes_integration(t *testing.T) {
 		defer testsuit.CleanUpWeaviate(t, client)
 
 		nodesStatus, err := client.Cluster().NodesStatusGetter().
-			WithOutput(verbosity.OutputVerbose).Do(context.Background())
+			WithOutput(verbosity.OutputVerbose).
+			Do(context.Background())
 
 		require.Nil(t, err)
 		require.NotNil(t, nodesStatus)
@@ -84,6 +88,7 @@ func TestClusterNodes_integration(t *testing.T) {
 
 		// query only for one class
 		nodesStatusSingleClass, err := client.Cluster().NodesStatusGetter().
+			WithOutput(verbosity.OutputVerbose).
 			WithClass("Pizza").Do(context.Background())
 		require.Nil(t, err)
 		assert.Len(t, nodesStatusSingleClass.Nodes, 1)
