@@ -2,7 +2,7 @@
 version: '3.4'
 services:
   weaviate-node-1:
-    image: semitechnologies/weaviate:1.23.0
+    image: semitechnologies/weaviate:preview-fix-for-grpc-batch-api-vectors-pass-b6e6111
     restart: on-failure:0
     ports:
       - "8087:8080"
@@ -16,6 +16,7 @@ services:
       CLUSTER_GOSSIP_BIND_PORT: "7110"
       CLUSTER_DATA_BIND_PORT: "7111"
       DISABLE_TELEMETRY: 'true'
+      PERSISTENCE_MEMTABLES_FLUSH_IDLE_AFTER_SECONDS: 1
 
   weaviate-node-2:
     init: true
@@ -26,7 +27,7 @@ services:
       - '8080'
       - --scheme
       - http
-    image: semitechnologies/weaviate:1.23.0
+    image: semitechnologies/weaviate:preview-fix-for-grpc-batch-api-vectors-pass-b6e6111
     ports:
       - 8088:8080
       - 6061:6060
@@ -44,4 +45,5 @@ services:
       CLUSTER_DATA_BIND_PORT: '7113'
       CLUSTER_JOIN: 'weaviate-node-1:7110'
       DISABLE_TELEMETRY: 'true'
+      PERSISTENCE_MEMTABLES_FLUSH_IDLE_AFTER_SECONDS: 1
 ...

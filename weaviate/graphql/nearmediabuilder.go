@@ -37,9 +37,7 @@ func (b *nearMediaArgumentBuilder) withDistance(distance float32) *nearMediaArgu
 }
 
 func (b *nearMediaArgumentBuilder) withTargetVectors(targetVectors ...string) *nearMediaArgumentBuilder {
-	if len(targetVectors) > 0 {
-		b.targetVectors = targetVectors
-	}
+	b.targetVectors = targetVectors
 	return b
 }
 

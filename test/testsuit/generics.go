@@ -498,7 +498,7 @@ const (
 	AllProperties_hasRefClass2 = "hasRefClass2"
 )
 
-func AllPropertiesSchemaCreate(t *testing.T, client *weaviate.Client, className string, withCrossRefs bool) {
+func AllPropertiesSchemaCreate(t *testing.T, client *weaviate.Client, className string, withCrossRefs, withMultipleVectors bool) {
 	class := &models.Class{
 		Class: className,
 		Properties: []*models.Property{
@@ -559,6 +559,28 @@ func AllPropertiesSchemaCreate(t *testing.T, client *weaviate.Client, className 
 				DataType: []string{schema.DataTypeUUIDArray.String()},
 			},
 		},
+	}
+
+	if withMultipleVectors {
+		class.VectorConfig = map[string]models.VectorConfig{
+			"author_and_colors": {
+				Vectorizer: map[string]interface{}{
+					"text2vec-contextionary": map[string]interface{}{
+						"vectorizeClassName": false,
+						"properties":         []interface{}{"author", "colors"},
+					},
+				},
+				VectorIndexType: "hnsw",
+			},
+			"all_properties": {
+				Vectorizer: map[string]interface{}{
+					"text2vec-contextionary": map[string]interface{}{
+						"vectorizeClassName": false,
+					},
+				},
+				VectorIndexType: "flat",
+			},
+		}
 	}
 
 	if withCrossRefs {

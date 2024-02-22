@@ -90,6 +90,16 @@ func (c *GrpcClient) getBatchObjects(objects []*models.Object) ([]*pb.BatchObjec
 				batchObject.Vector = obj.Vector
 			}
 		}
+		if len(obj.Vectors) > 0 {
+			vectors := []*pb.Vectors{}
+			for targetVector, vector := range obj.Vectors {
+				vectors = append(vectors, &pb.Vectors{
+					Name:        targetVector,
+					VectorBytes: byteops.Float32ToByteVector(vector),
+				})
+			}
+			batchObject.Vectors = vectors
+		}
 		result[i] = batchObject
 	}
 	return result, nil

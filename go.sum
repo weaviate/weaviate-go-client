@@ -291,8 +291,8 @@ github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAh
 github.com/vmihailenco/tagparser/v2 v2.0.0/go.mod h1:Wri+At7QHww0WTrCBeu4J6bNtoV6mEfg5OIWRZA9qds=
 github.com/weaviate/sroar v0.0.0-20230210105426-26108af5465d h1:bULMGmIS786YSmm/SssAmwu86y4saMoHhvuL0u7pWLc=
 github.com/weaviate/sroar v0.0.0-20230210105426-26108af5465d/go.mod h1:bJUcu8a/7XKOeaCWZtSjuBogUGReUiwJTyGSvcAjDzQ=
-github.com/weaviate/weaviate v1.23.10-0.20240213150731-e788604433dd h1:CsTULtfKNxPZBAWsQII4vms72I70u3jCn38SlnvjUOc=
-github.com/weaviate/weaviate v1.23.10-0.20240213150731-e788604433dd/go.mod h1:2NfeTh8sbeUXOQF0G0iboH87u85e9rV0tgueaAceARA=
+github.com/weaviate/weaviate v1.24.0-rc.0 h1:Fo7R59vcHYqabKQv74PlaZZbHMGMgtWUtrc+P3Oqngk=
+github.com/weaviate/weaviate v1.24.0-rc.0/go.mod h1:2NfeTh8sbeUXOQF0G0iboH87u85e9rV0tgueaAceARA=
 github.com/willf/bitset v1.1.10/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
 github.com/willf/bitset v1.1.11 h1:N7Z7E9UvjW+sGsEl7k/SJrvY2reP1A07MrGuCjIOjRE=
 github.com/willf/bitset v1.1.11/go.mod h1:83CECat5yLh5zVOf4P1ErAgKA5UDvKtgyUABdr3+MjI=

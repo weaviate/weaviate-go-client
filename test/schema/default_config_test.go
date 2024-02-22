@@ -45,6 +45,10 @@ var defaultPQConfig = map[string]interface{}{
 	"trainingLimit": float64(100_000),
 }
 
+var defaultBQConfig = map[string]interface{}{
+	"enabled": false,
+}
+
 var defaultVectorIndexConfig = map[string]interface{}{
 	"cleanupIntervalSeconds": float64(300),
 	"efConstruction":         float64(128),
@@ -58,6 +62,7 @@ var defaultVectorIndexConfig = map[string]interface{}{
 	"flatSearchCutoff":       float64(40000),
 	"distance":               "cosine",
 	"pq":                     defaultPQConfig,
+	"bq":                     defaultBQConfig,
 }
 
 var defaultReplicationConfig = &models.ReplicationConfig{

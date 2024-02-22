@@ -15,12 +15,13 @@ const Ranked FusionType = "rankedFusion"
 const RelativeScore FusionType = "relativeScoreFusion"
 
 type HybridArgumentBuilder struct {
-	query      string
-	vector     []float32
-	withAlpha  bool
-	alpha      float32
-	properties []string
-	fusionType FusionType
+	query         string
+	vector        []float32
+	withAlpha     bool
+	alpha         float32
+	properties    []string
+	fusionType    FusionType
+	targetVectors []string
 }
 
 // WithQuery the search string
@@ -54,6 +55,11 @@ func (h *HybridArgumentBuilder) WithFusionType(fusionType FusionType) *HybridArg
 	return h
 }
 
+func (h *HybridArgumentBuilder) withTargetVectors(targetVectors ...string) *HybridArgumentBuilder {
+	h.targetVectors = targetVectors
+	return h
+}
+
 // Build build the given clause
 func (h *HybridArgumentBuilder) build() string {
 	clause := []string{}
@@ -81,6 +87,11 @@ func (h *HybridArgumentBuilder) build() string {
 
 	if h.fusionType != "" {
 		clause = append(clause, fmt.Sprintf("fusionType: %s", h.fusionType))
+	}
+
+	if len(h.targetVectors) > 0 {
+		targetVectors, _ := json.Marshal(h.targetVectors)
+		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}
 
 	return fmt.Sprintf("hybrid:{%v}", strings.Join(clause, ", "))

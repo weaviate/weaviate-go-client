@@ -135,7 +135,7 @@ func TestNearMedia(t *testing.T) {
 		assert.Equal(t, expected, nearMedia)
 	})
 
-	t.Run("from base64", func(t *testing.T) {
+	t.Run("from base64 with targetVectors", func(t *testing.T) {
 		nearMedia := (&nearMediaArgumentBuilder{
 			mediaName:     "nearMedia",
 			mediaField:    "media",

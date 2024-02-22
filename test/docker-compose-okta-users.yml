@@ -10,7 +10,7 @@ services:
       - --scheme
       - http
       - --write-timeout=600s
-    image: semitechnologies/weaviate:1.23.0
+    image: semitechnologies/weaviate:preview-fix-for-grpc-batch-api-vectors-pass-b6e6111
     ports:
       - 8083:8083
     restart: on-failure:0
@@ -26,4 +26,5 @@ services:
       AUTHORIZATION_ADMINLIST_USERS: 'test@test.de'
       AUTHENTICATION_OIDC_SCOPES: 'openid,email'
       DISABLE_TELEMETRY: 'true'
+      PERSISTENCE_MEMTABLES_FLUSH_IDLE_AFTER_SECONDS: 1
 ...
