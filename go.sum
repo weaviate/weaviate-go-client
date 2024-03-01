@@ -284,6 +284,8 @@ github.com/tailor-inc/graphql v0.4.1 h1:pAl/Xwy8aMtDVX0QjNj/S8vAWVM0e3IrK9554w0c
 github.com/tailor-inc/graphql v0.4.1/go.mod h1:KtXmBAjFV+o3NEaWvtOStTMqE7g7sCWIGazL5sgJU7k=
 github.com/testcontainers/testcontainers-go v0.28.1-0.20240301154625-bf87aee46d20 h1:kX5OKHMUPRA3u5G+rwEqfX+rnIUS0p27HtFnmtOdEFE=
 github.com/testcontainers/testcontainers-go v0.28.1-0.20240301154625-bf87aee46d20/go.mod h1:I2J8zSqVizOrB/niEmESb98gC6CVLy0aXA/iue0Ij3o=
+github.com/testcontainers/testcontainers-go/modules/weaviate v0.0.0-20240301154625-bf87aee46d20 h1:bKoUA9wckfvRfOTDchel0RTRoz/uEkZtj3qdwGNRTDI=
+github.com/testcontainers/testcontainers-go/modules/weaviate v0.0.0-20240301154625-bf87aee46d20/go.mod h1:FqRC53Wn13SJ2Bz5w8zC4gPyey06cVP1c8aMAI0qQIU=
 github.com/tidwall/pretty v1.0.0 h1:HsD+QiTn7sK6flMKIvNmpqz1qrpP3Ps6jOKIKMooyg4=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tklauser/go-sysconf v0.3.12 h1:0QaGUFOdQaIVdPgfITYzaTegZvdCjmYO52cSFAEVmqU=

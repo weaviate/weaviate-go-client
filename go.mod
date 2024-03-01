@@ -2,13 +2,17 @@ module github.com/weaviate/weaviate-go-client/v4
 
 go 1.21
 
-replace github.com/testcontainers/testcontainers-go => github.com/testcontainers/testcontainers-go v0.28.1-0.20240301154625-bf87aee46d20
+replace (
+	github.com/testcontainers/testcontainers-go => github.com/testcontainers/testcontainers-go v0.28.1-0.20240301154625-bf87aee46d20
+	github.com/testcontainers/testcontainers-go/modules/weaviate => github.com/testcontainers/testcontainers-go/modules/weaviate v0.0.0-20240301154625-bf87aee46d20
+)
 
 require (
 	github.com/docker/go-connections v0.5.0
 	github.com/go-openapi/strfmt v0.21.3
 	github.com/stretchr/testify v1.8.4
-	github.com/testcontainers/testcontainers-go v0.28.0
+	github.com/testcontainers/testcontainers-go v0.29.0
+	github.com/testcontainers/testcontainers-go/modules/weaviate v0.29.0
 	github.com/weaviate/weaviate v1.24.0-rc.0
 	golang.org/x/oauth2 v0.11.0
 	google.golang.org/grpc v1.59.0
