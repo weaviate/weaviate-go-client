@@ -2,7 +2,7 @@
 version: '3.4'
 services:
   weaviate-node-1:
-    image: semitechnologies/weaviate:preview-fix-for-grpc-batch-api-vectors-pass-b6e6111
+    image: semitechnologies/weaviate:1.24.1
     restart: on-failure:0
     ports:
       - "8087:8080"
@@ -27,7 +27,7 @@ services:
       - '8080'
       - --scheme
       - http
-    image: semitechnologies/weaviate:preview-fix-for-grpc-batch-api-vectors-pass-b6e6111
+    image: semitechnologies/weaviate:1.24.1
     ports:
       - 8088:8080
       - 6061:6060
