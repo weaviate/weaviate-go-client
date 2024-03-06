@@ -55,7 +55,7 @@ func (h *HybridArgumentBuilder) WithFusionType(fusionType FusionType) *HybridArg
 	return h
 }
 
-func (h *HybridArgumentBuilder) withTargetVectors(targetVectors ...string) *HybridArgumentBuilder {
+func (h *HybridArgumentBuilder) WithTargetVectors(targetVectors ...string) *HybridArgumentBuilder {
 	h.targetVectors = targetVectors
 	return h
 }

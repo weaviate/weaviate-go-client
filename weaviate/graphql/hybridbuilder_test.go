@@ -61,7 +61,7 @@ func TestHybridBuilder_build(t *testing.T) {
 
 	t.Run("query and alpha and targetVectors", func(t *testing.T) {
 		hybrid := HybridArgumentBuilder{}
-		str := hybrid.WithQuery("query").WithAlpha(0.6).withTargetVectors("t1").build()
+		str := hybrid.WithQuery("query").WithAlpha(0.6).WithTargetVectors("t1").build()
 		expected := `hybrid:{query: "query", alpha: 0.6, targetVectors: ["t1"]}`
 		require.Equal(t, expected, str)
 	})
