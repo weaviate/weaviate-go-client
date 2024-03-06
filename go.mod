@@ -2,17 +2,12 @@ module github.com/weaviate/weaviate-go-client/v4
 
 go 1.21
 
-replace (
-	github.com/testcontainers/testcontainers-go => github.com/testcontainers/testcontainers-go v0.28.1-0.20240301154625-bf87aee46d20
-	github.com/testcontainers/testcontainers-go/modules/weaviate => github.com/testcontainers/testcontainers-go/modules/weaviate v0.0.0-20240301154625-bf87aee46d20
-)
-
 require (
 	github.com/docker/go-connections v0.5.0
 	github.com/go-openapi/strfmt v0.21.3
-	github.com/stretchr/testify v1.8.4
-	github.com/testcontainers/testcontainers-go v0.29.0
-	github.com/testcontainers/testcontainers-go/modules/weaviate v0.29.0
+	github.com/stretchr/testify v1.9.0
+	github.com/testcontainers/testcontainers-go v0.29.1
+	github.com/testcontainers/testcontainers-go/modules/weaviate v0.29.1
 	github.com/weaviate/weaviate v1.24.1
 	golang.org/x/oauth2 v0.13.0
 	google.golang.org/grpc v1.59.0
@@ -37,7 +32,7 @@ require (
 	github.com/cpuguy83/dockercfg v0.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/distribution/reference v0.5.0 // indirect
-	github.com/docker/docker v25.0.2+incompatible // indirect
+	github.com/docker/docker v25.0.3+incompatible // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
@@ -110,12 +105,12 @@ require (
 	go.opentelemetry.io/otel/trace v1.19.0 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea // indirect
-	golang.org/x/mod v0.11.0 // indirect
+	golang.org/x/mod v0.16.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.10.0 // indirect
+	golang.org/x/tools v0.13.0 // indirect
 	gonum.org/v1/gonum v0.12.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
