@@ -2,11 +2,10 @@ package docker
 
 import (
 	"context"
-	"time"
 
 	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/testcontainers/testcontainers-go/modules/weaviate"
 )
 
 func StartWeaviate(ctx context.Context, weaviateImage string) (*DockerContainer, error) {
@@ -17,24 +16,16 @@ func StartWeaviate(ctx context.Context, weaviateImage string) (*DockerContainer,
 		"PERSISTENCE_DATA_PATH":     "./data",
 		"DEFAULT_VECTORIZER_MODULE": "none",
 	}
-	req := testcontainers.ContainerRequest{
-		Image:        weaviateImage,
-		ExposedPorts: []string{"8080/tcp", "50051/tcp"},
-		Env:          env,
-		WaitingFor: wait.
-			ForAll(
-				wait.ForListeningPort(nat.Port("8080/tcp")),
-				wait.ForListeningPort(nat.Port("50051/tcp")),
-			).WithDeadline(30 * time.Second),
-	}
-	c, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
+
+	c, err := weaviate.RunContainer(
+		ctx,
+		testcontainers.WithImage(weaviateImage),
+		testcontainers.WithEnv(env),
+	)
 	if err != nil {
 		return nil, err
 	}
-	httpUri, err := c.PortEndpoint(ctx, nat.Port("8080/tcp"), "")
+	_, httpUri, err := c.HttpHostAddress(ctx)
 	if err != nil {
 		return nil, err
 	}
