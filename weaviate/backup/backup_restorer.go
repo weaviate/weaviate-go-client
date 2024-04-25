@@ -21,6 +21,7 @@ type BackupRestorer struct {
 	backend           string
 	backupID          string
 	waitForCompletion bool
+	config            *models.RestoreConfig
 }
 
 func (c *BackupRestorer) WithIncludeClassNames(classNames ...string) *BackupRestorer {
@@ -51,10 +52,16 @@ func (r *BackupRestorer) WithWaitForCompletion(waitForCompletion bool) *BackupRe
 	return r
 }
 
+func (r *BackupRestorer) WithConfig(cfg *models.RestoreConfig) *BackupRestorer {
+	r.config = cfg
+	return r
+}
+
 func (r *BackupRestorer) Do(ctx context.Context) (*models.BackupRestoreResponse, error) {
 	payload := models.BackupRestoreRequest{
 		Include: r.includeClasses,
 		Exclude: r.excludeClasses,
+		Config:  r.config,
 	}
 
 	if r.waitForCompletion {

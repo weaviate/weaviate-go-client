@@ -665,6 +665,242 @@ func TestBackups_integration(t *testing.T) {
 			assert.Contains(t, err.Error(), "exclude")
 		})
 	})
+
+	t.Run("test create backup with valid compression config values", func(t *testing.T) {
+		testsuit.CreateTestSchemaAndData(t, client)
+		defer testsuit.CleanUpWeaviate(t, client)
+
+		backend := backup.BACKEND_FILESYSTEM
+		backupID := fmt.Sprint(random.Int63())
+		pizzaClassName := "Pizza"
+
+		t.Run("create backup", func(t *testing.T) {
+			createResponse, err := client.Backup().Creator().
+				WithIncludeClassNames(pizzaClassName).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithWaitForCompletion(true).
+				WithConfig(&models.BackupConfig{
+					CPUPercentage:    80,
+					ChunkSize:        512,
+					CompressionLevel: models.BackupConfigCompressionLevelBestSpeed,
+				}).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, createResponse)
+		})
+	})
+
+	t.Run("fail creating backup with invalid compression config", func(t *testing.T) {
+		testsuit.CreateTestSchemaAndData(t, client)
+		defer testsuit.CleanUpWeaviate(t, client)
+
+		backend := backup.BACKEND_FILESYSTEM
+		backupID := fmt.Sprint(random.Int63())
+		pizzaClassName := "Pizza"
+
+		t.Run("create backup with CPUPercentage too high", func(t *testing.T) {
+			createResponse, err := client.Backup().Creator().
+				WithIncludeClassNames(pizzaClassName).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithWaitForCompletion(true).
+				WithConfig(&models.BackupConfig{
+					CPUPercentage: 81, // Max is 80
+				}).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			require.Nil(t, createResponse)
+			assert.Contains(t, err.Error(), "422")
+			assert.Contains(t, err.Error(), "CPUPercentage")
+		})
+
+		t.Run("create backup with CPUPercentage too low", func(t *testing.T) {
+			createResponse, err := client.Backup().Creator().
+				WithIncludeClassNames(pizzaClassName).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithWaitForCompletion(true).
+				WithConfig(&models.BackupConfig{
+					CPUPercentage: -1, // Min is 1, but zero doesn't fail due to Go handling of zero values
+				}).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			require.Nil(t, createResponse)
+			assert.Contains(t, err.Error(), "422")
+			assert.Contains(t, err.Error(), "CPUPercentage")
+		})
+
+		t.Run("create backup with ChunkSize too high", func(t *testing.T) {
+			createResponse, err := client.Backup().Creator().
+				WithIncludeClassNames(pizzaClassName).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithWaitForCompletion(true).
+				WithConfig(&models.BackupConfig{
+					ChunkSize: 513, // Max is 512
+				}).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			require.Nil(t, createResponse)
+			assert.Contains(t, err.Error(), "422")
+			assert.Contains(t, err.Error(), "ChunkSize")
+		})
+
+		t.Run("create backup with ChunkSize too low", func(t *testing.T) {
+			createResponse, err := client.Backup().Creator().
+				WithIncludeClassNames(pizzaClassName).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithWaitForCompletion(true).
+				WithConfig(&models.BackupConfig{
+					ChunkSize: 1, // Min is 2
+				}).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			require.Nil(t, createResponse)
+			assert.Contains(t, err.Error(), "422")
+			assert.Contains(t, err.Error(), "ChunkSize")
+		})
+
+		t.Run("create backup with invalid CompressionLevel", func(t *testing.T) {
+			createResponse, err := client.Backup().Creator().
+				WithIncludeClassNames(pizzaClassName).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithWaitForCompletion(true).
+				WithConfig(&models.BackupConfig{
+					CompressionLevel: "DNE", // Must be [DefaultCompression | BestSpeed | BestCompression]
+				}).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			require.Nil(t, createResponse)
+			assert.Contains(t, err.Error(), "422")
+			assert.Contains(t, err.Error(), "CompressionLevel")
+		})
+	})
+
+	t.Run("test restore backup with valid compression config values", func(t *testing.T) {
+		testsuit.CreateTestSchemaAndData(t, client)
+		defer testsuit.CleanUpWeaviate(t, client)
+
+		backend := backup.BACKEND_FILESYSTEM
+		backupID := fmt.Sprint(random.Int63())
+		className := "Pizza"
+
+		t.Run("check data exist", func(t *testing.T) {
+			assertAllPizzasExist(t, client)
+		})
+
+		t.Run("create backup", func(t *testing.T) {
+			createResponse, err := client.Backup().Creator().
+				WithIncludeClassNames(className).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithWaitForCompletion(true).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, createResponse)
+		})
+
+		t.Run("remove existing class", func(t *testing.T) {
+			err := client.Schema().ClassDeleter().
+				WithClassName(className).
+				Do(context.Background())
+
+			assert.Nil(t, err)
+		})
+
+		t.Run("restore backup", func(t *testing.T) {
+			restoreResponse, err := client.Backup().Restorer().
+				WithIncludeClassNames(className).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithWaitForCompletion(true).
+				WithConfig(&models.RestoreConfig{
+					CPUPercentage: 80,
+				}).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, restoreResponse)
+			assert.Empty(t, restoreResponse.Error)
+		})
+	})
+
+	t.Run("fail restore backup with invalid compression config values", func(t *testing.T) {
+		testsuit.CreateTestSchemaAndData(t, client)
+		defer testsuit.CleanUpWeaviate(t, client)
+
+		backend := backup.BACKEND_FILESYSTEM
+		backupID := fmt.Sprint(random.Int63())
+		className := "Pizza"
+
+		t.Run("check data exist", func(t *testing.T) {
+			assertAllPizzasExist(t, client)
+		})
+
+		t.Run("create backup", func(t *testing.T) {
+			createResponse, err := client.Backup().Creator().
+				WithIncludeClassNames(className).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithWaitForCompletion(true).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, createResponse)
+		})
+
+		t.Run("remove existing class", func(t *testing.T) {
+			err := client.Schema().ClassDeleter().
+				WithClassName(className).
+				Do(context.Background())
+
+			assert.Nil(t, err)
+		})
+
+		t.Run("restore backup with too high CPUPercentage", func(t *testing.T) {
+			restoreResponse, err := client.Backup().Restorer().
+				WithIncludeClassNames(className).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithWaitForCompletion(true).
+				WithConfig(&models.RestoreConfig{
+					CPUPercentage: 81, // Max is 80
+				}).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			require.Nil(t, restoreResponse)
+			assert.Contains(t, err.Error(), "422")
+			assert.Contains(t, err.Error(), "CPUPercentage")
+		})
+
+		t.Run("restore backup with too low CPUPercentage", func(t *testing.T) {
+			restoreResponse, err := client.Backup().Restorer().
+				WithIncludeClassNames(className).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithWaitForCompletion(true).
+				WithConfig(&models.RestoreConfig{
+					CPUPercentage: -1, // Min is 1, but zero doesn't fail due to Go handling of zero values
+				}).
+				Do(context.Background())
+
+			require.NotNil(t, err)
+			require.Nil(t, restoreResponse)
+			assert.Contains(t, err.Error(), "422")
+			assert.Contains(t, err.Error(), "CPUPercentage")
+		})
+	})
 }
 
 func assertAllPizzasExist(t *testing.T, client *weaviate.Client) {
