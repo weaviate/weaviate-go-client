@@ -21,6 +21,7 @@ type BackupCreator struct {
 	backend           string
 	backupID          string
 	waitForCompletion bool
+	config            *models.BackupConfig
 }
 
 func (c *BackupCreator) WithIncludeClassNames(classNames ...string) *BackupCreator {
@@ -51,11 +52,18 @@ func (c *BackupCreator) WithWaitForCompletion(waitForCompletion bool) *BackupCre
 	return c
 }
 
+// WithConfig sets the compression configuration for the backup
+func (c *BackupCreator) WithConfig(cfg *models.BackupConfig) *BackupCreator {
+	c.config = cfg
+	return c
+}
+
 func (c *BackupCreator) Do(ctx context.Context) (*models.BackupCreateResponse, error) {
 	payload := models.BackupCreateRequest{
 		ID:      c.backupID,
 		Include: c.includeClasses,
 		Exclude: c.excludeClasses,
+		Config:  c.config,
 	}
 
 	if c.waitForCompletion {
