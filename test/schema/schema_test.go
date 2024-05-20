@@ -2,6 +2,7 @@ package schema
 
 import (
 	"context"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -103,9 +104,14 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, errA)
 		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())
 		assert.Nil(t, getErr)
-		assert.Equal(t, loadedSchema.Classes[0].Class, schemaClassThing.Class)
-		assert.Equal(t, loadedSchema.Classes[1].Class, schemaClassAction.Class)
 		assert.Equal(t, 2, len(loadedSchema.Classes), "There are classes in the schema that are not part of this test")
+		classNames := make([]string, 2)
+		for i := range loadedSchema.Classes {
+			classNames[i] = loadedSchema.Classes[i].Class
+		}
+		assert.True(t, sort.StringsAreSorted(classNames))
+		assert.Equal(t, classNames[0], schemaClassAction.Class)
+		assert.Equal(t, classNames[1], schemaClassThing.Class)
 
 		errRm1 := client.Schema().ClassDeleter().WithClassName(schemaClassThing.Class).Do(context.Background())
 		errRm2 := client.Schema().ClassDeleter().WithClassName(schemaClassAction.Class).Do(context.Background())

@@ -1,8 +1,8 @@
 ---
 version: '3.4'
 services:
-  weaviate-node-1:
-    image: semitechnologies/weaviate:1.24.1
+  weaviate-0:
+    image: semitechnologies/weaviate:1.25.1
     restart: on-failure:0
     ports:
       - "8087:8080"
@@ -13,12 +13,17 @@ services:
       PERSISTENCE_DATA_PATH: "./weaviate-node-1"
       DEFAULT_VECTORIZER_MODULE: text2vec-contextionary
       ENABLE_MODULES: text2vec-contextionary
+      CLUSTER_HOSTNAME: "weaviate-0"
       CLUSTER_GOSSIP_BIND_PORT: "7110"
       CLUSTER_DATA_BIND_PORT: "7111"
+      RAFT_PORT: "8300"
+      RAFT_INTERNAL_RPC_PORT: "8301"
+      RAFT_BOOTSTRAP_EXPECT: "2"
+      RAFT_JOIN: "weaviate-0:8300,weaviate-1:8300"
       DISABLE_TELEMETRY: 'true'
       PERSISTENCE_MEMTABLES_FLUSH_IDLE_AFTER_SECONDS: 1
 
-  weaviate-node-2:
+  weaviate-1:
     init: true
     command:
       - --host
@@ -27,7 +32,7 @@ services:
       - '8080'
       - --scheme
       - http
-    image: semitechnologies/weaviate:1.24.1
+    image: semitechnologies/weaviate:1.25.1
     ports:
       - 8088:8080
       - 6061:6060
@@ -40,10 +45,14 @@ services:
       PERSISTENCE_DATA_PATH: './weaviate-node-2'
       DEFAULT_VECTORIZER_MODULE: text2vec-contextionary
       ENABLE_MODULES: text2vec-contextionary
-      CLUSTER_HOSTNAME: 'node2'
+      CLUSTER_HOSTNAME: "weaviate-1"
       CLUSTER_GOSSIP_BIND_PORT: '7112'
       CLUSTER_DATA_BIND_PORT: '7113'
-      CLUSTER_JOIN: 'weaviate-node-1:7110'
+      CLUSTER_JOIN: 'weaviate-0:7110'
+      RAFT_PORT: "8300"
+      RAFT_INTERNAL_RPC_PORT: "8301"
+      RAFT_BOOTSTRAP_EXPECT: "2"
+      RAFT_JOIN: "weaviate-0:8300,weaviate-1:8300"
       DISABLE_TELEMETRY: 'true'
       PERSISTENCE_MEMTABLES_FLUSH_IDLE_AFTER_SECONDS: 1
 ...
