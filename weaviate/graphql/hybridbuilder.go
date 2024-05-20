@@ -22,6 +22,7 @@ type HybridArgumentBuilder struct {
 	properties    []string
 	fusionType    FusionType
 	targetVectors []string
+	searches      *HybridSearchesArgumentBuilder
 }
 
 // WithQuery the search string
@@ -55,8 +56,15 @@ func (h *HybridArgumentBuilder) WithFusionType(fusionType FusionType) *HybridArg
 	return h
 }
 
+// WithTargetVectors sets the target vectors to be used with hybrid query.
 func (h *HybridArgumentBuilder) WithTargetVectors(targetVectors ...string) *HybridArgumentBuilder {
 	h.targetVectors = targetVectors
+	return h
+}
+
+// WithSearches sets the searches to be used with hybrid.
+func (h *HybridArgumentBuilder) WithSearches(searches *HybridSearchesArgumentBuilder) *HybridArgumentBuilder {
+	h.searches = searches
 	return h
 }
 
@@ -94,5 +102,35 @@ func (h *HybridArgumentBuilder) build() string {
 		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}
 
+	if h.searches != nil {
+		clause = append(clause, fmt.Sprintf("searches:{%s}", h.searches.build()))
+	}
+
 	return fmt.Sprintf("hybrid:{%v}", strings.Join(clause, ", "))
+}
+
+type HybridSearchesArgumentBuilder struct {
+	nearVector *NearVectorArgumentBuilder
+	nearText   *NearTextArgumentBuilder
+}
+
+func (s *HybridSearchesArgumentBuilder) WithNearVector(nearVector *NearVectorArgumentBuilder) *HybridSearchesArgumentBuilder {
+	s.nearVector = nearVector
+	return s
+}
+
+func (s *HybridSearchesArgumentBuilder) WithNearText(nearText *NearTextArgumentBuilder) *HybridSearchesArgumentBuilder {
+	s.nearText = nearText
+	return s
+}
+
+func (h *HybridSearchesArgumentBuilder) build() string {
+	searches := []string{}
+	if h.nearText != nil {
+		searches = append(searches, h.nearText.build())
+	}
+	if h.nearVector != nil {
+		searches = append(searches, h.nearVector.build())
+	}
+	return strings.Join(searches, " ")
 }

@@ -102,12 +102,19 @@ func (api *API) GroupArgBuilder() *GroupArgumentBuilder {
 	return &GroupArgumentBuilder{}
 }
 
+// Bm25ArgBuilder bm25 clause
 func (api *API) Bm25ArgBuilder() *BM25ArgumentBuilder {
 	return &BM25ArgumentBuilder{}
 }
 
+// HybridArgumentBuilder hybrid clause
 func (api *API) HybridArgumentBuilder() *HybridArgumentBuilder {
 	return &HybridArgumentBuilder{}
+}
+
+// HybridSearchesArgumentBuilder hybrid.searches clause
+func (api *API) HybridSearchesArgumentBuilder() *HybridSearchesArgumentBuilder {
+	return &HybridSearchesArgumentBuilder{}
 }
 
 // GroupByArgBuilder groupBy clause

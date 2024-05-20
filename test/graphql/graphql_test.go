@@ -1512,7 +1512,7 @@ func TestGraphQL_integration(t *testing.T) {
 		assert.Equal(t, risottoExpectedUpdateTime, risottoResp.Get.Risotto[0].Additional.LastUpdateTimeUnix)
 	})
 
-	t.Run("group by", func(t *testing.T) {
+	t.Run("group by with nearObject", func(t *testing.T) {
 		client := testsuit.CreateTestClient()
 		testsuit.CreateTestDocumentAndPassageSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
@@ -1615,6 +1615,88 @@ func TestGraphQL_integration(t *testing.T) {
 			groupedBy, ids := getGroupHits(current)
 			assert.Equal(t, groupsOrder[i], groupedBy)
 			assert.ElementsMatch(t, expectedGroups[groupedBy], ids)
+		}
+	})
+
+	t.Run("group by with hybrid", func(t *testing.T) {
+		client := testsuit.CreateTestClient()
+		testsuit.CreateTestDocumentAndPassageSchemaAndData(t, client)
+		defer testsuit.CleanUpWeaviate(t, client)
+
+		additional := graphql.Field{
+			Name: "_additional", Fields: []graphql.Field{
+				{Name: "group", Fields: []graphql.Field{
+					{Name: "id"},
+					{Name: "groupedBy", Fields: []graphql.Field{
+						{Name: "value"},
+						{Name: "path"},
+					}},
+					{Name: "count"},
+					{Name: "maxDistance"},
+					{Name: "minDistance"},
+					{Name: "hits", Fields: []graphql.Field{
+						{Name: "_additional", Fields: []graphql.Field{
+							{Name: "id"},
+							{Name: "distance"},
+						}},
+					}},
+				}},
+			},
+		}
+
+		groupBy := client.GraphQL().GroupByArgBuilder().
+			WithPath([]string{"content"}).WithGroups(3).WithObjectsPerGroup(10)
+
+		searches := client.GraphQL().HybridSearchesArgumentBuilder().
+			WithNearText(client.GraphQL().NearTextArgBuilder().WithConcepts([]string{"Passage content 2"}))
+
+		hybrid := client.GraphQL().HybridArgumentBuilder().
+			WithQuery("Passage content 2").
+			WithSearches(searches).
+			WithAlpha(0.9)
+
+		result, err := client.GraphQL().Get().
+			WithClassName("Passage").
+			WithHybrid(hybrid).
+			WithGroupBy(groupBy).
+			WithFields(additional).
+			Do(context.Background())
+
+		require.Nil(t, err)
+		require.Nil(t, result.Errors)
+		require.NotNil(t, result)
+		require.NotNil(t, result.Data)
+
+		getGroup := func(value interface{}) map[string]interface{} {
+			group := value.(map[string]interface{})["_additional"].(map[string]interface{})["group"].(map[string]interface{})
+			return group
+		}
+		groups := []map[string]interface{}{}
+		passages := result.Data["Get"].(map[string]interface{})["Passage"].([]interface{})
+		for _, passage := range passages {
+			groups = append(groups, getGroup(passage))
+		}
+		getGroupHits := func(group map[string]interface{}) (string, []string) {
+			result := []string{}
+			hits := group["hits"].([]interface{})
+			for _, hit := range hits {
+				additional := hit.(map[string]interface{})["_additional"].(map[string]interface{})
+				result = append(result, additional["id"].(string))
+			}
+			groupedBy := group["groupedBy"].(map[string]interface{})
+			groupedByValue := groupedBy["value"].(string)
+			return groupedByValue, result
+		}
+
+		require.Len(t, groups, 3)
+		group1 := "Passage content 2"
+		group2 := "Passage content 1"
+		group3 := "Passage content 3"
+
+		groupsOrder := []string{group1, group2, group3}
+		for i, current := range groups {
+			groupedBy, _ := getGroupHits(current)
+			assert.Equal(t, groupsOrder[i], groupedBy)
 		}
 	})
 

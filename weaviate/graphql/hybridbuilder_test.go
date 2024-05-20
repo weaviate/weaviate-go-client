@@ -65,4 +65,26 @@ func TestHybridBuilder_build(t *testing.T) {
 		expected := `hybrid:{query: "query", alpha: 0.6, targetVectors: ["t1"]}`
 		require.Equal(t, expected, str)
 	})
+
+	t.Run("query and nearText search", func(t *testing.T) {
+		neartText := &NearTextArgumentBuilder{}
+		neartText.WithConcepts([]string{"concept"}).WithCertainty(0.9)
+		searches := &HybridSearchesArgumentBuilder{}
+		searches.WithNearText(neartText)
+		hybrid := HybridArgumentBuilder{}
+		str := hybrid.WithQuery("I'm a simple string").WithSearches(searches).build()
+		expected := `hybrid:{query: "I'm a simple string", searches:{nearText:{concepts: ["concept"] certainty: 0.9}}}`
+		require.Equal(t, expected, str)
+	})
+
+	t.Run("query and nearVector search", func(t *testing.T) {
+		neartVector := &NearVectorArgumentBuilder{}
+		neartVector.WithVector([]float32{0.1, 0.2, 0.3}).WithCertainty(0.9)
+		searches := &HybridSearchesArgumentBuilder{}
+		searches.WithNearVector(neartVector)
+		hybrid := HybridArgumentBuilder{}
+		str := hybrid.WithQuery("I'm a simple string").WithSearches(searches).build()
+		expected := `hybrid:{query: "I'm a simple string", searches:{nearVector:{certainty: 0.9 vector: [0.1,0.2,0.3]}}}`
+		require.Equal(t, expected, str)
+	})
 }
