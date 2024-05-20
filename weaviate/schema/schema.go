@@ -116,3 +116,10 @@ func (schema *API) TenantsGetter() *TenantsGetter {
 		connection: schema.connection,
 	}
 }
+
+// TenantsExists builder to check Class's tenants
+func (schema *API) TenantsExists() *TenantsExists {
+	return &TenantsExists{
+		connection: schema.connection,
+	}
+}

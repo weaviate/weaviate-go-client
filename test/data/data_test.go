@@ -15,6 +15,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
+	"github.com/weaviate/weaviate/entities/schema"
 )
 
 func createWeaviateTestSchemaUuid(t *testing.T, client *weaviate.Client) {
@@ -757,10 +758,10 @@ func TestData_integration(t *testing.T) {
 		assert.Nil(t, errUpdate)
 
 		object, objErr := client.Data().ObjectsGetter().
-		WithClassName("Donut").
-		WithID(id).
-		WithAdditional("vector").
-		Do(context.Background())
+			WithClassName("Donut").
+			WithID(id).
+			WithAdditional("vector").
+			Do(context.Background())
 		assert.Nil(t, objErr)
 		assert.Len(t, object, 1)
 		assert.Equal(t, vecT, []float32(object[0].Vector))
@@ -1933,6 +1934,49 @@ func TestData_MultiTenancy(t *testing.T) {
 				assert.Equal(t, "Putting the game of letter soups to a whole new level.",
 					objects[0].Properties.(map[string]interface{})["description"])
 			}
+		})
+
+		t.Run("auto tenant creation and tenant exists", func(t *testing.T) {
+			ctx := context.TODO()
+			className := "MultiAutoCreateTenantClass"
+			autoTenant := "AutoTenant"
+			id := strfmt.UUID("10000000-0000-0000-0000-000000000000")
+			class := &models.Class{
+				Class: className,
+				Properties: []*models.Property{
+					{
+						Name: "name", DataType: []string{schema.DataTypeText.String()},
+					},
+				},
+				MultiTenancyConfig: &models.MultiTenancyConfig{
+					Enabled:            true,
+					AutoTenantCreation: true,
+				},
+			}
+			err := client.Schema().ClassCreator().WithClass(class).Do(ctx)
+			require.NoError(t, err)
+
+			exists, err := client.Schema().TenantsExists().WithClassName(className).WithTenant(autoTenant).Do(ctx)
+			require.NoError(t, err)
+			assert.False(t, exists)
+
+			obj := &models.Object{
+				ID:    id,
+				Class: className,
+				Properties: map[string]interface{}{
+					"name": "some name",
+				},
+				Tenant: autoTenant,
+			}
+
+			resp, err := client.Batch().ObjectsBatcher().WithObjects(obj).Do(ctx)
+			require.NoError(t, err)
+			require.NotEmpty(t, resp)
+			assert.Len(t, resp, 1)
+
+			exists, err = client.Schema().TenantsExists().WithClassName(className).WithTenant(autoTenant).Do(ctx)
+			require.NoError(t, err)
+			assert.True(t, exists)
 		})
 	})
 
