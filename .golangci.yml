@@ -21,6 +21,10 @@ issues:
       text: 'SA1019' # TODO: remove this once deprecated gRPC fields are removed from API
     - linters:
         - staticcheck
+      path: weaviate/grpc/batch/batch.go
+      text: 'SA1019' # TODO: remove this once deprecated gRPC fields are removed from API
+    - linters:
+        - staticcheck
       text: "SA1029:"
     - linters:
         - staticcheck
