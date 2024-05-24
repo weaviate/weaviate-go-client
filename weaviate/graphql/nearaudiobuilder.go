@@ -2,6 +2,8 @@ package graphql
 
 import (
 	"io"
+
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type NearAudioArgumentBuilder struct {
@@ -73,4 +75,24 @@ func (b *NearAudioArgumentBuilder) build() string {
 	}
 	builder.withTargets(b.targets)
 	return builder.build()
+}
+
+func (b *NearAudioArgumentBuilder) togrpc() *pb.NearAudioSearch {
+	builder := &nearMediaArgumentBuilder{
+		data:       b.audio,
+		dataReader: b.audioReader,
+	}
+	nearAudio := &pb.NearAudioSearch{
+		Audio:         builder.getContent(),
+		TargetVectors: b.targetVectors,
+	}
+	if b.hasCertainty {
+		certainty := float64(b.certainty)
+		nearAudio.Certainty = &certainty
+	}
+	if b.hasDistance {
+		distance := float64(b.distance)
+		nearAudio.Distance = &distance
+	}
+	return nearAudio
 }

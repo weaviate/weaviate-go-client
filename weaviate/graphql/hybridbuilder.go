@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/grpc/common"
 	"github.com/weaviate/weaviate/entities/models"
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type FusionType string
@@ -156,6 +158,43 @@ func (h *HybridArgumentBuilder) isVectorEmpty(vector models.Vector) bool {
 	default:
 		return true
 	}
+}
+
+func (h *HybridArgumentBuilder) togrpc() *pb.Hybrid {
+	hybrid := &pb.Hybrid{
+		Query: h.query,
+	}
+	if len(h.properties) > 0 {
+		hybrid.Properties = h.properties
+	}
+	if h.withAlpha {
+		hybrid.Alpha = h.alpha
+	}
+	if !h.isVectorEmpty(h.vector) {
+		hybrid.Vectors = []*pb.Vectors{common.GetVector("", h.vector)}
+	}
+	if len(h.targetVectors) > 0 && h.targets == nil {
+		hybrid.Targets = &pb.Targets{
+			TargetVectors: h.targetVectors,
+		}
+	}
+	switch h.fusionType {
+	case Ranked:
+		hybrid.FusionType = pb.Hybrid_FUSION_TYPE_RANKED
+	case RelativeScore:
+		hybrid.FusionType = pb.Hybrid_FUSION_TYPE_RELATIVE_SCORE
+	default:
+		hybrid.FusionType = pb.Hybrid_FUSION_TYPE_UNSPECIFIED
+	}
+	if h.searches != nil {
+		if h.searches.nearText != nil {
+			hybrid.NearText = h.searches.nearText.togrpc()
+		}
+		if h.searches.nearVector != nil {
+			hybrid.NearVector = h.searches.nearVector.togrpc()
+		}
+	}
+	return hybrid
 }
 
 type HybridSearchesArgumentBuilder struct {

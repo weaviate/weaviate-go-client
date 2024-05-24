@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/grpc/common"
 	"github.com/weaviate/weaviate/entities/models"
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type NearVectorArgumentBuilder struct {
@@ -155,4 +157,22 @@ func (b NearVectorArgumentBuilder) prepareTargetVectors(targets []string) (out [
 		}
 	}
 	return
+}
+
+func (b *NearVectorArgumentBuilder) togrpc() *pb.NearVector {
+	nearVector := &pb.NearVector{
+		TargetVectors: b.targetVectors,
+	}
+	if !b.isVectorEmpty(b.vector) && len(b.vectorsPerTarget) == 0 {
+		nearVector.Vectors = []*pb.Vectors{common.GetVector("", b.vector)}
+	}
+	if b.withCertainty {
+		certainty := float64(b.certainty)
+		nearVector.Certainty = &certainty
+	}
+	if b.withDistance {
+		distance := float64(b.distance)
+		nearVector.Distance = &distance
+	}
+	return nearVector
 }

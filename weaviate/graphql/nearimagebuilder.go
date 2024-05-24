@@ -2,6 +2,8 @@ package graphql
 
 import (
 	"io"
+
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type NearImageArgumentBuilder struct {
@@ -73,4 +75,24 @@ func (b *NearImageArgumentBuilder) build() string {
 	}
 	builder.withTargets(b.targets)
 	return builder.build()
+}
+
+func (b *NearImageArgumentBuilder) togrpc() *pb.NearImageSearch {
+	builder := &nearMediaArgumentBuilder{
+		data:       b.image,
+		dataReader: b.imageReader,
+	}
+	nearImage := &pb.NearImageSearch{
+		Image:         builder.getContent(),
+		TargetVectors: b.targetVectors,
+	}
+	if b.hasCertainty {
+		certainty := float64(b.certainty)
+		nearImage.Certainty = &certainty
+	}
+	if b.hasDistance {
+		distance := float64(b.distance)
+		nearImage.Distance = &distance
+	}
+	return nearImage
 }
