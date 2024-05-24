@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
+	"github.com/weaviate/weaviate/usecases/byteops"
 )
 
 type FusionType string
@@ -107,6 +110,34 @@ func (h *HybridArgumentBuilder) build() string {
 	}
 
 	return fmt.Sprintf("hybrid:{%v}", strings.Join(clause, ", "))
+}
+
+func (h *HybridArgumentBuilder) togrpc() *pb.Hybrid {
+	hybrid := &pb.Hybrid{
+		Query:       h.query,
+		Properties:  h.properties,
+		VectorBytes: byteops.Float32ToByteVector(h.vector),
+	}
+	if h.withAlpha {
+		hybrid.Alpha = h.alpha
+	}
+	switch h.fusionType {
+	case Ranked:
+		hybrid.FusionType = pb.Hybrid_FUSION_TYPE_RANKED
+	case RelativeScore:
+		hybrid.FusionType = pb.Hybrid_FUSION_TYPE_RELATIVE_SCORE
+	default:
+		hybrid.FusionType = pb.Hybrid_FUSION_TYPE_UNSPECIFIED
+	}
+	if h.searches != nil {
+		if h.searches.nearText != nil {
+			hybrid.NearText = h.searches.nearText.togrpc()
+		}
+		if h.searches.nearVector != nil {
+			hybrid.NearVector = h.searches.nearVector.togrpc()
+		}
+	}
+	return hybrid
 }
 
 type HybridSearchesArgumentBuilder struct {

@@ -32,6 +32,10 @@ func NewGrpcClient(host string, secured bool, headers map[string]string,
 	return &GrpcClient{client, headers, grpcbatch.New(gRPCVersionSupport)}, nil
 }
 
+func (c *GrpcClient) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchReply, error) {
+	return c.client.Search(c.ctxWithHeaders(ctx), req, c.getOptions()...)
+}
+
 func (c *GrpcClient) BatchObjects(ctx context.Context, objects []*models.Object,
 	consistencyLevel string,
 ) ([]models.ObjectsGetResponse, error) {

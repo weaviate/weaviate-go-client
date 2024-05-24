@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
+	"github.com/weaviate/weaviate/usecases/byteops"
 )
 
 type NearVectorArgumentBuilder struct {
@@ -64,4 +67,20 @@ func (b *NearVectorArgumentBuilder) build() string {
 		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}
 	return fmt.Sprintf("nearVector:{%v}", strings.Join(clause, " "))
+}
+
+func (b *NearVectorArgumentBuilder) togrpc() *pb.NearVector {
+	nearVector := &pb.NearVector{
+		VectorBytes:   byteops.Float32ToByteVector(b.vector),
+		TargetVectors: b.targetVectors,
+	}
+	if b.withCertainty {
+		certainty := float64(b.certainty)
+		nearVector.Certainty = &certainty
+	}
+	if b.withDistance {
+		distance := float64(b.distance)
+		nearVector.Distance = &distance
+	}
+	return nearVector
 }

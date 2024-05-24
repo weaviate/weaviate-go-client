@@ -2,6 +2,8 @@ package graphql
 
 import (
 	"io"
+
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type NearVideoArgumentBuilder struct {
@@ -64,4 +66,24 @@ func (b *NearVideoArgumentBuilder) build() string {
 		builder.withTargetVectors(b.targetVectors...)
 	}
 	return builder.build()
+}
+
+func (b *NearVideoArgumentBuilder) togrpc() *pb.NearVideoSearch {
+	builder := &nearMediaArgumentBuilder{
+		data:       b.video,
+		dataReader: b.videoReader,
+	}
+	nearVideo := &pb.NearVideoSearch{
+		Video:         builder.getContent(),
+		TargetVectors: b.targetVectors,
+	}
+	if b.hasCertainty {
+		certainty := float64(b.certainty)
+		nearVideo.Certainty = &certainty
+	}
+	if b.hasDistance {
+		distance := float64(b.distance)
+		nearVideo.Distance = &distance
+	}
+	return nearVideo
 }

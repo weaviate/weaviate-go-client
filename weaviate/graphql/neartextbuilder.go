@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 // fldMover is a type representing field names of a move sub query
@@ -154,4 +156,44 @@ func (e *NearTextArgumentBuilder) build() string {
 		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}
 	return fmt.Sprintf("nearText:{%v}", strings.Join(clause, " "))
+}
+
+func (e *NearTextArgumentBuilder) togrpc() *pb.NearTextSearch {
+	nearText := &pb.NearTextSearch{
+		Query:         e.concepts,
+		TargetVectors: e.targetVectors,
+	}
+	if e.withCertainty {
+		certainty := float64(e.certainty)
+		nearText.Certainty = &certainty
+	}
+	if e.withDistance {
+		distance := float64(e.distance)
+		nearText.Distance = &distance
+	}
+	if e.moveTo != nil {
+		nearText.MoveTo = e.parseMoveParam(e.moveTo)
+	}
+	if e.moveAwayFrom != nil {
+		nearText.MoveAway = e.parseMoveParam(e.moveAwayFrom)
+	}
+	return nearText
+}
+
+func (e *NearTextArgumentBuilder) parseMoveParam(moveParam *MoveParameters) *pb.NearTextSearch_Move {
+	move := &pb.NearTextSearch_Move{
+		Concepts: moveParam.Concepts,
+	}
+	if moveParam.Force != 0.0 {
+		move.Force = moveParam.Force
+	}
+	if len(moveParam.Objects) > 0 {
+		uuids := make([]string, len(moveParam.Objects))
+		for i := range moveParam.Objects {
+			// TODO: handle beacon
+			uuids[i] = moveParam.Objects[i].ID
+		}
+		move.Uuids = uuids
+	}
+	return move
 }

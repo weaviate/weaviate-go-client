@@ -3,8 +3,8 @@ package batch
 import (
 	"fmt"
 
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/grpc/common"
 	"github.com/weaviate/weaviate/entities/models"
 	"github.com/weaviate/weaviate/entities/schema/crossref"
 	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
@@ -121,17 +121,17 @@ func (b Batch) extractProperties(properties map[string]interface{}, rootLevel bo
 			var values []int64
 			switch vv := v.(type) {
 			case []int:
-				values = toInt64Array[int](vv)
+				values = toInt64Array(vv)
 			case []int32:
-				values = toInt64Array[int32](vv)
+				values = toInt64Array(vv)
 			case []int64:
 				values = vv
 			case []uint:
-				values = toInt64Array[uint](vv)
+				values = toInt64Array(vv)
 			case []uint32:
-				values = toInt64Array[uint32](vv)
+				values = toInt64Array(vv)
 			case []uint64:
-				values = toInt64Array[uint64](vv)
+				values = toInt64Array(vv)
 			}
 			intArrayProperties = append(intArrayProperties, &pb.IntArrayProperties{
 				PropName: name, Values: values,
@@ -288,16 +288,7 @@ func (b Batch) getCrossRefs(propName string, crossRefs map[string][]string) ([]*
 }
 
 func (b Batch) GetConsistencyLevel(consistencyLevel string) *pb.ConsistencyLevel {
-	switch consistencyLevel {
-	case replication.ConsistencyLevel.ALL:
-		return pb.ConsistencyLevel_CONSISTENCY_LEVEL_ALL.Enum()
-	case replication.ConsistencyLevel.ONE:
-		return pb.ConsistencyLevel_CONSISTENCY_LEVEL_ONE.Enum()
-	case replication.ConsistencyLevel.QUORUM:
-		return pb.ConsistencyLevel_CONSISTENCY_LEVEL_QUORUM.Enum()
-	default:
-		return nil
-	}
+	return common.GetConsistencyLevel(consistencyLevel)
 }
 
 func (b Batch) ParseReply(reply *pb.BatchObjectsReply, objects []*models.Object) []models.ObjectsGetResponse {

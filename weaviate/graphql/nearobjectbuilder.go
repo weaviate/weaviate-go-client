@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/crossref"
+
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type NearObjectArgumentBuilder struct {
@@ -70,4 +74,23 @@ func (e *NearObjectArgumentBuilder) build() string {
 		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}
 	return fmt.Sprintf("nearObject:{%s}", strings.Join(clause, " "))
+}
+
+func (e *NearObjectArgumentBuilder) togrpc() *pb.NearObject {
+	nearObject := &pb.NearObject{}
+	id := e.id
+	if len(e.beacon) > 0 {
+		id = crossref.ExtractID(e.beacon)
+	}
+	nearObject.Id = id
+	nearObject.TargetVectors = e.targetVectors
+	if e.withCertainty {
+		certainty := float64(e.certainty)
+		nearObject.Certainty = &certainty
+	}
+	if e.withDistance {
+		distance := float64(e.distance)
+		nearObject.Distance = &distance
+	}
+	return nearObject
 }
