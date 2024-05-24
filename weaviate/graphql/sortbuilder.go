@@ -3,6 +3,8 @@ package graphql
 import (
 	"fmt"
 	"strings"
+
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type Sort struct {
@@ -25,6 +27,14 @@ func (s Sort) build() string {
 	return fmt.Sprintf("{%s}", strings.Join(clause, " "))
 }
 
+func (s Sort) togrpc() *pb.SortBy {
+	sortBy := &pb.SortBy{
+		Path:      s.Path,
+		Ascending: s.Order == Asc,
+	}
+	return sortBy
+}
+
 type SortBuilder struct {
 	sort []Sort
 }
@@ -37,4 +47,12 @@ func (b *SortBuilder) build() string {
 		}
 	}
 	return fmt.Sprintf("sort:[%s]", strings.Join(clause, ", "))
+}
+
+func (b *SortBuilder) togrpc() []*pb.SortBy {
+	sort := make([]*pb.SortBy, len(b.sort))
+	for i := range b.sort {
+		sort[i] = b.sort[i].togrpc()
+	}
+	return sort
 }
