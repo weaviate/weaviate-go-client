@@ -6,7 +6,7 @@ import (
 
 type Properties struct {
 	withProperties []string
-	withReferences []*ReferenceProperties
+	withReferences []*Reference
 }
 
 func (p *Properties) WithProperties(properties ...string) *Properties {
@@ -14,7 +14,7 @@ func (p *Properties) WithProperties(properties ...string) *Properties {
 	return p
 }
 
-func (p *Properties) WithReferences(references ...*ReferenceProperties) *Properties {
+func (p *Properties) WithReferences(references ...*Reference) *Properties {
 	p.withReferences = references
 	return p
 }
@@ -36,50 +36,28 @@ func (p *Properties) togrpc() *pb.PropertiesRequest {
 		}
 		props.RefProperties = refProperties
 	}
-	// TODO: object properties
+	// TODO: add support for json object properties
 	return props
 }
 
-type ReferenceProperties struct {
-	targetCollection  string
-	referenceProperty string
-	withProperties    []string
-	withMetadata      *Metadata
+type Reference struct {
+	TargetCollection  string
+	ReferenceProperty string
+	Properties        []string
+	Metadata          *Metadata
 }
 
-func NewReferenceProperties() *ReferenceProperties {
-	return &ReferenceProperties{}
-}
-
-func (p *ReferenceProperties) WithTargetCollection(targetCollection string) *ReferenceProperties {
-	p.targetCollection = targetCollection
-	return p
-}
-
-func (p *ReferenceProperties) WithReferenceProperty(referenceProperty string) *ReferenceProperties {
-	p.referenceProperty = referenceProperty
-	return p
-}
-
-func (p *ReferenceProperties) WithProperties(properties ...string) *ReferenceProperties {
-	p.withProperties = properties
-	return p
-}
-
-func (p *ReferenceProperties) WithMetadata(metadata *Metadata) *ReferenceProperties {
-	p.withMetadata = metadata
-	return p
-}
-
-func (p *ReferenceProperties) togrpc() *pb.RefPropertiesRequest {
+func (p *Reference) togrpc() *pb.RefPropertiesRequest {
 	refProps := &pb.RefPropertiesRequest{
-		TargetCollection:  p.targetCollection,
-		ReferenceProperty: p.referenceProperty,
-		Metadata:          p.withMetadata.togrpc(),
+		TargetCollection:  p.TargetCollection,
+		ReferenceProperty: p.ReferenceProperty,
 	}
-	if len(p.withProperties) > 0 {
-		props := &Properties{withProperties: p.withProperties}
+	if len(p.Properties) > 0 {
+		props := &Properties{withProperties: p.Properties}
 		refProps.Properties = props.togrpc()
+	}
+	if p.Metadata != nil {
+		refProps.Metadata = p.Metadata.togrpc()
 	}
 	return refProps
 }

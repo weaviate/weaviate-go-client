@@ -9,13 +9,13 @@ type SearchResult struct {
 	ID         string
 	Collection string
 	Properties map[string]any
-	References []Reference
+	References []ReferenceResult
 	Metadata   MetadataResult
 	Vectors    map[string][]float32
 	Vector     []float32
 }
 
-type Reference struct {
+type ReferenceResult struct {
 	Name                string
 	ReferenceProperties []ReferencePropertiesResult
 }
@@ -92,12 +92,12 @@ func extractProperties(p *pb.PropertiesResult) map[string]any {
 	return nil
 }
 
-func extractReferences(p *pb.PropertiesResult) []Reference {
+func extractReferences(p *pb.PropertiesResult) []ReferenceResult {
 	if p != nil {
 		if refProps := p.GetRefProps(); len(refProps) > 0 {
-			references := make([]Reference, len(refProps))
+			references := make([]ReferenceResult, len(refProps))
 			for i := range refProps {
-				references[i] = Reference{
+				references[i] = ReferenceResult{
 					Name:                refProps[i].GetPropName(),
 					ReferenceProperties: extractReferenceProperties(refProps[i].GetProperties()),
 				}

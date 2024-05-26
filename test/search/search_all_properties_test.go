@@ -116,16 +116,15 @@ func TestSearch_all_properties(t *testing.T) {
 				"uuid", "uuids", "date", "dates", "bool", "bools",
 			}
 
-			refs := graphql.NewReferenceProperties().
-				WithReferenceProperty("hasRefClass").
-				WithTargetCollection("RefClass").
-				WithProperties("category").
-				WithMetadata(graphql.NewMetadata().WithID())
-
 			results, err := client.Search().
 				WithCollection(className).
 				WithProperties(props...).
-				WithReferences(refs).
+				WithReferences(&graphql.Reference{
+					ReferenceProperty: "hasRefClass",
+					TargetCollection:  "RefClass",
+					Properties:        []string{"category"},
+					Metadata:          &graphql.Metadata{ID: true},
+				}).
 				Do(ctx)
 			require.NoError(t, err)
 			assert.Len(t, results, 3)
@@ -146,6 +145,34 @@ func TestSearch_all_properties(t *testing.T) {
 						assert.NotEmpty(t, refProps.Metadata.ID)
 					}
 				}
+			}
+		})
+		t.Run("find all primitive and array types along with metadata", func(t *testing.T) {
+			props := []string{
+				"color", "colors", "author", "authors", "number", "numbers", "int", "ints",
+				"uuid", "uuids", "date", "dates", "bool", "bools",
+			}
+			results, err := client.Search().
+				WithCollection(className).
+				WithProperties(props...).
+				WithMetadata(&graphql.Metadata{
+					ID: true, CreationTimeUnix: true, LastUpdateTimeUnix: true, Vector: true, Vectors: []string{"author_and_colors"},
+				}).
+				Do(ctx)
+			require.NoError(t, err)
+			assert.Len(t, results, 3)
+			for _, res := range results {
+				assert.NotEmpty(t, res.ID)
+				assert.Equal(t, className, res.Collection)
+				require.Len(t, res.Properties, len(props))
+				for _, prop := range props {
+					assert.NotNil(t, res.Properties[prop])
+				}
+				assert.True(t, res.Metadata.CreationTimeUnix > 0)
+				assert.True(t, res.Metadata.LastUpdateTimeUnix > 0)
+				assert.Empty(t, res.Vector)
+				require.NotEmpty(t, res.Vectors)
+				assert.NotNil(t, res.Vectors["author_and_colors"])
 			}
 		})
 	})

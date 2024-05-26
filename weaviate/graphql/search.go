@@ -36,7 +36,7 @@ type Search struct {
 	withSortBy *SortBuilder
 
 	withProperties []string
-	withReferences []*ReferenceProperties
+	withReferences []*Reference
 	withMetadata   *Metadata
 }
 
@@ -146,7 +146,7 @@ func (s *Search) WithProperties(properties ...string) *Search {
 	return s
 }
 
-func (s *Search) WithReferences(references ...*ReferenceProperties) *Search {
+func (s *Search) WithReferences(references ...*Reference) *Search {
 	s.withReferences = references
 	return s
 }
