@@ -114,12 +114,17 @@ func (h *HybridArgumentBuilder) build() string {
 
 func (h *HybridArgumentBuilder) togrpc() *pb.Hybrid {
 	hybrid := &pb.Hybrid{
-		Query:       h.query,
-		Properties:  h.properties,
-		VectorBytes: byteops.Float32ToByteVector(h.vector),
+		Query:         h.query,
+		TargetVectors: h.targetVectors,
+	}
+	if len(h.properties) > 0 {
+		hybrid.Properties = h.properties
 	}
 	if h.withAlpha {
 		hybrid.Alpha = h.alpha
+	}
+	if len(h.vector) > 0 {
+		hybrid.VectorBytes = byteops.Float32ToByteVector(h.vector)
 	}
 	switch h.fusionType {
 	case Ranked:
