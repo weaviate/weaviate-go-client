@@ -362,6 +362,8 @@ github.com/weaviate/sroar v0.0.0-20230210105426-26108af5465d h1:bULMGmIS786YSmm/
 github.com/weaviate/sroar v0.0.0-20230210105426-26108af5465d/go.mod h1:bJUcu8a/7XKOeaCWZtSjuBogUGReUiwJTyGSvcAjDzQ=
 github.com/weaviate/weaviate v1.25.1 h1:Eg+Ns+ORy5pTpwo9ZsueB4VBuaguW2qGrnlKO6Py+eI=
 github.com/weaviate/weaviate v1.25.1/go.mod h1:T2T8AEbnDOIyI1TOGDwXpU7ODRy4yrETK0K4M7fBN2w=
+github.com/weaviate/weaviate v1.25.3-0.20240610160733-d77688b5ec08 h1:MY8QP45Km44UuU86n8lVOZmHXtAJocGDiDgl9c/FwzU=
+github.com/weaviate/weaviate v1.25.3-0.20240610160733-d77688b5ec08/go.mod h1:RBftdiRdbkBIEcXPOCe7HluhWCwVhoLmK/9e5fGpO/o=
 github.com/xdg-go/pbkdf2 v1.0.0/go.mod h1:jrpuAogTd400dnrH08LKmI/xc1MbPOebTwRqcT5RDeI=
 github.com/xdg-go/scram v1.0.2/go.mod h1:1WAq6h33pAW+iRreB34OORO2Nf7qel3VV3fjBj+hCSs=
 github.com/xdg-go/stringprep v1.0.2/go.mod h1:8F9zXuvzgwmyT5DUm4GUfZGDdT3W+LCvS6+da4O5kxM=

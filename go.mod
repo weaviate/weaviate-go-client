@@ -8,7 +8,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.31.0
 	github.com/testcontainers/testcontainers-go/modules/weaviate v0.31.0
-	github.com/weaviate/weaviate v1.25.1
+	github.com/weaviate/weaviate v1.25.3-0.20240610160733-d77688b5ec08
 	golang.org/x/oauth2 v0.20.0
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.1

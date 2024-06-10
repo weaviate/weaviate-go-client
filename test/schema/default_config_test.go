@@ -66,7 +66,8 @@ var defaultVectorIndexConfig = map[string]interface{}{
 }
 
 var defaultReplicationConfig = &models.ReplicationConfig{
-	Factor: 1,
+	Factor:       1,
+	AsyncEnabled: false,
 }
 
 var defaultMultiTenancyConfig = &models.MultiTenancyConfig{
