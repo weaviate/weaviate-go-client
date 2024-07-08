@@ -23,8 +23,8 @@ func TestMultiTargetSearch(t *testing.T) {
 	class := &models.Class{
 		Class: "MultiTargetTest",
 		VectorConfig: map[string]models.VectorConfig{
-			"first":  {Vectorizer: map[string]interface{}{"none": nil}},
-			"second": {Vectorizer: map[string]interface{}{"none": nil}},
+			"first":  {Vectorizer: map[string]interface{}{"none": nil}, VectorIndexType: "hnsw"},
+			"second": {Vectorizer: map[string]interface{}{"none": nil}, VectorIndexType: "hnsw"},
 		},
 	}
 	require.Nil(t, client.Schema().ClassCreator().WithClass(class).Do(ctx))
