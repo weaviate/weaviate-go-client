@@ -40,7 +40,7 @@ func TestMultiTargetSearch(t *testing.T) {
 
 	nv := client.GraphQL().NearVectorMultiTargetArgBuilder()
 
-	resp, err := client.GraphQL().Get().WithNearVectorMultiTarget(nv.Sum("first", "second").WithVectorPerTarget(map[string][]float32{"first": {1, 0}, "second": {1, 0, 0}})).WithClassName(class.Class).Do(ctx)
+	resp, err := client.GraphQL().Get().WithNearMultiVector(nv.Sum("first", "second").WithVectorPerTarget(map[string][]float32{"first": {1, 0}, "second": {1, 0, 0}})).WithClassName(class.Class).Do(ctx)
 	require.Nil(t, err)
 	require.NotNil(t, resp)
 }
