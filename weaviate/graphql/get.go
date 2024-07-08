@@ -16,34 +16,35 @@ type GetBuilder struct {
 	className  string
 	withFields []Field
 
-	includesFilterClause bool // true if brackets behind class is needed
-	includesLimit        bool
-	limit                int
-	autocut              int
-	includesAutocut      bool
-	includesOffset       bool
-	offset               int
-	includesAfter        bool
-	after                string
-	consistencyLevel     string
-	tenant               string
-	withWhereFilter      *filters.WhereBuilder
-	withNearTextFilter   *NearTextArgumentBuilder
-	withNearVectorFilter *NearVectorArgumentBuilder
-	withNearObjectFilter *NearObjectArgumentBuilder
-	withGroupFilter      *GroupArgumentBuilder
-	withAskFilter        *AskArgumentBuilder
-	withNearImage        *NearImageArgumentBuilder
-	withNearAudio        *NearAudioArgumentBuilder
-	withNearVideo        *NearVideoArgumentBuilder
-	withNearDepth        *NearDepthArgumentBuilder
-	withNearThermal      *NearThermalArgumentBuilder
-	withNearImu          *NearImuArgumentBuilder
-	withSort             *SortBuilder
-	withBM25             *BM25ArgumentBuilder
-	withHybrid           *HybridArgumentBuilder
-	withGenerativeSearch *GenerativeSearchBuilder
-	withGroupBy          *GroupByArgumentBuilder
+	includesFilterClause            bool // true if brackets behind class is needed
+	includesLimit                   bool
+	limit                           int
+	autocut                         int
+	includesAutocut                 bool
+	includesOffset                  bool
+	offset                          int
+	includesAfter                   bool
+	after                           string
+	consistencyLevel                string
+	tenant                          string
+	withWhereFilter                 *filters.WhereBuilder
+	withNearTextFilter              *NearTextArgumentBuilder
+	withNearVectorFilter            *NearVectorArgumentBuilder
+	withNearVectorMultiTargetFilter *NearVectorMultiTargetArgBuilder
+	withNearObjectFilter            *NearObjectArgumentBuilder
+	withGroupFilter                 *GroupArgumentBuilder
+	withAskFilter                   *AskArgumentBuilder
+	withNearImage                   *NearImageArgumentBuilder
+	withNearAudio                   *NearAudioArgumentBuilder
+	withNearVideo                   *NearVideoArgumentBuilder
+	withNearDepth                   *NearDepthArgumentBuilder
+	withNearThermal                 *NearThermalArgumentBuilder
+	withNearImu                     *NearImuArgumentBuilder
+	withSort                        *SortBuilder
+	withBM25                        *BM25ArgumentBuilder
+	withHybrid                      *HybridArgumentBuilder
+	withGenerativeSearch            *GenerativeSearchBuilder
+	withGroupBy                     *GroupByArgumentBuilder
 }
 
 // WithAfter is part of the Cursor API. It can be used to extract all elements
@@ -166,6 +167,13 @@ func (gb *GetBuilder) WithNearImu(nearImu *NearImuArgumentBuilder) *GetBuilder {
 func (gb *GetBuilder) WithNearVector(nearVector *NearVectorArgumentBuilder) *GetBuilder {
 	gb.includesFilterClause = true
 	gb.withNearVectorFilter = nearVector
+	return gb
+}
+
+// WithNearVector clause to find close objects
+func (gb *GetBuilder) WithNearVectorMultiTarget(nearVector *NearVectorMultiTargetArgBuilder) *GetBuilder {
+	gb.includesFilterClause = true
+	gb.withNearVectorMultiTargetFilter = nearVector
 	return gb
 }
 
