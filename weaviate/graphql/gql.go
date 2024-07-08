@@ -63,8 +63,8 @@ func (api *API) NearVectorArgBuilder() *NearVectorArgumentBuilder {
 }
 
 // NearVectorArgBuilder nearVector clause
-func (api *API) NearVectorMultiTargetArgBuilder() *NearVectorMultiTargetArgBuilder {
-	return &NearVectorMultiTargetArgBuilder{}
+func (api *API) NearVectorMultiTargetArgBuilder() *NearMultiVectorArgumentBuilder {
+	return &NearMultiVectorArgumentBuilder{}
 }
 
 // AskArgBuilder ask clause
