@@ -38,6 +38,7 @@ func TestSchema_integration(t *testing.T) {
 			ReplicationConfig:   defaultReplicationConfig,
 		}
 
+		client.Schema().ClassDeleter().WithClassName(schemaClass.Class).Do(context.Background())
 		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(context.Background())
 		assert.Nil(t, err)
 
@@ -46,9 +47,7 @@ func TestSchema_integration(t *testing.T) {
 		assert.Equal(t, 1, len(loadedSchema.Classes))
 
 		schemaClass.MultiTenancyConfig = defaultMultiTenancyConfig
-		assert.Equal(t, schemaClass, loadedSchema.Classes[0])
-		assert.Equal(t, schemaClass.Class, loadedSchema.Classes[0].Class)
-		assert.Equal(t, schemaClass.Description, loadedSchema.Classes[0].Description)
+		assert.EqualValues(t, schemaClass, loadedSchema.Classes[0])
 
 		// Clean up classes
 		errRm := client.Schema().AllDeleter().Do(context.Background())

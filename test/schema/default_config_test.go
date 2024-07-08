@@ -49,6 +49,12 @@ var defaultBQConfig = map[string]interface{}{
 	"enabled": false,
 }
 
+var defaultSQConfig = map[string]interface{}{
+	"enabled":       false,
+	"rescoreLimit":  float64(20),
+	"trainingLimit": float64(100_000),
+}
+
 var defaultVectorIndexConfig = map[string]interface{}{
 	"cleanupIntervalSeconds": float64(300),
 	"efConstruction":         float64(128),
@@ -63,6 +69,7 @@ var defaultVectorIndexConfig = map[string]interface{}{
 	"distance":               "cosine",
 	"pq":                     defaultPQConfig,
 	"bq":                     defaultBQConfig,
+	"sq":                     defaultSQConfig,
 }
 
 var defaultReplicationConfig = &models.ReplicationConfig{
