@@ -27,12 +27,12 @@ function wait(){
   echo "Weaviate is up and running!"
 }
 
-docker-compose -f test/docker-compose-azure.yml up -d
-docker-compose -f test/docker-compose-okta-cc.yml up -d
-docker-compose -f test/docker-compose-okta-users.yml up -d
-docker-compose -f test/docker-compose-wcs.yml up -d
-docker-compose -f test/docker-compose-cluster.yml up -d
-docker-compose -f test/docker-compose.yml up -d
+docker compose -f test/docker-compose-azure.yml up -d
+docker compose -f test/docker-compose-okta-cc.yml up -d
+docker compose -f test/docker-compose-okta-users.yml up -d
+docker compose -f test/docker-compose-wcs.yml up -d
+docker compose -f test/docker-compose-cluster.yml up -d
+docker compose -f test/docker-compose.yml up -d
 
 wait "http://localhost:8080"
 wait "http://localhost:8081"
