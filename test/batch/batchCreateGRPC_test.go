@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
@@ -19,14 +21,18 @@ func TestBatchCreate_gRPC_integration(t *testing.T) {
 		require.Nil(t, err, "failed to start weaviate")
 	}
 
-	port, _, _ := testsuit.GetPortAndAuthPw()
+	port, grpcPort, authEnabled := testsuit.GetPortAndAuthPw()
 	cfg := weaviate.Config{
 		Host:   fmt.Sprintf("localhost:%v", port),
 		Scheme: "http",
 		GrpcConfig: &grpc.Config{
-			Host: "localhost:50051",
+			Host: fmt.Sprintf("localhost:%v", grpcPort),
 		},
 	}
+	if authEnabled {
+		cfg.AuthConfig = auth.ApiKey{Value: "my-secret-key"}
+	}
+
 	client, err := weaviate.NewClient(cfg)
 	if err != nil {
 		require.Nil(t, err)
