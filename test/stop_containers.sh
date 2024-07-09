@@ -2,6 +2,8 @@
 
 set -eou pipefail
 
+export WEAVIATE_VERSION=$1
+
 docker-compose -f test/docker-compose.yml down --remove-orphans
 docker-compose -f test/docker-compose-azure.yml down --remove-orphans
 docker-compose -f test/docker-compose-okta-cc.yml down --remove-orphans

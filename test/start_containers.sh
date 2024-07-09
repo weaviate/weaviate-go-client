@@ -2,6 +2,8 @@
 
 set -eou pipefail
 
+export WEAVIATE_VERSION=$1
+
 function wait(){
   MAX_WAIT_SECONDS=60
   ALREADY_WAITING=0
