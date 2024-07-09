@@ -17,9 +17,6 @@ type NearMultiVectorArgumentBuilder struct {
 	withCertainty     bool
 	withDistance      bool
 }
-type NearMultiVectorTargettedArgumentBuilder struct {
-	base *NearMultiVectorArgumentBuilder
-}
 type targets struct {
 	combinationMethod string
 	targetVectors     []string
@@ -47,31 +44,31 @@ func (m *NearMultiVectorArgumentBuilder) toTargets() *targets {
 	}
 }
 
-func (m *NearMultiVectorArgumentBuilder) Sum(targetVectors ...string) *NearMultiVectorTargettedArgumentBuilder {
+func (m *NearMultiVectorArgumentBuilder) Sum(targetVectors ...string) *NearMultiVectorArgumentBuilder {
 	if len(targetVectors) > 0 {
 		m.targetVectors = targetVectors
 		m.targetCombination = dto.TargetCombination{Type: dto.Sum}
 	}
-	return &NearMultiVectorTargettedArgumentBuilder{m}
+	return m
 }
 
-func (m *NearMultiVectorArgumentBuilder) Average(targetVectors ...string) *NearMultiVectorTargettedArgumentBuilder {
+func (m *NearMultiVectorArgumentBuilder) Average(targetVectors ...string) *NearMultiVectorArgumentBuilder {
 	if len(targetVectors) > 0 {
 		m.targetVectors = targetVectors
 		m.targetCombination = dto.TargetCombination{Type: dto.Average}
 	}
-	return &NearMultiVectorTargettedArgumentBuilder{m}
+	return m
 }
 
-func (m *NearMultiVectorArgumentBuilder) Min(targetVectors ...string) *NearMultiVectorTargettedArgumentBuilder {
+func (m *NearMultiVectorArgumentBuilder) Min(targetVectors ...string) *NearMultiVectorArgumentBuilder {
 	if len(targetVectors) > 0 {
 		m.targetVectors = targetVectors
 		m.targetCombination = dto.TargetCombination{Type: dto.Minimum}
 	}
-	return &NearMultiVectorTargettedArgumentBuilder{m}
+	return m
 }
 
-func (m *NearMultiVectorArgumentBuilder) ManualWeights(targetVectors map[string]float32) *NearMultiVectorTargettedArgumentBuilder {
+func (m *NearMultiVectorArgumentBuilder) ManualWeights(targetVectors map[string]float32) *NearMultiVectorArgumentBuilder {
 	if len(targetVectors) > 0 {
 		targetVectorsTmp := make([]string, 0, len(targetVectors))
 		for k := range targetVectors {
@@ -80,10 +77,10 @@ func (m *NearMultiVectorArgumentBuilder) ManualWeights(targetVectors map[string]
 		m.targetVectors = targetVectorsTmp
 		m.targetCombination = dto.TargetCombination{Type: dto.ManualWeights, Weights: targetVectors}
 	}
-	return &NearMultiVectorTargettedArgumentBuilder{m}
+	return m
 }
 
-func (m *NearMultiVectorArgumentBuilder) RelativeScore(targetVectors map[string]float32) *NearMultiVectorTargettedArgumentBuilder {
+func (m *NearMultiVectorArgumentBuilder) RelativeScore(targetVectors map[string]float32) *NearMultiVectorArgumentBuilder {
 	if len(targetVectors) > 0 {
 		targetVectorsTmp := make([]string, 0, len(targetVectors))
 		for k := range targetVectors {
@@ -92,34 +89,34 @@ func (m *NearMultiVectorArgumentBuilder) RelativeScore(targetVectors map[string]
 		m.targetVectors = targetVectorsTmp
 		m.targetCombination = dto.TargetCombination{Type: dto.RelativeScore, Weights: targetVectors}
 	}
-	return &NearMultiVectorTargettedArgumentBuilder{m}
-}
-
-func (m *NearMultiVectorTargettedArgumentBuilder) WithVectorPerTarget(vectorPerTarget map[string][]float32) *NearMultiVectorArgumentBuilder {
-	if len(vectorPerTarget) > 0 {
-		m.base.vectorPerTarget = vectorPerTarget
-	}
-	return m.base
-}
-
-func (m *NearMultiVectorTargettedArgumentBuilder) WithVector(vector []float32) *NearMultiVectorArgumentBuilder {
-	vectorPerTarget := make(map[string][]float32, len(m.base.targetVectors))
-	for _, target := range m.base.targetVectors {
-		vectorPerTarget[target] = vector
-	}
-	m.base.vectorPerTarget = vectorPerTarget
-	return m.base
-}
-
-func (m *NearMultiVectorTargettedArgumentBuilder) WithCertainty(certainty float32) *NearMultiVectorTargettedArgumentBuilder {
-	m.base.certainty = certainty
-	m.base.withCertainty = true
 	return m
 }
 
-func (m *NearMultiVectorTargettedArgumentBuilder) WithDistance(distance float32) *NearMultiVectorTargettedArgumentBuilder {
-	m.base.distance = distance
-	m.base.withDistance = true
+func (m *NearMultiVectorArgumentBuilder) WithVectorPerTarget(vectorPerTarget map[string][]float32) *NearMultiVectorArgumentBuilder {
+	if len(vectorPerTarget) > 0 {
+		m.vectorPerTarget = vectorPerTarget
+	}
+	return m
+}
+
+func (m *NearMultiVectorArgumentBuilder) WithVector(vector []float32) *NearMultiVectorArgumentBuilder {
+	vectorPerTarget := make(map[string][]float32, len(m.targetVectors))
+	for _, target := range m.targetVectors {
+		vectorPerTarget[target] = vector
+	}
+	m.vectorPerTarget = vectorPerTarget
+	return m
+}
+
+func (m *NearMultiVectorArgumentBuilder) WithCertainty(certainty float32) *NearMultiVectorArgumentBuilder {
+	m.certainty = certainty
+	m.withCertainty = true
+	return m
+}
+
+func (m *NearMultiVectorArgumentBuilder) WithDistance(distance float32) *NearMultiVectorArgumentBuilder {
+	m.distance = distance
+	m.withDistance = true
 	return m
 }
 
