@@ -23,13 +23,7 @@ func TestMisc_version_check(t *testing.T) {
 		}
 	})
 
-	cfg := &weaviate.Config{
-		Host:    "localhost:8080",
-		Scheme:  "http",
-		Headers: map[string]string{},
-	}
-
-	client := weaviate.New(*cfg)
+	client := testsuit.CreateTestClient()
 
 	t.Run("Weaviate is not live, perform live check", func(t *testing.T) {
 		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
