@@ -8,7 +8,7 @@ services:
       - '8085'
       - --scheme
       - http
-    image: semitechnologies/weaviate:1.26.0-rc.0
+    image: semitechnologies/weaviate:${WEAVIATE_VERSION}
     ports:
       - 8085:8085
       - 50056:50051
@@ -39,8 +39,6 @@ services:
       PERSISTENCE_MEMTABLES_FLUSH_IDLE_AFTER_SECONDS: 1
   contextionary:
     image: semitechnologies/contextionary:en0.16.0-v1.2.1
-    ports:
-      - "9999:9999"
     environment:
       OCCURRENCE_WEIGHT_LINEAR_FACTOR: 0.75
       EXTENSIONS_STORAGE_MODE: weaviate-wcs
