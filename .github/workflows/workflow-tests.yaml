@@ -30,7 +30,7 @@ jobs:
         run: WEAVIATE_VERSION=${WEAVIATE_VERSION} ./tools/run_tests.sh --auth-integration-only
   tests:
     name: Integration
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-4-cores
     strategy:
       matrix:
         auth_integration: [ "auth_enabled", "auth_disabled" ]
