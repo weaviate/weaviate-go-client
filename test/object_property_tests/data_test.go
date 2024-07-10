@@ -21,7 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	wvt "github.com/weaviate/weaviate-go-client/v4/weaviate"
+	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
 	"github.com/weaviate/weaviate/entities/schema"
@@ -29,8 +29,6 @@ import (
 
 func TestObjectProperty_Data(t *testing.T) {
 	ctx := context.Background()
-	client, err := wvt.NewClient(wvt.Config{Scheme: "http", Host: "localhost:8080"})
-	require.Nil(t, err)
 
 	vTrue := true
 	vFalse := false
@@ -78,9 +76,11 @@ func TestObjectProperty_Data(t *testing.T) {
 		}
 	})
 
+	client := testsuit.CreateTestClient()
+
 	t.Run("clean up DB", func(t *testing.T) {
 		// clean up DB
-		err = client.Schema().AllDeleter().Do(context.Background())
+		err := client.Schema().AllDeleter().Do(context.Background())
 		require.Nil(t, err)
 	})
 
@@ -241,7 +241,7 @@ func TestObjectProperty_Data(t *testing.T) {
 
 	t.Run("create complicated object using auto schema", func(t *testing.T) {
 		className := "NestedObject"
-		_, err = client.Data().Creator().
+		_, err := client.Data().Creator().
 			WithClassName(className).
 			WithID(id1).
 			WithProperties(map[string]interface{}{

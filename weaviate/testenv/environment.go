@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v4/test"
+	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 )
 
 func waitForStartup(ctx context.Context, url string, interval time.Duration) error {
@@ -67,7 +68,9 @@ func SetupLocalWeaviateWaitForStartup(waitForWeaviateStartup bool) error {
 			return err
 		}
 		if waitForWeaviateStartup {
-			return waitForStartup(context.TODO(), "localhost:8080", 1*time.Second)
+			port, _, _ := testsuit.GetPortAndAuthPw()
+			return waitForStartup(context.TODO(), fmt.Sprintf("localhost:%v", port), 1*time.Second)
+
 		}
 		return nil
 	}

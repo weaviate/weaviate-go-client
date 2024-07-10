@@ -23,22 +23,30 @@ func TestMisc_version_check(t *testing.T) {
 		}
 	})
 
-	client := testsuit.CreateTestClient()
-
 	t.Run("Weaviate is not live, perform live check", func(t *testing.T) {
+		port, _, _ := testsuit.GetPortAndAuthPw()
+		cfg := &weaviate.Config{
+			Host:    fmt.Sprintf("localhost:%v", port),
+			Scheme:  "http",
+			Headers: map[string]string{},
+		}
+		client := weaviate.New(*cfg)
 		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
 		assert.NotNil(t, err)
 		assert.False(t, isReady)
 	})
 
 	t.Run("Start Weaviate", func(t *testing.T) {
-		err := testenv.SetupLocalWeaviateWaitForStartup(false)
+		err := testenv.SetupLocalWeaviate()
 		if err != nil {
 			fmt.Printf(err.Error())
 			t.Fail()
 		}
 	})
-	client.WaitForWeavaite(time.Second * 60)
+
+	client := testsuit.CreateTestClient()
+	require.Nil(t, client.WaitForWeavaite(60*time.Second))
+
 	t.Run("Weaviate is live, perform ready check", func(t *testing.T) {
 		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
 		assert.Nil(t, err)
@@ -88,16 +96,15 @@ func TestMisc_empty_version_check(t *testing.T) {
 			t.Fail()
 		}
 	})
-	// needs to be the same client for the whole test
-	cfg := &weaviate.Config{
-		Host:    "localhost:8080",
-		Scheme:  "http",
-		Headers: map[string]string{},
-	}
-
-	client := weaviate.New(*cfg)
 
 	t.Run("Weaviate is not live, perform live check", func(t *testing.T) {
+		port, _, _ := testsuit.GetPortAndAuthPw()
+		cfg := &weaviate.Config{
+			Host:    fmt.Sprintf("localhost:%v", port),
+			Scheme:  "http",
+			Headers: map[string]string{},
+		}
+		client := weaviate.New(*cfg)
 		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
 		assert.NotNil(t, err)
 		assert.False(t, isReady)
@@ -109,8 +116,10 @@ func TestMisc_empty_version_check(t *testing.T) {
 			fmt.Printf(err.Error())
 			t.Fail()
 		}
-		require.Nil(t, client.WaitForWeavaite(60*time.Second))
 	})
+
+	client := testsuit.CreateTestClient()
+	require.Nil(t, client.WaitForWeavaite(60*time.Second))
 
 	t.Run("Create sample schema food, try to perform queries using /v1/objects?class={className}", func(t *testing.T) {
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
