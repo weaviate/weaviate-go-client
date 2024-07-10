@@ -9,3 +9,4 @@ tmp
 vendor/
 .vscode/
 .idea/
+.env
