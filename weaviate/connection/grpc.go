@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	grpcbatch "github.com/weaviate/weaviate-go-client/v4/weaviate/grpc/batch"
@@ -23,9 +24,9 @@ type GrpcClient struct {
 }
 
 func NewGrpcClient(host string, secured bool, headers map[string]string,
-	gRPCVersionSupport *db.GRPCVersionSupport,
+	gRPCVersionSupport *db.GRPCVersionSupport, timeout time.Duration,
 ) (*GrpcClient, error) {
-	client, err := createClient(host, secured)
+	client, err := createClient(host, secured, timeout)
 	if err != nil {
 		return nil, fmt.Errorf("create grpc client: %w", err)
 	}
@@ -65,7 +66,7 @@ func (c *GrpcClient) getOptions() []grpc.CallOption {
 	return []grpc.CallOption{}
 }
 
-func createClient(host string, secured bool) (pb.WeaviateClient, error) {
+func createClient(host string, secured bool, timeout time.Duration) (pb.WeaviateClient, error) {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithBlock())
 	if secured || strings.HasSuffix(host, ":443") {
@@ -76,6 +77,7 @@ func createClient(host string, secured bool) (pb.WeaviateClient, error) {
 	} else {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
+	opts = append(opts, grpc.WithTimeout(timeout))
 	conn, err := grpc.Dial(getAddress(host, secured), opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial: %w", err)

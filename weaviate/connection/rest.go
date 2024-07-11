@@ -64,12 +64,12 @@ func (con *Connection) WaitForWeaviate(startupTimeout time.Duration) error {
 
 	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second)
 	response, err := con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
-	cancelFunc()
 	if err == nil {
 		if response.StatusCode == 200 {
 			return nil
 		}
 	}
+	cancelFunc()
 	ticker := time.NewTicker(time.Second)
 	startTime := time.Now()
 	for {
