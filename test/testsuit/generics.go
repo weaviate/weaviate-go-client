@@ -17,14 +17,15 @@ import (
 )
 
 const (
-	NoAuthPort     = 8080
-	NoAuthGRPCPort = 50051
-	AzurePort      = 8081
-	OktaCCPort     = 8082
-	OktaUsersPort  = 8083
-	WCSPort        = 8085
-	WCSGRPCPort    = 50056
-	NoWeaviatePort = 8888
+	NoAuthPort         = 8080
+	NoAuthGRPCPort     = 50051
+	AzurePort          = 8081
+	OktaCCPort         = 8082
+	OktaUsersPort      = 8083
+	WCSPort            = 8085
+	WCSGRPCPort        = 50056
+	NoWeaviatePort     = 8888
+	NoWeaviateGRPCPort = 55555
 )
 
 func GetPortAndAuthPw() (int, int, bool) {

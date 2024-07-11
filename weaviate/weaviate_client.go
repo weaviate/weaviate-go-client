@@ -3,6 +3,7 @@ package weaviate
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -146,7 +147,7 @@ func NewClient(config Config) (*Client, error) {
 
 	grpcClient, err := createGrpcClient(config, grpcVersionSupport)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("create weaviate client: %w", err)
 	}
 
 	client := &Client{
@@ -263,7 +264,7 @@ func (c *Client) Cluster() *cluster.API {
 
 func createGrpcClient(config Config, gRPCVersionSupport *db.GRPCVersionSupport) (*connection.GrpcClient, error) {
 	if config.GrpcConfig != nil {
-		return connection.NewGrpcClient(config.GrpcConfig.Host, config.GrpcConfig.Secured, config.Headers, gRPCVersionSupport)
+		return connection.NewGrpcClient(config.GrpcConfig.Host, config.GrpcConfig.Secured, config.Headers, gRPCVersionSupport, config.StartupTimeout)
 	}
 	return nil, nil
 }
