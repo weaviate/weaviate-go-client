@@ -20,7 +20,7 @@ func TestStartupTimeout_REST(t *testing.T) {
 		GrpcConfig: &grpc.Config{
 			Host: fmt.Sprintf("localhost:%v", grpcPort),
 		},
-		StartupTimeout: 1000 * time.Millisecond,
+		StartupTimeout: time.Second,
 	}
 	if authEnabled {
 		cfg.AuthConfig = auth.ApiKey{Value: "my-secret-key"}
@@ -38,7 +38,7 @@ func TestStartupTimeout_GRPC(t *testing.T) {
 		GrpcConfig: &grpc.Config{
 			Host: fmt.Sprintf("localhost:%v", testsuit.NoWeaviateGRPCPort),
 		},
-		StartupTimeout: 1000 * time.Millisecond,
+		StartupTimeout: time.Second,
 	}
 	if authEnabled {
 		cfg.AuthConfig = auth.ApiKey{Value: "my-secret-key"}
