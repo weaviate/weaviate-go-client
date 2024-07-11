@@ -22,7 +22,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	wvt "github.com/weaviate/weaviate-go-client/v4/weaviate"
+	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
 	"github.com/weaviate/weaviate/entities/schema"
@@ -30,8 +30,6 @@ import (
 
 func TestObjectProperty_Batch(t *testing.T) {
 	ctx := context.Background()
-	client, err := wvt.NewClient(wvt.Config{Scheme: "http", Host: "localhost:8080"})
-	require.Nil(t, err)
 
 	id1 := strfmt.UUID("00000000-0000-0000-0000-000000000001")
 	id2 := strfmt.UUID("00000000-0000-0000-0000-000000000002")
@@ -44,9 +42,11 @@ func TestObjectProperty_Batch(t *testing.T) {
 		}
 	})
 
+	client := testsuit.CreateTestClient()
+
 	t.Run("clean up DB", func(t *testing.T) {
 		// clean up DB
-		err = client.Schema().AllDeleter().Do(context.Background())
+		err := client.Schema().AllDeleter().Do(context.Background())
 		require.Nil(t, err)
 	})
 
