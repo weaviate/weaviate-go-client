@@ -70,7 +70,6 @@ func SetupLocalWeaviateWaitForStartup(waitForWeaviateStartup bool) error {
 		if waitForWeaviateStartup {
 			port, _, _ := testsuit.GetPortAndAuthPw()
 			return waitForStartup(context.TODO(), fmt.Sprintf("localhost:%v", port), 1*time.Second)
-
 		}
 		return nil
 	}
@@ -86,7 +85,8 @@ func isExternalWeaviateRunning() bool {
 	val = strings.ToLower(val)
 	isExternalWeaviateRunning := val == "true"
 
-	err := checkReady(context.TODO(), "localhost:8080")
+	port, _, _ := testsuit.GetPortAndAuthPw()
+	err := checkReady(context.TODO(), fmt.Sprintf("localhost:%v", port))
 	isRunning := err == nil
 
 	return isExternalWeaviateRunning || isRunning

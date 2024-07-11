@@ -29,7 +29,6 @@ import (
 
 func TestObjectProperty_Data(t *testing.T) {
 	ctx := context.Background()
-
 	vTrue := true
 	vFalse := false
 

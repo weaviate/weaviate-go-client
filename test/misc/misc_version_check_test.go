@@ -96,7 +96,6 @@ func TestMisc_empty_version_check(t *testing.T) {
 			t.Fail()
 		}
 	})
-
 	t.Run("Weaviate is not live, perform live check", func(t *testing.T) {
 		port, _, _ := testsuit.GetPortAndAuthPw()
 		cfg := &weaviate.Config{
