@@ -17,13 +17,8 @@ type NearMultiVectorArgumentBuilder struct {
 	withCertainty     bool
 	withDistance      bool
 }
-type targets struct {
-	combinationMethod string
-	targetVectors     []string
-	weights           map[string]float32
-}
 
-func (m *NearMultiVectorArgumentBuilder) toTargets() *targets {
+func (m *NearMultiVectorArgumentBuilder) getCombinationMethod() string {
 	combinationMethod := ""
 	switch m.targetCombination.Type {
 	case dto.Sum:
@@ -37,11 +32,7 @@ func (m *NearMultiVectorArgumentBuilder) toTargets() *targets {
 	case dto.RelativeScore:
 		combinationMethod = "relativeScore"
 	}
-	return &targets{
-		combinationMethod: combinationMethod,
-		targetVectors:     m.targetVectors,
-		weights:           m.targetCombination.Weights,
-	}
+	return combinationMethod
 }
 
 func (m *NearMultiVectorArgumentBuilder) Sum(targetVectors ...string) *NearMultiVectorArgumentBuilder {
@@ -122,26 +113,59 @@ func (m *NearMultiVectorArgumentBuilder) WithDistance(distance float32) *NearMul
 
 func (m *NearMultiVectorArgumentBuilder) build() string {
 	clause := []string{}
+	targetVectors := m.targetVectors
 	if m.withCertainty {
-		clause = append(clause, fmt.Sprintf("certainty: %v", m.certainty))
+		clause = append(clause, fmt.Sprintf("certainty:%v", m.certainty))
 	}
 	if m.withDistance {
-		clause = append(clause, fmt.Sprintf("distance: %v", m.distance))
+		clause = append(clause, fmt.Sprintf("distance:%v", m.distance))
 	}
 	if len(m.vectorPerTarget) > 0 {
-		vectorPerTarget, err := json.Marshal(m.vectorPerTarget)
-		if err != nil {
-			panic(fmt.Errorf("failed to unmarshal near multi vector search vector: %s", err))
+		vectorPerTarget := make([]string, 0, len(m.vectorPerTarget))
+		for k, v := range m.vectorPerTarget {
+			vBytes, err := json.Marshal(v)
+			if err != nil {
+				panic(fmt.Sprintf("could not marshal vector: %v", err))
+			}
+			vectorPerTarget = append(vectorPerTarget, fmt.Sprintf("%s:%v", k, string(vBytes)))
 		}
-		clause = append(clause, fmt.Sprintf("vectorPerTarget: %s", string(vectorPerTarget)))
-	}
-	if len(m.targetVectors) > 0 {
-		targets := m.toTargets()
-		weights, err := json.Marshal(targets.weights)
-		if err != nil {
-			panic(fmt.Errorf("failed to unmarshal near multi vector search weights: %s", err))
+		clause = append(clause, fmt.Sprintf("vectorPerTarget:{%s}", strings.Join(vectorPerTarget, ",")))
+		if len(targetVectors) == 0 {
+			targetVectors = make([]string, 0, len(m.vectorPerTarget))
+			for k := range m.vectorPerTarget {
+				targetVectors = append(targetVectors, k)
+			}
 		}
-		clause = append(clause, fmt.Sprintf("targets:{combinationMethod: %s, targetVectors: %s, weights: %s}", targets.combinationMethod, targets.targetVectors, string(weights)))
 	}
-	return fmt.Sprintf("nearVector:{%v}", strings.Join(clause, " "))
+	if len(targetVectors) > 0 {
+		targetVectorsBytes, err := json.Marshal(targetVectors)
+		if err != nil {
+			panic(fmt.Sprintf("could not marshal target vectors: %v", err))
+		}
+		targetVectorsString := fmt.Sprintf("targetVectors:%s", string(targetVectorsBytes))
+
+		weightsString := ""
+		combinationWeights := m.targetCombination.Weights
+		if len(combinationWeights) > 0 {
+			weights := make([]string, 0, len(combinationWeights))
+			for k, v := range combinationWeights {
+				weights = append(weights, fmt.Sprintf("%s:%v", k, v))
+			}
+			weightsString = fmt.Sprintf(", weights:{%s}", strings.Join(weights, ","))
+		}
+
+		combinationMethodString := ""
+		combinationMethod := m.getCombinationMethod()
+		if combinationMethod != "" {
+			combinationMethodString = fmt.Sprintf(", combinationMethod:%s", combinationMethod)
+		}
+
+		clause = append(clause, fmt.Sprintf(
+			"targets:{%s%s%s}",
+			targetVectorsString,
+			combinationMethodString,
+			weightsString,
+		))
+	}
+	return fmt.Sprintf("nearVector:{%s}", strings.Join(clause, " "))
 }

@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/go-openapi/strfmt"
@@ -22,7 +23,7 @@ func TestMultiTargetSearch(t *testing.T) {
 	ctx := context.TODO()
 
 	class := &models.Class{
-		Class: "MultiTargetTest",
+		Class: "MultiTargetSearchTest",
 		VectorConfig: map[string]models.VectorConfig{
 			"first":  {Vectorizer: map[string]interface{}{"none": nil}, VectorIndexType: "hnsw"},
 			"second": {Vectorizer: map[string]interface{}{"none": nil}, VectorIndexType: "hnsw"},
@@ -39,7 +40,7 @@ func TestMultiTargetSearch(t *testing.T) {
 	_, err = client.Batch().ObjectsBatcher().WithObjects(objs...).Do(ctx)
 	require.Nil(t, err)
 
-	var outer = []struct {
+	outer := []struct {
 		nvo *graphql.NearMultiVectorArgumentBuilder
 	}{
 		{client.GraphQL().NearVectorMultiTargetArgBuilder().Sum("first", "second")},
@@ -50,16 +51,24 @@ func TestMultiTargetSearch(t *testing.T) {
 		{client.GraphQL().NearVectorMultiTargetArgBuilder()},
 	}
 	for _, to := range outer {
-		var inner = []struct {
+		inner := []struct {
 			nvi *graphql.NearMultiVectorArgumentBuilder
 		}{
 			{to.nvo.WithVector([]float32{1, 0, 0})},
 			{to.nvo.WithVectorPerTarget(map[string][]float32{"first": {1, 0}, "second": {1, 0, 0}})},
 		}
 		for _, ti := range inner {
-			resp, err := client.GraphQL().Get().WithNearMultiVector(ti.nvi).WithClassName(class.Class).Do(ctx)
+			resp, err := client.GraphQL().Get().WithNearMultiVector(ti.nvi).WithClassName(class.Class).WithFields(graphql.Field{Name: "_additional", Fields: []graphql.Field{{Name: "id"}}}).Do(ctx)
 			require.Nil(t, err)
-			require.NotNil(t, resp)
+			if resp.Errors != nil {
+				errors := make([]string, len(resp.Errors))
+				for i, e := range resp.Errors {
+					errors[i] = e.Message
+				}
+				t.Fatalf("errors: %v", strings.Join(errors, ", "))
+			}
+			require.NotNil(t, resp.Data)
+			require.Equal(t, objs[0].ID.String(), resp.Data["Get"].(map[string]interface{})[class.Class].([]interface{})[0].(map[string]interface{})["_additional"].(map[string]interface{})["id"].(string))
 		}
 	}
 }
