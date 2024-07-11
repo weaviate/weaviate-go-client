@@ -24,12 +24,12 @@ func TestMisc_version_check(t *testing.T) {
 	})
 
 	t.Run("Weaviate is not live, perform live check", func(t *testing.T) {
+		port, _, _ := testsuit.GetPortAndAuthPw()
 		cfg := &weaviate.Config{
-			Host:    "localhost:8080",
+			Host:    fmt.Sprintf("localhost:%v", port),
 			Scheme:  "http",
 			Headers: map[string]string{},
 		}
-
 		client := weaviate.New(*cfg)
 		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
 		assert.NotNil(t, err)
@@ -97,8 +97,9 @@ func TestMisc_empty_version_check(t *testing.T) {
 		}
 	})
 	t.Run("Weaviate is not live, perform live check", func(t *testing.T) {
+		port, _, _ := testsuit.GetPortAndAuthPw()
 		cfg := &weaviate.Config{
-			Host:    "localhost:8080",
+			Host:    fmt.Sprintf("localhost:%v", port),
 			Scheme:  "http",
 			Headers: map[string]string{},
 		}
