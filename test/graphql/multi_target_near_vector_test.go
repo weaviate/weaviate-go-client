@@ -41,34 +41,38 @@ func TestMultiTargetSearch(t *testing.T) {
 	require.Nil(t, err)
 
 	outer := []struct {
-		nvo *graphql.NearMultiVectorArgumentBuilder
+		name string
+		nvo  *graphql.NearMultiVectorArgumentBuilder
 	}{
-		{client.GraphQL().NearVectorMultiTargetArgBuilder().Sum("first", "second")},
-		{client.GraphQL().NearVectorMultiTargetArgBuilder().Average("first", "second")},
-		{client.GraphQL().NearVectorMultiTargetArgBuilder().Min("first", "second")},
-		{client.GraphQL().NearVectorMultiTargetArgBuilder().ManualWeights(map[string]float32{"first": 1, "second": 1})},
-		{client.GraphQL().NearVectorMultiTargetArgBuilder().RelativeScore(map[string]float32{"first": 1, "second": 1})},
-		{client.GraphQL().NearVectorMultiTargetArgBuilder()},
+		{name: "Sum", nvo: client.GraphQL().NearVectorMultiTargetArgBuilder().Sum("first", "second")},
+		{name: "Average", nvo: client.GraphQL().NearVectorMultiTargetArgBuilder().Average("first", "second")},
+		{name: "Minimum", nvo: client.GraphQL().NearVectorMultiTargetArgBuilder().Minimum("first", "second")},
+		{name: "Manual weights", nvo: client.GraphQL().NearVectorMultiTargetArgBuilder().ManualWeights(map[string]float32{"first": 1, "second": 1})},
+		{name: "Relative score", nvo: client.GraphQL().NearVectorMultiTargetArgBuilder().RelativeScore(map[string]float32{"first": 1, "second": 1})},
+		{name: "No", nvo: client.GraphQL().NearVectorMultiTargetArgBuilder()},
 	}
 	for _, to := range outer {
 		inner := []struct {
-			nvi *graphql.NearMultiVectorArgumentBuilder
+			name string
+			nvi  *graphql.NearMultiVectorArgumentBuilder
 		}{
-			{to.nvo.WithVector([]float32{1, 0, 0})},
-			{to.nvo.WithVectorPerTarget(map[string][]float32{"first": {1, 0}, "second": {1, 0, 0}})},
+			{name: "with vector", nvi: to.nvo.WithVector([]float32{1, 0, 0})},
+			{name: "with vector per target", nvi: to.nvo.WithVectorPerTarget(map[string][]float32{"first": {1, 0}, "second": {1, 0, 0}})},
 		}
 		for _, ti := range inner {
-			resp, err := client.GraphQL().Get().WithNearMultiVector(ti.nvi).WithClassName(class.Class).WithFields(graphql.Field{Name: "_additional", Fields: []graphql.Field{{Name: "id"}}}).Do(ctx)
-			require.Nil(t, err)
-			if resp.Errors != nil {
-				errors := make([]string, len(resp.Errors))
-				for i, e := range resp.Errors {
-					errors[i] = e.Message
+			t.Run(to.name+" combination "+ti.name, func(t *testing.T) {
+				resp, err := client.GraphQL().Get().WithNearMultiVector(ti.nvi).WithClassName(class.Class).WithFields(graphql.Field{Name: "_additional", Fields: []graphql.Field{{Name: "id"}}}).Do(ctx)
+				require.Nil(t, err)
+				if resp.Errors != nil {
+					errors := make([]string, len(resp.Errors))
+					for i, e := range resp.Errors {
+						errors[i] = e.Message
+					}
+					t.Fatalf("errors: %v", strings.Join(errors, ", "))
 				}
-				t.Fatalf("errors: %v", strings.Join(errors, ", "))
-			}
-			require.NotNil(t, resp.Data)
-			require.Equal(t, objs[0].ID.String(), resp.Data["Get"].(map[string]interface{})[class.Class].([]interface{})[0].(map[string]interface{})["_additional"].(map[string]interface{})["id"].(string))
+				require.NotNil(t, resp.Data)
+				require.Equal(t, objs[0].ID.String(), resp.Data["Get"].(map[string]interface{})[class.Class].([]interface{})[0].(map[string]interface{})["_additional"].(map[string]interface{})["id"].(string))
+			})
 		}
 	}
 }

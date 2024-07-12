@@ -9,17 +9,18 @@ import (
 )
 
 type NearMultiVectorArgumentBuilder struct {
-	certainty         float32
 	distance          float32
-	targetCombination dto.TargetCombination
+	targetCombination *dto.TargetCombination
 	targetVectors     []string
 	vectorPerTarget   map[string][]float32
-	withCertainty     bool
 	withDistance      bool
 }
 
 func (m *NearMultiVectorArgumentBuilder) getCombinationMethod() string {
 	combinationMethod := ""
+	if m.targetCombination == nil {
+		return combinationMethod
+	}
 	switch m.targetCombination.Type {
 	case dto.Sum:
 		combinationMethod = "sum"
@@ -35,10 +36,17 @@ func (m *NearMultiVectorArgumentBuilder) getCombinationMethod() string {
 	return combinationMethod
 }
 
+func (m *NearMultiVectorArgumentBuilder) getCombinationWeights() map[string]float32 {
+	if m.targetCombination == nil {
+		return nil
+	}
+	return m.targetCombination.Weights
+}
+
 func (m *NearMultiVectorArgumentBuilder) Sum(targetVectors ...string) *NearMultiVectorArgumentBuilder {
 	if len(targetVectors) > 0 {
 		m.targetVectors = targetVectors
-		m.targetCombination = dto.TargetCombination{Type: dto.Sum}
+		m.targetCombination = &dto.TargetCombination{Type: dto.Sum}
 	}
 	return m
 }
@@ -46,15 +54,15 @@ func (m *NearMultiVectorArgumentBuilder) Sum(targetVectors ...string) *NearMulti
 func (m *NearMultiVectorArgumentBuilder) Average(targetVectors ...string) *NearMultiVectorArgumentBuilder {
 	if len(targetVectors) > 0 {
 		m.targetVectors = targetVectors
-		m.targetCombination = dto.TargetCombination{Type: dto.Average}
+		m.targetCombination = &dto.TargetCombination{Type: dto.Average}
 	}
 	return m
 }
 
-func (m *NearMultiVectorArgumentBuilder) Min(targetVectors ...string) *NearMultiVectorArgumentBuilder {
+func (m *NearMultiVectorArgumentBuilder) Minimum(targetVectors ...string) *NearMultiVectorArgumentBuilder {
 	if len(targetVectors) > 0 {
 		m.targetVectors = targetVectors
-		m.targetCombination = dto.TargetCombination{Type: dto.Minimum}
+		m.targetCombination = &dto.TargetCombination{Type: dto.Minimum}
 	}
 	return m
 }
@@ -66,7 +74,7 @@ func (m *NearMultiVectorArgumentBuilder) ManualWeights(targetVectors map[string]
 			targetVectorsTmp = append(targetVectorsTmp, k)
 		}
 		m.targetVectors = targetVectorsTmp
-		m.targetCombination = dto.TargetCombination{Type: dto.ManualWeights, Weights: targetVectors}
+		m.targetCombination = &dto.TargetCombination{Type: dto.ManualWeights, Weights: targetVectors}
 	}
 	return m
 }
@@ -78,7 +86,7 @@ func (m *NearMultiVectorArgumentBuilder) RelativeScore(targetVectors map[string]
 			targetVectorsTmp = append(targetVectorsTmp, k)
 		}
 		m.targetVectors = targetVectorsTmp
-		m.targetCombination = dto.TargetCombination{Type: dto.RelativeScore, Weights: targetVectors}
+		m.targetCombination = &dto.TargetCombination{Type: dto.RelativeScore, Weights: targetVectors}
 	}
 	return m
 }
@@ -99,12 +107,6 @@ func (m *NearMultiVectorArgumentBuilder) WithVector(vector []float32) *NearMulti
 	return m
 }
 
-func (m *NearMultiVectorArgumentBuilder) WithCertainty(certainty float32) *NearMultiVectorArgumentBuilder {
-	m.certainty = certainty
-	m.withCertainty = true
-	return m
-}
-
 func (m *NearMultiVectorArgumentBuilder) WithDistance(distance float32) *NearMultiVectorArgumentBuilder {
 	m.distance = distance
 	m.withDistance = true
@@ -114,9 +116,6 @@ func (m *NearMultiVectorArgumentBuilder) WithDistance(distance float32) *NearMul
 func (m *NearMultiVectorArgumentBuilder) build() string {
 	clause := []string{}
 	targetVectors := m.targetVectors
-	if m.withCertainty {
-		clause = append(clause, fmt.Sprintf("certainty:%v", m.certainty))
-	}
 	if m.withDistance {
 		clause = append(clause, fmt.Sprintf("distance:%v", m.distance))
 	}
@@ -145,7 +144,7 @@ func (m *NearMultiVectorArgumentBuilder) build() string {
 		targetVectorsString := fmt.Sprintf("targetVectors:%s", string(targetVectorsBytes))
 
 		weightsString := ""
-		combinationWeights := m.targetCombination.Weights
+		combinationWeights := m.getCombinationWeights()
 		if len(combinationWeights) > 0 {
 			weights := make([]string, 0, len(combinationWeights))
 			for k, v := range combinationWeights {
