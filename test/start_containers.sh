@@ -2,6 +2,8 @@
 
 set -eou pipefail
 
+export WEAVIATE_VERSION=$1
+
 function wait(){
   MAX_WAIT_SECONDS=60
   ALREADY_WAITING=0
@@ -12,7 +14,7 @@ function wait(){
       break
     else
       if [ $? -eq 7 ]; then
-        echo "Weaviate is not up yet. (waited for ${ALREADY_WAITING}s)"
+        echo "$1 is not up yet. (waited for ${ALREADY_WAITING}s)"
         if [ $ALREADY_WAITING -gt $MAX_WAIT_SECONDS ]; then
           echo "Weaviate did not start up in $MAX_WAIT_SECONDS."
           exit 1

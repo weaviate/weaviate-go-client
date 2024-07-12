@@ -39,20 +39,20 @@ function main() {
   if $run_integration_tests || $run_all_tests
   then
     echo_green "Run all integration tests..."
-    ./test/start_containers.sh
+    ./test/start_containers.sh ${WEAVIATE_VERSION}
     run_integration_tests "$@"
     exit_code=$?
-    ./test/stop_containers.sh
+    ./test/stop_containers.sh ${WEAVIATE_VERSION}
     check_exit_code "Integration tests" $exit_code
   fi
 
   if $run_auth_integration_tests || $run_all_tests
   then
     echo_green "Run all auth integration tests..."
-    ./test/start_containers.sh
+    ./test/start_containers.sh ${WEAVIATE_VERSION}
     go test -v -count 1 -race test/auth/*.go
     exit_code=$?
-    ./test/stop_containers.sh
+    ./test/stop_containers.sh ${WEAVIATE_VERSION}
     check_exit_code "Auth integration tests" $exit_code
   fi
 
