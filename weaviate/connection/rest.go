@@ -93,11 +93,9 @@ func (con *Connection) WaitForWeaviate(startupTimeout time.Duration) error {
 					returnChannel <- true // return wait function immediately
 				}
 			}()
-			select {
-			case t := <-ticker.C:
-				if t.After(startTime.Add(startupTimeout)) {
-					returnChannel <- false
-				}
+			t := <-ticker.C
+			if t.After(startTime.Add(startupTimeout)) {
+				returnChannel <- false
 			}
 
 			if endLoop.Load() {
