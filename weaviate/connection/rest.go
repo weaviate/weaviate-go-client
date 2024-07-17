@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"sync/atomic"
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
@@ -62,40 +63,54 @@ func (con *Connection) WaitForWeaviate(startupTimeout time.Duration) error {
 		return nil
 	}
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second)
-	response, err := con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
-	if err == nil {
-		if response.StatusCode == 200 {
-			return nil
-		}
-	}
-	cancelFunc()
+	// query every second, even is the startupTimeout is longer. The query-loop is ended immediately after receiving a
+	// response
 	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
 	startTime := time.Now()
-	for {
-		t := <-ticker.C
-		ctx, cancelFunc = context.WithTimeout(context.Background(), time.Second)
-		response, err = con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
-		var isReady bool
-		switch {
-		case err != nil:
-			isReady = false
-		case response.StatusCode == 200:
-			isReady = true
-		default:
-			isReady = false
+	returnChannel := make(chan bool)
+	defer close(returnChannel)
+	endLoop := atomic.Bool{}
+	go func() {
+		for {
+			go func() {
+				ctx, cancelFunc := context.WithTimeout(context.Background(), startupTimeout)
+				defer cancelFunc()
 
-		}
+				response, err := con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
+				var isReadyLocal bool
+				switch {
+				case err != nil:
+					isReadyLocal = false
+				case response.StatusCode == 200:
+					isReadyLocal = true
+				default:
+					isReadyLocal = false
 
-		cancelFunc()
-		if isReady {
-			return nil
+				}
+
+				if isReadyLocal && endLoop.CompareAndSwap(false, true) {
+					returnChannel <- true // return wait function immediately
+				}
+			}()
+			t := <-ticker.C
+			if t.After(startTime.Add(startupTimeout)) {
+				returnChannel <- false
+			}
+
+			if endLoop.Load() {
+				break
+			}
+
+			log.Printf("Weaviate not yet up. Waiting for another second.")
 		}
-		if t.After(startTime.Add(startupTimeout)) {
-			return fmt.Errorf("weaviate did not start up in %s. Either the Weaviate URL %q is wrong or Weaviate did not start up in the interval given in 'startupTimeout'", startupTimeout.String(), con.basePath)
-		}
-		log.Printf("Weaviate not yet up. Waiting for another second.")
+	}()
+
+	success := <-returnChannel
+	if !success {
+		return fmt.Errorf("weaviate did not start up in %s. Either the Weaviate URL %q is wrong or Weaviate did not start up in the interval given in 'startupTimeout'", startupTimeout.String(), con.basePath)
 	}
+	return nil
 }
 
 // startRefreshGoroutine starts a background goroutine that periodically refreshes the auth token.
