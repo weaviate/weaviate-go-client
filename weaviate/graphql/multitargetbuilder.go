@@ -116,7 +116,7 @@ func (m *MultiTargetArgumentBuilder) build() string {
 		}
 
 		clause = append(clause, fmt.Sprintf(
-			"targets:{%s%s%s}",
+			"%s%s%s",
 			combinationMethodString,
 			targetVectorsString,
 			weightsString,
