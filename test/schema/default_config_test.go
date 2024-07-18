@@ -58,7 +58,7 @@ var defaultSQConfig = map[string]interface{}{
 var defaultVectorIndexConfig = map[string]interface{}{
 	"cleanupIntervalSeconds": float64(300),
 	"efConstruction":         float64(128),
-	"maxConnections":         float64(64),
+	"maxConnections":         float64(32),
 	"vectorCacheMaxObjects":  float64(500000),
 	"ef":                     float64(-1),
 	"skip":                   false,
