@@ -117,6 +117,11 @@ func (api *API) HybridArgumentBuilder() *HybridArgumentBuilder {
 	return &HybridArgumentBuilder{}
 }
 
+// MultiTargetArgumentBuilder targets clause
+func (api *API) MultiTargetArgumentBuilder() *MultiTargetArgumentBuilder {
+	return &MultiTargetArgumentBuilder{}
+}
+
 // HybridSearchesArgumentBuilder hybrid.searches clause
 func (api *API) HybridSearchesArgumentBuilder() *HybridSearchesArgumentBuilder {
 	return &HybridSearchesArgumentBuilder{}
