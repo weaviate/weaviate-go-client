@@ -12,6 +12,7 @@ type NearDepthArgumentBuilder struct {
 	hasDistance   bool
 	distance      float32
 	targetVectors []string
+	targets       *MultiTargetArgumentBuilder
 }
 
 // WithDepth base64 encoded depth
@@ -46,6 +47,13 @@ func (b *NearDepthArgumentBuilder) WithTargetVectors(targetVectors ...string) *N
 	return b
 }
 
+// WithTargets sets the multi target vectors to be used with hybrid query. This builder takes precedence over WithTargetVectors.
+// So if WithTargets is used, WithTargetVectors will be ignored.
+func (h *NearDepthArgumentBuilder) WithTargets(targets *MultiTargetArgumentBuilder) *NearDepthArgumentBuilder {
+	h.targets = targets
+	return h
+}
+
 // Build build the given clause
 func (b *NearDepthArgumentBuilder) build() string {
 	builder := &nearMediaArgumentBuilder{
@@ -63,5 +71,6 @@ func (b *NearDepthArgumentBuilder) build() string {
 	if len(b.targetVectors) > 0 {
 		builder.withTargetVectors(b.targetVectors...)
 	}
+	builder.withTargets(b.targets)
 	return builder.build()
 }

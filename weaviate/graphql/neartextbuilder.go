@@ -79,6 +79,7 @@ type NearTextArgumentBuilder struct {
 	withAutocorrect bool
 	autocorrect     bool
 	targetVectors   []string
+	targets         *MultiTargetArgumentBuilder
 }
 
 // WithConcepts the result is based on
@@ -128,6 +129,13 @@ func (e *NearTextArgumentBuilder) WithTargetVectors(targetVectors ...string) *Ne
 	return e
 }
 
+// WithTargets sets the multi target vectors to be used with hybrid query. This builder takes precedence over WithTargetVectors.
+// So if WithTargets is used, WithTargetVectors will be ignored.
+func (h *NearTextArgumentBuilder) WithTargets(targets *MultiTargetArgumentBuilder) *NearTextArgumentBuilder {
+	h.targets = targets
+	return h
+}
+
 // Build build the given clause
 func (e *NearTextArgumentBuilder) build() string {
 	clause := []string{}
@@ -149,7 +157,10 @@ func (e *NearTextArgumentBuilder) build() string {
 	if e.withAutocorrect {
 		clause = append(clause, fmt.Sprintf("autocorrect: %v", e.autocorrect))
 	}
-	if len(e.targetVectors) > 0 {
+	if e.targets != nil {
+		clause = append(clause, fmt.Sprintf("targets:{%s}", e.targets.build()))
+	}
+	if len(e.targetVectors) > 0 && e.targets == nil {
 		targetVectors, _ := json.Marshal(e.targetVectors)
 		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}

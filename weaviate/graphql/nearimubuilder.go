@@ -12,6 +12,7 @@ type NearImuArgumentBuilder struct {
 	hasDistance   bool
 	distance      float32
 	targetVectors []string
+	targets       *MultiTargetArgumentBuilder
 }
 
 // WithImu base64 encoded imu
@@ -46,6 +47,13 @@ func (b *NearImuArgumentBuilder) WithTargetVectors(targetVectors ...string) *Nea
 	return b
 }
 
+// WithTargets sets the multi target vectors to be used with hybrid query. This builder takes precedence over WithTargetVectors.
+// So if WithTargets is used, WithTargetVectors will be ignored.
+func (h *NearImuArgumentBuilder) WithTargets(targets *MultiTargetArgumentBuilder) *NearImuArgumentBuilder {
+	h.targets = targets
+	return h
+}
+
 // Build build the given clause
 func (b *NearImuArgumentBuilder) build() string {
 	builder := &nearMediaArgumentBuilder{
@@ -64,5 +72,6 @@ func (b *NearImuArgumentBuilder) build() string {
 	if len(b.targetVectors) > 0 {
 		builder.withTargetVectors(b.targetVectors...)
 	}
+	builder.withTargets((b.targets))
 	return builder.build()
 }

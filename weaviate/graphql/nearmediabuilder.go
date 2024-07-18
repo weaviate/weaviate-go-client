@@ -22,6 +22,7 @@ type nearMediaArgumentBuilder struct {
 	hasDistance   bool
 	distance      float32
 	targetVectors []string
+	targets       *MultiTargetArgumentBuilder
 }
 
 func (b *nearMediaArgumentBuilder) withCertainty(certainty float32) *nearMediaArgumentBuilder {
@@ -38,6 +39,11 @@ func (b *nearMediaArgumentBuilder) withDistance(distance float32) *nearMediaArgu
 
 func (b *nearMediaArgumentBuilder) withTargetVectors(targetVectors ...string) *nearMediaArgumentBuilder {
 	b.targetVectors = targetVectors
+	return b
+}
+
+func (b *nearMediaArgumentBuilder) withTargets(targets *MultiTargetArgumentBuilder) *nearMediaArgumentBuilder {
+	b.targets = targets
 	return b
 }
 
@@ -68,7 +74,10 @@ func (b *nearMediaArgumentBuilder) build() string {
 	if b.hasDistance {
 		clause = append(clause, fmt.Sprintf("distance: %v", b.distance))
 	}
-	if len(b.targetVectors) > 0 {
+	if b.targets != nil {
+		clause = append(clause, fmt.Sprintf("targets:{%s}", b.targets.build()))
+	}
+	if len(b.targetVectors) > 0 && b.targets == nil {
 		targetVectors, _ := json.Marshal(b.targetVectors)
 		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}

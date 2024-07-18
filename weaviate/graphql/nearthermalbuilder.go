@@ -12,6 +12,7 @@ type NearThermalArgumentBuilder struct {
 	hasDistance   bool
 	distance      float32
 	targetVectors []string
+	targets       *MultiTargetArgumentBuilder
 }
 
 // WithThermal base64 encoded thermal
@@ -46,6 +47,13 @@ func (b *NearThermalArgumentBuilder) WithTargetVectors(targetVectors ...string) 
 	return b
 }
 
+// WithTargets sets the multi target vectors to be used with hybrid query. This builder takes precedence over WithTargetVectors.
+// So if WithTargets is used, WithTargetVectors will be ignored.
+func (h *NearThermalArgumentBuilder) WithTargets(targets *MultiTargetArgumentBuilder) *NearThermalArgumentBuilder {
+	h.targets = targets
+	return h
+}
+
 // Build build the given clause
 func (b *NearThermalArgumentBuilder) build() string {
 	builder := &nearMediaArgumentBuilder{
@@ -64,5 +72,6 @@ func (b *NearThermalArgumentBuilder) build() string {
 	if len(b.targetVectors) > 0 {
 		builder.withTargetVectors(b.targetVectors...)
 	}
+	builder.withTargets(b.targets)
 	return builder.build()
 }

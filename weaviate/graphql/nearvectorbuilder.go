@@ -13,6 +13,7 @@ type NearVectorArgumentBuilder struct {
 	withDistance  bool
 	distance      float32
 	targetVectors []string
+	targets       *MultiTargetArgumentBuilder
 }
 
 // WithVector sets the search vector to be used in query
@@ -43,6 +44,13 @@ func (b *NearVectorArgumentBuilder) WithTargetVectors(targetVectors ...string) *
 	return b
 }
 
+// WithTargets sets the multi target vectors to be used with hybrid query. This builder takes precedence over WithTargetVectors.
+// So if WithTargets is used, WithTargetVectors will be ignored.
+func (h *NearVectorArgumentBuilder) WithTargets(targets *MultiTargetArgumentBuilder) *NearVectorArgumentBuilder {
+	h.targets = targets
+	return h
+}
+
 // Build build the given clause
 func (b *NearVectorArgumentBuilder) build() string {
 	clause := []string{}
@@ -59,7 +67,10 @@ func (b *NearVectorArgumentBuilder) build() string {
 		}
 		clause = append(clause, fmt.Sprintf("vector: %s", string(vectorB)))
 	}
-	if len(b.targetVectors) > 0 {
+	if b.targets != nil {
+		clause = append(clause, fmt.Sprintf("targets:{%s}", b.targets.build()))
+	}
+	if len(b.targetVectors) > 0 && b.targets == nil {
 		targetVectors, _ := json.Marshal(b.targetVectors)
 		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}
