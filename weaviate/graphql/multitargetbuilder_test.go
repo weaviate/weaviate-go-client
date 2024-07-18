@@ -12,21 +12,21 @@ func TestMultiTargetArgumentBuilder(t *testing.T) {
 		builder := &MultiTargetArgumentBuilder{}
 		builder.Sum("one", "two")
 		out := builder.build()
-		assert.Equal(t, "targets:{combinationMethod:sum, targetVectors:[\"one\",\"two\"]}", out)
+		assert.Equal(t, "combinationMethod:sum, targetVectors:[\"one\",\"two\"]", out)
 	})
 
 	t.Run("Average combination", func(t *testing.T) {
 		builder := &MultiTargetArgumentBuilder{}
 		builder.Average("one", "two")
 		out := builder.build()
-		assert.Equal(t, "targets:{combinationMethod:average, targetVectors:[\"one\",\"two\"]}", out)
+		assert.Equal(t, "combinationMethod:average, targetVectors:[\"one\",\"two\"]", out)
 	})
 
 	t.Run("Minimum combination", func(t *testing.T) {
 		builder := &MultiTargetArgumentBuilder{}
 		builder.Minimum("one", "two")
 		out := builder.build()
-		assert.Equal(t, "targets:{combinationMethod:minimum, targetVectors:[\"one\",\"two\"]}", out)
+		assert.Equal(t, "combinationMethod:minimum, targetVectors:[\"one\",\"two\"]", out)
 	})
 
 	t.Run("ManualWeights combination", func(t *testing.T) {
