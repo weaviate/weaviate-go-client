@@ -22,6 +22,8 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/schema"
 )
 
+const defaultTimeout = 60 * time.Second
+
 // Config of the client endpoint
 type Config struct {
 	// Host of the weaviate instance; this is a mandatory field.
@@ -47,6 +49,16 @@ type Config struct {
 
 	// gRPC configuration
 	GrpcConfig *grpc.Config
+
+	// Client connection timeout, defaults to 60s
+	Timeout time.Duration
+}
+
+func (c Config) getTimeout() time.Duration {
+	if c.Timeout == 0 {
+		return defaultTimeout
+	}
+	return c.Timeout
 }
 
 // Deprecated: This function is unable to wait for Weaviate to start. Use NewClient() instead and add auth.Config to
@@ -58,7 +70,7 @@ func NewConfig(host string, scheme string, authConfig auth.Config,
 	var err error
 	var additionalHeaders map[string]string
 	if authConfig != nil {
-		tmpCon := connection.NewConnection(scheme, host, nil, headers)
+		tmpCon := connection.NewConnection(scheme, host, nil, defaultTimeout, headers)
 		client, additionalHeaders, err = authConfig.GetAuthInfo(tmpCon)
 		if err != nil {
 			return nil, err
@@ -105,7 +117,7 @@ func NewClient(config Config) (*Client, error) {
 	// if an authentication config is given, we first need to create a temporary connection to fetch some OIDC
 	// infos from Weaviate. This connection is then replaced by the "real" connection
 	if config.AuthConfig != nil {
-		tmpCon := connection.NewConnection(config.Scheme, config.Host, nil, config.Headers)
+		tmpCon := connection.NewConnection(config.Scheme, config.Host, nil, config.getTimeout(), config.Headers)
 		err := tmpCon.WaitForWeaviate(config.StartupTimeout)
 		if err != nil {
 			return nil, err
@@ -124,7 +136,7 @@ func NewClient(config Config) (*Client, error) {
 
 	}
 
-	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
+	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.getTimeout(), config.Headers)
 
 	if err := con.WaitForWeaviate(config.StartupTimeout); err != nil {
 		return nil, err
@@ -173,7 +185,7 @@ func NewClient(config Config) (*Client, error) {
 // The client uses the original data models as provided by weaviate itself.
 // All these models are provided in the sub module "github.com/weaviate/weaviate/entities/models"
 func New(config Config) *Client {
-	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.Headers)
+	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.getTimeout(), config.Headers)
 
 	// some endpoints now require a className namespace.
 	// to determine if this new convention is to be used,
@@ -264,7 +276,7 @@ func (c *Client) Cluster() *cluster.API {
 
 func createGrpcClient(config Config, gRPCVersionSupport *db.GRPCVersionSupport) (*connection.GrpcClient, error) {
 	if config.GrpcConfig != nil {
-		return connection.NewGrpcClient(config.GrpcConfig.Host, config.GrpcConfig.Secured, config.Headers, gRPCVersionSupport, config.StartupTimeout)
+		return connection.NewGrpcClient(config.GrpcConfig.Host, config.GrpcConfig.Secured, config.Headers, gRPCVersionSupport, config.getTimeout(), config.StartupTimeout)
 	}
 	return nil, nil
 }
