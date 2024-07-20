@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/weaviate/weaviate/entities/models"
+	"github.com/weaviate/weaviate/entities/schema"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
@@ -16,7 +19,7 @@ func TestBatchCreate_gRPC_integration(t *testing.T) {
 		require.Nil(t, err, "failed to start weaviate")
 	}
 
-	client := testsuit.CreateTestClient()
+	client := testsuit.CreateTestClient(true)
 
 	t.Run("gRPC batch import", func(t *testing.T) {
 		tests := []struct {
@@ -99,6 +102,35 @@ func TestBatchCreate_gRPC_integration(t *testing.T) {
 				}
 			}
 		}
+	})
+
+	t.Run("no uuids", func(t *testing.T) {
+		className := "NoUUIDs"
+
+		require.Nil(t, client.Schema().ClassDeleter().WithClassName(className).Do(context.Background()))
+
+		class := &models.Class{
+			Class: className,
+			Properties: []*models.Property{
+				{Name: "text", DataType: []string{schema.DataTypeText.String()}},
+			},
+		}
+		require.Nil(t, client.Schema().ClassCreator().WithClass(class).Do(context.Background()))
+		objects := []*models.Object{
+			{
+				Class: className, Properties: map[string]interface{}{"text": "text1"},
+			},
+		}
+		_, batchErrSlice := client.Batch().ObjectsBatcher().WithObjects(objects...).Do(context.Background())
+		assert.Nil(t, batchErrSlice)
+
+		objs, err := client.Data().ObjectsGetter().WithClassName(className).Do(context.Background())
+		require.NoError(t, err)
+		require.Len(t, objs, 1)
+		assert.NotEmpty(t, objs[0].ID)
+		assert.Equal(t, "text1", objs[0].Properties.(map[string]interface{})["text"])
+
+		require.Nil(t, client.Schema().ClassDeleter().WithClassName(className).Do(context.Background()))
 	})
 
 	err = testenv.TearDownLocalWeaviate()

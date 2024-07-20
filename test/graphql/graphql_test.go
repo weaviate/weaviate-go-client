@@ -28,7 +28,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -353,7 +353,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 	t.Run("Explore", func(t *testing.T) {
 		t.Run("with certainty", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
+			client := testsuit.CreateTestClient(false)
 			testsuit.CreateTestSchemaAndData(t, client)
 			defer testsuit.CleanUpWeaviate(t, client)
 
@@ -394,7 +394,7 @@ func TestGraphQL_integration(t *testing.T) {
 		})
 
 		t.Run("with distance", func(t *testing.T) {
-			client := testsuit.CreateTestClient()
+			client := testsuit.CreateTestClient(false)
 			testsuit.CreateTestSchemaAndData(t, client)
 			defer testsuit.CleanUpWeaviate(t, client)
 
@@ -436,7 +436,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Aggregate", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -877,7 +877,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get with group filter", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -901,7 +901,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get with creationTimeUnix filters", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -942,7 +942,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get with lastUpdateTimeUnix filters", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -983,7 +983,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get bm25 filter", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1017,7 +1017,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("Get hybrid filter", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1061,7 +1061,7 @@ func TestGraphQL_integration(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			client := testsuit.CreateTestClient()
+			client := testsuit.CreateTestClient(false)
 			testsuit.CreateTestSchemaAndData(t, client)
 			defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1096,7 +1096,7 @@ func TestGraphQL_integration(t *testing.T) {
 	}
 
 	t.Run("MultiClass Get", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1370,7 +1370,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("MultiClassGet with group filter", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1399,7 +1399,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("MultiClassGet with creationTimeUnix filters", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1456,7 +1456,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("MultiClassGet with lastUpdateTimeUnix filters", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1513,7 +1513,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("group by with nearObject", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestDocumentAndPassageSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1619,7 +1619,7 @@ func TestGraphQL_integration(t *testing.T) {
 	})
 
 	t.Run("group by with hybrid", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestDocumentAndPassageSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 
@@ -1767,7 +1767,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 func TestGraphQL_MultiTenancy(t *testing.T) {
 	cleanup := func() {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		err := client.Schema().AllDeleter().Do(context.Background())
 		require.Nil(t, err)
 	}
@@ -1784,7 +1784,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 
 		tenant1 := models.Tenant{Name: "tenantNo1"}
 		tenant2 := models.Tenant{Name: "tenantNo2"}
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		assertGetContainsIds := func(t *testing.T, response *models.GraphQLResponse,
 			className string, expectedIds []string,
@@ -1900,7 +1900,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 
 		tenant1 := models.Tenant{Name: "tenantNo1"}
 		tenant2 := models.Tenant{Name: "tenantNo2"}
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		assertAggregateNumFieldHasValues := func(t *testing.T, response *models.GraphQLResponse,
 			className string, fieldName string, expectedAggValues map[string]*float64,

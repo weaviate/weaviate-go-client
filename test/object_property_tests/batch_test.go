@@ -42,7 +42,7 @@ func TestObjectProperty_Batch(t *testing.T) {
 		}
 	})
 
-	client := testsuit.CreateTestClient()
+	client := testsuit.CreateTestClient(false)
 
 	t.Run("clean up DB", func(t *testing.T) {
 		// clean up DB

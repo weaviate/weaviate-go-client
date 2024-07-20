@@ -56,7 +56,7 @@ func TestData_uuid(t *testing.T) {
 	})
 
 	t.Run("POST /{semanticType}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		createWeaviateTestSchemaUuid(t, client)
 
@@ -123,7 +123,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("POST /{semanticType}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -173,7 +173,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("POST vectorizorless class", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateWeaviateTestSchemaWithVectorizorlessClass(t, client)
 
@@ -220,7 +220,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("GET /actions /things", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 		// create two pizzas and two soups
 		_, errCreate := client.Data().Creator().WithClassName("Pizza").WithProperties(map[string]string{
@@ -287,7 +287,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("GET underscore properties", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -387,7 +387,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("GET /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		resp, err := client.Data().ObjectsGetter().
@@ -402,7 +402,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("DELETE /{type}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -455,7 +455,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("DELETE /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		err := client.Data().Deleter().
@@ -468,7 +468,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("HEAD /{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -532,7 +532,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("HEAD /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		exists, err := client.Data().Checker().
@@ -547,7 +547,7 @@ func TestData_integration(t *testing.T) {
 
 	t.Run("PUT /{type}/{id}", func(t *testing.T) {
 		// PUT replaces the object fully
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -616,7 +616,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("PUT /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		id := "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"
@@ -646,7 +646,7 @@ func TestData_integration(t *testing.T) {
 
 	t.Run("PATCH(merge) /{type}/{id}", func(t *testing.T) {
 		// PATCH merges the new object with the existing object
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -715,7 +715,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("PATCH(with vector) /object/{clasName}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateWeaviateTestSchemaWithVectorizorlessClass(t, client)
 
@@ -768,7 +768,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("PATCH /objects/{className}/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		id := "5b6a08ba-1d46-43aa-89cc-8b070790c6f2"
@@ -801,7 +801,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("POST /{type}/validate", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -848,7 +848,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("POST /objects?consistency_level={level}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -926,7 +926,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("PUT /objects/{className}/{id}?consistency_level={level}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -1013,7 +1013,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("PATCH /objects/{className}/{id}?consistency_level={level}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -1103,7 +1103,7 @@ func TestData_integration(t *testing.T) {
 	})
 
 	t.Run("DELETE /objects/{className}/{id}?consistency_level={level}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
@@ -1214,7 +1214,7 @@ func TestData_integration(t *testing.T) {
 
 func TestData_MultiTenancy(t *testing.T) {
 	cleanup := func() {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		err := client.Schema().AllDeleter().Do(context.Background())
 		require.Nil(t, err)
 	}
@@ -1235,7 +1235,7 @@ func TestData_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaPizzaForTenants(t, client)
 		testsuit.CreateTenantsPizza(t, client, tenants...)
 
@@ -1307,7 +1307,7 @@ func TestData_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaPizzaForTenants(t, client)
 		testsuit.CreateTenantsPizza(t, client, tenants...)
 
@@ -1372,7 +1372,7 @@ func TestData_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
@@ -1437,7 +1437,7 @@ func TestData_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
@@ -1489,7 +1489,7 @@ func TestData_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
@@ -1518,7 +1518,7 @@ func TestData_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
@@ -1547,7 +1547,7 @@ func TestData_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
@@ -1600,7 +1600,7 @@ func TestData_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
@@ -1654,7 +1654,7 @@ func TestData_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
 		testsuit.CreateDataSoupForTenants(t, client, tenants.Names()...)
@@ -1727,7 +1727,7 @@ func TestData_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
 		testsuit.CreateDataSoupForTenants(t, client, tenants.Names()...)
@@ -1802,7 +1802,7 @@ func TestData_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
 		testsuit.CreateDataSoupForTenants(t, client, tenants.Names()...)
@@ -1873,7 +1873,7 @@ func TestData_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
 		testsuit.CreateDataSoupForTenants(t, client, tenants.Names()...)

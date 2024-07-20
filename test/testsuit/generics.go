@@ -7,6 +7,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/grpc"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -201,8 +203,8 @@ func CleanUpWeaviate(t *testing.T, client *weaviate.Client) {
 }
 
 // CreateTestClient running on local host 8080
-func CreateTestClient() *weaviate.Client {
-	port, _, authEnabled := GetPortAndAuthPw()
+func CreateTestClient(enableGRPC bool) *weaviate.Client {
+	port, grpcPort, authEnabled := GetPortAndAuthPw()
 
 	openAIApiKey := os.Getenv("OPENAI_APIKEY")
 	headers := map[string]string{}
@@ -215,6 +217,12 @@ func CreateTestClient() *weaviate.Client {
 		Scheme:  "http",
 		Headers: headers,
 	}
+	if enableGRPC {
+		cfg.GrpcConfig = &grpc.Config{
+			Host: fmt.Sprintf("localhost:%v", grpcPort),
+		}
+	}
+
 	var client *weaviate.Client
 	var err error
 	if authEnabled {

@@ -21,7 +21,7 @@ func TestBatchCreate_integration(t *testing.T) {
 	})
 
 	t.Run("POST /batch/objects", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		// Create some classes to add in a batch
@@ -87,7 +87,7 @@ func TestBatchCreate_integration(t *testing.T) {
 
 	// Testing batch object creation with tunable consistency
 	t.Run("POST /batch/{objects}?consistency_level={level}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
 
 		// Create some classes to add in a batch
@@ -152,7 +152,7 @@ func TestBatchCreate_integration(t *testing.T) {
 	})
 
 	t.Run("POST /batch/references", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create some objects
@@ -228,7 +228,7 @@ func TestBatchCreate_integration(t *testing.T) {
 
 	// Testing batch reference creation with tunable consistency
 	t.Run("POST /batch/references?consistency_level={level}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create some objects
@@ -314,7 +314,7 @@ func TestBatchCreate_integration(t *testing.T) {
 
 func TestBatchCreate_MultiTenancy(t *testing.T) {
 	cleanup := func() {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		err := client.Schema().AllDeleter().Do(context.Background())
 		require.Nil(t, err)
 	}
@@ -334,7 +334,7 @@ func TestBatchCreate_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaPizzaForTenants(t, client)
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsPizza(t, client, tenants...)
@@ -438,7 +438,7 @@ func TestBatchCreate_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaPizzaForTenants(t, client)
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsPizza(t, client, tenants...)
@@ -533,7 +533,7 @@ func TestBatchCreate_MultiTenancy(t *testing.T) {
 
 func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 	cleanup := func() {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		err := client.Schema().AllDeleter().Do(context.Background())
 		require.Nil(t, err)
 	}
@@ -555,7 +555,7 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 		soupIds := testsuit.IdsByClass["Soup"]
 		pizzaIds := testsuit.IdsByClass["Pizza"]
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
 		testsuit.CreateDataSoupForTenants(t, client, tenants.Names()...)
@@ -636,7 +636,7 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 		soupIds := testsuit.IdsByClass["Soup"]
 		pizzaIds := testsuit.IdsByClass["Pizza"]
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
 		testsuit.CreateDataSoupForTenants(t, client, tenants.Names()...)
@@ -711,7 +711,7 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 		tenantSoup := models.Tenant{Name: "tenantSoup"}
 		pizzaIds := testsuit.IdsByClass["Pizza"]
 		soupIds := testsuit.IdsByClass["Soup"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenantSoup)
@@ -784,7 +784,7 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 		tenantSoup := models.Tenant{Name: "tenantSoup"}
 		pizzaIds := testsuit.IdsByClass["Pizza"]
 		soupIds := testsuit.IdsByClass["Soup"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenantSoup)
@@ -880,7 +880,7 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 		tenantPizza := models.Tenant{Name: "tenantPizza"}
 		pizzaIds := testsuit.IdsByClass["Pizza"]
 		soupIds := testsuit.IdsByClass["Soup"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoup(t, client)
 		testsuit.CreateDataSoup(t, client)

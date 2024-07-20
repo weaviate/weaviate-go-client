@@ -23,7 +23,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("POST /schema", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		schemaClass := &models.Class{
 			Class:               "Band",
@@ -55,7 +55,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("POST /schema", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		schemaClass := &models.Class{
 			Class:               "Run",
@@ -85,7 +85,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Delete /schema/{type}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		schemaClassThing := &models.Class{
 			Class:       "Pizza",
@@ -125,7 +125,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("PUT /schema", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		schemaClass := &models.Class{
 			Class:               "Run",
@@ -176,7 +176,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Delete All schema", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		schemaClassThing := &models.Class{
 			Class:       "Pizza",
@@ -201,7 +201,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("POST /schema/{type}/{className}/properties", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		schemaClassThing := &models.Class{
 			Class:       "Pizza",
@@ -242,7 +242,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("GET /schema/{className}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		schemaClass := &models.Class{
 			Class:               "Band",
@@ -280,7 +280,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("CHECK /schema/{className}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		schemaClass := &models.Class{
 			Class: "Band",
@@ -303,7 +303,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("GET /schema/{className}/shards", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		class := &models.Class{
 			Class:               "Article",
@@ -334,7 +334,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("PUT /schema/{className}/shards/{shardName}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		class := &models.Class{
 			Class:               "ClassOne",
@@ -385,7 +385,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Update all shards convenience method", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		shardCount := 3
 
@@ -455,7 +455,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Create class with BM25 config", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		schemaClass := &models.Class{
 			Class:             "Run",
@@ -492,7 +492,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Create class with Stopword config", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		schemaClass := &models.Class{
 			Class:             "SpaceThings",
@@ -530,7 +530,7 @@ func TestSchema_integration(t *testing.T) {
 	})
 
 	t.Run("Create class with BM25 and Stopword config", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		schemaClass := &models.Class{
 			Class:               "SpaceThings",
@@ -589,7 +589,7 @@ func TestReplication(t *testing.T) {
 		}
 	})
 	t.Run("Create class with implicit replication config", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		className := "ReplicationClass"
 
 		schemaClass := &models.Class{
@@ -614,7 +614,7 @@ func TestReplication(t *testing.T) {
 	})
 
 	t.Run("Create class with explicit replication config", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		className := "ReplicationClass"
 
 		schemaClass := &models.Class{
@@ -658,14 +658,14 @@ func TestSchema_errors(t *testing.T) {
 	})
 
 	t.Run("Run Do without setting a class", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		err := client.Schema().ClassCreator().Do(context.Background())
 		assert.NotNil(t, err)
 	})
 
 	t.Run("Fail to add property having not supported tokenization", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		pizzaClass := &models.Class{
 			Class:       "Pizza",
@@ -720,7 +720,7 @@ func TestSchema_errors(t *testing.T) {
 
 func TestSchema_MultiTenancyConfig(t *testing.T) {
 	cleanup := func() {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		err := client.Schema().AllDeleter().Do(context.Background())
 		require.Nil(t, err)
 	}
@@ -735,7 +735,7 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 	t.Run("class with MT config - MT enabled", func(t *testing.T) {
 		defer cleanup()
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		className := "MultiTenantClass"
 		schemaClass := &models.Class{
 			Class: className,
@@ -766,7 +766,7 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 	t.Run("class with MT config - MT disabled", func(t *testing.T) {
 		defer cleanup()
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		className := "MultiTenantClassDisabled"
 		schemaClass := &models.Class{
 			Class: className,
@@ -797,7 +797,7 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 	t.Run("class without MT config", func(t *testing.T) {
 		defer cleanup()
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		className := "NonMultiTenantClass"
 		schemaClass := &models.Class{
 			Class: className,
@@ -832,7 +832,7 @@ func TestSchema_MultiTenancyConfig(t *testing.T) {
 
 func TestSchema_Tenants(t *testing.T) {
 	cleanup := func() {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		err := client.Schema().AllDeleter().Do(context.Background())
 		require.Nil(t, err)
 	}
@@ -850,7 +850,7 @@ func TestSchema_Tenants(t *testing.T) {
 	t.Run("adds tenants to MT class", func(t *testing.T) {
 		defer cleanup()
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaPizzaForTenants(t, client)
 
 		t.Run("adds single tenant", func(t *testing.T) {
@@ -889,7 +889,7 @@ func TestSchema_Tenants(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaPizza(t, client)
 
 		err := client.Schema().TenantsCreator().
@@ -911,7 +911,7 @@ func TestSchema_Tenants(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaPizzaForTenants(t, client)
 		testsuit.CreateTenantsPizza(t, client, tenants...)
 
@@ -928,7 +928,7 @@ func TestSchema_Tenants(t *testing.T) {
 	t.Run("fails getting tenants from non-MT class", func(t *testing.T) {
 		defer cleanup()
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaPizza(t, client)
 
 		gotTenants, err := client.Schema().TenantsGetter().
@@ -951,7 +951,7 @@ func TestSchema_Tenants(t *testing.T) {
 			{Name: "tenantNo3"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaPizzaForTenants(t, client)
 		testsuit.CreateTenantsPizza(t, client, tenants...)
 
@@ -979,7 +979,7 @@ func TestSchema_Tenants(t *testing.T) {
 
 		tenants := []string{"tenantNo1", "tenantNo2"}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaPizza(t, client)
 
 		err := client.Schema().TenantsDeleter().
@@ -1001,7 +1001,7 @@ func TestSchema_Tenants(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaPizzaForTenants(t, client)
 		testsuit.CreateTenantsPizza(t, client, tenants...)
 
@@ -1051,7 +1051,7 @@ func TestSchema_Tenants(t *testing.T) {
 			},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaPizza(t, client)
 
 		err := client.Schema().TenantsUpdater().
@@ -1075,7 +1075,7 @@ func TestSchema_Tenants(t *testing.T) {
 
 func TestSchema_TenantsActivationDeactivation(t *testing.T) {
 	cleanup := func() {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		err := client.Schema().AllDeleter().Do(context.Background())
 		require.Nil(t, err)
 	}
@@ -1108,7 +1108,7 @@ func TestSchema_TenantsActivationDeactivation(t *testing.T) {
 		ctx := context.Background()
 		ids := testsuit.IdsByClass[className]
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		assertTenantActive := func(t *testing.T, tenantName string) {
 			gotTenants, err := client.Schema().TenantsGetter().
