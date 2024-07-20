@@ -19,7 +19,7 @@ func TestMultiTargetSearch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to setup weaviate: %s", err)
 	}
-	client := testsuit.CreateTestClient()
+	client := testsuit.CreateTestClient(false)
 	ctx := context.TODO()
 
 	class := &models.Class{

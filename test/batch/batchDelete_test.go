@@ -26,7 +26,7 @@ func TestBatchDelete_integration(t *testing.T) {
 	})
 
 	t.Run("batch delete dry run", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		where := filters.Where().
@@ -63,7 +63,7 @@ func TestBatchDelete_integration(t *testing.T) {
 	})
 
 	t.Run("batch delete dry run and no output setting", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		where := filters.Where().
@@ -94,7 +94,7 @@ func TestBatchDelete_integration(t *testing.T) {
 	})
 
 	t.Run("batch delete dry run and no output setting and no dry run", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		where := filters.Where().
@@ -124,7 +124,7 @@ func TestBatchDelete_integration(t *testing.T) {
 	})
 
 	t.Run("batch delete", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		nowString := fmt.Sprint(time.Now().UnixNano() / int64(time.Millisecond))
@@ -166,7 +166,7 @@ func TestBatchDelete_integration(t *testing.T) {
 	})
 
 	t.Run("batch delete with consistency level", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		nowString := fmt.Sprint(time.Now().UnixNano() / int64(time.Millisecond))
@@ -209,7 +209,7 @@ func TestBatchDelete_integration(t *testing.T) {
 	})
 
 	t.Run("batch delete no matches", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 
 		where := filters.Where().
@@ -247,7 +247,7 @@ func TestBatchDelete_integration(t *testing.T) {
 
 func TestBatchDelete_MultiTenancy(t *testing.T) {
 	cleanup := func() {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		err := client.Schema().AllDeleter().Do(context.Background())
 		require.Nil(t, err)
 	}
@@ -267,7 +267,7 @@ func TestBatchDelete_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)
@@ -318,7 +318,7 @@ func TestBatchDelete_MultiTenancy(t *testing.T) {
 			{Name: "tenantNo2"},
 		}
 
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateSchemaFoodForTenants(t, client)
 		testsuit.CreateTenantsFood(t, client, tenants...)
 		testsuit.CreateDataFoodForTenants(t, client, tenants.Names()...)

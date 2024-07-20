@@ -23,7 +23,7 @@ func TestClassifications_With_Where_Filters_integration(t *testing.T) {
 	})
 
 	t.Run("POST /classifications", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		createClassificationClasses(t, client)
 
 		sourceWhere := filters.Where().
@@ -58,7 +58,7 @@ func TestClassifications_With_Where_Filters_integration(t *testing.T) {
 	})
 
 	t.Run("GET /classifications/{id}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		createClassificationClasses(t, client)
 
 		sourceWhere := filters.Where().

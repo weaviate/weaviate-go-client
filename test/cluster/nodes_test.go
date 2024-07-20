@@ -29,7 +29,7 @@ func TestClusterNodes_integration(t *testing.T) {
 	})
 
 	t.Run("GET /nodes without data", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		nodesStatus, err := client.Cluster().NodesStatusGetter().
 			WithOutput(verbosity.OutputVerbose).
 			Do(context.Background())
@@ -50,7 +50,7 @@ func TestClusterNodes_integration(t *testing.T) {
 	})
 
 	t.Run("GET /nodes with data", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
 

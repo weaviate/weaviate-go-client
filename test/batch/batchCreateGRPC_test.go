@@ -16,7 +16,7 @@ func TestBatchCreate_gRPC_integration(t *testing.T) {
 		require.Nil(t, err, "failed to start weaviate")
 	}
 
-	client := testsuit.CreateTestClient()
+	client := testsuit.CreateTestClient(true)
 
 	t.Run("gRPC batch import", func(t *testing.T) {
 		tests := []struct {
