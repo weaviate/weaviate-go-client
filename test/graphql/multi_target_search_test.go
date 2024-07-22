@@ -167,26 +167,26 @@ func TestMultiTargetNearVector(t *testing.T) {
 
 	outer := []struct {
 		name string
-		nvo  *graphql.NearMultiVectorArgumentBuilder
+		mta  *graphql.MultiTargetArgumentBuilder
 	}{
-		{name: "Sum", nvo: client.GraphQL().NearVectorMultiTargetArgBuilder().Sum("first", "second")},
-		{name: "Average", nvo: client.GraphQL().NearVectorMultiTargetArgBuilder().Average("first", "second")},
-		{name: "Minimum", nvo: client.GraphQL().NearVectorMultiTargetArgBuilder().Minimum("first", "second")},
-		{name: "Manual weights", nvo: client.GraphQL().NearVectorMultiTargetArgBuilder().ManualWeights(map[string]float32{"first": 1, "second": 1})},
-		{name: "Relative score", nvo: client.GraphQL().NearVectorMultiTargetArgBuilder().RelativeScore(map[string]float32{"first": 1, "second": 1})},
-		{name: "No", nvo: client.GraphQL().NearVectorMultiTargetArgBuilder()},
+		{name: "Sum", mta: client.GraphQL().MultiTargetArgumentBuilder().Sum("first", "second")},
+		{name: "Average", mta: client.GraphQL().MultiTargetArgumentBuilder().Average("first", "second")},
+		{name: "Minimum", mta: client.GraphQL().MultiTargetArgumentBuilder().Minimum("first", "second")},
+		{name: "Manual weights", mta: client.GraphQL().MultiTargetArgumentBuilder().ManualWeights(map[string]float32{"first": 1, "second": 1})},
+		{name: "Relative score", mta: client.GraphQL().MultiTargetArgumentBuilder().RelativeScore(map[string]float32{"first": 1, "second": 1})},
+		{name: "No", mta: client.GraphQL().MultiTargetArgumentBuilder()},
 	}
 	for _, to := range outer {
 		inner := []struct {
 			name string
-			nvi  *graphql.NearMultiVectorArgumentBuilder
+			nva  *graphql.NearVectorArgumentBuilder
 		}{
-			{name: "with vector", nvi: to.nvo.WithVector([]float32{1, 0, 0})},
-			{name: "with vector per target", nvi: to.nvo.WithVectorPerTarget(map[string][]float32{"first": {1, 0}, "second": {1, 0, 0}})},
+			{name: "with vector", nva: client.GraphQL().NearVectorArgBuilder().WithVector([]float32{1, 0, 0}).WithTargets(to.mta)},
+			{name: "with vector per target", nva: client.GraphQL().NearVectorArgBuilder().WithVectorPerTarget(map[string][]float32{"first": {1, 0}, "second": {1, 0, 0}}).WithTargets(to.mta)},
 		}
 		for _, ti := range inner {
 			t.Run(to.name+" combination "+ti.name, func(t *testing.T) {
-				resp, err := client.GraphQL().Get().WithNearMultiVector(ti.nvi).WithClassName(class.Class).WithFields(graphql.Field{Name: "_additional", Fields: []graphql.Field{{Name: "id"}}}).Do(ctx)
+				resp, err := client.GraphQL().Get().WithNearVector(ti.nva).WithClassName(class.Class).WithFields(graphql.Field{Name: "_additional", Fields: []graphql.Field{{Name: "id"}}}).Do(ctx)
 				require.Nil(t, err)
 				if resp.Errors != nil {
 					errors := make([]string, len(resp.Errors))
