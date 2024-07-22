@@ -35,7 +35,7 @@ func TestBackups_integration(t *testing.T) {
 		dockerComposeBackupDir += "-wcs"
 	}
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
-	client := testsuit.CreateTestClient()
+	client := testsuit.CreateTestClient(false)
 	testsuit.CleanUpWeaviate(t, client)
 
 	t.Run("create and restore backup with waiting", func(t *testing.T) {

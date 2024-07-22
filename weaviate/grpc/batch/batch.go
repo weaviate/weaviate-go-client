@@ -3,6 +3,8 @@ package batch
 import (
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
 	"github.com/weaviate/weaviate/entities/models"
@@ -27,8 +29,12 @@ func (b Batch) GetBatchObjects(objects []*models.Object) ([]*pb.BatchObject, err
 		if err != nil {
 			return nil, err
 		}
+		uid := obj.ID.String()
+		if obj.ID == "" {
+			uid = uuid.New().String()
+		}
 		batchObject := &pb.BatchObject{
-			Uuid:       obj.ID.String(),
+			Uuid:       uid,
 			Collection: obj.Class,
 			Vector:     obj.Vector,
 			Tenant:     obj.Tenant,

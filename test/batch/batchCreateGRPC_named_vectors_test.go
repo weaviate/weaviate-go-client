@@ -20,7 +20,7 @@ func TestBatchCreate_gRPC_named_vectors(t *testing.T) {
 		require.Nil(t, err, "failed to start weaviate")
 	}
 
-	client := testsuit.CreateTestClient()
+	client := testsuit.CreateTestClient(true)
 
 	t.Run("multiple vectors", func(t *testing.T) {
 		// run batch import

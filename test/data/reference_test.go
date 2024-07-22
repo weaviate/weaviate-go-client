@@ -26,7 +26,7 @@ func TestData_reference_integration(t *testing.T) {
 	})
 
 	t.Run("POST /{type}/{className}/{id}/references/{propertyName}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		propertySchemaT := map[string]string{
@@ -74,7 +74,7 @@ func TestData_reference_integration(t *testing.T) {
 	})
 
 	t.Run("POST /{type}/{className}/{id}/references/{propertyName}?consistency_level={level}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		var (
@@ -167,7 +167,7 @@ func TestData_reference_integration(t *testing.T) {
 	})
 
 	t.Run("PUT /{type}/{className}/{id}/references/{propertyName}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create things with references
@@ -231,7 +231,7 @@ func TestData_reference_integration(t *testing.T) {
 	})
 
 	t.Run("PUT /{type}/{className}/{id}/references/{propertyName}?consistency_level={level}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		var (
@@ -349,7 +349,7 @@ func TestData_reference_integration(t *testing.T) {
 	})
 
 	t.Run("DELETE /{type}/{className}/{id}/references/{propertyName}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		// Create things with references
@@ -397,7 +397,7 @@ func TestData_reference_integration(t *testing.T) {
 	})
 
 	t.Run("DELETE /{type}/{className}/{id}/references/{propertyName}?consistency_level={level}", func(t *testing.T) {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		testsuit.CreateWeaviateTestSchemaFoodWithReferenceProperty(t, client)
 
 		var (
@@ -516,7 +516,7 @@ func TestData_reference_integration(t *testing.T) {
 
 func TestDataReference_MultiTenancy(t *testing.T) {
 	cleanup := func() {
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 		err := client.Schema().AllDeleter().Do(context.Background())
 		require.Nil(t, err)
 	}
@@ -537,7 +537,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		}
 		soupIds := testsuit.IdsByClass["Soup"]
 		pizzaIds := testsuit.IdsByClass["Pizza"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
@@ -608,7 +608,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		}
 		soupIds := testsuit.IdsByClass["Soup"]
 		pizzaIds := testsuit.IdsByClass["Pizza"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
@@ -678,7 +678,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		}
 		pizzaIds := testsuit.IdsByClass["Pizza"]
 		soupIds := testsuit.IdsByClass["Soup"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
@@ -778,7 +778,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		}
 		pizzaIds := testsuit.IdsByClass["Pizza"]
 		soupIds := testsuit.IdsByClass["Soup"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
@@ -880,7 +880,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		soupIds := testsuit.IdsByClass["Soup"]
 		pizzaIdsBefore := testsuit.IdsByClass["Pizza"][:2]
 		pizzaIdsAfter := testsuit.IdsByClass["Pizza"][2:]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
@@ -995,7 +995,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		soupIds := testsuit.IdsByClass["Soup"]
 		pizzaIdsBefore := testsuit.IdsByClass["Pizza"][:2]
 		pizzaIdsAfter := testsuit.IdsByClass["Pizza"][2:]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenants...)
@@ -1106,7 +1106,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		tenantSoup := models.Tenant{Name: "tenantSoup"}
 		pizzaIds := testsuit.IdsByClass["Pizza"]
 		soupIds := testsuit.IdsByClass["Soup"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenantSoup)
@@ -1169,7 +1169,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		tenantSoup := models.Tenant{Name: "tenantSoup"}
 		pizzaIds := testsuit.IdsByClass["Pizza"]
 		soupIds := testsuit.IdsByClass["Soup"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenantSoup)
@@ -1256,7 +1256,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		tenantSoup := models.Tenant{Name: "tenantSoup"}
 		pizzaIds := testsuit.IdsByClass["Pizza"]
 		soupIds := testsuit.IdsByClass["Soup"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenantSoup)
@@ -1341,7 +1341,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		tenantSoup := models.Tenant{Name: "tenantSoup"}
 		pizzaIds := testsuit.IdsByClass["Pizza"]
 		soupIds := testsuit.IdsByClass["Soup"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenantSoup)
@@ -1428,7 +1428,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		pizzaIdsBefore := testsuit.IdsByClass["Pizza"][:2]
 		pizzaIdsAfter := testsuit.IdsByClass["Pizza"][2:]
 		soupIds := testsuit.IdsByClass["Soup"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenantSoup)
@@ -1526,7 +1526,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		pizzaIdsBefore := testsuit.IdsByClass["Pizza"][:2]
 		pizzaIdsAfter := testsuit.IdsByClass["Pizza"][2:]
 		soupIds := testsuit.IdsByClass["Soup"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoupForTenants(t, client)
 		testsuit.CreateTenantsSoup(t, client, tenantSoup)
@@ -1625,7 +1625,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		tenantPizza := models.Tenant{Name: "tenantPizza"}
 		pizzaIds := testsuit.IdsByClass["Pizza"]
 		soupIds := testsuit.IdsByClass["Soup"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoup(t, client)
 		testsuit.CreateDataSoup(t, client)
@@ -1702,7 +1702,7 @@ func TestDataReference_MultiTenancy(t *testing.T) {
 		tenantPizza := models.Tenant{Name: "tenantPizza"}
 		pizzaIds := testsuit.IdsByClass["Pizza"]
 		soupIds := testsuit.IdsByClass["Soup"]
-		client := testsuit.CreateTestClient()
+		client := testsuit.CreateTestClient(false)
 
 		testsuit.CreateSchemaSoup(t, client)
 		testsuit.CreateDataSoup(t, client)
