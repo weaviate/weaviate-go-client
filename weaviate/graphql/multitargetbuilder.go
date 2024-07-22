@@ -97,22 +97,22 @@ func (m *MultiTargetArgumentBuilder) build() string {
 		if err != nil {
 			panic(fmt.Sprintf("could not marshal target vectors: %v", err))
 		}
-		targetVectorsString := fmt.Sprintf(", targetVectors:%s", string(targetVectorsBytes))
+		targetVectorsString := fmt.Sprintf(", targetVectors: %s", string(targetVectorsBytes))
 
 		weightsString := ""
 		combinationWeights := m.getCombinationWeights()
 		if len(combinationWeights) > 0 {
 			weights := make([]string, 0, len(combinationWeights))
 			for k, v := range combinationWeights {
-				weights = append(weights, fmt.Sprintf("%s:%v", k, v))
+				weights = append(weights, fmt.Sprintf("%s: %v", k, v))
 			}
-			weightsString = fmt.Sprintf(", weights:{%s}", strings.Join(weights, ","))
+			weightsString = fmt.Sprintf(", weights: {%s}", strings.Join(weights, ","))
 		}
 
 		combinationMethodString := ""
 		combinationMethod := m.getCombinationMethod()
 		if combinationMethod != "" {
-			combinationMethodString = fmt.Sprintf("combinationMethod:%s", combinationMethod)
+			combinationMethodString = fmt.Sprintf("combinationMethod: %s", combinationMethod)
 		}
 
 		clause = append(clause, fmt.Sprintf(
