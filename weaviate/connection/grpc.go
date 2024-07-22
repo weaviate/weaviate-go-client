@@ -14,23 +14,25 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 )
 
 type GrpcClient struct {
 	client  pb.WeaviateClient
 	headers map[string]string
+	timeout time.Duration
 	batch   grpcbatch.Batch
 }
 
 func NewGrpcClient(host string, secured bool, headers map[string]string,
-	gRPCVersionSupport *db.GRPCVersionSupport, timeout time.Duration,
+	gRPCVersionSupport *db.GRPCVersionSupport, timeout, startupTimeout time.Duration,
 ) (*GrpcClient, error) {
-	client, err := createClient(host, secured, timeout)
+	client, err := createClient(host, secured, startupTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("create grpc client: %w", err)
 	}
-	return &GrpcClient{client, headers, grpcbatch.New(gRPCVersionSupport)}, nil
+	return &GrpcClient{client, headers, timeout, grpcbatch.New(gRPCVersionSupport)}, nil
 }
 
 func (c *GrpcClient) BatchObjects(ctx context.Context, objects []*models.Object,
@@ -40,8 +42,15 @@ func (c *GrpcClient) BatchObjects(ctx context.Context, objects []*models.Object,
 	if err != nil {
 		return nil, err
 	}
-	reply, err := c.client.BatchObjects(c.ctxWithHeaders(ctx), batchRequest, c.getOptions()...)
+	reply, err := c.doBatchObjects(ctx, batchRequest)
 	return c.batch.ParseReply(reply, objects), err
+}
+
+func (c *GrpcClient) doBatchObjects(ctx context.Context, batchRequest *pb.BatchObjectsRequest) (*pb.BatchObjectsReply, error) {
+	ctxWithTimeoutAndHeaders, cancel := c.ctxWithTimeoutWithHeaders(ctx)
+	defer cancel()
+
+	return c.client.BatchObjects(ctxWithTimeoutAndHeaders, batchRequest, c.getOptions()...)
 }
 
 func (c *GrpcClient) getBatchRequest(objects []*models.Object, consistencyLevel string) (*pb.BatchObjectsRequest, error) {
@@ -55,20 +64,20 @@ func (c *GrpcClient) getBatchRequest(objects []*models.Object, consistencyLevel 
 	}, nil
 }
 
-func (c *GrpcClient) ctxWithHeaders(ctx context.Context) context.Context {
+func (c *GrpcClient) ctxWithTimeoutWithHeaders(ctx context.Context) (context.Context, context.CancelFunc) {
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, c.timeout)
 	if len(c.headers) > 0 {
-		return metadata.NewOutgoingContext(ctx, metadata.New(c.headers))
+		return metadata.NewOutgoingContext(ctxWithTimeout, metadata.New(c.headers)), cancel
 	}
-	return ctx
+	return ctxWithTimeout, cancel
 }
 
 func (c *GrpcClient) getOptions() []grpc.CallOption {
 	return []grpc.CallOption{}
 }
 
-func createClient(host string, secured bool, timeout time.Duration) (pb.WeaviateClient, error) {
+func createClient(host string, secured bool, startupTimeout time.Duration) (pb.WeaviateClient, error) {
 	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithBlock())
 	if secured || strings.HasSuffix(host, ":443") {
 		tlsConfig := &tls.Config{
 			InsecureSkipVerify: true,
@@ -77,10 +86,20 @@ func createClient(host string, secured bool, timeout time.Duration) (pb.Weaviate
 	} else {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
-	opts = append(opts, grpc.WithTimeout(timeout))
-	conn, err := grpc.Dial(getAddress(host, secured), opts...)
+	conn, err := grpc.NewClient(getAddress(host, secured), opts...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to dial: %w", err)
+		return nil, fmt.Errorf("failed to create gRPC client: %w", err)
+	}
+	if startupTimeout != 0 {
+		// check if the gRPC connection is possible
+		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), startupTimeout)
+		client := grpc_health_v1.NewHealthClient(conn)
+		_, err := client.Check(ctxWithTimeout, &grpc_health_v1.HealthCheckRequest{})
+		if err != nil {
+			cancel()
+			return nil, fmt.Errorf("failed to connect to host: %s with secured set to: %v: %w", host, secured, err)
+		}
+		cancel()
 	}
 	return pb.NewWeaviateClient(conn), nil
 }

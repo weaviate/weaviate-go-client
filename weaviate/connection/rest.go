@@ -33,10 +33,10 @@ func finalizer(c *Connection) {
 
 // NewConnection based on scheme://host
 // if httpClient is nil a default client will be used
-func NewConnection(scheme string, host string, httpClient *http.Client, headers map[string]string) *Connection {
+func NewConnection(scheme string, host string, httpClient *http.Client, timeout time.Duration, headers map[string]string) *Connection {
 	client := httpClient
 	if client == nil {
-		client = &http.Client{}
+		client = &http.Client{Timeout: timeout}
 	}
 	connection := &Connection{
 		basePath:   scheme + "://" + host + "/" + apiVersion,
