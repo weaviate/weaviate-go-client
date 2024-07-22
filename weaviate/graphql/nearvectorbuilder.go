@@ -56,9 +56,9 @@ func (b *NearVectorArgumentBuilder) WithTargetVectors(targetVectors ...string) *
 
 // WithTargets sets the multi target vectors to be used with hybrid query. This builder method takes precedence over WithTargetVectors.
 // So if WithTargets is used, WithTargetVectors will be ignored.
-func (h *NearVectorArgumentBuilder) WithTargets(targets *MultiTargetArgumentBuilder) *NearVectorArgumentBuilder {
-	h.targets = targets
-	return h
+func (b *NearVectorArgumentBuilder) WithTargets(targets *MultiTargetArgumentBuilder) *NearVectorArgumentBuilder {
+	b.targets = targets
+	return b
 }
 
 // Build build the given clause
