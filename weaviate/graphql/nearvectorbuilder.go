@@ -7,18 +7,28 @@ import (
 )
 
 type NearVectorArgumentBuilder struct {
-	vector        []float32
-	withCertainty bool
-	certainty     float32
-	withDistance  bool
-	distance      float32
-	targetVectors []string
-	targets       *MultiTargetArgumentBuilder
+	vector          []float32
+	vectorPerTarget map[string][]float32
+	withCertainty   bool
+	certainty       float32
+	withDistance    bool
+	distance        float32
+	targetVectors   []string
+	targets         *MultiTargetArgumentBuilder
 }
 
 // WithVector sets the search vector to be used in query
 func (b *NearVectorArgumentBuilder) WithVector(vector []float32) *NearVectorArgumentBuilder {
 	b.vector = vector
+	return b
+}
+
+// WithVectorPerTarget sets the search vector per target to be used in a multi target search query. This builder method takes
+// precedence over WithVector. So if WithVectorPerTarget is used, WithVector will be ignored.
+func (b *NearVectorArgumentBuilder) WithVectorPerTarget(vectorPerTarget map[string][]float32) *NearVectorArgumentBuilder {
+	if len(vectorPerTarget) > 0 {
+		b.vectorPerTarget = vectorPerTarget
+	}
 	return b
 }
 
@@ -44,23 +54,41 @@ func (b *NearVectorArgumentBuilder) WithTargetVectors(targetVectors ...string) *
 	return b
 }
 
-// WithTargets sets the multi target vectors to be used with hybrid query. This builder takes precedence over WithTargetVectors.
+// WithTargets sets the multi target vectors to be used with hybrid query. This builder method takes precedence over WithTargetVectors.
 // So if WithTargets is used, WithTargetVectors will be ignored.
-func (h *NearVectorArgumentBuilder) WithTargets(targets *MultiTargetArgumentBuilder) *NearVectorArgumentBuilder {
-	h.targets = targets
-	return h
+func (b *NearVectorArgumentBuilder) WithTargets(targets *MultiTargetArgumentBuilder) *NearVectorArgumentBuilder {
+	b.targets = targets
+	return b
 }
 
 // Build build the given clause
 func (b *NearVectorArgumentBuilder) build() string {
 	clause := []string{}
+	targetVectors := b.targetVectors
 	if b.withCertainty {
 		clause = append(clause, fmt.Sprintf("certainty: %v", b.certainty))
 	}
 	if b.withDistance {
 		clause = append(clause, fmt.Sprintf("distance: %v", b.distance))
 	}
-	if len(b.vector) != 0 {
+	if len(b.vectorPerTarget) > 0 {
+		vectorPerTarget := make([]string, 0, len(b.vectorPerTarget))
+		for k, v := range b.vectorPerTarget {
+			vBytes, err := json.Marshal(v)
+			if err != nil {
+				panic(fmt.Sprintf("could not marshal vector: %v", err))
+			}
+			vectorPerTarget = append(vectorPerTarget, fmt.Sprintf("%s: %v", k, string(vBytes)))
+		}
+		clause = append(clause, fmt.Sprintf("vectorPerTarget: {%s}", strings.Join(vectorPerTarget, ",")))
+		if len(targetVectors) == 0 {
+			targetVectors = make([]string, 0, len(b.vectorPerTarget))
+			for k := range b.vectorPerTarget {
+				targetVectors = append(targetVectors, k)
+			}
+		}
+	}
+	if len(b.vector) != 0 && len(b.vectorPerTarget) == 0 {
 		vectorB, err := json.Marshal(b.vector)
 		if err != nil {
 			panic(fmt.Errorf("failed to unmarshal nearVector search vector: %s", err))
@@ -68,10 +96,10 @@ func (b *NearVectorArgumentBuilder) build() string {
 		clause = append(clause, fmt.Sprintf("vector: %s", string(vectorB)))
 	}
 	if b.targets != nil {
-		clause = append(clause, fmt.Sprintf("targets:{%s}", b.targets.build()))
+		clause = append(clause, fmt.Sprintf("targets: {%s}", b.targets.build()))
 	}
-	if len(b.targetVectors) > 0 && b.targets == nil {
-		targetVectors, _ := json.Marshal(b.targetVectors)
+	if len(targetVectors) > 0 && b.targets == nil {
+		targetVectors, _ := json.Marshal(targetVectors)
 		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}
 	return fmt.Sprintf("nearVector:{%v}", strings.Join(clause, " "))
