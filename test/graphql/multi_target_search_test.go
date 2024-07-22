@@ -19,7 +19,7 @@ func TestMultiTargetNearObject(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to setup weaviate: %s", err)
 	}
-	client := testsuit.CreateTestClient()
+	client := testsuit.CreateTestClient(false)
 	ctx := context.TODO()
 
 	class := &models.Class{
@@ -80,7 +80,7 @@ func TestMultiTargetNearText(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to setup weaviate: %s", err)
 	}
-	client := testsuit.CreateTestClient()
+	client := testsuit.CreateTestClient(false)
 	ctx := context.TODO()
 
 	class := &models.Class{
@@ -144,7 +144,7 @@ func TestMultiTargetNearVector(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to setup weaviate: %s", err)
 	}
-	client := testsuit.CreateTestClient()
+	client := testsuit.CreateTestClient(false)
 	ctx := context.TODO()
 
 	class := &models.Class{
