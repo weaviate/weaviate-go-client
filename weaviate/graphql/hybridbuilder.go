@@ -22,6 +22,7 @@ type HybridArgumentBuilder struct {
 	properties    []string
 	fusionType    FusionType
 	targetVectors []string
+	targets       *MultiTargetArgumentBuilder
 	searches      *HybridSearchesArgumentBuilder
 }
 
@@ -62,6 +63,13 @@ func (h *HybridArgumentBuilder) WithTargetVectors(targetVectors ...string) *Hybr
 	return h
 }
 
+// WithTargets sets the multi target vectors to be used with hybrid query. This builder takes precedence over WithTargetVectors.
+// So if WithTargets is used, WithTargetVectors will be ignored.
+func (h *HybridArgumentBuilder) WithTargets(targets *MultiTargetArgumentBuilder) *HybridArgumentBuilder {
+	h.targets = targets
+	return h
+}
+
 // WithSearches sets the searches to be used with hybrid.
 func (h *HybridArgumentBuilder) WithSearches(searches *HybridSearchesArgumentBuilder) *HybridArgumentBuilder {
 	h.searches = searches
@@ -97,7 +105,11 @@ func (h *HybridArgumentBuilder) build() string {
 		clause = append(clause, fmt.Sprintf("fusionType: %s", h.fusionType))
 	}
 
-	if len(h.targetVectors) > 0 {
+	if h.targets != nil {
+		clause = append(clause, fmt.Sprintf("targets:{%s}", h.targets.build()))
+	}
+
+	if len(h.targetVectors) > 0 && h.targets == nil {
 		targetVectors, _ := json.Marshal(h.targetVectors)
 		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}

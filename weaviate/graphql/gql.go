@@ -62,11 +62,6 @@ func (api *API) NearVectorArgBuilder() *NearVectorArgumentBuilder {
 	return &NearVectorArgumentBuilder{}
 }
 
-// NearVectorArgBuilder nearVector clause
-func (api *API) NearVectorMultiTargetArgBuilder() *NearMultiVectorArgumentBuilder {
-	return &NearMultiVectorArgumentBuilder{}
-}
-
 // AskArgBuilder ask clause
 func (api *API) AskArgBuilder() *AskArgumentBuilder {
 	return &AskArgumentBuilder{}
@@ -115,6 +110,11 @@ func (api *API) Bm25ArgBuilder() *BM25ArgumentBuilder {
 // HybridArgumentBuilder hybrid clause
 func (api *API) HybridArgumentBuilder() *HybridArgumentBuilder {
 	return &HybridArgumentBuilder{}
+}
+
+// MultiTargetArgumentBuilder targets clause
+func (api *API) MultiTargetArgumentBuilder() *MultiTargetArgumentBuilder {
+	return &MultiTargetArgumentBuilder{}
 }
 
 // HybridSearchesArgumentBuilder hybrid.searches clause

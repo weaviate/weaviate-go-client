@@ -14,6 +14,7 @@ type NearObjectArgumentBuilder struct {
 	withDistance  bool
 	distance      float32
 	targetVectors []string
+	targets       *MultiTargetArgumentBuilder
 }
 
 // WithID the id of the object
@@ -50,6 +51,13 @@ func (e *NearObjectArgumentBuilder) WithTargetVectors(targetVectors ...string) *
 	return e
 }
 
+// WithTargets sets the multi target vectors to be used with hybrid query. This builder takes precedence over WithTargetVectors.
+// So if WithTargets is used, WithTargetVectors will be ignored.
+func (h *NearObjectArgumentBuilder) WithTargets(targets *MultiTargetArgumentBuilder) *NearObjectArgumentBuilder {
+	h.targets = targets
+	return h
+}
+
 // Build build the given clause
 func (e *NearObjectArgumentBuilder) build() string {
 	clause := []string{}
@@ -65,7 +73,10 @@ func (e *NearObjectArgumentBuilder) build() string {
 	if e.withDistance {
 		clause = append(clause, fmt.Sprintf("distance: %v", e.distance))
 	}
-	if len(e.targetVectors) > 0 {
+	if e.targets != nil {
+		clause = append(clause, fmt.Sprintf("targets:{%s}", e.targets.build()))
+	}
+	if len(e.targetVectors) > 0 && e.targets == nil {
 		targetVectors, _ := json.Marshal(e.targetVectors)
 		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}

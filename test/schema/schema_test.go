@@ -684,7 +684,7 @@ func TestSchema_errors(t *testing.T) {
 
 		err = client.Schema().PropertyCreator().WithClassName("Pizza").
 			WithProperty(notExistingTokenizationProperty).Do(context.Background())
-		assert.EqualError(t, err, `status code: 422, error: {"code":606,"message":"tokenization in body should be one of [word lowercase whitespace field trigram gse]"}`)
+		assert.EqualError(t, err, `status code: 422, error: {"code":606,"message":"tokenization in body should be one of [word lowercase whitespace field trigram gse kagome_kr]"}`)
 
 		notSupportedTokenizationProperty1 := &models.Property{
 			DataType:     []string{"text"},
