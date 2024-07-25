@@ -51,6 +51,11 @@ func TestMTBatching_stress(t *testing.T) {
 		}
 	})
 
+	vector := make([]float32, 16)
+	for i := range vector {
+		vector[i] = float32(i) / 16
+	}
+
 	t.Run("Create 1000 objects per 1000 tenants", func(t *testing.T) {
 		tenantsN := 1000
 		objectsN := 1000
@@ -59,6 +64,7 @@ func TestMTBatching_stress(t *testing.T) {
 		for i := 0; i < tenantsN; i++ {
 			tenant := fmt.Sprintf("tenant-%v", i)
 			for j := 0; j < objectsN; j++ {
+
 				obj := &models.Object{
 					Class: "Collection",
 					Properties: map[string]interface{}{
@@ -67,6 +73,7 @@ func TestMTBatching_stress(t *testing.T) {
 						"price": 42.0 * float64(j),
 					},
 					Tenant: tenant,
+					Vector: vector,
 				}
 				batcher = batcher.WithObjects(obj)
 
