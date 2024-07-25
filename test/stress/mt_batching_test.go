@@ -22,34 +22,32 @@ func TestMTBatching_stress(t *testing.T) {
 		require.Nil(t, err)
 	}()
 
-	t.Run("Create multi-tenancy collection", func(t *testing.T) {
-		err := client.Schema().ClassCreator().WithClass(&models.Class{
-			Class: className,
-			Properties: []*models.Property{
-				{
-					DataType: []string{"string"},
-					Name:     "name",
-				},
-				{
-					DataType: []string{"int"},
-					Name:     "count",
-				},
-				{
-					DataType: []string{"number"},
-					Name:     "price",
-				},
+	err := client.Schema().ClassCreator().WithClass(&models.Class{
+		Class: className,
+		Properties: []*models.Property{
+			{
+				DataType: []string{"string"},
+				Name:     "name",
 			},
-			MultiTenancyConfig: &models.MultiTenancyConfig{
-				AutoTenantActivation: true,
-				AutoTenantCreation:   true,
-				Enabled:              true,
+			{
+				DataType: []string{"int"},
+				Name:     "count",
 			},
-			Vectorizer: "none",
-		}).Do(ctx)
-		if err != nil {
-			t.Fatalf("Create collection: %v", err)
-		}
-	})
+			{
+				DataType: []string{"number"},
+				Name:     "price",
+			},
+		},
+		MultiTenancyConfig: &models.MultiTenancyConfig{
+			AutoTenantActivation: true,
+			AutoTenantCreation:   true,
+			Enabled:              true,
+		},
+		Vectorizer: "none",
+	}).Do(ctx)
+	if err != nil {
+		t.Fatalf("Create collection: %v", err)
+	}
 
 	vector := make([]float32, 16)
 	for i := range vector {
@@ -106,9 +104,7 @@ func TestMTBatching_stress(t *testing.T) {
 				WithTenant(tenant).
 				WithFields(graphql.Field{Name: "name"}).
 				Do(ctx)
-			if err != nil {
-				t.Fatalf("Search objects usage error: %v", err)
-			}
+			require.Nil(t, err)
 			if res.Errors != nil {
 				t.Fatalf("Search objects GQL error: %+v", res.Errors[0])
 			}
