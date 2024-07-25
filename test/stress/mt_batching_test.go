@@ -51,17 +51,14 @@ func TestMTBatching_stress(t *testing.T) {
 		}
 	})
 
-	t.Run("Create 200 objects per 1000 tenants", func(t *testing.T) {
+	t.Run("Create 1000 objects per 1000 tenants", func(t *testing.T) {
 		tenantsN := 1000
-		objectsN := 200
+		objectsN := 1000
+		count := 0
+		batcher := client.Batch().ObjectsBatcher()
 		for i := 0; i < tenantsN; i++ {
-			batcher := client.Batch().ObjectsBatcher()
 			tenant := fmt.Sprintf("tenant-%v", i)
 			for j := 0; j < objectsN; j++ {
-				vector := make([]float32, 1536)
-				for i := range vector {
-					vector[i] = float32(i) / 1536
-				}
 				obj := &models.Object{
 					Class: "Collection",
 					Properties: map[string]interface{}{
@@ -69,16 +66,25 @@ func TestMTBatching_stress(t *testing.T) {
 						"count": j,
 						"price": 42.0 * float64(j),
 					},
-					Vector: vector,
 					Tenant: tenant,
 				}
 				batcher = batcher.WithObjects(obj)
+
+				if count == 1000 {
+					_, err := batcher.Do(ctx)
+					if err != nil {
+						t.Fatalf("Batch create objects: %v", err)
+					}
+					batcher = client.Batch().ObjectsBatcher()
+					count = 0
+				} else {
+					count++
+				}
 			}
-			_, err := batcher.Do(ctx)
-			if err != nil {
-				t.Fatalf("Batch create objects: %v", err)
-			}
-			t.Logf("Batch created %v objects in %s", objectsN, tenant)
+		}
+		_, err := batcher.Do(ctx)
+		if err != nil {
+			t.Fatalf("Batch create objects: %v", err)
 		}
 	})
 
