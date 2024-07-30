@@ -1009,3 +1009,26 @@ func TestBatchResponseError(t *testing.T) {
 		})
 	}
 }
+
+func TestBatchWrongInput(t *testing.T) {
+	require.Nil(t, testenv.SetupLocalWeaviate())
+	client := testsuit.CreateTestClient(true)
+	ctx := context.Background()
+
+	className := "TestBatchResponseError"
+	require.Nil(t, client.Schema().ClassDeleter().WithClassName(className).Do(ctx))
+	defer client.Schema().ClassDeleter().WithClassName(className).Do(ctx)
+
+	err := client.Schema().ClassCreator().WithClass(&models.Class{Class: className}).Do(ctx)
+	require.Nil(t, err)
+
+	// only set one object
+	objects := make([]*models.Object, 2)
+	objects[0] = &models.Object{Class: className, Properties: map[string]interface{}{}}
+
+	batchResultSlice, err := client.Batch().ObjectsBatcher().WithObjects(objects...).Do(context.Background())
+	require.NotNil(t, err)
+	require.Nil(t, batchResultSlice)
+
+	require.Nil(t, testenv.TearDownLocalWeaviate())
+}
