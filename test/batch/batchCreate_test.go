@@ -2,6 +2,7 @@ package batch
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -966,4 +967,68 @@ func TestBatchReferenceCreate_MultiTenancy(t *testing.T) {
 			t.Fatalf("failed to tear down weaviate: %s", err)
 		}
 	})
+}
+
+func TestBatchResponseError(t *testing.T) {
+	require.Nil(t, testenv.SetupLocalWeaviate())
+	grpc := []bool{true, false}
+	for i := range grpc {
+		t.Run(fmt.Sprintf("grpc: %v", grpc[i]), func(t *testing.T) {
+			client := testsuit.CreateTestClient(grpc[i])
+			ctx := context.Background()
+
+			className := "TestBatchResponseError"
+			require.Nil(t, client.Schema().ClassDeleter().WithClassName(className).Do(ctx))
+			defer client.Schema().ClassDeleter().WithClassName(className).Do(ctx)
+
+			tenant := "tenant"
+
+			err := client.Schema().ClassCreator().WithClass(&models.Class{
+				Class:              className,
+				Properties:         []*models.Property{{DataType: []string{"int"}, Name: "age"}},
+				MultiTenancyConfig: &models.MultiTenancyConfig{Enabled: true, AutoTenantCreation: true},
+				Vectorizer:         "none",
+			}).Do(ctx)
+			require.Nil(t, err)
+
+			require.Nil(t, client.Schema().TenantsCreator().
+				WithClassName(className).
+				WithTenants(models.Tenant{Name: tenant}).
+				Do(ctx))
+
+			objects := make([]*models.Object, 11)
+			for i := 0; i < 11; i++ {
+				objects[i] = &models.Object{Class: className}
+			}
+
+			batchResultSlice, err := client.Batch().ObjectsBatcher().WithObjects(objects...).Do(context.Background())
+			require.NotNil(t, err)
+			require.Nil(t, batchResultSlice)
+
+			require.Nil(t, testenv.TearDownLocalWeaviate())
+		})
+	}
+}
+
+func TestBatchWrongInput(t *testing.T) {
+	require.Nil(t, testenv.SetupLocalWeaviate())
+	client := testsuit.CreateTestClient(true)
+	ctx := context.Background()
+
+	className := "TestBatchResponseError"
+	require.Nil(t, client.Schema().ClassDeleter().WithClassName(className).Do(ctx))
+	defer client.Schema().ClassDeleter().WithClassName(className).Do(ctx)
+
+	err := client.Schema().ClassCreator().WithClass(&models.Class{Class: className}).Do(ctx)
+	require.Nil(t, err)
+
+	// only set one object
+	objects := make([]*models.Object, 2)
+	objects[0] = &models.Object{Class: className, Properties: map[string]interface{}{}}
+
+	batchResultSlice, err := client.Batch().ObjectsBatcher().WithObjects(objects...).Do(context.Background())
+	require.NotNil(t, err)
+	require.Nil(t, batchResultSlice)
+
+	require.Nil(t, testenv.TearDownLocalWeaviate())
 }

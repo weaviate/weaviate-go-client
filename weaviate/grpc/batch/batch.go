@@ -25,6 +25,9 @@ func New(gRPCVersionSupport *db.GRPCVersionSupport) Batch {
 func (b Batch) GetBatchObjects(objects []*models.Object) ([]*pb.BatchObject, error) {
 	result := make([]*pb.BatchObject, len(objects))
 	for i, obj := range objects {
+		if obj == nil {
+			return nil, fmt.Errorf("object at index %d is nil", i)
+		}
 		properties, err := b.getProperties(obj.Properties)
 		if err != nil {
 			return nil, err

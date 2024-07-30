@@ -43,6 +43,9 @@ func (c *GrpcClient) BatchObjects(ctx context.Context, objects []*models.Object,
 		return nil, err
 	}
 	reply, err := c.doBatchObjects(ctx, batchRequest)
+	if err != nil {
+		return nil, fmt.Errorf("batch objects: %w", err)
+	}
 	return c.batch.ParseReply(reply, objects), err
 }
 
