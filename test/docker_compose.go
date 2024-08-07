@@ -9,8 +9,9 @@ import (
 
 // SetupWeaviate run docker compose up
 func SetupWeaviate() error {
-	app := "docker compose"
+	app := "docker"
 	arguments := []string{
+		"compose",
 		"up",
 		"-d",
 	}
@@ -24,8 +25,9 @@ func SetupWeaviate() error {
 
 // TearDownWeaviate run docker-compose down
 func TearDownWeaviate() error {
-	app := "docker compose"
+	app := "docker"
 	arguments := []string{
+		"compose",
 		"down",
 		"--remove-orphans",
 	}
