@@ -9,16 +9,15 @@ import (
 
 // SetupWeaviate run docker compose up
 func SetupWeaviate() error {
+	_, _, authEnabled := testsuit.GetPortAndAuthPw()
 	app := "docker"
 	arguments := []string{
 		"compose",
-		"up",
-		"-d",
 	}
-	_, _, authEnabled := testsuit.GetPortAndAuthPw()
-	if authEnabled {
+	if authEnabled { // location of argument is important
 		arguments = append(arguments, "-f", "docker-compose-wcs.yml")
 	}
+	arguments = append(arguments, "up", "-d")
 
 	return command(app, arguments)
 }
