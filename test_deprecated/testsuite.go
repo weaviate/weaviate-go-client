@@ -72,8 +72,9 @@ func SetupLocalWeaviateDeprecated() error {
 // SetupWeaviateDeprecated run docker compose up
 // for pre-v1.14 backwards compatibility tests
 func SetupWeaviateDeprecated() error {
-	app := "docker-compose"
+	app := "docker"
 	arguments := []string{
+		"compose",
 		"-f",
 		"docker-compose-deprecated-api-test.yml",
 		"up",
@@ -85,8 +86,9 @@ func SetupWeaviateDeprecated() error {
 // TearDownWeaviateDeprecated run docker-compose down
 // for pre-v1.14 backwards compatibility tests
 func TearDownWeaviateDeprecated() error {
-	app := "docker-compose"
+	app := "docker"
 	arguments := []string{
+		"compose",
 		"-f",
 		"docker-compose-deprecated-api-test.yml",
 		"down",

@@ -9,23 +9,24 @@ import (
 
 // SetupWeaviate run docker compose up
 func SetupWeaviate() error {
-	app := "docker-compose"
-	arguments := []string{
-		"up",
-		"-d",
-	}
 	_, _, authEnabled := testsuit.GetPortAndAuthPw()
-	if authEnabled {
-		arguments = append([]string{"-f", "docker-compose-wcs.yml"}, arguments...)
+	app := "docker"
+	arguments := []string{
+		"compose",
 	}
+	if authEnabled { // location of argument is important
+		arguments = append(arguments, "-f", "docker-compose-wcs.yml")
+	}
+	arguments = append(arguments, "up", "-d")
 
 	return command(app, arguments)
 }
 
 // TearDownWeaviate run docker-compose down
 func TearDownWeaviate() error {
-	app := "docker-compose"
+	app := "docker"
 	arguments := []string{
+		"compose",
 		"down",
 		"--remove-orphans",
 	}
