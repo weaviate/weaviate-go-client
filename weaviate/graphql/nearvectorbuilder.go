@@ -7,14 +7,14 @@ import (
 )
 
 type NearVectorArgumentBuilder struct {
-	vector          []float32
-	vectorPerTarget map[string][]float32
-	withCertainty   bool
-	certainty       float32
-	withDistance    bool
-	distance        float32
-	targetVectors   []string
-	targets         *MultiTargetArgumentBuilder
+	vector           []float32
+	vectorsPerTarget map[string][][]float32
+	withCertainty    bool
+	certainty        float32
+	withDistance     bool
+	distance         float32
+	targetVectors    []string
+	targets          *MultiTargetArgumentBuilder
 }
 
 // WithVector sets the search vector to be used in query
@@ -27,7 +27,20 @@ func (b *NearVectorArgumentBuilder) WithVector(vector []float32) *NearVectorArgu
 // precedence over WithVector. So if WithVectorPerTarget is used, WithVector will be ignored.
 func (b *NearVectorArgumentBuilder) WithVectorPerTarget(vectorPerTarget map[string][]float32) *NearVectorArgumentBuilder {
 	if len(vectorPerTarget) > 0 {
-		b.vectorPerTarget = vectorPerTarget
+		vectorPerTargetTmp := make(map[string][][]float32)
+		for k, v := range vectorPerTarget {
+			vectorPerTargetTmp[k] = [][]float32{v}
+		}
+		b.vectorsPerTarget = vectorPerTargetTmp
+	}
+	return b
+}
+
+// WithVectorsPerTarget sets the search vector per target to be used in a multi target search query. This builder method takes
+// precedence over WithVector and WithVectorPerTarget. So if WithVectorsPerTarget is used, WithVector and WithVectorPerTarget will be ignored.
+func (b *NearVectorArgumentBuilder) WithVectorsPerTarget(vectorPerTarget map[string][][]float32) *NearVectorArgumentBuilder {
+	if len(vectorPerTarget) > 0 {
+		b.vectorsPerTarget = vectorPerTarget
 	}
 	return b
 }
@@ -71,24 +84,26 @@ func (b *NearVectorArgumentBuilder) build() string {
 	if b.withDistance {
 		clause = append(clause, fmt.Sprintf("distance: %v", b.distance))
 	}
-	if len(b.vectorPerTarget) > 0 {
-		vectorPerTarget := make([]string, 0, len(b.vectorPerTarget))
-		for k, v := range b.vectorPerTarget {
-			vBytes, err := json.Marshal(v)
+
+	if len(b.vectorsPerTarget) > 0 {
+		vectorPerTarget := make([]string, 0, len(b.vectorsPerTarget))
+		for k, v := range b.vectorsPerTarget {
+			var vBytes []byte
+			var err error
+			if len(v) == 1 {
+				vBytes, err = json.Marshal(v[0])
+			} else {
+				vBytes, err = json.Marshal(v)
+			}
+
 			if err != nil {
 				panic(fmt.Sprintf("could not marshal vector: %v", err))
 			}
 			vectorPerTarget = append(vectorPerTarget, fmt.Sprintf("%s: %v", k, string(vBytes)))
 		}
 		clause = append(clause, fmt.Sprintf("vectorPerTarget: {%s}", strings.Join(vectorPerTarget, ",")))
-		if len(targetVectors) == 0 {
-			targetVectors = make([]string, 0, len(b.vectorPerTarget))
-			for k := range b.vectorPerTarget {
-				targetVectors = append(targetVectors, k)
-			}
-		}
 	}
-	if len(b.vector) != 0 && len(b.vectorPerTarget) == 0 {
+	if len(b.vector) != 0 && len(b.vectorsPerTarget) == 0 {
 		vectorB, err := json.Marshal(b.vector)
 		if err != nil {
 			panic(fmt.Errorf("failed to unmarshal nearVector search vector: %s", err))

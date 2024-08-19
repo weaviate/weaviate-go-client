@@ -56,4 +56,32 @@ func TestMultiTargetArgumentBuilder(t *testing.T) {
 		require.Contains(t, out, "one: 1")
 		require.Contains(t, out, "two: 2")
 	})
+
+	t.Run("RelativeScoreMulti combination", func(t *testing.T) {
+		builder := &MultiTargetArgumentBuilder{}
+		builder.RelativeScoreMulti(map[string][]float32{"one": {1}, "two": {2, 3}})
+		out := builder.build()
+		// Have to use Contains because the order of the keys in the map is not guaranteed
+		require.Contains(t, out, "combinationMethod: relativeScore")
+		require.Contains(t, out, "targetVectors: ")
+		require.Contains(t, out, "\"one\"")
+		require.Contains(t, out, "\"two\",\"two\"")
+		require.Contains(t, out, "weights: ")
+		require.Contains(t, out, "one: 1")
+		require.Contains(t, out, "two: [2,3]")
+	})
+
+	t.Run("ManualWeightsMulti combination", func(t *testing.T) {
+		builder := &MultiTargetArgumentBuilder{}
+		builder.ManualWeightsMulti(map[string][]float32{"one": {1}, "two": {2, 3}})
+		out := builder.build()
+		// Have to use Contains because the order of the keys in the map is not guaranteed
+		require.Contains(t, out, "combinationMethod: manualWeights")
+		require.Contains(t, out, "targetVectors: ")
+		require.Contains(t, out, "\"one\"")
+		require.Contains(t, out, "\"two\",\"two\"")
+		require.Contains(t, out, "weights: ")
+		require.Contains(t, out, "one: 1")
+		require.Contains(t, out, "two: [2,3]")
+	})
 }

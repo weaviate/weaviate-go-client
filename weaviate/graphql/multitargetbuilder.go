@@ -9,8 +9,9 @@ import (
 )
 
 type MultiTargetArgumentBuilder struct {
-	targetCombination *dto.TargetCombination
+	targetCombination *dto.TargetCombinationType
 	targetVectors     []string
+	weights           [][]float32
 }
 
 func (m *MultiTargetArgumentBuilder) getCombinationMethod() string {
@@ -18,7 +19,7 @@ func (m *MultiTargetArgumentBuilder) getCombinationMethod() string {
 	if m.targetCombination == nil {
 		return combinationMethod
 	}
-	switch m.targetCombination.Type {
+	switch *m.targetCombination {
 	case dto.Sum:
 		combinationMethod = "sum"
 	case dto.Average:
@@ -33,17 +34,11 @@ func (m *MultiTargetArgumentBuilder) getCombinationMethod() string {
 	return combinationMethod
 }
 
-func (m *MultiTargetArgumentBuilder) getCombinationWeights() map[string]float32 {
-	if m.targetCombination == nil {
-		return nil
-	}
-	return m.targetCombination.Weights
-}
-
 func (m *MultiTargetArgumentBuilder) Sum(targetVectors ...string) *MultiTargetArgumentBuilder {
 	if len(targetVectors) > 0 {
 		m.targetVectors = targetVectors
-		m.targetCombination = &dto.TargetCombination{Type: dto.Sum}
+		comb := dto.Sum
+		m.targetCombination = &comb
 	}
 	return m
 }
@@ -51,7 +46,8 @@ func (m *MultiTargetArgumentBuilder) Sum(targetVectors ...string) *MultiTargetAr
 func (m *MultiTargetArgumentBuilder) Average(targetVectors ...string) *MultiTargetArgumentBuilder {
 	if len(targetVectors) > 0 {
 		m.targetVectors = targetVectors
-		m.targetCombination = &dto.TargetCombination{Type: dto.Average}
+		comb := dto.Average
+		m.targetCombination = &comb
 	}
 	return m
 }
@@ -59,7 +55,8 @@ func (m *MultiTargetArgumentBuilder) Average(targetVectors ...string) *MultiTarg
 func (m *MultiTargetArgumentBuilder) Minimum(targetVectors ...string) *MultiTargetArgumentBuilder {
 	if len(targetVectors) > 0 {
 		m.targetVectors = targetVectors
-		m.targetCombination = &dto.TargetCombination{Type: dto.Minimum}
+		comb := dto.Minimum
+		m.targetCombination = &comb
 	}
 	return m
 }
@@ -67,11 +64,33 @@ func (m *MultiTargetArgumentBuilder) Minimum(targetVectors ...string) *MultiTarg
 func (m *MultiTargetArgumentBuilder) ManualWeights(targetVectors map[string]float32) *MultiTargetArgumentBuilder {
 	if len(targetVectors) > 0 {
 		targetVectorsTmp := make([]string, 0, len(targetVectors))
-		for k := range targetVectors {
+		weightsTmp := make([][]float32, 0, len(targetVectors))
+		for k, v := range targetVectors {
 			targetVectorsTmp = append(targetVectorsTmp, k)
+			weightsTmp = append(weightsTmp, []float32{v})
 		}
 		m.targetVectors = targetVectorsTmp
-		m.targetCombination = &dto.TargetCombination{Type: dto.ManualWeights, Weights: targetVectors}
+		m.weights = weightsTmp
+		comb := dto.ManualWeights
+		m.targetCombination = &comb
+	}
+	return m
+}
+
+func (m *MultiTargetArgumentBuilder) ManualWeightsMulti(targetVectors map[string][]float32) *MultiTargetArgumentBuilder {
+	if len(targetVectors) > 0 {
+		targetVectorsTmp := make([]string, 0, len(targetVectors))
+		weightsTmp := make([][]float32, 0, len(targetVectors))
+		for k, vv := range targetVectors {
+			for range vv {
+				targetVectorsTmp = append(targetVectorsTmp, k)
+			}
+			weightsTmp = append(weightsTmp, vv)
+		}
+		m.weights = weightsTmp
+		m.targetVectors = targetVectorsTmp
+		comb := dto.ManualWeights
+		m.targetCombination = &comb
 	}
 	return m
 }
@@ -79,11 +98,33 @@ func (m *MultiTargetArgumentBuilder) ManualWeights(targetVectors map[string]floa
 func (m *MultiTargetArgumentBuilder) RelativeScore(targetVectors map[string]float32) *MultiTargetArgumentBuilder {
 	if len(targetVectors) > 0 {
 		targetVectorsTmp := make([]string, 0, len(targetVectors))
-		for k := range targetVectors {
+		weightsTmp := make([][]float32, 0, len(targetVectors))
+		for k, v := range targetVectors {
 			targetVectorsTmp = append(targetVectorsTmp, k)
+			weightsTmp = append(weightsTmp, []float32{v})
 		}
 		m.targetVectors = targetVectorsTmp
-		m.targetCombination = &dto.TargetCombination{Type: dto.RelativeScore, Weights: targetVectors}
+		m.weights = weightsTmp
+		comb := dto.RelativeScore
+		m.targetCombination = &comb
+	}
+	return m
+}
+
+func (m *MultiTargetArgumentBuilder) RelativeScoreMulti(targetVectors map[string][]float32) *MultiTargetArgumentBuilder {
+	if len(targetVectors) > 0 {
+		targetVectorsTmp := make([]string, 0, len(targetVectors))
+		weightsTmp := make([][]float32, 0, len(targetVectors))
+		for k, vv := range targetVectors {
+			for range vv {
+				targetVectorsTmp = append(targetVectorsTmp, k)
+			}
+			weightsTmp = append(weightsTmp, vv)
+		}
+		m.weights = weightsTmp
+		m.targetVectors = targetVectorsTmp
+		comb := dto.RelativeScore
+		m.targetCombination = &comb
 	}
 	return m
 }
@@ -100,11 +141,20 @@ func (m *MultiTargetArgumentBuilder) build() string {
 		targetVectorsString := fmt.Sprintf(", targetVectors: %s", string(targetVectorsBytes))
 
 		weightsString := ""
-		combinationWeights := m.getCombinationWeights()
-		if len(combinationWeights) > 0 {
-			weights := make([]string, 0, len(combinationWeights))
-			for k, v := range combinationWeights {
-				weights = append(weights, fmt.Sprintf("%s: %v", k, v))
+		if len(m.weights) > 0 {
+			weights := make([]string, 0, len(m.weights))
+			targetCount := 0
+			for _, v := range m.weights {
+				if len(v) > 1 {
+					vectorStr := fmt.Sprintf("%v", v[0])
+					for _, vv := range v[1:] {
+						vectorStr += fmt.Sprintf(",%v", vv)
+					}
+					weights = append(weights, fmt.Sprintf("%s: [%v]", targetVectors[targetCount], vectorStr))
+				} else {
+					weights = append(weights, fmt.Sprintf("%s: %v", targetVectors[targetCount], v[0]))
+				}
+				targetCount += len(v)
 			}
 			weightsString = fmt.Sprintf(", weights: {%s}", strings.Join(weights, ","))
 		}
