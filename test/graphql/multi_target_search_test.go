@@ -162,7 +162,7 @@ func TestMultiTargetNearVector(t *testing.T) {
 		{Class: class.Class, Vectors: map[string]models.Vector{"first": []float32{0, 0, 1}, "second": []float32{0, 0, 1}}, ID: strfmt.UUID(uuid.New().String())},
 	}
 
-	_, err := client.Batch().ObjectsBatcher().WithObjects(objs...).Do(ctx)
+	_, err = client.Batch().ObjectsBatcher().WithObjects(objs...).Do(ctx)
 	require.Nil(t, err)
 
 	outer := []struct {
@@ -234,7 +234,7 @@ func TestMultiTargetNearVectorMultipleVectors(t *testing.T) {
 		{Class: class.Class, Vectors: map[string]models.Vector{"first": []float32{0, 0, 1}, "second": []float32{0, 0, 1}}, ID: strfmt.UUID(uuid.New().String())},
 	}
 
-	_, err := client.Batch().ObjectsBatcher().WithObjects(objs...).Do(ctx)
+	_, err = client.Batch().ObjectsBatcher().WithObjects(objs...).Do(ctx)
 	require.Nil(t, err)
 
 	outer := []struct {
