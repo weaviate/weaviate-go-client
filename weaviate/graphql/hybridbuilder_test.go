@@ -87,7 +87,8 @@ func TestHybridBuilder_build(t *testing.T) {
 				)
 				text.WithConcepts([]string{"concept"}).WithCertainty(0.9)
 				searches.WithNearText(&text)
-				h.WithQuery("I'm a simple string").WithSearches(&searches)
+				h.WithQuery("I'm a simple string").
+					WithSearches(&searches)
 			},
 			want: `hybrid:{query: "I'm a simple string", searches:{nearText:{concepts: ["concept"] certainty: 0.9}}}`,
 		},
@@ -103,6 +104,36 @@ func TestHybridBuilder_build(t *testing.T) {
 				h.WithQuery("I'm a simple string").WithSearches(&searches)
 			},
 			want: `hybrid:{query: "I'm a simple string", searches:{nearVector:{certainty: 0.9 vector: [0.1,0.2,0.3]}}}`,
+		},
+		{
+			name: "nearVector with maxVectorDistance",
+			apply: func(h *HybridArgumentBuilder) {
+				var (
+					vector   NearVectorArgumentBuilder
+					searches HybridSearchesArgumentBuilder
+				)
+				vector.WithVector([]float32{0.1, 0.2, 0.3})
+				searches.WithNearVector(&vector)
+				h.WithQuery("I'm a simple string").
+					WithSearches(&searches).
+					WithMaxVectorDistance(0.8)
+			},
+			want: `hybrid:{query: "I'm a simple string", maxVectorDistance: 0.8, searches:{nearVector:{vector: [0.1,0.2,0.3]}}}`,
+		},
+		{
+			name: "nearText with maxVectorDistance",
+			apply: func(h *HybridArgumentBuilder) {
+				var (
+					text     NearTextArgumentBuilder
+					searches HybridSearchesArgumentBuilder
+				)
+				text.WithConcepts([]string{"concept"})
+				searches.WithNearText(&text)
+				h.WithQuery("I'm a simple string").
+					WithSearches(&searches).
+					WithMaxVectorDistance(0.8)
+			},
+			want: `hybrid:{query: "I'm a simple string", maxVectorDistance: 0.8, searches:{nearText:{concepts: ["concept"]}}}`,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
