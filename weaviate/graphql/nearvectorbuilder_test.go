@@ -79,9 +79,32 @@ func TestNearMultiVectorBuilder_build(t *testing.T) {
 		require.Contains(t, str, "vectorPerTarget: ")
 		require.Contains(t, str, "one: [1,2,3]")
 		require.Contains(t, str, "two: [4,5,6]")
-		require.Contains(t, str, "targetVectors:")
-		require.Contains(t, str, "\"one\"")
+		require.NotContains(t, str, "vector:")
+		require.NotContains(t, str, "combinationMethod:")
+		require.NotContains(t, str, "weights:")
+	})
+
+	t.Run("No combination with multiple vectors per target", func(t *testing.T) {
+		vector := NearVectorArgumentBuilder{}
+		str := vector.WithVectorsPerTarget(map[string][][]float32{"one": {{1, 2, 3}, {7, 8, 9}}, "two": {{4, 5, 6}}}).build()
+		require.Contains(t, str, "vectorPerTarget: ")
+		require.Contains(t, str, "one: [[1,2,3],[7,8,9]]")
+		require.Contains(t, str, "two: [4,5,6]")
+		require.NotContains(t, str, "vector:")
+		require.NotContains(t, str, "combinationMethod:")
+		require.NotContains(t, str, "weights:")
+	})
+
+	t.Run("No combination with vector per target and target vectors", func(t *testing.T) {
+		vector := NearVectorArgumentBuilder{}
+		str := vector.WithVectorsPerTarget(map[string][][]float32{"one": {{1, 2, 3}, {7, 8, 9}}, "two": {{4, 5, 6}}}).WithTargetVectors("one", "one", "two").build()
+		require.Contains(t, str, "vectorPerTarget: ")
+		require.Contains(t, str, "one: [[1,2,3],[7,8,9]]")
+		require.Contains(t, str, "two: [4,5,6]")
+		require.Contains(t, str, "targetVectors: ")
+		require.Contains(t, str, "\"one\",\"one\"")
 		require.Contains(t, str, "\"two\"")
+
 		require.NotContains(t, str, "vector:")
 		require.NotContains(t, str, "combinationMethod:")
 		require.NotContains(t, str, "weights:")

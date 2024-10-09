@@ -2,7 +2,7 @@ on:
   workflow_call:
 
 env:
-  WEAVIATE_VERSION: preview--08cbf0a
+  WEAVIATE_VERSION: preview-allow-multiple-inputs-for-a-single-target-vector-d6df8e2
 
 jobs:
   auth-tests:
