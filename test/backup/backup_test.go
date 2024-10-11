@@ -919,7 +919,6 @@ func TestBackups_integration(t *testing.T) {
 			WithIncludeClassNames(class).
 			WithBackend(backend).
 			WithBackupID(id).
-			// WithWaitForCompletion(true).
 			Do(ctx)
 		require.NoError(t, err, "couldn't start backup process")
 
