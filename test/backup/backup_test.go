@@ -913,7 +913,6 @@ func TestBackups_integration(t *testing.T) {
 		id := fmt.Sprint(random.Int63())
 		ctx := context.Background()
 
-		// Arrange: Check fixture data exists and create a backup of it
 		assertAllPizzasExist(t, client)
 		_, err := client.Backup().Creator().
 			WithIncludeClassNames(class).
@@ -922,14 +921,12 @@ func TestBackups_integration(t *testing.T) {
 			Do(ctx)
 		require.NoError(t, err, "couldn't start backup process")
 
-		// Act: Cancel backup
-		err = client.Backup().Canceller().
+		err = client.Backup().Canceler().
 			WithBackend(backend).
 			WithBackupID(id).
 			Do(ctx)
 		require.NoError(t, err, "cancel request failed")
 
-		// Assert: Check backup status
 		waitForCreateStatus(t, ctx, client, backend, id, ent_backup.Cancelled)
 	})
 }

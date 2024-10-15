@@ -9,23 +9,23 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
 )
 
-type BackupCanceller struct {
+type BackupCanceler struct {
 	connection *connection.Connection
 	backend    string
 	backupID   string
 }
 
-func (bc *BackupCanceller) WithBackend(backend string) *BackupCanceller {
+func (bc *BackupCanceler) WithBackend(backend string) *BackupCanceler {
 	bc.backend = backend
 	return bc
 }
 
-func (bc *BackupCanceller) WithBackupID(id string) *BackupCanceller {
+func (bc *BackupCanceler) WithBackupID(id string) *BackupCanceler {
 	bc.backupID = id
 	return bc
 }
 
-func (bc *BackupCanceller) Do(ctx context.Context) error {
+func (bc *BackupCanceler) Do(ctx context.Context) error {
 	res, err := bc.connection.RunREST(ctx, bc.path(), http.MethodDelete, nil)
 	if err != nil {
 		return except.NewDerivedWeaviateClientError(err)
@@ -36,6 +36,6 @@ func (bc *BackupCanceller) Do(ctx context.Context) error {
 	return except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
-func (bc BackupCanceller) path() string {
+func (bc BackupCanceler) path() string {
 	return fmt.Sprintf("/backups/%s/%s", bc.backend, bc.backupID)
 }

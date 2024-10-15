@@ -49,9 +49,9 @@ func (s *API) RestoreStatusGetter() *BackupRestoreStatusGetter {
 	}
 }
 
-// Canceller creates a builder for "cancel backup" request.
-func (s *API) Canceller() *BackupCanceller {
-	return &BackupCanceller{
+// Canceler creates a builder for "cancel backup" request.
+func (s *API) Canceler() *BackupCanceler {
+	return &BackupCanceler{
 		connection: s.connection,
 	}
 }
