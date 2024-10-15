@@ -2,7 +2,7 @@ on:
   workflow_call:
 
 env:
-  WEAVIATE_VERSION: preview--08cbf0a
+  WEAVIATE_VERSION: stable-v1.26-6a411a4
 
 jobs:
   auth-tests:
@@ -24,7 +24,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.21'
+          go-version: '1.22'
           cache: true
       - name: Run tests
         run: WEAVIATE_VERSION=${WEAVIATE_VERSION} ./tools/run_tests.sh --auth-integration-only
@@ -50,7 +50,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.21'
+          go-version: '1.22'
           cache: true
       - name: Run tests
         run: WEAVIATE_VERSION=${WEAVIATE_VERSION} ./tools/run_tests.sh --integration-only
@@ -62,7 +62,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.21'
+          go-version: '1.22'
           cache: true
       - name: Run tests
         run: WEAVIATE_VERSION=${WEAVIATE_VERSION} ./tools/run_tests.sh --unit-only
@@ -75,7 +75,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.21'
+          go-version: '1.22'
           cache: true
       - name: Login to Docker Hub
         uses: docker/login-action@v2
