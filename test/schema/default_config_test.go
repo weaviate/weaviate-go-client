@@ -73,8 +73,8 @@ var defaultVectorIndexConfig = map[string]interface{}{
 }
 
 var defaultReplicationConfig = &models.ReplicationConfig{
-	Factor:                           1,
-	ObjectDeletionConflictResolution: models.ReplicationConfigObjectDeletionConflictResolutionPermanentDeletion,
+	Factor:           1,
+	DeletionStrategy: models.ReplicationConfigDeletionStrategyDeleteOnConflict,
 }
 
 var defaultMultiTenancyConfig = &models.MultiTenancyConfig{

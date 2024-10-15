@@ -2,7 +2,6 @@ module github.com/weaviate/weaviate-go-client/v4
 
 go 1.22.0
 
-
 require (
 	github.com/docker/go-connections v0.5.0
 	github.com/go-openapi/strfmt v0.23.0
@@ -10,7 +9,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.33.0
 	github.com/testcontainers/testcontainers-go/modules/weaviate v0.32.0
-	github.com/weaviate/weaviate v1.26.6
+	github.com/weaviate/weaviate v1.26.7-0.20241014144329-6a411a43c58d
 	go.nhat.io/grpcmock v0.26.0
 	golang.org/x/oauth2 v0.23.0
 	golang.org/x/sync v0.8.0
@@ -99,7 +98,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/prometheus/client_golang v1.20.4 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.55.0 // indirect
+	github.com/prometheus/common v0.60.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
