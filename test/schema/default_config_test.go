@@ -70,6 +70,7 @@ var defaultVectorIndexConfig = map[string]interface{}{
 	"pq":                     defaultPQConfig,
 	"bq":                     defaultBQConfig,
 	"sq":                     defaultSQConfig,
+	"filterStrategy":         "sweeping",
 }
 
 var defaultReplicationConfig = &models.ReplicationConfig{
