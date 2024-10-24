@@ -235,7 +235,7 @@ func TestMultiTargetNearVectorMultipleVectors(t *testing.T) {
 	}
 
 	_, err = client.Batch().ObjectsBatcher().WithObjects(objs...).Do(ctx)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	outer := []struct {
 		name string

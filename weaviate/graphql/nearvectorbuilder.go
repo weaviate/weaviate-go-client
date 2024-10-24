@@ -88,14 +88,7 @@ func (b *NearVectorArgumentBuilder) build() string {
 	if len(b.vectorsPerTarget) > 0 {
 		vectorPerTarget := make([]string, 0, len(b.vectorsPerTarget))
 		for k, v := range b.vectorsPerTarget {
-			var vBytes []byte
-			var err error
-			if len(v) == 1 {
-				vBytes, err = json.Marshal(v[0])
-			} else {
-				vBytes, err = json.Marshal(v)
-			}
-
+			vBytes, err := json.Marshal(v)
 			if err != nil {
 				panic(fmt.Sprintf("could not marshal vector: %v", err))
 			}
