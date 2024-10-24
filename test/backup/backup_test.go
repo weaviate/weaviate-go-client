@@ -14,12 +14,14 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/backup"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
+	ent_backup "github.com/weaviate/weaviate/entities/backup"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
 var dockerComposeBackupDir = "/tmp/backups"
 
 func TestBackups_integration(t *testing.T) {
+
 	if err := testenv.SetupLocalWeaviate(); err != nil {
 		t.Fatalf("failed to setup weaviate: %s", err)
 	}
@@ -901,6 +903,32 @@ func TestBackups_integration(t *testing.T) {
 			assert.Contains(t, err.Error(), "CPUPercentage")
 		})
 	})
+
+	t.Run("cancel backup", func(t *testing.T) {
+		testsuit.CreateTestSchemaAndData(t, client)
+		defer testsuit.CleanUpWeaviate(t, client)
+
+		class := "Pizza"
+		backend := backup.BACKEND_FILESYSTEM
+		id := fmt.Sprint(random.Int63())
+		ctx := context.Background()
+
+		assertAllPizzasExist(t, client)
+		_, err := client.Backup().Creator().
+			WithIncludeClassNames(class).
+			WithBackend(backend).
+			WithBackupID(id).
+			Do(ctx)
+		require.NoError(t, err, "couldn't start backup process")
+
+		err = client.Backup().Canceler().
+			WithBackend(backend).
+			WithBackupID(id).
+			Do(ctx)
+		require.NoError(t, err, "cancel request failed")
+
+		waitForCreateStatus(t, ctx, client, backend, id, ent_backup.Cancelled)
+	})
 }
 
 func assertAllPizzasExist(t *testing.T, client *weaviate.Client) {
@@ -926,4 +954,18 @@ func assertAllFoodObjectsExist(t *testing.T, client *weaviate.Client, className 
 	get := resultSet.Data["Get"].(map[string]interface{})
 	objects := get[className].([]interface{})
 	assert.Len(t, objects, count)
+}
+
+// waitForCreateStatus periodically polls backup creation status until it reaches the desired (want) state or the context times out.
+// Status is requested every 100ms, timeout after 5s.
+func waitForCreateStatus(t *testing.T, ctx context.Context, client *weaviate.Client, backend, id string, want ent_backup.Status) {
+	t.Helper()
+
+	statusCheck := client.Backup().CreateStatusGetter().WithBackend(backend).WithBackupID(id)
+	require.Eventuallyf(t, func() bool {
+		res, err := statusCheck.Do(ctx)
+		require.NoError(t, err, "couldn't fetch backup status")
+		require.NotNil(t, res.Status)
+		return *res.Status == string(want)
+	}, 5*time.Second, 100*time.Millisecond, "backup status %q not reached", want)
 }

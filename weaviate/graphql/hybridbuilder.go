@@ -15,15 +15,17 @@ const Ranked FusionType = "rankedFusion"
 const RelativeScore FusionType = "relativeScoreFusion"
 
 type HybridArgumentBuilder struct {
-	query         string
-	vector        []float32
-	withAlpha     bool
-	alpha         float32
-	properties    []string
-	fusionType    FusionType
-	targetVectors []string
-	targets       *MultiTargetArgumentBuilder
-	searches      *HybridSearchesArgumentBuilder
+	query                 string
+	vector                []float32
+	withAlpha             bool
+	alpha                 float32
+	withMaxVectorDistance bool
+	maxVectorDistance     float32
+	properties            []string
+	fusionType            FusionType
+	targetVectors         []string
+	targets               *MultiTargetArgumentBuilder
+	searches              *HybridSearchesArgumentBuilder
 }
 
 // WithQuery the search string
@@ -43,6 +45,13 @@ func (h *HybridArgumentBuilder) WithAlpha(alpha float32) *HybridArgumentBuilder 
 	h.withAlpha = true
 	h.alpha = alpha
 	return h
+}
+
+// WithMaxVectorDistance is the equivalent of 'distance' threshold in vector search.
+func (s *HybridArgumentBuilder) WithMaxVectorDistance(d float32) *HybridArgumentBuilder {
+	s.withMaxVectorDistance = true
+	s.maxVectorDistance = d
+	return s
 }
 
 // WithProperties The properties which are searched. Can be omitted.
@@ -92,6 +101,9 @@ func (h *HybridArgumentBuilder) build() string {
 	if h.withAlpha {
 		clause = append(clause, fmt.Sprintf("alpha: %v", h.alpha))
 	}
+	if h.withMaxVectorDistance {
+		clause = append(clause, fmt.Sprintf("maxVectorDistance: %v", h.maxVectorDistance))
+	}
 
 	if len(h.properties) > 0 {
 		props, err := json.Marshal(h.properties)
@@ -136,13 +148,13 @@ func (s *HybridSearchesArgumentBuilder) WithNearText(nearText *NearTextArgumentB
 	return s
 }
 
-func (h *HybridSearchesArgumentBuilder) build() string {
-	searches := []string{}
-	if h.nearText != nil {
-		searches = append(searches, h.nearText.build())
+func (s *HybridSearchesArgumentBuilder) build() string {
+	var searches []string
+	if s.nearText != nil {
+		searches = append(searches, s.nearText.build())
 	}
-	if h.nearVector != nil {
-		searches = append(searches, h.nearVector.build())
+	if s.nearVector != nil {
+		searches = append(searches, s.nearVector.build())
 	}
 	return strings.Join(searches, " ")
 }

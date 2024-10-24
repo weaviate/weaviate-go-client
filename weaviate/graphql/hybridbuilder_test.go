@@ -7,84 +7,127 @@ import (
 )
 
 func TestHybridBuilder_build(t *testing.T) {
-	t.Run("all parameters", func(t *testing.T) {
-		hybrid := HybridArgumentBuilder{}
-		str := hybrid.WithQuery("query").WithVector([]float32{1, 2, 3}).WithAlpha(0.6).WithProperties([]string{"prop1", "prop2"}).build()
-		expected := `hybrid:{query: "query", vector: [1,2,3], alpha: 0.6, properties: ["prop1","prop2"]}`
-		require.Equal(t, expected, str)
-	})
+	for _, tt := range []struct {
+		name  string
+		apply func(h *HybridArgumentBuilder)
+		want  string
+	}{
+		{
+			name: "all parameters",
+			apply: func(h *HybridArgumentBuilder) {
+				h.WithQuery("query").
+					WithVector([]float32{1, 2, 3}).
+					WithAlpha(0.6).
+					WithProperties([]string{"prop1", "prop2"})
+			},
+			want: `hybrid:{query: "query", vector: [1,2,3], alpha: 0.6, properties: ["prop1","prop2"]}`,
+		},
+		{
+			name: "only query",
+			apply: func(h *HybridArgumentBuilder) {
+				h.WithQuery("query")
+			},
+			want: `hybrid:{query: "query"}`,
+		},
+		{
+			name: "query and vector",
+			apply: func(h *HybridArgumentBuilder) {
+				h.WithQuery("query").
+					WithVector([]float32{1, 2, 3})
+			},
+			want: `hybrid:{query: "query", vector: [1,2,3]}`,
+		},
+		{
+			name: "query and alpha",
+			apply: func(h *HybridArgumentBuilder) {
+				h.WithQuery("query").
+					WithAlpha(0.6)
+			},
+			want: `hybrid:{query: "query", alpha: 0.6}`,
+		},
+		{
+			name: "query with escaping and alpha",
+			apply: func(h *HybridArgumentBuilder) {
+				h.WithQuery("\"I'm a complex string\" says the string").
+					WithAlpha(0.6)
+			},
+			want: `hybrid:{query: "\"I'm a complex string\" says the string", alpha: 0.6}`,
+		},
+		{
+			name: "query with fusion type Ranked",
+			apply: func(h *HybridArgumentBuilder) {
+				h.WithQuery("some query").
+					WithFusionType(Ranked)
+			},
+			want: `hybrid:{query: "some query", fusionType: rankedFusion}`,
+		},
+		{
+			name: "query with fusion type Relative Score",
+			apply: func(h *HybridArgumentBuilder) {
+				h.WithQuery("some query").
+					WithFusionType(RelativeScore)
+			},
+			want: `hybrid:{query: "some query", fusionType: relativeScoreFusion}`,
+		},
+		{
+			name: "query and alpha and targetVectors",
+			apply: func(h *HybridArgumentBuilder) {
+				h.WithQuery("query").
+					WithAlpha(0.6).
+					WithTargetVectors("t1")
+			},
+			want: `hybrid:{query: "query", alpha: 0.6, targetVectors: ["t1"]}`,
+		},
+		{
+			name: "query and nearText search",
+			apply: func(h *HybridArgumentBuilder) {
+				var (
+					text     NearTextArgumentBuilder
+					searches HybridSearchesArgumentBuilder
+				)
+				text.WithConcepts([]string{"concept"}).WithCertainty(0.9)
+				searches.WithNearText(&text)
+				h.WithQuery("I'm a simple string").
+					WithSearches(&searches)
+			},
+			want: `hybrid:{query: "I'm a simple string", searches:{nearText:{concepts: ["concept"] certainty: 0.9}}}`,
+		},
+		{
+			name: "query and nearVector search",
+			apply: func(h *HybridArgumentBuilder) {
+				var (
+					vector   NearVectorArgumentBuilder
+					searches HybridSearchesArgumentBuilder
+				)
+				vector.WithVector([]float32{0.1, 0.2, 0.3}).WithCertainty(0.9)
+				searches.WithNearVector(&vector)
+				h.WithQuery("I'm a simple string").WithSearches(&searches)
+			},
+			want: `hybrid:{query: "I'm a simple string", searches:{nearVector:{certainty: 0.9 vector: [0.1,0.2,0.3]}}}`,
+		},
+		{
+			name: "nearVector with maxVectorDistance",
+			apply: func(h *HybridArgumentBuilder) {
+				var (
+					vector   NearVectorArgumentBuilder
+					searches HybridSearchesArgumentBuilder
+				)
+				vector.WithVector([]float32{0.1, 0.2, 0.3})
+				searches.WithNearVector(&vector)
+				h.WithQuery("I'm a simple string").
+					WithSearches(&searches).
+					WithMaxVectorDistance(0.8)
+			},
+			want: `hybrid:{query: "I'm a simple string", maxVectorDistance: 0.8, searches:{nearVector:{vector: [0.1,0.2,0.3]}}}`,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var hybrid HybridArgumentBuilder
+			tt.apply(&hybrid)
 
-	t.Run("only query", func(t *testing.T) {
-		hybrid := HybridArgumentBuilder{}
-		str := hybrid.WithQuery("query").build()
-		expected := `hybrid:{query: "query"}`
-		require.Equal(t, expected, str)
-	})
+			got := hybrid.build()
 
-	t.Run("query and vector", func(t *testing.T) {
-		hybrid := HybridArgumentBuilder{}
-		str := hybrid.WithQuery("query").WithVector([]float32{1, 2, 3}).build()
-		expected := `hybrid:{query: "query", vector: [1,2,3]}`
-		require.Equal(t, expected, str)
-	})
-
-	t.Run("query and alpha", func(t *testing.T) {
-		hybrid := HybridArgumentBuilder{}
-		str := hybrid.WithQuery("query").WithAlpha(0.6).build()
-		expected := `hybrid:{query: "query", alpha: 0.6}`
-		require.Equal(t, expected, str)
-	})
-
-	t.Run("query with escaping and alpha", func(t *testing.T) {
-		hybrid := HybridArgumentBuilder{}
-
-		str := hybrid.WithQuery("\"I'm a complex string\" says the string").WithAlpha(0.6).build()
-		expected := `hybrid:{query: "\"I'm a complex string\" says the string", alpha: 0.6}`
-		require.Equal(t, expected, str)
-	})
-
-	t.Run("query with fusion type Ranked", func(t *testing.T) {
-		hybrid := HybridArgumentBuilder{}
-
-		str := hybrid.WithQuery("some query").WithFusionType(Ranked).build()
-		expected := `hybrid:{query: "some query", fusionType: rankedFusion}`
-		require.Equal(t, expected, str)
-	})
-
-	t.Run("query with fusion type Relative Score", func(t *testing.T) {
-		hybrid := HybridArgumentBuilder{}
-
-		str := hybrid.WithQuery("some query").WithFusionType(RelativeScore).build()
-		expected := `hybrid:{query: "some query", fusionType: relativeScoreFusion}`
-		require.Equal(t, expected, str)
-	})
-
-	t.Run("query and alpha and targetVectors", func(t *testing.T) {
-		hybrid := HybridArgumentBuilder{}
-		str := hybrid.WithQuery("query").WithAlpha(0.6).WithTargetVectors("t1").build()
-		expected := `hybrid:{query: "query", alpha: 0.6, targetVectors: ["t1"]}`
-		require.Equal(t, expected, str)
-	})
-
-	t.Run("query and nearText search", func(t *testing.T) {
-		neartText := &NearTextArgumentBuilder{}
-		neartText.WithConcepts([]string{"concept"}).WithCertainty(0.9)
-		searches := &HybridSearchesArgumentBuilder{}
-		searches.WithNearText(neartText)
-		hybrid := HybridArgumentBuilder{}
-		str := hybrid.WithQuery("I'm a simple string").WithSearches(searches).build()
-		expected := `hybrid:{query: "I'm a simple string", searches:{nearText:{concepts: ["concept"] certainty: 0.9}}}`
-		require.Equal(t, expected, str)
-	})
-
-	t.Run("query and nearVector search", func(t *testing.T) {
-		neartVector := &NearVectorArgumentBuilder{}
-		neartVector.WithVector([]float32{0.1, 0.2, 0.3}).WithCertainty(0.9)
-		searches := &HybridSearchesArgumentBuilder{}
-		searches.WithNearVector(neartVector)
-		hybrid := HybridArgumentBuilder{}
-		str := hybrid.WithQuery("I'm a simple string").WithSearches(searches).build()
-		expected := `hybrid:{query: "I'm a simple string", searches:{nearVector:{certainty: 0.9 vector: [0.1,0.2,0.3]}}}`
-		require.Equal(t, expected, str)
-	})
+			require.Equal(t, tt.want, got)
+		})
+	}
 }
