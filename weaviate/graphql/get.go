@@ -228,7 +228,7 @@ func (gb *GetBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, gb.connection, gb.build())
 }
 
-// Do execute the GraphQL query
+// Build execute the GraphQL query
 func (gb *GetBuilder) Build() string {
 	return gb.build()
 }
