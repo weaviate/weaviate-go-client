@@ -77,7 +77,6 @@ func (b *NearVectorArgumentBuilder) WithTargets(targets *MultiTargetArgumentBuil
 // Build build the given clause
 func (b *NearVectorArgumentBuilder) build() string {
 	clause := []string{}
-	targetVectors := b.targetVectors
 	if b.withCertainty {
 		clause = append(clause, fmt.Sprintf("certainty: %v", b.certainty))
 	}
@@ -106,9 +105,39 @@ func (b *NearVectorArgumentBuilder) build() string {
 	if b.targets != nil {
 		clause = append(clause, fmt.Sprintf("targets: {%s}", b.targets.build()))
 	}
-	if len(targetVectors) > 0 && b.targets == nil {
+
+	targetVectors := b.prepareTargetVectors(b.targetVectors)
+	if len(targetVectors) > 0 {
 		targetVectors, _ := json.Marshal(targetVectors)
 		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}
 	return fmt.Sprintf("nearVector:{%v}", strings.Join(clause, " "))
+}
+
+// prepareTargetVectors adds appends the target name for each target vector associated with it.
+// Example:
+//
+//	// For target vectors:
+//	WithTargetVectors("v1", "v2").
+//	WithVectorProTarget(map[string][][]float32{"v1": {{1,2,3}, {4,5,6}}})
+//	// Outputs:
+//	[]string{"v1", "v1", "v2"}
+//
+// The server requires that the target names be repeated for each target vector,
+// and passing them once only is a mistake that the users can easily make.
+// This way, the client provides some safeguard.
+//
+// Note, too, that in case the user fails to pass a value in TargetVectors,
+// it will not be added to the query.
+func (b NearVectorArgumentBuilder) prepareTargetVectors(targets []string) (out []string) {
+	for _, target := range targets {
+		if vectors, ok := b.vectorsPerTarget[target]; ok {
+			for range vectors {
+				out = append(out, target)
+			}
+			continue
+		}
+		out = append(out, target)
+	}
+	return
 }
