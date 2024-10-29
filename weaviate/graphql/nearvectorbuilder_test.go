@@ -102,7 +102,8 @@ func TestNearMultiVectorBuilder_build(t *testing.T) {
 		vector := NearVectorArgumentBuilder{}
 		str := vector.WithVectorsPerTarget(map[string][][]float32{
 			"one": {{1, 2, 3}, {7, 8, 9}},
-			"two": {{4, 5, 6}}},
+			"two": {{4, 5, 6}},
+		},
 		).WithTargetVectors("one", "two").build()
 		require.Contains(t, str, "vectorPerTarget: ")
 		require.Contains(t, str, "one: [[1,2,3],[7,8,9]]")

@@ -21,7 +21,6 @@ import (
 var dockerComposeBackupDir = "/tmp/backups"
 
 func TestBackups_integration(t *testing.T) {
-
 	if err := testenv.SetupLocalWeaviate(); err != nil {
 		t.Fatalf("failed to setup weaviate: %s", err)
 	}
