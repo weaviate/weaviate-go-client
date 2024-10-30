@@ -228,6 +228,11 @@ func (gb *GetBuilder) Do(ctx context.Context) (*models.GraphQLResponse, error) {
 	return runGraphQLQuery(ctx, gb.connection, gb.build())
 }
 
+// Build execute the GraphQL query
+func (gb *GetBuilder) Build() string {
+	return gb.build()
+}
+
 // build the GraphQL query string (not needed when Do is executed)
 func (gb *GetBuilder) build() string {
 	filterClause := ""
