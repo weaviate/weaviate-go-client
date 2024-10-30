@@ -135,9 +135,9 @@ func (b NearVectorArgumentBuilder) prepareTargetVectors(targets []string) (out [
 			for range vectors {
 				out = append(out, target)
 			}
-			continue
+		} else {
+			out = append(out, target)
 		}
-		out = append(out, target)
 	}
 	return
 }
