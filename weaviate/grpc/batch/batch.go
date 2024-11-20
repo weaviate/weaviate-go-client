@@ -310,38 +310,50 @@ func (b Batch) GetConsistencyLevel(consistencyLevel string) *pb.ConsistencyLevel
 }
 
 func (b Batch) ParseReply(reply *pb.BatchObjectsReply, objects []*models.Object) []models.ObjectsGetResponse {
+	errors := map[int]*models.ObjectsGetResponseAO2Result{}
+	// parse errors
 	if reply != nil && len(reply.Errors) > 0 {
-		result := make([]models.ObjectsGetResponse, len(reply.Errors))
-		for i, res := range reply.Errors {
-			var errors *models.ErrorResponse
-			if res.Error != "" {
-				errors = &models.ErrorResponse{
-					Error: []*models.ErrorResponseErrorItems0{
-						{Message: res.Error},
-					},
-				}
-			}
-			failed := models.ObjectsGetResponseAO2ResultStatusFAILED
-			result[i] = models.ObjectsGetResponse{
-				Result: &models.ObjectsGetResponseAO2Result{
-					Errors: errors,
-					Status: &failed,
-				},
-			}
+		for _, res := range reply.Errors {
+			errors[int(res.Index)] = b.getErrorGetResponse(res)
 		}
-		return result
 	}
-	// all is OK
+	// prepare response
 	success := models.ObjectsGetResponseAO2ResultStatusSUCCESS
 	result := make([]models.ObjectsGetResponse, len(objects))
 	for i := range objects {
-		result[i] = models.ObjectsGetResponse{
-			Result: &models.ObjectsGetResponseAO2Result{
-				Status: &success,
-			},
+		if err, ok := errors[i]; ok {
+			// error
+			result[i] = models.ObjectsGetResponse{
+				Object: *objects[i],
+				Result: err,
+			}
+		} else {
+			// success
+			result[i] = models.ObjectsGetResponse{
+				Object: *objects[i],
+				Result: &models.ObjectsGetResponseAO2Result{
+					Status: &success,
+				},
+			}
 		}
 	}
 	return result
+}
+
+func (b Batch) getErrorGetResponse(res *pb.BatchObjectsReply_BatchError) *models.ObjectsGetResponseAO2Result {
+	var errors *models.ErrorResponse
+	if res.Error != "" {
+		errors = &models.ErrorResponse{
+			Error: []*models.ErrorResponseErrorItems0{
+				{Message: res.Error},
+			},
+		}
+	}
+	failed := models.ObjectsGetResponseAO2ResultStatusFAILED
+	return &models.ObjectsGetResponseAO2Result{
+		Errors: errors,
+		Status: &failed,
+	}
 }
 
 func toInt64Array[T int | int32 | int64 | uint | uint32 | uint64](arr []T) []int64 {
