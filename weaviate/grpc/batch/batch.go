@@ -54,10 +54,23 @@ func (b Batch) GetBatchObjects(objects []*models.Object) ([]*pb.BatchObject, err
 		if len(obj.Vectors) > 0 {
 			vectors := []*pb.Vectors{}
 			for targetVector, vector := range obj.Vectors {
-				vectors = append(vectors, &pb.Vectors{
-					Name:        targetVector,
-					VectorBytes: byteops.Float32ToByteVector(vector),
-				})
+				switch v := vector.(type) {
+				case []float32:
+					vectors = append(vectors, &pb.Vectors{
+						Name:        targetVector,
+						VectorBytes: byteops.Float32ToByteVector(v),
+					})
+				case [][]float32:
+					for i := range v {
+						vectors = append(vectors, &pb.Vectors{
+							Name:        targetVector,
+							VectorBytes: byteops.Float32ToByteVector(v[i]),
+							Index:       uint64(i),
+						})
+					}
+				default:
+					// do nothing
+				}
 			}
 			batchObject.Vectors = vectors
 		}
