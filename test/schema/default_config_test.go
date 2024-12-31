@@ -71,6 +71,12 @@ var defaultVectorIndexConfig = map[string]interface{}{
 	"bq":                     defaultBQConfig,
 	"sq":                     defaultSQConfig,
 	"filterStrategy":         "sweeping",
+	"multivector":            defaultMultivectorConfig,
+}
+
+var defaultMultivectorConfig = map[string]interface{}{
+	"enabled":     false,
+	"aggregation": "maxSim",
 }
 
 var defaultReplicationConfig = &models.ReplicationConfig{
