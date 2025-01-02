@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 type FusionType string
@@ -16,7 +18,7 @@ const RelativeScore FusionType = "relativeScoreFusion"
 
 type HybridArgumentBuilder struct {
 	query                 string
-	vector                []float32
+	vector                models.Vector
 	withAlpha             bool
 	alpha                 float32
 	withMaxVectorDistance bool
@@ -35,7 +37,7 @@ func (h *HybridArgumentBuilder) WithQuery(query string) *HybridArgumentBuilder {
 }
 
 // WithVector the vector. Can be omitted
-func (h *HybridArgumentBuilder) WithVector(vector []float32) *HybridArgumentBuilder {
+func (h *HybridArgumentBuilder) WithVector(vector models.Vector) *HybridArgumentBuilder {
 	h.vector = vector
 	return h
 }
@@ -91,7 +93,7 @@ func (h *HybridArgumentBuilder) build() string {
 	if h.query != "" {
 		clause = append(clause, fmt.Sprintf("query: %q", h.query))
 	}
-	if len(h.vector) > 0 {
+	if !h.isVectorEmpty(h.vector) {
 		vectorB, err := json.Marshal(h.vector)
 		if err != nil {
 			panic(fmt.Errorf("failed to unmarshal hybrid search vector: %s", err))
@@ -131,6 +133,19 @@ func (h *HybridArgumentBuilder) build() string {
 	}
 
 	return fmt.Sprintf("hybrid:{%v}", strings.Join(clause, ", "))
+}
+
+func (h *HybridArgumentBuilder) isVectorEmpty(vector models.Vector) bool {
+	switch v := vector.(type) {
+	case []float32:
+		return len(v) == 0
+	case [][]float32:
+		return len(v) == 0
+	case models.C11yVector:
+		return len(v) == 0
+	default:
+		return true
+	}
 }
 
 type HybridSearchesArgumentBuilder struct {

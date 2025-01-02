@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 func TestNearMultiVectorBuilder_build(t *testing.T) {
@@ -23,7 +24,7 @@ func TestNearMultiVectorBuilder_build(t *testing.T) {
 	t.Run("Average combination with vector per target", func(t *testing.T) {
 		vector := NearVectorArgumentBuilder{}
 		targets := MultiTargetArgumentBuilder{}
-		str := vector.WithVectorPerTarget(map[string][]float32{"one": {1, 2, 3}, "two": {4, 5, 6}}).WithTargets(targets.Average("one", "two")).build()
+		str := vector.WithVectorPerTarget(map[string]models.Vector{"one": []float32{1, 2, 3}, "two": []float32{4, 5, 6}}).WithTargets(targets.Average("one", "two")).build()
 		require.Contains(t, str, "vectorPerTarget: ")
 		require.NotContains(t, str, "vector: ")
 		require.Contains(t, str, "one: [[1,2,3]]")
@@ -78,7 +79,7 @@ func TestNearMultiVectorBuilder_build(t *testing.T) {
 
 	t.Run("No combination with vector per target", func(t *testing.T) {
 		vector := NearVectorArgumentBuilder{}
-		str := vector.WithVectorPerTarget(map[string][]float32{"one": {1, 2, 3}, "two": {4, 5, 6}}).build()
+		str := vector.WithVectorPerTarget(map[string]models.Vector{"one": []float32{1, 2, 3}, "two": []float32{4, 5, 6}}).build()
 		require.Contains(t, str, "vectorPerTarget: ")
 		require.Contains(t, str, "one: [[1,2,3]]")
 		require.Contains(t, str, "two: [[4,5,6]]")
@@ -89,7 +90,7 @@ func TestNearMultiVectorBuilder_build(t *testing.T) {
 
 	t.Run("No combination with multiple vectors per target", func(t *testing.T) {
 		vector := NearVectorArgumentBuilder{}
-		str := vector.WithVectorsPerTarget(map[string][][]float32{"one": {{1, 2, 3}, {7, 8, 9}}, "two": {{4, 5, 6}}}).build()
+		str := vector.WithVectorsPerTarget(map[string][]models.Vector{"one": {[]float32{1, 2, 3}, []float32{7, 8, 9}}, "two": {[]float32{4, 5, 6}}}).build()
 		require.Contains(t, str, "vectorPerTarget: ")
 		require.Contains(t, str, "one: [[1,2,3],[7,8,9]]")
 		require.Contains(t, str, "two: [[4,5,6]]")
@@ -100,9 +101,9 @@ func TestNearMultiVectorBuilder_build(t *testing.T) {
 
 	t.Run("No combination with vector per target and target vectors", func(t *testing.T) {
 		vector := NearVectorArgumentBuilder{}
-		str := vector.WithVectorsPerTarget(map[string][][]float32{
-			"one": {{1, 2, 3}, {7, 8, 9}},
-			"two": {{4, 5, 6}},
+		str := vector.WithVectorsPerTarget(map[string][]models.Vector{
+			"one": {[]float32{1, 2, 3}, []float32{7, 8, 9}},
+			"two": {[]float32{4, 5, 6}},
 		},
 		).WithTargetVectors("one", "two").build()
 		require.Contains(t, str, "vectorPerTarget: ")
