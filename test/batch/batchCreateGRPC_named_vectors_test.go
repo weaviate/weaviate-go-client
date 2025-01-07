@@ -72,7 +72,7 @@ func TestBatchCreate_gRPC_named_vectors(t *testing.T) {
 				},
 				vectors: models.Vectors{
 					"regular": []float32{1, 2},
-					"colbert": [][]float32{{0.11}, {0.22, 0.33}, {0.44}},
+					"colbert": [][]float32{{0.09, 0.11}, {0.22, 0.33}, {0.33, 0.44}},
 				},
 			},
 		}
