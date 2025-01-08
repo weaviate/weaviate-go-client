@@ -7,13 +7,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/grpc"
-
 	"github.com/go-openapi/strfmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/grpc"
 	"github.com/weaviate/weaviate/entities/models"
 	"github.com/weaviate/weaviate/entities/schema"
 )
@@ -204,13 +203,52 @@ func CleanUpWeaviate(t *testing.T, client *weaviate.Client) {
 
 // CreateTestClient running on local host 8080
 func CreateTestClient(enableGRPC bool) *weaviate.Client {
-	port, grpcPort, authEnabled := GetPortAndAuthPw()
 
 	openAIApiKey := os.Getenv("OPENAI_APIKEY")
+	jinaAiApiKey := ""
 	headers := map[string]string{}
 	if openAIApiKey != "" {
 		headers["X-OpenAI-Api-Key"] = openAIApiKey
 	}
+	if jinaAiApiKey != "" {
+		headers["X-JinaAi-Api-Key"] = jinaAiApiKey
+	}
+
+	// host_sandbox := "uhmsl3t3r9id1qvoku0a.c0.europe-west3.dev.gcp.weaviate.cloud"
+	// grpcHost_sandbox := "grpc-uhmsl3t3r9id1qvoku0a.c0.europe-west3.dev.gcp.weaviate.cloud"
+	// apiKey_sandbox := "3fyRyPhsmPu0aYxONsjDQVjc2e6G0lZdTTJx"
+
+	// host_serverless := "5o928akytvsugnftzrq.c0.europe-west3.dev.gcp.weaviate.cloud"
+	// grpcHost_serverless := "grpc-5o928akytvsugnftzrq.c0.europe-west3.dev.gcp.weaviate.cloud:443"
+	// apiKey_serverless := "28rBgiiQXDZI1ItXe9nzfXvJUxEGQpeCS9Mp"
+
+	// host := host_serverless
+	// grpcHost := grpcHost_serverless
+	// apiKey := apiKey_serverless
+
+	// cfg := weaviate.Config{
+	// 	Host: host,
+	// 	GrpcConfig: &grpc.Config{
+	// 		Host: grpcHost,
+	// 	},
+	// 	Scheme:     "https",
+	// 	AuthConfig: auth.ApiKey{Value: apiKey},
+	// 	Headers:    headers,
+	// }
+
+	// client, err := weaviate.NewClient(cfg)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+
+	// // Check the connection
+	// live, err := client.Misc().LiveChecker().Do(context.Background())
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Printf("%v", live)
+
+	port, grpcPort, authEnabled := GetPortAndAuthPw()
 
 	cfg := weaviate.Config{
 		Host:    fmt.Sprintf("localhost:%v", port),
