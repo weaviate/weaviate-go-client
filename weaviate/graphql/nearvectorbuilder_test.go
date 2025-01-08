@@ -117,4 +117,16 @@ func TestNearMultiVectorBuilder_build(t *testing.T) {
 		require.NotContains(t, str, "combinationMethod:")
 		require.NotContains(t, str, "weights:")
 	})
+
+	t.Run("multi vector with target vector", func(t *testing.T) {
+		nearVector := NearVectorArgumentBuilder{}
+		str := nearVector.WithVector([][]float32{{1, 2, 3}, {1, 2, 3}}).WithTargetVectors("colbert").build()
+		require.Equal(t, str, "nearVector:{vector: [[1,2,3],[1,2,3]] targetVectors: [\"colbert\"]}")
+	})
+
+	t.Run("vector with target vector", func(t *testing.T) {
+		nearVector := NearVectorArgumentBuilder{}
+		str := nearVector.WithVector([]float32{1, 2, 3}).WithTargetVectors("regular").build()
+		require.Equal(t, str, "nearVector:{vector: [1,2,3] targetVectors: [\"regular\"]}")
+	})
 }
