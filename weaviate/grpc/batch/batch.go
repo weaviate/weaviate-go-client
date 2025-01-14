@@ -59,6 +59,7 @@ func (b Batch) GetBatchObjects(objects []*models.Object) ([]*pb.BatchObject, err
 					vectors = append(vectors, &pb.Vectors{
 						Name:        targetVector,
 						VectorBytes: byteops.Float32ToByteVector(v),
+						Type:        pb.VectorType_VECTOR_TYPE_FP32,
 					})
 				case [][]float32:
 					for i := range v {
@@ -66,6 +67,7 @@ func (b Batch) GetBatchObjects(objects []*models.Object) ([]*pb.BatchObject, err
 							Name:        targetVector,
 							VectorBytes: byteops.Float32ToByteVector(v[i]),
 							Index:       uint64(i),
+							Type:        pb.VectorType_VECTOR_TYPE_COLBERT_FP32,
 						})
 					}
 				default:
