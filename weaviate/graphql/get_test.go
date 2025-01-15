@@ -408,6 +408,25 @@ func TestQueryBuilder(t *testing.T) {
 		assert.Equal(t, expected, query)
 	})
 
+	t.Run("NearVector with multi vector and target vector", func(t *testing.T) {
+		conMock := &MockRunREST{}
+
+		builder := GetBuilder{
+			connection:           conMock,
+			includesFilterClause: false,
+		}
+
+		name := Field{Name: "name"}
+
+		nearVector := &NearVectorArgumentBuilder{}
+		nearVector.WithVector([][]float32{{0, 1}, {0.8, 0.9}}).WithTargetVectors("colbert")
+
+		query := builder.WithClassName("Pizza").WithFields(name).WithNearVector(nearVector).build()
+
+		expected := `{Get {Pizza (nearVector:{vector: [[0,1],[0.8,0.9]] targetVectors: ["colbert"]}) {name}}}`
+		assert.Equal(t, expected, query)
+	})
+
 	t.Run("Group filter", func(t *testing.T) {
 		conMock := &MockRunREST{}
 

@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 type NearVectorArgumentBuilder struct {
-	vector           []float32
-	vectorsPerTarget map[string][][]float32
+	vector           models.Vector
+	vectorsPerTarget map[string][]models.Vector
 	withCertainty    bool
 	certainty        float32
 	withDistance     bool
@@ -18,18 +20,18 @@ type NearVectorArgumentBuilder struct {
 }
 
 // WithVector sets the search vector to be used in query
-func (b *NearVectorArgumentBuilder) WithVector(vector []float32) *NearVectorArgumentBuilder {
+func (b *NearVectorArgumentBuilder) WithVector(vector models.Vector) *NearVectorArgumentBuilder {
 	b.vector = vector
 	return b
 }
 
 // WithVectorPerTarget sets the search vector per target to be used in a multi target search query. This builder method takes
 // precedence over WithVector. So if WithVectorPerTarget is used, WithVector will be ignored.
-func (b *NearVectorArgumentBuilder) WithVectorPerTarget(vectorPerTarget map[string][]float32) *NearVectorArgumentBuilder {
+func (b *NearVectorArgumentBuilder) WithVectorPerTarget(vectorPerTarget map[string]models.Vector) *NearVectorArgumentBuilder {
 	if len(vectorPerTarget) > 0 {
-		vectorPerTargetTmp := make(map[string][][]float32)
+		vectorPerTargetTmp := make(map[string][]models.Vector)
 		for k, v := range vectorPerTarget {
-			vectorPerTargetTmp[k] = [][]float32{v}
+			vectorPerTargetTmp[k] = []models.Vector{v}
 		}
 		b.vectorsPerTarget = vectorPerTargetTmp
 	}
@@ -38,7 +40,7 @@ func (b *NearVectorArgumentBuilder) WithVectorPerTarget(vectorPerTarget map[stri
 
 // WithVectorsPerTarget sets the search vector per target to be used in a multi target search query. This builder method takes
 // precedence over WithVector and WithVectorPerTarget. So if WithVectorsPerTarget is used, WithVector and WithVectorPerTarget will be ignored.
-func (b *NearVectorArgumentBuilder) WithVectorsPerTarget(vectorPerTarget map[string][][]float32) *NearVectorArgumentBuilder {
+func (b *NearVectorArgumentBuilder) WithVectorsPerTarget(vectorPerTarget map[string][]models.Vector) *NearVectorArgumentBuilder {
 	if len(vectorPerTarget) > 0 {
 		b.vectorsPerTarget = vectorPerTarget
 	}
@@ -95,7 +97,7 @@ func (b *NearVectorArgumentBuilder) build() string {
 		}
 		clause = append(clause, fmt.Sprintf("vectorPerTarget: {%s}", strings.Join(vectorPerTarget, ",")))
 	}
-	if len(b.vector) != 0 && len(b.vectorsPerTarget) == 0 {
+	if !b.isVectorEmpty(b.vector) && len(b.vectorsPerTarget) == 0 {
 		vectorB, err := json.Marshal(b.vector)
 		if err != nil {
 			panic(fmt.Errorf("failed to unmarshal nearVector search vector: %s", err))
@@ -112,6 +114,19 @@ func (b *NearVectorArgumentBuilder) build() string {
 		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}
 	return fmt.Sprintf("nearVector:{%v}", strings.Join(clause, " "))
+}
+
+func (b *NearVectorArgumentBuilder) isVectorEmpty(vector models.Vector) bool {
+	switch v := vector.(type) {
+	case []float32:
+		return len(v) == 0
+	case [][]float32:
+		return len(v) == 0
+	case models.C11yVector:
+		return len(v) == 0
+	default:
+		return true
+	}
 }
 
 // prepareTargetVectors adds appends the target name for each target vector associated with it.

@@ -17,9 +17,9 @@ func StartWeaviate(ctx context.Context, weaviateImage string) (*DockerContainer,
 		"DEFAULT_VECTORIZER_MODULE": "none",
 	}
 
-	c, err := weaviate.RunContainer(
+	c, err := weaviate.Run(
 		ctx,
-		testcontainers.WithImage(weaviateImage),
+		weaviateImage,
 		testcontainers.WithEnv(env),
 	)
 	if err != nil {

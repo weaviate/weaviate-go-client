@@ -2,7 +2,7 @@ on:
   workflow_call:
 
 env:
-  WEAVIATE_VERSION: 1.27.0
+  WEAVIATE_VERSION: preview-add-support-for-vector-search-with-colbert-embeddings-d0d4fb0
 
 jobs:
   auth-tests:
@@ -32,6 +32,7 @@ jobs:
     name: Integration
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         auth_integration: [ "auth_enabled", "auth_disabled" ]
     env:
