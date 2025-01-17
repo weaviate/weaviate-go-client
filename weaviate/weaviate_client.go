@@ -180,11 +180,12 @@ func NewClient(config Config) (*Client, error) {
 }
 
 // New client from config
-// Every function represents one API group of weaviate and provides a set of functions and builders to interact with them.
-//
-// The client uses the original data models as provided by weaviate itself.
-// All these models are provided in the sub module "github.com/weaviate/weaviate/entities/models"
+// For backwards compatibility, this function will panic if the client cannot be created
+// Deprecated: Use NewClient() instead, which returns an error instead of panicking
 func New(config Config) *Client {
+	if client, err := NewClient(config); err == nil {
+		return client
+	}
 	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.getTimeout(), config.Headers)
 
 	// some endpoints now require a className namespace.
