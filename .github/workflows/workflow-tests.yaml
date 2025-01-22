@@ -2,7 +2,7 @@ on:
   workflow_call:
 
 env:
-  WEAVIATE_VERSION: preview-add-support-for-vector-search-with-colbert-embeddings-d0d4fb0
+  WEAVIATE_VERSION: 1.29.0-dev-f985564
 
 jobs:
   auth-tests:
