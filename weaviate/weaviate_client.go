@@ -180,7 +180,6 @@ func NewClient(config Config) (*Client, error) {
 }
 
 // New client from config
-// For backwards compatibility, this function will panic if the client cannot be created
 // Deprecated: Use NewClient() instead, which returns an error instead of panicking
 func New(config Config) *Client {
 	if client, err := NewClient(config); err == nil {
