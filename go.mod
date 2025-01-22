@@ -2,7 +2,7 @@ module github.com/weaviate/weaviate-go-client/v4
 
 go 1.22.7
 
-replace github.com/weaviate/weaviate v1.28.2 => github.com/weaviate/weaviate v0.0.0-20250114155825-7887f7450000
+replace github.com/weaviate/weaviate v1.28.2 => github.com/weaviate/weaviate v1.28.4-0.20250122140331-9df7356054ce
 
 require (
 	github.com/docker/go-connections v0.5.0
@@ -15,8 +15,8 @@ require (
 	go.nhat.io/grpcmock v0.26.0
 	golang.org/x/oauth2 v0.25.0
 	golang.org/x/sync v0.10.0
-	google.golang.org/grpc v1.69.2
-	google.golang.org/protobuf v1.36.1
+	google.golang.org/grpc v1.69.4
+	google.golang.org/protobuf v1.36.3
 )
 
 require (

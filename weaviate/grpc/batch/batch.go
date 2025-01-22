@@ -45,7 +45,7 @@ func (b Batch) GetBatchObjects(objects []*models.Object) ([]*pb.BatchObject, err
 		}
 		if obj.Vector != nil {
 			if b.gRPCVersionSupport.SupportsVectorBytesField() {
-				batchObject.VectorBytes = byteops.Float32ToByteVector(obj.Vector)
+				batchObject.VectorBytes = byteops.Fp32SliceToBytes(obj.Vector)
 			} else {
 				// We fall back to vector field for backward compatibility reasons
 				batchObject.Vector = obj.Vector
@@ -58,18 +58,15 @@ func (b Batch) GetBatchObjects(objects []*models.Object) ([]*pb.BatchObject, err
 				case []float32:
 					vectors = append(vectors, &pb.Vectors{
 						Name:        targetVector,
-						VectorBytes: byteops.Float32ToByteVector(v),
-						Type:        pb.VectorType_VECTOR_TYPE_FP32,
+						VectorBytes: byteops.Fp32SliceToBytes(v),
+						Type:        pb.VectorType_VECTOR_TYPE_SINGLE_FP32,
 					})
 				case [][]float32:
-					for i := range v {
-						vectors = append(vectors, &pb.Vectors{
-							Name:        targetVector,
-							VectorBytes: byteops.Float32ToByteVector(v[i]),
-							Index:       uint64(i),
-							Type:        pb.VectorType_VECTOR_TYPE_COLBERT_FP32,
-						})
-					}
+					vectors = append(vectors, &pb.Vectors{
+						Name:        targetVector,
+						VectorBytes: byteops.Fp32SliceOfSlicesToBytes(v),
+						Type:        pb.VectorType_VECTOR_TYPE_MULTI_FP32,
+					})
 				default:
 					// do nothing
 				}
