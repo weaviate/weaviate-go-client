@@ -59,13 +59,13 @@ func (b Batch) GetBatchObjects(objects []*models.Object) ([]*pb.BatchObject, err
 					vectors = append(vectors, &pb.Vectors{
 						Name:        targetVector,
 						VectorBytes: byteops.Fp32SliceToBytes(v),
-						Type:        pb.VectorType_VECTOR_TYPE_SINGLE_FP32,
+						Type:        pb.Vectors_VECTOR_TYPE_SINGLE_FP32,
 					})
 				case [][]float32:
 					vectors = append(vectors, &pb.Vectors{
 						Name:        targetVector,
 						VectorBytes: byteops.Fp32SliceOfSlicesToBytes(v),
-						Type:        pb.VectorType_VECTOR_TYPE_MULTI_FP32,
+						Type:        pb.Vectors_VECTOR_TYPE_MULTI_FP32,
 					})
 				default:
 					// do nothing
