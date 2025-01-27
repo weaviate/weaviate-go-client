@@ -11,7 +11,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.35.0
 	github.com/testcontainers/testcontainers-go/modules/weaviate v0.35.0
-	github.com/weaviate/weaviate v1.28.2
+	github.com/weaviate/weaviate v1.28.5-0.20250126214405-c3c12e7623bf
 	go.nhat.io/grpcmock v0.26.0
 	golang.org/x/oauth2 v0.25.0
 	golang.org/x/sync v0.10.0
@@ -142,7 +142,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.33.0 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
-	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
+	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
