@@ -15,8 +15,8 @@ type AssignedUsersGetter struct {
 	role string
 }
 
-func (aug *AssignedUsersGetter) WithName(name string) *AssignedUsersGetter {
-	aug.role = name
+func (aug *AssignedUsersGetter) WithRole(role string) *AssignedUsersGetter {
+	aug.role = role
 	return aug
 }
 

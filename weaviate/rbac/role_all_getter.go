@@ -2,7 +2,6 @@ package rbac
 
 import (
 	"context"
-	"log"
 	"net/http"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
@@ -19,12 +18,9 @@ func (rag *RoleAllGetter) Do(ctx context.Context) ([]*models.Role, error) {
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}
-	log.Print("status code: ", res.StatusCode)
 	if res.StatusCode == http.StatusOK {
-		log.Print(string(res.Body))
 		var roles []*models.Role
 		decodeErr := res.DecodeBodyIntoTarget(&roles)
-		log.Print("decoded successfully: ", decodeErr == nil)
 		return roles, decodeErr
 	}
 	return nil, except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
