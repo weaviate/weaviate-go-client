@@ -30,7 +30,7 @@ func (urg *UserRolesGetter) Do(ctx context.Context) ([]*models.Role, error) {
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}
-	if res.StatusCode == http.StatusCreated {
+	if res.StatusCode == http.StatusOK {
 		var roles []*models.Role
 		decodeErr := res.DecodeBodyIntoTarget(&roles)
 		return roles, decodeErr
@@ -39,5 +39,5 @@ func (urg *UserRolesGetter) Do(ctx context.Context) ([]*models.Role, error) {
 }
 
 func (urg *UserRolesGetter) path() string {
-	return fmt.Sprintf("/authz/roles/%s/roles", urg.user)
+	return fmt.Sprintf("/authz/users/%s/roles", urg.user)
 }

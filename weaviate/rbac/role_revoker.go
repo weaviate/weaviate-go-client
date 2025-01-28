@@ -17,8 +17,8 @@ type RoleRevoker struct {
 	roles []string
 }
 
-func (rr *RoleRevoker) WithName(name string) *RoleRevoker {
-	rr.user = name
+func (rr *RoleRevoker) WithUser(user string) *RoleRevoker {
+	rr.user = user
 	return rr
 }
 
@@ -41,5 +41,5 @@ func (rr *RoleRevoker) Do(ctx context.Context) error {
 }
 
 func (rr *RoleRevoker) path() string {
-	return fmt.Sprintf("/authz/roles/%s/revoke", rr.user)
+	return fmt.Sprintf("/authz/users/%s/revoke", rr.user)
 }

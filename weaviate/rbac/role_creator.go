@@ -34,6 +34,7 @@ func (rc *RoleCreator) Do(ctx context.Context) error {
 	if err != nil {
 		return except.NewDerivedWeaviateClientError(err)
 	}
+
 	if res.StatusCode == http.StatusCreated {
 		return nil
 	}

@@ -15,13 +15,13 @@ type RoleGetter struct {
 	name string
 }
 
-func (rc *RoleGetter) WithName(name string) *RoleGetter {
-	rc.name = name
-	return rc
+func (rg *RoleGetter) WithName(name string) *RoleGetter {
+	rg.name = name
+	return rg
 }
 
-func (rc *RoleGetter) Do(ctx context.Context) (*models.Role, error) {
-	res, err := rc.connection.RunREST(ctx, "/authz/roles/"+rc.name, http.MethodPost, nil)
+func (rg *RoleGetter) Do(ctx context.Context) (*models.Role, error) {
+	res, err := rg.connection.RunREST(ctx, "/authz/roles/"+rg.name, http.MethodGet, nil)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}

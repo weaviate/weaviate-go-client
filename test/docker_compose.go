@@ -14,8 +14,12 @@ func SetupWeaviate() error {
 	arguments := []string{
 		"compose",
 	}
-	if authEnabled { // location of argument is important
+
+	switch {
+	case authEnabled:
 		arguments = append(arguments, "-f", "docker-compose-wcs.yml")
+	case testsuit.RbacEnabled():
+		arguments = append(arguments, "-f", "docker-compose-rbac.yml")
 	}
 	arguments = append(arguments, "up", "-d")
 
@@ -44,6 +48,7 @@ func command(app string, arguments []string) error {
 	cmd.Dir = execDir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err = cmd.Start()
+
+	err = cmd.Run()
 	return err
 }

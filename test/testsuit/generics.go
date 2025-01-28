@@ -3,7 +3,6 @@ package testsuit
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"testing"
 
@@ -30,8 +29,9 @@ const (
 	NoWeaviateGRPCPort = 55555
 )
 
+var integrationTestsWithAuth = os.Getenv("INTEGRATION_TESTS_AUTH")
+
 func GetPortAndAuthPw() (int, int, bool) {
-	integrationTestsWithAuth := os.Getenv("INTEGRATION_TESTS_AUTH")
 	authEnabled := integrationTestsWithAuth == "auth_enabled"
 	port := NoAuthPort
 	grpcPort := NoAuthGRPCPort
@@ -40,6 +40,10 @@ func GetPortAndAuthPw() (int, int, bool) {
 		grpcPort = WCSGRPCPort
 	}
 	return port, grpcPort, authEnabled
+}
+
+func RbacEnabled() bool {
+	return integrationTestsWithAuth == "rbac_enabled"
 }
 
 // CreateWeaviateTestSchemaFood creates a class for each semantic type (Pizza and Soup)
@@ -225,11 +229,10 @@ func CreateTestClient(enableGRPC bool) *weaviate.Client {
 
 	var client *weaviate.Client
 	var err error
-	if authEnabled {
+	if authEnabled || RbacEnabled() {
 		cfg.AuthConfig = auth.ApiKey{Value: "my-secret-key"}
 		client, err = weaviate.NewClient(cfg)
 		if err != nil {
-			log.Printf("Error occurred during startup %v", err)
 		}
 	} else {
 		client = weaviate.New(cfg)
