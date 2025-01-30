@@ -22,7 +22,7 @@ func (pc *PermissionChecker) WithRole(role string) *PermissionChecker {
 	return pc
 }
 
-func (pc *PermissionChecker) WithPermissions(permission *models.Permission) *PermissionChecker {
+func (pc *PermissionChecker) WithPermission(permission *models.Permission) *PermissionChecker {
 	pc.permission = permission
 	return pc
 }

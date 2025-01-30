@@ -32,6 +32,38 @@ func TestRBAC_integration(t *testing.T) {
 	manageBackups := models.PermissionActionManageBackups
 	deleteTenants := models.PermissionActionDeleteTenants
 
+	// mustCreateRole and register a t.Cleanup callback to delete it.
+	mustCreateRole := func(tt *testing.T, role string, permissions ...*models.Permission) {
+		tt.Helper()
+
+		tt.Cleanup(func() {
+			err := rolesClient.Deleter().WithName(role).Do(ctx)
+			require.NoErrorf(tt, err, "delete role %q", role)
+
+			exists, _ := rolesClient.Exists().WithName(role).Do(ctx)
+			require.Falsef(tt, exists, "role %q should not exist after deletion", role)
+		})
+
+		err := rolesClient.Creator().
+			WithName(role).
+			// Create an extra permission so that the role would not be
+			// deleted with its otherwise only permission is removed.
+			WithPermissions(permissions...).
+			Do(ctx)
+		require.NoErrorf(tt, err, "create role %q", role)
+	}
+
+	hasPermission := func(tt *testing.T, role string, permission *models.Permission) bool {
+		tt.Helper()
+
+		has, err := rolesClient.PermissionChecker().
+			WithRole(role).
+			WithPermission(permission).
+			Do(ctx)
+		require.NoError(tt, err, "has-permissions failed")
+		return has
+	}
+
 	t.Run("get all roles", func(t *testing.T) {
 		all, err := rolesClient.AllGetter().Do(ctx)
 		require.NoError(t, err, "fetch all roles")
@@ -39,6 +71,7 @@ func TestRBAC_integration(t *testing.T) {
 		require.Equal(t, *all[0].Name, adminRole)
 		require.Equal(t, *all[1].Name, viewerRole)
 	})
+
 	t.Run("get user roles", func(t *testing.T) {
 		adminRoles, err := rolesClient.UserRolesGetter().WithUser(adminUser).Do(ctx)
 		require.NoErrorf(t, err, "fetch roles for %q user", adminUser)
@@ -48,32 +81,25 @@ func TestRBAC_integration(t *testing.T) {
 		require.NoError(t, err, "fetch roles for current user")
 		require.Lenf(t, ownRoles, 1, "wrong number of roles for %q user")
 
-		require.EqualExportedValues(t, ownRoles, adminRoles, "expect same set of roles for both requests")
+		require.EqualExportedValues(t, ownRoles, adminRoles,
+			"expect same set of roles for both requests")
 	})
+
 	t.Run("get assigned users", func(t *testing.T) {
 		assigned, err := rolesClient.AssignedUsersGetter().WithRole(adminRole).Do(ctx)
 
 		require.NoErrorf(t, err, "get users with role %q", adminRole)
-		require.ElementsMatchf(t, []string{adminUser}, assigned, "only %q should be assigned to %q", adminUser, adminRole)
+		require.ElementsMatchf(t, []string{adminUser}, assigned,
+			"only %q should be assigned to %q", adminUser, adminRole)
 	})
+
 	t.Run("create role", func(t *testing.T) {
 		roleName := "TestRole"
-		t.Cleanup(func() {
-			err := rolesClient.Deleter().WithName(roleName).Do(ctx)
-			require.NoErrorf(t, err, "delete role %q", roleName)
 
-			exists, _ := rolesClient.Exists().WithName(roleName).Do(ctx)
-			require.Falsef(t, exists, "role %q should not exist after deletion", roleName)
+		mustCreateRole(t, roleName, &models.Permission{
+			Action:  &manageBackups,
+			Backups: &models.PermissionBackups{Collection: &pizza},
 		})
-
-		err := rolesClient.Creator().
-			WithName(roleName).
-			WithPermissions(&models.Permission{
-				Action:  &manageBackups,
-				Backups: &models.PermissionBackups{Collection: &pizza},
-			}).
-			Do(ctx)
-		require.NoErrorf(t, err, "create role %q", roleName)
 
 		exists, err := rolesClient.Exists().WithName(roleName).Do(ctx)
 		require.NoError(t, err, "check if role exists")
@@ -85,6 +111,7 @@ func TestRBAC_integration(t *testing.T) {
 		require.Equal(t, *testRole.Name, roleName)
 		require.Len(t, testRole.Permissions, 1)
 	})
+
 	t.Run("add permissions", func(t *testing.T) {
 		roleName := "WantsMorePermissions"
 		addPerm := models.Permission{
@@ -94,16 +121,10 @@ func TestRBAC_integration(t *testing.T) {
 			},
 		}
 
-		{
-			err := rolesClient.Creator().
-				WithName(roleName).
-				WithPermissions(&models.Permission{
-					Action:  &manageBackups,
-					Backups: &models.PermissionBackups{Collection: &pizza},
-				}).
-				Do(ctx)
-			require.NoErrorf(t, err, "create role %q", roleName)
-		}
+		mustCreateRole(t, roleName, &models.Permission{
+			Action:  &manageBackups,
+			Backups: &models.PermissionBackups{Collection: &pizza},
+		})
 
 		err := rolesClient.PermissionAdder().
 			WithRole(roleName).
@@ -111,13 +132,10 @@ func TestRBAC_integration(t *testing.T) {
 			Do(ctx)
 		require.NoErrorf(t, err, "add %q permission to %q", deleteTenants, roleName)
 
-		has, err := rolesClient.PermissionChecker().
-			WithRole(roleName).
-			WithPermissions(&addPerm).
-			Do(ctx)
-		require.NoError(t, err, "has-permissions failed")
-		require.True(t, has, "%q role should have %q permission", roleName, deleteTenants)
+		require.True(t, hasPermission(t, roleName, &addPerm),
+			"%q role should have %q permission", roleName, deleteTenants)
 	})
+
 	t.Run("remove permissions", func(t *testing.T) {
 		roleName := "WantsLessPermissions"
 		removePerm := models.Permission{
@@ -127,18 +145,10 @@ func TestRBAC_integration(t *testing.T) {
 			},
 		}
 
-		{
-			err := rolesClient.Creator().
-				WithName(roleName).
-				// Create an extra permission so that the role would not be
-				// deleted with its otherwise only permission is removed.
-				WithPermissions(&removePerm, &models.Permission{
-					Action:  &manageBackups,
-					Backups: &models.PermissionBackups{Collection: &pizza},
-				}).
-				Do(ctx)
-			require.NoErrorf(t, err, "create role %q", roleName)
-		}
+		mustCreateRole(t, roleName, &removePerm, &models.Permission{
+			Action:  &manageBackups,
+			Backups: &models.PermissionBackups{Collection: &pizza},
+		})
 
 		err := rolesClient.PermissionRemover().
 			WithRole(roleName).
@@ -146,28 +156,17 @@ func TestRBAC_integration(t *testing.T) {
 			Do(ctx)
 		require.NoErrorf(t, err, "remove %q permission from %q", deleteTenants, roleName)
 
-		has, err := rolesClient.PermissionChecker().
-			WithRole(roleName).
-			WithPermissions(&removePerm).
-			Do(ctx)
-		require.NoError(t, err, "has-permissions failed")
-		require.Falsef(t, has, "%q role should not have %q permission", roleName, deleteTenants)
+		require.Falsef(t, hasPermission(t, roleName, &removePerm),
+			"%q role should not have %q permission", roleName, deleteTenants)
 	})
+
 	t.Run("assign and revoke a role", func(t *testing.T) {
 		roleName := "AssignRevokeMe"
 
-		{
-			err := rolesClient.Creator().
-				WithName(roleName).
-				// Create an extra permission so that the role would not be
-				// deleted with its otherwise only permission is removed.
-				WithPermissions(&models.Permission{
-					Action:  &manageBackups,
-					Backups: &models.PermissionBackups{Collection: &pizza},
-				}).
-				Do(ctx)
-			require.NoErrorf(t, err, "create role %q", roleName)
-		}
+		mustCreateRole(t, roleName, &models.Permission{
+			Action:  &manageBackups,
+			Backups: &models.PermissionBackups{Collection: &pizza},
+		})
 
 		// Act: assign
 		err := rolesClient.Assigner().WithUser(adminUser).WithRoles(roleName).Do(ctx)
