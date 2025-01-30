@@ -76,7 +76,7 @@ function run_integration_tests() {
   done
 }
 
-function check_exit_code() {
+function rheck_exit_code() {
   if [ $2 -eq 0 ]; then
     echo_green "$1 successful"
   else
