@@ -50,7 +50,6 @@ type Container struct {
 	host     string
 	httpPort string // Should match the *exposed* port in docker-compose file.
 	gRPCPort string // Specify to enable gRPC in weaviate.Client.
-
 }
 
 // HTTPAddress of the Weaviate container.
