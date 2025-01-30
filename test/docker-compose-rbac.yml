@@ -10,8 +10,7 @@ services:
       - http
     image: semitechnologies/weaviate:${WEAVIATE_VERSION}
     ports:
-      - 8080:8080
-      - 50051:50051
+      - 8089:8080
     restart: on-failure:0
     environment:
       AUTHENTICATION_APIKEY_ENABLED: 'true'
@@ -24,4 +23,3 @@ services:
       ENABLE_MODULES: "backup-filesystem"
       CLUSTER_GOSSIP_BIND_PORT: "7100"
       CLUSTER_DATA_BIND_PORT: "7101"
-      PERSISTENCE_MEMTABLES_FLUSH_IDLE_AFTER_SECONDS: 1
