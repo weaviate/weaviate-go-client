@@ -2,35 +2,23 @@ package rbac
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/weaviate/weaviate-go-client/v4/test"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
 func TestRBAC_integration(t *testing.T) {
-	// FIXME: this doesn't work, still need to setup this in each shell.
-	os.Setenv("INTEGRATION_TESTS_AUTH", "rbac_enabled")
-	t.Cleanup(func() { os.Unsetenv("INTEGRATION_TESTS_AUTH") })
+	ctx := context.Background()
+	container, stop := testenv.SetupLocalContainer(t, ctx, test.RBAC, true)
+	t.Cleanup(stop)
 
-	if err := testenv.SetupLocalWeaviate(); err != nil {
-		t.Fatalf("failed to setup weaviate: %s", err)
-	}
-	t.Cleanup(func() {
-		fmt.Printf("TestBackups_integration TEAR DOWN START\n")
-		if err := testenv.TearDownLocalWeaviateForcefully(); err != nil {
-			t.Fatalf("failed to tear down weaviate: %s", err)
-		}
-		fmt.Printf("TestBackups_integration TEAR DOWN STOP\n")
-	})
-	client := testsuit.CreateTestClient(false)
+	client := testsuit.CreateTestClientForContainer(t, container)
 	testsuit.CleanUpWeaviate(t, client)
 
-	ctx := context.Background()
 	rolesClient := client.Roles()
 
 	const (

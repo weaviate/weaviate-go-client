@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"testing"
 
+	"github.com/weaviate/weaviate-go-client/v4/test"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/grpc"
 
 	"github.com/go-openapi/strfmt"
@@ -15,6 +17,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
 	"github.com/weaviate/weaviate/entities/models"
 	"github.com/weaviate/weaviate/entities/schema"
+	"github.com/weaviate/weaviate/usecases/auth/authorization"
 )
 
 const (
@@ -27,12 +30,17 @@ const (
 	WCSGRPCPort        = 50056
 	NoWeaviatePort     = 8888
 	NoWeaviateGRPCPort = 55555
+	RbacPort           = 8089
 )
 
-var integrationTestsWithAuth = os.Getenv("INTEGRATION_TESTS_AUTH")
+const ENV_INTEGRATION_TESTS_AUTH = "INTEGRATION_TESTS_AUTH"
+
+var (
+	authEnabled  = os.Getenv(ENV_INTEGRATION_TESTS_AUTH) == "auth_enabled"
+	openAIApiKey = os.Getenv("OPENAI_APIKEY")
+)
 
 func GetPortAndAuthPw() (int, int, bool) {
-	authEnabled := integrationTestsWithAuth == "auth_enabled"
 	port := NoAuthPort
 	grpcPort := NoAuthGRPCPort
 	if authEnabled {
@@ -40,10 +48,6 @@ func GetPortAndAuthPw() (int, int, bool) {
 		grpcPort = WCSGRPCPort
 	}
 	return port, grpcPort, authEnabled
-}
-
-func RbacEnabled() bool {
-	return integrationTestsWithAuth == "rbac_enabled"
 }
 
 // CreateWeaviateTestSchemaFood creates a class for each semantic type (Pizza and Soup)
@@ -201,16 +205,27 @@ func createWeaviateTestSchemaFoodWithReferenceProperty(t *testing.T, client *wea
 
 // CleanUpWeaviate removes the schema and thereby all data
 func CleanUpWeaviate(t *testing.T, client *weaviate.Client) {
+	ctx := context.Background()
+
 	// Clean up all classes and by that also all data
-	errRm := client.Schema().AllDeleter().Do(context.Background())
-	assert.Nil(t, errRm)
+	err := client.Schema().AllDeleter().Do(ctx)
+	assert.Nil(t, err)
+
+	// Cleanup all roles except for the builtin ones.
+	roles, err := client.Roles().AllGetter().Do(ctx)
+	assert.Nil(t, err)
+
+	for _, role := range roles {
+		if name := *role.Name; !slices.Contains(authorization.BuiltInRoles, name) {
+			client.Roles().Deleter().WithName(*role.Name).Do(ctx)
+		}
+	}
 }
 
 // CreateTestClient running on local host 8080
 func CreateTestClient(enableGRPC bool) *weaviate.Client {
 	port, grpcPort, authEnabled := GetPortAndAuthPw()
 
-	openAIApiKey := os.Getenv("OPENAI_APIKEY")
 	headers := map[string]string{}
 	if openAIApiKey != "" {
 		headers["X-OpenAI-Api-Key"] = openAIApiKey
@@ -229,7 +244,7 @@ func CreateTestClient(enableGRPC bool) *weaviate.Client {
 
 	var client *weaviate.Client
 	var err error
-	if authEnabled || RbacEnabled() {
+	if authEnabled {
 		cfg.AuthConfig = auth.ApiKey{Value: "my-secret-key"}
 		client, err = weaviate.NewClient(cfg)
 		if err != nil {
@@ -237,6 +252,32 @@ func CreateTestClient(enableGRPC bool) *weaviate.Client {
 	} else {
 		client = weaviate.New(cfg)
 	}
+	return client
+}
+
+// CreateTestClientForContainer is a test helper that configures an appropriate weaviate.Client for the container.
+func CreateTestClientForContainer(t *testing.T, container test.Container) *weaviate.Client {
+	t.Helper()
+
+	cfg := weaviate.Config{
+		Host:   container.HTTPAddress(),
+		Scheme: "http",
+	}
+
+	if openAIApiKey != "" {
+		cfg.Headers = map[string]string{"X-OpenAI-Api-Key": openAIApiKey}
+	}
+
+	if container.EnableGRPC() {
+		cfg.GrpcConfig = &grpc.Config{Host: container.GRPCAddress()}
+	}
+
+	if container.APISecret != "" {
+		cfg.AuthConfig = auth.ApiKey{Value: "my-secret-key"}
+	}
+
+	client, err := weaviate.NewClient(cfg)
+	require.NoError(t, err, "create test client")
 	return client
 }
 
