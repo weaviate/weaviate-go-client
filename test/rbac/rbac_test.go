@@ -70,7 +70,8 @@ func TestRBAC_integration(t *testing.T) {
 			WithName(roleName).
 			WithPermissions(&models.Permission{
 				Action:  &manageBackups,
-				Backups: &models.PermissionBackups{Collection: &pizza}}).
+				Backups: &models.PermissionBackups{Collection: &pizza},
+			}).
 			Do(ctx)
 		require.NoErrorf(t, err, "create role %q", roleName)
 
@@ -98,7 +99,8 @@ func TestRBAC_integration(t *testing.T) {
 				WithName(roleName).
 				WithPermissions(&models.Permission{
 					Action:  &manageBackups,
-					Backups: &models.PermissionBackups{Collection: &pizza}}).
+					Backups: &models.PermissionBackups{Collection: &pizza},
+				}).
 				Do(ctx)
 			require.NoErrorf(t, err, "create role %q", roleName)
 		}
@@ -132,7 +134,8 @@ func TestRBAC_integration(t *testing.T) {
 				// deleted with its otherwise only permission is removed.
 				WithPermissions(&removePerm, &models.Permission{
 					Action:  &manageBackups,
-					Backups: &models.PermissionBackups{Collection: &pizza}}).
+					Backups: &models.PermissionBackups{Collection: &pizza},
+				}).
 				Do(ctx)
 			require.NoErrorf(t, err, "create role %q", roleName)
 		}
@@ -149,7 +152,6 @@ func TestRBAC_integration(t *testing.T) {
 			Do(ctx)
 		require.NoError(t, err, "has-permissions failed")
 		require.Falsef(t, has, "%q role should not have %q permission", roleName, deleteTenants)
-
 	})
 	t.Run("assign and revoke a role", func(t *testing.T) {
 		roleName := "AssignRevokeMe"
@@ -161,7 +163,8 @@ func TestRBAC_integration(t *testing.T) {
 				// deleted with its otherwise only permission is removed.
 				WithPermissions(&models.Permission{
 					Action:  &manageBackups,
-					Backups: &models.PermissionBackups{Collection: &pizza}}).
+					Backups: &models.PermissionBackups{Collection: &pizza},
+				}).
 				Do(ctx)
 			require.NoErrorf(t, err, "create role %q", roleName)
 		}
