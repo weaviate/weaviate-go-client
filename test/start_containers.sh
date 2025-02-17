@@ -35,6 +35,7 @@ docker compose -f test/docker-compose-okta-users.yml up -d
 docker compose -f test/docker-compose-wcs.yml up -d
 docker compose -f test/docker-compose-cluster.yml up -d
 docker compose -f test/docker-compose.yml up -d
+docker compose -f test/docker-compose-rbac.yml up -d
 
 wait "http://localhost:8080"
 wait "http://localhost:8081"
@@ -43,5 +44,6 @@ wait "http://localhost:8083"
 wait "http://localhost:8085"
 wait "http://localhost:8087"
 wait "http://localhost:8088"
+wait "http://localhost:8089"
 
 echo "All containers running"
