@@ -3,6 +3,7 @@ package testsuit
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"slices"
 	"testing"
@@ -222,7 +223,7 @@ func CleanUpWeaviate(t *testing.T, client *weaviate.Client) {
 	}
 }
 
-// CreateTestClient running on local host 8080
+// CreateTestClient running on localhost 8080
 func CreateTestClient(enableGRPC bool) *weaviate.Client {
 	port, grpcPort, authEnabled := GetPortAndAuthPw()
 
@@ -248,6 +249,7 @@ func CreateTestClient(enableGRPC bool) *weaviate.Client {
 		cfg.AuthConfig = auth.ApiKey{Value: "my-secret-key"}
 		client, err = weaviate.NewClient(cfg)
 		if err != nil {
+			log.Printf("Error occurred during startup: %v", err)
 		}
 	} else {
 		client = weaviate.New(cfg)

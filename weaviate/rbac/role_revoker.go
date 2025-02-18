@@ -23,7 +23,7 @@ func (rr *RoleRevoker) WithUser(user string) *RoleRevoker {
 }
 
 func (rr *RoleRevoker) WithRoles(roles ...string) *RoleRevoker {
-	rr.roles = append([]string(nil), roles...)
+	rr.roles = roles
 	return rr
 }
 

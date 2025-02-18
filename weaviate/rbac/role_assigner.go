@@ -23,7 +23,7 @@ func (ra *RoleAssigner) WithUser(user string) *RoleAssigner {
 }
 
 func (ra *RoleAssigner) WithRoles(roles ...string) *RoleAssigner {
-	ra.roles = append([]string(nil), roles...)
+	ra.roles = roles
 	return ra
 }
 

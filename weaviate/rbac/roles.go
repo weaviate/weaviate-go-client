@@ -2,13 +2,6 @@ package rbac
 
 import "github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 
-const (
-	BACKEND_FILESYSTEM = "filesystem"
-	BACKEND_S3         = "s3"
-	BACKEND_GCS        = "gcs"
-	BACKEND_AZURE      = "azure"
-)
-
 type API struct {
 	connection *connection.Connection
 }
