@@ -1,4 +1,4 @@
-package rbac
+package users
 
 import (
 	"context"
@@ -22,11 +22,7 @@ func (urg *UserRolesGetter) WithUser(user string) *UserRolesGetter {
 }
 
 func (urg *UserRolesGetter) Do(ctx context.Context) ([]*models.Role, error) {
-	path := "/authz/users/own-roles"
-	if urg.user != "" {
-		path = urg.path()
-	}
-	res, err := urg.connection.RunREST(ctx, path, http.MethodGet, nil)
+	res, err := urg.connection.RunREST(ctx, urg.path(), http.MethodGet, nil)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}

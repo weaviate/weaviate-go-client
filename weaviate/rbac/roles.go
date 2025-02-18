@@ -50,11 +50,6 @@ func (api *API) Getter() *RoleGetter {
 	return &RoleGetter{connection: api.connection}
 }
 
-// Get roles assigned to a user.
-func (api *API) UserRolesGetter() *UserRolesGetter {
-	return &UserRolesGetter{connection: api.connection}
-}
-
 // Get users assigned to a role.
 func (api *API) AssignedUsersGetter() *AssignedUsersGetter {
 	return &AssignedUsersGetter{connection: api.connection}
@@ -63,14 +58,4 @@ func (api *API) AssignedUsersGetter() *AssignedUsersGetter {
 // Check if a role exists.
 func (api *API) Exists() *RoleExists {
 	return &RoleExists{connection: api.connection, getter: api.Getter()}
-}
-
-// Assign a role to a user. Note that 'root' cannot be assigned.
-func (api *API) Assigner() *RoleAssigner {
-	return &RoleAssigner{connection: api.connection}
-}
-
-// Revoke a role from a user. Note that 'root' cannot be revoked.
-func (api *API) Revoker() *RoleRevoker {
-	return &RoleRevoker{connection: api.connection}
 }

@@ -1,4 +1,4 @@
-package rbac
+package users
 
 import (
 	"context"
@@ -28,7 +28,7 @@ func (ra *RoleAssigner) WithRoles(roles ...string) *RoleAssigner {
 }
 
 func (ra *RoleAssigner) Do(ctx context.Context) error {
-	res, err := ra.connection.RunREST(ctx, ra.path(), http.MethodPost, authz.AssignRoleBody{
+	res, err := ra.connection.RunREST(ctx, ra.path(), http.MethodPost, authz.AssignRoleToUserBody{
 		Roles: ra.roles,
 	})
 	if err != nil {

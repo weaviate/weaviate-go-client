@@ -1,4 +1,4 @@
-package rbac
+package users
 
 import (
 	"context"
@@ -28,7 +28,7 @@ func (rr *RoleRevoker) WithRoles(roles ...string) *RoleRevoker {
 }
 
 func (rr *RoleRevoker) Do(ctx context.Context) error {
-	res, err := rr.connection.RunREST(ctx, rr.path(), http.MethodPost, authz.RevokeRoleBody{
+	res, err := rr.connection.RunREST(ctx, rr.path(), http.MethodPost, authz.RevokeRoleFromUserBody{
 		Roles: rr.roles,
 	})
 	if err != nil {

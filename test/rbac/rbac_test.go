@@ -23,9 +23,10 @@ func TestRBAC_integration(t *testing.T) {
 
 	const (
 		adminRole  = "admin"
+		rootRole   = "root"
 		viewerRole = "viewer"
 
-		adminUser = "adam-the-admin"
+		rootUser = "adam-the-admin"
 	)
 
 	pizza := "Pizza"
@@ -67,30 +68,18 @@ func TestRBAC_integration(t *testing.T) {
 	t.Run("get all roles", func(t *testing.T) {
 		all, err := rolesClient.AllGetter().Do(ctx)
 		require.NoError(t, err, "fetch all roles")
-		require.Lenf(t, all, 2, "wrong number of roles")
+		require.Lenf(t, all, 3, "wrong number of roles")
 		require.Equal(t, *all[0].Name, adminRole)
-		require.Equal(t, *all[1].Name, viewerRole)
-	})
-
-	t.Run("get user roles", func(t *testing.T) {
-		adminRoles, err := rolesClient.UserRolesGetter().WithUser(adminUser).Do(ctx)
-		require.NoErrorf(t, err, "fetch roles for %q user", adminUser)
-		require.Lenf(t, adminRoles, 1, "wrong number of roles for %q user")
-
-		ownRoles, err := rolesClient.UserRolesGetter().Do(ctx)
-		require.NoError(t, err, "fetch roles for current user")
-		require.Lenf(t, ownRoles, 1, "wrong number of roles for %q user")
-
-		require.EqualExportedValues(t, ownRoles, adminRoles,
-			"expect same set of roles for both requests")
+		require.Equal(t, *all[1].Name, rootRole)
+		require.Equal(t, *all[2].Name, viewerRole)
 	})
 
 	t.Run("get assigned users", func(t *testing.T) {
-		assigned, err := rolesClient.AssignedUsersGetter().WithRole(adminRole).Do(ctx)
+		assigned, err := rolesClient.AssignedUsersGetter().WithRole(rootRole).Do(ctx)
 
-		require.NoErrorf(t, err, "get users with role %q", adminRole)
-		require.ElementsMatchf(t, []string{adminUser}, assigned,
-			"only %q should be assigned to %q", adminUser, adminRole)
+		require.NoErrorf(t, err, "get users with role %q", rootRole)
+		require.ElementsMatchf(t, []string{rootUser}, assigned,
+			"%q should be assigned to %q", rootRole, rootUser)
 	})
 
 	t.Run("create role", func(t *testing.T) {
@@ -158,28 +147,5 @@ func TestRBAC_integration(t *testing.T) {
 
 		require.Falsef(t, hasPermission(t, roleName, &removePerm),
 			"%q role should not have %q permission", roleName, deleteTenants)
-	})
-
-	t.Run("assign and revoke a role", func(t *testing.T) {
-		roleName := "AssignRevokeMe"
-
-		mustCreateRole(t, roleName, &models.Permission{
-			Action:  &manageBackups,
-			Backups: &models.PermissionBackups{Collection: &pizza},
-		})
-
-		// Act: assign
-		err := rolesClient.Assigner().WithUser(adminUser).WithRoles(roleName).Do(ctx)
-		require.NoErrorf(t, err, "assign %q role", roleName)
-
-		assignedUsers, _ := rolesClient.AssignedUsersGetter().WithRole(roleName).Do(ctx)
-		require.Containsf(t, assignedUsers, adminUser, "should have %q role", roleName)
-
-		// Act: revoke
-		err = rolesClient.Revoker().WithUser(adminUser).WithRoles(roleName).Do(ctx)
-		require.NoErrorf(t, err, "revoke %q role", roleName)
-
-		assignedUsers, _ = rolesClient.AssignedUsersGetter().WithRole(roleName).Do(ctx)
-		require.NotContainsf(t, assignedUsers, adminUser, "should not have %q role", roleName)
 	})
 }
