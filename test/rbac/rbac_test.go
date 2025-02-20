@@ -27,8 +27,8 @@ func TestRBAC_integration(t *testing.T) {
 		rootRole   = "root"
 		viewerRole = "viewer"
 
-		rootUser = "adam-the-admin"
-		pizza    = "Pizza"
+		adminUser = "adam-the-admin"
+		pizza     = "Pizza"
 	)
 
 	// mustCreateRole and register a t.Cleanup callback to delete it.
@@ -61,18 +61,17 @@ func TestRBAC_integration(t *testing.T) {
 	t.Run("get all roles", func(t *testing.T) {
 		all, err := rolesClient.AllGetter().Do(ctx)
 		require.NoError(t, err, "fetch all roles")
-		require.Lenf(t, all, 3, "wrong number of roles")
+		require.Lenf(t, all, 2, "wrong number of roles")
 		require.Equal(t, all[0].Name, adminRole)
-		require.Equal(t, all[1].Name, rootRole)
-		require.Equal(t, all[2].Name, viewerRole)
+		require.Equal(t, all[1].Name, viewerRole)
 	})
 
 	t.Run("get assigned users", func(t *testing.T) {
-		assigned, err := rolesClient.AssignedUsersGetter().WithRole(rootRole).Do(ctx)
+		assigned, err := rolesClient.AssignedUsersGetter().WithRole(adminRole).Do(ctx)
 
-		require.NoErrorf(t, err, "get users with role %q", rootRole)
-		require.ElementsMatchf(t, []string{rootUser}, assigned,
-			"%q should be assigned to %q", rootRole, rootUser)
+		require.NoErrorf(t, err, "get users with role %q", adminRole)
+		require.ElementsMatchf(t, []string{adminUser}, assigned,
+			"%q should be assigned to %q", adminRole, adminUser)
 	})
 
 	t.Run("create role", func(t *testing.T) {

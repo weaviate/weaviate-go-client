@@ -63,11 +63,16 @@ func roleFromWeaviate(r models.Role) Role {
 				Verbosity:  *perm.Nodes.Verbosity,
 			})
 		case perm.Roles != nil:
-			role.Roles = append(role.Roles, RolesPermission{
+			permission := RolesPermission{
 				Action: *perm.Action,
 				Role:   *perm.Roles.Role,
-				// Scope:  *perm.Roles.Scope,
-			})
+			}
+
+			// Scope comes back as `nil` if not set.
+			if perm.Roles.Scope != nil {
+				permission.Scope = *perm.Roles.Scope
+			}
+			role.Roles = append(role.Roles, permission)
 
 		// Weaviate v1.30 may defined additional actions for these permission groups
 		// and we want to ensure they can be handled elegantly.
