@@ -72,7 +72,7 @@ func roleFromWeaviate(r models.Role) Role {
 		// Weaviate v1.30 may defined additional actions for these permission groups
 		// and we want to ensure they can be handled elegantly.
 		// While somewhat crude, this method makes sure any cluster/tenants/users
-		// action are read correcty without requiring the latest client version.
+		// action are read correctly without requiring the latest client version.
 		case strings.HasSuffix(*perm.Action, "cluster"):
 			role.Cluster = append(role.Cluster, ClusterPermission{Action: *perm.Action})
 		case strings.HasSuffix(*perm.Action, "tenants"):
