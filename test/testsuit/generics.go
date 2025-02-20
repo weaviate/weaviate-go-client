@@ -217,8 +217,8 @@ func CleanUpWeaviate(t *testing.T, client *weaviate.Client) {
 	assert.Nil(t, err)
 
 	for _, role := range roles {
-		if name := *role.Name; !slices.Contains(authorization.BuiltInRoles, name) {
-			client.Roles().Deleter().WithName(*role.Name).Do(ctx)
+		if name := role.Name; !slices.Contains(authorization.BuiltInRoles, name) {
+			client.Roles().Deleter().WithName(role.Name).Do(ctx)
 		}
 	}
 }

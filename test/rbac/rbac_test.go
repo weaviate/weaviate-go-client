@@ -62,9 +62,9 @@ func TestRBAC_integration(t *testing.T) {
 		all, err := rolesClient.AllGetter().Do(ctx)
 		require.NoError(t, err, "fetch all roles")
 		require.Lenf(t, all, 3, "wrong number of roles")
-		require.Equal(t, *all[0].Name, adminRole)
-		require.Equal(t, *all[1].Name, rootRole)
-		require.Equal(t, *all[2].Name, viewerRole)
+		require.Equal(t, all[0].Name, adminRole)
+		require.Equal(t, all[1].Name, rootRole)
+		require.Equal(t, all[2].Name, viewerRole)
 	})
 
 	t.Run("get assigned users", func(t *testing.T) {
@@ -89,8 +89,8 @@ func TestRBAC_integration(t *testing.T) {
 		testRole, err := rolesClient.Getter().WithName(roleName).Do(ctx)
 		require.NoErrorf(t, err, "retrieve %q", roleName)
 
-		require.Equal(t, *testRole.Name, roleName)
-		require.Len(t, testRole.Permissions, 1)
+		require.Equal(t, testRole.Name, roleName)
+		require.Len(t, testRole.Permissions.Backups, 1)
 	})
 
 	t.Run("add permissions", func(t *testing.T) {

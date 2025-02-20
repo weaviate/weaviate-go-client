@@ -20,6 +20,9 @@ func (pc *PermissionChecker) WithRole(role string) *PermissionChecker {
 	return pc
 }
 
+// WithPermission specifies the permission (singular) to be checked.
+// Note that, while this method accepts a permission group for convenience,
+// it will only check against the first permission in the group.
 func (pc *PermissionChecker) WithPermission(permission ...PermissionGroup) *PermissionChecker {
 	for _, perm := range permission {
 		perm.ExtendRole(&pc.role)
