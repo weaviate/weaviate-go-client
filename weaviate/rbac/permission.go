@@ -273,7 +273,6 @@ func (p Permissions) toWeaviate() []*models.Permission {
 	}
 
 	appendPermissions(len(p.Backups), func(i int) *models.Permission { return p.Backups[i].toWeaviate() })
-
 	appendPermissions(len(p.Cluster), func(i int) *models.Permission { return p.Cluster[i].toWeaviate() })
 	appendPermissions(len(p.Collections), func(i int) *models.Permission { return p.Collections[i].toWeaviate() })
 	appendPermissions(len(p.Data), func(i int) *models.Permission { return p.Data[i].toWeaviate() })
