@@ -66,7 +66,7 @@ func roleFromWeaviate(r models.Role) Role {
 			role.Roles = append(role.Roles, RolesPermission{
 				Action: *perm.Action,
 				Role:   *perm.Roles.Role,
-				Scope:  *perm.Roles.Scope,
+				// Scope:  *perm.Roles.Scope,
 			})
 
 		// Weaviate v1.30 may defined additional actions for these permission groups
