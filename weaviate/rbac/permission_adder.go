@@ -8,29 +8,29 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
 	"github.com/weaviate/weaviate/client/authz"
-	"github.com/weaviate/weaviate/entities/models"
 )
 
 type PermissionAdder struct {
 	connection *connection.Connection
 
-	role        string
-	permissions []*models.Permission
+	role Role
 }
 
 func (pa *PermissionAdder) WithRole(role string) *PermissionAdder {
-	pa.role = role
+	pa.role.Name = role
 	return pa
 }
 
-func (pa *PermissionAdder) WithPermissions(permissions ...*models.Permission) *PermissionAdder {
-	pa.permissions = append([]*models.Permission(nil), permissions...)
+func (pa *PermissionAdder) WithPermissions(permissions ...PermissionGroup) *PermissionAdder {
+	for _, perm := range permissions {
+		perm.ExtendRole(&pa.role)
+	}
 	return pa
 }
 
 func (pa *PermissionAdder) Do(ctx context.Context) error {
 	res, err := pa.connection.RunREST(ctx, pa.path(), http.MethodPost, authz.AddPermissionsBody{
-		Permissions: pa.permissions,
+		Permissions: pa.role.Permissions.toWeaviate(),
 	})
 	if err != nil {
 		return except.NewDerivedWeaviateClientError(err)
@@ -42,5 +42,5 @@ func (pa *PermissionAdder) Do(ctx context.Context) error {
 }
 
 func (pa *PermissionAdder) path() string {
-	return fmt.Sprintf("/authz/roles/%s/add-permissions", pa.role)
+	return fmt.Sprintf("/authz/roles/%s/add-permissions", pa.role.Name)
 }

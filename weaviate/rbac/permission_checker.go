@@ -7,28 +7,29 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
-	"github.com/weaviate/weaviate/entities/models"
 )
 
 type PermissionChecker struct {
 	connection *connection.Connection
 
-	role       string
-	permission *models.Permission
+	role Role
 }
 
 func (pc *PermissionChecker) WithRole(role string) *PermissionChecker {
-	pc.role = role
+	pc.role.Name = role
 	return pc
 }
 
-func (pc *PermissionChecker) WithPermission(permission *models.Permission) *PermissionChecker {
-	pc.permission = permission
+func (pc *PermissionChecker) WithPermission(permission ...PermissionGroup) *PermissionChecker {
+	for _, perm := range permission {
+		perm.ExtendRole(&pc.role)
+	}
 	return pc
 }
 
 func (pc *PermissionChecker) Do(ctx context.Context) (bool, error) {
-	res, err := pc.connection.RunREST(ctx, pc.path(), http.MethodPost, pc.permission)
+	checkPermission := pc.role.Permissions.toWeaviate()[0]
+	res, err := pc.connection.RunREST(ctx, pc.path(), http.MethodPost, checkPermission)
 	if err != nil {
 		return false, except.NewDerivedWeaviateClientError(err)
 	}
@@ -41,5 +42,5 @@ func (pc *PermissionChecker) Do(ctx context.Context) (bool, error) {
 }
 
 func (pc *PermissionChecker) path() string {
-	return fmt.Sprintf("/authz/roles/%s/has-permission", pc.role)
+	return fmt.Sprintf("/authz/roles/%s/has-permission", pc.role.Name)
 }

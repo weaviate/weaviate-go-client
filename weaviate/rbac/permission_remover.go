@@ -8,29 +8,29 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
 	"github.com/weaviate/weaviate/client/authz"
-	"github.com/weaviate/weaviate/entities/models"
 )
 
 type PermissionRemover struct {
 	connection *connection.Connection
 
-	role        string
-	permissions []*models.Permission
+	role Role
 }
 
-func (pr *PermissionRemover) WithRole(role string) *PermissionRemover {
-	pr.role = role
-	return pr
+func (pc *PermissionRemover) WithRole(role string) *PermissionRemover {
+	pc.role.Name = role
+	return pc
 }
 
-func (pr *PermissionRemover) WithPermissions(permissions ...*models.Permission) *PermissionRemover {
-	pr.permissions = append([]*models.Permission(nil), permissions...)
-	return pr
+func (pc *PermissionRemover) WithPermissions(permissions ...PermissionGroup) *PermissionRemover {
+	for _, perm := range permissions {
+		perm.ExtendRole(&pc.role)
+	}
+	return pc
 }
 
 func (pr *PermissionRemover) Do(ctx context.Context) error {
 	res, err := pr.connection.RunREST(ctx, pr.path(), http.MethodPost, authz.RemovePermissionsBody{
-		Permissions: pr.permissions,
+		Permissions: pr.role.Permissions.toWeaviate(),
 	})
 	if err != nil {
 		return except.NewDerivedWeaviateClientError(err)
@@ -42,5 +42,5 @@ func (pr *PermissionRemover) Do(ctx context.Context) error {
 }
 
 func (pr *PermissionRemover) path() string {
-	return fmt.Sprintf("/authz/roles/%s/remove-permissions", pr.role)
+	return fmt.Sprintf("/authz/roles/%s/remove-permissions", pr.role.Name)
 }

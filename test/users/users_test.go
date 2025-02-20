@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/rbac"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
 )
@@ -27,30 +28,23 @@ func TestUsers_integration(t *testing.T) {
 		viewerRole = "viewer"
 
 		adminUser = "adam-the-admin"
+		pizza     = "Pizza"
 	)
 
-	pizza := "Pizza"
-	manageBackups := models.PermissionActionManageBackups
-
 	// mustCreateRole and register a t.Cleanup callback to delete it.
-	mustCreateRole := func(tt *testing.T, role string, permissions ...*models.Permission) {
+	mustCreateRole := func(tt *testing.T, role rbac.Role) {
 		tt.Helper()
 
 		tt.Cleanup(func() {
-			err := rolesClient.Deleter().WithName(role).Do(ctx)
+			err := rolesClient.Deleter().WithName(role.Name).Do(ctx)
 			require.NoErrorf(tt, err, "delete role %q", role)
 
-			exists, _ := rolesClient.Exists().WithName(role).Do(ctx)
+			exists, _ := rolesClient.Exists().WithName(role.Name).Do(ctx)
 			require.Falsef(tt, exists, "role %q should not exist after deletion", role)
 		})
 
-		err := rolesClient.Creator().
-			WithName(role).
-			// Create an extra permission so that the role would not be
-			// deleted with its otherwise only permission is removed.
-			WithPermissions(permissions...).
-			Do(ctx)
-		require.NoErrorf(tt, err, "create role %q", role)
+		err := rolesClient.Creator().WithRole(role).Do(ctx)
+		require.NoErrorf(tt, err, "create role %q", role.Name)
 	}
 
 	t.Run("get user roles", func(t *testing.T) {
@@ -69,10 +63,9 @@ func TestUsers_integration(t *testing.T) {
 	t.Run("assign and revoke a role", func(t *testing.T) {
 		roleName := "AssignRevokeMe"
 
-		mustCreateRole(t, roleName, &models.Permission{
-			Action:  &manageBackups,
-			Backups: &models.PermissionBackups{Collection: &pizza},
-		})
+		mustCreateRole(t, rbac.NewRole(roleName,
+			rbac.BackupPermissions(pizza, models.PermissionActionManageBackups),
+		))
 
 		// Act: assign
 		err := usersClient.Assigner().WithUser(adminUser).WithRoles(roleName).Do(ctx)

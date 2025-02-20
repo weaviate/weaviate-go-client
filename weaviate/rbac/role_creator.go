@@ -12,24 +12,18 @@ import (
 type RoleCreator struct {
 	connection *connection.Connection
 
-	name        string
-	permissions []*models.Permission
+	role Role
 }
 
-func (rc *RoleCreator) WithName(name string) *RoleCreator {
-	rc.name = name
-	return rc
-}
-
-func (rc *RoleCreator) WithPermissions(permissions ...*models.Permission) *RoleCreator {
-	rc.permissions = append([]*models.Permission(nil), permissions...)
+func (rc *RoleCreator) WithRole(role Role) *RoleCreator {
+	rc.role = role
 	return rc
 }
 
 func (rc *RoleCreator) Do(ctx context.Context) error {
-	res, err := rc.connection.RunREST(ctx, "/authz/roles", http.MethodPost, models.Role{
-		Name:        &rc.name,
-		Permissions: rc.permissions,
+	res, err := rc.connection.RunREST(ctx, "/authz/roles", http.MethodPost, &models.Role{
+		Name:        &rc.role.Name,
+		Permissions: rc.role.Permissions.toWeaviate(),
 	})
 	if err != nil {
 		return except.NewDerivedWeaviateClientError(err)
