@@ -2,6 +2,7 @@ package testsuit
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/weaviate/weaviate-go-client/v4/test"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/grpc"
 
 	"github.com/go-openapi/strfmt"
@@ -214,7 +216,8 @@ func CleanUpWeaviate(t *testing.T, client *weaviate.Client) {
 
 	// Cleanup all roles except for the builtin ones.
 	roles, err := client.Roles().AllGetter().Do(ctx)
-	if err != nil {
+	clientErr := &fault.WeaviateClientError{}
+	if err != nil && errors.As(err, &clientErr) && clientErr.StatusCode != -1 {
 		t.Logf("delete all roles: %v. This error can be ignored in the 'deprecated' test suite", err)
 	}
 
