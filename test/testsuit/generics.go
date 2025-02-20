@@ -214,7 +214,9 @@ func CleanUpWeaviate(t *testing.T, client *weaviate.Client) {
 
 	// Cleanup all roles except for the builtin ones.
 	roles, err := client.Roles().AllGetter().Do(ctx)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Logf("delete all roles: %v. This error can be ignored in the 'deprecated' test suite", err)
+	}
 
 	for _, role := range roles {
 		if name := role.Name; !slices.Contains(authorization.BuiltInRoles, name) {
