@@ -184,6 +184,7 @@ func TestMultiTargetNearVector(t *testing.T) {
 			mta  *graphql.MultiTargetArgumentBuilder
 		}{
 			{name: "with vector", nva: client.GraphQL().NearVectorArgBuilder().WithVector([]float32{1, 0, 0}), mta: to.mta},
+			// TODO: write another test case with [][]float32 to make sure we're serializing ColBERT vectors
 			{name: "with vector per target", nva: client.GraphQL().NearVectorArgBuilder().WithVectorPerTarget(map[string]models.Vector{"first": []float32{1, 0, 0}, "second": []float32{1, 0, 0}}), mta: to.mta},
 		}
 		for _, ti := range inner {

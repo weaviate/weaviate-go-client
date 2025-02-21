@@ -21,7 +21,7 @@ func (pc *PermissionRemover) WithRole(role string) *PermissionRemover {
 	return pc
 }
 
-func (pc *PermissionRemover) WithPermissions(permissions ...PermissionGroup) *PermissionRemover {
+func (pc *PermissionRemover) WithPermissions(permissions ...Permission) *PermissionRemover {
 	for _, perm := range permissions {
 		perm.ExtendRole(&pc.role)
 	}
@@ -30,7 +30,7 @@ func (pc *PermissionRemover) WithPermissions(permissions ...PermissionGroup) *Pe
 
 func (pr *PermissionRemover) Do(ctx context.Context) error {
 	res, err := pr.connection.RunREST(ctx, pr.path(), http.MethodPost, authz.RemovePermissionsBody{
-		Permissions: pr.role.Permissions.toWeaviate(),
+		Permissions: pr.role.makeWeaviatePermissions(),
 	})
 	if err != nil {
 		return except.NewDerivedWeaviateClientError(err)

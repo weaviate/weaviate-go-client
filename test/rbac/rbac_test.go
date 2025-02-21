@@ -27,8 +27,8 @@ func TestRBAC_integration(t *testing.T) {
 		rootRole   = "root"
 		viewerRole = "viewer"
 
-		adminUser = "adam-the-admin"
-		pizza     = "Pizza"
+		rootUser = "adam-the-admin"
+		pizza    = "Pizza"
 	)
 
 	// mustCreateRole and register a t.Cleanup callback to delete it.
@@ -47,7 +47,7 @@ func TestRBAC_integration(t *testing.T) {
 		require.NoErrorf(tt, err, "create role %q", role)
 	}
 
-	hasPermissions := func(tt *testing.T, role string, permissions rbac.PermissionGroup) bool {
+	hasPermissions := func(tt *testing.T, role string, permissions rbac.Permission) bool {
 		tt.Helper()
 
 		has, err := rolesClient.PermissionChecker().
@@ -61,24 +61,25 @@ func TestRBAC_integration(t *testing.T) {
 	t.Run("get all roles", func(t *testing.T) {
 		all, err := rolesClient.AllGetter().Do(ctx)
 		require.NoError(t, err, "fetch all roles")
-		require.Lenf(t, all, 2, "wrong number of roles")
+		require.Lenf(t, all, 3, "wrong number of roles")
 		require.Equal(t, all[0].Name, adminRole)
-		require.Equal(t, all[1].Name, viewerRole)
+		require.Equal(t, all[1].Name, rootRole)
+		require.Equal(t, all[2].Name, viewerRole)
 	})
 
 	t.Run("get assigned users", func(t *testing.T) {
-		assigned, err := rolesClient.AssignedUsersGetter().WithRole(adminRole).Do(ctx)
+		assigned, err := rolesClient.AssignedUsersGetter().WithRole(rootRole).Do(ctx)
 
-		require.NoErrorf(t, err, "get users with role %q", adminRole)
-		require.ElementsMatchf(t, []string{adminUser}, assigned,
-			"%q should be assigned to %q", adminRole, adminUser)
+		require.NoErrorf(t, err, "get users with role %q", rootRole)
+		require.ElementsMatchf(t, []string{rootUser}, assigned,
+			"%q should be assigned to %q", rootRole, rootUser)
 	})
 
 	t.Run("create role", func(t *testing.T) {
 		roleName := "TestRole"
 
 		mustCreateRole(t, rbac.NewRole(roleName,
-			rbac.BackupPermissions(pizza, models.PermissionActionManageBackups),
+			rbac.BackupsPermission{Actions: []string{models.PermissionActionManageBackups}, Collection: pizza},
 		))
 
 		exists, err := rolesClient.Exists().WithName(roleName).Do(ctx)
@@ -89,15 +90,15 @@ func TestRBAC_integration(t *testing.T) {
 		require.NoErrorf(t, err, "retrieve %q", roleName)
 
 		require.Equal(t, testRole.Name, roleName)
-		require.Len(t, testRole.Permissions.Backups, 1)
+		require.Len(t, testRole.Backups, 1)
 	})
 
 	t.Run("add permissions", func(t *testing.T) {
 		roleName := "WantsMorePermissions"
-		addPerm := rbac.TenantsPermissions(models.PermissionActionDeleteTenants)
+		addPerm := rbac.TenantsPermission{Actions: []string{models.PermissionActionDeleteTenants}}
 
 		mustCreateRole(t, rbac.NewRole(roleName,
-			rbac.BackupPermissions(pizza, models.PermissionActionManageBackups),
+			rbac.BackupsPermission{Actions: []string{models.PermissionActionManageBackups}, Collection: pizza},
 		))
 
 		err := rolesClient.PermissionAdder().
@@ -112,10 +113,10 @@ func TestRBAC_integration(t *testing.T) {
 
 	t.Run("remove permissions", func(t *testing.T) {
 		roleName := "WantsLessPermissions"
-		removePerm := rbac.TenantsPermissions(models.PermissionActionDeleteTenants)
+		removePerm := rbac.TenantsPermission{Actions: []string{models.PermissionActionDeleteTenants}}
 
 		mustCreateRole(t, rbac.NewRole(roleName,
-			rbac.BackupPermissions(pizza, models.PermissionActionManageBackups),
+			rbac.BackupsPermission{Actions: []string{models.PermissionActionManageBackups}, Collection: pizza},
 		))
 
 		err := rolesClient.PermissionRemover().

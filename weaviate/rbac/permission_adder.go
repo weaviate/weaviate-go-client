@@ -21,7 +21,7 @@ func (pa *PermissionAdder) WithRole(role string) *PermissionAdder {
 	return pa
 }
 
-func (pa *PermissionAdder) WithPermissions(permissions ...PermissionGroup) *PermissionAdder {
+func (pa *PermissionAdder) WithPermissions(permissions ...Permission) *PermissionAdder {
 	for _, perm := range permissions {
 		perm.ExtendRole(&pa.role)
 	}
@@ -30,7 +30,7 @@ func (pa *PermissionAdder) WithPermissions(permissions ...PermissionGroup) *Perm
 
 func (pa *PermissionAdder) Do(ctx context.Context) error {
 	res, err := pa.connection.RunREST(ctx, pa.path(), http.MethodPost, authz.AddPermissionsBody{
-		Permissions: pa.role.Permissions.toWeaviate(),
+		Permissions: pa.role.makeWeaviatePermissions(),
 	})
 	if err != nil {
 		return except.NewDerivedWeaviateClientError(err)

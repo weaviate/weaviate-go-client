@@ -36,54 +36,76 @@ func (rg *RoleGetter) Do(ctx context.Context) (Role, error) {
 }
 
 func roleFromWeaviate(r models.Role) Role {
-	role := Role{Name: *r.Name}
+	backups := make(mergedPermissions)
+	collections := make(mergedPermissions)
+	data := make(mergedPermissions)
+	nodes := make(mergedPermissions)
+	roles := make(mergedPermissions)
+	clusters := make(mergedPermissions)
+	tenants := make(mergedPermissions)
+	users := make(mergedPermissions)
 
 	for _, perm := range r.Permissions {
 		switch {
 		case perm.Backups != nil:
-			role.Backups = append(role.Backups, BackupsPermission{
-				Action:     *perm.Action,
-				Collection: *perm.Backups.Collection,
-			})
+			backups.Add(func(actions []string, filters ...string) Permission {
+				return BackupsPermission{
+					Actions:    actions,
+					Collection: filters[0],
+				}
+			}, *perm.Action, *perm.Backups.Collection)
 		case perm.Collections != nil:
-			role.Collections = append(role.Collections, CollectionsPermission{
-				Action:     *perm.Action,
-				Collection: *perm.Collections.Collection,
-			})
+			collections.Add(func(actions []string, filters ...string) Permission {
+				return CollectionsPermission{
+					Actions:    actions,
+					Collection: filters[0],
+				}
+			}, *perm.Action, *perm.Collections.Collection)
 		case perm.Data != nil:
-			role.Data = append(role.Data, DataPermission{
-				Action:     *perm.Action,
-				Collection: *perm.Data.Collection,
-				Object:     *perm.Data.Object,
-			})
+			data.Add(func(actions []string, filters ...string) Permission {
+				return DataPermission{
+					Actions:    actions,
+					Collection: filters[0],
+				}
+			}, *perm.Action, *perm.Data.Collection)
 		case perm.Nodes != nil:
-			role.Nodes = append(role.Nodes, NodesPermission{
-				Action:     *perm.Action,
-				Collection: *perm.Nodes.Collection,
-				Verbosity:  *perm.Nodes.Verbosity,
-			})
-		case perm.Roles != nil:
-			permission := RolesPermission{
-				Action: *perm.Action,
-				Role:   *perm.Roles.Role,
-			}
-
+			nodes.Add(func(actions []string, filters ...string) Permission {
+				return NodesPermission{
+					Actions:    actions,
+					Collection: filters[0],
+					Verbosity:  filters[1],
+				}
+			}, *perm.Action, *perm.Nodes.Collection, *perm.Nodes.Verbosity)
 			// Scope comes back as `nil` if not set.
-			if perm.Roles.Scope != nil {
-				permission.Scope = *perm.Roles.Scope
-			}
-			role.Roles = append(role.Roles, permission)
+		case perm.Roles != nil:
+			// scope := ""
+			// if (perm.Roles.Scope != nil) {
+			// 	scope = *perm.Roles.Scope
+			// }
+			roles.Add(func(actions []string, filters ...string) Permission {
+				return RolesPermission{
+					Actions: actions,
+					Role:    filters[0],
+					Scope:   filters[1],
+				}
+			}, *perm.Action, *perm.Roles.Role, *perm.Roles.Scope)
 
 		// Weaviate v1.30 may defined additional actions for these permission groups
 		// and we want to ensure they can be handled elegantly.
 		// While somewhat crude, this method makes sure any cluster/tenants/users
 		// action are read correctly without requiring the latest client version.
 		case strings.HasSuffix(*perm.Action, "cluster"):
-			role.Cluster = append(role.Cluster, ClusterPermission{Action: *perm.Action})
+			clusters.Add(func(actions []string, _ ...string) Permission {
+				return ClusterPermission{Actions: actions}
+			}, *perm.Action)
 		case strings.HasSuffix(*perm.Action, "tenants"):
-			role.Tenants = append(role.Tenants, TenantsPermission{Action: *perm.Action})
+			tenants.Add(func(actions []string, _ ...string) Permission {
+				return TenantsPermission{Actions: actions}
+			}, *perm.Action)
 		case strings.HasSuffix(*perm.Action, "users"):
-			role.Users = append(role.Users, UsersPermission{Action: *perm.Action})
+			users.Add(func(actions []string, _ ...string) Permission {
+				return UsersPermission{Actions: actions}
+			}, *perm.Action)
 		default:
 			// New permission group may have been introduced on the server,
 			// e.g. "manage_indices", which aren't reflected in this version of the client,
@@ -91,5 +113,42 @@ func roleFromWeaviate(r models.Role) Role {
 			log.Printf("WARN: %q action belongs to an unrecognized group, try updating the client to the latest version", *perm.Action)
 		}
 	}
-	return role
+	return NewRole(*r.Name, backups, collections, data, nodes, roles, clusters, tenants, users)
+}
+
+// mergedPermissions groups permissions by resource.
+type mergedPermissions map[string]*genericPermission
+
+func (mp mergedPermissions) Add(
+	permFunc func(actions []string, filters ...string) Permission,
+	action string, parts ...string,
+) {
+	key := strings.Join(parts, "#")
+	if v, ok := mp[key]; !ok {
+		mp[key] = &genericPermission{fields: parts, permFunc: permFunc}
+	} else {
+		v.actions = append(v.actions, action)
+	}
+}
+
+// ExtendRole with all permissions in this group.
+func (mp mergedPermissions) ExtendRole(r *Role) {
+	for _, generic := range mp {
+		generic.ExtendRole(r)
+	}
+}
+
+// ExtendRole with a concrete action derived from permFunc.
+func (gp *genericPermission) ExtendRole(r *Role) {
+	concrete := gp.permFunc(gp.actions, gp.fields...)
+	concrete.ExtendRole(r)
+}
+
+// genericPermission is a helper type that has information necessary
+type genericPermission struct {
+	actions []string
+	fields  []string
+
+	// permFunc creates a concrete permission with given actions and filters.
+	permFunc func(actions []string, filters ...string) Permission
 }

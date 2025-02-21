@@ -64,7 +64,7 @@ func TestUsers_integration(t *testing.T) {
 		roleName := "AssignRevokeMe"
 
 		mustCreateRole(t, rbac.NewRole(roleName,
-			rbac.BackupPermissions(pizza, models.PermissionActionManageBackups),
+			rbac.BackupsPermission{Actions: []string{models.PermissionActionManageBackups}, Collection: pizza},
 		))
 
 		// Act: assign

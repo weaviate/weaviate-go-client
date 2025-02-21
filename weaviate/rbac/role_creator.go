@@ -23,7 +23,7 @@ func (rc *RoleCreator) WithRole(role Role) *RoleCreator {
 func (rc *RoleCreator) Do(ctx context.Context) error {
 	res, err := rc.connection.RunREST(ctx, "/authz/roles", http.MethodPost, &models.Role{
 		Name:        &rc.role.Name,
-		Permissions: rc.role.Permissions.toWeaviate(),
+		Permissions: rc.role.makeWeaviatePermissions(),
 	})
 	if err != nil {
 		return except.NewDerivedWeaviateClientError(err)

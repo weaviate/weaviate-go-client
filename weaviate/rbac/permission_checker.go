@@ -21,15 +21,14 @@ func (pc *PermissionChecker) WithRole(role string) *PermissionChecker {
 }
 
 // WithPermission specifies the permission (singular) to be checked.
-// Note that, while this method accepts a permission group for convenience,
-// it will only check against the first permission in the group.
-func (pc *PermissionChecker) WithPermission(permission PermissionGroup) *PermissionChecker {
+// Only first action in the permission's list of actions will be used.
+func (pc *PermissionChecker) WithPermission(permission Permission) *PermissionChecker {
 	permission.ExtendRole(&pc.role)
 	return pc
 }
 
 func (pc *PermissionChecker) Do(ctx context.Context) (bool, error) {
-	checkPermission := pc.role.Permissions.toWeaviate()[0]
+	checkPermission := pc.role.makeWeaviatePermissions()[0]
 	res, err := pc.connection.RunREST(ctx, pc.path(), http.MethodPost, checkPermission)
 	if err != nil {
 		return false, except.NewDerivedWeaviateClientError(err)
