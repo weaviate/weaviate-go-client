@@ -77,12 +77,7 @@ func roleFromWeaviate(r *models.Role) Role {
 					Verbosity:  resources[1],
 				}
 			}, *perm.Action, *perm.Nodes.Collection, *perm.Nodes.Verbosity)
-			// Scope comes back as `nil` if not set.
 		case perm.Roles != nil:
-			// scope := ""
-			// if (perm.Roles.Scope != nil) {
-			// 	scope = *perm.Roles.Scope
-			// }
 			roles.Add(func(actions []string, resources ...string) Permission {
 				return RolesPermission{
 					Actions: actions,
