@@ -30,12 +30,13 @@ func (rg *RoleGetter) Do(ctx context.Context) (Role, error) {
 	if res.StatusCode == http.StatusOK {
 		var role models.Role
 		decodeErr := res.DecodeBodyIntoTarget(&role)
-		return roleFromWeaviate(role), decodeErr
+		return roleFromWeaviate(&role), decodeErr
 	}
 	return Role{}, except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
-func roleFromWeaviate(r models.Role) Role {
+// roleFromWeaviate groups permissions by resource and creates an rbac.Role.
+func roleFromWeaviate(r *models.Role) Role {
 	backups := make(mergedPermissions)
 	collections := make(mergedPermissions)
 	data := make(mergedPermissions)
@@ -48,32 +49,32 @@ func roleFromWeaviate(r models.Role) Role {
 	for _, perm := range r.Permissions {
 		switch {
 		case perm.Backups != nil:
-			backups.Add(func(actions []string, filters ...string) Permission {
+			backups.Add(func(actions []string, resources ...string) Permission {
 				return BackupsPermission{
 					Actions:    actions,
-					Collection: filters[0],
+					Collection: resources[0],
 				}
 			}, *perm.Action, *perm.Backups.Collection)
 		case perm.Collections != nil:
-			collections.Add(func(actions []string, filters ...string) Permission {
+			collections.Add(func(actions []string, resources ...string) Permission {
 				return CollectionsPermission{
 					Actions:    actions,
-					Collection: filters[0],
+					Collection: resources[0],
 				}
 			}, *perm.Action, *perm.Collections.Collection)
 		case perm.Data != nil:
-			data.Add(func(actions []string, filters ...string) Permission {
+			data.Add(func(actions []string, resources ...string) Permission {
 				return DataPermission{
 					Actions:    actions,
-					Collection: filters[0],
+					Collection: resources[0],
 				}
 			}, *perm.Action, *perm.Data.Collection)
 		case perm.Nodes != nil:
-			nodes.Add(func(actions []string, filters ...string) Permission {
+			nodes.Add(func(actions []string, resources ...string) Permission {
 				return NodesPermission{
 					Actions:    actions,
-					Collection: filters[0],
-					Verbosity:  filters[1],
+					Collection: resources[0],
+					Verbosity:  resources[1],
 				}
 			}, *perm.Action, *perm.Nodes.Collection, *perm.Nodes.Verbosity)
 			// Scope comes back as `nil` if not set.
@@ -82,11 +83,11 @@ func roleFromWeaviate(r models.Role) Role {
 			// if (perm.Roles.Scope != nil) {
 			// 	scope = *perm.Roles.Scope
 			// }
-			roles.Add(func(actions []string, filters ...string) Permission {
+			roles.Add(func(actions []string, resources ...string) Permission {
 				return RolesPermission{
 					Actions: actions,
-					Role:    filters[0],
-					Scope:   filters[1],
+					Role:    resources[0],
+					Scope:   resources[1],
 				}
 			}, *perm.Action, *perm.Roles.Role, *perm.Roles.Scope)
 
@@ -120,12 +121,12 @@ func roleFromWeaviate(r models.Role) Role {
 type mergedPermissions map[string]*genericPermission
 
 func (mp mergedPermissions) Add(
-	permFunc func(actions []string, filters ...string) Permission,
-	action string, parts ...string,
+	permFunc func(actions []string, resources ...string) Permission,
+	action string, resources ...string,
 ) {
-	key := strings.Join(parts, "#")
+	key := strings.Join(resources, "#")
 	if v, ok := mp[key]; !ok {
-		mp[key] = &genericPermission{fields: parts, permFunc: permFunc}
+		mp[key] = &genericPermission{resources: resources, permFunc: permFunc}
 	} else {
 		v.actions = append(v.actions, action)
 	}
@@ -140,15 +141,16 @@ func (mp mergedPermissions) ExtendRole(r *Role) {
 
 // ExtendRole with a concrete action derived from permFunc.
 func (gp *genericPermission) ExtendRole(r *Role) {
-	concrete := gp.permFunc(gp.actions, gp.fields...)
+	concrete := gp.permFunc(gp.actions, gp.resources...)
 	concrete.ExtendRole(r)
 }
 
-// genericPermission is a helper type that has information necessary
+// genericPermission is a helper container for information
+// necessary to construct a concrete Permission for the specified resources.
 type genericPermission struct {
-	actions []string
-	fields  []string
+	actions   []string
+	resources []string
 
 	// permFunc creates a concrete permission with given actions and filters.
-	permFunc func(actions []string, filters ...string) Permission
+	permFunc func(actions []string, resources ...string) Permission
 }

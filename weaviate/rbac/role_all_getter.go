@@ -19,7 +19,7 @@ func (rag *RoleAllGetter) Do(ctx context.Context) ([]Role, error) {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}
 	if res.StatusCode == http.StatusOK {
-		var roles []models.Role
+		var roles []*models.Role
 		decodeErr := res.DecodeBodyIntoTarget(&roles)
 
 		var out []Role
