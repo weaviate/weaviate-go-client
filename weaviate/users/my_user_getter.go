@@ -6,11 +6,18 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/rbac"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
 type MyUserGetter struct {
 	connection *connection.Connection
+}
+
+type UserInfo struct {
+	ID       string
+	Username string
+	Roles    []rbac.Role
 }
 
 func (mug *MyUserGetter) Do(ctx context.Context) (*models.UserInfo, error) {
