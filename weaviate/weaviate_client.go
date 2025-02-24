@@ -19,7 +19,9 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/grpc"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/misc"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/rbac"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/schema"
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/users"
 )
 
 const defaultTimeout = 60 * time.Second
@@ -107,6 +109,8 @@ type Client struct {
 	backup          *backup.API
 	graphQL         *graphql.API
 	cluster         *cluster.API
+	roles           *rbac.API
+	users           *users.API
 }
 
 func NewClient(config Config) (*Client, error) {
@@ -174,6 +178,8 @@ func NewClient(config Config) (*Client, error) {
 		batch:           batch.New(con, grpcClient, dbVersionSupport),
 		backup:          backup.New(con),
 		cluster:         cluster.New(con),
+		roles:           rbac.New(con),
+		users:           users.New(con),
 	}
 
 	return client, nil
@@ -219,6 +225,8 @@ func New(config Config) *Client {
 		batch:           batch.New(con, grpcClient, dbVersionSupport),
 		backup:          backup.New(con),
 		cluster:         cluster.New(con),
+		roles:           rbac.New(con),
+		users:           users.New(con),
 	}
 
 	return client
@@ -272,6 +280,14 @@ func (c *Client) Backup() *backup.API {
 // Cluster API group
 func (c *Client) Cluster() *cluster.API {
 	return c.cluster
+}
+
+func (c *Client) Roles() *rbac.API {
+	return c.roles
+}
+
+func (c *Client) Users() *users.API {
+	return c.users
 }
 
 func createGrpcClient(config Config, gRPCVersionSupport *db.GRPCVersionSupport) (*connection.GrpcClient, error) {

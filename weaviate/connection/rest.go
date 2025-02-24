@@ -276,7 +276,7 @@ func (rd *ResponseData) DecodeBodyIntoTarget(target interface{}) error {
 		return &fault.WeaviateClientError{
 			IsUnexpectedStatusCode: false,
 			StatusCode:             -1,
-			Msg:                    "failed to parse resonse data check DerivedFromError field for more information",
+			Msg:                    "failed to parse response data check DerivedFromError field for more information",
 			DerivedFromError:       err,
 		}
 	}

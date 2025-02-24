@@ -6,11 +6,22 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v4/test"
 	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
 )
+
+// EXTERNAL_WEAVIATE_RUNNING is the environment variable which controls the lifecycle
+// of the Docker containers created for the test. If set to 'true', containers are
+// preserved between test runs (useful for CI scenario, where all existing presets
+// are started at once with ../../test/start_containers.sh.
+// Otherwise containers are torn down on every test cleanup.
+var EXTERNAL_WEAVIATE_RUNNING = os.Getenv("EXTERNAL_WEAVIATE_RUNNING")
+
+var envExternalWeaviateRunning bool = strings.ToLower(EXTERNAL_WEAVIATE_RUNNING) == "true"
 
 func waitForStartup(ctx context.Context, url string, interval time.Duration) error {
 	t := time.NewTicker(interval)
@@ -64,11 +75,11 @@ func checkReady(initCtx context.Context, url string) error {
 //	due to syncing issues and speeds up the process
 func SetupLocalWeaviateWaitForStartup(waitForWeaviateStartup bool) error {
 	if !isExternalWeaviateRunning() {
-		if err := test.SetupWeaviate(); err != nil {
+		port, _, authEnabled := testsuit.GetPortAndAuthPw()
+		if err := test.SetupWeaviate(authEnabled); err != nil {
 			return err
 		}
 		if waitForWeaviateStartup {
-			port, _, _ := testsuit.GetPortAndAuthPw()
 			return waitForStartup(context.TODO(), fmt.Sprintf("localhost:%v", port), 1*time.Second)
 		}
 		return nil
@@ -80,16 +91,43 @@ func SetupLocalWeaviate() error {
 	return SetupLocalWeaviateWaitForStartup(true)
 }
 
-func isExternalWeaviateRunning() bool {
-	val := os.Getenv("EXTERNAL_WEAVIATE_RUNNING")
-	val = strings.ToLower(val)
-	isExternalWeaviateRunning := val == "true"
+// SetupLocalContainer is a test helper that starts a Weaviate instance from
+// a docker-compose files specified by the preset. It returns a cleanup function,
+// which will tear down ALL current containers if 'EXTERNAL_WEAVIATE_RUNNING=true'
+// is set and do nothing otherwise.
+//
+// Usage:
+//
+//	container, stop := testenv.SetupLocalContainer(t, ctx, test.Basic, true)
+//	t.Cleanup(stop)
+//	client := testsuit.CreateTestClientForContainer(t, container)
+func SetupLocalContainer(t *testing.T, ctx context.Context, preset test.Preset, waitForWeaviateStartup bool) (test.Container, func()) {
+	t.Helper()
 
+	container, start, stop := test.GetContainer(preset)
+
+	err := start()
+	if err == nil && waitForWeaviateStartup {
+		err = waitForStartup(ctx, container.HTTPAddress(), 1*time.Second)
+	}
+	require.NoErrorf(t, err, "start container from %q", container.DockerComposeFile)
+
+	mustStop := func() {
+		if !envExternalWeaviateRunning {
+			require.NoErrorf(t, stop(), "stop container from %q", container.DockerComposeFile)
+		}
+	}
+	return container, mustStop
+}
+
+// isExternalWeaviateRunning checks if either EXTERNAL_WEAVIATE_RUNNING is set
+// or a Weaviate container is already running.
+func isExternalWeaviateRunning() bool {
 	port, _, _ := testsuit.GetPortAndAuthPw()
 	err := checkReady(context.TODO(), fmt.Sprintf("localhost:%v", port))
 	isRunning := err == nil
 
-	return isExternalWeaviateRunning || isRunning
+	return envExternalWeaviateRunning || isRunning
 }
 
 // TearDownLocalWeaviate shuts down the locally started weaviate docker compose

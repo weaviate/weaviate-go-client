@@ -4,11 +4,8 @@ set -eou pipefail
 
 export WEAVIATE_VERSION=$1
 
-docker compose -f test/docker-compose.yml down --remove-orphans
-docker compose -f test/docker-compose-azure.yml down --remove-orphans
-docker compose -f test/docker-compose-okta-cc.yml down --remove-orphans
-docker compose -f test/docker-compose-okta-users.yml down --remove-orphans
-docker compose -f test/docker-compose-wcs.yml down --remove-orphans
-docker compose -f test/docker-compose-cluster.yml down --remove-orphans
+# Removes containers in the default docker-compose.yml
+# and _any other containers_ not defined in that file.
+docker compose down --remove-orphans
 
 echo "All containers stopped"
