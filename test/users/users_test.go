@@ -48,7 +48,7 @@ func TestUsers_integration(t *testing.T) {
 	}
 
 	t.Run("get user roles", func(t *testing.T) {
-		adminRoles, err := usersClient.UserRolesGetter().WithUser(adminUser).Do(ctx)
+		adminRoles, err := usersClient.UserRolesGetter().WithUserID(adminUser).Do(ctx)
 		require.NoErrorf(t, err, "fetch roles for %q user", adminUser)
 		require.Lenf(t, adminRoles, 1, "wrong number of roles for %q user")
 
@@ -68,14 +68,14 @@ func TestUsers_integration(t *testing.T) {
 		))
 
 		// Act: assign
-		err := usersClient.Assigner().WithUser(adminUser).WithRoles(roleName).Do(ctx)
+		err := usersClient.Assigner().WithUserID(adminUser).WithRoles(roleName).Do(ctx)
 		require.NoErrorf(t, err, "assign %q role", roleName)
 
 		assignedUsers, _ := rolesClient.AssignedUsersGetter().WithRole(roleName).Do(ctx)
 		require.Containsf(t, assignedUsers, adminUser, "should have %q role", roleName)
 
 		// Act: revoke
-		err = usersClient.Revoker().WithUser(adminUser).WithRoles(roleName).Do(ctx)
+		err = usersClient.Revoker().WithUserID(adminUser).WithRoles(roleName).Do(ctx)
 		require.NoErrorf(t, err, "revoke %q role", roleName)
 
 		assignedUsers, _ = rolesClient.AssignedUsersGetter().WithRole(roleName).Do(ctx)

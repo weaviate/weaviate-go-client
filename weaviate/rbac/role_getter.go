@@ -86,7 +86,7 @@ func roleFromWeaviate(r *models.Role) Role {
 				}
 			}, *perm.Action, *perm.Roles.Role, *perm.Roles.Scope)
 
-		// Weaviate v1.30 may defined additional actions for these permission groups
+		// Weaviate v1.30 may define additional actions for these permission groups
 		// and we want to ensure they can be handled elegantly.
 		// While somewhat crude, this method makes sure any cluster/tenants/users
 		// action are read correctly without requiring the latest client version.

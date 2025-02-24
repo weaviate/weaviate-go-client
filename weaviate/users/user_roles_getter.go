@@ -13,11 +13,11 @@ import (
 type UserRolesGetter struct {
 	connection *connection.Connection
 
-	user string
+	userID string
 }
 
-func (urg *UserRolesGetter) WithUser(user string) *UserRolesGetter {
-	urg.user = user
+func (urg *UserRolesGetter) WithUserID(id string) *UserRolesGetter {
+	urg.userID = id
 	return urg
 }
 
@@ -35,5 +35,5 @@ func (urg *UserRolesGetter) Do(ctx context.Context) ([]*models.Role, error) {
 }
 
 func (urg *UserRolesGetter) path() string {
-	return fmt.Sprintf("/authz/users/%s/roles", urg.user)
+	return fmt.Sprintf("/authz/users/%s/roles", urg.userID)
 }

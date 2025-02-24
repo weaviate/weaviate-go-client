@@ -13,12 +13,12 @@ import (
 type RoleRevoker struct {
 	connection *connection.Connection
 
-	user  string
-	roles []string
+	userID string
+	roles  []string
 }
 
-func (rr *RoleRevoker) WithUser(user string) *RoleRevoker {
-	rr.user = user
+func (rr *RoleRevoker) WithUserID(id string) *RoleRevoker {
+	rr.userID = id
 	return rr
 }
 
@@ -41,5 +41,5 @@ func (rr *RoleRevoker) Do(ctx context.Context) error {
 }
 
 func (rr *RoleRevoker) path() string {
-	return fmt.Sprintf("/authz/users/%s/revoke", rr.user)
+	return fmt.Sprintf("/authz/users/%s/revoke", rr.userID)
 }

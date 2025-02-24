@@ -13,12 +13,12 @@ import (
 type RoleAssigner struct {
 	connection *connection.Connection
 
-	user  string
-	roles []string
+	userID string
+	roles  []string
 }
 
-func (ra *RoleAssigner) WithUser(user string) *RoleAssigner {
-	ra.user = user
+func (ra *RoleAssigner) WithUserID(id string) *RoleAssigner {
+	ra.userID = id
 	return ra
 }
 
@@ -41,5 +41,5 @@ func (ra *RoleAssigner) Do(ctx context.Context) error {
 }
 
 func (ra *RoleAssigner) path() string {
-	return fmt.Sprintf("/authz/users/%s/assign", ra.user)
+	return fmt.Sprintf("/authz/users/%s/assign", ra.userID)
 }
