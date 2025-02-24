@@ -8,7 +8,6 @@ import (
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/rbac"
-	"github.com/weaviate/weaviate/entities/models"
 )
 
 type MyUserGetter struct {
@@ -17,28 +16,28 @@ type MyUserGetter struct {
 
 type UserInfo struct {
 	UserID string
-	Roles  []rbac.Role
+	Roles  []*rbac.Role
 }
 
-func (mug *MyUserGetter) Do(ctx context.Context) (*models.UserInfo, error) {
+func (mug *MyUserGetter) Do(ctx context.Context) (UserInfo, error) {
 	path := "/users/own-info"
 	res, err := mug.connection.RunREST(ctx, path, http.MethodGet, nil)
 	if err != nil {
-		return nil, except.NewDerivedWeaviateClientError(err)
+		return UserInfo{}, except.NewDerivedWeaviateClientError(err)
 	}
 	if res.StatusCode == http.StatusOK {
-		var user *models.UserInfo
+		var user UserInfo
 		decodeErr := res.DecodeBodyIntoTarget(&user)
 		return user, decodeErr
 	}
-	return nil, except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
+	return UserInfo{}, except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
 func (info *UserInfo) UnmarshalJSON(data []byte) error {
 	var tmp struct {
-		UserID   string      `json:"user_id"`
-		Username string      `json:"username"`
-		Roles    []rbac.Role `json:"roles"`
+		UserID   string       `json:"user_id"`
+		Username string       `json:"username"`
+		Roles    []*rbac.Role `json:"roles"`
 	}
 
 	if err := json.Unmarshal(data, &tmp); err != nil {

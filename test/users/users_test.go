@@ -54,6 +54,7 @@ func TestUsers_integration(t *testing.T) {
 
 		userInfo, err := usersClient.MyUserGetter().Do(ctx)
 		require.NoError(t, err, "fetch roles for current user")
+		require.Equal(t, adminUser, userInfo.UserID)
 		require.Lenf(t, userInfo.Roles, 1, "wrong number of roles for %q user")
 
 		require.EqualExportedValues(t, userInfo.Roles, adminRoles,
