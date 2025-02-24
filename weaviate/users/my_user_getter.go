@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
@@ -15,9 +16,8 @@ type MyUserGetter struct {
 }
 
 type UserInfo struct {
-	ID       string
-	Username string
-	Roles    []rbac.Role
+	UserID string
+	Roles  []rbac.Role
 }
 
 func (mug *MyUserGetter) Do(ctx context.Context) (*models.UserInfo, error) {
@@ -32,4 +32,26 @@ func (mug *MyUserGetter) Do(ctx context.Context) (*models.UserInfo, error) {
 		return user, decodeErr
 	}
 	return nil, except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
+}
+
+func (info *UserInfo) UnmarshalJSON(data []byte) error {
+	var tmp struct {
+		UserID   string      `json:"user_id"`
+		Username string      `json:"username"`
+		Roles    []rbac.Role `json:"roles"`
+	}
+
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	id := tmp.UserID
+	if id == "" {
+		id = tmp.Username
+	}
+	*info = UserInfo{
+		UserID: id,
+		Roles:  tmp.Roles,
+	}
+	return nil
 }
