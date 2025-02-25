@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/users"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/users"
 )
 
 func TestUserInfo_UnmarshalJSON(t *testing.T) {

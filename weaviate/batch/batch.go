@@ -1,8 +1,8 @@
 package batch
 
 import (
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/db"
 	"github.com/weaviate/weaviate/entities/models"
 )
 

@@ -5,8 +5,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/data/replication"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/db"
 	"github.com/weaviate/weaviate/entities/models"
 	"github.com/weaviate/weaviate/entities/schema/crossref"
 	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"

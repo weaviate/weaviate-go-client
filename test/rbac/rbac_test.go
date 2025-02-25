@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/weaviate/weaviate-go-client/v4/test"
-	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/rbac"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
+	"github.com/weaviate/weaviate-go-client/v5/test"
+	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/rbac"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
 )
 

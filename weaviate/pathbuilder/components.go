@@ -1,6 +1,6 @@
 package pathbuilder
 
-import "github.com/weaviate/weaviate-go-client/v4/weaviate/db"
+import "github.com/weaviate/weaviate-go-client/v5/weaviate/db"
 
 type Components struct {
 	ID                string

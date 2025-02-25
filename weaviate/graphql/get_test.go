@@ -9,9 +9,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/data/replication"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/filters"
 )
 
 // MockRunREST for testing

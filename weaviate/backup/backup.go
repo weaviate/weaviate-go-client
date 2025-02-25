@@ -1,7 +1,7 @@
 package backup
 
 import (
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 )
 
 const (

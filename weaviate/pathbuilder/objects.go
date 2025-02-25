@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/db"
 )
 
 func ObjectsGet(comp Components) string {

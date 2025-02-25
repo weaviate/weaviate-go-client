@@ -1,4 +1,4 @@
-module github.com/weaviate/weaviate-go-client/v4
+module github.com/weaviate/weaviate-go-client/v5
 
 go 1.22.7
 

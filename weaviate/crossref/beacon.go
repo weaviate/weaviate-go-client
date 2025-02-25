@@ -3,7 +3,7 @@ package crossref
 import (
 	"fmt"
 
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/db"
 )
 
 func BuildBeacon(id, className string, dbVersion *db.VersionSupport) string {

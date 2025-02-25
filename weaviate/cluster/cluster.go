@@ -1,7 +1,7 @@
 package cluster
 
 import (
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 )
 
 // API collection of cluster related endpoints
