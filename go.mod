@@ -2,8 +2,6 @@ module github.com/weaviate/weaviate-go-client/v4
 
 go 1.22.7
 
-toolchain go1.23.6
-
 require (
 	github.com/docker/go-connections v0.5.0
 	github.com/go-openapi/strfmt v0.23.0
