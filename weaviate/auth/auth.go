@@ -18,6 +18,8 @@ const oidcConfigURL = "/.well-known/openid-configuration"
 
 type Config interface {
 	GetAuthInfo(con *connection.Connection) (*http.Client, map[string]string, error)
+	// Returns a nil pointer if the authentication method does not use an api key.
+	ApiKey() *string
 }
 
 type authBase struct {
@@ -109,6 +111,10 @@ func (cc ClientCredentials) GetAuthInfo(con *connection.Connection) (*http.Clien
 	return config.Client(context.TODO()), nil, nil
 }
 
+func (cc ClientCredentials) ApiKey() *string {
+	return nil
+}
+
 type ResourceOwnerPasswordFlow struct {
 	Username string
 	Password string
@@ -151,6 +157,10 @@ func (ro ResourceOwnerPasswordFlow) GetAuthInfo(con *connection.Connection) (*ht
 	return oauth2.NewClient(context.TODO(), tokenSource), nil, nil
 }
 
+func (ro ResourceOwnerPasswordFlow) ApiKey() *string {
+	return nil
+}
+
 type BearerToken struct {
 	AccessToken  string
 	RefreshToken string
@@ -178,6 +188,10 @@ func (bt BearerToken) GetAuthInfo(con *connection.Connection) (*http.Client, map
 	return oauth2.NewClient(context.TODO(), tokenSource), nil, nil
 }
 
+func (bt BearerToken) ApiKey() *string {
+	return nil
+}
+
 type ApiKey struct {
 	Value string
 }
@@ -187,4 +201,8 @@ func (api ApiKey) GetAuthInfo(con *connection.Connection) (*http.Client, map[str
 	additional_headers := make(map[string]string)
 	additional_headers["authorization"] = "Bearer " + api.Value
 	return nil, additional_headers, nil
+}
+
+func (api ApiKey) ApiKey() *string {
+	return &api.Value
 }

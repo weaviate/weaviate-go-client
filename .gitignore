@@ -10,3 +10,4 @@ vendor/
 .vscode/
 .idea/
 .env
+test/scratch_test.go
