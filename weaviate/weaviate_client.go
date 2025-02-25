@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/auth"
@@ -137,7 +138,10 @@ func NewClient(config Config) (*Client, error) {
 		for k, v := range additionalHeaders {
 			config.Headers[k] = v
 		}
-
+		if isWeaviateDomain(config.Host) && config.AuthConfig.ApiKey() != nil {
+			config.Headers["X-Weaviate-Api-Key"] = *config.AuthConfig.ApiKey()
+			config.Headers["X-Weaviate-Cluster-URL"] = "https://" + config.Host
+		}
 	}
 
 	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.getTimeout(), config.Headers)
@@ -295,4 +299,9 @@ func createGrpcClient(config Config, gRPCVersionSupport *db.GRPCVersionSupport) 
 		return connection.NewGrpcClient(config.GrpcConfig.Host, config.GrpcConfig.Secured, config.Headers, gRPCVersionSupport, config.getTimeout(), config.StartupTimeout)
 	}
 	return nil, nil
+}
+
+func isWeaviateDomain(url string) bool {
+	lower := strings.ToLower(url)
+	return strings.Contains(lower, "weaviate.io") || strings.Contains(lower, "semi.technology") || strings.Contains(lower, "weaviate.cloud")
 }
