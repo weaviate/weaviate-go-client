@@ -44,6 +44,10 @@ elif [[ $TARGET_MAJOR_VERSION -gt $CURRENT_MAJOR_VERSION ]]; then
 
     find . -type f \( -name "*.go" -o -name "go.mod" \) \
         -exec sed -i '' "s|$GO_MOD_PKG|$PACKAGE/v$TARGET_MAJOR_VERSION|g" {} \;
+
+    echo "Building project... An error might indicate a malformed go.mod or unresolvable dependencies."
+    go build ./...
+    echo "OK"
 fi
 
 # `v4` -> `v4` (except quoted warnings starting with >)
