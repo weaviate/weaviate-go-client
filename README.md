@@ -7,7 +7,7 @@ A native Go client for [Weaviate](https://github.com/weaviate/weaviate).
 > :warning: `v5.0.0` cannot be installed due to a malformed `go.mod` file.
 > Prefer `v5.0.1` or higher.
 
-In order to get the Go client v5 issue this command:
+In order to get the Go client `v5` issue this command:
 
 ```bash
 $ go get github.com/weaviate/weaviate-go-client/v5@v5.x.x
