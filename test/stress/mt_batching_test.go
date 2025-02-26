@@ -9,8 +9,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/stretchr/testify/require"
-	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
+	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 	"github.com/weaviate/weaviate/entities/models"
 )
 

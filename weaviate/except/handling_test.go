@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 )
 
 func TestNewWeaviateClientError(t *testing.T) {

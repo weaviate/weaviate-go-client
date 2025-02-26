@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/weaviate/weaviate-go-client/v4/weaviate"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate"
 )
 
 func CreateTestClient() *weaviate.Client {

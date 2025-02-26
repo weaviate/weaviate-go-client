@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/filters"
 	"github.com/weaviate/weaviate/entities/models"
 )
 

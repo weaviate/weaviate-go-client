@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
 	"github.com/weaviate/weaviate/entities/models"
 )
 

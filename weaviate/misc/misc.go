@@ -1,8 +1,8 @@
 package misc
 
 import (
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/db"
 )
 
 // API collection of endpoints that don't fit in other categories

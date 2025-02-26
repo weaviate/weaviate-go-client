@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
+	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/testenv"
 )
 
 func TestContextionary_integration(t *testing.T) {

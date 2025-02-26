@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/weaviate/weaviate-go-client/v4/test"
-	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v5/test"
+	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
 )
 
 // EXTERNAL_WEAVIATE_RUNNING is the environment variable which controls the lifecycle

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/weaviate/weaviate-go-client/v4/test/helpers"
+	"github.com/weaviate/weaviate-go-client/v5/test/helpers"
 	"github.com/weaviate/weaviate/entities/models"
 )
 

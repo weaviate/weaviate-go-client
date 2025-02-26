@@ -8,12 +8,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/weaviate/weaviate-go-client/v4/test/helpers"
-	"github.com/weaviate/weaviate-go-client/v4/test/testsuit"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/fault"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/testenv"
+	"github.com/weaviate/weaviate-go-client/v5/test/helpers"
+	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/data/replication"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/fault"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/filters"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
 )
 

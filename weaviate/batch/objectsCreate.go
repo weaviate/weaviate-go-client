@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/except"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/pathbuilder"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/pathbuilder"
 	"github.com/weaviate/weaviate/entities/models"
 )
 

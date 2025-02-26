@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/db"
-	grpcbatch "github.com/weaviate/weaviate-go-client/v4/weaviate/grpc/batch"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/db"
+	grpcbatch "github.com/weaviate/weaviate-go-client/v5/weaviate/grpc/batch"
 	"github.com/weaviate/weaviate/entities/models"
 	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 	"google.golang.org/grpc"

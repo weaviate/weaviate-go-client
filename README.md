@@ -1,21 +1,24 @@
-# Weaviate go client  <img alt='Weaviate logo' src='https://raw.githubusercontent.com/weaviate/weaviate/19de0956c69b66c5552447e84d016f4fe29d12c9/docs/assets/weaviate-logo.png' width='180' align='right' />
+# Weaviate Go client  <img alt='Weaviate logo' src='https://raw.githubusercontent.com/weaviate/weaviate/19de0956c69b66c5552447e84d016f4fe29d12c9/docs/assets/weaviate-logo.png' width='180' align='right' />
 
-A go native client for weaviate.
+A native Go client for [Weaviate](https://github.com/weaviate/weaviate).
 
 ## Usage
 
-In order to get the go client v4 issue this command:
+> :warning: `v5.0.0` cannot be installed due to a malformed `go.mod` file.
+> Prefer `v5.0.1` or higher.
+
+In order to get the Go client `v5` issue this command:
 
 ```bash
-$ go get github.com/weaviate/weaviate-go-client/v4@v4.x.x
+$ go get github.com/weaviate/weaviate-go-client/v5@v5.x.x
 ```
 
-where `v4.x.x` is the desired go client v4 version, for example `v5.0.0`
+where `v5.x.x` is the desired Go client `v5` version, for example `v5.0.1`.
 
 Add dependency to your `go.mod`:
 
 ```go
-require github.com/weaviate/weaviate-go-client/v4 v5.0.0
+require github.com/weaviate/weaviate-go-client/v5 v5.0.1
 ```
 
 Connect to Weaviate on `localhost:8080` and fetch meta information
@@ -27,7 +30,7 @@ import (
   "context"
   "fmt"
 
-  client "github.com/weaviate/weaviate-go-client/v4/weaviate"
+  client "github.com/weaviate/weaviate-go-client/v5/weaviate"
 )
 
 func main() {

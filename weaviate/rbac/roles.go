@@ -1,6 +1,6 @@
 package rbac
 
-import "github.com/weaviate/weaviate-go-client/v4/weaviate/connection"
+import "github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 
 type API struct {
 	connection *connection.Connection
