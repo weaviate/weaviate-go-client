@@ -57,7 +57,7 @@ fi
 # require github.com/weaviate/weaviate-go-client/v4 v4.1.1 -> github.com/weaviate/weaviate-go-client/v5 v5.0.1
 sed -i '' \
     -e "/^>/!s/\`v${CURRENT_MAJOR_VERSION}\`/\`v${TARGET_MAJOR_VERSION}\`/g" \
-    -e "/^>/!s/\`v[0-9a-z.]*\`/\`$TARGET_VERSION\`/g" \
+    -e "/^>/!s/\`v[0-9a-z]*.[0-9a-z]*.[0-9a-z]*\`/\`$TARGET_VERSION\`/g" \
     -e "s/v${CURRENT_MAJOR_VERSION}.x.x/v${TARGET_MAJOR_VERSION}.x.x/g" \
     -e "s|\($PACKAGE\)/v${CURRENT_MAJOR_VERSION}|\1/v${TARGET_MAJOR_VERSION}|g" \
     -e "/require/s/ v[0-9a-z.]*$/ $TARGET_VERSION/g" README.md
