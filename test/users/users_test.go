@@ -47,6 +47,20 @@ func TestUsers_integration(t *testing.T) {
 		require.NoErrorf(tt, err, "create role %q", role.Name)
 	}
 
+	t.Run("get user roles (legacy API)", func(t *testing.T) {
+		adminRoles, err := usersClient.UserRolesGetter().WithUserID(adminUser).WithIncludeFullRoles(true).Do(ctx)
+		require.NoErrorf(t, err, "fetch roles for %q user", adminUser)
+		require.Lenf(t, adminRoles, 1, "wrong number of roles for %q user")
+
+		userInfo, err := usersClient.MyUserGetter().Do(ctx)
+		require.NoError(t, err, "fetch roles for current user")
+		require.Equal(t, adminUser, userInfo.UserID)
+		require.Lenf(t, userInfo.Roles, 1, "wrong number of roles for %q user")
+
+		require.EqualExportedValues(t, userInfo.Roles, adminRoles,
+			"expect same set of roles for both requests")
+	})
+
 	t.Run("get user roles", func(t *testing.T) {
 		adminRoles, err := usersClient.DB().RolesGetter().WithUserID(adminUser).WithIncludeFullRoles(true).Do(ctx)
 		require.NoErrorf(t, err, "fetch roles for %q user", adminUser)
@@ -59,6 +73,28 @@ func TestUsers_integration(t *testing.T) {
 
 		require.EqualExportedValues(t, userInfo.Roles, adminRoles,
 			"expect same set of roles for both requests")
+	})
+
+	t.Run("assign and revoke a role (legacy API)", func(t *testing.T) {
+		roleName := "AssignRevokeMe"
+
+		mustCreateRole(t, rbac.NewRole(roleName,
+			rbac.BackupsPermission{Actions: []string{models.PermissionActionManageBackups}, Collection: pizza},
+		))
+
+		// Act: assign
+		err := usersClient.Assigner().WithUserID(adminUser).WithRoles(roleName).Do(ctx)
+		require.NoErrorf(t, err, "assign %q role", roleName)
+
+		assignedUsers, _ := rolesClient.AssignedUsersGetter().WithRole(roleName).Do(ctx)
+		require.Containsf(t, assignedUsers, adminUser, "should have %q role", roleName)
+
+		// Act: revoke
+		err = usersClient.DB().RolesRevoker().WithUserID(adminUser).WithRoles(roleName).Do(ctx)
+		require.NoErrorf(t, err, "revoke %q role", roleName)
+
+		assignedUsers, _ = rolesClient.AssignedUsersGetter().WithRole(roleName).Do(ctx)
+		require.NotContainsf(t, assignedUsers, adminUser, "should not have %q role", roleName)
 	})
 
 	t.Run("assign and revoke a role", func(t *testing.T) {
