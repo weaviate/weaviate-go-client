@@ -48,7 +48,7 @@ func TestUsers_integration(t *testing.T) {
 	}
 
 	t.Run("get user roles", func(t *testing.T) {
-		adminRoles, err := usersClient.DB().RolesGetter().WithUserID(adminUser).Do(ctx)
+		adminRoles, err := usersClient.DB().RolesGetter().WithUserID(adminUser).WithIncludeFullRoles(true).Do(ctx)
 		require.NoErrorf(t, err, "fetch roles for %q user", adminUser)
 		require.Lenf(t, adminRoles, 1, "wrong number of roles for %q user")
 
