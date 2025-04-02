@@ -15,7 +15,7 @@ type UserRolesGetter struct {
 
 	userID           string
 	userType         string
-	IncludeFullRoles *bool
+	includeFullRoles bool
 }
 
 func (urg *UserRolesGetter) WithUserID(id string) *UserRolesGetter {
@@ -29,7 +29,7 @@ func (urg *UserRolesGetter) WithUserType(userType UserType) *UserRolesGetter {
 }
 
 func (urg *UserRolesGetter) WithIncludeFullRoles(include bool) *UserRolesGetter {
-	urg.IncludeFullRoles = &include
+	urg.includeFullRoles = include
 	return urg
 }
 
@@ -52,8 +52,8 @@ func (urg *UserRolesGetter) Do(ctx context.Context) ([]*rbac.Role, error) {
 
 func (urg *UserRolesGetter) path() string {
 	path := fmt.Sprintf("/authz/users/%s/roles/%s", urg.userID, urg.userType)
-	if urg.IncludeFullRoles != nil {
-		path += "?includeFullRoles=" + fmt.Sprint(*urg.IncludeFullRoles)
+	if urg.includeFullRoles {
+		path += "?includeFullRoles=" + fmt.Sprint(urg.includeFullRoles)
 	}
 	return path
 }
