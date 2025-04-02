@@ -13,7 +13,8 @@ import (
 type UserRolesGetter struct {
 	connection *connection.Connection
 
-	userID string
+	userID   string
+	userType string
 }
 
 func (urg *UserRolesGetter) WithUserID(id string) *UserRolesGetter {
@@ -21,7 +22,16 @@ func (urg *UserRolesGetter) WithUserID(id string) *UserRolesGetter {
 	return urg
 }
 
+func (urg *UserRolesGetter) WithUserType(userType UserType) *UserRolesGetter {
+	urg.userType = string(userType)
+	return urg
+}
+
 func (urg *UserRolesGetter) Do(ctx context.Context) ([]*rbac.Role, error) {
+	// Assume DB user if no user type is specified
+	if urg.userType == "" {
+		urg = urg.WithUserType(UserTypeDb)
+	}
 	res, err := urg.connection.RunREST(ctx, urg.path(), http.MethodGet, nil)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
@@ -35,5 +45,5 @@ func (urg *UserRolesGetter) Do(ctx context.Context) ([]*rbac.Role, error) {
 }
 
 func (urg *UserRolesGetter) path() string {
-	return fmt.Sprintf("/authz/users/%s/roles", urg.userID)
+	return fmt.Sprintf("/authz/users/%s/roles/%s", urg.userID, urg.userType)
 }
