@@ -11,18 +11,18 @@ import (
 	"github.com/weaviate/weaviate/entities/models"
 )
 
-type UserDbKeyRotator struct {
+type UserDBKeyRotator struct {
 	connection *connection.Connection
 
 	userID string
 }
 
-func (r *UserDbKeyRotator) WithUserID(id string) *UserDbKeyRotator {
+func (r *UserDBKeyRotator) WithUserID(id string) *UserDBKeyRotator {
 	r.userID = id
 	return r
 }
 
-func (r *UserDbKeyRotator) Do(ctx context.Context) (string, error) {
+func (r *UserDBKeyRotator) Do(ctx context.Context) (string, error) {
 	payload := users.NewCreateUserParams().WithUserID(r.userID)
 
 	res, err := r.connection.RunREST(ctx, r.path(), http.MethodPost, payload)
@@ -37,6 +37,6 @@ func (r *UserDbKeyRotator) Do(ctx context.Context) (string, error) {
 	return "", except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
-func (r *UserDbKeyRotator) path() string {
+func (r *UserDBKeyRotator) path() string {
 	return fmt.Sprintf("/users/db/%s/rotate-key", r.userID)
 }

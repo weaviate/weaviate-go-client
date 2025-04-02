@@ -30,7 +30,7 @@ func (urg *UserRolesGetter) WithUserType(userType UserType) *UserRolesGetter {
 func (urg *UserRolesGetter) Do(ctx context.Context) ([]*rbac.Role, error) {
 	// Assume DB user if no user type is specified
 	if urg.userType == "" {
-		urg = urg.WithUserType(UserTypeDb)
+		urg = urg.WithUserType(UserTypeDB)
 	}
 	res, err := urg.connection.RunREST(ctx, urg.path(), http.MethodGet, nil)
 	if err != nil {

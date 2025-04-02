@@ -7,37 +7,37 @@ type UserOperationsDB struct {
 }
 
 func (r *UserOperationsDB) RolesGetter() *UserRolesGetter {
-	return (&UserRolesGetter{connection: r.connection}).WithUserType(UserTypeDb)
+	return (&UserRolesGetter{connection: r.connection}).WithUserType(UserTypeDB)
 }
 
 func (r *UserOperationsDB) RolesAssigner() *RoleAssigner {
-	return (&RoleAssigner{connection: r.connection}).WithUserType(UserTypeDb)
+	return (&RoleAssigner{connection: r.connection}).WithUserType(UserTypeDB)
 }
 
 func (r *UserOperationsDB) RolesRevoker() *RoleRevoker {
-	return (&RoleRevoker{connection: r.connection}).WithUserType(UserTypeDb)
+	return (&RoleRevoker{connection: r.connection}).WithUserType(UserTypeDB)
 }
 
-func (r *UserOperationsDB) Creator() *UserDbCreator {
-	return &UserDbCreator{connection: r.connection}
+func (r *UserOperationsDB) Creator() *UserDBCreator {
+	return &UserDBCreator{connection: r.connection}
 }
 
-func (r *UserOperationsDB) Activator() *UserDbActivator {
-	return &UserDbActivator{connection: r.connection}
+func (r *UserOperationsDB) Activator() *UserDBActivator {
+	return &UserDBActivator{connection: r.connection}
 }
 
-func (r *UserOperationsDB) Deactivator() *UserDbDeactivator {
-	return &UserDbDeactivator{connection: r.connection}
+func (r *UserOperationsDB) Deactivator() *UserDBDeactivator {
+	return &UserDBDeactivator{connection: r.connection}
 }
 
-func (r *UserOperationsDB) Deleter() *UserDbDeleter {
-	return &UserDbDeleter{connection: r.connection}
+func (r *UserOperationsDB) Deleter() *UserDBDeleter {
+	return &UserDBDeleter{connection: r.connection}
 }
 
-func (r *UserOperationsDB) Getter() *UserDbGetter {
-	return &UserDbGetter{connection: r.connection}
+func (r *UserOperationsDB) Getter() *UserDBGetter {
+	return &UserDBGetter{connection: r.connection}
 }
 
-func (r *UserOperationsDB) Lister() *UserDbLister {
-	return &UserDbLister{connection: r.connection}
+func (r *UserOperationsDB) Lister() *UserDBLister {
+	return &UserDBLister{connection: r.connection}
 }

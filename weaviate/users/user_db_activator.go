@@ -10,18 +10,18 @@ import (
 	"github.com/weaviate/weaviate/client/users"
 )
 
-type UserDbActivator struct {
+type UserDBActivator struct {
 	connection *connection.Connection
 
 	userID string
 }
 
-func (r *UserDbActivator) WithUserID(id string) *UserDbActivator {
+func (r *UserDBActivator) WithUserID(id string) *UserDBActivator {
 	r.userID = id
 	return r
 }
 
-func (r *UserDbActivator) Do(ctx context.Context) error {
+func (r *UserDBActivator) Do(ctx context.Context) error {
 	payload := users.NewActivateUserParams().WithUserID(r.userID)
 
 	res, err := r.connection.RunREST(ctx, r.path(), http.MethodPost, payload)
@@ -34,6 +34,6 @@ func (r *UserDbActivator) Do(ctx context.Context) error {
 	return except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
-func (r *UserDbActivator) path() string {
+func (r *UserDBActivator) path() string {
 	return fmt.Sprintf("/users/db/%s/activate", r.userID)
 }

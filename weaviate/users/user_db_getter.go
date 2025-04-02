@@ -10,18 +10,18 @@ import (
 	"github.com/weaviate/weaviate/client/users"
 )
 
-type UserDbGetter struct {
+type UserDBGetter struct {
 	connection *connection.Connection
 
 	userID string
 }
 
-func (r *UserDbGetter) WithUserID(id string) *UserDbGetter {
+func (r *UserDBGetter) WithUserID(id string) *UserDBGetter {
 	r.userID = id
 	return r
 }
 
-func (r *UserDbGetter) Do(ctx context.Context) (UserInfo, error) {
+func (r *UserDBGetter) Do(ctx context.Context) (UserInfo, error) {
 	payload := users.NewGetUserInfoParams().WithUserID(r.userID)
 
 	res, err := r.connection.RunREST(ctx, r.path(), http.MethodGet, payload)
@@ -36,6 +36,6 @@ func (r *UserDbGetter) Do(ctx context.Context) (UserInfo, error) {
 	return UserInfo{}, except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
-func (r *UserDbGetter) path() string {
+func (r *UserDBGetter) path() string {
 	return fmt.Sprintf("/users/db/%s", r.userID)
 }

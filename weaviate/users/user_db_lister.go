@@ -11,18 +11,18 @@ import (
 
 type UserInfoList []UserInfo
 
-type UserDbLister struct {
+type UserDBLister struct {
 	connection *connection.Connection
 
 	userID string
 }
 
-func (r *UserDbLister) WithUserID(id string) *UserDbLister {
+func (r *UserDBLister) WithUserID(id string) *UserDBLister {
 	r.userID = id
 	return r
 }
 
-func (r *UserDbLister) Do(ctx context.Context) (UserInfoList, error) {
+func (r *UserDBLister) Do(ctx context.Context) (UserInfoList, error) {
 	payload := users.NewListAllUsersParams()
 
 	res, err := r.connection.RunREST(ctx, r.path(), http.MethodGet, payload)
@@ -37,6 +37,6 @@ func (r *UserDbLister) Do(ctx context.Context) (UserInfoList, error) {
 	return nil, except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
-func (r *UserDbLister) path() string {
+func (r *UserDBLister) path() string {
 	return "/users/db"
 }

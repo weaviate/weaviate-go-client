@@ -10,18 +10,18 @@ import (
 	"github.com/weaviate/weaviate/client/users"
 )
 
-type UserDbDeleter struct {
+type UserDBDeleter struct {
 	connection *connection.Connection
 
 	userID string
 }
 
-func (r *UserDbDeleter) WithUserID(id string) *UserDbDeleter {
+func (r *UserDBDeleter) WithUserID(id string) *UserDBDeleter {
 	r.userID = id
 	return r
 }
 
-func (r *UserDbDeleter) Do(ctx context.Context) error {
+func (r *UserDBDeleter) Do(ctx context.Context) error {
 	payload := users.NewDeleteUserParams().WithUserID(r.userID)
 
 	res, err := r.connection.RunREST(ctx, r.path(), http.MethodDelete, payload)
@@ -34,6 +34,6 @@ func (r *UserDbDeleter) Do(ctx context.Context) error {
 	return except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
-func (r *UserDbDeleter) path() string {
+func (r *UserDBDeleter) path() string {
 	return fmt.Sprintf("/users/db/%s", r.userID)
 }

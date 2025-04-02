@@ -8,7 +8,7 @@ import (
 type UserType string
 
 const (
-	UserTypeDb   UserType = UserType(models.UserTypeDb)
+	UserTypeDB   UserType = UserType(models.UserTypeDb)
 	UserTypeOIDC UserType = UserType(models.UserTypeOidc)
 )
 

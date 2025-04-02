@@ -10,18 +10,18 @@ import (
 	"github.com/weaviate/weaviate/client/users"
 )
 
-type UserDbDeactivator struct {
+type UserDBDeactivator struct {
 	connection *connection.Connection
 
 	userID string
 }
 
-func (r *UserDbDeactivator) WithUserID(id string) *UserDbDeactivator {
+func (r *UserDBDeactivator) WithUserID(id string) *UserDBDeactivator {
 	r.userID = id
 	return r
 }
 
-func (r *UserDbDeactivator) Do(ctx context.Context) error {
+func (r *UserDBDeactivator) Do(ctx context.Context) error {
 	payload := users.NewDeactivateUserParams().WithUserID(r.userID)
 
 	res, err := r.connection.RunREST(ctx, r.path(), http.MethodPost, payload)
@@ -34,6 +34,6 @@ func (r *UserDbDeactivator) Do(ctx context.Context) error {
 	return except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
-func (r *UserDbDeactivator) path() string {
+func (r *UserDBDeactivator) path() string {
 	return fmt.Sprintf("/users/db/%s/deactivate", r.userID)
 }
