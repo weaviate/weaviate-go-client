@@ -24,7 +24,7 @@ import (
 
 const (
 	oktaScope = "some_scope"
-	wcsUser   = "ms_2d0e007e7136de11d5f29fce7a53dae219a51458@existiert.net"
+	wcsUser   = "oidc-test-user@weaviate.io"
 	oktaUser  = "test@test.de"
 )
 
