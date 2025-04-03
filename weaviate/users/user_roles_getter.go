@@ -34,10 +34,6 @@ func (urg *UserRolesGetter) WithIncludeFullRoles(include bool) *UserRolesGetter 
 }
 
 func (urg *UserRolesGetter) Do(ctx context.Context) ([]*rbac.Role, error) {
-	// Assume DB user if no user type is specified
-	if urg.userType == "" {
-		urg = urg.WithUserType(UserTypeDB)
-	}
 	res, err := urg.connection.RunREST(ctx, urg.path(), http.MethodGet, nil)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
@@ -51,9 +47,15 @@ func (urg *UserRolesGetter) Do(ctx context.Context) ([]*rbac.Role, error) {
 }
 
 func (urg *UserRolesGetter) path() string {
-	path := fmt.Sprintf("/authz/users/%s/roles/%s", urg.userID, urg.userType)
+	path := fmt.Sprintf("/authz/users/%s/roles", urg.userID)
+
+	if urg.userType != "" {
+		path += "/" + urg.userType
+	}
+
 	if urg.includeFullRoles {
 		path += "?includeFullRoles=" + fmt.Sprint(urg.includeFullRoles)
 	}
+
 	return path
 }
