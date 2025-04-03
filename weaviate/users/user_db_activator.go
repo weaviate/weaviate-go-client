@@ -7,7 +7,6 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
-	"github.com/weaviate/weaviate/client/users"
 )
 
 type UserDBActivator struct {
@@ -21,17 +20,20 @@ func (r *UserDBActivator) WithUserID(id string) *UserDBActivator {
 	return r
 }
 
-func (r *UserDBActivator) Do(ctx context.Context) error {
-	payload := users.NewActivateUserParams().WithUserID(r.userID)
-
-	res, err := r.connection.RunREST(ctx, r.path(), http.MethodPost, payload)
+func (r *UserDBActivator) Do(ctx context.Context) (bool, error) {
+	res, err := r.connection.RunREST(ctx, r.path(), http.MethodPost, nil)
 	if err != nil {
-		return except.NewDerivedWeaviateClientError(err)
+		return false, except.NewDerivedWeaviateClientError(err)
 	}
-	if res.StatusCode == http.StatusOK {
-		return nil
+	switch res.StatusCode {
+	case http.StatusOK:
+		return true, nil
+	case http.StatusConflict:
+		fallthrough
+	case http.StatusNotFound:
+		return false, nil
 	}
-	return except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
+	return false, except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
 func (r *UserDBActivator) path() string {

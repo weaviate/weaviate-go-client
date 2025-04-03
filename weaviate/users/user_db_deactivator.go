@@ -45,7 +45,7 @@ func (r *UserDBDeactivator) Do(ctx context.Context) (bool, error) {
 	case http.StatusNotFound:
 		return false, nil
 	}
-	return false, except.NewExpectedStatusCodeErrorFromRESTResponse(res)
+	return false, except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
 func (r *UserDBDeactivator) path() string {

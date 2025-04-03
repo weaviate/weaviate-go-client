@@ -7,7 +7,6 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
-	"github.com/weaviate/weaviate/client/users"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -23,9 +22,7 @@ func (r *UserDBKeyRotator) WithUserID(id string) *UserDBKeyRotator {
 }
 
 func (r *UserDBKeyRotator) Do(ctx context.Context) (string, error) {
-	payload := users.NewCreateUserParams().WithUserID(r.userID)
-
-	res, err := r.connection.RunREST(ctx, r.path(), http.MethodPost, payload)
+	res, err := r.connection.RunREST(ctx, r.path(), http.MethodPost, nil)
 	if err != nil {
 		return "", except.NewDerivedWeaviateClientError(err)
 	}

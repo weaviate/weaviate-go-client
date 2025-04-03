@@ -7,7 +7,6 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
-	"github.com/weaviate/weaviate/client/users"
 )
 
 type UserDBDeleter struct {
@@ -22,9 +21,7 @@ func (r *UserDBDeleter) WithUserID(id string) *UserDBDeleter {
 }
 
 func (r *UserDBDeleter) Do(ctx context.Context) (bool, error) {
-	payload := users.NewDeleteUserParams().WithUserID(r.userID)
-
-	res, err := r.connection.RunREST(ctx, r.path(), http.MethodDelete, payload)
+	res, err := r.connection.RunREST(ctx, r.path(), http.MethodDelete, nil)
 	if err != nil {
 		return false, except.NewDerivedWeaviateClientError(err)
 	}
@@ -32,7 +29,7 @@ func (r *UserDBDeleter) Do(ctx context.Context) (bool, error) {
 	case http.StatusNoContent:
 		return true, nil
 	case http.StatusNotFound:
-		return false, except.NewExpectedStatusCodeErrorFromRESTResponse(res)
+		return false, nil
 	}
 
 	return false, except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)

@@ -6,7 +6,6 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
-	"github.com/weaviate/weaviate/client/users"
 )
 
 type UserInfoList []UserInfo
@@ -23,9 +22,7 @@ func (r *UserDBLister) WithUserID(id string) *UserDBLister {
 }
 
 func (r *UserDBLister) Do(ctx context.Context) (UserInfoList, error) {
-	payload := users.NewListAllUsersParams()
-
-	res, err := r.connection.RunREST(ctx, r.path(), http.MethodGet, payload)
+	res, err := r.connection.RunREST(ctx, r.path(), http.MethodGet, nil)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}

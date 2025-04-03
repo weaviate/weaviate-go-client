@@ -7,7 +7,6 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
-	"github.com/weaviate/weaviate/client/users"
 )
 
 type UserDBGetter struct {
@@ -22,9 +21,7 @@ func (r *UserDBGetter) WithUserID(id string) *UserDBGetter {
 }
 
 func (r *UserDBGetter) Do(ctx context.Context) (UserInfo, error) {
-	payload := users.NewGetUserInfoParams().WithUserID(r.userID)
-
-	res, err := r.connection.RunREST(ctx, r.path(), http.MethodGet, payload)
+	res, err := r.connection.RunREST(ctx, r.path(), http.MethodGet, nil)
 	if err != nil {
 		return UserInfo{}, except.NewDerivedWeaviateClientError(err)
 	}

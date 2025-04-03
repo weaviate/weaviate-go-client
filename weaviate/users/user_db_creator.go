@@ -7,7 +7,6 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
-	"github.com/weaviate/weaviate/client/users"
 )
 
 type UserDBCreator struct {
@@ -22,9 +21,7 @@ func (r *UserDBCreator) WithUserID(id string) *UserDBCreator {
 }
 
 func (r *UserDBCreator) Do(ctx context.Context) error {
-	payload := users.NewCreateUserParams().WithUserID(r.userID)
-
-	res, err := r.connection.RunREST(ctx, r.path(), http.MethodPost, payload)
+	res, err := r.connection.RunREST(ctx, r.path(), http.MethodPost, nil)
 	if err != nil {
 		return except.NewDerivedWeaviateClientError(err)
 	}

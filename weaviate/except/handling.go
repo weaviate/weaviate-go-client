@@ -26,13 +26,6 @@ func NewDerivedWeaviateClientError(err error) *fault.WeaviateClientError {
 	}
 }
 
-// NewExpectedStatusCodeErrorFromRESTResponse creates the error based on an expected response data object
-func NewExpectedStatusCodeErrorFromRESTResponse(responseData *connection.ResponseData) *fault.WeaviateClientError {
-	err := NewUnexpectedStatusCodeErrorFromRESTResponse(responseData)
-	err.IsUnexpectedStatusCode = false
-	return err
-}
-
 // NewUnexpectedStatusCodeErrorFromRESTResponse creates the error based on a response data object
 func NewUnexpectedStatusCodeErrorFromRESTResponse(responseData *connection.ResponseData) *fault.WeaviateClientError {
 	return NewWeaviateClientError(responseData.StatusCode, string(responseData.Body))
