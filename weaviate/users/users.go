@@ -8,8 +8,8 @@ import (
 type UserType string
 
 const (
-	UserTypeDB   UserType = UserType(models.UserTypeDb)
-	UserTypeOIDC UserType = UserType(models.UserTypeOidc)
+	UserTypeDB   UserType = UserType(models.UserTypeInputDb)
+	UserTypeOIDC UserType = UserType(models.UserTypeInputOidc)
 )
 
 type API struct {
