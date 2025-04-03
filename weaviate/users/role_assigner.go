@@ -8,6 +8,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
 	"github.com/weaviate/weaviate/client/authz"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 type RoleAssigner struct {
@@ -15,7 +16,7 @@ type RoleAssigner struct {
 
 	userID   string
 	roles    []string
-	userType string
+	userType models.UserTypeInput
 }
 
 func (ra *RoleAssigner) WithUserID(id string) *RoleAssigner {
@@ -29,13 +30,14 @@ func (ra *RoleAssigner) WithRoles(roles ...string) *RoleAssigner {
 }
 
 func (ra *RoleAssigner) WithUserType(userType UserType) *RoleAssigner {
-	ra.userType = string(userType)
+	ra.userType = models.UserTypeInput(userType)
 	return ra
 }
 
 func (ra *RoleAssigner) Do(ctx context.Context) error {
 	payload := authz.AssignRoleToUserBody{
-		Roles: ra.roles,
+		Roles:    ra.roles,
+		UserType: ra.userType,
 	}
 	res, err := ra.connection.RunREST(ctx, ra.path(), http.MethodPost, payload)
 	if err != nil {

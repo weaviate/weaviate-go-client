@@ -8,6 +8,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
 	"github.com/weaviate/weaviate/client/authz"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 type RoleRevoker struct {
@@ -15,7 +16,7 @@ type RoleRevoker struct {
 
 	userID   string
 	roles    []string
-	userType string
+	userType models.UserTypeInput
 }
 
 func (rr *RoleRevoker) WithUserID(id string) *RoleRevoker {
@@ -29,13 +30,14 @@ func (rr *RoleRevoker) WithRoles(roles ...string) *RoleRevoker {
 }
 
 func (rr *RoleRevoker) WithUserType(userType UserType) *RoleRevoker {
-	rr.userType = string(userType)
+	rr.userType = models.UserTypeInput(userType)
 	return rr
 }
 
 func (rr *RoleRevoker) Do(ctx context.Context) error {
 	payload := authz.RevokeRoleFromUserBody{
-		Roles: rr.roles,
+		Roles:    rr.roles,
+		UserType: rr.userType,
 	}
 	res, err := rr.connection.RunREST(ctx, rr.path(), http.MethodPost, payload)
 	if err != nil {
