@@ -90,7 +90,7 @@ func TestUsers_integration(t *testing.T) {
 		require.Containsf(t, assignedUsers, adminUser, "should have %q role", roleName)
 
 		// Act: revoke
-		err = usersClient.DB().RolesRevoker().WithUserID(adminUser).WithRoles(roleName).Do(ctx)
+		err = usersClient.Revoker().WithUserID(adminUser).WithRoles(roleName).Do(ctx)
 		require.NoErrorf(t, err, "revoke %q role", roleName)
 
 		assignedUsers, _ = rolesClient.AssignedUsersGetter().WithRole(roleName).Do(ctx)
