@@ -21,17 +21,21 @@ func (r *UserDBDeleter) WithUserID(id string) *UserDBDeleter {
 	return r
 }
 
-func (r *UserDBDeleter) Do(ctx context.Context) error {
+func (r *UserDBDeleter) Do(ctx context.Context) (bool, error) {
 	payload := users.NewDeleteUserParams().WithUserID(r.userID)
 
 	res, err := r.connection.RunREST(ctx, r.path(), http.MethodDelete, payload)
 	if err != nil {
-		return except.NewDerivedWeaviateClientError(err)
+		return false, except.NewDerivedWeaviateClientError(err)
 	}
-	if res.StatusCode == http.StatusNoContent {
-		return err
+	switch res.StatusCode {
+	case http.StatusNoContent:
+		return true, nil
+	case http.StatusNotFound:
+		return false, except.NewExpectedStatusCodeErrorFromRESTResponse(res)
 	}
-	return except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
+
+	return false, except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
 func (r *UserDBDeleter) path() string {
