@@ -7,13 +7,13 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
-	"github.com/weaviate/weaviate/client/users"
 )
 
 type UserDBDeactivator struct {
 	connection *connection.Connection
 
-	userID string
+	userID    string
+	revokeKey bool
 }
 
 func (r *UserDBDeactivator) WithUserID(id string) *UserDBDeactivator {
@@ -21,17 +21,31 @@ func (r *UserDBDeactivator) WithUserID(id string) *UserDBDeactivator {
 	return r
 }
 
-func (r *UserDBDeactivator) Do(ctx context.Context) error {
-	payload := users.NewDeactivateUserParams().WithUserID(r.userID)
+func (r *UserDBDeactivator) WithRevokeKey(revokeKey bool) *UserDBDeactivator {
+	r.revokeKey = revokeKey
+	return r
+}
+
+func (r *UserDBDeactivator) Do(ctx context.Context) (bool, error) {
+	payload := struct {
+		RevokeKey bool `json:"revoke_key"`
+	}{
+		RevokeKey: r.revokeKey,
+	}
 
 	res, err := r.connection.RunREST(ctx, r.path(), http.MethodPost, payload)
 	if err != nil {
-		return except.NewDerivedWeaviateClientError(err)
+		return false, except.NewDerivedWeaviateClientError(err)
 	}
-	if res.StatusCode == http.StatusOK {
-		return nil
+	switch res.StatusCode {
+	case http.StatusOK:
+		return true, nil
+	case http.StatusConflict:
+		fallthrough
+	case http.StatusNotFound:
+		return false, nil
 	}
-	return except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
+	return false, except.NewExpectedStatusCodeErrorFromRESTResponse(res)
 }
 
 func (r *UserDBDeactivator) path() string {
