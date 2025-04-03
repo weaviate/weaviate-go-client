@@ -1156,7 +1156,7 @@ func TestSchema_TenantsActivationDeactivation(t *testing.T) {
 		t.Run("create tenants (1,2,3), populate active tenants (1,2)", func(t *testing.T) {
 			testsuit.CreateSchemaPizzaForTenants(t, client)
 			testsuit.CreateTenantsPizza(t, client, tenants...)
-			testsuit.CreateDataPizzaForTenants(t, client, tenants[:2].Names()...)
+			testsuit.CreateDataPizzaForTenants(t, client, testsuit.Tenants(tenants[:2]).Names()...)
 
 			assertTenantActive(t, tenants[0].Name)
 			assertTenantActive(t, tenants[1].Name)
