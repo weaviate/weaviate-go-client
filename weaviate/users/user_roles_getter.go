@@ -8,23 +8,19 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/rbac"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 type UserRolesGetter struct {
 	connection *connection.Connection
 
 	userID           string
-	userType         string
+	userType         models.UserTypeInput
 	includeFullRoles bool
 }
 
 func (urg *UserRolesGetter) WithUserID(id string) *UserRolesGetter {
 	urg.userID = id
-	return urg
-}
-
-func (urg *UserRolesGetter) WithUserType(userType UserType) *UserRolesGetter {
-	urg.userType = string(userType)
 	return urg
 }
 
@@ -50,11 +46,10 @@ func (urg *UserRolesGetter) path() string {
 	path := fmt.Sprintf("/authz/users/%s/roles", urg.userID)
 
 	if urg.userType != "" {
-		path += "/" + urg.userType
-	}
-
-	if urg.includeFullRoles {
-		path += "?includeFullRoles=" + fmt.Sprint(urg.includeFullRoles)
+		path += "/" + string(urg.userType)
+		if urg.includeFullRoles {
+			path += "?includeFullRoles=" + fmt.Sprint(urg.includeFullRoles)
+		}
 	}
 
 	return path

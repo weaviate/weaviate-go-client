@@ -29,11 +29,6 @@ func (rr *RoleRevoker) WithRoles(roles ...string) *RoleRevoker {
 	return rr
 }
 
-func (rr *RoleRevoker) WithUserType(userType UserType) *RoleRevoker {
-	rr.userType = models.UserTypeInput(userType)
-	return rr
-}
-
 func (rr *RoleRevoker) Do(ctx context.Context) error {
 	payload := authz.RevokeRoleFromUserBody{
 		Roles:    rr.roles,

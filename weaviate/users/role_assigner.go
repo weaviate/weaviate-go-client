@@ -29,11 +29,6 @@ func (ra *RoleAssigner) WithRoles(roles ...string) *RoleAssigner {
 	return ra
 }
 
-func (ra *RoleAssigner) WithUserType(userType UserType) *RoleAssigner {
-	ra.userType = models.UserTypeInput(userType)
-	return ra
-}
-
 func (ra *RoleAssigner) Do(ctx context.Context) error {
 	payload := authz.AssignRoleToUserBody{
 		Roles:    ra.roles,

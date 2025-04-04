@@ -1,21 +1,24 @@
 package users
 
-import "github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
+import (
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
+	"github.com/weaviate/weaviate/entities/models"
+)
 
 type UserOperationsDB struct {
 	connection *connection.Connection
 }
 
 func (r *UserOperationsDB) RolesGetter() *UserRolesGetter {
-	return (&UserRolesGetter{connection: r.connection}).WithUserType(UserTypeDB)
+	return &UserRolesGetter{connection: r.connection, userType: models.UserTypeInputDb}
 }
 
 func (r *UserOperationsDB) RolesAssigner() *RoleAssigner {
-	return (&RoleAssigner{connection: r.connection}).WithUserType(UserTypeDB)
+	return &RoleAssigner{connection: r.connection, userType: models.UserTypeInputDb}
 }
 
 func (r *UserOperationsDB) RolesRevoker() *RoleRevoker {
-	return (&RoleRevoker{connection: r.connection}).WithUserType(UserTypeDB)
+	return &RoleRevoker{connection: r.connection, userType: models.UserTypeInputDb}
 }
 
 func (r *UserOperationsDB) Creator() *UserDBCreator {
