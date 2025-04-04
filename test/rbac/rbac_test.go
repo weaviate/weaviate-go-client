@@ -71,7 +71,13 @@ func TestRBAC_integration(t *testing.T) {
 		assigned, err := rolesClient.AssignedUsersGetter().WithRole(rootRole).Do(ctx)
 
 		require.NoErrorf(t, err, "get users with role %q", rootRole)
-		require.ElementsMatchf(t, []string{rootUser}, assigned,
+		expected := []rbac.UserAssignment{
+			{
+				UserID:   rootUser,
+				UserType: rbac.UserTypeDB,
+			},
+		}
+		require.ElementsMatchf(t, expected, assigned,
 			"%q should be assigned to %q", rootRole, rootUser)
 	})
 

@@ -1,6 +1,33 @@
 package rbac
 
-import "github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
+import (
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
+	"github.com/weaviate/weaviate/entities/models"
+)
+
+type UserType string
+
+const (
+	UserTypeDB   UserType = UserType(models.UserTypeInputDb)
+	UserTypeOIDC UserType = UserType(models.UserTypeInputOidc)
+)
+
+func mapUserType(userType models.UserTypeOutput) UserType {
+	switch userType {
+	case models.UserTypeOutputDbUser:
+		return UserTypeDB
+	case models.UserTypeOutputDbEnvUser:
+		return UserTypeDB
+	case models.UserTypeOutputOidc:
+		return UserTypeOIDC
+	}
+	return UserTypeDB
+}
+
+type UserAssignment struct {
+	UserID   string
+	UserType UserType
+}
 
 type API struct {
 	connection *connection.Connection

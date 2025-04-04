@@ -2,14 +2,6 @@ package users
 
 import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
-	"github.com/weaviate/weaviate/entities/models"
-)
-
-type UserType string
-
-const (
-	UserTypeDB   UserType = UserType(models.UserTypeInputDb)
-	UserTypeOIDC UserType = UserType(models.UserTypeInputOidc)
 )
 
 type API struct {
