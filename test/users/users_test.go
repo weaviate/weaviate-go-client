@@ -88,16 +88,14 @@ func TestUsers_integration(t *testing.T) {
 		require.NoErrorf(t, err, "assign %q role", roleName)
 
 		assignedUsers, _ := rolesClient.AssignedUsersGetter().WithRole(roleName).Do(ctx)
-		require.Truef(t, slices.ContainsFunc(assignedUsers,
-			func(e rbac.UserAssignment) bool { return e.UserID == adminUser }), "should have %q role", roleName)
+		require.Truef(t, slices.Contains(assignedUsers, adminUser), "should have %q role", roleName)
 
 		// Act: revoke
 		err = usersClient.Revoker().WithUserID(adminUser).WithRoles(roleName).Do(ctx)
 		require.NoErrorf(t, err, "revoke %q role", roleName)
 
 		assignedUsers, _ = rolesClient.AssignedUsersGetter().WithRole(roleName).Do(ctx)
-		require.Falsef(t, slices.ContainsFunc(assignedUsers,
-			func(e rbac.UserAssignment) bool { return e.UserID == adminUser }), "should not have %q role", roleName)
+		require.Falsef(t, slices.Contains(assignedUsers, adminUser), "should not have %q role", roleName)
 	})
 
 	t.Run("assign and revoke a role", func(t *testing.T) {
@@ -111,7 +109,7 @@ func TestUsers_integration(t *testing.T) {
 		err := usersClient.DB().RolesAssigner().WithUserID(adminUser).WithRoles(roleName).Do(ctx)
 		require.NoErrorf(t, err, "assign %q role", roleName)
 
-		assignedUsers, _ := rolesClient.AssignedUsersGetter().WithRole(roleName).Do(ctx)
+		assignedUsers, _ := rolesClient.AssignedTypedUsersGetter().WithRole(roleName).Do(ctx)
 		require.Truef(t, slices.ContainsFunc(assignedUsers,
 			func(e rbac.UserAssignment) bool { return e.UserID == adminUser }), "should have %q role", roleName)
 
@@ -119,7 +117,7 @@ func TestUsers_integration(t *testing.T) {
 		err = usersClient.DB().RolesRevoker().WithUserID(adminUser).WithRoles(roleName).Do(ctx)
 		require.NoErrorf(t, err, "revoke %q role", roleName)
 
-		assignedUsers, _ = rolesClient.AssignedUsersGetter().WithRole(roleName).Do(ctx)
+		assignedUsers, _ = rolesClient.AssignedTypedUsersGetter().WithRole(roleName).Do(ctx)
 		require.Falsef(t, slices.ContainsFunc(assignedUsers,
 			func(e rbac.UserAssignment) bool { return e.UserID == adminUser }), "should not have %q role", roleName)
 	})

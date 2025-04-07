@@ -78,8 +78,15 @@ func (api *API) Getter() *RoleGetter {
 }
 
 // Get users assigned to a role.
+//
+// Deprecated: Use AssignedTypedUsersGetter() instead.
 func (api *API) AssignedUsersGetter() *AssignedUsersGetter {
 	return &AssignedUsersGetter{connection: api.connection}
+}
+
+// Get users assigned to a role.
+func (api *API) AssignedTypedUsersGetter() *AssignedTypedUsersGetter {
+	return &AssignedTypedUsersGetter{connection: api.connection}
 }
 
 // Check if a role exists.
