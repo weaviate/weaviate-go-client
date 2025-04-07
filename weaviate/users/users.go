@@ -1,11 +1,52 @@
 package users
 
 import (
+	"encoding/json"
+	"time"
+
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/rbac"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 type API struct {
 	connection *connection.Connection
+}
+
+type UserInfo struct {
+	Active    bool
+	CreatedAt time.Time
+	UserType  rbac.UserType
+	UserID    string
+	Roles     []*rbac.Role
+}
+
+func (info *UserInfo) UnmarshalJSON(data []byte) error {
+	var tmp struct {
+		Active    bool         `json:"active"`
+		CreatedAt time.Time    `json:"createdAt"`
+		UserType  string       `json:"dbUserType"`
+		UserID    string       `json:"user_id"`
+		Username  string       `json:"username"`
+		Roles     []*rbac.Role `json:"roles"`
+	}
+
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	id := tmp.UserID
+	if id == "" {
+		id = tmp.Username
+	}
+	*info = UserInfo{
+		Active:    tmp.Active,
+		CreatedAt: tmp.CreatedAt,
+		UserType:  rbac.MapUserType(models.UserTypeOutput(tmp.UserType)),
+		UserID:    id,
+		Roles:     tmp.Roles,
+	}
+	return nil
 }
 
 func New(connection *connection.Connection) *API {

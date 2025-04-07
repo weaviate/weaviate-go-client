@@ -29,6 +29,16 @@ func TestUserInfo_UnmarshalJSON(t *testing.T) {
 			json: `{"user_id": "john_doe", "username": "John Doe"}`,
 			want: users.UserInfo{UserID: "john_doe"},
 		},
+		{
+			name: "is active",
+			json: `{"active": true, "username": "John Doe"}`,
+			want: users.UserInfo{Active: true, UserID: "John Doe"},
+		},
+		{
+			name: "is deactivated",
+			json: `{"active": false, "username": "John Doe"}`,
+			want: users.UserInfo{Active: false, UserID: "John Doe"},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			var got users.UserInfo

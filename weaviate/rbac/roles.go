@@ -12,7 +12,7 @@ const (
 	UserTypeOIDC UserType = UserType(models.UserTypeInputOidc)
 )
 
-func mapUserType(userType models.UserTypeOutput) UserType {
+func MapUserType(userType models.UserTypeOutput) UserType {
 	switch userType {
 	case models.UserTypeOutputDbUser:
 		return UserTypeDB

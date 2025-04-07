@@ -36,7 +36,7 @@ func (aug *AssignedTypedUsersGetter) Do(ctx context.Context) ([]UserAssignment, 
 		for i, user := range users {
 			res[i] = UserAssignment{
 				UserID:   user.UserID,
-				UserType: mapUserType(user.UserType),
+				UserType: MapUserType(user.UserType),
 			}
 		}
 		return res, decodeErr
