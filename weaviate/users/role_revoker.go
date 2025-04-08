@@ -16,7 +16,7 @@ type RoleRevoker struct {
 
 	userID   string
 	roles    []string
-	userType models.UserTypeInput
+	userType UserTypeInput
 }
 
 func (rr *RoleRevoker) WithUserID(id string) *RoleRevoker {
@@ -32,7 +32,7 @@ func (rr *RoleRevoker) WithRoles(roles ...string) *RoleRevoker {
 func (rr *RoleRevoker) Do(ctx context.Context) error {
 	payload := authz.RevokeRoleFromUserBody{
 		Roles:    rr.roles,
-		UserType: rr.userType,
+		UserType: models.UserTypeInput(rr.userType),
 	}
 	res, err := rr.connection.RunREST(ctx, rr.path(), http.MethodPost, payload)
 	if err != nil {

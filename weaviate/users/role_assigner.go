@@ -16,7 +16,7 @@ type RoleAssigner struct {
 
 	userID   string
 	roles    []string
-	userType models.UserTypeInput
+	userType UserTypeInput
 }
 
 func (ra *RoleAssigner) WithUserID(id string) *RoleAssigner {
@@ -32,7 +32,7 @@ func (ra *RoleAssigner) WithRoles(roles ...string) *RoleAssigner {
 func (ra *RoleAssigner) Do(ctx context.Context) error {
 	payload := authz.AssignRoleToUserBody{
 		Roles:    ra.roles,
-		UserType: ra.userType,
+		UserType: models.UserTypeInput(ra.userType),
 	}
 	res, err := ra.connection.RunREST(ctx, ra.path(), http.MethodPost, payload)
 	if err != nil {

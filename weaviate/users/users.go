@@ -4,9 +4,17 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/rbac"
 	"github.com/weaviate/weaviate/entities/models"
+)
+
+type UserTypeInput string
+
+const (
+	UserTypeInputDB   UserTypeInput = UserTypeInput(models.UserTypeInputDb)
+	UserTypeInputOIDC UserTypeInput = UserTypeInput(models.UserTypeInputOidc)
 )
 
 type API struct {
@@ -23,12 +31,12 @@ type UserInfo struct {
 
 func (info *UserInfo) UnmarshalJSON(data []byte) error {
 	var tmp struct {
-		Active    bool         `json:"active"`
-		CreatedAt time.Time    `json:"createdAt"`
-		UserType  string       `json:"dbUserType"`
-		UserID    string       `json:"user_id"`
-		Username  string       `json:"username"`
-		Roles     []*rbac.Role `json:"roles"`
+		Active    bool            `json:"active"`
+		CreatedAt strfmt.DateTime `json:"createdAt,omitempty"`
+		UserType  string          `json:"dbUserType"`
+		UserID    string          `json:"user_id"`
+		Username  string          `json:"username"`
+		Roles     []*rbac.Role    `json:"roles"`
 	}
 
 	if err := json.Unmarshal(data, &tmp); err != nil {
@@ -39,10 +47,11 @@ func (info *UserInfo) UnmarshalJSON(data []byte) error {
 	if id == "" {
 		id = tmp.Username
 	}
+
 	*info = UserInfo{
 		Active:    tmp.Active,
-		CreatedAt: tmp.CreatedAt,
-		UserType:  rbac.MapUserType(models.UserTypeOutput(tmp.UserType)),
+		CreatedAt: time.Time(tmp.CreatedAt),
+		UserType:  rbac.UserType(tmp.UserType),
 		UserID:    id,
 		Roles:     tmp.Roles,
 	}

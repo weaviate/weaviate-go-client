@@ -10,18 +10,18 @@ import (
 	"github.com/weaviate/weaviate/entities/models"
 )
 
-type AssignedTypedUsersGetter struct {
+type UserAssignmentGetter struct {
 	connection *connection.Connection
 
 	role string
 }
 
-func (aug *AssignedTypedUsersGetter) WithRole(role string) *AssignedTypedUsersGetter {
+func (aug *UserAssignmentGetter) WithRole(role string) *UserAssignmentGetter {
 	aug.role = role
 	return aug
 }
 
-func (aug *AssignedTypedUsersGetter) Do(ctx context.Context) ([]UserAssignment, error) {
+func (aug *UserAssignmentGetter) Do(ctx context.Context) ([]UserAssignment, error) {
 	res, err := aug.connection.RunREST(ctx, aug.path(), http.MethodGet, nil)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
@@ -36,7 +36,7 @@ func (aug *AssignedTypedUsersGetter) Do(ctx context.Context) ([]UserAssignment, 
 		for i, user := range users {
 			res[i] = UserAssignment{
 				UserID:   user.UserID,
-				UserType: MapUserType(user.UserType),
+				UserType: UserType(user.UserType),
 			}
 		}
 		return res, decodeErr
@@ -44,6 +44,6 @@ func (aug *AssignedTypedUsersGetter) Do(ctx context.Context) ([]UserAssignment, 
 	return nil, except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
-func (aug *AssignedTypedUsersGetter) path() string {
+func (aug *UserAssignmentGetter) path() string {
 	return fmt.Sprintf("/authz/roles/%s/user-assignments", aug.role)
 }

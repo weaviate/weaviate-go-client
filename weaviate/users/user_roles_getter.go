@@ -8,14 +8,13 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/rbac"
-	"github.com/weaviate/weaviate/entities/models"
 )
 
 type UserRolesGetter struct {
 	connection *connection.Connection
 
 	userID           string
-	userType         models.UserTypeInput
+	userType         UserTypeInput
 	includeFullRoles bool
 }
 

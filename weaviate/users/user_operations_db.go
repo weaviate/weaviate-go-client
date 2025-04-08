@@ -2,7 +2,6 @@ package users
 
 import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
-	"github.com/weaviate/weaviate/entities/models"
 )
 
 type UserOperationsDB struct {
@@ -10,15 +9,15 @@ type UserOperationsDB struct {
 }
 
 func (r *UserOperationsDB) RolesGetter() *UserRolesGetter {
-	return &UserRolesGetter{connection: r.connection, userType: models.UserTypeInputDb}
+	return &UserRolesGetter{connection: r.connection, userType: UserTypeInputDB}
 }
 
 func (r *UserOperationsDB) RolesAssigner() *RoleAssigner {
-	return &RoleAssigner{connection: r.connection, userType: models.UserTypeInputDb}
+	return &RoleAssigner{connection: r.connection, userType: UserTypeInputDB}
 }
 
 func (r *UserOperationsDB) RolesRevoker() *RoleRevoker {
-	return &RoleRevoker{connection: r.connection, userType: models.UserTypeInputDb}
+	return &RoleRevoker{connection: r.connection, userType: UserTypeInputDB}
 }
 
 func (r *UserOperationsDB) Creator() *UserDBCreator {

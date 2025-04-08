@@ -68,7 +68,7 @@ func TestRBAC_integration(t *testing.T) {
 	})
 
 	t.Run("get assigned users", func(t *testing.T) {
-		assigned, err := rolesClient.AssignedTypedUsersGetter().WithRole(rootRole).Do(ctx)
+		assigned, err := rolesClient.UserAssignmentGetter().WithRole(rootRole).Do(ctx)
 
 		require.NoErrorf(t, err, "get users with role %q", rootRole)
 		expected := []rbac.UserAssignment{

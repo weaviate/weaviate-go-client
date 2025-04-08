@@ -5,24 +5,15 @@ import (
 	"github.com/weaviate/weaviate/entities/models"
 )
 
-type UserType string
-
-const (
-	UserTypeDB   UserType = UserType(models.UserTypeInputDb)
-	UserTypeOIDC UserType = UserType(models.UserTypeInputOidc)
+type (
+	UserType string
 )
 
-func MapUserType(userType models.UserTypeOutput) UserType {
-	switch userType {
-	case models.UserTypeOutputDbUser:
-		return UserTypeDB
-	case models.UserTypeOutputDbEnvUser:
-		return UserTypeDB
-	case models.UserTypeOutputOidc:
-		return UserTypeOIDC
-	}
-	return UserTypeDB
-}
+const (
+	UserTypeDB    UserType = UserType(models.UserTypeOutputDbUser)
+	UserTypeDBEnv UserType = UserType(models.UserTypeOutputDbEnvUser)
+	UserTypeOIDC  UserType = UserType(models.UserTypeOutputOidc)
+)
 
 type UserAssignment struct {
 	UserID   string
@@ -79,14 +70,14 @@ func (api *API) Getter() *RoleGetter {
 
 // Get users assigned to a role.
 //
-// Deprecated: Use AssignedTypedUsersGetter() instead.
+// Deprecated: Use UserAssignmentGetter() instead.
 func (api *API) AssignedUsersGetter() *AssignedUsersGetter {
 	return &AssignedUsersGetter{connection: api.connection}
 }
 
 // Get users assigned to a role.
-func (api *API) AssignedTypedUsersGetter() *AssignedTypedUsersGetter {
-	return &AssignedTypedUsersGetter{connection: api.connection}
+func (api *API) UserAssignmentGetter() *UserAssignmentGetter {
+	return &UserAssignmentGetter{connection: api.connection}
 }
 
 // Check if a role exists.
