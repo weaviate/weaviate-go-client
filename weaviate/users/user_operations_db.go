@@ -43,3 +43,7 @@ func (r *UserOperationsDB) Getter() *UserDBGetter {
 func (r *UserOperationsDB) Lister() *UserDBLister {
 	return &UserDBLister{connection: r.connection}
 }
+
+func (r *UserOperationsDB) KeyRotator() *UserDBKeyRotator {
+	return &UserDBKeyRotator{connection: r.connection}
+}

@@ -18,6 +18,7 @@ services:
       AUTHENTICATION_APIKEY_ALLOWED_KEYS: 'my-secret-key'
       AUTHENTICATION_APIKEY_USERS: 'adam-the-admin'
       AUTHORIZATION_ADMIN_USERS: 'adam-the-admin'
+      AUTHENTICATION_DB_USERS_ENABLED: "true"
       PERSISTENCE_DATA_PATH: "./data"
       BACKUP_FILESYSTEM_PATH: "/tmp/backups"
       ENABLE_MODULES: "backup-filesystem"

@@ -2,7 +2,7 @@ on:
   workflow_call:
 
 env:
-  WEAVIATE_VERSION: 1.30.0-rc.0-89bc709.amd64 # TODO: change to 1.30.0 on release
+  WEAVIATE_VERSION: 1.30.0.amd64
 
 jobs:
   auth-tests:

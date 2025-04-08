@@ -25,12 +25,15 @@ func (r *UserDBCreator) Do(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", except.NewDerivedWeaviateClientError(err)
 	}
-	if res.StatusCode == http.StatusOK {
+	if res.StatusCode == http.StatusCreated {
 		tmp := struct {
 			Apikey *string `json:"apikey"`
 		}{}
 		err := res.DecodeBodyIntoTarget(&tmp)
-		return *tmp.Apikey, except.NewDerivedWeaviateClientError(err)
+		if err != nil {
+			return "", except.NewDerivedWeaviateClientError(err)
+		}
+		return *tmp.Apikey, nil
 	}
 	return "", except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
