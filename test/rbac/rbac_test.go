@@ -74,7 +74,7 @@ func TestRBAC_integration(t *testing.T) {
 		expected := []rbac.UserAssignment{
 			{
 				UserID:   rootUser,
-				UserType: rbac.UserTypeDB,
+				UserType: rbac.UserTypeDBEnv,
 			},
 		}
 		require.ElementsMatchf(t, expected, assigned,
