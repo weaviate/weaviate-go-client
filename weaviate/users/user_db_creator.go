@@ -20,15 +20,19 @@ func (r *UserDBCreator) WithUserID(id string) *UserDBCreator {
 	return r
 }
 
-func (r *UserDBCreator) Do(ctx context.Context) error {
+func (r *UserDBCreator) Do(ctx context.Context) (string, error) {
 	res, err := r.connection.RunREST(ctx, r.path(), http.MethodPost, nil)
 	if err != nil {
-		return except.NewDerivedWeaviateClientError(err)
+		return "", except.NewDerivedWeaviateClientError(err)
 	}
 	if res.StatusCode == http.StatusOK {
-		return nil
+		tmp := struct {
+			Apikey *string `json:"apikey"`
+		}{}
+		err := res.DecodeBodyIntoTarget(&tmp)
+		return *tmp.Apikey, except.NewDerivedWeaviateClientError(err)
 	}
-	return except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
+	return "", except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
 func (r *UserDBCreator) path() string {
