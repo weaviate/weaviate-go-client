@@ -1,6 +1,24 @@
 package rbac
 
-import "github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
+import (
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
+	"github.com/weaviate/weaviate/entities/models"
+)
+
+type (
+	UserType string
+)
+
+const (
+	UserTypeDB    UserType = UserType(models.UserTypeOutputDbUser)
+	UserTypeDBEnv UserType = UserType(models.UserTypeOutputDbEnvUser)
+	UserTypeOIDC  UserType = UserType(models.UserTypeOutputOidc)
+)
+
+type UserAssignment struct {
+	UserID   string
+	UserType UserType
+}
 
 type API struct {
 	connection *connection.Connection
@@ -51,8 +69,15 @@ func (api *API) Getter() *RoleGetter {
 }
 
 // Get users assigned to a role.
+//
+// Deprecated: Use UserAssignmentGetter() instead.
 func (api *API) AssignedUsersGetter() *AssignedUsersGetter {
 	return &AssignedUsersGetter{connection: api.connection}
+}
+
+// Get users assigned to a role.
+func (api *API) UserAssignmentGetter() *UserAssignmentGetter {
+	return &UserAssignmentGetter{connection: api.connection}
 }
 
 // Check if a role exists.

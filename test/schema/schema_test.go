@@ -684,7 +684,7 @@ func TestSchema_errors(t *testing.T) {
 
 		err = client.Schema().PropertyCreator().WithClassName("Pizza").
 			WithProperty(notExistingTokenizationProperty).Do(context.Background())
-		assert.EqualError(t, err, `status code: 422, error: {"code":606,"message":"tokenization in body should be one of [word lowercase whitespace field trigram gse kagome_kr kagome_ja]"}`)
+		assert.ErrorContains(t, err, `status code: 422, error: {"code":606,"message":"tokenization in body should be one of `)
 
 		notSupportedTokenizationProperty1 := &models.Property{
 			DataType:     []string{"text"},
@@ -1156,7 +1156,7 @@ func TestSchema_TenantsActivationDeactivation(t *testing.T) {
 		t.Run("create tenants (1,2,3), populate active tenants (1,2)", func(t *testing.T) {
 			testsuit.CreateSchemaPizzaForTenants(t, client)
 			testsuit.CreateTenantsPizza(t, client, tenants...)
-			testsuit.CreateDataPizzaForTenants(t, client, tenants[:2].Names()...)
+			testsuit.CreateDataPizzaForTenants(t, client, testsuit.Tenants(tenants[:2]).Names()...)
 
 			assertTenantActive(t, tenants[0].Name)
 			assertTenantActive(t, tenants[1].Name)

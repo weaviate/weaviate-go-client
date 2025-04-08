@@ -13,11 +13,18 @@ import (
 type UserRolesGetter struct {
 	connection *connection.Connection
 
-	userID string
+	userID           string
+	userType         UserTypeInput
+	includeFullRoles bool
 }
 
 func (urg *UserRolesGetter) WithUserID(id string) *UserRolesGetter {
 	urg.userID = id
+	return urg
+}
+
+func (urg *UserRolesGetter) WithIncludeFullRoles(include bool) *UserRolesGetter {
+	urg.includeFullRoles = include
 	return urg
 }
 
@@ -35,5 +42,14 @@ func (urg *UserRolesGetter) Do(ctx context.Context) ([]*rbac.Role, error) {
 }
 
 func (urg *UserRolesGetter) path() string {
-	return fmt.Sprintf("/authz/users/%s/roles", urg.userID)
+	path := fmt.Sprintf("/authz/users/%s/roles", urg.userID)
+
+	if urg.userType != "" {
+		path += "/" + string(urg.userType)
+		if urg.includeFullRoles {
+			path += "?includeFullRoles=" + fmt.Sprint(urg.includeFullRoles)
+		}
+	}
+
+	return path
 }

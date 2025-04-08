@@ -68,6 +68,20 @@ func TestRBAC_integration(t *testing.T) {
 	})
 
 	t.Run("get assigned users", func(t *testing.T) {
+		assigned, err := rolesClient.UserAssignmentGetter().WithRole(rootRole).Do(ctx)
+
+		require.NoErrorf(t, err, "get users with role %q", rootRole)
+		expected := []rbac.UserAssignment{
+			{
+				UserID:   rootUser,
+				UserType: rbac.UserTypeDBEnv,
+			},
+		}
+		require.ElementsMatchf(t, expected, assigned,
+			"%q should be assigned to %q", rootRole, rootUser)
+	})
+
+	t.Run("get assigned users (Legacy API)", func(t *testing.T) {
 		assigned, err := rolesClient.AssignedUsersGetter().WithRole(rootRole).Do(ctx)
 
 		require.NoErrorf(t, err, "get users with role %q", rootRole)
@@ -105,7 +119,8 @@ func TestRBAC_integration(t *testing.T) {
 			WithRole(roleName).
 			WithPermissions(addPerm).
 			Do(ctx)
-		require.NoErrorf(t, err, "add %q permission to %q", models.PermissionActionDeleteTenants, roleName)
+		require.NoErrorf(t, err, "add %q permission to %q",
+			models.PermissionActionDeleteTenants, roleName)
 
 		require.True(t, hasPermissions(t, roleName, addPerm),
 			"%q role should have %q permission", roleName, models.PermissionActionDeleteTenants)
@@ -123,7 +138,8 @@ func TestRBAC_integration(t *testing.T) {
 			WithRole(roleName).
 			WithPermissions(removePerm).
 			Do(ctx)
-		require.NoErrorf(t, err, "remove %q permission from %q", models.PermissionActionDeleteTenants, roleName)
+		require.NoErrorf(t, err, "remove %q permission from %q",
+			models.PermissionActionDeleteTenants, roleName)
 
 		require.Falsef(t, hasPermissions(t, roleName, removePerm),
 			"%q role should not have %q permission", roleName, models.PermissionActionDeleteTenants)
