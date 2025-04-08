@@ -13,12 +13,12 @@ In order to get the Go client `v5` issue this command:
 $ go get github.com/weaviate/weaviate-go-client/v5@v5.x.x
 ```
 
-where `v5.x.x` is the desired Go client `v5` version, for example `v5.0.2`.
+where `v5.x.x` is the desired Go client `v5` version, for example `v5.1.0`.
 
 Add dependency to your `go.mod`:
 
 ```go
-require github.com/weaviate/weaviate-go-client/v5 v5.0.2
+require github.com/weaviate/weaviate-go-client/v5 v5.1.0
 ```
 
 Connect to Weaviate on `localhost:8080` and fetch meta information
