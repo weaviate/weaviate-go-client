@@ -7,13 +7,19 @@ import (
 )
 
 type BM25ArgumentBuilder struct {
-	query      string
-	properties []string
+	query          string
+	properties     []string
+	searchOperator *BM25SearchOperatorBuilder
 }
 
 // WithQuery the search string
 func (b *BM25ArgumentBuilder) WithQuery(query string) *BM25ArgumentBuilder {
 	b.query = query
+	return b
+}
+
+func (b *BM25ArgumentBuilder) WithSearchOperator(searchOperator BM25SearchOperatorBuilder) *BM25ArgumentBuilder {
+	b.searchOperator = &searchOperator
 	return b
 }
 
@@ -35,6 +41,10 @@ func (b *BM25ArgumentBuilder) build() string {
 			panic(fmt.Errorf("failed to unmarshal bm25 properties: %s", err))
 		}
 		clause = append(clause, fmt.Sprintf("properties: %v", string(propStr)))
+
+		if b.searchOperator != nil {
+			clause = append(clause, fmt.Sprintf("searchOperator: %s", b.searchOperator.build()))
+		}
 	}
 	return fmt.Sprintf("bm25:{%v}", strings.Join(clause, ", "))
 }
