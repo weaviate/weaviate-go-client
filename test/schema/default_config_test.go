@@ -77,6 +77,12 @@ var defaultVectorIndexConfig = map[string]interface{}{
 var defaultMultivectorConfig = map[string]interface{}{
 	"enabled":     false,
 	"aggregation": "maxSim",
+	"muvera": map[string]interface{}{
+		"enabled":      false,
+		"dprojections": float64(16),
+		"ksim":         float64(4),
+		"repetitions":  float64(10),
+	},
 }
 
 var defaultReplicationConfig = &models.ReplicationConfig{

@@ -750,7 +750,7 @@ func TestSchema_errors(t *testing.T) {
 
 		err = client.Schema().PropertyCreator().WithClassName("Pizza").
 			WithProperty(notSupportedTokenizationProperty2).Do(context.Background())
-		assert.EqualError(t, err, "status code: 422, error: {\"error\":[{\"message\":\"Tokenization is not allowed for data type 'int[]'\"}]}\n")
+		assert.EqualError(t, err, "status code: 422, error: {\"error\":[{\"message\":\"tokenization is not allowed for data type 'int[]'\"}]}\n")
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
