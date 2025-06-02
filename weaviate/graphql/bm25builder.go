@@ -41,10 +41,9 @@ func (b *BM25ArgumentBuilder) build() string {
 			panic(fmt.Errorf("failed to unmarshal bm25 properties: %s", err))
 		}
 		clause = append(clause, fmt.Sprintf("properties: %v", string(propStr)))
-
-		if b.searchOperator != nil {
-			clause = append(clause, fmt.Sprintf("searchOperator: %s", b.searchOperator.build()))
-		}
+	}
+	if b.searchOperator != nil {
+		clause = append(clause, fmt.Sprintf("searchOperator:%s", b.searchOperator.build()))
 	}
 	return fmt.Sprintf("bm25:{%v}", strings.Join(clause, ", "))
 }

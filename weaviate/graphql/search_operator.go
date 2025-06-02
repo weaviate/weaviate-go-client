@@ -25,8 +25,8 @@ func (bm25 *BM25SearchOperatorBuilder) WithMinimumMatch(times int) *BM25SearchOp
 
 func (bm25 *BM25SearchOperatorBuilder) build() string {
 	query := fmt.Sprintf("{operator:%s", bm25.operator)
-	if bm25.operator == "And" {
-		query += fmt.Sprintf(" minimumOrTokensMatch: %d", bm25.minimumMatch)
+	if bm25.operator != "And" {
+		query += fmt.Sprintf(" minimumOrTokensMatch:%d", bm25.minimumMatch)
 	}
 	query += "}"
 	return query

@@ -139,7 +139,7 @@ func (h *HybridArgumentBuilder) build() string {
 	}
 
 	if h.bm25SearchOperator != nil {
-		clause = append(clause, fmt.Sprintf("bm25SearchOperator: %s", h.bm25SearchOperator.build()))
+		clause = append(clause, fmt.Sprintf("bm25SearchOperator:%s", h.bm25SearchOperator.build()))
 	}
 
 	return fmt.Sprintf("hybrid:{%v}", strings.Join(clause, ", "))
