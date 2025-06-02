@@ -241,6 +241,49 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, errRm)
 	})
 
+	t.Run("PUT /schema/{className} to add vectors", func(t *testing.T) {
+		ctx := context.Background()
+		client := testsuit.CreateTestClient(false)
+		err := client.Schema().ClassCreator().WithClass(&models.Class{
+			Class: "PizzaAddVector",
+			VectorConfig: map[string]models.VectorConfig{
+				"default": {
+					VectorIndexType: "hnsw",
+					Vectorizer: map[string]interface{}{
+						"none": map[string]interface{}{},
+					},
+				},
+			},
+		}).Do(ctx)
+		require.NoError(t, err, "create PizzaAddVector collection")
+
+		err = client.Schema().VectorAdder().
+			WithClassName("PizzaAddVector").
+			WithVectors(map[string]models.VectorConfig{
+				"vector-a": {
+					VectorIndexType: "hnsw",
+					Vectorizer: map[string]interface{}{
+						"none": map[string]interface{}{},
+					},
+				},
+				"vector-b": {
+					VectorIndexType: "hnsw",
+					Vectorizer: map[string]interface{}{
+						"none": map[string]interface{}{},
+					},
+				},
+			}).
+			Do(ctx)
+		require.NoError(t, err, "add vector-a and vector-b")
+
+		pizza, err := client.Schema().ClassGetter().WithClassName("PizzaAddVector").Do(ctx)
+		require.NoError(t, err, "get PizzaAddVector collection")
+
+		require.Contains(t, pizza.VectorConfig, "default")
+		require.Contains(t, pizza.VectorConfig, "vector-a")
+		require.Contains(t, pizza.VectorConfig, "vector-b")
+	})
+
 	t.Run("GET /schema/{className}", func(t *testing.T) {
 		client := testsuit.CreateTestClient(false)
 

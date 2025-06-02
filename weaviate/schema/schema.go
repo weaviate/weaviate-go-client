@@ -69,6 +69,15 @@ func (schema *API) PropertyCreator() *PropertyCreator {
 	}
 }
 
+// PropertyCreator builder to add a property to an existing schema class
+func (schema *API) VectorAdder() *VectorAdder {
+	return &VectorAdder{
+		connection:   schema.connection,
+		classGetter:  schema.ClassGetter(),
+		classUpdater: schema.ClassUpdater(),
+	}
+}
+
 // ShardsGetter builder to get a weaviate class' shards
 func (schema *API) ShardsGetter() *ShardsGetter {
 	return &ShardsGetter{
