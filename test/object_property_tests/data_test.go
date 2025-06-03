@@ -70,7 +70,7 @@ func TestObjectProperty_Data(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
+			fmt.Print(err.Error())
 			t.Fail()
 		}
 	})

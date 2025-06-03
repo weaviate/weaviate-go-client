@@ -18,7 +18,7 @@ func TestMisc_version_check(t *testing.T) {
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviateForcefully()
 		if err != nil {
-			fmt.Printf(err.Error())
+			fmt.Print(err.Error())
 			t.Fail()
 		}
 	})
@@ -39,7 +39,7 @@ func TestMisc_version_check(t *testing.T) {
 	t.Run("Start Weaviate", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
+			fmt.Print(err.Error())
 			t.Fail()
 		}
 	})
@@ -82,7 +82,7 @@ func TestMisc_version_check(t *testing.T) {
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
+			fmt.Print(err.Error())
 			t.Fail()
 		}
 	})
@@ -92,7 +92,7 @@ func TestMisc_empty_version_check(t *testing.T) {
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviateForcefully()
 		if err != nil {
-			fmt.Printf(err.Error())
+			fmt.Print(err.Error())
 			t.Fail()
 		}
 	})
@@ -112,7 +112,7 @@ func TestMisc_empty_version_check(t *testing.T) {
 	t.Run("Start Weaviate", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
+			fmt.Print(err.Error())
 			t.Fail()
 		}
 	})
@@ -149,7 +149,7 @@ func TestMisc_empty_version_check(t *testing.T) {
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
+			fmt.Print(err.Error())
 			t.Fail()
 		}
 	})

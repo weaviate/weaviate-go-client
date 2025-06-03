@@ -56,7 +56,7 @@ func TestAuthMock_NoRefreshToken(t *testing.T) {
 			// provides all endpoints
 			muxEndpoints := http.NewServeMux()
 			muxEndpoints.HandleFunc("/endpoints", func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte(fmt.Sprintf(`{"token_endpoint": "` + sToken.URL + `/auth"}`)))
+				w.Write([]byte(fmt.Sprint(`{"token_endpoint": "` + sToken.URL + `/auth"}`)))
 			})
 			sEndpoints := httptest.NewServer(muxEndpoints)
 			defer sEndpoints.Close()
@@ -102,7 +102,7 @@ func TestAuthMock_RefreshCC(t *testing.T) {
 	// provides all endpoints
 	muxEndpoints := http.NewServeMux()
 	muxEndpoints.HandleFunc("/endpoints", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(fmt.Sprintf(`{"token_endpoint": "` + sToken.URL + `/auth"}`)))
+		w.Write([]byte(fmt.Sprint(`{"token_endpoint": "` + sToken.URL + `/auth"}`)))
 	})
 	sEndpoints := httptest.NewServer(muxEndpoints)
 	defer sEndpoints.Close()
@@ -174,7 +174,7 @@ func TestAuthMock_RefreshUserPWAndToken(t *testing.T) {
 			// provides all endpoints
 			muxEndpoints := http.NewServeMux()
 			muxEndpoints.HandleFunc("/endpoints", func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte(fmt.Sprintf(`{"token_endpoint": "` + sToken.URL + `/auth"}`)))
+				w.Write([]byte(fmt.Sprint(`{"token_endpoint": "` + sToken.URL + `/auth"}`)))
 			})
 			sEndpoints := httptest.NewServer(muxEndpoints)
 			defer sEndpoints.Close()
@@ -260,7 +260,7 @@ func TestAuthMock_CheckDefaultScopes(t *testing.T) {
 	// provides all endpoints
 	muxEndpoints := http.NewServeMux()
 	muxEndpoints.HandleFunc("/endpoints", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(fmt.Sprintf(`{"token_endpoint": "` + sToken.URL + `/auth"}`)))
+		w.Write([]byte(fmt.Sprint(`{"token_endpoint": "` + sToken.URL + `/auth"}`)))
 	})
 	sEndpoints := httptest.NewServer(muxEndpoints)
 	defer sEndpoints.Close()
