@@ -28,11 +28,17 @@ type HybridArgumentBuilder struct {
 	targetVectors         []string
 	targets               *MultiTargetArgumentBuilder
 	searches              *HybridSearchesArgumentBuilder
+	bm25SearchOperator    *BM25SearchOperatorBuilder
 }
 
 // WithQuery the search string
 func (h *HybridArgumentBuilder) WithQuery(query string) *HybridArgumentBuilder {
 	h.query = query
+	return h
+}
+
+func (h *HybridArgumentBuilder) WithBM25SearchOperator(searchOperator BM25SearchOperatorBuilder) *HybridArgumentBuilder {
+	h.bm25SearchOperator = &searchOperator
 	return h
 }
 
@@ -130,6 +136,10 @@ func (h *HybridArgumentBuilder) build() string {
 
 	if h.searches != nil {
 		clause = append(clause, fmt.Sprintf("searches:{%s}", h.searches.build()))
+	}
+
+	if h.bm25SearchOperator != nil {
+		clause = append(clause, fmt.Sprintf("bm25SearchOperator:%s", h.bm25SearchOperator.build()))
 	}
 
 	return fmt.Sprintf("hybrid:{%v}", strings.Join(clause, ", "))

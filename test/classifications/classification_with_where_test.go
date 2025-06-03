@@ -17,7 +17,7 @@ func TestClassifications_With_Where_Filters_integration(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
 		err := testenv.SetupLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
+			fmt.Print(err.Error())
 			t.Fail()
 		}
 	})
@@ -89,7 +89,7 @@ func TestClassifications_With_Where_Filters_integration(t *testing.T) {
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
-			fmt.Printf(err.Error())
+			fmt.Print(err.Error())
 			t.Fail()
 		}
 	})

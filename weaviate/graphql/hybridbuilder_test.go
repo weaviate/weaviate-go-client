@@ -120,6 +120,24 @@ func TestHybridBuilder_build(t *testing.T) {
 			},
 			want: `hybrid:{query: "I'm a simple string", maxVectorDistance: 0.8, searches:{nearVector:{vector: [0.1,0.2,0.3]}}}`,
 		},
+		{
+			name: "hybrid with bm25SearchOperator (OR)",
+			apply: func(h *HybridArgumentBuilder) {
+				var bm25 BM25SearchOperatorBuilder
+				bm25.WithOperator(BM25SearchOperatorOr).WithMinimumMatch(4)
+				h.WithQuery("hello").WithBM25SearchOperator(bm25)
+			},
+			want: `hybrid:{query: "hello", bm25SearchOperator:{operator:Or minimumOrTokensMatch:4}}`,
+		},
+		{
+			name: "hybrid with bm25SearchOperator (AND)",
+			apply: func(h *HybridArgumentBuilder) {
+				var bm25 BM25SearchOperatorBuilder
+				bm25.WithOperator(BM25SearchOperatorAnd)
+				h.WithQuery("hello").WithBM25SearchOperator(bm25)
+			},
+			want: `hybrid:{query: "hello", bm25SearchOperator:{operator:And}}`,
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			var hybrid HybridArgumentBuilder

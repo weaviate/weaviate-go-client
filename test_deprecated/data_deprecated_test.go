@@ -15,7 +15,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
 		err := SetupLocalWeaviateDeprecated()
 		if err != nil {
-			fmt.Printf(err.Error())
+			fmt.Print(err.Error())
 			t.Fail()
 		}
 	})
@@ -540,7 +540,7 @@ func TestData_integration_deprecated(t *testing.T) {
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := TearDownLocalWeaviateDeprecated()
 		if err != nil {
-			fmt.Printf(err.Error())
+			fmt.Print(err.Error())
 			t.Fail()
 		}
 	})

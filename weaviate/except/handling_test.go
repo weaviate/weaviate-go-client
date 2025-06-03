@@ -16,7 +16,7 @@ func TestNewWeaviateClientError(t *testing.T) {
 	}{
 		{
 			name:        "error",
-			weaviateErr: NewWeaviateClientError(404, "problem with: %s %s %s", "connection", "to", "localhost"),
+			weaviateErr: NewWeaviateClientErrorf(404, "problem with: %s %s %s", "connection", "to", "localhost"),
 			want:        "status code: 404, error: problem with: connection to localhost",
 		},
 		{

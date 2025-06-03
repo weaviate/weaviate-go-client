@@ -8,12 +8,17 @@ import (
 )
 
 // NewWeaviateClientError from status code and error message
-func NewWeaviateClientError(statusCode int, format string, args ...interface{}) *fault.WeaviateClientError {
+func NewWeaviateClientError(statusCode int, message string) *fault.WeaviateClientError {
 	return &fault.WeaviateClientError{
 		IsUnexpectedStatusCode: true,
 		StatusCode:             statusCode,
-		Msg:                    fmt.Sprintf(format, args...),
+		Msg:                    message,
 	}
+}
+
+// NewWeaviateClientError from status code and error message
+func NewWeaviateClientErrorf(statusCode int, format string, args ...interface{}) *fault.WeaviateClientError {
+	return NewWeaviateClientError(statusCode, fmt.Sprintf(format, args...))
 }
 
 // NewDerivedWeaviateClientError wraps an error into a WeviateClientError as derived error
