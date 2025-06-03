@@ -130,7 +130,7 @@ func (ro ResourceOwnerPasswordFlow) GetAuthInfo(con *connection.Connection) (*ht
 		return nil, nil, nil // not configured with authentication
 	}
 
-	if ro.Scopes == nil || len(ro.Scopes) == 0 {
+	if len(ro.Scopes) == 0 {
 		ro.Scopes = []string{"offline_access"}
 	}
 	ro.Scopes = append(ro.Scopes, ro.WeaviateScopes...)
