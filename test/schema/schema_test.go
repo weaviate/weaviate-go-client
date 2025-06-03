@@ -241,6 +241,49 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, errRm)
 	})
 
+	t.Run("PUT /schema/{className} to add vectors", func(t *testing.T) {
+		ctx := context.Background()
+		client := testsuit.CreateTestClient(false)
+		err := client.Schema().ClassCreator().WithClass(&models.Class{
+			Class: "PizzaAddVector",
+			VectorConfig: map[string]models.VectorConfig{
+				"default": {
+					VectorIndexType: "hnsw",
+					Vectorizer: map[string]interface{}{
+						"none": map[string]interface{}{},
+					},
+				},
+			},
+		}).Do(ctx)
+		require.NoError(t, err, "create PizzaAddVector collection")
+
+		err = client.Schema().VectorAdder().
+			WithClassName("PizzaAddVector").
+			WithVectors(map[string]models.VectorConfig{
+				"vector-a": {
+					VectorIndexType: "hnsw",
+					Vectorizer: map[string]interface{}{
+						"none": map[string]interface{}{},
+					},
+				},
+				"vector-b": {
+					VectorIndexType: "hnsw",
+					Vectorizer: map[string]interface{}{
+						"none": map[string]interface{}{},
+					},
+				},
+			}).
+			Do(ctx)
+		require.NoError(t, err, "add vector-a and vector-b")
+
+		pizza, err := client.Schema().ClassGetter().WithClassName("PizzaAddVector").Do(ctx)
+		require.NoError(t, err, "get PizzaAddVector collection")
+
+		require.Contains(t, pizza.VectorConfig, "default")
+		require.Contains(t, pizza.VectorConfig, "vector-a")
+		require.Contains(t, pizza.VectorConfig, "vector-b")
+	})
+
 	t.Run("GET /schema/{className}", func(t *testing.T) {
 		client := testsuit.CreateTestClient(false)
 
@@ -707,7 +750,7 @@ func TestSchema_errors(t *testing.T) {
 
 		err = client.Schema().PropertyCreator().WithClassName("Pizza").
 			WithProperty(notSupportedTokenizationProperty2).Do(context.Background())
-		assert.EqualError(t, err, "status code: 422, error: {\"error\":[{\"message\":\"Tokenization is not allowed for data type 'int[]'\"}]}\n")
+		assert.EqualError(t, err, "status code: 422, error: {\"error\":[{\"message\":\"tokenization is not allowed for data type 'int[]'\"}]}\n")
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
