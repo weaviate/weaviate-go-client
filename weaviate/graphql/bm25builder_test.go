@@ -46,7 +46,7 @@ func TestBM25Builder_build(t *testing.T) {
 		)
 		operator.WithOperator(BM25SearchOperatorAnd).WithMinimumMatch(4)
 		got := bm25.WithQuery("hello").WithSearchOperator(operator).build()
-		expected := `bm25:{query: "hello", searchOperator:{operator:And}}`
+		expected := `bm25:{query: "hello", searchOperator:{operator:And minimumOrTokensMatch:0}}`
 		require.Equal(t, expected, got)
 	})
 }

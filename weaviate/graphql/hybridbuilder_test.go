@@ -136,7 +136,7 @@ func TestHybridBuilder_build(t *testing.T) {
 				bm25.WithOperator(BM25SearchOperatorAnd)
 				h.WithQuery("hello").WithBM25SearchOperator(bm25)
 			},
-			want: `hybrid:{query: "hello", bm25SearchOperator:{operator:And}}`,
+			want: `hybrid:{query: "hello", bm25SearchOperator:{operator:And minimumOrTokensMatch:0}}`,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

@@ -1014,6 +1014,53 @@ func TestGraphQL_integration(t *testing.T) {
 
 		assert.Equal(t, 1, len(resp.Get.Pizzas))
 		assert.Equal(t, "A innovation, some say revolution, in the pizza industry.", resp.Get.Pizzas[0].Description)
+
+		t.Run("search operator", func(t *testing.T) {
+			for _, tt := range []struct {
+				name     string
+				operator func(graphql.BM25SearchOperatorBuilder) graphql.BM25SearchOperatorBuilder
+			}{
+				{name: graphql.BM25SearchOperatorAnd, operator: func(builder graphql.BM25SearchOperatorBuilder) graphql.BM25SearchOperatorBuilder {
+					return *builder.WithOperator(graphql.BM25SearchOperatorAnd)
+				}},
+				{name: graphql.BM25SearchOperatorOr, operator: func(builder graphql.BM25SearchOperatorBuilder) graphql.BM25SearchOperatorBuilder {
+					return *builder.WithOperator(graphql.BM25SearchOperatorOr).
+						WithMinimumMatch(1)
+				}},
+			} {
+				t.Run(tt.name, func(t *testing.T) {
+					var builder graphql.BM25SearchOperatorBuilder
+
+					bm25 := client.GraphQL().
+						Bm25ArgBuilder().
+						WithQuery("innovation").
+						WithProperties("description").
+						WithSearchOperator(tt.operator(builder))
+
+					result, err := client.GraphQL().Get().
+						WithClassName("Pizza").
+						WithFields(description).
+						WithBM25(bm25).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.Nil(t, result.Errors)
+					require.NotNil(t, result)
+					require.NotNil(t, result.Data)
+
+					b, err := json.Marshal(result.Data)
+					require.Nil(t, err)
+
+					var resp GetPizzaResponse
+					err = json.Unmarshal(b, &resp)
+					require.Nil(t, err)
+					require.NotEmpty(t, resp.Get.Pizzas)
+
+					assert.Equal(t, 1, len(resp.Get.Pizzas))
+					assert.Equal(t, "A innovation, some say revolution, in the pizza industry.", resp.Get.Pizzas[0].Description)
+				})
+			}
+		})
 	})
 
 	t.Run("Get hybrid filter", func(t *testing.T) {
@@ -1047,6 +1094,52 @@ func TestGraphQL_integration(t *testing.T) {
 		require.NotEmpty(t, resp.Get.Pizzas)
 
 		assert.Equal(t, 4, len(resp.Get.Pizzas))
+
+		t.Run("search operator", func(t *testing.T) {
+			for _, tt := range []struct {
+				name     string
+				operator func(graphql.BM25SearchOperatorBuilder) graphql.BM25SearchOperatorBuilder
+			}{
+				{name: graphql.BM25SearchOperatorAnd, operator: func(builder graphql.BM25SearchOperatorBuilder) graphql.BM25SearchOperatorBuilder {
+					return *builder.WithOperator(graphql.BM25SearchOperatorAnd)
+				}},
+				{name: graphql.BM25SearchOperatorOr, operator: func(builder graphql.BM25SearchOperatorBuilder) graphql.BM25SearchOperatorBuilder {
+					return *builder.WithOperator(graphql.BM25SearchOperatorOr).
+						WithMinimumMatch(1)
+				}},
+			} {
+				t.Run(tt.name, func(t *testing.T) {
+					var builder graphql.BM25SearchOperatorBuilder
+
+					hybrid := client.GraphQL().
+						HybridArgumentBuilder().
+						WithQuery("some say revolution").
+						WithAlpha(0.8).
+						WithBM25SearchOperator(tt.operator(builder))
+
+					result, err := client.GraphQL().Get().
+						WithClassName("Pizza").
+						WithFields(description).
+						WithHybrid(hybrid).
+						Do(context.Background())
+
+					require.Nil(t, err)
+					require.Nil(t, result.Errors)
+					require.NotNil(t, result)
+					require.NotNil(t, result.Data)
+
+					b, err := json.Marshal(result.Data)
+					require.Nil(t, err)
+
+					var resp GetPizzaResponse
+					err = json.Unmarshal(b, &resp)
+					require.Nil(t, err)
+					require.NotEmpty(t, resp.Get.Pizzas)
+
+					assert.Equal(t, 4, len(resp.Get.Pizzas))
+				})
+			}
+		})
 	})
 
 	tests := []struct {
