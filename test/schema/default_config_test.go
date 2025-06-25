@@ -55,6 +55,12 @@ var defaultSQConfig = map[string]interface{}{
 	"trainingLimit": float64(100_000),
 }
 
+var defaultRQConfig = map[string]interface{}{
+	"enabled":      false,
+	"rescoreLimit": float64(20),
+	"bits":         float64(8),
+}
+
 var defaultVectorIndexConfig = map[string]interface{}{
 	"cleanupIntervalSeconds": float64(300),
 	"efConstruction":         float64(128),
@@ -70,6 +76,7 @@ var defaultVectorIndexConfig = map[string]interface{}{
 	"pq":                     defaultPQConfig,
 	"bq":                     defaultBQConfig,
 	"sq":                     defaultSQConfig,
+	"rq":                     defaultRQConfig,
 	"filterStrategy":         "sweeping",
 	"multivector":            defaultMultivectorConfig,
 }
