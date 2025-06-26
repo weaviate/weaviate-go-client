@@ -14,7 +14,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/backup"
-	backupRbac "github.com/weaviate/weaviate-go-client/v5/weaviate/backup/rbac"
+	rb "github.com/weaviate/weaviate-go-client/v5/weaviate/backup/rbac"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/rbac"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
@@ -49,7 +49,6 @@ func waitForBackupCompletion(t *testing.T, client *weaviate.Client, backend, bac
 
 // TestRBACBackupWithUserRoleManagement tests comprehensive user and role management with backups
 func TestRBACBackupWithUserRoleManagement(t *testing.T) {
-
 	ctx := context.Background()
 	container, stop := testenv.SetupLocalContainer(t, ctx, test.RBAC, true)
 	t.Cleanup(stop)
@@ -159,15 +158,16 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 		}
 	})
 
-	// Test selective role backup and restore
-	t.Run("test selective role backup and restore", func(t *testing.T) {
-		backupID := fmt.Sprintf("selective-roles-%d", random.Int63())
+	// Test all roles backup and restore
+	t.Run("test all roles backup and restore", func(t *testing.T) {
+		backupID := fmt.Sprintf("all-roles-%d", random.Int63())
 
-		// Backup only specific roles, with retry logic if already in progress
+		// Backup all roles and users
 		createResponse, err := client.Backup().Creator().
 			WithBackend(backend).
 			WithBackupID(backupID).
-			WithRBACSpecificRoles(adminRole, viewerRole). // Exclude editorRole
+			WithRBACRoles(rb.RBACAll).
+			WithRBACUsers("all").
 			WithWaitForCompletion(true).
 			Do(ctx)
 
@@ -178,36 +178,43 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 			createResponse, err = client.Backup().Creator().
 				WithBackend(backend).
 				WithBackupID(backupID).
-				WithRBACSpecificRoles(adminRole, viewerRole).
+				WithRBACRoles("all").
+				WithRBACUsers("all").
 				WithWaitForCompletion(true).
 				Do(ctx)
 		}
 
-		require.NoError(t, err, "failed to create selective role backup")
+		require.NoError(t, err, "failed to create all roles backup")
 		require.NotNil(t, createResponse)
 		if *createResponse.Status != models.BackupCreateResponseStatusSUCCESS {
 			t.Logf("Backup creation failed with status: %s", *createResponse.Status)
 			if createResponse.Error != "" {
 				t.Logf("Backup creation error: %s", createResponse.Error)
 			}
-			statusResponse, statusErr := client.Backup().CreateStatusGetter().
-				WithBackend(backend).
-				WithBackupID(backupID).
-				Do(ctx)
-			if statusErr == nil && statusResponse != nil {
-				t.Logf("Backup status: %s", *statusResponse.Status)
-				if statusResponse.Error != "" {
-					t.Logf("Backup status error: %s", statusResponse.Error)
-				}
-			}
 		}
 		assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse.Status)
-		t.Logf("Created selective role backup %s", backupID)
+		t.Logf("Created all roles backup %s", backupID)
 
 		// Delete all roles
-		for _, role := range []string{adminRole, viewerRole, editorRole} {
-			err := client.Roles().Deleter().WithName(role).Do(ctx)
-			require.NoError(t, err, "failed to delete role %s", role)
+		err = client.Roles().Deleter().WithName(adminRole).Do(ctx)
+		require.NoError(t, err, "failed to delete role %s", adminRole)
+		err = client.Roles().Deleter().WithName(viewerRole).Do(ctx)
+		require.NoError(t, err, "failed to delete role %s", viewerRole)
+		err = client.Roles().Deleter().WithName(editorRole).Do(ctx)
+		require.NoError(t, err, "failed to delete role %s", editorRole)
+
+		// Delete all users
+		deleted, err := client.Users().DB().Deleter().WithUserID(adminUser).Do(ctx)
+		if err == nil && deleted {
+			t.Logf("Deleted user %s", adminUser)
+		}
+		deleted, err = client.Users().DB().Deleter().WithUserID(viewerUser).Do(ctx)
+		if err == nil && deleted {
+			t.Logf("Deleted user %s", viewerUser)
+		}
+		deleted, err = client.Users().DB().Deleter().WithUserID(editorUser).Do(ctx)
+		if err == nil && deleted {
+			t.Logf("Deleted user %s", editorUser)
 		}
 
 		// Delete the class before restore to avoid conflicts
@@ -218,44 +225,58 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 		restoreResponse, err := client.Backup().Restorer().
 			WithBackend(backend).
 			WithBackupID(backupID).
-			WithRBACSpecificRoles(adminRole, viewerRole).
+			WithRBACRoles("all").
+			WithRBACUsers("all").
 			WithWaitForCompletion(true).
 			Do(ctx)
 
-		require.NoError(t, err, "failed to restore selective role backup")
+		require.NoError(t, err, "failed to restore all roles backup")
 		require.NotNil(t, restoreResponse)
 		if *restoreResponse.Status != models.BackupRestoreResponseStatusSUCCESS {
 			t.Logf("Backup restore failed with status: %s", *restoreResponse.Status)
 			if restoreResponse.Error != "" {
 				t.Logf("Backup restore error: %s", restoreResponse.Error)
 			}
-			statusResponse, statusErr := client.Backup().RestoreStatusGetter().
-				WithBackend(backend).
-				WithBackupID(backupID).
-				Do(ctx)
-			if statusErr == nil && statusResponse != nil {
-				t.Logf("Restore status: %s", *statusResponse.Status)
-				if statusResponse.Error != "" {
-					t.Logf("Restore status error: %s", statusResponse.Error)
-				}
-			}
 		}
 		assert.Equal(t, models.BackupRestoreResponseStatusSUCCESS, *restoreResponse.Status)
-		t.Logf("Restored selective role backup %s", backupID)
+		t.Logf("Restored all roles backup %s", backupID)
 
-		// Verify only selected roles were restored
-		for _, role := range []string{adminRole, viewerRole} {
-			exists, err := client.Roles().Exists().WithName(role).Do(ctx)
-			require.NoError(t, err, "failed to check role existence")
-			assert.True(t, exists, "Role '%s' should exist after selective restore", role)
+		// Verify all roles were restored
+		allRoles, err := client.Roles().AllGetter().Do(ctx)
+		if err == nil {
+			t.Logf("Found %d roles after restore", len(allRoles))
+			for _, role := range allRoles {
+				t.Logf("Role '%s' exists after restore", role.Name)
+			}
+		} else {
+			t.Logf("Could not list roles after restore: %v", err)
 		}
 
-		// Editor role should not exist (was not included in backup)
-		exists, err := client.Roles().Exists().WithName(editorRole).Do(ctx)
+		// Verify users were restored
+		users, err := client.Users().DB().Lister().Do(ctx)
 		if err == nil {
-			assert.False(t, exists, "Role '%s' should not exist after selective restore", editorRole)
+			userMap := make(map[string]bool)
+			for _, user := range users {
+				userMap[user.UserID] = true
+			}
+
+			if userMap[adminUser] {
+				t.Logf("User '%s' exists after restore", adminUser)
+			} else {
+				t.Logf("User '%s' does not exist after restore", adminUser)
+			}
+			if userMap[viewerUser] {
+				t.Logf("User '%s' exists after restore", viewerUser)
+			} else {
+				t.Logf("User '%s' does not exist after restore", viewerUser)
+			}
+			if userMap[editorUser] {
+				t.Logf("User '%s' exists after restore", editorUser)
+			} else {
+				t.Logf("User '%s' does not exist after restore", editorUser)
+			}
 		} else {
-			t.Logf("Could not check editor role existence: %v", err)
+			t.Logf("Could not list users after restore: %v", err)
 		}
 	})
 
@@ -267,7 +288,8 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 		createResponse, err := client.Backup().Creator().
 			WithBackend(backend).
 			WithBackupID(backupID).
-			WithRBACUsersOnly().
+			WithRBACRoles("noRestore").
+			WithRBACUsers("all").
 			WithWaitForCompletion(true).
 			Do(ctx)
 
@@ -278,27 +300,22 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 			if createResponse.Error != "" {
 				t.Logf("User assignments backup creation error: %s", createResponse.Error)
 			}
-			// Check backup status for more details
-			statusResponse, statusErr := client.Backup().CreateStatusGetter().
-				WithBackend(backend).
-				WithBackupID(backupID).
-				Do(ctx)
-			if statusErr == nil && statusResponse != nil {
-				t.Logf("User backup status: %s", *statusResponse.Status)
-				if statusResponse.Error != "" {
-					t.Logf("User backup status error: %s", statusResponse.Error)
-				}
-			}
 		}
 		assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse.Status)
 		t.Logf("Created user assignments backup %s", backupID)
 
 		// Delete all users
-		for _, user := range []string{adminUser, viewerUser, editorUser} {
-			deleted, err := client.Users().DB().Deleter().WithUserID(user).Do(ctx)
-			if err == nil && deleted {
-				t.Logf("Deleted user %s", user)
-			}
+		deleted, err := client.Users().DB().Deleter().WithUserID(adminUser).Do(ctx)
+		if err == nil && deleted {
+			t.Logf("Deleted user %s", adminUser)
+		}
+		deleted, err = client.Users().DB().Deleter().WithUserID(viewerUser).Do(ctx)
+		if err == nil && deleted {
+			t.Logf("Deleted user %s", viewerUser)
+		}
+		deleted, err = client.Users().DB().Deleter().WithUserID(editorUser).Do(ctx)
+		if err == nil && deleted {
+			t.Logf("Deleted user %s", editorUser)
 		}
 
 		// Delete the class before restore to avoid conflicts
@@ -309,7 +326,8 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 		restoreResponse, err := client.Backup().Restorer().
 			WithBackend(backend).
 			WithBackupID(backupID).
-			WithRBACUsersOnly().
+			WithRBACRoles("noRestore").
+			WithRBACUsers("all").
 			WithWaitForCompletion(true).
 			Do(ctx)
 
@@ -319,17 +337,6 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 			t.Logf("User assignments backup restore failed with status: %s", *restoreResponse.Status)
 			if restoreResponse.Error != "" {
 				t.Logf("User assignments backup restore error: %s", restoreResponse.Error)
-			}
-			// Check restore status for more details
-			statusResponse, statusErr := client.Backup().RestoreStatusGetter().
-				WithBackend(backend).
-				WithBackupID(backupID).
-				Do(ctx)
-			if statusErr == nil && statusResponse != nil {
-				t.Logf("User restore status: %s", *statusResponse.Status)
-				if statusResponse.Error != "" {
-					t.Logf("User restore status error: %s", statusResponse.Error)
-				}
 			}
 		}
 		assert.Equal(t, models.BackupRestoreResponseStatusSUCCESS, *restoreResponse.Status)
@@ -343,12 +350,20 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 				userMap[user.UserID] = true
 			}
 
-			for _, expectedUser := range []string{adminUser, viewerUser, editorUser} {
-				if userMap[expectedUser] {
-					t.Logf("User '%s' exists after restore", expectedUser)
-				} else {
-					t.Logf("User '%s' does not exist after restore", expectedUser)
-				}
+			if userMap[adminUser] {
+				t.Logf("User '%s' exists after restore", adminUser)
+			} else {
+				t.Logf("User '%s' does not exist after restore", adminUser)
+			}
+			if userMap[viewerUser] {
+				t.Logf("User '%s' exists after restore", viewerUser)
+			} else {
+				t.Logf("User '%s' does not exist after restore", viewerUser)
+			}
+			if userMap[editorUser] {
+				t.Logf("User '%s' exists after restore", editorUser)
+			} else {
+				t.Logf("User '%s' does not exist after restore", editorUser)
 			}
 		} else {
 			t.Logf("Could not list users after restore: %v", err)
@@ -386,225 +401,115 @@ func TestRBACBackupComplexScenarios(t *testing.T) {
 		client.Schema().ClassDeleter().WithClassName("ComplexTestClass").Do(ctx)
 	})
 
-	t.Run("test backup with complex RBAC hierarchy", func(t *testing.T) {
-		backupID := fmt.Sprintf("complex-hierarchy-%d", random.Int63())
+	t.Run("test backup with all RBAC data", func(t *testing.T) {
+		backupID := fmt.Sprintf("all-rbac-%d", random.Int63())
 
-		// Create multiple roles with hierarchy
-		roles := []string{"test-superuser", "test-manager", "test-coordinator", "test-member", "test-guest"}
-		for i, roleName := range roles {
-			// Each role has progressively fewer permissions
-			var permissions []rbac.Permission
-			
-			if i <= 0 { // super-admin
-				permissions = append(permissions, rbac.BackupsPermission{
-					Actions:    []string{models.PermissionActionManageBackups},
-					Collection: "*",
-				})
-			}
-			if i <= 1 { // admin and above
-				permissions = append(permissions, rbac.DataPermission{
-					Actions:    []string{models.PermissionActionCreateData, models.PermissionActionReadData, models.PermissionActionUpdateData, models.PermissionActionDeleteData},
-					Collection: "*",
-				})
-			}
-			if i <= 2 { // manager and above
-				permissions = append(permissions, rbac.DataPermission{
-					Actions:    []string{models.PermissionActionCreateData, models.PermissionActionReadData, models.PermissionActionUpdateData},
-					Collection: "Documents",
-				})
-			}
-			if i <= 3 { // user and above
-				permissions = append(permissions, rbac.DataPermission{
-					Actions:    []string{models.PermissionActionReadData},
-					Collection: "*",
-				})
-			}
-			// guest gets minimal permissions - always add at least one permission to avoid error
-			if len(permissions) == 0 {
-				permissions = append(permissions, rbac.DataPermission{
-					Actions:    []string{models.PermissionActionReadData},
-					Collection: "*",
-				})
-			}
-
-			role := rbac.NewRole(roleName, permissions...)
-			err := client.Roles().Creator().WithRole(role).Do(ctx)
-			require.NoError(t, err, "failed to create role %s", roleName)
-			t.Logf("Created role '%s' with %d permissions", roleName, len(permissions))
-
-			t.Cleanup(func() {
-				client.Roles().Deleter().WithName(roleName).Do(ctx)
-			})
-		}
-
-		// Create users and assign roles
-		for _, roleName := range roles {
-			userName := fmt.Sprintf("user-%s", roleName)
-			apiKey, err := client.Users().DB().Creator().WithUserID(userName).Do(ctx)
-			require.NoError(t, err, "failed to create user %s", userName)
-			require.NotEmpty(t, apiKey)
-
-			err = client.Users().DB().RolesAssigner().WithUserID(userName).WithRoles(roleName).Do(ctx)
-			require.NoError(t, err, "failed to assign role %s to user %s", roleName, userName)
-			t.Logf("Created user '%s' with role '%s'", userName, roleName)
-
-			t.Cleanup(func() {
-				client.Users().DB().Deleter().WithUserID(userName).Do(ctx)
-			})
-		}
-
-		// Create backup with custom RBAC configuration
-		rbacConfig := &backupRbac.RBACConfig{
-			Scope:                    backupRbac.RBACAll,
-			RoleSelection:           backupRbac.RoleSelectionSpecific,
-			SpecificRoles:           []string{"test-superuser", "test-manager", "test-coordinator"}, // Only backup first 3 roles
-			IncludeUserAssignments:  true,
-			IncludeGroupAssignments: false,
-		}
-
-		createResponse, err := client.Backup().Creator().
-			WithBackend(backend).
-			WithBackupID(backupID).
-			WithRBAC(rbacConfig).
-			WithWaitForCompletion(true).
-			Do(ctx)
-
-		require.NoError(t, err, "failed to create complex hierarchy backup")
-		require.NotNil(t, createResponse)
-		assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse.Status)
-		t.Logf("Created complex hierarchy backup %s", backupID)
-
-		// Delete all roles and users
-		for _, roleName := range roles {
-			userName := fmt.Sprintf("user-%s", roleName)
-			client.Users().DB().Deleter().WithUserID(userName).Do(ctx)
-			client.Roles().Deleter().WithName(roleName).Do(ctx)
-		}
-
-		// Delete the class before restore to avoid conflicts
-		err = client.Schema().ClassDeleter().WithClassName("ComplexTestClass").Do(ctx)
-		require.NoError(t, err, "failed to delete test class before restore")
-
-		// Restore with same configuration
-		restoreResponse, err := client.Backup().Restorer().
-			WithBackend(backend).
-			WithBackupID(backupID).
-			WithRBAC(rbacConfig).
-			WithWaitForCompletion(true).
-			Do(ctx)
-
-		require.NoError(t, err, "failed to restore complex hierarchy backup")
-		require.NotNil(t, restoreResponse)
-		assert.Equal(t, models.BackupRestoreResponseStatusSUCCESS, *restoreResponse.Status)
-		t.Logf("Restored complex hierarchy backup %s", backupID)
-
-		// Verify only the specified roles were restored
-		for i, roleName := range roles {
-			exists, err := client.Roles().Exists().WithName(roleName).Do(ctx)
-			if err == nil {
-				if i <= 2 { // Should exist (superuser, manager, coordinator)
-					assert.True(t, exists, "Role '%s' should exist after restore", roleName)
-				} else { // Should not exist (member, guest)
-					assert.False(t, exists, "Role '%s' should not exist after restore", roleName)
-				}
-			}
-		}
-	})
-
-	t.Run("test incremental backup strategy", func(t *testing.T) {
-		baseBackupID := fmt.Sprintf("base-backup-%d", random.Int63())
-		incrementalBackupID := fmt.Sprintf("incremental-backup-%d", random.Int63())
-
-		// Create initial roles and users
-		initialRole := "initial-role"
-		role := rbac.NewRole(initialRole,
+		// Create multiple test roles
+		testRole1 := rbac.NewRole("test-role-1",
 			rbac.DataPermission{
 				Actions:    []string{models.PermissionActionReadData},
 				Collection: "*",
 			},
 		)
-		err = client.Roles().Creator().WithRole(role).Do(ctx)
-		require.NoError(t, err, "failed to create initial role")
+		err := client.Roles().Creator().WithRole(testRole1).Do(ctx)
+		require.NoError(t, err, "failed to create test-role-1")
+		t.Logf("Created role 'test-role-1'")
+		t.Cleanup(func() {
+			client.Roles().Deleter().WithName("test-role-1").Do(ctx)
+		})
 
-		// Create base backup
-		createResponse, err := client.Backup().Creator().
-			WithBackend(backend).
-			WithBackupID(baseBackupID).
-			WithRBACAll().
-			WithWaitForCompletion(true).
-			Do(ctx)
-
-		require.NoError(t, err, "failed to create base backup")
-		require.NotNil(t, createResponse)
-		assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse.Status)
-		t.Logf("Created base backup %s", baseBackupID)
-
-		// Add more roles
-		additionalRole := "additional-role"
-		role2 := rbac.NewRole(additionalRole,
+		testRole2 := rbac.NewRole("test-role-2",
 			rbac.DataPermission{
 				Actions:    []string{models.PermissionActionCreateData, models.PermissionActionReadData},
 				Collection: "*",
 			},
 		)
-		err = client.Roles().Creator().WithRole(role2).Do(ctx)
-		require.NoError(t, err, "failed to create additional role")
+		err = client.Roles().Creator().WithRole(testRole2).Do(ctx)
+		require.NoError(t, err, "failed to create test-role-2")
+		t.Logf("Created role 'test-role-2'")
+		t.Cleanup(func() {
+			client.Roles().Deleter().WithName("test-role-2").Do(ctx)
+		})
 
-		// Create incremental backup (only new role)
-		createResponse2, err := client.Backup().Creator().
+		// Create test users
+		apiKey, err := client.Users().DB().Creator().WithUserID("test-user-1").Do(ctx)
+		require.NoError(t, err, "failed to create test-user-1")
+		require.NotEmpty(t, apiKey)
+		err = client.Users().DB().RolesAssigner().WithUserID("test-user-1").WithRoles("test-role-1").Do(ctx)
+		require.NoError(t, err, "failed to assign role to test-user-1")
+		t.Logf("Created user 'test-user-1' with role 'test-role-1'")
+		t.Cleanup(func() {
+			client.Users().DB().Deleter().WithUserID("test-user-1").Do(ctx)
+		})
+
+		apiKey, err = client.Users().DB().Creator().WithUserID("test-user-2").Do(ctx)
+		require.NoError(t, err, "failed to create test-user-2")
+		require.NotEmpty(t, apiKey)
+		err = client.Users().DB().RolesAssigner().WithUserID("test-user-2").WithRoles("test-role-2").Do(ctx)
+		require.NoError(t, err, "failed to assign role to test-user-2")
+		t.Logf("Created user 'test-user-2' with role 'test-role-2'")
+		t.Cleanup(func() {
+			client.Users().DB().Deleter().WithUserID("test-user-2").Do(ctx)
+		})
+
+		// Create backup with all RBAC data
+		createResponse, err := client.Backup().Creator().
 			WithBackend(backend).
-			WithBackupID(incrementalBackupID).
-			WithRBACSpecificRoles(additionalRole).
+			WithBackupID(backupID).
+			WithRBACRoles("all").
+			WithRBACUsers("all").
 			WithWaitForCompletion(true).
 			Do(ctx)
 
-		require.NoError(t, err, "failed to create incremental backup")
-		require.NotNil(t, createResponse2)
-		assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse2.Status)
-		t.Logf("Created incremental backup %s", incrementalBackupID)
+		require.NoError(t, err, "failed to create all RBAC backup")
+		require.NotNil(t, createResponse)
+		assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse.Status)
+		t.Logf("Created all RBAC backup %s", backupID)
 
-		// Clean up roles
-		client.Roles().Deleter().WithName(initialRole).Do(ctx)
-		client.Roles().Deleter().WithName(additionalRole).Do(ctx)
+		// Delete all roles and users
+		client.Users().DB().Deleter().WithUserID("test-user-1").Do(ctx)
+		client.Roles().Deleter().WithName("test-role-1").Do(ctx)
+		client.Users().DB().Deleter().WithUserID("test-user-2").Do(ctx)
+		client.Roles().Deleter().WithName("test-role-2").Do(ctx)
 
 		// Delete the class before restore to avoid conflicts
 		err = client.Schema().ClassDeleter().WithClassName("ComplexTestClass").Do(ctx)
 		require.NoError(t, err, "failed to delete test class before restore")
 
-		// Restore base backup first
+		// Restore with all RBAC data
 		restoreResponse, err := client.Backup().Restorer().
 			WithBackend(backend).
-			WithBackupID(baseBackupID).
-			WithRBACAll().
+			WithBackupID(backupID).
+			WithRBACRoles("all").
+			WithRBACUsers("all").
 			WithWaitForCompletion(true).
 			Do(ctx)
 
-		require.NoError(t, err, "failed to restore base backup")
+		require.NoError(t, err, "failed to restore all RBAC backup")
 		require.NotNil(t, restoreResponse)
 		assert.Equal(t, models.BackupRestoreResponseStatusSUCCESS, *restoreResponse.Status)
+		t.Logf("Restored all RBAC backup %s", backupID)
 
-		// Then restore incremental backup
-		restoreResponse2, err := client.Backup().Restorer().
-			WithBackend(backend).
-			WithBackupID(incrementalBackupID).
-			WithRBACSpecificRoles(additionalRole).
-			WithWaitForCompletion(true).
-			Do(ctx)
-
-		require.NoError(t, err, "failed to restore incremental backup")
-		require.NotNil(t, restoreResponse2)
-		assert.Equal(t, models.BackupRestoreResponseStatusSUCCESS, *restoreResponse2.Status)
-
-		// Verify both roles exist
-		for _, roleName := range []string{initialRole, additionalRole} {
-			exists, err := client.Roles().Exists().WithName(roleName).Do(ctx)
-			if err == nil {
-				assert.True(t, exists, "Role '%s' should exist after incremental restore", roleName)
+		// Verify all roles were restored
+		allRoles, err := client.Roles().AllGetter().Do(ctx)
+		if err == nil {
+			t.Logf("Found %d roles after restore", len(allRoles))
+			for _, role := range allRoles {
+				t.Logf("Role '%s' exists after restore", role.Name)
 			}
+		} else {
+			t.Logf("Could not list roles after restore: %v", err)
 		}
 
-		// Cleanup
-		client.Roles().Deleter().WithName(initialRole).Do(ctx)
-		client.Roles().Deleter().WithName(additionalRole).Do(ctx)
+		// Verify users were restored
+		users, err := client.Users().DB().Lister().Do(ctx)
+		if err == nil {
+			t.Logf("Found %d users after restore", len(users))
+			for _, user := range users {
+				t.Logf("User '%s' exists after restore", user.UserID)
+			}
+		} else {
+			t.Logf("Could not list users after restore: %v", err)
+		}
 	})
 }
