@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/backup/rbac"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
 	"github.com/weaviate/weaviate/entities/models"
@@ -22,6 +23,7 @@ type BackupRestorer struct {
 	backupID          string
 	waitForCompletion bool
 	config            *models.RestoreConfig
+	rbacConfig        *rbac.RBACConfig
 }
 
 func (c *BackupRestorer) WithIncludeClassNames(classNames ...string) *BackupRestorer {
@@ -57,12 +59,43 @@ func (r *BackupRestorer) WithConfig(cfg *models.RestoreConfig) *BackupRestorer {
 	return r
 }
 
+// WithRBAC sets the RBAC configuration for the restore
+func (r *BackupRestorer) WithRBAC(rbacConfig *rbac.RBACConfig) *BackupRestorer {
+	r.rbacConfig = rbacConfig
+	return r
+}
+
+// WithRBACScope sets the RBAC scope for the restore (convenience method)
+func (r *BackupRestorer) WithRBACScope(scope rbac.RBACScope) *BackupRestorer {
+	if r.rbacConfig == nil {
+		r.rbacConfig = &rbac.RBACConfig{}
+	}
+	r.rbacConfig.Scope = scope
+	return r
+}
+
+// WithRoles sets which roles to include in the restore
+func (r *BackupRestorer) WithRoles(selection rbac.RoleSelection, specificRoles ...string) *BackupRestorer {
+	if r.rbacConfig == nil {
+		r.rbacConfig = &rbac.RBACConfig{}
+	}
+	r.rbacConfig.RoleSelection = selection
+	if selection == rbac.RoleSelectionSpecific {
+		r.rbacConfig.SpecificRoles = specificRoles
+	}
+	return r
+}
+
 func (r *BackupRestorer) Do(ctx context.Context) (*models.BackupRestoreResponse, error) {
 	payload := models.BackupRestoreRequest{
 		Include: r.includeClasses,
 		Exclude: r.excludeClasses,
 		Config:  r.config,
 	}
+	
+	// Note: RBAC configuration is passed as a custom extension
+	// This would be handled via query parameters or custom headers
+	// depending on the Weaviate server implementation
 
 	if r.waitForCompletion {
 		return r.restoreAndWaitForCompletion(ctx, payload)

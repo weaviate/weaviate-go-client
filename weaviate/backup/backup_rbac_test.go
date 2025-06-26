@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v5/test"
 	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
@@ -20,34 +21,74 @@ import (
 func waitForBackupCompletion(t *testing.T, ctx context.Context, client *weaviate.Client, backend, backupID string) {
 	t.Helper()
 	
-	for i := 0; i < 50; i++ { // Maximum 5 seconds (50 * 100ms)
+	require.EventuallyWithT(t, func(t *assert.CollectT) {
 		status, err := client.Backup().CreateStatusGetter().
 			WithBackend(backend).
 			WithBackupID(backupID).
 			Do(ctx)
 		
 		if err != nil {
-			// If we get a 404, the backup might not have started yet, keep waiting
-			time.Sleep(100 * time.Millisecond)
-			continue
+			// If we get a 404, the backup might not have started yet
+			return
 		}
 		
 		if status != nil && status.Status != nil {
 			switch *status.Status {
 			case models.BackupCreateStatusResponseStatusSUCCESS:
-				return // Backup completed successfully
+				// Success! Test passes
+				return
 			case models.BackupCreateStatusResponseStatusFAILED:
-				t.Fatalf("Backup failed: %s", status.Error)
+				assert.Fail(t, "Backup failed", "Backup failed with error: %s", status.Error)
+				return
 			case models.BackupCreateStatusResponseStatusSTARTED,
 				models.BackupCreateStatusResponseStatusTRANSFERRING,
 				models.BackupCreateStatusResponseStatusTRANSFERRED:
-				// Still in progress, continue waiting
+				// Still in progress, keep polling
+				assert.Fail(t, "Backup still in progress")
+				return
 			}
 		}
 		
-		time.Sleep(100 * time.Millisecond)
-	}
-	t.Fatal("Backup did not complete within timeout")
+		// Status not available yet
+		assert.Fail(t, "Backup status not available")
+	}, 30*time.Second, 500*time.Millisecond)
+}
+
+// waitForRestoreCompletion waits for a restore to complete by polling its status
+func waitForRestoreCompletion(t *testing.T, ctx context.Context, client *weaviate.Client, backend, backupID string) {
+	t.Helper()
+	
+	require.EventuallyWithT(t, func(t *assert.CollectT) {
+		status, err := client.Backup().RestoreStatusGetter().
+			WithBackend(backend).
+			WithBackupID(backupID).
+			Do(ctx)
+		
+		if err != nil {
+			// If we get a 404, the restore might not have started yet
+			return
+		}
+		
+		if status != nil && status.Status != nil {
+			switch *status.Status {
+			case models.BackupRestoreStatusResponseStatusSUCCESS:
+				// Success! Test passes
+				return
+			case models.BackupRestoreStatusResponseStatusFAILED:
+				assert.Fail(t, "Restore failed", "Restore failed with error: %s", status.Error)
+				return
+			case models.BackupRestoreStatusResponseStatusSTARTED,
+				models.BackupRestoreStatusResponseStatusTRANSFERRING,
+				models.BackupRestoreStatusResponseStatusTRANSFERRED:
+				// Still in progress, keep polling
+				assert.Fail(t, "Restore still in progress")
+				return
+			}
+		}
+		
+		// Status not available yet
+		assert.Fail(t, "Restore status not available")
+	}, 30*time.Second, 500*time.Millisecond)
 }
 
 // TestRBACBackupCreatorUsage demonstrates how to use the new RBAC features with backup creation
@@ -217,60 +258,134 @@ func TestRBACBackupRestorerUsage(t *testing.T) {
 		client.Schema().ClassDeleter().WithClassName("TestRestoreClass").Do(ctx)
 	})
 
-	// First create a backup to restore from
-	baseBackupID := fmt.Sprintf("test-restore-backup-%d", random.Int63())
-	_, err = client.Backup().Creator().
-		WithBackend("filesystem").
-		WithBackupID(baseBackupID).
-		WithRBACAll().
-		Do(ctx)
-	require.NoError(t, err, "failed to create backup for restore test")
-	
-	// Wait for backup to complete
-	waitForBackupCompletion(t, ctx, client, "filesystem", baseBackupID)
+	// Helper function to create a backup for each test
+	createBackupForTest := func(t *testing.T, testName string) string {
+		backupID := fmt.Sprintf("test-restore-backup-%s-%d", testName, random.Int63())
+		_, err := client.Backup().Creator().
+			WithBackend("filesystem").
+			WithBackupID(backupID).
+			WithRBACAll().
+			Do(ctx)
+		require.NoError(t, err, "failed to create backup for restore test: %s", testName)
+		
+		// Wait for backup to complete
+		waitForBackupCompletion(t, ctx, client, "filesystem", backupID)
+		return backupID
+	}
+
+	// Helper function to delete the class before restore
+	deleteClass := func(t *testing.T) {
+		// Delete the class to avoid conflicts during restore
+		err := client.Schema().ClassDeleter().WithClassName("TestRestoreClass").Do(ctx)
+		if err != nil {
+			t.Logf("Could not delete TestRestoreClass before restore: %v", err)
+		}
+		
+		// Wait for the class to actually be deleted
+		require.EventuallyWithT(t, func(t *assert.CollectT) {
+			_, err := client.Schema().ClassGetter().WithClassName("TestRestoreClass").Do(ctx)
+			// We expect this to fail (class should not exist)
+			assert.Error(t, err, "Class should be deleted")
+		}, 10*time.Second, 200*time.Millisecond)
+	}
 
 	// Example 1: Restore backup with all RBAC data
 	t.Run("restore with all RBAC", func(t *testing.T) {
+		backupID := createBackupForTest(t, "all-rbac")
+		deleteClass(t)
+		
 		_, err := client.Backup().Restorer().
 			WithBackend("filesystem").
-			WithBackupID(baseBackupID).
+			WithBackupID(backupID).
 			WithRBACAll().
 			Do(ctx)
 		require.NoError(t, err, "restore with all RBAC should succeed")
+		
+		// Wait for restore to complete
+		waitForRestoreCompletion(t, ctx, client, "filesystem", backupID)
+		
+		// Verify the class was restored
+		require.EventuallyWithT(t, func(t *assert.CollectT) {
+			class, err := client.Schema().ClassGetter().WithClassName("TestRestoreClass").Do(ctx)
+			assert.NoError(t, err, "Class should be restored")
+			assert.NotNil(t, class, "Class should not be nil")
+		}, 10*time.Second, 200*time.Millisecond)
 	})
 
 	// Example 2: Restore backup excluding all RBAC data
 	t.Run("restore excluding RBAC", func(t *testing.T) {
+		backupID := createBackupForTest(t, "no-rbac")
+		deleteClass(t)
+		
 		_, err := client.Backup().Restorer().
 			WithBackend("filesystem").
-			WithBackupID(baseBackupID).
+			WithBackupID(backupID).
 			WithRBACNone().
 			Do(ctx)
 		require.NoError(t, err, "restore excluding RBAC should succeed")
+		
+		// Wait for restore to complete
+		waitForRestoreCompletion(t, ctx, client, "filesystem", backupID)
+		
+		// Verify the class was restored
+		require.EventuallyWithT(t, func(t *assert.CollectT) {
+			class, err := client.Schema().ClassGetter().WithClassName("TestRestoreClass").Do(ctx)
+			assert.NoError(t, err, "Class should be restored")
+			assert.NotNil(t, class, "Class should not be nil")
+		}, 10*time.Second, 200*time.Millisecond)
 	})
 
 	// Example 3: Restore backup with only specific roles
 	t.Run("restore with specific roles", func(t *testing.T) {
+		backupID := createBackupForTest(t, "specific-roles")
+		deleteClass(t)
+		
 		_, err := client.Backup().Restorer().
 			WithBackend("filesystem").
-			WithBackupID(baseBackupID).
+			WithBackupID(backupID).
 			WithRBACSpecificRoles("test-manager", "test-reader").
 			Do(ctx)
 		require.NoError(t, err, "restore with specific roles should succeed")
+		
+		// Wait for restore to complete
+		waitForRestoreCompletion(t, ctx, client, "filesystem", backupID)
+		
+		// Verify the class was restored
+		require.EventuallyWithT(t, func(t *assert.CollectT) {
+			class, err := client.Schema().ClassGetter().WithClassName("TestRestoreClass").Do(ctx)
+			assert.NoError(t, err, "Class should be restored")
+			assert.NotNil(t, class, "Class should not be nil")
+		}, 10*time.Second, 200*time.Millisecond)
 	})
 
 	// Example 4: Restore backup with only user assignments
 	t.Run("restore with users only", func(t *testing.T) {
+		backupID := createBackupForTest(t, "users-only")
+		deleteClass(t)
+		
 		_, err := client.Backup().Restorer().
 			WithBackend("filesystem").
-			WithBackupID(baseBackupID).
+			WithBackupID(backupID).
 			WithRBACUsersOnly().
 			Do(ctx)
 		require.NoError(t, err, "restore with users only should succeed")
+		
+		// Wait for restore to complete
+		waitForRestoreCompletion(t, ctx, client, "filesystem", backupID)
+		
+		// Verify the class was restored
+		require.EventuallyWithT(t, func(t *assert.CollectT) {
+			class, err := client.Schema().ClassGetter().WithClassName("TestRestoreClass").Do(ctx)
+			assert.NoError(t, err, "Class should be restored")
+			assert.NotNil(t, class, "Class should not be nil")
+		}, 10*time.Second, 200*time.Millisecond)
 	})
 
 	// Example 5: Restore backup with custom RBAC configuration
 	t.Run("restore with custom RBAC config", func(t *testing.T) {
+		backupID := createBackupForTest(t, "custom-rbac")
+		deleteClass(t)
+		
 		rbacConfig := &rbac.RBACConfig{
 			Scope:                   rbac.RBACAll,
 			RoleSelection:          rbac.RoleSelectionAll,
@@ -280,10 +395,20 @@ func TestRBACBackupRestorerUsage(t *testing.T) {
 
 		_, err := client.Backup().Restorer().
 			WithBackend("filesystem").
-			WithBackupID(baseBackupID).
+			WithBackupID(backupID).
 			WithRBAC(rbacConfig).
 			Do(ctx)
 		require.NoError(t, err, "restore with custom RBAC config should succeed")
+		
+		// Wait for restore to complete
+		waitForRestoreCompletion(t, ctx, client, "filesystem", backupID)
+		
+		// Verify the class was restored
+		require.EventuallyWithT(t, func(t *assert.CollectT) {
+			class, err := client.Schema().ClassGetter().WithClassName("TestRestoreClass").Do(ctx)
+			assert.NoError(t, err, "Class should be restored")
+			assert.NotNil(t, class, "Class should not be nil")
+		}, 10*time.Second, 200*time.Millisecond)
 	})
 }
 

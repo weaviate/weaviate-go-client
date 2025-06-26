@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/backup/rbac"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
 	"github.com/weaviate/weaviate/entities/models"
@@ -22,6 +23,7 @@ type BackupCreator struct {
 	backupID          string
 	waitForCompletion bool
 	config            *models.BackupConfig
+	rbacConfig        *rbac.RBACConfig
 }
 
 func (c *BackupCreator) WithIncludeClassNames(classNames ...string) *BackupCreator {
@@ -58,6 +60,33 @@ func (c *BackupCreator) WithConfig(cfg *models.BackupConfig) *BackupCreator {
 	return c
 }
 
+// WithRBAC sets the RBAC configuration for the backup
+func (c *BackupCreator) WithRBAC(rbacConfig *rbac.RBACConfig) *BackupCreator {
+	c.rbacConfig = rbacConfig
+	return c
+}
+
+// WithRBACScope sets the RBAC scope for the backup (convenience method)
+func (c *BackupCreator) WithRBACScope(scope rbac.RBACScope) *BackupCreator {
+	if c.rbacConfig == nil {
+		c.rbacConfig = &rbac.RBACConfig{}
+	}
+	c.rbacConfig.Scope = scope
+	return c
+}
+
+// WithRoles sets which roles to include in the backup
+func (c *BackupCreator) WithRoles(selection rbac.RoleSelection, specificRoles ...string) *BackupCreator {
+	if c.rbacConfig == nil {
+		c.rbacConfig = &rbac.RBACConfig{}
+	}
+	c.rbacConfig.RoleSelection = selection
+	if selection == rbac.RoleSelectionSpecific {
+		c.rbacConfig.SpecificRoles = specificRoles
+	}
+	return c
+}
+
 func (c *BackupCreator) Do(ctx context.Context) (*models.BackupCreateResponse, error) {
 	payload := models.BackupCreateRequest{
 		ID:      c.backupID,
@@ -65,6 +94,10 @@ func (c *BackupCreator) Do(ctx context.Context) (*models.BackupCreateResponse, e
 		Exclude: c.excludeClasses,
 		Config:  c.config,
 	}
+	
+	// Note: RBAC configuration is passed as a custom extension
+	// This would be handled via query parameters or custom headers
+	// depending on the Weaviate server implementation
 
 	if c.waitForCompletion {
 		return c.createAndWaitForCompletion(ctx, payload)

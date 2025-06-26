@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v5/test"
 	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/backup"
 	backupRbac "github.com/weaviate/weaviate-go-client/v5/weaviate/backup/rbac"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/rbac"
@@ -18,8 +20,36 @@ import (
 	"github.com/weaviate/weaviate/entities/models"
 )
 
+// waitForBackupCompletion polls the backup status until it is no longer "STARTED"
+func waitForBackupCompletion(t *testing.T, client *weaviate.Client, backend, backupID string) {
+	t.Helper()
+	timeout := time.After(30 * time.Second)
+	tick := time.Tick(1 * time.Second)
+
+	for {
+		select {
+		case <-timeout:
+			t.Fatalf("Timeout waiting for backup %s to complete", backupID)
+		case <-tick:
+			status, err := client.Backup().CreateStatusGetter().
+				WithBackend(backend).
+				WithBackupID(backupID).
+				Do(context.Background())
+			if err != nil {
+				t.Logf("Error checking backup status: %v", err)
+				continue
+			}
+			if status != nil && *status.Status != "STARTED" {
+				t.Logf("Backup %s completed with status %s", backupID, *status.Status)
+				return
+			}
+		}
+	}
+}
+
 // TestRBACBackupWithUserRoleManagement tests comprehensive user and role management with backups
 func TestRBACBackupWithUserRoleManagement(t *testing.T) {
+
 	ctx := context.Background()
 	container, stop := testenv.SetupLocalContainer(t, ctx, test.RBAC, true)
 	t.Cleanup(stop)
@@ -133,7 +163,7 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 	t.Run("test selective role backup and restore", func(t *testing.T) {
 		backupID := fmt.Sprintf("selective-roles-%d", random.Int63())
 
-		// Backup only specific roles
+		// Backup only specific roles, with retry logic if already in progress
 		createResponse, err := client.Backup().Creator().
 			WithBackend(backend).
 			WithBackupID(backupID).
@@ -141,8 +171,36 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 			WithWaitForCompletion(true).
 			Do(ctx)
 
+		if err != nil && strings.Contains(err.Error(), "already in progress") {
+			t.Logf("Backup already in progress, waiting...")
+			waitForBackupCompletion(t, client, backend, backupID)
+
+			createResponse, err = client.Backup().Creator().
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithRBACSpecificRoles(adminRole, viewerRole).
+				WithWaitForCompletion(true).
+				Do(ctx)
+		}
+
 		require.NoError(t, err, "failed to create selective role backup")
 		require.NotNil(t, createResponse)
+		if *createResponse.Status != models.BackupCreateResponseStatusSUCCESS {
+			t.Logf("Backup creation failed with status: %s", *createResponse.Status)
+			if createResponse.Error != "" {
+				t.Logf("Backup creation error: %s", createResponse.Error)
+			}
+			statusResponse, statusErr := client.Backup().CreateStatusGetter().
+				WithBackend(backend).
+				WithBackupID(backupID).
+				Do(ctx)
+			if statusErr == nil && statusResponse != nil {
+				t.Logf("Backup status: %s", *statusResponse.Status)
+				if statusResponse.Error != "" {
+					t.Logf("Backup status error: %s", statusResponse.Error)
+				}
+			}
+		}
 		assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse.Status)
 		t.Logf("Created selective role backup %s", backupID)
 
@@ -151,6 +209,10 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 			err := client.Roles().Deleter().WithName(role).Do(ctx)
 			require.NoError(t, err, "failed to delete role %s", role)
 		}
+
+		// Delete the class before restore to avoid conflicts
+		err = client.Schema().ClassDeleter().WithClassName(testClassName).Do(ctx)
+		require.NoError(t, err, "failed to delete test class before restore")
 
 		// Restore backup
 		restoreResponse, err := client.Backup().Restorer().
@@ -162,6 +224,22 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 
 		require.NoError(t, err, "failed to restore selective role backup")
 		require.NotNil(t, restoreResponse)
+		if *restoreResponse.Status != models.BackupRestoreResponseStatusSUCCESS {
+			t.Logf("Backup restore failed with status: %s", *restoreResponse.Status)
+			if restoreResponse.Error != "" {
+				t.Logf("Backup restore error: %s", restoreResponse.Error)
+			}
+			statusResponse, statusErr := client.Backup().RestoreStatusGetter().
+				WithBackend(backend).
+				WithBackupID(backupID).
+				Do(ctx)
+			if statusErr == nil && statusResponse != nil {
+				t.Logf("Restore status: %s", *statusResponse.Status)
+				if statusResponse.Error != "" {
+					t.Logf("Restore status error: %s", statusResponse.Error)
+				}
+			}
+		}
 		assert.Equal(t, models.BackupRestoreResponseStatusSUCCESS, *restoreResponse.Status)
 		t.Logf("Restored selective role backup %s", backupID)
 
@@ -195,6 +273,23 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 
 		require.NoError(t, err, "failed to create user assignments backup")
 		require.NotNil(t, createResponse)
+		if *createResponse.Status != models.BackupCreateResponseStatusSUCCESS {
+			t.Logf("User assignments backup creation failed with status: %s", *createResponse.Status)
+			if createResponse.Error != "" {
+				t.Logf("User assignments backup creation error: %s", createResponse.Error)
+			}
+			// Check backup status for more details
+			statusResponse, statusErr := client.Backup().CreateStatusGetter().
+				WithBackend(backend).
+				WithBackupID(backupID).
+				Do(ctx)
+			if statusErr == nil && statusResponse != nil {
+				t.Logf("User backup status: %s", *statusResponse.Status)
+				if statusResponse.Error != "" {
+					t.Logf("User backup status error: %s", statusResponse.Error)
+				}
+			}
+		}
 		assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse.Status)
 		t.Logf("Created user assignments backup %s", backupID)
 
@@ -206,6 +301,10 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 			}
 		}
 
+		// Delete the class before restore to avoid conflicts
+		err = client.Schema().ClassDeleter().WithClassName(testClassName).Do(ctx)
+		require.NoError(t, err, "failed to delete test class before restore")
+
 		// Restore backup
 		restoreResponse, err := client.Backup().Restorer().
 			WithBackend(backend).
@@ -216,6 +315,23 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 
 		require.NoError(t, err, "failed to restore user assignments backup")
 		require.NotNil(t, restoreResponse)
+		if *restoreResponse.Status != models.BackupRestoreResponseStatusSUCCESS {
+			t.Logf("User assignments backup restore failed with status: %s", *restoreResponse.Status)
+			if restoreResponse.Error != "" {
+				t.Logf("User assignments backup restore error: %s", restoreResponse.Error)
+			}
+			// Check restore status for more details
+			statusResponse, statusErr := client.Backup().RestoreStatusGetter().
+				WithBackend(backend).
+				WithBackupID(backupID).
+				Do(ctx)
+			if statusErr == nil && statusResponse != nil {
+				t.Logf("User restore status: %s", *statusResponse.Status)
+				if statusResponse.Error != "" {
+					t.Logf("User restore status error: %s", statusResponse.Error)
+				}
+			}
+		}
 		assert.Equal(t, models.BackupRestoreResponseStatusSUCCESS, *restoreResponse.Status)
 		t.Logf("Restored user assignments backup %s", backupID)
 
@@ -274,7 +390,7 @@ func TestRBACBackupComplexScenarios(t *testing.T) {
 		backupID := fmt.Sprintf("complex-hierarchy-%d", random.Int63())
 
 		// Create multiple roles with hierarchy
-		roles := []string{"test-superuser", "test-manager", "test-coordinator", "test-member", "test-visitor"}
+		roles := []string{"test-superuser", "test-manager", "test-coordinator", "test-member", "test-guest"}
 		for i, roleName := range roles {
 			// Each role has progressively fewer permissions
 			var permissions []rbac.Permission
@@ -303,7 +419,13 @@ func TestRBACBackupComplexScenarios(t *testing.T) {
 					Collection: "*",
 				})
 			}
-			// guest gets minimal permissions by default
+			// guest gets minimal permissions - always add at least one permission to avoid error
+			if len(permissions) == 0 {
+				permissions = append(permissions, rbac.DataPermission{
+					Actions:    []string{models.PermissionActionReadData},
+					Collection: "*",
+				})
+			}
 
 			role := rbac.NewRole(roleName, permissions...)
 			err := client.Roles().Creator().WithRole(role).Do(ctx)
@@ -359,6 +481,10 @@ func TestRBACBackupComplexScenarios(t *testing.T) {
 			client.Roles().Deleter().WithName(roleName).Do(ctx)
 		}
 
+		// Delete the class before restore to avoid conflicts
+		err = client.Schema().ClassDeleter().WithClassName("ComplexTestClass").Do(ctx)
+		require.NoError(t, err, "failed to delete test class before restore")
+
 		// Restore with same configuration
 		restoreResponse, err := client.Backup().Restorer().
 			WithBackend(backend).
@@ -378,7 +504,7 @@ func TestRBACBackupComplexScenarios(t *testing.T) {
 			if err == nil {
 				if i <= 2 { // Should exist (superuser, manager, coordinator)
 					assert.True(t, exists, "Role '%s' should exist after restore", roleName)
-				} else { // Should not exist (member, visitor)
+				} else { // Should not exist (member, guest)
 					assert.False(t, exists, "Role '%s' should not exist after restore", roleName)
 				}
 			}
@@ -440,6 +566,10 @@ func TestRBACBackupComplexScenarios(t *testing.T) {
 		// Clean up roles
 		client.Roles().Deleter().WithName(initialRole).Do(ctx)
 		client.Roles().Deleter().WithName(additionalRole).Do(ctx)
+
+		// Delete the class before restore to avoid conflicts
+		err = client.Schema().ClassDeleter().WithClassName("ComplexTestClass").Do(ctx)
+		require.NoError(t, err, "failed to delete test class before restore")
 
 		// Restore base backup first
 		restoreResponse, err := client.Backup().Restorer().
