@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/backup/rbac"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
 	"github.com/weaviate/weaviate/entities/models"
@@ -58,20 +59,34 @@ func (r *BackupRestorer) WithConfig(cfg *models.RestoreConfig) *BackupRestorer {
 }
 
 // WithRBACRoles sets roles restore option
-func (r *BackupRestorer) WithRBACRoles(option string) *BackupRestorer {
+func (r *BackupRestorer) WithRBACRoles(option rbac.RBACScope) *BackupRestorer {
 	if r.config == nil {
 		r.config = &models.RestoreConfig{}
 	}
-	r.config.RolesOptions = &option
+	s :=string(option)
+	r.config.RolesOptions = &s
 	return r
 }
 
 // WithRBACUsers sets users restore option
-func (r *BackupRestorer) WithRBACUsers(option string) *BackupRestorer {
+func (r *BackupRestorer) WithRBACUsers(option rbac.RBACScope) *BackupRestorer {
 	if r.config == nil {
 		r.config = &models.RestoreConfig{}
 	}
-	r.config.UsersOptions = &option
+	s :=string(option)
+	r.config.UsersOptions = &s
+	return r
+}
+
+func (r *BackupRestorer) WithRBACAll() *BackupRestorer {
+	r.WithRBACRoles(rbac.RBACAll)
+	r.WithRBACUsers(rbac.RBACAll)
+	return r
+}
+
+func (r *BackupRestorer) WithoutRBAC(option rbac.RBACScope) *BackupRestorer {
+	r.WithRBACRoles(rbac.RBACNone)
+	r.WithRBACUsers(rbac.RBACNone)
 	return r
 }
 

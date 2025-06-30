@@ -33,7 +33,7 @@ const (
 	WCSGRPCPort        = 50056
 	NoWeaviatePort     = 8888
 	NoWeaviateGRPCPort = 55555
-	RbacPort           = 8089
+	RbacPort           = 9099
 )
 
 const ENV_INTEGRATION_TESTS_AUTH = "INTEGRATION_TESTS_AUTH"

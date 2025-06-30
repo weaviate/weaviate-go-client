@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	rb "github.com/weaviate/weaviate-go-client/v5/weaviate/backup/rbac"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
 	"github.com/weaviate/weaviate/entities/models"
@@ -56,18 +55,6 @@ func (c *BackupCreator) WithWaitForCompletion(waitForCompletion bool) *BackupCre
 // WithConfig sets the compression configuration for the backup
 func (c *BackupCreator) WithConfig(cfg *models.BackupConfig) *BackupCreator {
 	c.config = cfg
-	return c
-}
-
-// WithRBACRoles sets roles backup option (placeholder - BackupConfig needs rolesOptions field)
-func (c *BackupCreator) WithRBACRoles(option rb.RBACScope) *BackupCreator {
-	// TODO: Implement when BackupConfig has rolesOptions field
-	return c
-}
-
-// WithRBACUsers sets users backup option (placeholder - BackupConfig needs usersOptions field)
-func (c *BackupCreator) WithRBACUsers(option rb.RBACScope) *BackupCreator {
-	// TODO: Implement when BackupConfig has usersOptions field
 	return c
 }
 

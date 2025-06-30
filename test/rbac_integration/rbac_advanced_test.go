@@ -166,8 +166,6 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 		createResponse, err := client.Backup().Creator().
 			WithBackend(backend).
 			WithBackupID(backupID).
-			WithRBACRoles(rb.RBACAll).
-			WithRBACUsers("all").
 			WithWaitForCompletion(true).
 			Do(ctx)
 
@@ -178,8 +176,6 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 			createResponse, err = client.Backup().Creator().
 				WithBackend(backend).
 				WithBackupID(backupID).
-				WithRBACRoles("all").
-				WithRBACUsers("all").
 				WithWaitForCompletion(true).
 				Do(ctx)
 		}
@@ -225,8 +221,8 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 		restoreResponse, err := client.Backup().Restorer().
 			WithBackend(backend).
 			WithBackupID(backupID).
-			WithRBACRoles("all").
-			WithRBACUsers("all").
+			WithRBACRoles(rb.RBACAll).
+			WithRBACUsers(rb.RBACAll).
 			WithWaitForCompletion(true).
 			Do(ctx)
 
@@ -288,8 +284,6 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 		createResponse, err := client.Backup().Creator().
 			WithBackend(backend).
 			WithBackupID(backupID).
-			WithRBACRoles("noRestore").
-			WithRBACUsers("all").
 			WithWaitForCompletion(true).
 			Do(ctx)
 
@@ -326,8 +320,8 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 		restoreResponse, err := client.Backup().Restorer().
 			WithBackend(backend).
 			WithBackupID(backupID).
-			WithRBACRoles("noRestore").
-			WithRBACUsers("all").
+			WithRBACRoles(rb.RBACNone).
+			WithRBACUsers(rb.RBACAll).
 			WithWaitForCompletion(true).
 			Do(ctx)
 
@@ -456,8 +450,6 @@ func TestRBACBackupComplexScenarios(t *testing.T) {
 		createResponse, err := client.Backup().Creator().
 			WithBackend(backend).
 			WithBackupID(backupID).
-			WithRBACRoles("all").
-			WithRBACUsers("all").
 			WithWaitForCompletion(true).
 			Do(ctx)
 
@@ -480,8 +472,8 @@ func TestRBACBackupComplexScenarios(t *testing.T) {
 		restoreResponse, err := client.Backup().Restorer().
 			WithBackend(backend).
 			WithBackupID(backupID).
-			WithRBACRoles("all").
-			WithRBACUsers("all").
+			WithRBACRoles(rb.RBACAll).
+			WithRBACUsers(rb.RBACAll).
 			WithWaitForCompletion(true).
 			Do(ctx)
 

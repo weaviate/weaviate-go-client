@@ -13,13 +13,31 @@ import (
 	"github.com/weaviate/weaviate/entities/models"
 )
 
-func test1(t *testing.T) {
+func TestRBACBackupBasicCreation(t *testing.T) {
 	ctx := context.Background()
 	container, stop := testenv.SetupLocalContainer(t, ctx, test.RBAC, true)
 	t.Cleanup(stop)
 
 	client := testsuit.CreateTestClientForContainer(t, container)
 	testsuit.CleanUpWeaviate(t, client)
+
+	// Create test class first (required for backup to work)
+	testClass := &models.Class{
+		Class:       "TestBackupClass",
+		Description: "Test class for backup",
+		Properties: []*models.Property{
+			{
+				Name:     "title",
+				DataType: []string{"text"},
+			},
+		},
+	}
+
+	err := client.Schema().ClassCreator().WithClass(testClass).Do(ctx)
+	require.NoError(t, err, "failed to create test class")
+	t.Cleanup(func() {
+		client.Schema().ClassDeleter().WithClassName("TestBackupClass").Do(ctx)
+	})
 
 	backend := backup.BACKEND_FILESYSTEM
 	backupID := "test1-backup"
@@ -28,7 +46,6 @@ func test1(t *testing.T) {
 	createResponse, err := client.Backup().Creator().
 		WithBackend(backend).
 		WithBackupID(backupID).
-		WithRBACAll().
 		WithWaitForCompletion(true).
 		Do(ctx)
 
@@ -38,13 +55,31 @@ func test1(t *testing.T) {
 	assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse.Status)
 }
 
-func test2(t *testing.T) {
+func TestRBACBackupCreationAndStatusCheck(t *testing.T) {
 	ctx := context.Background()
 	container, stop := testenv.SetupLocalContainer(t, ctx, test.RBAC, true)
 	t.Cleanup(stop)
 
 	client := testsuit.CreateTestClientForContainer(t, container)
 	testsuit.CleanUpWeaviate(t, client)
+
+	// Create test class first (required for backup to work)
+	testClass := &models.Class{
+		Class:       "TestBackupClass",
+		Description: "Test class for backup",
+		Properties: []*models.Property{
+			{
+				Name:     "title",
+				DataType: []string{"text"},
+			},
+		},
+	}
+
+	err := client.Schema().ClassCreator().WithClass(testClass).Do(ctx)
+	require.NoError(t, err, "failed to create test class")
+	t.Cleanup(func() {
+		client.Schema().ClassDeleter().WithClassName("TestBackupClass").Do(ctx)
+	})
 
 	backend := backup.BACKEND_FILESYSTEM
 	backupID := "test2-backup"
@@ -53,7 +88,6 @@ func test2(t *testing.T) {
 	createResponse, err := client.Backup().Creator().
 		WithBackend(backend).
 		WithBackupID(backupID).
-		WithRBACAll().
 		WithWaitForCompletion(true).
 		Do(ctx)
 
@@ -72,7 +106,7 @@ func test2(t *testing.T) {
 	assert.Equal(t, models.BackupCreateStatusResponseStatusSUCCESS, *statusResponse.Status)
 }
 
-func test3(t *testing.T) {
+func TestRBACBackupWithClassCreationAndDeletion(t *testing.T) {
 	ctx := context.Background()
 	container, stop := testenv.SetupLocalContainer(t, ctx, test.RBAC, true)
 	t.Cleanup(stop)
@@ -102,7 +136,6 @@ func test3(t *testing.T) {
 	createResponse, err := client.Backup().Creator().
 		WithBackend(backend).
 		WithBackupID(backupID).
-		WithRBACAll().
 		WithWaitForCompletion(true).
 		Do(ctx)
 
@@ -138,7 +171,7 @@ func test3(t *testing.T) {
 	assert.False(t, found)
 }
 
-func test4(t *testing.T) {
+func TestRBACBackupCreateDeleteRestore(t *testing.T) {
 	ctx := context.Background()
 	container, stop := testenv.SetupLocalContainer(t, ctx, test.RBAC, true)
 	t.Cleanup(stop)
@@ -168,7 +201,6 @@ func test4(t *testing.T) {
 	createResponse, err := client.Backup().Creator().
 		WithBackend(backend).
 		WithBackupID(backupID).
-		WithRBACAll().
 		WithWaitForCompletion(true).
 		Do(ctx)
 
@@ -216,7 +248,7 @@ func test4(t *testing.T) {
 	assert.Equal(t, models.BackupRestoreResponseStatusSUCCESS, *restoreResponse.Status)
 }
 
-func test5(t *testing.T) {
+func TestRBACBackupFullCycleWithValidation(t *testing.T) {
 	ctx := context.Background()
 	container, stop := testenv.SetupLocalContainer(t, ctx, test.RBAC, true)
 	t.Cleanup(stop)
@@ -246,7 +278,6 @@ func test5(t *testing.T) {
 	createResponse, err := client.Backup().Creator().
 		WithBackend(backend).
 		WithBackupID(backupID).
-		WithRBACAll().
 		WithWaitForCompletion(true).
 		Do(ctx)
 

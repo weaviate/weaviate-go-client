@@ -10,7 +10,7 @@ services:
       - http
     image: semitechnologies/weaviate:${WEAVIATE_VERSION}
     ports:
-      - 8089:8080
+      - 9099:8080
       - 6060:6060
     restart: on-failure:0
     environment:
@@ -26,3 +26,4 @@ services:
       CLUSTER_GOSSIP_BIND_PORT: "7100"
       CLUSTER_DATA_BIND_PORT: "7101"
       DEBUG_LOGS_IN_API_ENABLED: "true"
+      WEAVIATE_VERSION: ${WEAVIATE_VERSION}

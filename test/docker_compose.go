@@ -90,7 +90,7 @@ var containers map[Preset]Container = map[Preset]Container{
 		DockerComposeFile: "../test/docker-compose-rbac.yml",
 		APISecret:         "my-secret-key",
 		host:              "localhost",
-		httpPort:          "8089",
+		httpPort:          "9099",
 	},
 }
 
