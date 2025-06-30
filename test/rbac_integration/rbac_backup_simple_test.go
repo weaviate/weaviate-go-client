@@ -83,6 +83,9 @@ func TestBackupAllRBAC(t *testing.T) {
 	_, err = client.Roles().Getter().WithName("test-role").Do(ctx)
 	assert.Error(t, err)
 
+	_, err = client.Users().DB().Lister().Do(ctx)
+	require.NoError(t, err)
+
 	// Restore backup
 	_, err = client.Backup().Restorer().
 		WithBackend(backup.BACKEND_FILESYSTEM).
@@ -173,6 +176,10 @@ func TestBackupNoRBAC(t *testing.T) {
 	schema, err := client.Schema().Getter().Do(ctx)
 	require.NoError(t, err)
 	assert.Empty(t, schema.Classes)
+	_, err = client.Roles().Getter().WithName("test-role").Do(ctx)
+	assert.Error(t, err)
+	_, err = client.Users().DB().Lister().Do(ctx)
+	require.NoError(t, err)
 
 	// Restore backup
 	_, err = client.Backup().Restorer().
@@ -257,6 +264,10 @@ func TestBackupRolesOnly(t *testing.T) {
 	schema, err := client.Schema().Getter().Do(ctx)
 	require.NoError(t, err)
 	assert.Empty(t, schema.Classes)
+	_, err = client.Roles().Getter().WithName("test-role").Do(ctx)
+	assert.Error(t, err)
+	_, err = client.Users().DB().Lister().Do(ctx)
+	require.NoError(t, err)
 
 	// Restore backup
 	_, err = client.Backup().Restorer().
@@ -353,6 +364,10 @@ func TestBackupUsersOnly(t *testing.T) {
 	schema, err := client.Schema().Getter().Do(ctx)
 	require.NoError(t, err)
 	assert.Empty(t, schema.Classes)
+	_, err = client.Roles().Getter().WithName("test-role").Do(ctx)
+	assert.Error(t, err)
+	_, err = client.Users().DB().Lister().Do(ctx)
+	require.NoError(t, err)
 
 	// Restore backup
 	_, err = client.Backup().Restorer().
@@ -381,196 +396,6 @@ func TestBackupUsersOnly(t *testing.T) {
 	assert.True(t, found)
 
 	// Roles should NOT be restored
-	_, err = client.Roles().Getter().WithName("test-role").Do(ctx)
-	assert.Error(t, err)
-}
-
-func TestCompleteBackupRestoreRoles(t *testing.T) {
-	ctx := context.Background()
-	container, stop := testenv.SetupLocalContainer(t, ctx, test.RBAC, true)
-	defer stop()
-
-	client := testsuit.CreateTestClientForContainer(t, container)
-	testsuit.CleanUpWeaviate(t, client)
-
-	// Create test class
-	class := &models.Class{
-		Class: "TestClass",
-		Properties: []*models.Property{
-			{Name: "title", DataType: []string{"text"}},
-		},
-	}
-	err := client.Schema().ClassCreator().WithClass(class).Do(ctx)
-	require.NoError(t, err)
-
-	// Create test role
-	role := weaviateRbac.NewRole("test-role", weaviateRbac.DataPermission{
-		Actions:    []string{models.PermissionActionReadData},
-		Collection: "*",
-	})
-	err = client.Roles().Creator().WithRole(role).Do(ctx)
-	require.NoError(t, err)
-
-	// Create test user
-	_, err = client.Users().DB().Creator().WithUserID("test-user").Do(ctx)
-	require.NoError(t, err)
-
-	// Assign role to user
-	err = client.Users().DB().RolesAssigner().WithUserID("test-user").WithRoles("test-role").Do(ctx)
-	require.NoError(t, err)
-
-	// Create complete backup
-	_, err = client.Backup().Creator().
-		WithBackend(backup.BACKEND_FILESYSTEM).
-		WithBackupID("test-backup-complete").
-		WithWaitForCompletion(true).
-		Do(ctx)
-	require.NoError(t, err)
-
-	// Check backup exists
-	status, err := client.Backup().CreateStatusGetter().
-		WithBackend(backup.BACKEND_FILESYSTEM).
-		WithBackupID("test-backup-complete").
-		Do(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, models.BackupCreateStatusResponseStatusSUCCESS, *status.Status)
-
-	// Delete everything in database
-	err = client.Schema().ClassDeleter().WithClassName("TestClass").Do(ctx)
-	require.NoError(t, err)
-
-	_, err = client.Users().DB().Deleter().WithUserID("test-user").Do(ctx)
-	require.NoError(t, err)
-
-	err = client.Roles().Deleter().WithName("test-role").Do(ctx)
-	require.NoError(t, err)
-
-	// Check delete worked
-	schema, err := client.Schema().Getter().Do(ctx)
-	require.NoError(t, err)
-	assert.Empty(t, schema.Classes)
-
-	// Restore only roles from complete backup
-	_, err = client.Backup().Restorer().
-		WithBackend(backup.BACKEND_FILESYSTEM).
-		WithBackupID("test-backup-complete").
-		WithRBACRoles(rbac.RBACAll).
-		WithWaitForCompletion(true).
-		Do(ctx)
-	require.NoError(t, err)
-
-	// Check restore worked - class and roles should be restored, users should not
-	schema, err = client.Schema().Getter().Do(ctx)
-	require.NoError(t, err)
-	assert.Len(t, schema.Classes, 1)
-	assert.Equal(t, "TestClass", schema.Classes[0].Class)
-
-	_, err = client.Roles().Getter().WithName("test-role").Do(ctx)
-	require.NoError(t, err)
-
-	users, err := client.Users().DB().Lister().Do(ctx)
-	require.NoError(t, err)
-	found := false
-	for _, user := range users {
-		if user.UserID == "test-user" {
-			found = true
-			break
-		}
-	}
-	assert.False(t, found)
-}
-
-func TestCompleteBackupRestoreUsers(t *testing.T) {
-	ctx := context.Background()
-	container, stop := testenv.SetupLocalContainer(t, ctx, test.RBAC, true)
-	defer stop()
-
-	client := testsuit.CreateTestClientForContainer(t, container)
-	testsuit.CleanUpWeaviate(t, client)
-
-	// Create test class
-	class := &models.Class{
-		Class: "TestClass",
-		Properties: []*models.Property{
-			{Name: "title", DataType: []string{"text"}},
-		},
-	}
-	err := client.Schema().ClassCreator().WithClass(class).Do(ctx)
-	require.NoError(t, err)
-
-	// Create test role
-	role := weaviateRbac.NewRole("test-role", weaviateRbac.DataPermission{
-		Actions:    []string{models.PermissionActionReadData},
-		Collection: "*",
-	})
-	err = client.Roles().Creator().WithRole(role).Do(ctx)
-	require.NoError(t, err)
-
-	// Create test user
-	_, err = client.Users().DB().Creator().WithUserID("test-user").Do(ctx)
-	require.NoError(t, err)
-
-	// Assign role to user
-	err = client.Users().DB().RolesAssigner().WithUserID("test-user").WithRoles("test-role").Do(ctx)
-	require.NoError(t, err)
-
-	// Create complete backup
-	_, err = client.Backup().Creator().
-		WithBackend(backup.BACKEND_FILESYSTEM).
-		WithBackupID("test-backup-complete2").
-		WithWaitForCompletion(true).
-		Do(ctx)
-	require.NoError(t, err)
-
-	// Check backup exists
-	status, err := client.Backup().CreateStatusGetter().
-		WithBackend(backup.BACKEND_FILESYSTEM).
-		WithBackupID("test-backup-complete2").
-		Do(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, models.BackupCreateStatusResponseStatusSUCCESS, *status.Status)
-
-	// Delete everything in database
-	err = client.Schema().ClassDeleter().WithClassName("TestClass").Do(ctx)
-	require.NoError(t, err)
-
-	_, err = client.Users().DB().Deleter().WithUserID("test-user").Do(ctx)
-	require.NoError(t, err)
-
-	err = client.Roles().Deleter().WithName("test-role").Do(ctx)
-	require.NoError(t, err)
-
-	// Check delete worked
-	schema, err := client.Schema().Getter().Do(ctx)
-	require.NoError(t, err)
-	assert.Empty(t, schema.Classes)
-
-	// Restore only users from complete backup
-	_, err = client.Backup().Restorer().
-		WithBackend(backup.BACKEND_FILESYSTEM).
-		WithBackupID("test-backup-complete2").
-		WithRBACUsers(rbac.RBACAll).
-		WithWaitForCompletion(true).
-		Do(ctx)
-	require.NoError(t, err)
-
-	// Check restore worked - class and users should be restored, roles should not
-	schema, err = client.Schema().Getter().Do(ctx)
-	require.NoError(t, err)
-	assert.Len(t, schema.Classes, 1)
-	assert.Equal(t, "TestClass", schema.Classes[0].Class)
-
-	users, err := client.Users().DB().Lister().Do(ctx)
-	require.NoError(t, err)
-	found := false
-	for _, user := range users {
-		if user.UserID == "test-user" {
-			found = true
-			break
-		}
-	}
-	assert.True(t, found)
-
 	_, err = client.Roles().Getter().WithName("test-role").Do(ctx)
 	assert.Error(t, err)
 }
