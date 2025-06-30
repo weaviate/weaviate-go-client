@@ -1,6 +1,6 @@
 module github.com/weaviate/weaviate-go-client/v5
 
-go 1.23.0
+go 1.24
 
 require (
 	github.com/docker/go-connections v0.5.0
