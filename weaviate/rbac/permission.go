@@ -302,7 +302,7 @@ func roleFromWeaviate(r *models.Role) Role {
 			// New permission group may have been introduced on the server,
 			// e.g. "manage_indices", which aren't reflected in this version of the client,
 			// so it doesn't have a good way of presenting them to the user.
-			//log.Printf("WARN: %q action belongs to an unrecognized group, try updating the client to the latest version", *perm.Action)
+			// log.Printf("WARN: %q action belongs to an unrecognized group, try updating the client to the latest version", *perm.Action)
 		}
 	}
 	return NewRole(*r.Name, backups, collections, data, nodes, roles, clusters, tenants, users)

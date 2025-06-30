@@ -449,7 +449,6 @@ func TestRBACBackupRestorerUsage(t *testing.T) {
 			}
 		}
 
-
 		t.Logf("✅ ALL RBAC RESTORE TEST PASSED - Roles: %v, Users with roles: %v", testRoles, finalUsersWithRoles)
 	})
 

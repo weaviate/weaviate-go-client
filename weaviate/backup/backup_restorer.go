@@ -63,7 +63,7 @@ func (r *BackupRestorer) WithRBACRoles(option rbac.RBACScope) *BackupRestorer {
 	if r.config == nil {
 		r.config = &models.RestoreConfig{}
 	}
-	s :=string(option)
+	s := string(option)
 	r.config.RolesOptions = &s
 	return r
 }
@@ -73,7 +73,7 @@ func (r *BackupRestorer) WithRBACUsers(option rbac.RBACScope) *BackupRestorer {
 	if r.config == nil {
 		r.config = &models.RestoreConfig{}
 	}
-	s :=string(option)
+	s := string(option)
 	r.config.UsersOptions = &s
 	return r
 }

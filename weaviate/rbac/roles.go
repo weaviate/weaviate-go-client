@@ -82,5 +82,5 @@ func (api *API) UserAssignmentGetter() *UserAssignmentGetter {
 
 // Check if a role exists.
 func (api *API) Exists() *RoleExists {
-       return &RoleExists{connection: api.connection, getter: api.Getter()}
+	return &RoleExists{connection: api.connection, getter: api.Getter()}
 }
