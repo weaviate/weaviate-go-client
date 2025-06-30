@@ -39,8 +39,8 @@ func TestRBAC_integration(t *testing.T) {
 			err := rolesClient.Deleter().WithName(role.Name).Do(ctx)
 			require.NoErrorf(tt, err, "delete role %q", role)
 
-			exists, _ := rolesClient.Exists().WithName(role.Name).Do(ctx)
-			require.Falsef(tt, exists, "role %q should not exist after deletion", role)
+			_, err = rolesClient.Getter().WithName(role.Name).Do(ctx)
+			require.Errorf(tt, err, "role %q should not exist after deletion", role)
 		})
 
 		err := rolesClient.Creator().WithRole(role).Do(ctx)
@@ -96,9 +96,8 @@ func TestRBAC_integration(t *testing.T) {
 			rbac.BackupsPermission{Actions: []string{models.PermissionActionManageBackups}, Collection: pizza},
 		))
 
-		exists, err := rolesClient.Exists().WithName(roleName).Do(ctx)
-		require.NoError(t, err, "check if role exists")
-		require.Truef(t, exists, "role %q should exist after creation", roleName)
+		_, err := rolesClient.Getter().WithName(roleName).Do(ctx)
+		require.NoError(t, err, "role %q should exist after creation", roleName)
 
 		testRole, err := rolesClient.Getter().WithName(roleName).Do(ctx)
 		require.NoErrorf(t, err, "retrieve %q", roleName)
