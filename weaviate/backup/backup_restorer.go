@@ -78,12 +78,14 @@ func (r *BackupRestorer) WithRBACUsers(option rbac.RBACScope) *BackupRestorer {
 	return r
 }
 
+// WithRBACAll is a convenience method to restore both roles and users
 func (r *BackupRestorer) WithRBACAll() *BackupRestorer {
 	r.WithRBACRoles(rbac.RBACAll)
 	r.WithRBACUsers(rbac.RBACAll)
 	return r
 }
 
+// WithoutRBAC removes all RBAC restore options.  This is currently the default behaviour, so it is optonal.
 func (r *BackupRestorer) WithoutRBAC(option rbac.RBACScope) *BackupRestorer {
 	r.WithRBACRoles(rbac.RBACNone)
 	r.WithRBACUsers(rbac.RBACNone)
