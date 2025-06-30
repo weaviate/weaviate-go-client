@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/alias"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/auth"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/backup"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/batch"
@@ -103,6 +104,7 @@ type Client struct {
 	grpcClient      *connection.GrpcClient
 	misc            *misc.API
 	schema          *schema.API
+	alias           *alias.API
 	data            *data.API
 	batch           *batch.API
 	c11y            *contextionary.API
@@ -175,6 +177,7 @@ func NewClient(config Config) (*Client, error) {
 		grpcClient:      grpcClient,
 		misc:            misc.New(con, dbVersionProvider),
 		schema:          schema.New(con),
+		alias:           alias.New(con),
 		c11y:            contextionary.New(con),
 		classifications: classifications.New(con),
 		graphQL:         graphql.New(con),
@@ -249,6 +252,11 @@ func (c *Client) Misc() *misc.API {
 // Schema API group
 func (c *Client) Schema() *schema.API {
 	return c.schema
+}
+
+// Alias API group
+func (c *Client) Alias() *alias.API {
+	return c.alias
 }
 
 // Data API group including both things and actions

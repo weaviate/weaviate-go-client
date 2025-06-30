@@ -16,7 +16,7 @@ type AliasCreator struct {
 }
 
 // WithClass specifies the alias that will be added to the schema
-func (cc *AliasCreator) WithClass(alias *models.Alias) *AliasCreator {
+func (cc *AliasCreator) WithAlias(alias *models.Alias) *AliasCreator {
 	cc.alias = alias
 	return cc
 }
