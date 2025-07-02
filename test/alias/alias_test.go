@@ -218,7 +218,7 @@ func TestAlias_integration(t *testing.T) {
 		}()
 
 		// list all alias
-		resp, err := client.Alias().AliasLister().Do(ctx)
+		resp, err := client.Alias().Getter().Do(ctx)
 		require.NoError(t, err)
 		assert.Len(t, resp, 2)
 
@@ -282,13 +282,13 @@ func TestAlias_integration(t *testing.T) {
 		}()
 
 		// list alias for specific class
-		resp, err := client.Alias().AliasLister().WithClassName(schemaClass.Class).Do(ctx)
+		resp, err := client.Alias().Getter().WithClassName(schemaClass.Class).Do(ctx)
 		require.NoError(t, err)
 		assert.Len(t, resp, 1)
 		assert.Equal(t, schemaClass.Class, resp[0].Class)
 
 		// list alias for specific class
-		resp, err = client.Alias().AliasLister().WithClassName(schemaClass2.Class).Do(ctx)
+		resp, err = client.Alias().Getter().WithClassName(schemaClass2.Class).Do(ctx)
 		require.NoError(t, err)
 		assert.Len(t, resp, 1)
 		assert.Equal(t, schemaClass2.Class, resp[0].Class)
@@ -338,7 +338,7 @@ func TestAlias_integration(t *testing.T) {
 		}()
 
 		// list alias for specific class
-		resp, err := client.Alias().AliasLister().WithClassName(schemaClass.Class).Do(ctx)
+		resp, err := client.Alias().Getter().WithClassName(schemaClass.Class).Do(ctx)
 		require.NoError(t, err)
 		assert.Len(t, resp, 1)
 		assert.Equal(t, schemaClass.Class, resp[0].Class)
@@ -350,7 +350,7 @@ func TestAlias_integration(t *testing.T) {
 		require.NoError(t, err)
 
 		// list alias for specific class
-		resp, err = client.Alias().AliasLister().WithClassName(schemaClass2.Class).Do(ctx)
+		resp, err = client.Alias().Getter().WithClassName(schemaClass2.Class).Do(ctx)
 		require.NoError(t, err)
 		assert.Len(t, resp, 1)
 		assert.Equal(t, schemaClass2.Class, resp[0].Class)
@@ -390,7 +390,7 @@ func TestAlias_integration(t *testing.T) {
 		}()
 
 		// list alias for specific class
-		resp, err := client.Alias().AliasLister().WithClassName(schemaClass.Class).Do(ctx)
+		resp, err := client.Alias().Getter().WithClassName(schemaClass.Class).Do(ctx)
 		require.NoError(t, err)
 		assert.Len(t, resp, 1)
 		assert.Equal(t, schemaClass.Class, resp[0].Class)
