@@ -15,7 +15,7 @@ func New(con *connection.Connection) *API {
 }
 
 // Getter builder to get a weaviate schema
-func (schema *API) List() *AliasList {
+func (schema *API) AliasLister() *AliasList {
 	return &AliasList{connection: schema.connection}
 }
 

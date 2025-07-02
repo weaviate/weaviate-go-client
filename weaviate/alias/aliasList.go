@@ -24,24 +24,31 @@ func (s *AliasList) WithClassName(className string) *AliasList {
 }
 
 // Do get the status of the shards of the class specified in AliasList
-func (s *AliasList) Do(ctx context.Context) ([]*models.Alias, error) {
+func (s *AliasList) Do(ctx context.Context) ([]models.Alias, error) {
 	return listAlias(ctx, s.connection, s.className)
 }
 
-func listAlias(ctx context.Context, conn *connection.Connection, className string) ([]*models.Alias, error) {
-	url := "/alias"
+func listAlias(ctx context.Context, conn *connection.Connection, className string) ([]models.Alias, error) {
+	url := "/aliases"
 	if className != "" {
 		url = fmt.Sprintf("/aliases?class=%s", className)
 	}
+
+	fmt.Println("Am i here??")
 
 	responseData, err := conn.RunREST(ctx, url, http.MethodGet, nil)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}
+
+	fmt.Println("Debug!!", string(responseData.Body))
+
 	if responseData.StatusCode == 200 {
-		var shards []*models.Alias
-		decodeErr := responseData.DecodeBodyIntoTarget(&shards)
-		return shards, decodeErr
+		resp := struct {
+			Aliases []models.Alias `json:"aliases"`
+		}{}
+		decodeErr := responseData.DecodeBodyIntoTarget(&resp)
+		return resp.Aliases, decodeErr
 	}
 	return nil, except.NewWeaviateClientError(responseData.StatusCode, string(responseData.Body))
 }
