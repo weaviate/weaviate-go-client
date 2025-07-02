@@ -72,6 +72,11 @@ var defaultVectorIndexConfig = map[string]interface{}{
 	"sq":                     defaultSQConfig,
 	"filterStrategy":         "sweeping",
 	"multivector":            defaultMultivectorConfig,
+	"rq": map[string]interface{}{
+		"bits":         float64(8),
+		"enabled":      false,
+		"rescoreLimit": float64(20),
+	},
 }
 
 var defaultMultivectorConfig = map[string]interface{}{
