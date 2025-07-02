@@ -27,7 +27,13 @@ func (cu *AliasUpdater) Do(ctx context.Context) error {
 	if cu.alias == nil {
 		return except.NewWeaviateClientError(0, "A alias must be provided")
 	}
-	path := fmt.Sprintf("/aliases/%v", cu.alias)
-	responseData, err := cu.connection.RunREST(ctx, path, http.MethodPut, cu.alias)
+	path := fmt.Sprintf("/aliases/%v", cu.alias.Alias)
+	updatePaylod := struct {
+		Class string `json:"class"`
+	}{
+		Class: cu.alias.Class,
+	}
+
+	responseData, err := cu.connection.RunREST(ctx, path, http.MethodPut, updatePaylod)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)
 }

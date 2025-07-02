@@ -17,8 +17,8 @@ type AliasGetter struct {
 }
 
 // WithClassName specifies the class that will be fetched from schema
-func (c *AliasGetter) WithClassName(className string) *AliasGetter {
-	c.alias = className
+func (c *AliasGetter) WithAlias(aliasName string) *AliasGetter {
+	c.alias = aliasName
 	return c
 }
 

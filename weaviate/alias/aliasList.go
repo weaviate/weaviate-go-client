@@ -34,14 +34,10 @@ func listAlias(ctx context.Context, conn *connection.Connection, className strin
 		url = fmt.Sprintf("/aliases?class=%s", className)
 	}
 
-	fmt.Println("Am i here??")
-
 	responseData, err := conn.RunREST(ctx, url, http.MethodGet, nil)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}
-
-	fmt.Println("Debug!!", string(responseData.Body))
 
 	if responseData.StatusCode == 200 {
 		resp := struct {
