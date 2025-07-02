@@ -6,17 +6,16 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
-	"github.com/weaviate/weaviate/entities/models"
 )
 
 // AliasCreator builds object to create an alias
 type AliasCreator struct {
 	connection *connection.Connection
-	alias      *models.Alias
+	alias      *Alias
 }
 
 // WithClass specifies the alias that will be added to the schema
-func (cc *AliasCreator) WithAlias(alias *models.Alias) *AliasCreator {
+func (cc *AliasCreator) WithAlias(alias *Alias) *AliasCreator {
 	cc.alias = alias
 	return cc
 }

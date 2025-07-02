@@ -7,17 +7,16 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
-	"github.com/weaviate/weaviate/entities/models"
 )
 
 // AliasUpdater builder object to update a alias
 type AliasUpdater struct {
 	connection *connection.Connection
-	alias      *models.Alias
+	alias      *Alias
 }
 
 // WithAlias specifies the alias that will be updated to the schema
-func (cu *AliasUpdater) WithAlias(alias *models.Alias) *AliasUpdater {
+func (cu *AliasUpdater) WithAlias(alias *Alias) *AliasUpdater {
 	cu.alias = alias
 	return cu
 }

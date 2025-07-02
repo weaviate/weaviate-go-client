@@ -8,7 +8,6 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
-	"github.com/weaviate/weaviate/entities/models"
 )
 
 // Getter builder object to get a list of aliases
@@ -24,11 +23,11 @@ func (s *Getter) WithClassName(className string) *Getter {
 }
 
 // Do get the list of alias
-func (s *Getter) Do(ctx context.Context) ([]models.Alias, error) {
+func (s *Getter) Do(ctx context.Context) ([]Alias, error) {
 	return listAlias(ctx, s.connection, s.className)
 }
 
-func listAlias(ctx context.Context, conn *connection.Connection, className string) ([]models.Alias, error) {
+func listAlias(ctx context.Context, conn *connection.Connection, className string) ([]Alias, error) {
 	url := "/aliases"
 	if className != "" {
 		url = fmt.Sprintf("/aliases?class=%s", className)
@@ -41,7 +40,7 @@ func listAlias(ctx context.Context, conn *connection.Connection, className strin
 
 	if responseData.StatusCode == 200 {
 		resp := struct {
-			Aliases []models.Alias `json:"aliases"`
+			Aliases []Alias `json:"aliases"`
 		}{}
 		decodeErr := responseData.DecodeBodyIntoTarget(&resp)
 		return resp.Aliases, decodeErr

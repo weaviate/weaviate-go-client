@@ -15,8 +15,8 @@ func New(con *connection.Connection) *API {
 }
 
 // Getter builder to get a weaviate aliases
-func (schema *API) AliasLister() *AliasList {
-	return &AliasList{connection: schema.connection}
+func (schema *API) AliasLister() *Getter {
+	return &Getter{connection: schema.connection}
 }
 
 // AliasGetter builder to get a weaviate alias
@@ -45,4 +45,13 @@ func (schema *API) AliasDeleter() *AliasDeleter {
 	return &AliasDeleter{
 		connection: schema.connection,
 	}
+}
+
+// Alias represents the alias(softlink) to a collection in weaviate.
+type Alias struct {
+	// The name of the alias.
+	Alias string `json:"alias,omitempty"`
+
+	// class (collection) to which alias is assigned.
+	Class string `json:"class,omitempty"`
 }

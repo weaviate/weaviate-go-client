@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/alias"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
 )
@@ -23,7 +24,7 @@ func TestAlias_integration(t *testing.T) {
 		ctx := context.Background()
 		client := testsuit.CreateTestClient(false)
 
-		alias := &models.Alias{
+		alias := &alias.Alias{
 			Alias: "Band-Alias",
 			Class: "Band",
 		}
@@ -45,7 +46,7 @@ func TestAlias_integration(t *testing.T) {
 			Description: "Band that plays and produces music",
 		}
 
-		alias := &models.Alias{
+		alias := &alias.Alias{
 			Alias: "Band-Alias",
 			Class: schemaClass.Class,
 		}
@@ -77,7 +78,7 @@ func TestAlias_integration(t *testing.T) {
 			Description: "Band that plays and produces music",
 		}
 
-		alias := &models.Alias{
+		alias := &alias.Alias{
 			Alias: "Band-Alias",
 			Class: schemaClass.Class,
 		}
@@ -117,14 +118,14 @@ func TestAlias_integration(t *testing.T) {
 			Description: "Band that plays and produces different music",
 		}
 
-		alias := &models.Alias{
-			Alias: "Band-Alias",
-			Class: schemaClass.Class,
-		}
-
-		alias2 := &models.Alias{
+		alias2 := &alias.Alias{
 			Alias: "Band-Alias",
 			Class: schemaClass2.Class,
+		}
+
+		alias := &alias.Alias{
+			Alias: "Band-Alias",
+			Class: schemaClass.Class,
 		}
 
 		err := client.Schema().ClassDeleter().WithClassName(schemaClass.Class).Do(ctx)
@@ -176,14 +177,14 @@ func TestAlias_integration(t *testing.T) {
 			Description: "Band that plays and produces different music",
 		}
 
-		alias := &models.Alias{
-			Alias: an1,
-			Class: schemaClass.Class,
-		}
-
-		alias2 := &models.Alias{
+		alias2 := &alias.Alias{
 			Alias: an2,
 			Class: schemaClass2.Class,
+		}
+
+		alias := &alias.Alias{
+			Alias: an1,
+			Class: schemaClass.Class,
 		}
 
 		err := client.Schema().ClassDeleter().WithClassName(schemaClass.Class).Do(ctx)
@@ -240,14 +241,14 @@ func TestAlias_integration(t *testing.T) {
 			Description: "Band that plays and produces different music",
 		}
 
-		alias := &models.Alias{
-			Alias: an1,
-			Class: schemaClass.Class,
-		}
-
-		alias2 := &models.Alias{
+		alias2 := &alias.Alias{
 			Alias: an2,
 			Class: schemaClass2.Class,
+		}
+
+		alias := &alias.Alias{
+			Alias: an1,
+			Class: schemaClass.Class,
 		}
 
 		err := client.Schema().ClassDeleter().WithClassName(schemaClass.Class).Do(ctx)
@@ -310,7 +311,7 @@ func TestAlias_integration(t *testing.T) {
 			Description: "Band that plays and produces different music",
 		}
 
-		alias := &models.Alias{
+		alias := &alias.Alias{
 			Alias: an1,
 			Class: schemaClass.Class,
 		}
@@ -366,7 +367,7 @@ func TestAlias_integration(t *testing.T) {
 			Description: "Band that plays and produces music",
 		}
 
-		alias := &models.Alias{
+		alias := &alias.Alias{
 			Alias: an1,
 			Class: schemaClass.Class,
 		}
@@ -412,7 +413,7 @@ func TestAlias_integration(t *testing.T) {
 			Description: "Band that plays and produces music",
 		}
 
-		alias := &models.Alias{
+		alias := &alias.Alias{
 			Alias: an1,
 			Class: schemaClass.Class,
 		}

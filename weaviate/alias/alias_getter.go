@@ -7,7 +7,6 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
-	"github.com/weaviate/weaviate/entities/models"
 )
 
 // AliasGetter builder object to get a alias
@@ -25,13 +24,13 @@ func (c *AliasGetter) WithAliasName(aliasName string) *AliasGetter {
 // Do get a alias as specified in the builder
 // TODO(kavi): Currently server returns "list" instead of "single" alias.
 // Fix it in client once fixed it on server
-func (c *AliasGetter) Do(ctx context.Context) (*models.Alias, error) {
+func (c *AliasGetter) Do(ctx context.Context) (*Alias, error) {
 	responseData, err := c.connection.RunREST(ctx, fmt.Sprintf("/aliases/%s", c.alias), http.MethodGet, nil)
 	if err != nil {
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}
 	if responseData.StatusCode == 200 {
-		var object models.Alias
+		var object Alias
 		decodeErr := responseData.DecodeBodyIntoTarget(&object)
 		return &object, decodeErr
 	}
