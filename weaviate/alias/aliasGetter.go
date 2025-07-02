@@ -10,14 +10,14 @@ import (
 	"github.com/weaviate/weaviate/entities/models"
 )
 
-// AliasGetter builder object to get a schema class
+// AliasGetter builder object to get a alias
 type AliasGetter struct {
 	connection *connection.Connection
 	alias      string
 }
 
-// WithClassName specifies the class that will be fetched from schema
-func (c *AliasGetter) WithAlias(aliasName string) *AliasGetter {
+// WithAliasName specifies the alias that will be fetched from schema
+func (c *AliasGetter) WithAliasName(aliasName string) *AliasGetter {
 	c.alias = aliasName
 	return c
 }

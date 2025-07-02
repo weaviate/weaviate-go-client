@@ -21,7 +21,7 @@ func (cc *AliasCreator) WithAlias(alias *models.Alias) *AliasCreator {
 	return cc
 }
 
-// Do create a class in the schema as specified in the builder
+// Do create a alias in the schema as specified in the builder
 func (cc *AliasCreator) Do(ctx context.Context) error {
 	responseData, err := cc.connection.RunREST(ctx, "/aliases", http.MethodPost, cc.alias)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)

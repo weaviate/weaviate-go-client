@@ -11,19 +11,19 @@ import (
 	"github.com/weaviate/weaviate/entities/models"
 )
 
-// ShardsGetter builder object to get a class' shards
+// AliasList builder object to get a list of aliases
 type AliasList struct {
 	connection *connection.Connection
 	className  string
 }
 
-// WithClassName specifies the class to which the shards belong
+// WithClassName specifies the class to which the alias belongs to
 func (s *AliasList) WithClassName(className string) *AliasList {
 	s.className = strings.TrimSpace(className)
 	return s
 }
 
-// Do get the status of the shards of the class specified in AliasList
+// Do get the list of alias
 func (s *AliasList) Do(ctx context.Context) ([]models.Alias, error) {
 	return listAlias(ctx, s.connection, s.className)
 }
