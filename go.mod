@@ -1,6 +1,6 @@
 module github.com/weaviate/weaviate-go-client/v5
 
-go 1.23.0
+go 1.24
 
 toolchain go1.24.3
 
@@ -11,11 +11,11 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.35.0
 	github.com/testcontainers/testcontainers-go/modules/weaviate v0.35.0
-	github.com/weaviate/weaviate v1.30.0
+	github.com/weaviate/weaviate v1.31.5
 	go.nhat.io/grpcmock v0.26.0
-	golang.org/x/oauth2 v0.25.0
-	golang.org/x/sync v0.13.0
-	google.golang.org/grpc v1.69.4
+	golang.org/x/oauth2 v0.30.0
+	golang.org/x/sync v0.14.0
+	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.6
 )
 
@@ -47,6 +47,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/getsentry/sentry-go v0.30.0 // indirect
+	github.com/go-ego/gse v0.80.3 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -75,6 +76,8 @@ require (
 	github.com/hashicorp/memberlist v0.5.2 // indirect
 	github.com/hashicorp/raft v1.7.2 // indirect
 	github.com/iancoleman/orderedmap v0.3.0 // indirect
+	github.com/ikawaha/kagome-dict v1.1.6 // indirect
+	github.com/ikawaha/kagome-dict-ko v0.2.1 // indirect
 	github.com/ikawaha/kagome-dict/ipa v1.2.5 // indirect
 	github.com/ikawaha/kagome/v2 v2.10.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -131,15 +134,18 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/swaggest/assertjson v1.9.0 // indirect
 	github.com/tailor-inc/graphql v0.5.7 // indirect
 	github.com/termie/go-shutil v0.0.0-20140729215957-bcacb06fecae // indirect
 	github.com/tklauser/go-sysconf v0.3.14 // indirect
 	github.com/tklauser/numcpus v0.9.0 // indirect
 	github.com/urfave/cli/v2 v2.27.5 // indirect
+	github.com/vcaesar/cedar v0.20.2 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/weaviate/s5cmd/v2 v2.0.1 // indirect
+	github.com/weaviate/sroar v0.0.9 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
