@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/weaviate/weaviate-go-client/v5/test"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
@@ -1795,8 +1797,10 @@ func TestGraphQL_integration(t *testing.T) {
 
 	t.Run("query with consistency level", func(t *testing.T) {
 		ctx := context.Background()
+		container, stop := testenv.SetupLocalContainer(t, ctx, test.Cluster, true)
+		t.Cleanup(stop)
 		client := weaviate.New(weaviate.Config{
-			Host:   "localhost:8087",
+			Host:   container.HTTPAddress(),
 			Scheme: "http",
 		})
 		fields := []graphql.Field{
