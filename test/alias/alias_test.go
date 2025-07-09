@@ -276,6 +276,19 @@ func TestAlias_integration(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, resp, 1)
 		assert.Equal(t, schemaClass2.Class, resp[0].Class)
+
+		// Also verify via /alises/{alias} endpoint.
+		respSingle, err := client.Alias().AliasGetter().WithAliasName(alias.Alias).Do(ctx)
+		require.NoError(t, err)
+		require.NotNil(t, respSingle)
+		require.Equal(t, alias, respSingle)
+
+		// list alias for specific class
+		respSingle, err = client.Alias().AliasGetter().WithAliasName(alias2.Alias).Do(ctx)
+		require.NoError(t, err)
+		require.NotNil(t, respSingle)
+		require.Equal(t, alias2, respSingle)
+
 	})
 
 	t.Run("Update alias from one collection to another", func(t *testing.T) {
