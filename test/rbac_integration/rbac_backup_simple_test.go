@@ -373,7 +373,7 @@ func TestBackupUsersOnly(t *testing.T) {
 	_, err = client.Backup().Restorer().
 		WithBackend(backup.BACKEND_FILESYSTEM).
 		WithBackupID("test-backup-users").
-		WithRBACUsers(rbac.RBACAll).
+		WithRBACUsers(rbac.UserAll).
 		WithWaitForCompletion(true).
 		Do(ctx)
 	require.NoError(t, err)
