@@ -1,8 +1,6 @@
 module github.com/weaviate/weaviate-go-client/v5
 
-go 1.24
-
-toolchain go1.24.3
+go 1.23
 
 require (
 	github.com/docker/go-connections v0.5.0
@@ -13,10 +11,10 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/weaviate v0.35.0
 	github.com/weaviate/weaviate v1.30.11
 	go.nhat.io/grpcmock v0.26.0
-	golang.org/x/oauth2 v0.30.0
-	golang.org/x/sync v0.14.0
-	google.golang.org/grpc v1.72.0
-	google.golang.org/protobuf v1.36.6
+	golang.org/x/oauth2 v0.25.0
+	golang.org/x/sync v0.12.0
+	google.golang.org/grpc v1.69.4
+	google.golang.org/protobuf v1.36.3
 )
 
 require (
