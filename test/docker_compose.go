@@ -87,10 +87,10 @@ var containers map[Preset]Container = map[Preset]Container{
 		gRPCPort:          "50051",
 	},
 	RBAC: {
-		DockerComposeFile: "../test/docker-compose-rbac.yml",
+		DockerComposeFile: "docker-compose-rbac.yml",
 		APISecret:         "my-secret-key",
 		host:              "localhost",
-		httpPort:          "9099",
+		httpPort:          "8089",
 	},
 }
 

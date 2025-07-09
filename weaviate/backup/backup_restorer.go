@@ -69,7 +69,7 @@ func (r *BackupRestorer) WithRBACRoles(option rbac.RBACScope) *BackupRestorer {
 }
 
 // WithRBACUsers sets users restore option
-func (r *BackupRestorer) WithRBACUsers(option rbac.RBACScope) *BackupRestorer {
+func (r *BackupRestorer) WithRBACUsers(option rbac.UserScope) *BackupRestorer {
 	if r.config == nil {
 		r.config = &models.RestoreConfig{}
 	}
@@ -78,17 +78,17 @@ func (r *BackupRestorer) WithRBACUsers(option rbac.RBACScope) *BackupRestorer {
 	return r
 }
 
-// WithRBACAll is a convenience method to restore both roles and users
-func (r *BackupRestorer) WithRBACAll() *BackupRestorer {
+// WithRBACAndUsers is a convenience method to restore both roles and users
+func (r *BackupRestorer) WithRBACAndUsers() *BackupRestorer {
 	r.WithRBACRoles(rbac.RBACAll)
-	r.WithRBACUsers(rbac.RBACAll)
+	r.WithRBACUsers(rbac.UserAll)
 	return r
 }
 
-// WithoutRBAC removes all RBAC restore options.  This is currently the default behaviour, so it is optonal.
-func (r *BackupRestorer) WithoutRBAC(option rbac.RBACScope) *BackupRestorer {
+// WithoutRBAC removes all RBAC restore options.  This is currently the default behaviour, so it is optional.
+func (r *BackupRestorer) WithoutRBAC() *BackupRestorer {
 	r.WithRBACRoles(rbac.RBACNone)
-	r.WithRBACUsers(rbac.RBACNone)
+	r.WithRBACUsers(rbac.UserNone)
 	return r
 }
 

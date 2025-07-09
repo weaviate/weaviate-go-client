@@ -412,7 +412,7 @@ func TestRBACBackupRestorerUsage(t *testing.T) {
 			WithBackend("filesystem").
 			WithBackupID(backupID).
 			WithRBACRoles(rbac.RBACAll).
-			WithRBACUsers(rbac.RBACAll).
+			WithRBACUsers(rbac.UserAll).
 			Do(ctx)
 		require.NoError(t, err, "restore with all RBAC should succeed")
 
@@ -468,7 +468,7 @@ func TestRBACBackupRestorerUsage(t *testing.T) {
 			WithBackend("filesystem").
 			WithBackupID(backupID).
 			WithRBACRoles(rbac.RBACNone).
-			WithRBACUsers(rbac.RBACNone).
+			WithRBACUsers(rbac.UserNone).
 			Do(ctx)
 		require.NoError(t, err, "restore excluding RBAC should succeed")
 		t.Logf("✅ Restore excluding RBAC started successfully for backup '%s'", backupID)
@@ -517,7 +517,7 @@ func TestRBACBackupRestorerUsage(t *testing.T) {
 			WithBackend("filesystem").
 			WithBackupID(backupID).
 			WithRBACRoles(rbac.RBACAll).
-			WithRBACUsers(rbac.RBACNone).
+			WithRBACUsers(rbac.UserNone).
 			Do(ctx)
 		require.NoError(t, err, "restore with roles only should succeed")
 		t.Logf("✅ Restore with roles only started successfully for backup '%s'", backupID)
@@ -569,7 +569,7 @@ func TestRBACBackupRestorerUsage(t *testing.T) {
 			WithBackend("filesystem").
 			WithBackupID(backupID).
 			WithRBACRoles(rbac.RBACNone).
-			WithRBACUsers(rbac.RBACAll).
+			WithRBACUsers(rbac.UserAll).
 			Do(ctx)
 		require.NoError(t, err, "restore with users only should succeed")
 

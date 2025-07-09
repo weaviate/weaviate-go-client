@@ -517,8 +517,8 @@ github.com/weaviate/s5cmd/v2 v2.0.1 h1:NLsBemDEeUa1pcqVAGl5Y2quKH8EFpkz/Z8n4s620
 github.com/weaviate/s5cmd/v2 v2.0.1/go.mod h1:JEoBF8SXVwK8qoaRKi0fPA4qi4OFmr+iVgc4XO3l/Zs=
 github.com/weaviate/sroar v0.0.9 h1:S0WLyz7XxN8Kl1WxA08htpNE+vV66kdyFQ/UndL6Z60=
 github.com/weaviate/sroar v0.0.9/go.mod h1:I6HAMeJjGMDI8cuFDUK4TIRsy5Csn5RFncNkosyNgKE=
-github.com/weaviate/weaviate v1.31.3 h1:t4n4k679uu268Cd3KqzQ3SXblaPeqvgPQibND7TQX6c=
-github.com/weaviate/weaviate v1.31.3/go.mod h1:2z0QlXRpc92KCntdnD4JpB3KpUEQ9WGGmgYbIXHtrcU=
+github.com/weaviate/weaviate v1.30.11 h1:ICkX5/zHG4V5hDGyWOanCNrYXyKapX265Zb26+qoYaw=
+github.com/weaviate/weaviate v1.30.11/go.mod h1:wL6ViDAB/ONfzq5uQVLv3IIs9ixco/CsQsCe1SFhxOg=
 github.com/weaviate/weaviate-go-client/v4 v4.13.1 h1:7PuK/hpy6Q0b9XaVGiUg5OD1MI/eF2ew9CJge9XdBEE=
 github.com/weaviate/weaviate-go-client/v4 v4.13.1/go.mod h1:B2m6g77xWDskrCq1GlU6CdilS0RG2+YXEgzwXRADad0=
 github.com/willf/bitset v1.1.11 h1:N7Z7E9UvjW+sGsEl7k/SJrvY2reP1A07MrGuCjIOjRE=

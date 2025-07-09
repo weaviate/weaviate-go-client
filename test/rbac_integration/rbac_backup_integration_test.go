@@ -239,7 +239,7 @@ func TestRBACBackupCreateDeleteRestore(t *testing.T) {
 	restoreResponse, err := client.Backup().Restorer().
 		WithBackend(backend).
 		WithBackupID(backupID).
-		WithRBACAll().
+		WithRBACAndUsers().
 		WithWaitForCompletion(true).
 		Do(ctx)
 
@@ -316,7 +316,7 @@ func TestRBACBackupFullCycleWithValidation(t *testing.T) {
 	restoreResponse, err := client.Backup().Restorer().
 		WithBackend(backend).
 		WithBackupID(backupID).
-		WithRBACAll().
+		WithRBACAndUsers().
 		WithWaitForCompletion(true).
 		Do(ctx)
 

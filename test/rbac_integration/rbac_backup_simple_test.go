@@ -90,7 +90,7 @@ func TestBackupAllRBAC(t *testing.T) {
 	_, err = client.Backup().Restorer().
 		WithBackend(backup.BACKEND_FILESYSTEM).
 		WithBackupID("test-backup-all").
-		WithRBACAll().
+		WithRBACAndUsers().
 		WithWaitForCompletion(true).
 		Do(ctx)
 	require.NoError(t, err)
