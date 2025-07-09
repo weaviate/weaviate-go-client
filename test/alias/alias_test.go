@@ -31,10 +31,6 @@ func TestAlias_integration(t *testing.T) {
 		err := client.Alias().AliasCreator().WithAlias(alias).Do(ctx)
 		require.Error(t, err) // should cause error.
 
-		defer func() {
-			require.NoError(t, client.Alias().AliasDeleter().WithAliasName(alias.Alias).Do(ctx))
-		}()
-
 	})
 
 	t.Run("Create Alias for existing class", func(t *testing.T) {
@@ -132,10 +128,6 @@ func TestAlias_integration(t *testing.T) {
 		require.NoError(t, err)
 		err = client.Schema().ClassDeleter().WithClassName(schemaClass2.Class).Do(ctx)
 		require.NoError(t, err)
-		err = client.Alias().AliasDeleter().WithAliasName(alias.Alias).Do(ctx)
-		require.NoError(t, err)
-		err = client.Alias().AliasDeleter().WithAliasName(alias2.Alias).Do(ctx)
-		require.NoError(t, err)
 
 		err = client.Schema().ClassCreator().WithClass(schemaClass).Do(ctx)
 		require.NoError(t, err)
@@ -191,10 +183,6 @@ func TestAlias_integration(t *testing.T) {
 		require.NoError(t, err)
 		err = client.Schema().ClassDeleter().WithClassName(schemaClass2.Class).Do(ctx)
 		require.NoError(t, err)
-		err = client.Alias().AliasDeleter().WithAliasName(alias.Alias).Do(ctx)
-		require.NoError(t, err)
-		err = client.Alias().AliasDeleter().WithAliasName(alias2.Alias).Do(ctx)
-		require.NoError(t, err)
 
 		err = client.Schema().ClassCreator().WithClass(schemaClass).Do(ctx)
 		require.NoError(t, err)
@@ -214,7 +202,7 @@ func TestAlias_integration(t *testing.T) {
 		err = client.Alias().AliasCreator().WithAlias(alias2).Do(ctx)
 		require.NoError(t, err)
 		defer func() {
-			require.NoError(t, client.Alias().AliasDeleter().WithAliasName(alias.Alias).Do(ctx))
+			require.NoError(t, client.Alias().AliasDeleter().WithAliasName(alias2.Alias).Do(ctx))
 		}()
 
 		// list all alias
@@ -255,10 +243,6 @@ func TestAlias_integration(t *testing.T) {
 		require.NoError(t, err)
 		err = client.Schema().ClassDeleter().WithClassName(schemaClass2.Class).Do(ctx)
 		require.NoError(t, err)
-		err = client.Alias().AliasDeleter().WithAliasName(alias.Alias).Do(ctx)
-		require.NoError(t, err)
-		err = client.Alias().AliasDeleter().WithAliasName(alias2.Alias).Do(ctx)
-		require.NoError(t, err)
 
 		err = client.Schema().ClassCreator().WithClass(schemaClass).Do(ctx)
 		require.NoError(t, err)
@@ -278,7 +262,7 @@ func TestAlias_integration(t *testing.T) {
 		err = client.Alias().AliasCreator().WithAlias(alias2).Do(ctx)
 		require.NoError(t, err)
 		defer func() {
-			require.NoError(t, client.Alias().AliasDeleter().WithAliasName(alias.Alias).Do(ctx))
+			require.NoError(t, client.Alias().AliasDeleter().WithAliasName(alias2.Alias).Do(ctx))
 		}()
 
 		// list alias for specific class
@@ -320,8 +304,7 @@ func TestAlias_integration(t *testing.T) {
 		require.NoError(t, err)
 		err = client.Schema().ClassDeleter().WithClassName(schemaClass2.Class).Do(ctx)
 		require.NoError(t, err)
-		err = client.Alias().AliasDeleter().WithAliasName(alias.Alias).Do(ctx)
-		require.NoError(t, err)
+
 		err = client.Schema().ClassCreator().WithClass(schemaClass).Do(ctx)
 		require.NoError(t, err)
 		err = client.Schema().ClassCreator().WithClass(schemaClass2).Do(ctx)
@@ -374,8 +357,7 @@ func TestAlias_integration(t *testing.T) {
 
 		err := client.Schema().ClassDeleter().WithClassName(schemaClass.Class).Do(ctx)
 		require.NoError(t, err)
-		err = client.Alias().AliasDeleter().WithAliasName(alias.Alias).Do(ctx)
-		require.NoError(t, err)
+
 		err = client.Schema().ClassCreator().WithClass(schemaClass).Do(ctx)
 		require.NoError(t, err)
 		defer func() {
@@ -400,7 +382,7 @@ func TestAlias_integration(t *testing.T) {
 		alias.Class = cn2 // the class that doesn't exist
 		err = client.Alias().AliasUpdater().WithAlias(alias).Do(ctx)
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "nil new class")
+		assert.Contains(t, err.Error(), "class does not exist")
 	})
 	t.Run("Delete alias that doesn't exist", func(t *testing.T) {
 		ctx := context.Background()
@@ -420,8 +402,7 @@ func TestAlias_integration(t *testing.T) {
 
 		err := client.Schema().ClassDeleter().WithClassName(schemaClass.Class).Do(ctx)
 		require.NoError(t, err)
-		err = client.Alias().AliasDeleter().WithAliasName(alias.Alias).Do(ctx)
-		require.NoError(t, err)
+
 		err = client.Schema().ClassCreator().WithClass(schemaClass).Do(ctx)
 		require.NoError(t, err)
 		defer func() {
@@ -436,14 +417,14 @@ func TestAlias_integration(t *testing.T) {
 		}()
 
 		// list alias for specific class. Make sure alias "foo" doesn't exist
-		// TODO(kavi): Currently on the server side, we don't return 404. But will be fixed soon.
-		// Fix it on the client once that's done.
 		resp, err := client.Alias().AliasGetter().WithAliasName("foo").Do(ctx)
-		require.NoError(t, err)
-		assert.NotContains(t, "foo", resp)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "404")
+		assert.Nil(t, resp)
 
 		err = client.Alias().AliasDeleter().WithAliasName("foo").Do(ctx) // that doesn't exist
-		require.NoError(t, err)                                          // we treat delete of non-exist as normal
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "404")
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
