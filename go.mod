@@ -12,7 +12,6 @@ require (
 	github.com/testcontainers/testcontainers-go v0.35.0
 	github.com/testcontainers/testcontainers-go/modules/weaviate v0.35.0
 	github.com/weaviate/weaviate v1.30.11
-	github.com/weaviate/weaviate-go-client/v4 v4.13.1
 	go.nhat.io/grpcmock v0.26.0
 	golang.org/x/oauth2 v0.30.0
 	golang.org/x/sync v0.14.0
