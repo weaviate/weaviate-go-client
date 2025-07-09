@@ -2,7 +2,7 @@ on:
   workflow_call:
 
 env:
-  WEAVIATE_VERSION: 1.32.0-rc.0
+  WEAVIATE_VERSION: main-f3eaa07
 
 jobs:
   auth-tests:
