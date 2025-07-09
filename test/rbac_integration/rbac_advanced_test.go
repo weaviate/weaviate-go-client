@@ -222,7 +222,7 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 			WithBackend(backend).
 			WithBackupID(backupID).
 			WithRBACRoles(rb.RBACAll).
-			WithRBACUsers(rb.RBACAll).
+			WithRBACUsers(rb.UserAll).
 			WithWaitForCompletion(true).
 			Do(ctx)
 
@@ -321,7 +321,7 @@ func TestRBACBackupWithUserRoleManagement(t *testing.T) {
 			WithBackend(backend).
 			WithBackupID(backupID).
 			WithRBACRoles(rb.RBACNone).
-			WithRBACUsers(rb.RBACAll).
+			WithRBACUsers(rb.UserAll).
 			WithWaitForCompletion(true).
 			Do(ctx)
 
@@ -473,7 +473,7 @@ func TestRBACBackupComplexScenarios(t *testing.T) {
 			WithBackend(backend).
 			WithBackupID(backupID).
 			WithRBACRoles(rb.RBACAll).
-			WithRBACUsers(rb.RBACAll).
+			WithRBACUsers(rb.UserAll).
 			WithWaitForCompletion(true).
 			Do(ctx)
 
