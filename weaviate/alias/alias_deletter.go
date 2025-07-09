@@ -25,5 +25,5 @@ func (cd *AliasDeleter) WithAliasName(alias string) *AliasDeleter {
 func (cd *AliasDeleter) Do(ctx context.Context) error {
 	path := fmt.Sprintf("/aliases/%v", cd.alias)
 	responseData, err := cd.connection.RunREST(ctx, path, http.MethodDelete, nil)
-	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)
+	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 204)
 }
