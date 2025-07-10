@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/alias"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/fault"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
 )
@@ -30,7 +31,6 @@ func TestAlias_integration(t *testing.T) {
 		}
 		err := client.Alias().AliasCreator().WithAlias(alias).Do(ctx)
 		require.Error(t, err) // should cause error.
-
 	})
 
 	t.Run("Create Alias for existing class", func(t *testing.T) {
@@ -62,7 +62,6 @@ func TestAlias_integration(t *testing.T) {
 		defer func() {
 			require.NoError(t, client.Alias().AliasDeleter().WithAliasName(alias.Alias).Do(ctx))
 		}()
-
 	})
 
 	t.Run("Create same Alias for same existing class should fail", func(t *testing.T) {
@@ -209,7 +208,6 @@ func TestAlias_integration(t *testing.T) {
 		resp, err := client.Alias().Getter().Do(ctx)
 		require.NoError(t, err)
 		assert.Len(t, resp, 2)
-
 	})
 	t.Run("Get alias for specific collection", func(t *testing.T) {
 		ctx := context.Background()
@@ -288,7 +286,6 @@ func TestAlias_integration(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, respSingle)
 		require.Equal(t, alias2, respSingle)
-
 	})
 
 	t.Run("Update alias from one collection to another", func(t *testing.T) {
@@ -355,7 +352,6 @@ func TestAlias_integration(t *testing.T) {
 		ctx := context.Background()
 		client := testsuit.CreateTestClient(false)
 		cn1 := "TestUpdateBand"
-		cn2 := "TestUpdateBand2"
 		an1 := "TestUpdateAlias"
 
 		schemaClass := &models.Class{
@@ -363,7 +359,7 @@ func TestAlias_integration(t *testing.T) {
 			Description: "Band that plays and produces music",
 		}
 
-		alias := &alias.Alias{
+		bandAlias := &alias.Alias{
 			Alias: an1,
 			Class: schemaClass.Class,
 		}
@@ -378,10 +374,10 @@ func TestAlias_integration(t *testing.T) {
 			assert.Nil(t, errRm)
 		}()
 
-		err = client.Alias().AliasCreator().WithAlias(alias).Do(ctx)
+		err = client.Alias().AliasCreator().WithAlias(bandAlias).Do(ctx)
 		require.NoError(t, err)
 		defer func() {
-			require.NoError(t, client.Alias().AliasDeleter().WithAliasName(alias.Alias).Do(ctx))
+			require.NoError(t, client.Alias().AliasDeleter().WithAliasName(bandAlias.Alias).Do(ctx))
 		}()
 
 		// list alias for specific class
@@ -389,13 +385,16 @@ func TestAlias_integration(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, resp, 1)
 		assert.Equal(t, schemaClass.Class, resp[0].Class)
-		assert.Equal(t, alias.Alias, resp[0].Alias)
+		assert.Equal(t, bandAlias.Alias, resp[0].Alias)
 
 		// update should fail
-		alias.Class = cn2 // the class that doesn't exist
-		err = client.Alias().AliasUpdater().WithAlias(alias).Do(ctx)
+		err = client.Alias().AliasUpdater().WithAlias(&alias.Alias{
+			Alias: an1,
+			Class: "Unknown",
+		}).Do(ctx)
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "class does not exist")
+		require.IsType(t, (*fault.WeaviateClientError)(nil), err)
+		require.Equal(t, 422, err.(*fault.WeaviateClientError).StatusCode)
 	})
 	t.Run("Delete alias that doesn't exist", func(t *testing.T) {
 		ctx := context.Background()

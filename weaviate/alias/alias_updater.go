@@ -24,7 +24,7 @@ func (cu *AliasUpdater) WithAlias(alias *Alias) *AliasUpdater {
 // Do update a alias in the schema as specified in the builder
 func (cu *AliasUpdater) Do(ctx context.Context) error {
 	if cu.alias == nil {
-		return except.NewWeaviateClientError(0, "A alias must be provided")
+		return except.NewWeaviateClientError(0, "an alias must be provided")
 	}
 	path := fmt.Sprintf("/aliases/%v", cu.alias.Alias)
 	updatePaylod := struct {
