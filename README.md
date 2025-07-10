@@ -57,7 +57,7 @@ func main() {
 
 ## Documentation
 
-- [Documentation](https://weaviate.io/developers/weaviate/current/client-libraries/go.html).
+- [Documentation](https://docs.weaviate.io/weaviate/client-libraries/go).
 
 ## Support
 

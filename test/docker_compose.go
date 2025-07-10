@@ -75,6 +75,7 @@ const (
 	Basic Preset = iota
 	// Containers from ../test/docker-compose-rbac.yml
 	RBAC
+	Cluster
 )
 
 // TODO: add other presets from ../test/docker-compose*.yaml files
@@ -91,6 +92,11 @@ var containers map[Preset]Container = map[Preset]Container{
 		APISecret:         "my-secret-key",
 		host:              "localhost",
 		httpPort:          "8089",
+	},
+	Cluster: {
+		DockerComposeFile: "docker-compose-cluster.yml",
+		host:              "localhost",
+		httpPort:          "8087",
 	},
 }
 

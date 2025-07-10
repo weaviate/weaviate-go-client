@@ -22,7 +22,7 @@ func TestSchema_integration(t *testing.T) {
 		}
 	})
 
-	t.Run("POST /schema", func(t *testing.T) {
+	t.Run("POST /schema Test1", func(t *testing.T) {
 		client := testsuit.CreateTestClient(false)
 
 		schemaClass := &models.Class{
@@ -54,7 +54,7 @@ func TestSchema_integration(t *testing.T) {
 		assert.Nil(t, errRm)
 	})
 
-	t.Run("POST /schema", func(t *testing.T) {
+	t.Run("POST /schema - Test2", func(t *testing.T) {
 		client := testsuit.CreateTestClient(false)
 
 		schemaClass := &models.Class{

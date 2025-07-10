@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/backup/rbac"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
 	"github.com/weaviate/weaviate/entities/models"
@@ -54,6 +55,40 @@ func (r *BackupRestorer) WithWaitForCompletion(waitForCompletion bool) *BackupRe
 
 func (r *BackupRestorer) WithConfig(cfg *models.RestoreConfig) *BackupRestorer {
 	r.config = cfg
+	return r
+}
+
+// WithRBACRoles sets roles restore option
+func (r *BackupRestorer) WithRBACRoles(option rbac.RBACScope) *BackupRestorer {
+	if r.config == nil {
+		r.config = &models.RestoreConfig{}
+	}
+	s := string(option)
+	r.config.RolesOptions = &s
+	return r
+}
+
+// WithRBACUsers sets users restore option
+func (r *BackupRestorer) WithRBACUsers(option rbac.UserScope) *BackupRestorer {
+	if r.config == nil {
+		r.config = &models.RestoreConfig{}
+	}
+	s := string(option)
+	r.config.UsersOptions = &s
+	return r
+}
+
+// WithRBACAndUsers is a convenience method to restore both roles and users
+func (r *BackupRestorer) WithRBACAndUsers() *BackupRestorer {
+	r.WithRBACRoles(rbac.RBACAll)
+	r.WithRBACUsers(rbac.UserAll)
+	return r
+}
+
+// WithoutRBAC removes all RBAC restore options.  This is currently the default behaviour, so it is optional.
+func (r *BackupRestorer) WithoutRBAC() *BackupRestorer {
+	r.WithRBACRoles(rbac.RBACNone)
+	r.WithRBACUsers(rbac.UserNone)
 	return r
 }
 
