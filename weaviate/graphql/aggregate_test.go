@@ -638,4 +638,30 @@ func TestAggregate_NearMedia(t *testing.T) {
 		expected := `{Aggregate{PizzaImu(nearIMU:{imu: "iVBORw0KGgoAAAANS" certainty: 0.5}){meta{count}}}}`
 		assert.Equal(t, expected, query)
 	})
+
+	t.Run("Hybrid", func(t *testing.T) {
+		hybrid := (&HybridArgumentBuilder{}).
+			WithQuery("query").WithAlpha(0.5).WithFusionType(Ranked)
+
+		query := (&AggregateBuilder{}).
+			WithClassName("PizzaDepth").
+			WithFields(fieldMeta).
+			WithHybrid(hybrid).
+			build()
+
+		expected := `{Aggregate{PizzaDepth(hybrid:{query: "query", alpha: 0.5, fusionType: rankedFusion}){meta{count}}}}`
+		assert.Equal(t, expected, query)
+
+		hybrid = (&HybridArgumentBuilder{}).
+			WithQuery("new query").WithFusionType(RelativeScore)
+
+		query = (&AggregateBuilder{}).
+			WithClassName("PizzaDepth").
+			WithFields(fieldMeta).
+			WithHybrid(hybrid).
+			build()
+
+		expected = `{Aggregate{PizzaDepth(hybrid:{query: "new query", fusionType: relativeScoreFusion}){meta{count}}}}`
+		assert.Equal(t, expected, query)
+	})
 }
