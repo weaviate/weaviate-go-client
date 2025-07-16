@@ -36,7 +36,6 @@ func TestGraphQL_integration(t *testing.T) {
 
 		name := graphql.Field{Name: "name"}
 
-		// what what
 		t.Run("get raw", func(t *testing.T) {
 			resultSet, gqlErr := client.GraphQL().Raw().WithQuery("{Get {Pizza {name}}}").Do(context.Background())
 			assert.Nil(t, gqlErr)
@@ -891,12 +890,13 @@ func TestGraphQL_integration(t *testing.T) {
 					WithFields(meta).
 					WithWhere(where).
 					WithHybrid(hybrid).
+					WithObjectLimit(10).
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
+				assert.Empty(t, gqlErrors(resultSet.Errors))
 				assert.NotNil(t, resultSet)
-				assert.Empty(t, resultSet.Errors)
 			})
 
 			t.Run("with just hybrid", func(t *testing.T) {
@@ -907,12 +907,13 @@ func TestGraphQL_integration(t *testing.T) {
 					Aggregate().
 					WithFields(meta).
 					WithHybrid(hybrid).
+					WithObjectLimit(10).
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
+				assert.Empty(t, gqlErrors(resultSet.Errors))
 				assert.NotNil(t, resultSet)
-				assert.Empty(t, resultSet.Errors)
 			})
 
 			t.Run("with hybrid and nearText", func(t *testing.T) {
@@ -929,9 +930,9 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
+				assert.Empty(t, gqlErrors(resultSet.Errors))
 				assert.NotNil(t, resultSet)
-				assert.Empty(t, resultSet.Errors)
 			})
 		})
 	})
@@ -2512,4 +2513,18 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 			t.Fatalf("failed to tear down weaviate: %s", err)
 		}
 	})
+}
+
+// gqlErrors prints error messages from the GraphQL response.
+// Use it to create more informative test errors:
+//
+//	assert.Empty(t, gqlErrors(result.Errors))
+type gqlErrors []*models.GraphQLError
+
+func (errors gqlErrors) String() string {
+	var msgs []string
+	for i := range errors {
+		msgs = append(msgs, errors[i].Message)
+	}
+	return fmt.Sprintf("%v", msgs)
 }
