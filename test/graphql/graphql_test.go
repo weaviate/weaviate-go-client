@@ -74,7 +74,7 @@ func TestGraphQL_integration(t *testing.T) {
 				WithNearObject(withNearObject).
 				Do(context.Background())
 			assert.NoError(t, gqlErr)
-			require.Empty(t, gqlErrors(resultSet.Errors))
+			require.Empty(t, prettyErrors(resultSet.Errors))
 
 			get := resultSet.Data["Get"].(map[string]interface{})
 			pizza := get["Pizza"].([]interface{})
@@ -116,7 +116,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
-				require.Empty(t, gqlErrors(resultSet.Errors))
+				require.Empty(t, prettyErrors(resultSet.Errors))
 			})
 
 			t.Run("with distance", func(t *testing.T) {
@@ -153,7 +153,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
-				require.Empty(t, gqlErrors(resultSet.Errors))
+				require.Empty(t, prettyErrors(resultSet.Errors))
 			})
 		})
 
@@ -895,7 +895,7 @@ func TestGraphQL_integration(t *testing.T) {
 					Do(context.Background())
 
 				assert.NoError(t, gqlErr)
-				require.Empty(t, gqlErrors(resultSet.Errors))
+				require.Empty(t, prettyErrors(resultSet.Errors))
 				assert.NotNil(t, resultSet)
 			})
 
@@ -912,7 +912,7 @@ func TestGraphQL_integration(t *testing.T) {
 					Do(context.Background())
 
 				assert.NoError(t, gqlErr)
-				require.Empty(t, gqlErrors(resultSet.Errors))
+				require.Empty(t, prettyErrors(resultSet.Errors))
 				assert.NotNil(t, resultSet)
 			})
 
@@ -931,7 +931,7 @@ func TestGraphQL_integration(t *testing.T) {
 					Do(context.Background())
 
 				assert.NoError(t, gqlErr)
-				require.Empty(t, gqlErrors(resultSet.Errors))
+				require.Empty(t, prettyErrors(resultSet.Errors))
 				assert.NotNil(t, resultSet)
 			})
 		})
@@ -987,7 +987,7 @@ func TestGraphQL_integration(t *testing.T) {
 			Do(context.Background())
 
 		require.NoError(t, err)
-		require.Empty(t, gqlErrors(result.Errors))
+		require.Empty(t, prettyErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
@@ -1028,7 +1028,7 @@ func TestGraphQL_integration(t *testing.T) {
 			Do(context.Background())
 
 		require.NoError(t, err)
-		require.Empty(t, gqlErrors(result.Errors))
+		require.Empty(t, prettyErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
@@ -1061,7 +1061,7 @@ func TestGraphQL_integration(t *testing.T) {
 			Do(context.Background())
 
 		require.NoError(t, err)
-		require.Empty(t, gqlErrors(result.Errors))
+		require.Empty(t, prettyErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
@@ -1105,7 +1105,7 @@ func TestGraphQL_integration(t *testing.T) {
 						Do(context.Background())
 
 					require.NoError(t, err)
-					require.Empty(t, gqlErrors(result.Errors))
+					require.Empty(t, prettyErrors(result.Errors))
 					require.NotNil(t, result)
 					require.NotNil(t, result.Data)
 
@@ -1142,7 +1142,7 @@ func TestGraphQL_integration(t *testing.T) {
 			Do(context.Background())
 
 		require.NoError(t, err)
-		require.Empty(t, gqlErrors(result.Errors))
+		require.Empty(t, prettyErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
@@ -1185,7 +1185,7 @@ func TestGraphQL_integration(t *testing.T) {
 						Do(context.Background())
 
 					require.NoError(t, err)
-					require.Empty(t, gqlErrors(result.Errors))
+					require.Empty(t, prettyErrors(result.Errors))
 					require.NotNil(t, result)
 					require.NotNil(t, result.Data)
 
@@ -1234,7 +1234,7 @@ func TestGraphQL_integration(t *testing.T) {
 				Do(context.Background())
 
 			require.NoError(t, err)
-			require.Empty(t, gqlErrors(result.Errors))
+			require.Empty(t, prettyErrors(result.Errors))
 			require.NotNil(t, result)
 			require.NotNil(t, result.Data)
 
@@ -1300,7 +1300,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithNearObject(risottoWithNearObject)).
 				Do(context.Background())
 			assert.NoError(t, gqlErr)
-			require.Empty(t, gqlErrors(resultSet.Errors))
+			require.Empty(t, prettyErrors(resultSet.Errors))
 
 			get := resultSet.Data["Get"].(map[string]interface{})
 			pizza := get["Pizza"].([]interface{})
@@ -1345,7 +1345,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
-				require.Empty(t, gqlErrors(resultSet.Errors))
+				require.Empty(t, prettyErrors(resultSet.Errors))
 			})
 
 			t.Run("with distance", func(t *testing.T) {
@@ -1383,7 +1383,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
-				require.Empty(t, gqlErrors(resultSet.Errors))
+				require.Empty(t, prettyErrors(resultSet.Errors))
 			})
 		})
 
@@ -1589,7 +1589,7 @@ func TestGraphQL_integration(t *testing.T) {
 			Do(context.Background())
 
 		require.NoError(t, err)
-		require.Empty(t, gqlErrors(result.Errors))
+		require.Empty(t, prettyErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
@@ -1646,7 +1646,7 @@ func TestGraphQL_integration(t *testing.T) {
 			Do(context.Background())
 
 		require.NoError(t, err)
-		require.Empty(t, gqlErrors(result.Errors))
+		require.Empty(t, prettyErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
@@ -1707,7 +1707,7 @@ func TestGraphQL_integration(t *testing.T) {
 			Do(context.Background())
 
 		require.NoError(t, err)
-		require.Empty(t, gqlErrors(result.Errors))
+		require.Empty(t, prettyErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
@@ -1817,7 +1817,7 @@ func TestGraphQL_integration(t *testing.T) {
 			Do(context.Background())
 
 		require.NoError(t, err)
-		require.Empty(t, gqlErrors(result.Errors))
+		require.Empty(t, prettyErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
@@ -1887,7 +1887,7 @@ func TestGraphQL_integration(t *testing.T) {
 				Do(ctx)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
-			require.Empty(t, gqlErrors(resp.Errors))
+			require.Empty(t, prettyErrors(resp.Errors))
 		})
 
 		t.Run("Quorum", func(t *testing.T) {
@@ -1898,7 +1898,7 @@ func TestGraphQL_integration(t *testing.T) {
 				Do(ctx)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
-			require.Empty(t, gqlErrors(resp.Errors))
+			require.Empty(t, prettyErrors(resp.Errors))
 		})
 
 		t.Run("One", func(t *testing.T) {
@@ -1909,7 +1909,7 @@ func TestGraphQL_integration(t *testing.T) {
 				Do(ctx)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
-			require.Empty(t, gqlErrors(resp.Errors))
+			require.Empty(t, prettyErrors(resp.Errors))
 		})
 	})
 
@@ -2497,7 +2497,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 							WithFields(fields...).
 							Do(context.TODO())
 						require.NoError(t, err)
-						require.Empty(t, gqlErrors(resp.Errors))
+						require.Empty(t, prettyErrors(resp.Errors))
 						resultIds := getIds(resp.Data)
 						assert.Len(t, resultIds, len(tt.expectedIds))
 						assert.ElementsMatch(t, resultIds, tt.expectedIds)
@@ -2515,13 +2515,14 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 	})
 }
 
-// gqlErrors prints error messages from the GraphQL response.
+// prettyErrors prints error messages from the GraphQL error response
+// instead of struct pointers.
 // Use it to create more informative test errors:
 //
-//	require.Empty(t, gqlErrors(result.Errors))
-type gqlErrors []*models.GraphQLError
+//	require.Empty(t, prettyErrors(result.Errors))
+type prettyErrors []*models.GraphQLError
 
-func (errors gqlErrors) String() string {
+func (errors prettyErrors) String() string {
 	var msgs []string
 	for i := range errors {
 		msgs = append(msgs, errors[i].Message)
