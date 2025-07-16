@@ -38,7 +38,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 		t.Run("get raw", func(t *testing.T) {
 			resultSet, gqlErr := client.GraphQL().Raw().WithQuery("{Get {Pizza {name}}}").Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 
 			get := resultSet.Data["Get"].(map[string]interface{})
 			pizza := get["Pizza"].([]interface{})
@@ -47,7 +47,7 @@ func TestGraphQL_integration(t *testing.T) {
 
 		t.Run("get all", func(t *testing.T) {
 			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithFields(name).Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 
 			get := resultSet.Data["Get"].(map[string]interface{})
 			pizza := get["Pizza"].([]interface{})
@@ -58,7 +58,7 @@ func TestGraphQL_integration(t *testing.T) {
 			afterID := "00000000-0000-0000-0000-000000000000"
 			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").
 				WithFields(name).WithAfter(afterID).WithLimit(10).Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 
 			get := resultSet.Data["Get"].(map[string]interface{})
 			pizza := get["Pizza"].([]interface{})
@@ -73,8 +73,8 @@ func TestGraphQL_integration(t *testing.T) {
 				WithFields(name).
 				WithNearObject(withNearObject).
 				Do(context.Background())
-			assert.Nil(t, gqlErr)
-			require.Nil(t, resultSet.Errors)
+			assert.NoError(t, gqlErr)
+			require.Empty(t, gqlErrors(resultSet.Errors))
 
 			get := resultSet.Data["Get"].(map[string]interface{})
 			pizza := get["Pizza"].([]interface{})
@@ -114,9 +114,9 @@ func TestGraphQL_integration(t *testing.T) {
 					WithNearText(withNearText).
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
-				assert.Nil(t, resultSet.Errors)
+				require.Empty(t, gqlErrors(resultSet.Errors))
 			})
 
 			t.Run("with distance", func(t *testing.T) {
@@ -151,9 +151,9 @@ func TestGraphQL_integration(t *testing.T) {
 					WithNearText(withNearText).
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
-				assert.Nil(t, resultSet.Errors)
+				require.Empty(t, gqlErrors(resultSet.Errors))
 			})
 		})
 
@@ -166,7 +166,7 @@ func TestGraphQL_integration(t *testing.T) {
 			name = graphql.Field{Name: "name"}
 
 			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithWhere(where).WithFields(name).Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 
 			get := resultSet.Data["Get"].(map[string]interface{})
 			pizza := get["Pizza"].([]interface{})
@@ -178,7 +178,7 @@ func TestGraphQL_integration(t *testing.T) {
 			// May 3rd, the other May 5th, so the filter below should match exactly
 			// one.
 			targetDate, err := time.Parse(time.RFC3339, "2022-05-04T12:00:00+02:00")
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			where := filters.Where().
 				WithPath([]string{"best_before"}).
@@ -188,7 +188,7 @@ func TestGraphQL_integration(t *testing.T) {
 			name = graphql.Field{Name: "name"}
 
 			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").WithWhere(where).WithFields(name).Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 
 			get := resultSet.Data["Get"].(map[string]interface{})
 			pizza := get["Pizza"].([]interface{})
@@ -213,24 +213,24 @@ func TestGraphQL_integration(t *testing.T) {
 			byNameAsc := graphql.Sort{Path: []string{"name"}, Order: graphql.Asc}
 			resultSet, gqlErr := client.GraphQL().Get().WithClassName("Pizza").
 				WithSort(byNameAsc).WithFields(name).Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assertSortResult(resultSet, "Pizza", []string{"Doener", "Frutti di Mare", "Hawaii", "Quattro Formaggi"})
 
 			byNameDesc := graphql.Sort{Path: []string{"name"}, Order: graphql.Desc}
 			resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").
 				WithSort(byNameDesc).WithFields(name).Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Hawaii", "Frutti di Mare", "Doener"})
 
 			byPriceAsc := graphql.Sort{Path: []string{"price"}, Order: graphql.Asc}
 			resultSet, gqlErr = client.GraphQL().Get().WithClassName("Soup").
 				WithSort(byPriceAsc).WithFields(name).Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assertSortResult(resultSet, "Soup", []string{"ChickenSoup", "Beautiful"})
 
 			resultSet, gqlErr = client.GraphQL().Get().WithClassName("Pizza").
 				WithSort(byPriceAsc, byNameDesc).WithFields(name).Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Frutti di Mare", "Hawaii", "Doener"})
 		})
 
@@ -248,7 +248,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithFields(name).
 					WithGenerativeSearch(gs).
 					Do(context.Background())
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 
 				get := resultSet.Data["Get"].(map[string]interface{})
 				pizzas := get["Pizza"].([]interface{})
@@ -273,7 +273,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithFields(name).
 					WithGenerativeSearch(gs).
 					Do(context.Background())
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 
 				get := resultSet.Data["Get"].(map[string]interface{})
 				pizza := get["Pizza"].([]interface{})
@@ -299,7 +299,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithFields(name).
 					WithGenerativeSearch(gs).
 					Do(context.Background())
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 
 				get := resultSet.Data["Get"].(map[string]interface{})
 				pizzas := get["Pizza"].([]interface{})
@@ -334,7 +334,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithFields(name).
 					WithGenerativeSearch(gs).
 					Do(context.Background())
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 
 				get := resultSet.Data["Get"].(map[string]interface{})
 				pizza := get["Pizza"].([]interface{})
@@ -379,7 +379,7 @@ func TestGraphQL_integration(t *testing.T) {
 				WithNearText(withNearText).
 				Do(context.Background())
 
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assert.NotNil(t, resultSet)
 
 			withNearObject := client.GraphQL().NearObjectArgBuilder().
@@ -390,7 +390,7 @@ func TestGraphQL_integration(t *testing.T) {
 				WithNearObject(withNearObject).
 				Do(context.Background())
 
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assert.NotNil(t, resultSet)
 		})
 
@@ -420,7 +420,7 @@ func TestGraphQL_integration(t *testing.T) {
 				WithNearText(withNearText).
 				Do(context.Background())
 
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assert.NotNil(t, resultSet)
 
 			withNearObject := client.GraphQL().NearObjectArgBuilder().
@@ -431,7 +431,7 @@ func TestGraphQL_integration(t *testing.T) {
 				WithNearObject(withNearObject).
 				Do(context.Background())
 
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assert.NotNil(t, resultSet)
 		})
 	})
@@ -453,7 +453,7 @@ func TestGraphQL_integration(t *testing.T) {
 				WithClassName("Pizza").
 				Do(context.Background())
 
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assert.NotNil(t, resultSet)
 		})
 
@@ -470,7 +470,7 @@ func TestGraphQL_integration(t *testing.T) {
 				WithClassName("Pizza").
 				Do(context.Background())
 
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assert.NotNil(t, resultSet)
 		})
 
@@ -482,7 +482,7 @@ func TestGraphQL_integration(t *testing.T) {
 				WithClassName("Pizza").
 				Do(context.Background())
 
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assert.NotNil(t, resultSet)
 		})
 
@@ -500,7 +500,7 @@ func TestGraphQL_integration(t *testing.T) {
 				WithClassName("Pizza").
 				Do(context.Background())
 
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assert.NotNil(t, resultSet)
 		})
 
@@ -519,7 +519,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
 			})
 
@@ -537,7 +537,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
 			})
 		})
@@ -557,7 +557,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
 			})
 
@@ -575,7 +575,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
 			})
 		})
@@ -605,7 +605,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
 			})
 
@@ -633,7 +633,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
 			})
 		})
@@ -659,7 +659,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
 			})
 
@@ -683,7 +683,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
 			})
 		})
@@ -709,7 +709,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
 			})
 
@@ -733,7 +733,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
 			})
 		})
@@ -770,7 +770,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
 			})
 
@@ -805,7 +805,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
 			})
 		})
@@ -828,16 +828,16 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
 				assert.NotNil(t, resultSet.Data)
 
 				b, err := json.Marshal(resultSet.Data)
-				require.Nil(t, err)
+				require.NoError(t, err)
 
 				var resp AggregatePizzaResponse
 				err = json.Unmarshal(b, &resp)
-				require.Nil(t, err)
+				require.NoError(t, err)
 
 				assert.NotEmpty(t, resp.Aggregate.Pizza)
 				assert.Equal(t, objectLimit, resp.Aggregate.Pizza[0].Meta.Count)
@@ -860,16 +860,16 @@ func TestGraphQL_integration(t *testing.T) {
 					WithClassName("Pizza").
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
 				assert.NotNil(t, resultSet.Data)
 
 				b, err := json.Marshal(resultSet.Data)
-				require.Nil(t, err)
+				require.NoError(t, err)
 
 				var resp AggregatePizzaResponse
 				err = json.Unmarshal(b, &resp)
-				require.Nil(t, err)
+				require.NoError(t, err)
 
 				assert.NotEmpty(t, resp.Aggregate.Pizza)
 				assert.Equal(t, objectLimit, resp.Aggregate.Pizza[0].Meta.Count)
@@ -895,7 +895,7 @@ func TestGraphQL_integration(t *testing.T) {
 					Do(context.Background())
 
 				assert.NoError(t, gqlErr)
-				assert.Empty(t, gqlErrors(resultSet.Errors))
+				require.Empty(t, gqlErrors(resultSet.Errors))
 				assert.NotNil(t, resultSet)
 			})
 
@@ -912,7 +912,7 @@ func TestGraphQL_integration(t *testing.T) {
 					Do(context.Background())
 
 				assert.NoError(t, gqlErr)
-				assert.Empty(t, gqlErrors(resultSet.Errors))
+				require.Empty(t, gqlErrors(resultSet.Errors))
 				assert.NotNil(t, resultSet)
 			})
 
@@ -931,7 +931,7 @@ func TestGraphQL_integration(t *testing.T) {
 					Do(context.Background())
 
 				assert.NoError(t, gqlErr)
-				assert.Empty(t, gqlErrors(resultSet.Errors))
+				require.Empty(t, gqlErrors(resultSet.Errors))
 				assert.NotNil(t, resultSet)
 			})
 		})
@@ -952,7 +952,7 @@ func TestGraphQL_integration(t *testing.T) {
 			WithGroup(group).
 			WithLimit(7).
 			Do(context.Background())
-		assert.Nil(t, gqlErr)
+		assert.NoError(t, gqlErr)
 
 		get := resultSet.Data["Get"].(map[string]interface{})
 		require.Equal(t, 1, len(get))
@@ -986,17 +986,17 @@ func TestGraphQL_integration(t *testing.T) {
 			WithWhere(whereCreateTime).
 			Do(context.Background())
 
-		require.Nil(t, err)
-		require.Nil(t, result.Errors)
+		require.NoError(t, err)
+		require.Empty(t, gqlErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
 		b, err := json.Marshal(result.Data)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		var resp GetPizzaResponse
 		err = json.Unmarshal(b, &resp)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotEmpty(t, resp.Get.Pizzas)
 
 		assert.Equal(t, expectedCreateTime, resp.Get.Pizzas[0].Additional.CreationTimeUnix)
@@ -1027,17 +1027,17 @@ func TestGraphQL_integration(t *testing.T) {
 			WithWhere(whereUpdateTime).
 			Do(context.Background())
 
-		require.Nil(t, err)
-		require.Nil(t, result.Errors)
+		require.NoError(t, err)
+		require.Empty(t, gqlErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
 		b, err := json.Marshal(result.Data)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		var resp GetPizzaResponse
 		err = json.Unmarshal(b, &resp)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotEmpty(t, resp.Get.Pizzas)
 
 		assert.Equal(t, expectedUpdateTime, resp.Get.Pizzas[0].Additional.LastUpdateTimeUnix)
@@ -1060,17 +1060,17 @@ func TestGraphQL_integration(t *testing.T) {
 			WithBM25(bm25).
 			Do(context.Background())
 
-		require.Nil(t, err)
-		require.Nil(t, result.Errors)
+		require.NoError(t, err)
+		require.Empty(t, gqlErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
 		b, err := json.Marshal(result.Data)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		var resp GetPizzaResponse
 		err = json.Unmarshal(b, &resp)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotEmpty(t, resp.Get.Pizzas)
 
 		assert.Equal(t, 1, len(resp.Get.Pizzas))
@@ -1104,17 +1104,17 @@ func TestGraphQL_integration(t *testing.T) {
 						WithBM25(bm25).
 						Do(context.Background())
 
-					require.Nil(t, err)
-					require.Nil(t, result.Errors)
+					require.NoError(t, err)
+					require.Empty(t, gqlErrors(result.Errors))
 					require.NotNil(t, result)
 					require.NotNil(t, result.Data)
 
 					b, err := json.Marshal(result.Data)
-					require.Nil(t, err)
+					require.NoError(t, err)
 
 					var resp GetPizzaResponse
 					err = json.Unmarshal(b, &resp)
-					require.Nil(t, err)
+					require.NoError(t, err)
 					require.NotEmpty(t, resp.Get.Pizzas)
 
 					assert.Equal(t, 1, len(resp.Get.Pizzas))
@@ -1141,17 +1141,17 @@ func TestGraphQL_integration(t *testing.T) {
 			WithHybrid(hybrid).
 			Do(context.Background())
 
-		require.Nil(t, err)
-		require.Nil(t, result.Errors)
+		require.NoError(t, err)
+		require.Empty(t, gqlErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
 		b, err := json.Marshal(result.Data)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		var resp GetPizzaResponse
 		err = json.Unmarshal(b, &resp)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotEmpty(t, resp.Get.Pizzas)
 
 		assert.Equal(t, 4, len(resp.Get.Pizzas))
@@ -1184,17 +1184,17 @@ func TestGraphQL_integration(t *testing.T) {
 						WithHybrid(hybrid).
 						Do(context.Background())
 
-					require.Nil(t, err)
-					require.Nil(t, result.Errors)
+					require.NoError(t, err)
+					require.Empty(t, gqlErrors(result.Errors))
 					require.NotNil(t, result)
 					require.NotNil(t, result.Data)
 
 					b, err := json.Marshal(result.Data)
-					require.Nil(t, err)
+					require.NoError(t, err)
 
 					var resp GetPizzaResponse
 					err = json.Unmarshal(b, &resp)
-					require.Nil(t, err)
+					require.NoError(t, err)
 					require.NotEmpty(t, resp.Get.Pizzas)
 
 					assert.Equal(t, 4, len(resp.Get.Pizzas))
@@ -1233,17 +1233,17 @@ func TestGraphQL_integration(t *testing.T) {
 				WithHybrid(hybrid).
 				Do(context.Background())
 
-			require.Nil(t, err)
-			require.Nil(t, result.Errors)
+			require.NoError(t, err)
+			require.Empty(t, gqlErrors(result.Errors))
 			require.NotNil(t, result)
 			require.NotNil(t, result.Data)
 
 			b, err := json.Marshal(result.Data)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			var resp GetPizzaResponse
 			err = json.Unmarshal(b, &resp)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			assert.Equal(t, tc.num_results, len(resp.Get.Pizzas))
 		})
@@ -1260,7 +1260,7 @@ func TestGraphQL_integration(t *testing.T) {
 		// what what
 		t.Run("multiclass get raw", func(t *testing.T) {
 			resultSet, gqlErr := client.GraphQL().Raw().WithQuery("{Get {Pizza {name} Risotto{description}}}").Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 
 			get := resultSet.Data["Get"].(map[string]interface{})
 			pizza := get["Pizza"].([]interface{})
@@ -1276,7 +1276,7 @@ func TestGraphQL_integration(t *testing.T) {
 				AddQueryClass(graphql.NewQueryClassBuilder("Risotto").
 					WithFields(description)).
 				Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 
 			get := resultSet.Data["Get"].(map[string]interface{})
 			pizza := get["Pizza"].([]interface{})
@@ -1299,8 +1299,8 @@ func TestGraphQL_integration(t *testing.T) {
 					WithFields(description).
 					WithNearObject(risottoWithNearObject)).
 				Do(context.Background())
-			assert.Nil(t, gqlErr)
-			require.Nil(t, resultSet.Errors)
+			assert.NoError(t, gqlErr)
+			require.Empty(t, gqlErrors(resultSet.Errors))
 
 			get := resultSet.Data["Get"].(map[string]interface{})
 			pizza := get["Pizza"].([]interface{})
@@ -1343,9 +1343,9 @@ func TestGraphQL_integration(t *testing.T) {
 						WithNearText(withNearText)).
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
-				assert.Nil(t, resultSet.Errors)
+				require.Empty(t, gqlErrors(resultSet.Errors))
 			})
 
 			t.Run("with distance", func(t *testing.T) {
@@ -1381,9 +1381,9 @@ func TestGraphQL_integration(t *testing.T) {
 						WithNearText(withNearText)).
 					Do(context.Background())
 
-				assert.Nil(t, gqlErr)
+				assert.NoError(t, gqlErr)
 				assert.NotNil(t, resultSet)
-				assert.Nil(t, resultSet.Errors)
+				require.Empty(t, gqlErrors(resultSet.Errors))
 			})
 		})
 
@@ -1406,7 +1406,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithWhere(whereRisotto).
 					WithFields(description)).
 				Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 
 			get := resultSet.Data["Get"].(map[string]interface{})
 			pizza := get["Pizza"].([]interface{})
@@ -1420,12 +1420,12 @@ func TestGraphQL_integration(t *testing.T) {
 			// May 3rd, the other May 5th, so the filter below should match exactly
 			// one.
 			pizzaTargetDate, err := time.Parse(time.RFC3339, "2022-05-04T12:00:00+02:00")
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			// two risotto have best_before dates in the test set, one of them expires
 			// May 3rd, the other May 5th, so the filter below should match both
 			risottoTargetDate, err := time.Parse(time.RFC3339, "2022-05-02T12:00:00+02:00")
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			pizzaWhere := filters.Where().
 				WithPath([]string{"best_before"}).
@@ -1445,7 +1445,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithWhere(risottoWhere).
 					WithFields(name)).
 				Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 
 			get := resultSet.Data["Get"].(map[string]interface{})
 			pizza := get["Pizza"].([]interface{})
@@ -1478,7 +1478,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithSort(byNameAsc).
 					WithFields(name)).
 				Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assertSortResult(resultSet, "Pizza", []string{"Doener", "Frutti di Mare", "Hawaii", "Quattro Formaggi"})
 			assertSortResult(resultSet, "Risotto", []string{"Risi e bisi", "Risotto al nero di seppia", "Risotto alla pilota"})
 
@@ -1491,7 +1491,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithSort(byNameDesc).
 					WithFields(name)).
 				Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Hawaii", "Frutti di Mare", "Doener"})
 			assertSortResult(resultSet, "Risotto", []string{"Risotto alla pilota", "Risotto al nero di seppia", "Risi e bisi"})
 
@@ -1504,7 +1504,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithSort(byPriceAsc).
 					WithFields(name)).
 				Do(context.Background())
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assertSortResult(resultSet, "Soup", []string{"ChickenSoup", "Beautiful"})
 			assertSortResult(resultSet, "Risotto", []string{"Risi e bisi", "Risotto alla pilota", "Risotto al nero di seppia"})
 
@@ -1517,7 +1517,7 @@ func TestGraphQL_integration(t *testing.T) {
 					WithFields(name)).
 				Do(context.Background())
 
-			assert.Nil(t, gqlErr)
+			assert.NoError(t, gqlErr)
 			assertSortResult(resultSet, "Pizza", []string{"Quattro Formaggi", "Frutti di Mare", "Hawaii", "Doener"})
 			assertSortResult(resultSet, "Risotto", []string{"Risi e bisi", "Risotto alla pilota", "Risotto al nero di seppia"})
 		})
@@ -1541,7 +1541,7 @@ func TestGraphQL_integration(t *testing.T) {
 				WithGroup(group).
 				WithLimit(7)).
 			Do(context.Background())
-		assert.Nil(t, gqlErr)
+		assert.NoError(t, gqlErr)
 
 		get := resultSet.Data["Get"].(map[string]interface{})
 		require.Equal(t, 2, len(get))
@@ -1588,23 +1588,23 @@ func TestGraphQL_integration(t *testing.T) {
 				WithWhere(risottoWhereCreateTime)).
 			Do(context.Background())
 
-		require.Nil(t, err)
-		require.Nil(t, result.Errors)
+		require.NoError(t, err)
+		require.Empty(t, gqlErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
 		b, err := json.Marshal(result.Data)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		var pizzaResp GetPizzaResponse
 		err = json.Unmarshal(b, &pizzaResp)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotEmpty(t, pizzaResp.Get.Pizzas)
 		assert.Equal(t, pizzaExpectedCreateTime, pizzaResp.Get.Pizzas[0].Additional.CreationTimeUnix)
 
 		var risottoResp GetRisottoResponse
 		err = json.Unmarshal(b, &risottoResp)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotEmpty(t, risottoResp.Get.Risotto)
 		assert.Equal(t, risottoExpectedCreateTime, risottoResp.Get.Risotto[0].Additional.CreationTimeUnix)
 	})
@@ -1645,23 +1645,23 @@ func TestGraphQL_integration(t *testing.T) {
 				WithWhere(risottoWhereUpdateTime)).
 			Do(context.Background())
 
-		require.Nil(t, err)
-		require.Nil(t, result.Errors)
+		require.NoError(t, err)
+		require.Empty(t, gqlErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
 		b, err := json.Marshal(result.Data)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		var pizzaResp GetPizzaResponse
 		err = json.Unmarshal(b, &pizzaResp)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotEmpty(t, pizzaResp.Get.Pizzas)
 		assert.Equal(t, pizzaExpectedUpdateTime, pizzaResp.Get.Pizzas[0].Additional.LastUpdateTimeUnix)
 
 		var risottoResp GetRisottoResponse
 		err = json.Unmarshal(b, &risottoResp)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotEmpty(t, risottoResp.Get.Risotto)
 		assert.Equal(t, risottoExpectedUpdateTime, risottoResp.Get.Risotto[0].Additional.LastUpdateTimeUnix)
 	})
@@ -1706,8 +1706,8 @@ func TestGraphQL_integration(t *testing.T) {
 			WithFields(additional).
 			Do(context.Background())
 
-		require.Nil(t, err)
-		require.Nil(t, result.Errors)
+		require.NoError(t, err)
+		require.Empty(t, gqlErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
@@ -1816,8 +1816,8 @@ func TestGraphQL_integration(t *testing.T) {
 			WithFields(additional).
 			Do(context.Background())
 
-		require.Nil(t, err)
-		require.Nil(t, result.Errors)
+		require.NoError(t, err)
+		require.Empty(t, gqlErrors(result.Errors))
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
 
@@ -1885,9 +1885,9 @@ func TestGraphQL_integration(t *testing.T) {
 				WithFields(fields...).
 				WithConsistencyLevel(replication.ConsistencyLevel.ALL).
 				Do(ctx)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			require.NotNil(t, resp)
-			require.Empty(t, resp.Errors)
+			require.Empty(t, gqlErrors(resp.Errors))
 		})
 
 		t.Run("Quorum", func(t *testing.T) {
@@ -1896,9 +1896,9 @@ func TestGraphQL_integration(t *testing.T) {
 				WithFields(fields...).
 				WithConsistencyLevel(replication.ConsistencyLevel.QUORUM).
 				Do(ctx)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			require.NotNil(t, resp)
-			require.Empty(t, resp.Errors)
+			require.Empty(t, gqlErrors(resp.Errors))
 		})
 
 		t.Run("One", func(t *testing.T) {
@@ -1907,9 +1907,9 @@ func TestGraphQL_integration(t *testing.T) {
 				WithFields(fields...).
 				WithConsistencyLevel(replication.ConsistencyLevel.ONE).
 				Do(ctx)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			require.NotNil(t, resp)
-			require.Empty(t, resp.Errors)
+			require.Empty(t, gqlErrors(resp.Errors))
 		})
 	})
 
@@ -1925,7 +1925,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 	cleanup := func() {
 		client := testsuit.CreateTestClient(false)
 		err := client.Schema().AllDeleter().Do(context.Background())
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	t.Run("setup weaviate", func(t *testing.T) {
@@ -2194,7 +2194,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 
 			cleanup := func() {
 				err := client.Schema().AllDeleter().Do(context.Background())
-				require.Nil(t, err)
+				require.NoError(t, err)
 			}
 
 			t.Run("create class", func(t *testing.T) {
@@ -2238,7 +2238,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 							"bools":   boolsArray[i],
 						}).
 						Do(context.TODO())
-					require.Nil(t, err)
+					require.NoError(t, err)
 				}
 			})
 
@@ -2496,8 +2496,8 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 							WithWhere(tt.where).
 							WithFields(fields...).
 							Do(context.TODO())
-						require.Nil(t, err)
-						require.Empty(t, resp.Errors)
+						require.NoError(t, err)
+						require.Empty(t, gqlErrors(resp.Errors))
 						resultIds := getIds(resp.Data)
 						assert.Len(t, resultIds, len(tt.expectedIds))
 						assert.ElementsMatch(t, resultIds, tt.expectedIds)
@@ -2518,7 +2518,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 // gqlErrors prints error messages from the GraphQL response.
 // Use it to create more informative test errors:
 //
-//	assert.Empty(t, gqlErrors(result.Errors))
+//	require.Empty(t, gqlErrors(result.Errors))
 type gqlErrors []*models.GraphQLError
 
 func (errors gqlErrors) String() string {
