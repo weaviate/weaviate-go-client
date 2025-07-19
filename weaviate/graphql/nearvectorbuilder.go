@@ -160,9 +160,7 @@ func (b NearVectorArgumentBuilder) prepareTargetVectors(targets []string) (out [
 }
 
 func (b *NearVectorArgumentBuilder) togrpc() *pb.NearVector {
-	nearVector := &pb.NearVector{
-		TargetVectors: b.targetVectors,
-	}
+	nearVector := &pb.NearVector{}
 	if !b.isVectorEmpty(b.vector) && len(b.vectorsPerTarget) == 0 {
 		nearVector.Vectors = []*pb.Vectors{common.GetVector("", b.vector)}
 	}
@@ -173,6 +171,9 @@ func (b *NearVectorArgumentBuilder) togrpc() *pb.NearVector {
 	if b.withDistance {
 		distance := float64(b.distance)
 		nearVector.Distance = &distance
+	}
+	if len(b.targetVectors) > 0 && b.targets == nil {
+		nearVector.Targets = &pb.Targets{TargetVectors: b.targetVectors}
 	}
 	return nearVector
 }

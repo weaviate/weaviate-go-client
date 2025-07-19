@@ -84,8 +84,7 @@ func (b *NearImuArgumentBuilder) togrpc() *pb.NearIMUSearch {
 		dataReader: b.imuReader,
 	}
 	nearIMU := &pb.NearIMUSearch{
-		Imu:           builder.getContent(),
-		TargetVectors: b.targetVectors,
+		Imu: builder.getContent(),
 	}
 	if b.hasCertainty {
 		certainty := float64(b.certainty)
@@ -94,6 +93,9 @@ func (b *NearImuArgumentBuilder) togrpc() *pb.NearIMUSearch {
 	if b.hasDistance {
 		distance := float64(b.distance)
 		nearIMU.Distance = &distance
+	}
+	if len(b.targetVectors) > 0 && b.targets == nil {
+		nearIMU.Targets = &pb.Targets{TargetVectors: b.targetVectors}
 	}
 	return nearIMU
 }

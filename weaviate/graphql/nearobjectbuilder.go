@@ -103,9 +103,7 @@ func (e *NearObjectArgumentBuilder) togrpc() *pb.NearObject {
 		nearObject.Distance = &distance
 	}
 	if len(e.targetVectors) > 0 && e.targets == nil {
-		nearObject.Targets = &pb.Targets{
-			TargetVectors: e.targetVectors,
-		}
+		nearObject.Targets = &pb.Targets{TargetVectors: e.targetVectors}
 	}
 	return nearObject
 }
