@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/weaviate/weaviate/entities/dto"
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type MultiTargetArgumentBuilder struct {
@@ -173,4 +174,9 @@ func (m *MultiTargetArgumentBuilder) build() string {
 		))
 	}
 	return strings.Join(clause, " ")
+}
+
+func (m *MultiTargetArgumentBuilder) togrpc() ([]*pb.VectorForTarget, *pb.Targets) {
+
+	return nil, nil
 }

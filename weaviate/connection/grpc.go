@@ -35,6 +35,13 @@ func NewGrpcClient(host string, secured bool, headers map[string]string,
 	return &GrpcClient{client, headers, timeout, grpcbatch.New(gRPCVersionSupport)}, nil
 }
 
+func (c *GrpcClient) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchReply, error) {
+	ctxWithTimeoutAndHeaders, cancel := c.ctxWithTimeoutWithHeaders(ctx)
+	defer cancel()
+
+	return c.client.Search(ctxWithTimeoutAndHeaders, req, c.getOptions()...)
+}
+
 func (c *GrpcClient) BatchObjects(ctx context.Context, objects []*models.Object,
 	consistencyLevel string,
 ) ([]models.ObjectsGetResponse, error) {
