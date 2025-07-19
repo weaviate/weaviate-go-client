@@ -83,8 +83,7 @@ func (b *NearAudioArgumentBuilder) togrpc() *pb.NearAudioSearch {
 		dataReader: b.audioReader,
 	}
 	nearAudio := &pb.NearAudioSearch{
-		Audio:         builder.getContent(),
-		TargetVectors: b.targetVectors,
+		Audio: builder.getContent(),
 	}
 	if b.hasCertainty {
 		certainty := float64(b.certainty)
@@ -93,6 +92,12 @@ func (b *NearAudioArgumentBuilder) togrpc() *pb.NearAudioSearch {
 	if b.hasDistance {
 		distance := float64(b.distance)
 		nearAudio.Distance = &distance
+	}
+	if b.targets != nil {
+		nearAudio.Targets = b.targets.togrpc()
+	}
+	if len(b.targetVectors) > 0 && b.targets == nil {
+		nearAudio.Targets = &pb.Targets{TargetVectors: b.targetVectors}
 	}
 	return nearAudio
 }

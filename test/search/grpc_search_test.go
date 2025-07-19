@@ -358,6 +358,32 @@ func TestSearch_all_properties(t *testing.T) {
 				assert.NotNil(t, res.Vectors["colbert"].GetMultiVector())
 			}
 		})
+		t.Run("multi target search", func(t *testing.T) {
+			nearVector := client.GraphQL().NearVectorArgBuilder().
+				WithTargets(client.GraphQL().MultiTargetArgumentBuilder().Average("regular", "colbert")).
+				WithVectorsPerTarget(map[string][]models.Vector{
+					"regular": {[]float32{1, 2}},
+					"colbert": {[][]float32{{0.09, 0.11}, {0.22, 0.33}, {0.33, 0.44}}},
+				})
+			results, err := client.Search().
+				WithNearVector(nearVector).
+				WithCollection(noVectorizerClass).
+				WithMetadata(&graphql.Metadata{
+					ID: true, Vectors: []string{"regular", "colbert"},
+				}).
+				Do(ctx)
+			require.NoError(t, err)
+			assert.Len(t, results, 3)
+			for _, res := range results {
+				assert.NotEmpty(t, res.ID)
+				assert.Equal(t, noVectorizerClass, res.Collection)
+				require.Len(t, res.Vectors, 2)
+				assert.NotNil(t, res.Vectors["regular"].Vector)
+				assert.NotNil(t, res.Vectors["regular"].GetVector())
+				assert.NotNil(t, res.Vectors["colbert"].Vector)
+				assert.NotNil(t, res.Vectors["colbert"].GetMultiVector())
+			}
+		})
 	})
 
 	require.Nil(t, testenv.TearDownLocalWeaviate(), "failed to tear down weaviate")

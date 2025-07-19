@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 func TestMultiTargetArgumentBuilder(t *testing.T) {
@@ -13,6 +14,11 @@ func TestMultiTargetArgumentBuilder(t *testing.T) {
 		builder.Sum("one", "two")
 		out := builder.build()
 		assert.Equal(t, "combinationMethod: sum, targetVectors: [\"one\",\"two\"]", out)
+		targets := builder.togrpc()
+		assert.Equal(t, targets.Combination, pb.CombinationMethod_COMBINATION_METHOD_TYPE_SUM)
+		assert.Len(t, targets.TargetVectors, 2)
+		assert.Contains(t, targets.TargetVectors, "one", "two")
+		assert.Nil(t, targets.WeightsForTargets)
 	})
 
 	t.Run("Average combination", func(t *testing.T) {
@@ -20,6 +26,11 @@ func TestMultiTargetArgumentBuilder(t *testing.T) {
 		builder.Average("one", "two")
 		out := builder.build()
 		assert.Equal(t, "combinationMethod: average, targetVectors: [\"one\",\"two\"]", out)
+		targets := builder.togrpc()
+		assert.Equal(t, targets.Combination, pb.CombinationMethod_COMBINATION_METHOD_TYPE_AVERAGE)
+		assert.Len(t, targets.TargetVectors, 2)
+		assert.Contains(t, targets.TargetVectors, "one", "two")
+		assert.Nil(t, targets.WeightsForTargets)
 	})
 
 	t.Run("Minimum combination", func(t *testing.T) {
@@ -27,6 +38,11 @@ func TestMultiTargetArgumentBuilder(t *testing.T) {
 		builder.Minimum("one", "two")
 		out := builder.build()
 		assert.Equal(t, "combinationMethod: minimum, targetVectors: [\"one\",\"two\"]", out)
+		targets := builder.togrpc()
+		assert.Equal(t, targets.Combination, pb.CombinationMethod_COMBINATION_METHOD_TYPE_MIN)
+		assert.Len(t, targets.TargetVectors, 2)
+		assert.Contains(t, targets.TargetVectors, "one", "two")
+		assert.Nil(t, targets.WeightsForTargets)
 	})
 
 	t.Run("ManualWeights combination", func(t *testing.T) {
@@ -41,6 +57,19 @@ func TestMultiTargetArgumentBuilder(t *testing.T) {
 		require.Contains(t, out, "weights: ")
 		require.Contains(t, out, "one: 1")
 		require.Contains(t, out, "two: 2")
+		targets := builder.togrpc()
+		assert.Equal(t, targets.Combination, pb.CombinationMethod_COMBINATION_METHOD_TYPE_MANUAL)
+		assert.Len(t, targets.TargetVectors, 2)
+		assert.Contains(t, targets.TargetVectors, "one", "two")
+		assert.Len(t, targets.WeightsForTargets, 2)
+		for _, w := range targets.WeightsForTargets {
+			if w.Target == "one" {
+				assert.Equal(t, w.Weight, float32(1))
+			}
+			if w.Target == "two" {
+				assert.Equal(t, w.Weight, float32(2))
+			}
+		}
 	})
 
 	t.Run("RelativeScore combination", func(t *testing.T) {
@@ -55,6 +84,19 @@ func TestMultiTargetArgumentBuilder(t *testing.T) {
 		require.Contains(t, out, "weights: ")
 		require.Contains(t, out, "one: 1")
 		require.Contains(t, out, "two: 2")
+		targets := builder.togrpc()
+		assert.Equal(t, targets.Combination, pb.CombinationMethod_COMBINATION_METHOD_TYPE_RELATIVE_SCORE)
+		assert.Len(t, targets.TargetVectors, 2)
+		assert.Contains(t, targets.TargetVectors, "one", "two")
+		assert.Len(t, targets.WeightsForTargets, 2)
+		for _, w := range targets.WeightsForTargets {
+			if w.Target == "one" {
+				assert.Equal(t, w.Weight, float32(1))
+			}
+			if w.Target == "two" {
+				assert.Equal(t, w.Weight, float32(2))
+			}
+		}
 	})
 
 	t.Run("RelativeScoreMulti combination", func(t *testing.T) {
@@ -69,6 +111,23 @@ func TestMultiTargetArgumentBuilder(t *testing.T) {
 		require.Contains(t, out, "weights: ")
 		require.Contains(t, out, "one: 1")
 		require.Contains(t, out, "two: [2,3]")
+		targets := builder.togrpc()
+		assert.Equal(t, targets.Combination, pb.CombinationMethod_COMBINATION_METHOD_TYPE_RELATIVE_SCORE)
+		assert.Len(t, targets.TargetVectors, 3)
+		assert.Contains(t, targets.TargetVectors, "one", "two")
+		assert.Len(t, targets.WeightsForTargets, 3)
+		for i, w := range targets.WeightsForTargets {
+			if w.Target == "one" {
+				assert.Equal(t, w.Weight, float32(1))
+			}
+			if w.Target == "two" {
+				if i == 1 {
+					assert.Equal(t, w.Weight, float32(2))
+				} else {
+					assert.Equal(t, w.Weight, float32(3))
+				}
+			}
+		}
 	})
 
 	t.Run("ManualWeightsMulti combination", func(t *testing.T) {
@@ -83,5 +142,15 @@ func TestMultiTargetArgumentBuilder(t *testing.T) {
 		require.Contains(t, out, "weights: ")
 		require.Contains(t, out, "one: 1")
 		require.Contains(t, out, "two: [2,3]")
+		targets := builder.togrpc()
+		assert.Equal(t, targets.Combination, pb.CombinationMethod_COMBINATION_METHOD_TYPE_MANUAL)
+		assert.Len(t, targets.TargetVectors, 3)
+		assert.Contains(t, targets.TargetVectors, "one", "two")
+		assert.Len(t, targets.WeightsForTargets, 3)
+		for _, w := range targets.WeightsForTargets {
+			if w.Target == "one" {
+				assert.Equal(t, w.Weight, float32(1))
+			}
+		}
 	})
 }

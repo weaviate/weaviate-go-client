@@ -83,8 +83,7 @@ func (b *NearDepthArgumentBuilder) togrpc() *pb.NearDepthSearch {
 		dataReader: b.depthReader,
 	}
 	nearDepth := &pb.NearDepthSearch{
-		Depth:         builder.getContent(),
-		TargetVectors: b.targetVectors,
+		Depth: builder.getContent(),
 	}
 	if b.hasCertainty {
 		certainty := float64(b.certainty)
@@ -93,6 +92,12 @@ func (b *NearDepthArgumentBuilder) togrpc() *pb.NearDepthSearch {
 	if b.hasDistance {
 		distance := float64(b.distance)
 		nearDepth.Distance = &distance
+	}
+	if b.targets != nil {
+		nearDepth.Targets = b.targets.togrpc()
+	}
+	if len(b.targetVectors) > 0 && b.targets == nil {
+		nearDepth.Targets = &pb.Targets{TargetVectors: b.targetVectors}
 	}
 	return nearDepth
 }

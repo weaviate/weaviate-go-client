@@ -84,8 +84,7 @@ func (b *NearThermalArgumentBuilder) togrpc() *pb.NearThermalSearch {
 		dataReader: b.thermalReader,
 	}
 	nearThermal := &pb.NearThermalSearch{
-		Thermal:       builder.getContent(),
-		TargetVectors: b.targetVectors,
+		Thermal: builder.getContent(),
 	}
 	if b.hasCertainty {
 		certainty := float64(b.certainty)
@@ -94,6 +93,12 @@ func (b *NearThermalArgumentBuilder) togrpc() *pb.NearThermalSearch {
 	if b.hasDistance {
 		distance := float64(b.distance)
 		nearThermal.Distance = &distance
+	}
+	if b.targets != nil {
+		nearThermal.Targets = b.targets.togrpc()
+	}
+	if len(b.targetVectors) > 0 && b.targets == nil {
+		nearThermal.Targets = &pb.Targets{TargetVectors: b.targetVectors}
 	}
 	return nearThermal
 }

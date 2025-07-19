@@ -83,8 +83,7 @@ func (b *NearImageArgumentBuilder) togrpc() *pb.NearImageSearch {
 		dataReader: b.imageReader,
 	}
 	nearImage := &pb.NearImageSearch{
-		Image:         builder.getContent(),
-		TargetVectors: b.targetVectors,
+		Image: builder.getContent(),
 	}
 	if b.hasCertainty {
 		certainty := float64(b.certainty)
@@ -93,6 +92,12 @@ func (b *NearImageArgumentBuilder) togrpc() *pb.NearImageSearch {
 	if b.hasDistance {
 		distance := float64(b.distance)
 		nearImage.Distance = &distance
+	}
+	if b.targets != nil {
+		nearImage.Targets = b.targets.togrpc()
+	}
+	if len(b.targetVectors) > 0 && b.targets == nil {
+		nearImage.Targets = &pb.Targets{TargetVectors: b.targetVectors}
 	}
 	return nearImage
 }

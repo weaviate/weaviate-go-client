@@ -83,8 +83,7 @@ func (b *NearVideoArgumentBuilder) togrpc() *pb.NearVideoSearch {
 		dataReader: b.videoReader,
 	}
 	nearVideo := &pb.NearVideoSearch{
-		Video:         builder.getContent(),
-		TargetVectors: b.targetVectors,
+		Video: builder.getContent(),
 	}
 	if b.hasCertainty {
 		certainty := float64(b.certainty)
@@ -93,6 +92,12 @@ func (b *NearVideoArgumentBuilder) togrpc() *pb.NearVideoSearch {
 	if b.hasDistance {
 		distance := float64(b.distance)
 		nearVideo.Distance = &distance
+	}
+	if b.targets != nil {
+		nearVideo.Targets = b.targets.togrpc()
+	}
+	if len(b.targetVectors) > 0 && b.targets == nil {
+		nearVideo.Targets = &pb.Targets{TargetVectors: b.targetVectors}
 	}
 	return nearVideo
 }

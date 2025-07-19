@@ -173,10 +173,11 @@ func (h *HybridArgumentBuilder) togrpc() *pb.Hybrid {
 	if !h.isVectorEmpty(h.vector) {
 		hybrid.Vectors = []*pb.Vectors{common.GetVector("", h.vector)}
 	}
+	if h.targets != nil {
+		hybrid.Targets = h.targets.togrpc()
+	}
 	if len(h.targetVectors) > 0 && h.targets == nil {
-		hybrid.Targets = &pb.Targets{
-			TargetVectors: h.targetVectors,
-		}
+		hybrid.Targets = &pb.Targets{TargetVectors: h.targetVectors}
 	}
 	switch h.fusionType {
 	case Ranked:
@@ -193,6 +194,9 @@ func (h *HybridArgumentBuilder) togrpc() *pb.Hybrid {
 		if h.searches.nearVector != nil {
 			hybrid.NearVector = h.searches.nearVector.togrpc()
 		}
+	}
+	if h.bm25SearchOperator != nil {
+		hybrid.Bm25SearchOperator = h.bm25SearchOperator.togrpc()
 	}
 	return hybrid
 }

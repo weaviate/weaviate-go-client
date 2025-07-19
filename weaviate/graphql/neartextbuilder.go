@@ -171,8 +171,7 @@ func (e *NearTextArgumentBuilder) build() string {
 
 func (e *NearTextArgumentBuilder) togrpc() *pb.NearTextSearch {
 	nearText := &pb.NearTextSearch{
-		Query:         e.concepts,
-		TargetVectors: e.targetVectors,
+		Query: e.concepts,
 	}
 	if e.withCertainty {
 		certainty := float64(e.certainty)
@@ -187,6 +186,12 @@ func (e *NearTextArgumentBuilder) togrpc() *pb.NearTextSearch {
 	}
 	if e.moveAwayFrom != nil {
 		nearText.MoveAway = e.parseMoveParam(e.moveAwayFrom)
+	}
+	if e.targets != nil {
+		nearText.Targets = e.targets.togrpc()
+	}
+	if len(e.targetVectors) > 0 && e.targets == nil {
+		nearText.Targets = &pb.Targets{TargetVectors: e.targetVectors}
 	}
 	return nearText
 }

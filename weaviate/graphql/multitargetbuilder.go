@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/weaviate/weaviate/entities/dto"
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type MultiTargetArgumentBuilder struct {
@@ -14,24 +15,22 @@ type MultiTargetArgumentBuilder struct {
 	weights           [][]float32
 }
 
-func (m *MultiTargetArgumentBuilder) getCombinationMethod() string {
-	combinationMethod := ""
-	if m.targetCombination == nil {
-		return combinationMethod
+func (m *MultiTargetArgumentBuilder) getCombinationMethod() (string, pb.CombinationMethod) {
+	if m.targetCombination != nil {
+		switch *m.targetCombination {
+		case dto.Sum:
+			return "sum", pb.CombinationMethod_COMBINATION_METHOD_TYPE_SUM
+		case dto.Average:
+			return "average", pb.CombinationMethod_COMBINATION_METHOD_TYPE_AVERAGE
+		case dto.Minimum:
+			return "minimum", pb.CombinationMethod_COMBINATION_METHOD_TYPE_MIN
+		case dto.ManualWeights:
+			return "manualWeights", pb.CombinationMethod_COMBINATION_METHOD_TYPE_MANUAL
+		case dto.RelativeScore:
+			return "relativeScore", pb.CombinationMethod_COMBINATION_METHOD_TYPE_RELATIVE_SCORE
+		}
 	}
-	switch *m.targetCombination {
-	case dto.Sum:
-		combinationMethod = "sum"
-	case dto.Average:
-		combinationMethod = "average"
-	case dto.Minimum:
-		combinationMethod = "minimum"
-	case dto.ManualWeights:
-		combinationMethod = "manualWeights"
-	case dto.RelativeScore:
-		combinationMethod = "relativeScore"
-	}
-	return combinationMethod
+	return "", pb.CombinationMethod_COMBINATION_METHOD_UNSPECIFIED
 }
 
 func (m *MultiTargetArgumentBuilder) Sum(targetVectors ...string) *MultiTargetArgumentBuilder {
@@ -160,7 +159,7 @@ func (m *MultiTargetArgumentBuilder) build() string {
 		}
 
 		combinationMethodString := ""
-		combinationMethod := m.getCombinationMethod()
+		combinationMethod, _ := m.getCombinationMethod()
 		if combinationMethod != "" {
 			combinationMethodString = fmt.Sprintf("combinationMethod: %s", combinationMethod)
 		}
@@ -173,4 +172,26 @@ func (m *MultiTargetArgumentBuilder) build() string {
 		))
 	}
 	return strings.Join(clause, " ")
+}
+
+func (m *MultiTargetArgumentBuilder) togrpc() *pb.Targets {
+	if len(m.targetVectors) > 0 {
+		var weightsForTargets []*pb.WeightsForTarget
+		for i, weights := range m.weights {
+			for _, w := range weights {
+				weightsForTargets = append(weightsForTargets, &pb.WeightsForTarget{
+					Target: m.targetVectors[i],
+					Weight: w,
+				})
+			}
+		}
+		_, combination := m.getCombinationMethod()
+		targets := &pb.Targets{
+			TargetVectors:     m.targetVectors,
+			Combination:       combination,
+			WeightsForTargets: weightsForTargets,
+		}
+		return targets
+	}
+	return nil
 }
