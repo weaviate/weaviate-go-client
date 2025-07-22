@@ -36,9 +36,9 @@ func (bm25 *BM25SearchOperatorBuilder) build() string {
 func (bm25 *BM25SearchOperatorBuilder) togrpc() *pb.SearchOperatorOptions {
 	switch bm25.operator {
 	case BM25SearchOperatorAnd:
-		return &pb.SearchOperatorOptions{Operator: pb.SearchOperatorOptions_OPERATOR_AND, MinimumOrTokensMatch: &bm25.minimumMatch}
+		return &pb.SearchOperatorOptions{Operator: pb.SearchOperatorOptions_OPERATOR_AND}
 	case BM25SearchOperatorOr:
-		return &pb.SearchOperatorOptions{Operator: pb.SearchOperatorOptions_OPERATOR_OR}
+		return &pb.SearchOperatorOptions{Operator: pb.SearchOperatorOptions_OPERATOR_OR, MinimumOrTokensMatch: &bm25.minimumMatch}
 	default:
 		return nil
 	}

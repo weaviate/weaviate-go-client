@@ -196,7 +196,7 @@ func (e *NearTextArgumentBuilder) togrpc() *pb.NearTextSearch {
 	return nearText
 }
 
-func (e *NearTextArgumentBuilder) parseMoveParam(moveParam *MoveParameters) *pb.NearTextSearch_Move {
+func (e *NearTextArgumentBuilder) buildMoveParam(moveParam *MoveParameters) *pb.NearTextSearch_Move {
 	move := &pb.NearTextSearch_Move{
 		Concepts: moveParam.Concepts,
 	}
