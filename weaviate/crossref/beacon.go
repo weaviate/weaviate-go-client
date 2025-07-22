@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/db"
+	"github.com/weaviate/weaviate/entities/schema/crossref"
 )
 
 func BuildBeacon(id, className string, dbVersion *db.VersionSupport) string {
@@ -17,4 +18,11 @@ func BuildBeacon(id, className string, dbVersion *db.VersionSupport) string {
 		dbVersion.WarnUsageOfNotSupportedClassNamespacedEndpointsForBeacons()
 	}
 	return fmt.Sprintf("weaviate://localhost/%v", id)
+}
+
+func ExtractID(beacon string) string {
+	if ref, err := crossref.Parse(beacon); err == nil {
+		return ref.TargetID.String()
+	}
+	return ""
 }

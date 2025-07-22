@@ -2,6 +2,8 @@ package graphql
 
 import (
 	"io"
+
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type NearDepthArgumentBuilder struct {
@@ -73,4 +75,28 @@ func (b *NearDepthArgumentBuilder) build() string {
 	}
 	builder.withTargets(b.targets)
 	return builder.build()
+}
+
+func (b *NearDepthArgumentBuilder) togrpc() *pb.NearDepthSearch {
+	builder := &nearMediaArgumentBuilder{
+		data:       b.depth,
+		dataReader: b.depthReader,
+	}
+	nearDepth := &pb.NearDepthSearch{
+		Depth: builder.getContent(),
+	}
+	if b.hasCertainty {
+		certainty := float64(b.certainty)
+		nearDepth.Certainty = &certainty
+	}
+	if b.hasDistance {
+		distance := float64(b.distance)
+		nearDepth.Distance = &distance
+	}
+	if b.targets != nil {
+		nearDepth.Targets = b.targets.togrpc()
+	} else if len(b.targetVectors) > 0 {
+		nearDepth.Targets = &pb.Targets{TargetVectors: b.targetVectors}
+	}
+	return nearDepth
 }

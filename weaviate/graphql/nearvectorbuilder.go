@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/grpc/common"
 	"github.com/weaviate/weaviate/entities/models"
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type NearVectorArgumentBuilder struct {
@@ -155,4 +157,41 @@ func (b NearVectorArgumentBuilder) prepareTargetVectors(targets []string) (out [
 		}
 	}
 	return
+}
+
+func (b *NearVectorArgumentBuilder) togrpc() *pb.NearVector {
+	nearVector := &pb.NearVector{}
+	if !b.isVectorEmpty(b.vector) && len(b.vectorsPerTarget) == 0 {
+		nearVector.Vectors = []*pb.Vectors{common.GetVector("", b.vector)}
+	}
+	if b.withCertainty {
+		certainty := float64(b.certainty)
+		nearVector.Certainty = &certainty
+	}
+	if b.withDistance {
+		distance := float64(b.distance)
+		nearVector.Distance = &distance
+	}
+	if len(b.vectorsPerTarget) > 0 {
+		var targetVectors []string
+		var vectorForTargets []*pb.VectorForTarget
+		for targetVector, vecs := range b.vectorsPerTarget {
+			for _, v := range vecs {
+				vectorForTargets = append(vectorForTargets, &pb.VectorForTarget{
+					Name:    targetVector,
+					Vectors: []*pb.Vectors{common.GetVector("", v)},
+				})
+				targetVectors = append(targetVectors, targetVector)
+			}
+		}
+		if b.targets != nil {
+			nearVector.Targets = b.targets.togrpc()
+			nearVector.Targets.TargetVectors = targetVectors
+		}
+		nearVector.VectorForTargets = vectorForTargets
+	}
+	if len(b.targetVectors) > 0 && b.targets == nil {
+		nearVector.Targets = &pb.Targets{TargetVectors: b.targetVectors}
+	}
+	return nearVector
 }

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type BM25ArgumentBuilder struct {
@@ -46,4 +48,12 @@ func (b *BM25ArgumentBuilder) build() string {
 		clause = append(clause, fmt.Sprintf("searchOperator:%s", b.searchOperator.build()))
 	}
 	return fmt.Sprintf("bm25:{%v}", strings.Join(clause, ", "))
+}
+
+func (b *BM25ArgumentBuilder) togrpc() *pb.BM25 {
+	bm25 := &pb.BM25{
+		Query:      b.query,
+		Properties: b.properties,
+	}
+	return bm25
 }

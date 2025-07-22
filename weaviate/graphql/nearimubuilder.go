@@ -2,6 +2,8 @@ package graphql
 
 import (
 	"io"
+
+	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type NearImuArgumentBuilder struct {
@@ -74,4 +76,29 @@ func (b *NearImuArgumentBuilder) build() string {
 	}
 	builder.withTargets((b.targets))
 	return builder.build()
+}
+
+func (b *NearImuArgumentBuilder) togrpc() *pb.NearIMUSearch {
+	builder := &nearMediaArgumentBuilder{
+		data:       b.imu,
+		dataReader: b.imuReader,
+	}
+	nearIMU := &pb.NearIMUSearch{
+		Imu: builder.getContent(),
+	}
+	if b.hasCertainty {
+		certainty := float64(b.certainty)
+		nearIMU.Certainty = &certainty
+	}
+	if b.hasDistance {
+		distance := float64(b.distance)
+		nearIMU.Distance = &distance
+	}
+	if b.targets != nil {
+		nearIMU.Targets = b.targets.togrpc()
+	}
+	if len(b.targetVectors) > 0 && b.targets == nil {
+		nearIMU.Targets = &pb.Targets{TargetVectors: b.targetVectors}
+	}
+	return nearIMU
 }
