@@ -95,8 +95,7 @@ func (b *NearDepthArgumentBuilder) togrpc() *pb.NearDepthSearch {
 	}
 	if b.targets != nil {
 		nearDepth.Targets = b.targets.togrpc()
-	}
-	if len(b.targetVectors) > 0 && b.targets == nil {
+	} else if len(b.targetVectors) > 0 {
 		nearDepth.Targets = &pb.Targets{TargetVectors: b.targetVectors}
 	}
 	return nearDepth
