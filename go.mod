@@ -11,7 +11,7 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/weaviate v0.35.0
 	github.com/weaviate/weaviate v1.31.5
 	go.nhat.io/grpcmock v0.26.0
-	golang.org/x/oauth2 v0.27.0
+	golang.org/x/oauth2 v0.30.0
 	golang.org/x/sync v0.14.0
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.6
@@ -168,4 +168,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-retract v5.0.0 // Malformed go.mod declares v4 module path
+retract (
+	v5.4.0 // Missing entry for golang.org/x/oauth2 in go.sum
+	v5.0.0 // Malformed go.mod declares v4 module path
+)
