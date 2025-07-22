@@ -90,7 +90,7 @@ func TestSearch_all_properties(t *testing.T) {
 					"color", "colors", "author", "authors", "number", "numbers", "int", "ints",
 					"uuid", "uuids", "date", "dates", "bool", "bools",
 				}
-				results, err := client.Search().
+				results, err := client.Experimental().Search().
 					WithCollection(className).
 					WithProperties(props...).
 					Do(ctx)
@@ -111,7 +111,7 @@ func TestSearch_all_properties(t *testing.T) {
 					"uuid", "uuids", "date", "dates", "bool", "bools",
 				}
 
-				results, err := client.Search().
+				results, err := client.Experimental().Search().
 					WithCollection(className).
 					WithProperties(props...).
 					WithReferences(&graphql.Reference{
@@ -147,7 +147,7 @@ func TestSearch_all_properties(t *testing.T) {
 					"color", "colors", "author", "authors", "number", "numbers", "int", "ints",
 					"uuid", "uuids", "date", "dates", "bool", "bools",
 				}
-				results, err := client.Search().
+				results, err := client.Experimental().Search().
 					WithCollection(className).
 					WithProperties(props...).
 					WithMetadata(&graphql.Metadata{
@@ -181,7 +181,7 @@ func TestSearch_all_properties(t *testing.T) {
 					WithConcepts([]string{"Jenny"}).
 					WithTargetVectors("author_and_colors").
 					WithCertainty(0.8)
-				results, err := client.Search().
+				results, err := client.Experimental().Search().
 					WithNearText(nearText).
 					WithCollection(className).
 					WithProperties(props...).
@@ -221,7 +221,7 @@ func TestSearch_all_properties(t *testing.T) {
 					WithProperties([]string{"author"}).
 					WithTargetVectors("author_and_colors")
 
-				results, err := client.Search().
+				results, err := client.Experimental().Search().
 					WithHybrid(hybrid).
 					WithCollection(className).
 					WithProperties(props...).
@@ -339,7 +339,7 @@ func TestSearch_all_properties(t *testing.T) {
 		})
 		t.Run("search", func(t *testing.T) {
 			bm25 := client.GraphQL().Bm25ArgBuilder().WithQuery("name 1").WithProperties("name")
-			results, err := client.Search().
+			results, err := client.Experimental().Search().
 				WithBM25(bm25).
 				WithCollection(noVectorizerClass).
 				WithMetadata(&graphql.Metadata{
@@ -365,7 +365,7 @@ func TestSearch_all_properties(t *testing.T) {
 					"regular": {[]float32{1, 2}},
 					"colbert": {[][]float32{{0.09, 0.11}, {0.22, 0.33}, {0.33, 0.44}}},
 				})
-			results, err := client.Search().
+			results, err := client.Experimental().Search().
 				WithNearVector(nearVector).
 				WithCollection(noVectorizerClass).
 				WithMetadata(&graphql.Metadata{

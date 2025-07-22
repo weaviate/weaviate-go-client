@@ -111,10 +111,20 @@ type Client struct {
 	classifications *classifications.API
 	backup          *backup.API
 	graphQL         *graphql.API
-	search          *graphql.Search
 	cluster         *cluster.API
 	roles           *rbac.API
 	users           *users.API
+	experimental    *experimental
+}
+
+// experimental contains all experimental client features
+type experimental struct {
+	grpcClient *connection.GrpcClient
+}
+
+// Experimental Search gRPC API group
+func (e *experimental) Search() *graphql.Search {
+	return graphql.NewSearch(e.grpcClient)
 }
 
 func NewClient(config Config) (*Client, error) {
@@ -182,13 +192,13 @@ func NewClient(config Config) (*Client, error) {
 		c11y:            contextionary.New(con),
 		classifications: classifications.New(con),
 		graphQL:         graphql.New(con),
-		search:          graphql.NewSearch(grpcClient),
 		data:            data.New(con, dbVersionSupport),
 		batch:           batch.New(con, grpcClient, dbVersionSupport),
 		backup:          backup.New(con),
 		cluster:         cluster.New(con),
 		roles:           rbac.New(con),
 		users:           users.New(con),
+		experimental:    &experimental{grpcClient: grpcClient},
 	}
 
 	return client, nil
@@ -236,7 +246,7 @@ func New(config Config) *Client {
 		cluster:         cluster.New(con),
 		roles:           rbac.New(con),
 		users:           users.New(con),
-		search:          graphql.NewSearch(grpcClient),
+		experimental:    &experimental{grpcClient: grpcClient},
 	}
 
 	return client
@@ -305,9 +315,9 @@ func (c *Client) Users() *users.API {
 	return c.users
 }
 
-// Experimental Search gRPC API group
-func (c *Client) Search() *graphql.Search {
-	return graphql.NewSearch(c.grpcClient)
+// Experimental API group
+func (c *Client) Experimental() *experimental {
+	return c.experimental
 }
 
 func createGrpcClient(config Config, gRPCVersionSupport *db.GRPCVersionSupport) (*connection.GrpcClient, error) {

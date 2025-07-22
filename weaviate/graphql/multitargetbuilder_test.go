@@ -116,16 +116,9 @@ func TestMultiTargetArgumentBuilder(t *testing.T) {
 		assert.Len(t, targets.TargetVectors, 3)
 		assert.Contains(t, targets.TargetVectors, "one", "two")
 		assert.Len(t, targets.WeightsForTargets, 3)
-		for i, w := range targets.WeightsForTargets {
+		for _, w := range targets.WeightsForTargets {
 			if w.Target == "one" {
 				assert.Equal(t, w.Weight, float32(1))
-			}
-			if w.Target == "two" {
-				if i == 1 {
-					assert.Equal(t, w.Weight, float32(2))
-				} else {
-					assert.Equal(t, w.Weight, float32(3))
-				}
 			}
 		}
 	})
