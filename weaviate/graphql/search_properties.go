@@ -19,6 +19,8 @@ func (p *Properties) WithReferences(references ...*Reference) *Properties {
 	return p
 }
 
+// This method is lacking support for json object properties
+// it only supports non ref and reference properties
 func (p *Properties) togrpc() *pb.PropertiesRequest {
 	props := &pb.PropertiesRequest{
 		NonRefProperties:          p.withProperties,
@@ -31,7 +33,6 @@ func (p *Properties) togrpc() *pb.PropertiesRequest {
 		}
 		props.RefProperties = refProperties
 	}
-	// TODO: add support for json object properties
 	return props
 }
 

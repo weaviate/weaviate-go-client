@@ -182,10 +182,10 @@ func (e *NearTextArgumentBuilder) togrpc() *pb.NearTextSearch {
 		nearText.Distance = &distance
 	}
 	if e.moveTo != nil {
-		nearText.MoveTo = e.parseMoveParam(e.moveTo)
+		nearText.MoveTo = e.buildMoveParam(e.moveTo)
 	}
 	if e.moveAwayFrom != nil {
-		nearText.MoveAway = e.parseMoveParam(e.moveAwayFrom)
+		nearText.MoveAway = e.buildMoveParam(e.moveAwayFrom)
 	}
 	if e.targets != nil {
 		nearText.Targets = e.targets.togrpc()

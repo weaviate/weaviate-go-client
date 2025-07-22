@@ -216,6 +216,8 @@ func (s *Search) togrpc() *pb.SearchRequest {
 		// by default always return ID
 		req.Metadata = &pb.MetadataRequest{Uuid: true}
 	}
+	req.Uses_123Api = true
+	req.Uses_125Api = true
 	req.Uses_127Api = true
 	return req
 }

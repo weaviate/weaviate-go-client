@@ -22,91 +22,91 @@ type NearObjectArgumentBuilder struct {
 }
 
 // WithID the id of the object
-func (e *NearObjectArgumentBuilder) WithID(id string) *NearObjectArgumentBuilder {
-	e.id = id
-	return e
+func (b *NearObjectArgumentBuilder) WithID(id string) *NearObjectArgumentBuilder {
+	b.id = id
+	return b
 }
 
 // WithBeacon the beacon of the object
-func (e *NearObjectArgumentBuilder) WithBeacon(beacon string) *NearObjectArgumentBuilder {
-	e.beacon = beacon
-	return e
+func (b *NearObjectArgumentBuilder) WithBeacon(beacon string) *NearObjectArgumentBuilder {
+	b.beacon = beacon
+	return b
 }
 
 // WithCertainty that is minimally required for an object to be included in the result set
-func (e *NearObjectArgumentBuilder) WithCertainty(certainty float32) *NearObjectArgumentBuilder {
-	e.withCertainty = true
-	e.certainty = certainty
-	return e
+func (b *NearObjectArgumentBuilder) WithCertainty(certainty float32) *NearObjectArgumentBuilder {
+	b.withCertainty = true
+	b.certainty = certainty
+	return b
 }
 
 // WithDistance that is minimally required for an object to be included in the result set
-func (e *NearObjectArgumentBuilder) WithDistance(distance float32) *NearObjectArgumentBuilder {
-	e.withDistance = true
-	e.distance = distance
-	return e
+func (b *NearObjectArgumentBuilder) WithDistance(distance float32) *NearObjectArgumentBuilder {
+	b.withDistance = true
+	b.distance = distance
+	return b
 }
 
 // WithTargetVectors target vector name
-func (e *NearObjectArgumentBuilder) WithTargetVectors(targetVectors ...string) *NearObjectArgumentBuilder {
+func (b *NearObjectArgumentBuilder) WithTargetVectors(targetVectors ...string) *NearObjectArgumentBuilder {
 	if len(targetVectors) > 0 {
-		e.targetVectors = targetVectors
+		b.targetVectors = targetVectors
 	}
-	return e
+	return b
 }
 
 // WithTargets sets the multi target vectors to be used with hybrid query. This builder takes precedence over WithTargetVectors.
 // So if WithTargets is used, WithTargetVectors will be ignored.
-func (h *NearObjectArgumentBuilder) WithTargets(targets *MultiTargetArgumentBuilder) *NearObjectArgumentBuilder {
-	h.targets = targets
-	return h
+func (b *NearObjectArgumentBuilder) WithTargets(targets *MultiTargetArgumentBuilder) *NearObjectArgumentBuilder {
+	b.targets = targets
+	return b
 }
 
 // Build build the given clause
-func (e *NearObjectArgumentBuilder) build() string {
+func (b *NearObjectArgumentBuilder) build() string {
 	clause := []string{}
-	if len(e.id) > 0 {
-		clause = append(clause, fmt.Sprintf("id: \"%s\"", e.id))
+	if len(b.id) > 0 {
+		clause = append(clause, fmt.Sprintf("id: \"%s\"", b.id))
 	}
-	if len(e.beacon) > 0 {
-		clause = append(clause, fmt.Sprintf("beacon: \"%s\"", e.beacon))
+	if len(b.beacon) > 0 {
+		clause = append(clause, fmt.Sprintf("beacon: \"%s\"", b.beacon))
 	}
-	if e.withCertainty {
-		clause = append(clause, fmt.Sprintf("certainty: %v", e.certainty))
+	if b.withCertainty {
+		clause = append(clause, fmt.Sprintf("certainty: %v", b.certainty))
 	}
-	if e.withDistance {
-		clause = append(clause, fmt.Sprintf("distance: %v", e.distance))
+	if b.withDistance {
+		clause = append(clause, fmt.Sprintf("distance: %v", b.distance))
 	}
-	if e.targets != nil {
-		clause = append(clause, fmt.Sprintf("targets:{%s}", e.targets.build()))
+	if b.targets != nil {
+		clause = append(clause, fmt.Sprintf("targets:{%s}", b.targets.build()))
 	}
-	if len(e.targetVectors) > 0 && e.targets == nil {
-		targetVectors, _ := json.Marshal(e.targetVectors)
+	if len(b.targetVectors) > 0 && b.targets == nil {
+		targetVectors, _ := json.Marshal(b.targetVectors)
 		clause = append(clause, fmt.Sprintf("targetVectors: %s", targetVectors))
 	}
 	return fmt.Sprintf("nearObject:{%s}", strings.Join(clause, " "))
 }
 
-func (e *NearObjectArgumentBuilder) togrpc() *pb.NearObject {
+func (b *NearObjectArgumentBuilder) togrpc() *pb.NearObject {
 	nearObject := &pb.NearObject{}
-	id := e.id
-	if len(e.beacon) > 0 {
-		id = crossref.ExtractID(e.beacon)
+	id := b.id
+	if len(b.beacon) > 0 {
+		id = crossref.ExtractID(b.beacon)
 	}
 	nearObject.Id = id
-	if e.withCertainty {
-		certainty := float64(e.certainty)
+	if b.withCertainty {
+		certainty := float64(b.certainty)
 		nearObject.Certainty = &certainty
 	}
-	if e.withDistance {
-		distance := float64(e.distance)
+	if b.withDistance {
+		distance := float64(b.distance)
 		nearObject.Distance = &distance
 	}
-	if e.targets != nil {
-		nearObject.Targets = e.targets.togrpc()
+	if b.targets != nil {
+		nearObject.Targets = b.targets.togrpc()
 	}
-	if len(e.targetVectors) > 0 && e.targets == nil {
-		nearObject.Targets = &pb.Targets{TargetVectors: e.targetVectors}
+	if len(b.targetVectors) > 0 && b.targets == nil {
+		nearObject.Targets = &pb.Targets{TargetVectors: b.targetVectors}
 	}
 	return nearObject
 }
