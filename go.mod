@@ -11,7 +11,7 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/weaviate v0.35.0
 	github.com/weaviate/weaviate v1.31.5
 	go.nhat.io/grpcmock v0.26.0
-	golang.org/x/oauth2 v0.30.0
+	golang.org/x/oauth2 v0.27.0
 	golang.org/x/sync v0.14.0
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.6
