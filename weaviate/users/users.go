@@ -7,14 +7,13 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/rbac"
-	"github.com/weaviate/weaviate/entities/models"
 )
 
 type UserTypeInput string
 
 const (
-	UserTypeInputDB   UserTypeInput = UserTypeInput(models.UserTypeInputDb)
-	UserTypeInputOIDC UserTypeInput = UserTypeInput(models.UserTypeInputOidc)
+	UserTypeInputDB   UserTypeInput = UserTypeInput("db")
+	UserTypeInputOIDC UserTypeInput = UserTypeInput("oidc")
 )
 
 type API struct {
