@@ -55,3 +55,10 @@ func (s *API) Canceler() *BackupCanceler {
 		connection: s.connection,
 	}
 }
+
+// Lister creates a builder for "list backups" request.
+func (s *API) Lister() *BackupLister {
+	return &BackupLister{
+		connection: s.connection,
+	}
+}

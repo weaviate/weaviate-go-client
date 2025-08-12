@@ -3,7 +3,9 @@ package backup
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
@@ -927,6 +929,39 @@ func TestBackups_integration(t *testing.T) {
 		require.NoError(t, err, "cancel request failed")
 
 		waitForCreateStatus(t, ctx, client, backend, id, ent_backup.Cancelled)
+	})
+
+	t.Run("list backups", func(t *testing.T) {
+		testsuit.CreateTestSchemaAndData(t, client)
+		defer testsuit.CleanUpWeaviate(t, client)
+
+		assertAllPizzasExist(t, client)
+
+		class := "Pizza"
+		backend := backup.BACKEND_FILESYSTEM
+
+		for range 3 {
+			id := fmt.Sprintf("list-test-%d", random.Int63())
+			log.Println(id)
+			_, err := client.Backup().Creator().
+				WithIncludeClassNames(class).
+				WithBackend(backend).
+				WithBackupID(id).
+				WithWaitForCompletion(true).
+				Do(t.Context())
+			require.NoErrorf(t, err, "couldn't start backup process for %s", id)
+		}
+
+		all, err := client.Backup().Lister().WithBackend(backend).Do(t.Context())
+		require.NoError(t, err, "list backups")
+
+		var relevant models.BackupListResponse
+		for _, backup := range all {
+			if strings.HasPrefix(backup.ID, "list-test-") {
+				relevant = append(relevant, backup)
+			}
+		}
+		require.Len(t, relevant, 3, "wrong number of backups")
 	})
 }
 
