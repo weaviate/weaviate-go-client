@@ -17,6 +17,8 @@ type Role struct {
 	Data        []DataPermission
 	Nodes       []NodesPermission
 	Roles       []RolesPermission
+	Replicate   []ReplicatePermission
+	Alias       []AliasPermission
 	Tenants     []TenantsPermission
 	Users       []UsersPermission
 }
@@ -144,6 +146,54 @@ func (p NodesPermission) toWeaviate() []*models.Permission {
 	return out
 }
 
+type ReplicatePermission struct {
+	Actions    []string
+	Collection string
+	Shard      string
+}
+
+func (p ReplicatePermission) ExtendRole(r *Role) {
+	r.Replicate = append(r.Replicate, p)
+}
+
+func (p ReplicatePermission) toWeaviate() []*models.Permission {
+	out := make([]*models.Permission, len(p.Actions))
+	for i, action := range p.Actions {
+		out[i] = &models.Permission{
+			Action: &action,
+			Replicate: &models.PermissionReplicate{
+				Collection: &p.Collection,
+				Shard:      &p.Shard,
+			},
+		}
+	}
+	return out
+}
+
+type AliasPermission struct {
+	Actions    []string
+	Alias      string
+	Collection string
+}
+
+func (p AliasPermission) ExtendRole(r *Role) {
+	r.Alias = append(r.Alias, p)
+}
+
+func (p AliasPermission) toWeaviate() []*models.Permission {
+	out := make([]*models.Permission, len(p.Actions))
+	for i, action := range p.Actions {
+		out[i] = &models.Permission{
+			Action: &action,
+			Aliases: &models.PermissionAliases{
+				Collection: &p.Collection,
+				Alias:      &p.Alias,
+			},
+		}
+	}
+	return out
+}
+
 type RolesPermission struct {
 	Actions []string
 	Role    string
@@ -205,7 +255,7 @@ func (r *Role) makeWeaviatePermissions() []*models.Permission {
 	var out []*models.Permission
 
 	appendPermissions := func(n int, toWeaviate func(int) []*models.Permission) {
-		for i := 0; i < n; i++ {
+		for i := range n {
 			out = append(out, toWeaviate(i)...)
 		}
 	}
@@ -216,6 +266,8 @@ func (r *Role) makeWeaviatePermissions() []*models.Permission {
 	appendPermissions(len(r.Data), func(i int) []*models.Permission { return r.Data[i].toWeaviate() })
 	appendPermissions(len(r.Nodes), func(i int) []*models.Permission { return r.Nodes[i].toWeaviate() })
 	appendPermissions(len(r.Roles), func(i int) []*models.Permission { return r.Roles[i].toWeaviate() })
+	appendPermissions(len(r.Replicate), func(i int) []*models.Permission { return r.Replicate[i].toWeaviate() })
+	appendPermissions(len(r.Alias), func(i int) []*models.Permission { return r.Alias[i].toWeaviate() })
 	appendPermissions(len(r.Tenants), func(i int) []*models.Permission { return r.Tenants[i].toWeaviate() })
 	appendPermissions(len(r.Users), func(i int) []*models.Permission { return r.Users[i].toWeaviate() })
 	return out
@@ -241,6 +293,8 @@ func roleFromWeaviate(r *models.Role) Role {
 	clusters := make(mergedPermissions)
 	tenants := make(mergedPermissions)
 	users := make(mergedPermissions)
+	replicate := make(mergedPermissions)
+	alias := make(mergedPermissions)
 
 	for _, perm := range r.Permissions {
 		switch {
@@ -282,6 +336,23 @@ func roleFromWeaviate(r *models.Role) Role {
 				}
 			}, *perm.Action, *perm.Roles.Role, *perm.Roles.Scope)
 
+		case perm.Replicate != nil:
+			replicate.Add(func(actions []string, resources ...string) Permission {
+				return ReplicatePermission{
+					Actions:    actions,
+					Collection: resources[0],
+					Shard:      resources[1],
+				}
+			}, *perm.Action, *perm.Replicate.Collection, *perm.Replicate.Shard)
+		case perm.Aliases != nil:
+			alias.Add(func(actions []string, resources ...string) Permission {
+				return AliasPermission{
+					Actions:    actions,
+					Alias:      resources[0],
+					Collection: resources[1],
+				}
+			}, *perm.Action, *perm.Aliases.Alias, *perm.Aliases.Collection)
+
 		// Weaviate v1.30 may define additional actions for these permission groups
 		// and we want to ensure they can be handled elegantly.
 		// While somewhat crude, this method makes sure any cluster/tenants/users
@@ -305,7 +376,7 @@ func roleFromWeaviate(r *models.Role) Role {
 			log.Printf("WARN: %q action belongs to an unrecognized group, try updating the client to the latest version", *perm.Action)
 		}
 	}
-	return NewRole(*r.Name, backups, collections, data, nodes, roles, clusters, tenants, users)
+	return NewRole(*r.Name, backups, collections, data, nodes, roles, replicate, alias, clusters, tenants, users)
 }
 
 // mergedPermissions groups permissions by resource.
@@ -316,10 +387,10 @@ func (mp mergedPermissions) Add(
 	action string, resources ...string,
 ) {
 	key := strings.Join(resources, "#")
-	if v, ok := mp[key]; !ok {
+	if p, ok := mp[key]; !ok {
 		mp[key] = &genericPermission{actions: []string{action}, resources: resources, permFunc: permFunc}
 	} else {
-		v.actions = append(v.actions, action)
+		p.actions = append(p.actions, action)
 	}
 }
 
