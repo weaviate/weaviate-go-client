@@ -3,7 +3,6 @@ package backup
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/rand"
 	"strings"
 	"testing"
@@ -942,7 +941,6 @@ func TestBackups_integration(t *testing.T) {
 
 		for range 3 {
 			id := fmt.Sprintf("list-test-%d", random.Int63())
-			log.Println(id)
 			_, err := client.Backup().Creator().
 				WithIncludeClassNames(class).
 				WithBackend(backend).
