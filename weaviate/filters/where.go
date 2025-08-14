@@ -100,35 +100,35 @@ func (b *WhereBuilder) Build() *models.WhereFilter {
 	}
 
 	if b.withValueInt {
-		if len(b.valueInt) == 1 && !b.isContainsOperator() {
+		if !isArray(b.valueInt, b.operator) {
 			whereFilter.ValueInt = &b.valueInt[0]
 		} else {
 			whereFilter.ValueIntArray = b.valueInt
 		}
 	}
 	if b.withValueNumber {
-		if len(b.valueNumber) == 1 && !b.isContainsOperator() {
+		if !isArray(b.valueNumber, b.operator) {
 			whereFilter.ValueNumber = &b.valueNumber[0]
 		} else {
 			whereFilter.ValueNumberArray = b.valueNumber
 		}
 	}
 	if b.withValueBoolean {
-		if len(b.valueBoolean) == 1 && !b.isContainsOperator() {
+		if !isArray(b.valueBoolean, b.operator) {
 			whereFilter.ValueBoolean = &b.valueBoolean[0]
 		} else {
 			whereFilter.ValueBooleanArray = b.valueBoolean
 		}
 	}
 	if len(b.valueString) > 0 {
-		if len(b.valueString) == 1 && !b.isContainsOperator() {
+		if !isArray(b.valueString, b.operator) {
 			whereFilter.ValueString = &b.valueString[0]
 		} else {
 			whereFilter.ValueStringArray = b.valueString
 		}
 	}
 	if len(b.valueText) > 0 {
-		if len(b.valueText) == 1 && !b.isContainsOperator() {
+		if !isArray(b.valueText, b.operator) {
 			whereFilter.ValueText = &b.valueText[0]
 		} else {
 			whereFilter.ValueTextArray = b.valueText
@@ -139,7 +139,7 @@ func (b *WhereBuilder) Build() *models.WhereFilter {
 		for i := range b.valueDate {
 			formattedDates[i] = b.valueDate[i].Format(time.RFC3339Nano)
 		}
-		if len(formattedDates) == 1 && !b.isContainsOperator() {
+		if !isArray(formattedDates, b.operator) {
 			whereFilter.ValueDate = &formattedDates[0]
 		} else {
 			whereFilter.ValueDateArray = formattedDates
@@ -155,10 +155,6 @@ func (b *WhereBuilder) Build() *models.WhereFilter {
 	}
 
 	return whereFilter
-}
-
-func (b *WhereBuilder) isContainsOperator() bool {
-	return b.operator == ContainsAll || b.operator == ContainsAny
 }
 
 // String formats the where builder as a string for GQL queries
@@ -237,8 +233,21 @@ func formatValues[T any](values []T, operator WhereOperator) string {
 		}
 	}
 	formattedValues := strings.Join(clause, ",")
-	if len(values) > 1 || operator == ContainsAll || operator == ContainsAny {
+	if isArray(values, operator) {
 		return fmt.Sprintf("[%s]", formattedValues)
 	}
 	return formattedValues
+}
+
+func isArray[T any](values []T, operator WhereOperator) bool {
+	if len(values) > 1 {
+		return true
+	}
+
+	switch operator {
+	case ContainsAll, ContainsAny, ContainsNone:
+		return true
+	default:
+		return false
+	}
 }
