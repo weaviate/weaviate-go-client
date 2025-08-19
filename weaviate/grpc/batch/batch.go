@@ -37,11 +37,11 @@ func (b Batch) GetBatchObjects(objects []*models.Object) ([]*pb.BatchObject, err
 			uid = uuid.New().String()
 		}
 		batchObject := &pb.BatchObject{
-			Uuid:       uid,
-			Collection: obj.Class,
-			Vector:     obj.Vector,
-			Tenant:     obj.Tenant,
-			Properties: properties,
+			Uuid:        uid,
+			Collection:  obj.Class,
+			VectorBytes: byteops.Fp32SliceToBytes(obj.Vector),
+			Tenant:      obj.Tenant,
+			Properties:  properties,
 		}
 		if obj.Vector != nil {
 			if b.gRPCVersionSupport.SupportsVectorBytesField() {
@@ -168,7 +168,7 @@ func (b Batch) extractProperties(properties map[string]interface{}, rootLevel bo
 				values = vv
 			}
 			numberArrayProperties = append(numberArrayProperties, &pb.NumberArrayProperties{
-				PropName: name, Values: values,
+				PropName: name, ValuesBytes: byteops.Fp64SliceToBytes(values),
 			})
 		case map[string]interface{}:
 			// Object Property
