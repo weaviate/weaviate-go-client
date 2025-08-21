@@ -33,7 +33,11 @@ func TestRole_UnmarshalJSON(t *testing.T) {
 		{"action": "update_roles", "roles": {"role": "UpdaterDeleter", "scope": "matching"}},
 		{"action": "delete_roles", "roles": {"role": "UpdaterDeleter", "scope": "matching"}},
 		{"action": "create_tenants"}, {"action": "read_tenants"},
-		{"action": "read_users"}, {"action": "assign_and_revoke_users"}
+		{"action": "read_users"}, {"action": "assign_and_revoke_users"},
+		{"action": "read_aliases", "aliases": {"collection": "Pizza", "alias": "PizzaAlias"}},
+		{"action": "update_aliases", "aliases": {"collection": "Pizza", "alias": "PizzaAlias"}},
+		{"action": "read_replicate", "replicate": {"collection": "Pizza", "shard": "diadem"}},
+		{"action": "update_replicate", "replicate": {"collection": "Pizza", "shard": "diadem"}}
 	]
 }`)
 
@@ -90,6 +94,16 @@ func TestRole_UnmarshalJSON(t *testing.T) {
 		},
 		rbac.TenantsPermission{Actions: []string{"create_tenants", "read_tenants"}},
 		rbac.UsersPermission{Actions: []string{"read_users", "assign_and_revoke_users"}},
+		rbac.AliasPermission{
+			Actions:    []string{"read_aliases", "update_aliases"},
+			Collection: "Pizza",
+			Alias:      "PizzaAlias",
+		},
+		rbac.ReplicatePermission{
+			Actions:    []string{"read_replicate", "update_replicate"},
+			Collection: "Pizza",
+			Shard:      "diadem",
+		},
 	)
 
 	err := json.Unmarshal(data, &got)
@@ -104,4 +118,6 @@ func TestRole_UnmarshalJSON(t *testing.T) {
 	require.ElementsMatch(t, want.Roles, got.Roles)
 	require.ElementsMatch(t, want.Tenants, got.Tenants)
 	require.ElementsMatch(t, want.Users, got.Users)
+	require.ElementsMatch(t, want.Alias, got.Alias)
+	require.ElementsMatch(t, want.Replicate, got.Replicate)
 }
