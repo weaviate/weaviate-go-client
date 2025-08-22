@@ -219,6 +219,7 @@ func (b *WhereBuilder) ToGRPC() *pb.Filters {
 	// TODO aliszka add Not
 
 	default:
+		//nolint:staticcheck // SA1019
 		filters.On = b.path
 
 		switch b.operator {
