@@ -245,7 +245,8 @@ func (b *WhereBuilder) ToGRPC() *pb.Filters {
 			filters.Operator = pb.Filters_OPERATOR_CONTAINS_ANY
 		case ContainsAll:
 			filters.Operator = pb.Filters_OPERATOR_CONTAINS_ALL
-		// TODO aliszka add ContainsNone
+		case ContainsNone:
+			filters.Operator = pb.Filters_OPERATOR_CONTAINS_NONE
 		default:
 		}
 
@@ -352,5 +353,10 @@ func formatDates(dates []time.Time) []string {
 }
 
 func isContainsOperator(operator WhereOperator) bool {
-	return operator == ContainsAll || operator == ContainsAny
+	switch operator {
+	case ContainsAny, ContainsAll, ContainsNone:
+		return true
+	default:
+		return false
+	}
 }

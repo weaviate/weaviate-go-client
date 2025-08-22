@@ -168,14 +168,14 @@ func TestWhereBuilder_String(t *testing.T) {
 			want:    "where:{operator: ContainsAll path: [\"id\"] valueNumber: [1.1,2.1,3.1]}",
 		},
 		{
-			name:    "with: path operator.ContainsAll boolean",
-			builder: Where().WithPath([]string{"id"}).WithOperator(ContainsAll).WithValueBoolean(true, false),
-			want:    "where:{operator: ContainsAll path: [\"id\"] valueBoolean: [true,false]}",
+			name:    "with: path operator.ContainsNone boolean",
+			builder: Where().WithPath([]string{"id"}).WithOperator(ContainsNone).WithValueBoolean(true, false),
+			want:    "where:{operator: ContainsNone path: [\"id\"] valueBoolean: [true,false]}",
 		},
 		{
-			name:    "with: path operator.ContainsAll date",
-			builder: Where().WithPath([]string{"id"}).WithOperator(ContainsAll).WithValueDate(now, nowPlus1hour),
-			want: fmt.Sprintf("where:{operator: ContainsAll path: [\"id\"] valueDate: [\"%s\",\"%s\"]}",
+			name:    "with: path operator.ContainsNone date",
+			builder: Where().WithPath([]string{"id"}).WithOperator(ContainsNone).WithValueDate(now, nowPlus1hour),
+			want: fmt.Sprintf("where:{operator: ContainsNone path: [\"id\"] valueDate: [\"%s\",\"%s\"]}",
 				now.Format(time.RFC3339Nano), nowPlus1hour.Format(time.RFC3339Nano)),
 		},
 		{
@@ -184,8 +184,13 @@ func TestWhereBuilder_String(t *testing.T) {
 				WithOperands([]*WhereBuilder{
 					Where().WithPath([]string{"wordCount"}).WithOperator(ContainsAll).WithValueInt(1, 2),
 					Where().WithPath([]string{"w1", "w2", "w3"}).WithOperator(ContainsAny).WithValueString("word", "sentence"),
+					Where().WithPath([]string{"price"}).WithOperator(ContainsNone).WithValueNumber(10.99, 21.37),
 				}),
-			want: "where:{operator: And operands:[{operator: ContainsAll path: [\"wordCount\"] valueInt: [1,2]},{operator: ContainsAny path: [\"w1\",\"w2\",\"w3\"] valueString: [\"word\",\"sentence\"]}]}",
+			want: "where:{operator: And operands:[" +
+				"{operator: ContainsAll path: [\"wordCount\"] valueInt: [1,2]}," +
+				"{operator: ContainsAny path: [\"w1\",\"w2\",\"w3\"] valueString: [\"word\",\"sentence\"]}," +
+				"{operator: ContainsNone path: [\"price\"] valueNumber: [10.99,21.37]}" +
+				"]}",
 		},
 	}
 	for _, tt := range tests {
