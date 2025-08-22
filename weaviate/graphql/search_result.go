@@ -77,38 +77,17 @@ func toResults(results []*pb.SearchResult) []SearchResult {
 }
 
 func extractProperties(p *pb.PropertiesResult) map[string]any {
-	if p != nil {
-		properties := make(map[string]any)
-		if nonRefProps := p.GetNonRefProperties(); nonRefProps != nil {
-			properties = nonRefProps.AsMap()
-		} else if nonRefProps := p.GetNonRefProps(); nonRefProps != nil {
-			for name, val := range nonRefProps.GetFields() {
-				properties[name] = getValue(val)
-			}
-		}
-		if props := p.GetTextArrayProperties(); len(props) > 0 {
-			for i := range props {
-				properties[props[i].GetPropName()] = props[i].GetValues()
-			}
-		}
-		if props := p.GetBooleanArrayProperties(); len(props) > 0 {
-			for i := range props {
-				properties[props[i].GetPropName()] = props[i].GetValues()
-			}
-		}
-		if props := p.GetIntArrayProperties(); len(props) > 0 {
-			for i := range props {
-				properties[props[i].GetPropName()] = props[i].GetValues()
-			}
-		}
-		if props := p.GetNumberArrayProperties(); len(props) > 0 {
-			for i := range props {
-				properties[props[i].GetPropName()] = props[i].GetValues()
-			}
-		}
-		return properties
+	if p == nil {
+		return nil
 	}
-	return nil
+
+	properties := make(map[string]any)
+	if nonRefProps := p.GetNonRefProps(); nonRefProps != nil {
+		for name, val := range nonRefProps.GetFields() {
+			properties[name] = getValue(val)
+		}
+	}
+	return properties
 }
 
 func extractReferences(p *pb.PropertiesResult) []ReferenceResult {
