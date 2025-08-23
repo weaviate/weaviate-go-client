@@ -163,7 +163,7 @@ func (s *Search) togrpc() *pb.SearchRequest {
 		Limit:            s.limit,
 		Offset:           s.offset,
 		Autocut:          s.autocut,
-		After:            s.after,
+		After:            &s.after,
 		ConsistencyLevel: common.GetConsistencyLevel(s.consistencyLevel),
 	}
 	if s.withNearText != nil {
