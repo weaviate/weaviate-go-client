@@ -157,13 +157,17 @@ func (s *Search) WithMetadata(metadata *Metadata) *Search {
 }
 
 func (s *Search) togrpc() *pb.SearchRequest {
+	var after *string // only set if not empty
+	if s.after != "" {
+		after = &s.after
+	}
 	req := &pb.SearchRequest{
 		Collection:       s.collection,
 		Tenant:           s.tenant,
 		Limit:            s.limit,
 		Offset:           s.offset,
 		Autocut:          s.autocut,
-		After:            &s.after,
+		After:            after,
 		ConsistencyLevel: common.GetConsistencyLevel(s.consistencyLevel),
 	}
 	if s.withNearText != nil {
