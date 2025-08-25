@@ -708,7 +708,7 @@ type AllProperties struct {
 	Authors       []string
 	AuthorsArray  [][]string
 	Colors        []string
-	ColorssArray  [][]string
+	ColorsArray  [][]string
 	Numbers       []float64
 	NumbersArray  [][]float64
 	Ints          []int64
@@ -737,7 +737,7 @@ func AllPropertiesData() AllProperties {
 			{"John"},
 		},
 		Colors: []string{"red", "blue", "green"},
-		ColorssArray: [][]string{
+		ColorsArray: [][]string{
 			{"red", "blue", "green"},
 			{"red", "blue"},
 			{"red"},
@@ -785,7 +785,7 @@ func AllPropertiesDataAsMap() []map[string]interface{} {
 	authors := data.Authors
 	authorsArray := data.AuthorsArray
 	colors := data.Colors
-	colorsArray := data.ColorssArray
+	colorsArray := data.ColorsArray
 	numbers := data.Numbers
 	numbersArray := data.NumbersArray
 	ints := data.Ints
