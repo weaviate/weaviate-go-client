@@ -26,7 +26,7 @@ func TestAlias_integration(t *testing.T) {
 		client := testsuit.CreateTestClient(false)
 
 		alias := &alias.Alias{
-			Alias: "Band-Alias",
+			Alias: "BandAlias",
 			Class: "Band",
 		}
 		err := client.Alias().AliasCreator().WithAlias(alias).Do(ctx)
@@ -43,7 +43,7 @@ func TestAlias_integration(t *testing.T) {
 		}
 
 		alias := &alias.Alias{
-			Alias: "Band-Alias",
+			Alias: "BandAlias",
 			Class: schemaClass.Class,
 		}
 
@@ -74,7 +74,7 @@ func TestAlias_integration(t *testing.T) {
 		}
 
 		alias := &alias.Alias{
-			Alias: "Band-Alias",
+			Alias: "BandAlias",
 			Class: schemaClass.Class,
 		}
 
@@ -114,12 +114,12 @@ func TestAlias_integration(t *testing.T) {
 		}
 
 		alias2 := &alias.Alias{
-			Alias: "Band-Alias",
+			Alias: "BandAlias",
 			Class: schemaClass2.Class,
 		}
 
 		alias := &alias.Alias{
-			Alias: "Band-Alias",
+			Alias: "BandAlias",
 			Class: schemaClass.Class,
 		}
 

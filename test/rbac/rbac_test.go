@@ -23,9 +23,10 @@ func TestRBAC_integration(t *testing.T) {
 	rolesClient := client.Roles()
 
 	const (
-		adminRole  = "admin"
-		rootRole   = "root"
-		viewerRole = "viewer"
+		adminRole    = "admin"
+		rootRole     = "root"
+		viewerRole   = "viewer"
+		readonlyRole = "read-only"
 
 		rootUser = "adam-the-admin"
 		pizza    = "Pizza"
@@ -59,12 +60,18 @@ func TestRBAC_integration(t *testing.T) {
 	}
 
 	t.Run("get all roles", func(t *testing.T) {
+		roles := []string{adminRole, rootRole, viewerRole, readonlyRole}
+
 		all, err := rolesClient.AllGetter().Do(ctx)
 		require.NoError(t, err, "fetch all roles")
-		require.Lenf(t, all, 3, "wrong number of roles")
-		require.Equal(t, all[0].Name, adminRole)
-		require.Equal(t, all[1].Name, rootRole)
-		require.Equal(t, all[2].Name, viewerRole)
+		require.Lenf(t, all, len(roles), "wrong number of roles")
+
+		allNames := make([]string, len(roles))
+		for i := range all {
+			allNames[i] = all[i].Name
+		}
+
+		require.ElementsMatch(t, roles, allNames)
 	})
 
 	t.Run("get assigned users", func(t *testing.T) {
