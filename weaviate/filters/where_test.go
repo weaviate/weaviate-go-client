@@ -129,9 +129,11 @@ func TestWhereBuilder_String(t *testing.T) {
 		},
 		{
 			name: "with: multiple path operator.Not date",
-			builder: Where().WithPath([]string{"p1", "p2", "p3"}).WithOperator(Not).
-				WithValueDate(now),
-			want: fmt.Sprintf("where:{operator: Not path: [\"p1\",\"p2\",\"p3\"] valueDate: \"%s\"}", now.Format(time.RFC3339Nano)),
+			builder: Where().WithOperator(Not).
+				WithOperands([]*WhereBuilder{
+					Where().WithPath([]string{"p1", "p2", "p3"}).WithOperator(Equal).WithValueDate(now),
+				}),
+			want: fmt.Sprintf("where:{operator: Not operands:[{operator: Equal path: [\"p1\",\"p2\",\"p3\"] valueDate: \"%s\"}]}", now.Format(time.RFC3339Nano)),
 		},
 		{
 			name: "with: operands with multiple path",

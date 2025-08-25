@@ -216,7 +216,9 @@ func (b *WhereBuilder) ToGRPC() *pb.Filters {
 		filters.Operator = pb.Filters_OPERATOR_AND
 		filters.Filters = operandsToGRPC(b.operands)
 
-	// TODO aliszka add Not
+	case Not:
+		filters.Operator = pb.Filters_OPERATOR_NOT
+		filters.Filters = operandsToGRPC(b.operands)
 
 	default:
 		//nolint:staticcheck // SA1019
