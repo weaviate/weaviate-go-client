@@ -64,7 +64,7 @@ func TestGroup_integration(t *testing.T) {
 	knownGroups, err = groupsClient.OIDC().GetKnownGroups().Do(ctx)
 	require.NoError(t, err)
 	require.Len(t, knownGroups, 1)
-	require.Equal(t, roleName, knownGroups[0])
+	require.Equal(t, group, knownGroups[0])
 
 	require.NoErrorf(t, groupsClient.OIDC().RolesRevoker().WithGroupId(group).WithRoles(roleName).Do(ctx), "assign %q role", roleName)
 
