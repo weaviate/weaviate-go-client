@@ -50,25 +50,25 @@ func TestGroup_integration(t *testing.T) {
 		rbac.BackupsPermission{Actions: []string{models.PermissionActionManageBackups}, Collection: pizza},
 	))
 
-	groups, err := groupsClient.OIDC().RolesGetter().WithGroupID(group).Do(ctx)
+	knownGroups, err := groupsClient.OIDC().GetKnownGroups().Do(ctx)
 	require.NoError(t, err)
-	require.Len(t, groups, 0)
+	require.Len(t, knownGroups, 0)
 
 	require.NoErrorf(t, groupsClient.OIDC().RolesAssigner().WithGroupId(group).WithRoles(roleName).Do(ctx), "assign %q role", roleName)
 
-	groups, err = groupsClient.OIDC().RolesGetter().WithGroupID(group).Do(ctx)
+	roles, err := groupsClient.OIDC().RolesGetter().WithGroupID(group).Do(ctx)
 	require.NoError(t, err)
-	require.Len(t, groups, 1)
-	require.Equal(t, roleName, groups[0].Name)
+	require.Len(t, roles, 1)
+	require.Equal(t, roleName, roles[0].Name)
 
-	knownGroups, err := groupsClient.OIDC().GetKnownGroups().Do(ctx)
+	knownGroups, err = groupsClient.OIDC().GetKnownGroups().Do(ctx)
 	require.NoError(t, err)
-	require.Len(t, groups, 1)
+	require.Len(t, knownGroups, 1)
 	require.Equal(t, roleName, knownGroups[0])
 
 	require.NoErrorf(t, groupsClient.OIDC().RolesRevoker().WithGroupId(group).WithRoles(roleName).Do(ctx), "assign %q role", roleName)
 
-	groups, err = groupsClient.OIDC().RolesGetter().WithGroupID(group).Do(ctx)
+	knownGroups, err = groupsClient.OIDC().GetKnownGroups().Do(ctx)
 	require.NoError(t, err)
-	require.Len(t, groups, 0)
+	require.Len(t, knownGroups, 0)
 }
