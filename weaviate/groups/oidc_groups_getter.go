@@ -29,11 +29,7 @@ func (r *KnownGroupLister) Do(ctx context.Context) (KnownGroupList, error) {
 			return nil, except.NewDerivedWeaviateClientError(err)
 		}
 
-		data := make(KnownGroupList, len(response))
-		for i, groupName := range response {
-			data[i] = groupName
-		}
-		return data, err
+		return response, err
 	}
 	return nil, except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
