@@ -221,7 +221,7 @@ func (b *WhereBuilder) ToGRPC() *pb.Filters {
 		filters.Filters = operandsToGRPC(b.operands)
 
 	default:
-		//nolint:staticcheck // SA1019
+		//nolint:staticcheck // ignore SA1019 for deprecated code (Filters.On)
 		filters.On = b.path
 
 		switch b.operator {
