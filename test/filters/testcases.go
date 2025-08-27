@@ -2,8 +2,10 @@ package filtertestcases
 
 import (
 	"fmt"
+	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/filters"
 )
@@ -24,7 +26,7 @@ type AllFilterTestCases struct {
 	OrAnd    []FilterTestCase
 }
 
-func AllPropsTestCases() AllFilterTestCases {
+func AllPropsTestCases(tb testing.TB) AllFilterTestCases {
 	data := testsuit.AllPropertiesData()
 
 	id1, id2, id3 := data.ID1, data.ID2, data.ID3
@@ -200,9 +202,9 @@ func AllPropsTestCases() AllFilterTestCases {
 				WithPath([]string{"dates"}).
 				WithOperator(filters.ContainsAll).
 				WithValueDate(
-					mustGetTime("2009-11-01T23:00:00Z"),
-					mustGetTime("2009-11-02T23:00:00Z"),
-					mustGetTime("2009-11-03T23:00:00Z"),
+					mustGetTime(tb, "2009-11-01T23:00:00Z"),
+					mustGetTime(tb, "2009-11-02T23:00:00Z"),
+					mustGetTime(tb, "2009-11-03T23:00:00Z"),
 				),
 			Property:    "dates",
 			ExpectedIds: []string{id1},
@@ -213,9 +215,9 @@ func AllPropsTestCases() AllFilterTestCases {
 				WithPath([]string{"dates"}).
 				WithOperator(filters.ContainsAny).
 				WithValueDate(
-					mustGetTime("2009-11-01T23:00:00Z"),
-					mustGetTime("2009-11-02T23:00:00Z"),
-					mustGetTime("2009-11-03T23:00:00Z"),
+					mustGetTime(tb, "2009-11-01T23:00:00Z"),
+					mustGetTime(tb, "2009-11-02T23:00:00Z"),
+					mustGetTime(tb, "2009-11-03T23:00:00Z"),
 				),
 			Property:    "dates",
 			ExpectedIds: []string{id1, id2, id3},
@@ -226,8 +228,8 @@ func AllPropsTestCases() AllFilterTestCases {
 				WithPath([]string{"dates"}).
 				WithOperator(filters.ContainsNone).
 				WithValueDate(
-					mustGetTime("2009-11-03T23:00:00Z"),
-					mustGetTime("1970-01-01T00:00:00Z"),
+					mustGetTime(tb, "2009-11-03T23:00:00Z"),
+					mustGetTime(tb, "1970-01-01T00:00:00Z"),
 				),
 			Property:    "dates",
 			ExpectedIds: []string{id2, id3},
@@ -340,7 +342,7 @@ func AllPropsTestCases() AllFilterTestCases {
 				WithPath([]string{"date"}).
 				WithOperator(filters.ContainsAny).
 				WithValueDate(
-					mustGetTime("2009-11-01T23:00:00Z"), mustGetTime("2009-11-02T23:00:00Z"), mustGetTime("2009-11-03T23:00:00Z"),
+					mustGetTime(tb, "2009-11-01T23:00:00Z"), mustGetTime(tb, "2009-11-02T23:00:00Z"), mustGetTime(tb, "2009-11-03T23:00:00Z"),
 				),
 			Property:    "date",
 			ExpectedIds: []string{id1, id2, id3},
@@ -405,7 +407,7 @@ func AllPropsTestCases() AllFilterTestCases {
 			Where: filters.Where().
 				WithPath([]string{"date"}).
 				WithOperator(filters.ContainsAll).
-				WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+				WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 			Property:    "date",
 			ExpectedIds: []string{id2},
 		},
@@ -470,8 +472,8 @@ func AllPropsTestCases() AllFilterTestCases {
 				WithPath([]string{"date"}).
 				WithOperator(filters.ContainsNone).
 				WithValueDate(
-					mustGetTime("2009-11-02T23:00:00Z"),
-					mustGetTime("2009-11-03T23:00:00Z"),
+					mustGetTime(tb, "2009-11-02T23:00:00Z"),
+					mustGetTime(tb, "2009-11-03T23:00:00Z"),
 				),
 			Property:    "date",
 			ExpectedIds: []string{id1},
@@ -593,7 +595,7 @@ func AllPropsTestCases() AllFilterTestCases {
 			Where: filters.Where().
 				WithPath([]string{"dates"}).
 				WithOperator(filters.Equal).
-				WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+				WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 			Property:    "dates",
 			ExpectedIds: []string{id1, id2},
 		},
@@ -602,7 +604,7 @@ func AllPropsTestCases() AllFilterTestCases {
 			Where: filters.Where().
 				WithPath([]string{"dates"}).
 				WithOperator(filters.NotEqual).
-				WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+				WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 			Property:    "dates",
 			ExpectedIds: []string{id3},
 		},
@@ -721,7 +723,7 @@ func AllPropsTestCases() AllFilterTestCases {
 			Where: filters.Where().
 				WithPath([]string{"date"}).
 				WithOperator(filters.Equal).
-				WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+				WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 			Property:    "date",
 			ExpectedIds: []string{id2},
 		},
@@ -730,7 +732,7 @@ func AllPropsTestCases() AllFilterTestCases {
 			Where: filters.Where().
 				WithPath([]string{"date"}).
 				WithOperator(filters.NotEqual).
-				WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+				WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 			Property:    "date",
 			ExpectedIds: []string{id1, id3},
 		},
@@ -851,7 +853,7 @@ func AllPropsTestCases() AllFilterTestCases {
 			Where: filters.Where().
 				WithPath([]string{"dates"}).
 				WithOperator(filters.GreaterThanEqual).
-				WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+				WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 			Property:    "dates",
 			ExpectedIds: []string{id1, id2},
 		},
@@ -860,7 +862,7 @@ func AllPropsTestCases() AllFilterTestCases {
 			Where: filters.Where().
 				WithPath([]string{"dates"}).
 				WithOperator(filters.GreaterThan).
-				WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+				WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 			Property:    "dates",
 			ExpectedIds: []string{id1},
 		},
@@ -979,7 +981,7 @@ func AllPropsTestCases() AllFilterTestCases {
 			Where: filters.Where().
 				WithPath([]string{"date"}).
 				WithOperator(filters.GreaterThanEqual).
-				WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+				WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 			Property:    "date",
 			ExpectedIds: []string{id2, id3},
 		},
@@ -988,7 +990,7 @@ func AllPropsTestCases() AllFilterTestCases {
 			Where: filters.Where().
 				WithPath([]string{"date"}).
 				WithOperator(filters.GreaterThan).
-				WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+				WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 			Property:    "date",
 			ExpectedIds: []string{id3},
 		},
@@ -1109,7 +1111,7 @@ func AllPropsTestCases() AllFilterTestCases {
 			Where: filters.Where().
 				WithPath([]string{"dates"}).
 				WithOperator(filters.LessThanEqual).
-				WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+				WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 			Property:    "dates",
 			ExpectedIds: []string{id1, id2, id3},
 		},
@@ -1118,7 +1120,7 @@ func AllPropsTestCases() AllFilterTestCases {
 			Where: filters.Where().
 				WithPath([]string{"dates"}).
 				WithOperator(filters.LessThan).
-				WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+				WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 			Property:    "dates",
 			ExpectedIds: []string{id1, id2, id3},
 		},
@@ -1237,7 +1239,7 @@ func AllPropsTestCases() AllFilterTestCases {
 			Where: filters.Where().
 				WithPath([]string{"date"}).
 				WithOperator(filters.LessThanEqual).
-				WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+				WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 			Property:    "date",
 			ExpectedIds: []string{id1, id2},
 		},
@@ -1246,7 +1248,7 @@ func AllPropsTestCases() AllFilterTestCases {
 			Where: filters.Where().
 				WithPath([]string{"date"}).
 				WithOperator(filters.LessThan).
-				WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+				WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 			Property:    "date",
 			ExpectedIds: []string{id1},
 		},
@@ -1507,11 +1509,11 @@ func AllPropsTestCases() AllFilterTestCases {
 					filters.Where().
 						WithPath([]string{"dates"}).
 						WithOperator(filters.Equal).
-						WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+						WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 					filters.Where().
 						WithPath([]string{"date"}).
 						WithOperator(filters.Equal).
-						WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+						WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 				}),
 			Property:    "dates",
 			ExpectedIds: []string{id1, id2},
@@ -1524,11 +1526,11 @@ func AllPropsTestCases() AllFilterTestCases {
 					filters.Where().
 						WithPath([]string{"dates"}).
 						WithOperator(filters.Equal).
-						WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+						WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 					filters.Where().
 						WithPath([]string{"date"}).
 						WithOperator(filters.Equal).
-						WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+						WithValueDate(mustGetTime(tb, "2009-11-02T23:00:00Z")),
 				}),
 			Property:    "dates",
 			ExpectedIds: []string{id2},
@@ -1545,11 +1547,10 @@ func AllPropsTestCases() AllFilterTestCases {
 	}
 }
 
-func mustGetTime(date string) time.Time {
+func mustGetTime(tb testing.TB, date string) time.Time {
+	tb.Helper()
 	parsed, err := time.Parse(time.RFC3339Nano, date)
-	if err != nil {
-		panic(fmt.Sprintf("can't parse date: %v", date))
-	}
+	require.NoError(tb, err, "parse date %v", date)
 	return parsed
 }
 

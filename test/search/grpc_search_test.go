@@ -264,7 +264,7 @@ func TestSearch_all_properties(t *testing.T) {
 				}
 				return ids
 			}
-			testCases := filtertestcases.AllPropsTestCases()
+			testCases := filtertestcases.AllPropsTestCases(t)
 			runTestCases := func(testCases []filtertestcases.FilterTestCase) func(t *testing.T) {
 				return func(t *testing.T) {
 					for _, tc := range testCases {
