@@ -2186,7 +2186,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 			}
 		})
 
-		t.Run("ContainsAny and ContainsAll", func(t *testing.T) {
+		t.Run("ContainsAny / ContainsAll / ContainsNone", func(t *testing.T) {
 			className := "WhereTest"
 			data := testsuit.AllPropertiesData()
 			id1, id2, id3 := data.ID1, data.ID2, data.ID3
@@ -2291,6 +2291,15 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 						expectedIds: []string{id1, id2, id3},
 					},
 					{
+						name: "contains none authors with string array",
+						where: filters.Where().
+							WithPath([]string{"authors"}).
+							WithOperator(filters.ContainsNone).
+							WithValueString("Joseph", "Missing"),
+						property:    "authors",
+						expectedIds: []string{id2, id3},
+					},
+					{
 						name: "contains all colors with text array",
 						where: filters.Where().
 							WithPath([]string{"colors"}).
@@ -2307,6 +2316,15 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 							WithValueText("red", "blue", "green"),
 						property:    "colors",
 						expectedIds: []string{id1, id2, id3},
+					},
+					{
+						name: "contains none colors with text array",
+						where: filters.Where().
+							WithPath([]string{"colors"}).
+							WithOperator(filters.ContainsNone).
+							WithValueText("green", "missing"),
+						property:    "colors",
+						expectedIds: []string{id2, id3},
 					},
 					{
 						name: "contains all numbers with number array",
@@ -2327,6 +2345,15 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 						expectedIds: []string{id1, id2, id3},
 					},
 					{
+						name: "contains none numbers with number array",
+						where: filters.Where().
+							WithPath([]string{"numbers"}).
+							WithOperator(filters.ContainsNone).
+							WithValueNumber(3.3, 0),
+						property:    "numbers",
+						expectedIds: []string{id2, id3},
+					},
+					{
 						name: "contains all ints with int array",
 						where: filters.Where().
 							WithPath([]string{"ints"}).
@@ -2343,6 +2370,42 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 							WithValueInt(1, 2, 3),
 						property:    "ints",
 						expectedIds: []string{id1, id2, id3},
+					},
+					{
+						name: "contains none ints with int array",
+						where: filters.Where().
+							WithPath([]string{"ints"}).
+							WithOperator(filters.ContainsNone).
+							WithValueInt(3, 0),
+						property:    "ints",
+						expectedIds: []string{id2, id3},
+					},
+					{
+						name: "contains all bools with bool array",
+						where: filters.Where().
+							WithPath([]string{"bools"}).
+							WithOperator(filters.ContainsAll).
+							WithValueBoolean(true, false, true),
+						property:    "bools",
+						expectedIds: []string{id1, id2},
+					},
+					{
+						name: "contains any bools with bool array",
+						where: filters.Where().
+							WithPath([]string{"bools"}).
+							WithOperator(filters.ContainsAny).
+							WithValueBoolean(true, false),
+						property:    "bools",
+						expectedIds: []string{id1, id2, id3},
+					},
+					{
+						name: "contains none bools with bool array",
+						where: filters.Where().
+							WithPath([]string{"bools"}).
+							WithOperator(filters.ContainsNone).
+							WithValueBoolean(false),
+						property:    "bools",
+						expectedIds: []string{id3},
 					},
 					{
 						name: "contains all uuids with uuid array",
@@ -2363,12 +2426,23 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 						expectedIds: []string{id1, id2, id3},
 					},
 					{
+						name: "contains none uuids with uuid array",
+						where: filters.Where().
+							WithPath([]string{"uuids"}).
+							WithOperator(filters.ContainsNone).
+							WithValueText(id3, "FFFFFFFF-FFFF-0000-0000-000000000000"),
+						property:    "uuids",
+						expectedIds: []string{id2, id3},
+					},
+					{
 						name: "contains all dates with dates array",
 						where: filters.Where().
 							WithPath([]string{"dates"}).
 							WithOperator(filters.ContainsAll).
 							WithValueDate(
-								mustGetTime("2009-11-01T23:00:00Z"), mustGetTime("2009-11-02T23:00:00Z"), mustGetTime("2009-11-03T23:00:00Z"),
+								mustGetTime("2009-11-01T23:00:00Z"),
+								mustGetTime("2009-11-02T23:00:00Z"),
+								mustGetTime("2009-11-03T23:00:00Z"),
 							),
 						property:    "dates",
 						expectedIds: []string{id1},
@@ -2379,10 +2453,24 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 							WithPath([]string{"dates"}).
 							WithOperator(filters.ContainsAny).
 							WithValueDate(
-								mustGetTime("2009-11-01T23:00:00Z"), mustGetTime("2009-11-02T23:00:00Z"), mustGetTime("2009-11-03T23:00:00Z"),
+								mustGetTime("2009-11-01T23:00:00Z"),
+								mustGetTime("2009-11-02T23:00:00Z"),
+								mustGetTime("2009-11-03T23:00:00Z"),
 							),
 						property:    "dates",
 						expectedIds: []string{id1, id2, id3},
+					},
+					{
+						name: "contains none dates with dates array",
+						where: filters.Where().
+							WithPath([]string{"dates"}).
+							WithOperator(filters.ContainsNone).
+							WithValueDate(
+								mustGetTime("2009-11-03T23:00:00Z"),
+								mustGetTime("1970-01-01T00:00:00Z"),
+							),
+						property:    "dates",
+						expectedIds: []string{id2, id3},
 					},
 					{
 						name: "complex contains all ints and all numbers with AND on int array",
@@ -2402,7 +2490,7 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 						expectedIds: []string{id1},
 					},
 					{
-						name: "complex contains any ints and all numbers with OR on int array",
+						name: "complex contains any ints and all numbers and none texts with OR",
 						where: filters.Where().
 							WithOperator(filters.Or).
 							WithOperands([]*filters.WhereBuilder{
@@ -2413,10 +2501,14 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 								filters.Where().
 									WithPath([]string{"ints"}).
 									WithOperator(filters.ContainsAny).
-									WithValueInt(1, 2, 3),
+									WithValueInt(3),
+								filters.Where().
+									WithPath([]string{"authors"}).
+									WithOperator(filters.ContainsNone).
+									WithValueString("Jenny", "Missing"),
 							}),
 						property:    "ints",
-						expectedIds: []string{id1, id2, id3},
+						expectedIds: []string{id1, id3},
 					},
 					// Contains operator with primitives
 					{
@@ -2456,6 +2548,15 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 						expectedIds: []string{id1, id2, id3},
 					},
 					{
+						name: "contains any bool with bool",
+						where: filters.Where().
+							WithPath([]string{"bool"}).
+							WithOperator(filters.ContainsAny).
+							WithValueBoolean(true, false, true),
+						property:    "bool",
+						expectedIds: []string{id1, id2, id3},
+					},
+					{
 						name: "contains any uuid with uuid",
 						where: filters.Where().
 							WithPath([]string{"uuid"}).
@@ -2483,6 +2584,137 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 							),
 						property:    "date",
 						expectedIds: []string{id1, id2, id3},
+					},
+
+					{
+						name: "contains all author with string",
+						where: filters.Where().
+							WithPath([]string{"author"}).
+							WithOperator(filters.ContainsAll).
+							WithValueString("Jenny"),
+						property:    "author",
+						expectedIds: []string{id2},
+					},
+					{
+						name: "contains all color with text",
+						where: filters.Where().
+							WithPath([]string{"color"}).
+							WithOperator(filters.ContainsAll).
+							WithValueText("blue"),
+						property:    "color",
+						expectedIds: []string{id2},
+					},
+					{
+						name: "contains all number with number",
+						where: filters.Where().
+							WithPath([]string{"number"}).
+							WithOperator(filters.ContainsAll).
+							WithValueNumber(2.2),
+						property:    "number",
+						expectedIds: []string{id2},
+					},
+					{
+						name: "contains all int with int",
+						where: filters.Where().
+							WithPath([]string{"int"}).
+							WithOperator(filters.ContainsAll).
+							WithValueInt(2),
+						property:    "int",
+						expectedIds: []string{id2},
+					},
+					{
+						name: "contains all bool with bool",
+						where: filters.Where().
+							WithPath([]string{"bool"}).
+							WithOperator(filters.ContainsAll).
+							WithValueBoolean(false),
+						property:    "bool",
+						expectedIds: []string{id2},
+					},
+					{
+						name: "contains all uuid with uuid",
+						where: filters.Where().
+							WithPath([]string{"uuid"}).
+							WithOperator(filters.ContainsAll).
+							WithValueText(id2),
+						property:    "uuid",
+						expectedIds: []string{id2},
+					},
+					{
+						name: "contains all date with date",
+						where: filters.Where().
+							WithPath([]string{"date"}).
+							WithOperator(filters.ContainsAll).
+							WithValueDate(mustGetTime("2009-11-02T23:00:00Z")),
+						property:    "date",
+						expectedIds: []string{id2},
+					},
+
+					{
+						name: "contains none author with string",
+						where: filters.Where().
+							WithPath([]string{"author"}).
+							WithOperator(filters.ContainsNone).
+							WithValueString("Jenny", "Joseph"),
+						property:    "author",
+						expectedIds: []string{id1},
+					},
+					{
+						name: "contains none color with text",
+						where: filters.Where().
+							WithPath([]string{"color"}).
+							WithOperator(filters.ContainsNone).
+							WithValueText("blue", "green"),
+						property:    "color",
+						expectedIds: []string{id1},
+					},
+					{
+						name: "contains none number with number",
+						where: filters.Where().
+							WithPath([]string{"number"}).
+							WithOperator(filters.ContainsNone).
+							WithValueNumber(2.2, 3.3),
+						property:    "number",
+						expectedIds: []string{id1},
+					},
+					{
+						name: "contains none int with int",
+						where: filters.Where().
+							WithPath([]string{"int"}).
+							WithOperator(filters.ContainsNone).
+							WithValueInt(2, 3),
+						property:    "int",
+						expectedIds: []string{id1},
+					},
+					{
+						name: "contains none bool with bool",
+						where: filters.Where().
+							WithPath([]string{"bool"}).
+							WithOperator(filters.ContainsNone).
+							WithValueBoolean(false),
+						property:    "bool",
+						expectedIds: []string{id1, id3},
+					},
+					{
+						name: "contains none uuid with uuid",
+						where: filters.Where().
+							WithPath([]string{"uuid"}).
+							WithOperator(filters.ContainsNone).
+							WithValueText(id2, id3),
+						property:    "uuid",
+						expectedIds: []string{id1},
+					},
+					{
+						name: "contains none date with date",
+						where: filters.Where().
+							WithPath([]string{"date"}).
+							WithOperator(filters.ContainsNone).
+							WithValueDate(
+								mustGetTime("2009-11-02T23:00:00Z"),
+								mustGetTime("2009-11-03T23:00:00Z"),
+							),
+						property:    "date",
+						expectedIds: []string{id1},
 					},
 				}
 				for _, tt := range tests {
