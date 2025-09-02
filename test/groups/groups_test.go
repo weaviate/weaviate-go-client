@@ -67,8 +67,8 @@ func TestGroup_integration(t *testing.T) {
 	require.Len(t, knownGroups, 1)
 	require.Equal(t, group, knownGroups[0])
 
-	assignedUsers, _ := rolesClient.GroupAssignmentGetter().WithRole(roleName).Do(ctx)
-	require.Truef(t, slices.ContainsFunc(assignedUsers,
+	assignedGroups, _ := rolesClient.GroupAssignmentGetter().WithRole(roleName).Do(ctx)
+	require.Truef(t, slices.ContainsFunc(assignedGroups,
 		func(e rbac.GroupAssignment) bool { return e.Group == group }), "should have %q role", roleName)
 
 	require.NoErrorf(t, groupsClient.OIDC().RolesRevoker().WithGroupId(group).WithRoles(roleName).Do(ctx), "assign %q role", roleName)

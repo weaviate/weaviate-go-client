@@ -28,7 +28,7 @@ func (aug *GroupAssignmentGetter) Do(ctx context.Context) ([]GroupAssignment, er
 	}
 	if res.StatusCode == http.StatusOK {
 		var groups []struct {
-			GroupID   string           `json:"group"`
+			GroupID   string           `json:"groupId"`
 			GroupType models.GroupType `json:"groupType"`
 		}
 		decodeErr := res.DecodeBodyIntoTarget(&groups)
