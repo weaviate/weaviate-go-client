@@ -436,7 +436,7 @@ func TestAlias_integration(t *testing.T) {
 
 		err = client.Alias().AliasDeleter().WithAliasName("foo").Do(ctx) // that doesn't exist
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "404")
+		assert.Contains(t, err.Error(), "not found")
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
