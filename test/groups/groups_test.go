@@ -2,6 +2,7 @@ package groups
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -65,6 +66,10 @@ func TestGroup_integration(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, knownGroups, 1)
 	require.Equal(t, group, knownGroups[0])
+
+	assignedUsers, _ := rolesClient.GroupAssignmentGetter().WithRole(roleName).Do(ctx)
+	require.Truef(t, slices.ContainsFunc(assignedUsers,
+		func(e rbac.GroupAssignment) bool { return e.Group == group }), "should have %q role", roleName)
 
 	require.NoErrorf(t, groupsClient.OIDC().RolesRevoker().WithGroupId(group).WithRoles(roleName).Do(ctx), "assign %q role", roleName)
 
