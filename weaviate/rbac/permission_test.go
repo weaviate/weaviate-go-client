@@ -37,7 +37,8 @@ func TestRole_UnmarshalJSON(t *testing.T) {
 		{"action": "read_aliases", "aliases": {"collection": "Pizza", "alias": "PizzaAlias"}},
 		{"action": "update_aliases", "aliases": {"collection": "Pizza", "alias": "PizzaAlias"}},
 		{"action": "read_replicate", "replicate": {"collection": "Pizza", "shard": "diadem"}},
-		{"action": "update_replicate", "replicate": {"collection": "Pizza", "shard": "diadem"}}
+		{"action": "update_replicate", "replicate": {"collection": "Pizza", "shard": "diadem"}},
+		{"action": "read_groups", "groups": {"group": "Pizza", "groupType": "oidc"}}
 	]
 }`)
 
@@ -104,6 +105,7 @@ func TestRole_UnmarshalJSON(t *testing.T) {
 			Collection: "Pizza",
 			Shard:      "diadem",
 		},
+		rbac.GroupPermission{Actions: []string{"read_groups"}, Group: "Pizza", GroupType: "oidc"},
 	)
 
 	err := json.Unmarshal(data, &got)
@@ -120,4 +122,5 @@ func TestRole_UnmarshalJSON(t *testing.T) {
 	require.ElementsMatch(t, want.Users, got.Users)
 	require.ElementsMatch(t, want.Alias, got.Alias)
 	require.ElementsMatch(t, want.Replicate, got.Replicate)
+	require.ElementsMatch(t, want.Groups, got.Groups)
 }
