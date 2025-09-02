@@ -431,12 +431,12 @@ func TestAlias_integration(t *testing.T) {
 		// list alias for specific class. Make sure alias "foo" doesn't exist
 		resp, err := client.Alias().AliasGetter().WithAliasName("foo").Do(ctx)
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "not found")
+		assert.Contains(t, err.Error(), "404")
 		assert.Nil(t, resp)
 
 		err = client.Alias().AliasDeleter().WithAliasName("foo").Do(ctx) // that doesn't exist
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "not found")
+		assert.Contains(t, err.Error(), "404")
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
