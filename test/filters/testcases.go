@@ -24,6 +24,7 @@ type AllFilterTestCases struct {
 	Less     []FilterTestCase
 	Like     []FilterTestCase
 	OrAnd    []FilterTestCase
+	Refs     []FilterTestCase
 }
 
 func AllPropsTestCases(tb testing.TB) AllFilterTestCases {
@@ -1537,6 +1538,90 @@ func AllPropsTestCases(tb testing.TB) AllFilterTestCases {
 		},
 	}
 
+	refTestCases := []FilterTestCase{
+		{
+			Name: "by single ref (1)",
+			Where: filters.Where().
+				WithPath([]string{"hasRefClass", "RefClass", "category"}).
+				WithOperator(filters.Equal).
+				WithValueText("science-fiction"),
+			Property:    "author", // irrelevant
+			ExpectedIds: []string{id1, id2, id3},
+		},
+		{
+			Name: "by single ref (2)",
+			Where: filters.Where().
+				WithPath([]string{"hasRefClass", "RefClass", "category"}).
+				WithOperator(filters.Equal).
+				WithValueText("novel"),
+			Property:    "author", // irrelevant
+			ExpectedIds: []string{},
+		},
+		{
+			Name: "by single ref (3)",
+			Where: filters.Where().
+				WithPath([]string{"hasRefClass", "RefClass", "category"}).
+				WithOperator(filters.Equal).
+				WithValueText("fantasy"),
+			Property:    "author", // irrelevant
+			ExpectedIds: []string{},
+		},
+		{
+			Name: "by multi ref 1st (1)",
+			Where: filters.Where().
+				WithPath([]string{"hasRefClass2", "RefClass", "category"}).
+				WithOperator(filters.Equal).
+				WithValueText("science-fiction"),
+			Property:    "author", // irrelevant
+			ExpectedIds: []string{},
+		},
+		{
+			Name: "by multi ref 1st (2)",
+			Where: filters.Where().
+				WithPath([]string{"hasRefClass2", "RefClass", "category"}).
+				WithOperator(filters.Equal).
+				WithValueText("novel"),
+			Property:    "author", // irrelevant
+			ExpectedIds: []string{id1, id2, id3},
+		},
+		{
+			Name: "by multi ref 1st (3)",
+			Where: filters.Where().
+				WithPath([]string{"hasRefClass2", "RefClass", "category"}).
+				WithOperator(filters.Equal).
+				WithValueText("fantasy"),
+			Property:    "author", // irrelevant
+			ExpectedIds: []string{},
+		},
+		{
+			Name: "by multi ref 2nd (1)",
+			Where: filters.Where().
+				WithPath([]string{"hasRefClass2", "RefClass2", "category"}).
+				WithOperator(filters.Equal).
+				WithValueText("science-fiction"),
+			Property:    "author", // irrelevant
+			ExpectedIds: []string{},
+		},
+		{
+			Name: "by multi ref 2nd (2)",
+			Where: filters.Where().
+				WithPath([]string{"hasRefClass2", "RefClass2", "category"}).
+				WithOperator(filters.Equal).
+				WithValueText("novel"),
+			Property:    "author", // irrelevant
+			ExpectedIds: []string{},
+		},
+		{
+			Name: "by multi ref 2nd (3)",
+			Where: filters.Where().
+				WithPath([]string{"hasRefClass2", "RefClass2", "category"}).
+				WithOperator(filters.Equal).
+				WithValueText("fantasy"),
+			Property:    "author", // irrelevant
+			ExpectedIds: []string{id1, id2, id3},
+		},
+	}
+
 	return AllFilterTestCases{
 		Contains: append(containsTestCases, createNotTestCases(containsTestCases, invertIds)...),
 		Equal:    append(equalTestCases, createNotTestCases(equalTestCases, invertIds)...),
@@ -1544,6 +1629,7 @@ func AllPropsTestCases(tb testing.TB) AllFilterTestCases {
 		Less:     append(lessTestCases, createNotTestCases(lessTestCases, invertIds)...),
 		Like:     append(likeTestCases, createNotTestCases(likeTestCases, invertIds)...),
 		OrAnd:    append(orAndTestCases, createNotTestCases(orAndTestCases, invertIds)...),
+		Refs:     append(refTestCases, createNotTestCases(refTestCases, invertIds)...),
 	}
 }
 
