@@ -292,6 +292,8 @@ func TestSearch_all_properties(t *testing.T) {
 			t.Run("Like", runTestCases(testCases.Like))
 
 			t.Run("Or / And", runTestCases(testCases.OrAnd))
+
+			t.Run("Refs", runTestCases(testCases.Refs))
 		})
 	})
 

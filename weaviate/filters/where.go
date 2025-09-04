@@ -204,6 +204,17 @@ func (b *WhereBuilder) string() string {
 	return strings.Join(clause, " ")
 }
 
+func pathToFilterTarget(path []string) *pb.FilterTarget {
+	if len(path) > 2 {
+		return &pb.FilterTarget{Target: &pb.FilterTarget_MultiTarget{MultiTarget: &pb.FilterReferenceMultiTarget{
+			On:               path[0],
+			TargetCollection: path[1],
+			Target:           pathToFilterTarget(path[2:]),
+		}}}
+	}
+	return &pb.FilterTarget{Target: &pb.FilterTarget_Property{Property: path[0]}}
+}
+
 func (b *WhereBuilder) ToGRPC() *pb.Filters {
 	filters := &pb.Filters{}
 
@@ -221,8 +232,7 @@ func (b *WhereBuilder) ToGRPC() *pb.Filters {
 		filters.Filters = operandsToGRPC(b.operands)
 
 	default:
-		//nolint:staticcheck // ignore SA1019 for deprecated code (Filters.On)
-		filters.On = b.path
+		filters.Target = pathToFilterTarget(b.path)
 
 		switch b.operator {
 		case Equal:
