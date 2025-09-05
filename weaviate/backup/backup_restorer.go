@@ -21,6 +21,7 @@ type BackupRestorer struct {
 	excludeClasses    []string
 	backend           string
 	backupID          string
+	overwriteAlias    bool
 	waitForCompletion bool
 	config            *models.RestoreConfig
 }
@@ -44,6 +45,12 @@ func (r *BackupRestorer) WithBackend(backend string) *BackupRestorer {
 // WithBackupID specifies unique id given to the backup
 func (r *BackupRestorer) WithBackupID(backupID string) *BackupRestorer {
 	r.backupID = backupID
+	return r
+}
+
+// WithOverwriteAlias specifies whether to overwrite any existing aliases with ones restored from backup.
+func (r *BackupRestorer) WithOverwriteAlias(overwriteAlias bool) *BackupRestorer {
+	r.overwriteAlias = overwriteAlias
 	return r
 }
 
@@ -94,9 +101,10 @@ func (r *BackupRestorer) WithoutRBAC() *BackupRestorer {
 
 func (r *BackupRestorer) Do(ctx context.Context) (*models.BackupRestoreResponse, error) {
 	payload := models.BackupRestoreRequest{
-		Include: r.includeClasses,
-		Exclude: r.excludeClasses,
-		Config:  r.config,
+		Include:        r.includeClasses,
+		Exclude:        r.excludeClasses,
+		OverwriteAlias: r.overwriteAlias,
+		Config:         r.config,
 	}
 
 	if r.waitForCompletion {
