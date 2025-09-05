@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/alias"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/backup"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/testenv"
@@ -960,6 +961,94 @@ func TestBackups_integration(t *testing.T) {
 			}
 		}
 		require.Len(t, relevant, 3, "wrong number of backups")
+	})
+
+	t.Run("create and restore with overwriteAlias points to original collection", func(t *testing.T) {
+		ctx := context.Background()
+		client := testsuit.CreateTestClient(false)
+
+		schemaClass := &models.Class{
+			Class:       "Spy",
+			Description: "Spy that spies on other spies",
+		}
+
+		schemaDifferentClass := &models.Class{
+			Class:       "FakeSpy",
+			Description: "Spy that only plays a spy on movies",
+		}
+
+		alias := &alias.Alias{
+			Alias: "SpyAlias",
+			Class: schemaClass.Class,
+		}
+
+		err := client.Schema().ClassDeleter().WithClassName(schemaClass.Class).Do(ctx)
+		require.NoError(t, err)
+
+		err = client.Schema().ClassDeleter().WithClassName(schemaDifferentClass.Class).Do(ctx)
+		require.NoError(t, err)
+
+		err = client.Schema().ClassCreator().WithClass(schemaClass).Do(ctx)
+		require.NoError(t, err)
+
+		defer func() {
+			errRm := client.Schema().AllDeleter().Do(context.Background())
+			assert.Nil(t, errRm)
+		}()
+
+		err = client.Alias().AliasCreator().WithAlias(alias).Do(ctx)
+		require.NoError(t, err)
+		defer func() {
+			require.NoError(t, client.Alias().AliasDeleter().WithAliasName(alias.Alias).Do(ctx))
+		}()
+
+		backend := backup.BACKEND_FILESYSTEM
+		backupID := fmt.Sprintf("overwrite-alias-%d", random.Int63())
+
+		// Create backup
+		_, err = client.Backup().Creator().
+			WithBackupID(backupID).
+			WithBackend(backend).
+			WithIncludeClassNames(schemaClass.Class).
+			WithWaitForCompletion(true).
+			Do(context.Background())
+		require.Nil(t, err)
+
+		// Delete original class
+		err = client.Schema().ClassDeleter().
+			WithClassName(schemaClass.Class).
+			Do(context.Background())
+		require.Nil(t, err)
+
+		// Create different class
+		err = client.Schema().ClassCreator().WithClass(schemaDifferentClass).Do(ctx)
+		require.NoError(t, err)
+
+		// Update alias to point to different class
+		alias.Class = schemaDifferentClass.Class
+
+		err = client.Alias().AliasUpdater().
+			WithAlias(alias).
+			Do(context.Background())
+		require.Nil(t, err)
+
+		// Act: restore with overwriteAlias
+		_, err = client.Backup().Restorer().
+			WithBackupID(backupID).
+			WithBackend(backend).
+			WithIncludeClassNames(schemaClass.Class).
+			WithOverwriteAlias(true).
+			WithWaitForCompletion(true).
+			Do(context.Background())
+		require.Nil(t, err)
+
+		// Assert: alias points to original class
+		aliasObj, err := client.Alias().AliasGetter().
+			WithAliasName("SpyAlias").
+			Do(context.Background())
+		require.Nil(t, err)
+		require.NotNil(t, aliasObj)
+		assert.Equal(t, schemaClass.Class, aliasObj.Class)
 	})
 }
 

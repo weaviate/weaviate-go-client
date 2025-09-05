@@ -2233,8 +2233,10 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 		}
 
 		t.Run("create class and insert data", func(t *testing.T) {
-			testsuit.AllPropertiesSchemaCreate(t, client, className, false, false)
-			objects := testsuit.AllPropertiesObjects(className)
+			testsuit.AllPropertiesSchemaCreate(t, client, className, true, false)
+
+			properties := testsuit.AllPropertiesDataWithCrossReferencesAsMap()
+			objects := testsuit.AllPropertiesObjectsWithData(className, properties)
 
 			resp, err := client.Batch().ObjectsBatcher().WithObjects(objects...).Do(context.Background())
 			require.NoError(t, err)
@@ -2255,6 +2257,8 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 		t.Run("Like", runTestCases(testCases.Like))
 
 		t.Run("Or / And", runTestCases(testCases.OrAnd))
+
+		t.Run("Refs", runTestCases(testCases.Refs))
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {

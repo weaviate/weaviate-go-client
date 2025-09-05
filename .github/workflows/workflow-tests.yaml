@@ -4,7 +4,6 @@ on:
 env:
   WEAVIATE_VERSION: 1.33.0-rc.1
 
-
 jobs:
   auth-tests:
     name: Auth integration tests
