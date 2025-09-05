@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
@@ -45,5 +46,5 @@ func (rr *RoleRevoker) Do(ctx context.Context) error {
 }
 
 func (rr *RoleRevoker) path() string {
-	return fmt.Sprintf("/authz/users/%s/revoke", rr.userID)
+	return fmt.Sprintf("/authz/users/%s/revoke", url.PathEscape(rr.userID))
 }

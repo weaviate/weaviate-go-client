@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
@@ -39,5 +40,5 @@ func (r *UserDBCreator) Do(ctx context.Context) (string, error) {
 }
 
 func (r *UserDBCreator) path() string {
-	return fmt.Sprintf("/users/db/%s", r.userID)
+	return fmt.Sprintf("/users/db/%s", url.PathEscape(r.userID))
 }

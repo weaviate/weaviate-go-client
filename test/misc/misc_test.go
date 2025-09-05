@@ -14,7 +14,7 @@ import (
 
 func TestMisc_integration(t *testing.T) {
 	t.Run("up", func(t *testing.T) {
-		err := testenv.SetupLocalWeaviateWaitForStartup(false)
+		err := testenv.SetupLocalWeaviateWaitForStartup(true)
 		if err != nil {
 			fmt.Print(err.Error())
 			t.Fail()

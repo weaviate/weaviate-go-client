@@ -1,4 +1,4 @@
-package users
+package groups
 
 import (
 	"context"
@@ -12,28 +12,28 @@ import (
 	"github.com/weaviate/weaviate/entities/models"
 )
 
-type RoleAssigner struct {
+type RoleRevoker struct {
 	connection *connection.Connection
 
-	userID   string
-	roles    []string
-	userType UserTypeInput
+	groupID   string
+	roles     []string
+	groupType models.GroupType
 }
 
-func (ra *RoleAssigner) WithUserID(id string) *RoleAssigner {
-	ra.userID = id
+func (ra *RoleRevoker) WithGroupId(id string) *RoleRevoker {
+	ra.groupID = id
 	return ra
 }
 
-func (ra *RoleAssigner) WithRoles(roles ...string) *RoleAssigner {
+func (ra *RoleRevoker) WithRoles(roles ...string) *RoleRevoker {
 	ra.roles = roles
 	return ra
 }
 
-func (ra *RoleAssigner) Do(ctx context.Context) error {
-	payload := authz.AssignRoleToUserBody{
-		Roles:    ra.roles,
-		UserType: models.UserTypeInput(ra.userType),
+func (ra *RoleRevoker) Do(ctx context.Context) error {
+	payload := authz.RevokeRoleFromGroupBody{
+		Roles:     ra.roles,
+		GroupType: ra.groupType,
 	}
 	res, err := ra.connection.RunREST(ctx, ra.path(), http.MethodPost, payload)
 	if err != nil {
@@ -45,6 +45,6 @@ func (ra *RoleAssigner) Do(ctx context.Context) error {
 	return except.NewUnexpectedStatusCodeErrorFromRESTResponse(res)
 }
 
-func (ra *RoleAssigner) path() string {
-	return fmt.Sprintf("/authz/users/%s/assign", url.PathEscape(ra.userID))
+func (ra *RoleRevoker) path() string {
+	return fmt.Sprintf("/authz/groups/%s/revoke", url.PathEscape(ra.groupID))
 }

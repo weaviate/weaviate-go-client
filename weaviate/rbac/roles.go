@@ -6,7 +6,8 @@ import (
 )
 
 type (
-	UserType string
+	UserType  string
+	GroupType string
 )
 
 const (
@@ -18,6 +19,11 @@ const (
 type UserAssignment struct {
 	UserID   string
 	UserType UserType
+}
+
+type GroupAssignment struct {
+	Group     string
+	GroupType GroupType
 }
 
 type API struct {
@@ -78,6 +84,11 @@ func (api *API) AssignedUsersGetter() *AssignedUsersGetter {
 // Get users assigned to a role.
 func (api *API) UserAssignmentGetter() *UserAssignmentGetter {
 	return &UserAssignmentGetter{connection: api.connection}
+}
+
+// Get users assigned to a role.
+func (api *API) GroupAssignmentGetter() *GroupAssignmentGetter {
+	return &GroupAssignmentGetter{connection: api.connection}
 }
 
 // Check if a role exists.
