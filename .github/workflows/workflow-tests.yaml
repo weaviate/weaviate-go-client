@@ -2,7 +2,7 @@ on:
   workflow_call:
 
 env:
-  WEAVIATE_VERSION: 1.32.0
+  WEAVIATE_VERSION: preview-fix-extract-all-grpc-multi-ref-targets-93f0fcd.amd64    # 1.33
 
 jobs:
   auth-tests:

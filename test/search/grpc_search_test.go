@@ -8,6 +8,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	filtertestcases "github.com/weaviate/weaviate-go-client/v5/test/filters"
 	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/testenv"
@@ -253,6 +254,46 @@ func TestSearch_all_properties(t *testing.T) {
 					assert.NotNil(t, res.Vectors["author_and_colors"])
 				}
 			})
+		})
+
+		t.Run("where filter", func(t *testing.T) {
+			extractIds := func(results []graphql.SearchResult) []string {
+				ids := make([]string, len(results))
+				for i := range results {
+					ids[i] = results[i].ID
+				}
+				return ids
+			}
+			testCases := filtertestcases.AllPropsTestCases(t)
+			runTestCases := func(testCases []filtertestcases.FilterTestCase) func(t *testing.T) {
+				return func(t *testing.T) {
+					for _, tc := range testCases {
+						t.Run(tc.Name, func(t *testing.T) {
+							results, err := client.Experimental().Search().
+								WithCollection(className).
+								WithProperties(tc.Property).
+								WithWhere(tc.Where).
+								Do(context.Background())
+							require.NoError(t, err)
+							assert.ElementsMatch(t, tc.ExpectedIds, extractIds(results))
+						})
+					}
+				}
+			}
+
+			t.Run("ContainsAny / ContainsAll / ContainsNone", runTestCases(testCases.Contains))
+
+			t.Run("Equal / NotEqual", runTestCases(testCases.Equal))
+
+			t.Run("GreaterThanEqual / GreaterThan", runTestCases(testCases.Greater))
+
+			t.Run("LessThanEqual / LessThan", runTestCases(testCases.Less))
+
+			t.Run("Like", runTestCases(testCases.Like))
+
+			t.Run("Or / And", runTestCases(testCases.OrAnd))
+
+			t.Run("Refs", runTestCases(testCases.Refs))
 		})
 	})
 

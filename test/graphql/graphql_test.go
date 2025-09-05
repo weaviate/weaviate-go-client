@@ -12,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	filtertestcases "github.com/weaviate/weaviate-go-client/v5/test/filters"
 	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/data/replication"
@@ -2185,326 +2186,79 @@ func TestGraphQL_MultiTenancy(t *testing.T) {
 				assertAggregateNumFieldHasValues(t, resp, "Pizza", "price", expectedAggValues)
 			}
 		})
+	})
 
-		t.Run("ContainsAny and ContainsAll", func(t *testing.T) {
-			className := "WhereTest"
-			data := testsuit.AllPropertiesData()
-			id1, id2, id3 := data.ID1, data.ID2, data.ID3
-			ids := []string{id1, id2, id3}
+	t.Run("GraphQL Get with filters", func(t *testing.T) {
+		defer cleanup()
 
-			cleanup := func() {
-				err := client.Schema().AllDeleter().Do(context.Background())
-				require.NoError(t, err)
+		client := testsuit.CreateTestClient(false)
+
+		className := "WhereTest"
+		extractIds := func(data map[string]models.JSONObject) []string {
+			classMap, ok := data["Get"].(map[string]any)
+			require.True(t, ok)
+			class, ok := classMap[className].([]any)
+			require.True(t, ok)
+			ids := make([]string, len(class))
+			for i := range class {
+				resultMap, ok := class[i].(map[string]any)
+				require.True(t, ok)
+				additional, ok := resultMap["_additional"].(map[string]any)
+				require.True(t, ok)
+				ids[i] = additional["id"].(string)
 			}
-
-			t.Run("create class", func(t *testing.T) {
-				cleanup()
-				testsuit.AllPropertiesSchemaCreate(t, client, className, false, false)
-			})
-
-			t.Run("insert data", func(t *testing.T) {
-				authors := data.Authors
-				authorsArray := data.AuthorsArray
-				colors := data.Colors
-				colorssArray := data.ColorssArray
-				numbers := data.Numbers
-				numbersArray := data.NumbersArray
-				ints := data.Ints
-				intsArray := data.IntsArray
-				uuids := data.Uuids
-				uuidsArray := data.UuidsArray
-				dates := data.Dates
-				datesArray := data.DatesArray
-				bools := data.Bools
-				boolsArray := data.BoolsArray
-				for i, id := range ids {
-					_, err := client.Data().Creator().
-						WithClassName(className).
-						WithID(id).
-						WithProperties(map[string]interface{}{
-							"color":   colors[i],
-							"colors":  colorssArray[i],
-							"author":  authors[i],
-							"authors": authorsArray[i],
-							"number":  numbers[i],
-							"numbers": numbersArray[i],
-							"int":     ints[i],
-							"ints":    intsArray[i],
-							"uuid":    uuids[i],
-							"uuids":   uuidsArray[i],
-							"date":    dates[i],
-							"dates":   datesArray[i],
-							"bool":    bools[i],
-							"bools":   boolsArray[i],
-						}).
-						Do(context.TODO())
-					require.NoError(t, err)
-				}
-			})
-
-			t.Run("where", func(t *testing.T) {
-				mustGetTime := func(date string) time.Time {
-					result, err := time.Parse(time.RFC3339Nano, date)
-					if err != nil {
-						panic(fmt.Sprintf("can't parse date: %v", date))
-					}
-					return result
-				}
-				getIds := func(data map[string]models.JSONObject) []string {
-					classMap, ok := data["Get"].(map[string]interface{})
-					require.True(t, ok)
-					class, ok := classMap[className].([]interface{})
-					require.True(t, ok)
-					ids := make([]string, len(class))
-					for i := range class {
-						resultMap, ok := class[i].(map[string]interface{})
-						require.True(t, ok)
-						additional, ok := resultMap["_additional"].(map[string]interface{})
-						require.True(t, ok)
-						ids[i] = additional["id"].(string)
-					}
-					return ids
-				}
-				tests := []struct {
-					name        string
-					where       *filters.WhereBuilder
-					property    string
-					expectedIds []string
-				}{
-					// Contains operator with array types
-					{
-						name: "contains all authors with string array",
-						where: filters.Where().
-							WithPath([]string{"authors"}).
-							WithOperator(filters.ContainsAll).
-							WithValueString("John", "Jenny", "Joseph"),
-						property:    "authors",
-						expectedIds: []string{id1},
-					},
-					{
-						name: "contains any authors with string array",
-						where: filters.Where().
-							WithPath([]string{"authors"}).
-							WithOperator(filters.ContainsAny).
-							WithValueString("John", "Jenny", "Joseph"),
-						property:    "authors",
-						expectedIds: []string{id1, id2, id3},
-					},
-					{
-						name: "contains all colors with text array",
-						where: filters.Where().
-							WithPath([]string{"colors"}).
-							WithOperator(filters.ContainsAll).
-							WithValueText("red", "blue", "green"),
-						property:    "colors",
-						expectedIds: []string{id1},
-					},
-					{
-						name: "contains any colors with text array",
-						where: filters.Where().
-							WithPath([]string{"colors"}).
-							WithOperator(filters.ContainsAny).
-							WithValueText("red", "blue", "green"),
-						property:    "colors",
-						expectedIds: []string{id1, id2, id3},
-					},
-					{
-						name: "contains all numbers with number array",
-						where: filters.Where().
-							WithPath([]string{"numbers"}).
-							WithOperator(filters.ContainsAll).
-							WithValueNumber(1.1, 2.2, 3.3),
-						property:    "numbers",
-						expectedIds: []string{id1},
-					},
-					{
-						name: "contains any numbers with number array",
-						where: filters.Where().
-							WithPath([]string{"numbers"}).
-							WithOperator(filters.ContainsAny).
-							WithValueNumber(1.1, 2.2, 3.3),
-						property:    "numbers",
-						expectedIds: []string{id1, id2, id3},
-					},
-					{
-						name: "contains all ints with int array",
-						where: filters.Where().
-							WithPath([]string{"ints"}).
-							WithOperator(filters.ContainsAll).
-							WithValueInt(1, 2, 3),
-						property:    "ints",
-						expectedIds: []string{id1},
-					},
-					{
-						name: "contains any ints with int array",
-						where: filters.Where().
-							WithPath([]string{"ints"}).
-							WithOperator(filters.ContainsAny).
-							WithValueInt(1, 2, 3),
-						property:    "ints",
-						expectedIds: []string{id1, id2, id3},
-					},
-					{
-						name: "contains all uuids with uuid array",
-						where: filters.Where().
-							WithPath([]string{"uuids"}).
-							WithOperator(filters.ContainsAll).
-							WithValueText(id1, id2, id3),
-						property:    "uuids",
-						expectedIds: []string{id1},
-					},
-					{
-						name: "contains any uuids with uuid array",
-						where: filters.Where().
-							WithPath([]string{"uuids"}).
-							WithOperator(filters.ContainsAny).
-							WithValueText(id1, id2, id3),
-						property:    "uuids",
-						expectedIds: []string{id1, id2, id3},
-					},
-					{
-						name: "contains all dates with dates array",
-						where: filters.Where().
-							WithPath([]string{"dates"}).
-							WithOperator(filters.ContainsAll).
-							WithValueDate(
-								mustGetTime("2009-11-01T23:00:00Z"), mustGetTime("2009-11-02T23:00:00Z"), mustGetTime("2009-11-03T23:00:00Z"),
-							),
-						property:    "dates",
-						expectedIds: []string{id1},
-					},
-					{
-						name: "contains any dates with dates array",
-						where: filters.Where().
-							WithPath([]string{"dates"}).
-							WithOperator(filters.ContainsAny).
-							WithValueDate(
-								mustGetTime("2009-11-01T23:00:00Z"), mustGetTime("2009-11-02T23:00:00Z"), mustGetTime("2009-11-03T23:00:00Z"),
-							),
-						property:    "dates",
-						expectedIds: []string{id1, id2, id3},
-					},
-					{
-						name: "complex contains all ints and all numbers with AND on int array",
-						where: filters.Where().
-							WithOperator(filters.And).
-							WithOperands([]*filters.WhereBuilder{
-								filters.Where().
-									WithPath([]string{"numbers"}).
-									WithOperator(filters.ContainsAll).
-									WithValueNumber(1.1, 2.2, 3.3),
-								filters.Where().
-									WithPath([]string{"ints"}).
-									WithOperator(filters.ContainsAll).
-									WithValueInt(1, 2, 3),
-							}),
-						property:    "ints",
-						expectedIds: []string{id1},
-					},
-					{
-						name: "complex contains any ints and all numbers with OR on int array",
-						where: filters.Where().
-							WithOperator(filters.Or).
-							WithOperands([]*filters.WhereBuilder{
-								filters.Where().
-									WithPath([]string{"numbers"}).
-									WithOperator(filters.ContainsAll).
-									WithValueNumber(1.1, 2.2, 3.3),
-								filters.Where().
-									WithPath([]string{"ints"}).
-									WithOperator(filters.ContainsAny).
-									WithValueInt(1, 2, 3),
-							}),
-						property:    "ints",
-						expectedIds: []string{id1, id2, id3},
-					},
-					// Contains operator with primitives
-					{
-						name: "contains any author with string",
-						where: filters.Where().
-							WithPath([]string{"author"}).
-							WithOperator(filters.ContainsAny).
-							WithValueString("John", "Jenny", "Joseph"),
-						property:    "author",
-						expectedIds: []string{id1, id2, id3},
-					},
-					{
-						name: "contains any color with text",
-						where: filters.Where().
-							WithPath([]string{"color"}).
-							WithOperator(filters.ContainsAny).
-							WithValueText("red", "blue", "green"),
-						property:    "color",
-						expectedIds: []string{id1, id2, id3},
-					},
-					{
-						name: "contains any number with number",
-						where: filters.Where().
-							WithPath([]string{"number"}).
-							WithOperator(filters.ContainsAny).
-							WithValueNumber(1.1, 2.2, 3.3),
-						property:    "number",
-						expectedIds: []string{id1, id2, id3},
-					},
-					{
-						name: "contains any int with int",
-						where: filters.Where().
-							WithPath([]string{"int"}).
-							WithOperator(filters.ContainsAny).
-							WithValueInt(1, 2, 3),
-						property:    "int",
-						expectedIds: []string{id1, id2, id3},
-					},
-					{
-						name: "contains any uuid with uuid",
-						where: filters.Where().
-							WithPath([]string{"uuid"}).
-							WithOperator(filters.ContainsAny).
-							WithValueText(id1, id2, id3),
-						property:    "uuid",
-						expectedIds: []string{id1, id2, id3},
-					},
-					{
-						name: "contains any uuid with id",
-						where: filters.Where().
-							WithPath([]string{"id"}).
-							WithOperator(filters.ContainsAny).
-							WithValueText(id1, id2, id3),
-						property:    "uuid",
-						expectedIds: []string{id1, id2, id3},
-					},
-					{
-						name: "contains any date with date",
-						where: filters.Where().
-							WithPath([]string{"date"}).
-							WithOperator(filters.ContainsAny).
-							WithValueDate(
-								mustGetTime("2009-11-01T23:00:00Z"), mustGetTime("2009-11-02T23:00:00Z"), mustGetTime("2009-11-03T23:00:00Z"),
-							),
-						property:    "date",
-						expectedIds: []string{id1, id2, id3},
-					},
-				}
-				for _, tt := range tests {
-					t.Run(tt.name, func(t *testing.T) {
+			return ids
+		}
+		testCases := filtertestcases.AllPropsTestCases(t)
+		runTestCases := func(testCases []filtertestcases.FilterTestCase) func(t *testing.T) {
+			return func(t *testing.T) {
+				for _, tc := range testCases {
+					t.Run(tc.Name, func(t *testing.T) {
 						fields := []graphql.Field{
-							{Name: tt.property},
+							{Name: tc.Property},
 							{Name: "_additional", Fields: []graphql.Field{{Name: "id"}}},
 						}
 						resp, err := client.GraphQL().Get().
 							WithClassName(className).
-							WithWhere(tt.where).
+							WithWhere(tc.Where).
 							WithFields(fields...).
 							Do(context.TODO())
 						require.NoError(t, err)
 						require.Empty(t, prettyErrors(resp.Errors))
-						resultIds := getIds(resp.Data)
-						assert.Len(t, resultIds, len(tt.expectedIds))
-						assert.ElementsMatch(t, resultIds, tt.expectedIds)
+						resultIds := extractIds(resp.Data)
+						assert.ElementsMatch(t, resultIds, tc.ExpectedIds)
 					})
 				}
-			})
+			}
+		}
+
+		t.Run("create class and insert data", func(t *testing.T) {
+			testsuit.AllPropertiesSchemaCreate(t, client, className, true, false)
+
+			properties := testsuit.AllPropertiesDataWithCrossReferencesAsMap()
+			objects := testsuit.AllPropertiesObjectsWithData(className, properties)
+
+			resp, err := client.Batch().ObjectsBatcher().WithObjects(objects...).Do(context.Background())
+			require.NoError(t, err)
+			for i := range resp {
+				require.Nil(t, resp[i].Result.Errors)
+				require.Equal(t, *resp[i].Result.Status, "SUCCESS")
+			}
 		})
+
+		t.Run("ContainsAny / ContainsAll / ContainsNone", runTestCases(testCases.Contains))
+
+		t.Run("Equal / NotEqual", runTestCases(testCases.Equal))
+
+		t.Run("GreaterThanEqual / GreaterThan", runTestCases(testCases.Greater))
+
+		t.Run("LessThanEqual / LessThan", runTestCases(testCases.Less))
+
+		t.Run("Like", runTestCases(testCases.Like))
+
+		t.Run("Or / And", runTestCases(testCases.OrAnd))
+
+		t.Run("Refs", runTestCases(testCases.Refs))
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {

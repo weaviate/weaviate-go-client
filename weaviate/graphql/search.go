@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/filters"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/grpc/common"
 	pb "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
@@ -32,8 +33,8 @@ type Search struct {
 	withNearImu     *NearImuArgumentBuilder
 	withHybrid      *HybridArgumentBuilder
 	withBM25        *BM25ArgumentBuilder
-
-	withSortBy *SortBuilder
+	withWhere       *filters.WhereBuilder
+	withSortBy      *SortBuilder
 
 	withProperties []string
 	withReferences []*Reference
@@ -134,6 +135,11 @@ func (s *Search) WithBM25(bm25 *BM25ArgumentBuilder) *Search {
 	return s
 }
 
+func (s *Search) WithWhere(where *filters.WhereBuilder) *Search {
+	s.withWhere = where
+	return s
+}
+
 func (s *Search) WithSort(sort ...Sort) *Search {
 	if len(sort) > 0 {
 		s.withSortBy = &SortBuilder{sort}
@@ -202,6 +208,9 @@ func (s *Search) togrpc() *pb.SearchRequest {
 	}
 	if s.withBM25 != nil {
 		req.Bm25Search = s.withBM25.togrpc()
+	}
+	if s.withWhere != nil {
+		req.Filters = s.withWhere.ToGRPC()
 	}
 	if s.withSortBy != nil {
 		req.SortBy = s.withSortBy.togrpc()

@@ -45,6 +45,9 @@ const ContainsAny WhereOperator = "ContainsAny"
 // ContainsAll where operator
 const ContainsAll WhereOperator = "ContainsAll"
 
+// ContainsNone where operator
+const ContainsNone WhereOperator = "ContainsNone"
+
 // GeoCoordinatesParameter parameters in where filter
 type GeoCoordinatesParameter struct {
 	Latitude, Longitude, MaxDistance float32
