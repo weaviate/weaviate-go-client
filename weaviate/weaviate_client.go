@@ -19,6 +19,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/data"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/db"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/groups"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/grpc"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/misc"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/rbac"
@@ -115,6 +116,7 @@ type Client struct {
 	roles           *rbac.API
 	users           *users.API
 	experimental    *experimental
+	groups          *groups.API
 }
 
 // experimental contains all experimental client features
@@ -199,6 +201,7 @@ func NewClient(config Config) (*Client, error) {
 		roles:           rbac.New(con),
 		users:           users.New(con),
 		experimental:    &experimental{grpcClient: grpcClient},
+		groups:          groups.New(con),
 	}
 
 	return client, nil
@@ -309,6 +312,10 @@ func (c *Client) Cluster() *cluster.API {
 
 func (c *Client) Roles() *rbac.API {
 	return c.roles
+}
+
+func (c *Client) Groups() *groups.API {
+	return c.groups
 }
 
 func (c *Client) Users() *users.API {

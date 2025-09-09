@@ -21,6 +21,7 @@ type Role struct {
 	Alias       []AliasPermission
 	Tenants     []TenantsPermission
 	Users       []UsersPermission
+	Groups      []GroupPermission
 }
 
 var _ json.Unmarshaler = (*Role)(nil)
@@ -234,6 +235,24 @@ func (p TenantsPermission) toWeaviate() []*models.Permission {
 	return out
 }
 
+type GroupPermission struct {
+	Actions   []string
+	Group     string
+	GroupType string
+}
+
+func (g GroupPermission) ExtendRole(r *Role) {
+	r.Groups = append(r.Groups, g)
+}
+
+func (g GroupPermission) toWeaviate() []*models.Permission {
+	out := make([]*models.Permission, len(g.Actions))
+	for i, action := range g.Actions {
+		out[i] = &models.Permission{Action: &action}
+	}
+	return out
+}
+
 type UsersPermission struct {
 	Actions []string
 }
@@ -270,6 +289,7 @@ func (r *Role) makeWeaviatePermissions() []*models.Permission {
 	appendPermissions(len(r.Alias), func(i int) []*models.Permission { return r.Alias[i].toWeaviate() })
 	appendPermissions(len(r.Tenants), func(i int) []*models.Permission { return r.Tenants[i].toWeaviate() })
 	appendPermissions(len(r.Users), func(i int) []*models.Permission { return r.Users[i].toWeaviate() })
+	appendPermissions(len(r.Groups), func(i int) []*models.Permission { return r.Groups[i].toWeaviate() })
 	return out
 }
 
@@ -295,6 +315,7 @@ func roleFromWeaviate(r *models.Role) Role {
 	users := make(mergedPermissions)
 	replicate := make(mergedPermissions)
 	alias := make(mergedPermissions)
+	groups := make(mergedPermissions)
 
 	for _, perm := range r.Permissions {
 		switch {
@@ -352,6 +373,14 @@ func roleFromWeaviate(r *models.Role) Role {
 					Collection: resources[1],
 				}
 			}, *perm.Action, *perm.Aliases.Alias, *perm.Aliases.Collection)
+		case perm.Groups != nil:
+			groups.Add(func(actions []string, resources ...string) Permission {
+				return GroupPermission{
+					Actions:   actions,
+					Group:     resources[0],
+					GroupType: resources[1],
+				}
+			}, *perm.Action, *perm.Groups.Group, string(perm.Groups.GroupType))
 
 		// Weaviate v1.30 may define additional actions for these permission groups
 		// and we want to ensure they can be handled elegantly.
@@ -376,7 +405,7 @@ func roleFromWeaviate(r *models.Role) Role {
 			log.Printf("WARN: %q action belongs to an unrecognized group, try updating the client to the latest version", *perm.Action)
 		}
 	}
-	return NewRole(*r.Name, backups, collections, data, nodes, roles, replicate, alias, clusters, tenants, users)
+	return NewRole(*r.Name, backups, collections, data, nodes, roles, replicate, alias, clusters, tenants, users, groups)
 }
 
 // mergedPermissions groups permissions by resource.

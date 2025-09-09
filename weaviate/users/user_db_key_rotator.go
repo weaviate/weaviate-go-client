@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
@@ -35,5 +36,5 @@ func (r *UserDBKeyRotator) Do(ctx context.Context) (string, error) {
 }
 
 func (r *UserDBKeyRotator) path() string {
-	return fmt.Sprintf("/users/db/%s/rotate-key", r.userID)
+	return fmt.Sprintf("/users/db/%s/rotate-key", url.PathEscape(r.userID))
 }

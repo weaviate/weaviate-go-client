@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
@@ -42,7 +43,7 @@ func (urg *UserRolesGetter) Do(ctx context.Context) ([]*rbac.Role, error) {
 }
 
 func (urg *UserRolesGetter) path() string {
-	path := fmt.Sprintf("/authz/users/%s/roles", urg.userID)
+	path := fmt.Sprintf("/authz/users/%s/roles", url.PathEscape(urg.userID))
 
 	if urg.userType != "" {
 		path += "/" + string(urg.userType)
