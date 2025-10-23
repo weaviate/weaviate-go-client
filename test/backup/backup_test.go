@@ -1,9 +1,11 @@
 package backup
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"math/rand"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -960,7 +962,39 @@ func TestBackups_integration(t *testing.T) {
 				relevant = append(relevant, backup)
 			}
 		}
-		require.Len(t, relevant, 3, "wrong number of backups")
+
+		// There may be other backups created in other tests;
+		require.True(t, len(relevant) >= 3, "wrong number of backups")
+	})
+
+	t.Run("list backups with ascending order", func(t *testing.T) {
+		testsuit.AtLeastWeaviateVersion(t, client, "1.32.2", "List backups sorting is only supported from 1.33.2")
+
+		testsuit.CreateTestSchemaAndData(t, client)
+		defer testsuit.CleanUpWeaviate(t, client)
+
+		assertAllPizzasExist(t, client)
+
+		class := "Pizza"
+		backend := backup.BACKEND_FILESYSTEM
+
+		for range 3 {
+			id := fmt.Sprintf("list-test-%d", random.Int63())
+			_, err := client.Backup().Creator().
+				WithIncludeClassNames(class).
+				WithBackend(backend).
+				WithBackupID(id).
+				WithWaitForCompletion(true).
+				Do(t.Context())
+			require.NoErrorf(t, err, "couldn't start backup process for %s", id)
+		}
+
+		all, err := client.Backup().Lister().WithBackend(backend).WithAscendingOrder(false).Do(t.Context())
+		require.NoError(t, err, "list backups")
+
+		require.True(t, slices.IsSortedFunc(all, func(i, j *models.BackupListResponseItems0) int {
+			return cmp.Compare(i.StartedAt.String(), j.StartedAt.String())
+		}), "backups are not in ascending order")
 	})
 
 	t.Run("create and restore with overwriteAlias points to original collection", func(t *testing.T) {

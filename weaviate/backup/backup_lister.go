@@ -11,12 +11,18 @@ import (
 )
 
 type BackupLister struct {
-	connection *connection.Connection
-	backend    string
+	connection     *connection.Connection
+	backend        string
+	ascendingOrder bool
 }
 
 func (bc *BackupLister) WithBackend(backend string) *BackupLister {
 	bc.backend = backend
+	return bc
+}
+
+func (bc *BackupLister) WithAscendingOrder(ascendingOrder bool) *BackupLister {
+	bc.ascendingOrder = ascendingOrder
 	return bc
 }
 
@@ -34,5 +40,8 @@ func (bc *BackupLister) Do(ctx context.Context) (models.BackupListResponse, erro
 }
 
 func (bc *BackupLister) path() string {
+	if bc.ascendingOrder {
+		return fmt.Sprintf("/backups/%s?order=asc", bc.backend)
+	}
 	return fmt.Sprintf("/backups/%s", bc.backend)
 }
