@@ -20,7 +20,6 @@ func AtLeastWeaviateVersion(t *testing.T, client *weaviate.Client, requiredVersi
 	require.Nil(t, err, "could not parse required version")
 
 	if runningVersion.ComparePrecedence(minVersion) < 0 {
-		t.Log(message)
-		t.SkipNow()
+		t.Skip(message)
 	}
 }

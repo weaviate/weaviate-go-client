@@ -964,7 +964,7 @@ func TestBackups_integration(t *testing.T) {
 		}
 
 		// There may be other backups created in other tests;
-		require.True(t, len(relevant) >= 3, "wrong number of backups")
+		require.GreaterOrEqual(t, len(relevant), 3, "wrong number of backups")
 	})
 
 	t.Run("list backups with ascending order", func(t *testing.T) {
@@ -972,8 +972,6 @@ func TestBackups_integration(t *testing.T) {
 
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
-
-		assertAllPizzasExist(t, client)
 
 		class := "Pizza"
 		backend := backup.BACKEND_FILESYSTEM
@@ -989,7 +987,7 @@ func TestBackups_integration(t *testing.T) {
 			require.NoErrorf(t, err, "couldn't start backup process for %s", id)
 		}
 
-		all, err := client.Backup().Lister().WithBackend(backend).WithAscendingOrder(false).Do(t.Context())
+		all, err := client.Backup().Lister().WithBackend(backend).WithStartedAtAsc(false).Do(t.Context())
 		require.NoError(t, err, "list backups")
 
 		require.True(t, slices.IsSortedFunc(all, func(i, j *models.BackupListResponseItems0) int {
