@@ -60,6 +60,7 @@ func TestBackups_integration(t *testing.T) {
 				WithIncludeClassNames(className).
 				WithBackend(backend).
 				WithBackupID(backupID).
+				WithConfig(&models.BackupConfig{CompressionLevel: models.BackupConfigCompressionLevelZstdBestSpeed}).
 				WithWaitForCompletion(true).
 				Do(context.Background())
 
