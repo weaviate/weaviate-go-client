@@ -688,7 +688,6 @@ func TestBackups_integration(t *testing.T) {
 				WithWaitForCompletion(true).
 				WithConfig(&models.BackupConfig{
 					CPUPercentage:    80,
-					ChunkSize:        512,
 					CompressionLevel: models.BackupConfigCompressionLevelBestSpeed,
 				}).
 				Do(context.Background())
@@ -738,40 +737,6 @@ func TestBackups_integration(t *testing.T) {
 			require.Nil(t, createResponse)
 			assert.Contains(t, err.Error(), "422")
 			assert.Contains(t, err.Error(), "CPUPercentage")
-		})
-
-		t.Run("create backup with ChunkSize too high", func(t *testing.T) {
-			createResponse, err := client.Backup().Creator().
-				WithIncludeClassNames(pizzaClassName).
-				WithBackend(backend).
-				WithBackupID(backupID).
-				WithWaitForCompletion(true).
-				WithConfig(&models.BackupConfig{
-					ChunkSize: 513, // Max is 512
-				}).
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			require.Nil(t, createResponse)
-			assert.Contains(t, err.Error(), "422")
-			assert.Contains(t, err.Error(), "ChunkSize")
-		})
-
-		t.Run("create backup with ChunkSize too low", func(t *testing.T) {
-			createResponse, err := client.Backup().Creator().
-				WithIncludeClassNames(pizzaClassName).
-				WithBackend(backend).
-				WithBackupID(backupID).
-				WithWaitForCompletion(true).
-				WithConfig(&models.BackupConfig{
-					ChunkSize: 1, // Min is 2
-				}).
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			require.Nil(t, createResponse)
-			assert.Contains(t, err.Error(), "422")
-			assert.Contains(t, err.Error(), "ChunkSize")
 		})
 
 		t.Run("create backup with invalid CompressionLevel", func(t *testing.T) {
