@@ -953,7 +953,7 @@ func TestBackups_integration(t *testing.T) {
 			require.NoErrorf(t, err, "couldn't start backup process for %s", id)
 		}
 
-		all, err := client.Backup().Lister().WithBackend(backend).WithStartedAtAsc(false).Do(t.Context())
+		all, err := client.Backup().Lister().WithBackend(backend).WithStartedAtAsc(true).Do(t.Context())
 		require.NoError(t, err, "list backups")
 
 		require.True(t, slices.IsSortedFunc(all, func(i, j *models.BackupListResponseItems0) int {
