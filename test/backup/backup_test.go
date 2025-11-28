@@ -60,6 +60,7 @@ func TestBackups_integration(t *testing.T) {
 				WithIncludeClassNames(className).
 				WithBackend(backend).
 				WithBackupID(backupID).
+				WithConfig(&models.BackupConfig{CompressionLevel: models.BackupConfigCompressionLevelZstdBestSpeed}).
 				WithWaitForCompletion(true).
 				Do(context.Background())
 
@@ -687,7 +688,6 @@ func TestBackups_integration(t *testing.T) {
 				WithWaitForCompletion(true).
 				WithConfig(&models.BackupConfig{
 					CPUPercentage:    80,
-					ChunkSize:        512,
 					CompressionLevel: models.BackupConfigCompressionLevelBestSpeed,
 				}).
 				Do(context.Background())
@@ -737,40 +737,6 @@ func TestBackups_integration(t *testing.T) {
 			require.Nil(t, createResponse)
 			assert.Contains(t, err.Error(), "422")
 			assert.Contains(t, err.Error(), "CPUPercentage")
-		})
-
-		t.Run("create backup with ChunkSize too high", func(t *testing.T) {
-			createResponse, err := client.Backup().Creator().
-				WithIncludeClassNames(pizzaClassName).
-				WithBackend(backend).
-				WithBackupID(backupID).
-				WithWaitForCompletion(true).
-				WithConfig(&models.BackupConfig{
-					ChunkSize: 513, // Max is 512
-				}).
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			require.Nil(t, createResponse)
-			assert.Contains(t, err.Error(), "422")
-			assert.Contains(t, err.Error(), "ChunkSize")
-		})
-
-		t.Run("create backup with ChunkSize too low", func(t *testing.T) {
-			createResponse, err := client.Backup().Creator().
-				WithIncludeClassNames(pizzaClassName).
-				WithBackend(backend).
-				WithBackupID(backupID).
-				WithWaitForCompletion(true).
-				WithConfig(&models.BackupConfig{
-					ChunkSize: 1, // Min is 2
-				}).
-				Do(context.Background())
-
-			require.NotNil(t, err)
-			require.Nil(t, createResponse)
-			assert.Contains(t, err.Error(), "422")
-			assert.Contains(t, err.Error(), "ChunkSize")
 		})
 
 		t.Run("create backup with invalid CompressionLevel", func(t *testing.T) {
@@ -987,7 +953,7 @@ func TestBackups_integration(t *testing.T) {
 			require.NoErrorf(t, err, "couldn't start backup process for %s", id)
 		}
 
-		all, err := client.Backup().Lister().WithBackend(backend).WithStartedAtAsc(false).Do(t.Context())
+		all, err := client.Backup().Lister().WithBackend(backend).WithStartedAtAsc(true).Do(t.Context())
 		require.NoError(t, err, "list backups")
 
 		require.True(t, slices.IsSortedFunc(all, func(i, j *models.BackupListResponseItems0) int {
