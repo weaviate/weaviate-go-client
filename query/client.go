@@ -48,3 +48,7 @@ var _ NearVectorOption = (*AutoLimitOption)(nil)
 func WithAutoLimit(l int) AutoLimitOption {
 	return AutoLimitOption(l)
 }
+
+type Result struct {
+	Objects []map[string]any
+}

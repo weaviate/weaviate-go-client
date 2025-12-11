@@ -1,7 +1,6 @@
 package weaviate
 
 import (
-	"github.com/weaviate/weaviate-go-client/v5/internal"
 	"github.com/weaviate/weaviate-go-client/v5/query"
 )
 
@@ -14,5 +13,3 @@ func NewClient() (*Client, error) {
 type Client struct {
 	Query query.Client
 }
-
-type Vector = internal.Vector

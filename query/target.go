@@ -1,8 +1,6 @@
 package query
 
-import (
-	"github.com/weaviate/weaviate-go-client/v5/internal"
-)
+import "github.com/weaviate/weaviate-go-client/v5/types"
 
 type MultiVectorTarget struct {
 	CombinationMethod string
@@ -12,15 +10,15 @@ type MultiVectorTarget struct {
 var _ NearVectorTarget = (*MultiVectorTarget)(nil)
 
 type WeightedTarget struct {
-	internal.Vector
+	types.Vector
 	Weight float64
 }
 
-func Target(v internal.Vector, weight float64) WeightedTarget {
+func Target(v types.Vector, weight float64) WeightedTarget {
 	return WeightedTarget{Vector: v, Weight: weight}
 }
 
-func Average(vectors ...internal.Vector) MultiVectorTarget {
+func Average(vectors ...types.Vector) MultiVectorTarget {
 	targets := make([]WeightedTarget, len(vectors))
 	for _, v := range vectors {
 		targets = append(targets, WeightedTarget{Vector: v})
