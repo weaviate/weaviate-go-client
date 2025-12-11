@@ -7,3 +7,7 @@ type Vector struct {
 }
 
 func (v Vector) ToProto() {}
+
+// Vectors is a map of named vectors.
+// The key is the vector name (empty string for default vector).
+type Vectors map[string]Vector

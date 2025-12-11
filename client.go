@@ -1,7 +1,7 @@
 package weaviate
 
 import (
-	"github.com/weaviate/weaviate-go-client/v5/collections"
+	"github.com/weaviate/weaviate-go-client/v6/collections"
 )
 
 func NewClient() (*Client, error) {
