@@ -18,6 +18,8 @@ func TestDataClient_Insert_Simple(t *testing.T) {
 			WithID(uuid.NewString()),
 			WithValidation(),
 			WithVector(types.Vector{Single: []float32{0.1, 0.2, 0.3}}),
+			WithVector(types.Vectors{"single": {Single: []float32{0.1, 0.2, 0.3}}}),
+			WithVector([]types.Vector{{Name: "name", Single: []float32{0.1, 0.2, 0.3}}}),
 		)
 
 	if err != nil {

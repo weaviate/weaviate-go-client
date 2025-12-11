@@ -136,22 +136,43 @@ func WithProperties(properties types.Properties) InsertOption {
 	}
 }
 
-// WithVector specifies a custom vector.
-func WithVector(vector ...types.Vector) InsertOption {
+type vectorInput interface {
+	types.Vector | types.Vectors | []types.Vector
+}
+
+// WithVector specifies a custom vector or vectors.
+func WithVector[T vectorInput](vector ...T) InsertOption {
 	return func(o *insertOptions) {
+		if len(vector) == 0 {
+			return
+		}
 		if o.vectors == nil {
 			o.vectors = make(types.Vectors)
 		}
-		for _, v := range vector {
-			o.vectors[v.Name] = v
+		// Type switch on the first element to determine the type
+		switch any(vector[0]).(type) {
+		case types.Vector:
+			for _, v := range vector {
+				vv := any(v).(types.Vector)
+				o.vectors[vv.Name] = vv
+			}
+		case types.Vectors:
+			for _, v := range vector {
+				vv := any(v).(types.Vectors)
+				for _, vvv := range vv {
+					o.vectors[vvv.Name] = vvv
+				}
+			}
+		case []types.Vector:
+			for _, v := range vector {
+				vv := any(v).([]types.Vector)
+				for _, vvv := range vv {
+					o.vectors[vvv.Name] = vvv
+				}
+			}
+		default:
+			panic("unsupported vector type")
 		}
-	}
-}
-
-// WithVectors specifies custom vectors.
-func WithVectors(vectors types.Vectors) InsertOption {
-	return func(o *insertOptions) {
-		o.vectors = vectors
 	}
 }
 
