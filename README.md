@@ -10,7 +10,7 @@ A native Go client for [Weaviate](https://github.com/weaviate/weaviate).
 In order to get the Go client `v5` issue this command:
 
 ```bash
-$ go get github.com/weaviate/weaviate-go-client/v5@v5.x.x
+$ go get github.com/weaviate/weaviate-go-client/v6@v5.x.x
 ```
 
 where `v5.x.x` is the desired Go client `v5` version, for example `v5.6.0`.
@@ -18,7 +18,7 @@ where `v5.x.x` is the desired Go client `v5` version, for example `v5.6.0`.
 Add dependency to your `go.mod`:
 
 ```go
-require github.com/weaviate/weaviate-go-client/v5 v5.6.0
+require github.com/weaviate/weaviate-go-client/v6 v5.6.0
 ```
 
 Connect to Weaviate on `localhost:8080` and fetch meta information
@@ -30,7 +30,7 @@ import (
   "context"
   "fmt"
 
-  client "github.com/weaviate/weaviate-go-client/v5/weaviate"
+  client "github.com/weaviate/weaviate-go-client/v6/weaviate"
 )
 
 func main() {

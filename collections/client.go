@@ -3,8 +3,8 @@ package collections
 import (
 	"context"
 
-	"github.com/weaviate/weaviate-go-client/v5/internal"
-	"github.com/weaviate/weaviate-go-client/v5/query"
+	"github.com/weaviate/weaviate-go-client/v6/internal"
+	"github.com/weaviate/weaviate-go-client/v6/query"
 )
 
 func NewClient(t internal.Transport) *Client {

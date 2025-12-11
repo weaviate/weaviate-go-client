@@ -1,6 +1,6 @@
 package query
 
-import "github.com/weaviate/weaviate-go-client/v5/types"
+import "github.com/weaviate/weaviate-go-client/v6/types"
 
 type MultiVectorTarget struct {
 	CombinationMethod string

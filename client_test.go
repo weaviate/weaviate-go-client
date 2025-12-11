@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/weaviate/weaviate-go-client/v5"
-	"github.com/weaviate/weaviate-go-client/v5/query"
-	"github.com/weaviate/weaviate-go-client/v5/types"
+	"github.com/weaviate/weaviate-go-client/v6"
+	"github.com/weaviate/weaviate-go-client/v6/query"
+	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
 func TestClient(*testing.T) {

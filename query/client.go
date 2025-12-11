@@ -1,8 +1,8 @@
 package query
 
 import (
-	"github.com/weaviate/weaviate-go-client/v5/internal"
-	"github.com/weaviate/weaviate-go-client/v5/types"
+	"github.com/weaviate/weaviate-go-client/v6/internal"
+	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
 type Client struct {
