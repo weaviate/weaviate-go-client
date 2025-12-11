@@ -7,25 +7,65 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/types"
 )
 
+// For demo purposes only
+var (
+	mockObject_1 = types.Object[types.Map]{
+		UUID:       "uuid-1",
+		Properties: map[string]any{"number": "one"},
+		Vectors: map[string]types.Vector{
+			"1d": {Name: "1d", Single: []float32{1, 2, 3}},
+			"2d": {Name: "2d", Multi: [][]float32{{1, 2, 3}, {1, 2, 3}}},
+		},
+	}
+	mockObject_2 = types.Object[types.Map]{
+		UUID:       "uuid-2",
+		Properties: map[string]any{"number": "two"},
+		Vectors: map[string]types.Vector{
+			"1d": {Name: "1d", Single: []float32{1, 2, 3}},
+			"2d": {Name: "2d", Multi: [][]float32{{1, 2, 3}, {1, 2, 3}}},
+		},
+	}
+	mockObject_3 = types.Object[types.Map]{
+		UUID:       "uuid-3",
+		Properties: map[string]any{"number": "three"},
+		Vectors: map[string]types.Vector{
+			"1d": {Name: "1d", Single: []float32{1, 2, 3}},
+			"2d": {Name: "2d", Multi: [][]float32{{1, 2, 3}, {1, 2, 3}}},
+		},
+	}
+)
+
 // NearVectorFunc runs plain near vector search.
-type NearVectorFunc[P types.Properties] func(context.Context, NearVectorTarget, ...NearVectorOption) (*Result[P], error)
+type NearVectorFunc func(context.Context, NearVectorTarget, ...NearVectorOption) (*Result, error)
 
 // GroupBy runs near vector search with a group by clause.
-func (nv NearVectorFunc[P]) GroupBy(ctx context.Context, target NearVectorTarget, groupBy string, options ...NearVectorOption) (*GroupByResult[P], error) {
+func (nv NearVectorFunc) GroupBy(ctx context.Context, target NearVectorTarget, groupBy string, options ...NearVectorOption) (*GroupByResult, error) {
 	ctxcpy := internal.ContextWithGroupByResult(ctx)
 	_, err := nv(ctxcpy, target, NearVectorOptions(options).Add(withGroupBy(groupBy)))
 	if err != nil {
 		return nil, err
 	}
-	res := internal.GroupByResultFromContext(ctxcpy)
-	var p GroupByResult[P] = GroupByResult[types.Map]{Objects: []GroupByObject[types.Map]{
-		{Object: types.Object[types.Map]{Properties: make(types.Map)}},
-	}}
-	return &p, nil
-	// return &GroupByResult[types.Map]{
-	// 	Objects: nil,
-	// 	Groups:  nil,
-	// }, nil
+	_ = internal.GroupByResultFromContext(ctxcpy)
+	return &GroupByResult{
+		Objects: []GroupByObject{
+			{Object: mockObject_1, BelongsToGroup: "a"},
+			{Object: mockObject_2, BelongsToGroup: "b"},
+			{Object: mockObject_3, BelongsToGroup: "b"},
+		},
+		Groups: map[string]Group{
+			"a": {
+				Name: "a", Size: 1, Objects: []GroupByObject{
+					{Object: mockObject_1, BelongsToGroup: "a"},
+				},
+			},
+			"b": {
+				Name: "b", Size: 2, Objects: []GroupByObject{
+					{Object: mockObject_2, BelongsToGroup: "b"},
+					{Object: mockObject_3, BelongsToGroup: "b"},
+				},
+			},
+		},
+	}, nil
 }
 
 type nearVectorRequest struct {
@@ -65,7 +105,9 @@ func WithCertainty(l float32) CertaintyOption {
 }
 
 func nearVector(context.Context, internal.Transport, NearVectorTarget, ...NearVectorOption) (*Result, error) {
-	return nil, nil
+	return &Result{
+		Objects: []types.Object[types.Map]{mockObject_1, mockObject_2, mockObject_3},
+	}, nil
 }
 
 // nearVectorFunc makes internal.Transport available to nearVector via a closure.

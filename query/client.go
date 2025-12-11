@@ -71,8 +71,8 @@ func withGroupBy(property string) groupByOption {
 	return groupByOption(GroupBy{Property: property})
 }
 
-type Result[P types.Properties] struct {
-	Objects []types.Object[P]
+type Result struct {
+	Objects []types.Object[types.Map]
 }
 
 type QueryMetadata struct {
@@ -83,20 +83,20 @@ type QueryMetadata struct {
 	ExplainScore string
 }
 
-type Group[P types.Properties] struct {
+type Group struct {
 	Name                     string
 	MinDistance, MaxDistance float32
 	Size                     int64
-	Objects                  []GroupByObject[P]
+	Objects                  []GroupByObject
 }
 
-type GroupByObject[P types.Properties] struct {
-	types.Object[P]
+type GroupByObject struct {
+	types.Object[types.Map]
 	Metadata       QueryMetadata
 	BelongsToGroup string
 }
 
-type GroupByResult[P types.Properties] struct {
-	Objects []GroupByObject[P]
-	Groups  map[string][]GroupByObject[P]
+type GroupByResult struct {
+	Objects []GroupByObject
+	Groups  map[string]Group
 }

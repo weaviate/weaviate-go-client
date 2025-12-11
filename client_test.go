@@ -40,14 +40,20 @@ func TestClient(*testing.T) {
 		query.Target(types.Vector{Name: "lyrics", Multi: multi}, 0.6),
 	))
 
-	fmt.Printf("got %d objects\n", len(res.Objects))
+	fmt.Printf("NearVector: got %d objects\n", len(res.Objects))
 	for i, obj := range res.Objects {
-		fmt.Printf("#%d: id=%s\n\tproperties=%v", obj.UUID, obj.Properties)
+		fmt.Printf("#%d: id=%s\n\tproperties=%v\n", i, obj.UUID, obj.Properties)
 	}
 
-	h.Query.NearVector.GroupBy(ctx,
+	grouped, _ := h.Query.NearVector.GroupBy(ctx,
 		types.Vector{Single: single},
 		"group by album",
 		query.WithAutoLimit(2),
 	)
+
+	fmt.Printf("NearVector.GroupBy: got %d objects in %d groups\n", len(grouped.Objects), len(grouped.Groups))
+	for key, group := range grouped.Groups {
+		fmt.Printf("Group %q has %d objects \n", key, group.Size)
+	}
+	// grouped.Objects[0].Properties
 }
