@@ -83,20 +83,20 @@ type QueryMetadata struct {
 	ExplainScore string
 }
 
-type Group struct {
+type Group[P types.Properties] struct {
 	Name                     string
 	MinDistance, MaxDistance float32
 	Size                     int64
-	Objects                  []GroupByObject
+	Objects                  []GroupByObject[P]
 }
 
-type GroupByObject struct {
-	types.Object[types.Map]
+type GroupByObject[P types.Properties] struct {
+	types.Object[P]
 	Metadata       QueryMetadata
 	BelongsToGroup string
 }
 
 type GroupByResult struct {
-	Objects []GroupByObject
-	Groups  map[string]Group
+	Objects []GroupByObject[types.Map]
+	Groups  map[string]Group[types.Map]
 }

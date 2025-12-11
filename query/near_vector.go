@@ -47,19 +47,19 @@ func (nv NearVectorFunc) GroupBy(ctx context.Context, target NearVectorTarget, g
 	}
 	_ = internal.GroupByResultFromContext(ctxcpy)
 	return &GroupByResult{
-		Objects: []GroupByObject{
+		Objects: []GroupByObject[types.Map]{
 			{Object: mockObject_1, BelongsToGroup: "a"},
 			{Object: mockObject_2, BelongsToGroup: "b"},
 			{Object: mockObject_3, BelongsToGroup: "b"},
 		},
-		Groups: map[string]Group{
+		Groups: map[string]Group[types.Map]{
 			"a": {
-				Name: "a", Size: 1, Objects: []GroupByObject{
+				Name: "a", Size: 1, Objects: []GroupByObject[types.Map]{
 					{Object: mockObject_1, BelongsToGroup: "a"},
 				},
 			},
 			"b": {
-				Name: "b", Size: 2, Objects: []GroupByObject{
+				Name: "b", Size: 2, Objects: []GroupByObject[types.Map]{
 					{Object: mockObject_2, BelongsToGroup: "b"},
 					{Object: mockObject_3, BelongsToGroup: "b"},
 				},

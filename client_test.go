@@ -55,5 +55,23 @@ func TestClient(*testing.T) {
 	for key, group := range grouped.Groups {
 		fmt.Printf("Group %q has %d objects \n", key, group.Size)
 	}
-	// grouped.Objects[0].Properties
+
+	// Scan results differently
+	type Song struct{ Title, Album, Lyrics string }
+
+	songs := query.Scan[Song](res)
+
+	for _, song := range songs {
+		fmt.Printf("%q (%s) - %s\n",
+			song.Properties.Title, song.Properties.Album, song.Properties.Lyrics)
+	}
+
+	albums := query.ScanGroups[Song](grouped)
+	for _, album := range albums {
+		fmt.Printf("album %q has %d songs:", album.Name, album.Size)
+		for _, song := range album.Objects {
+			fmt.Printf("\t%q - %s\n",
+				song.Properties.Title, song.Properties.Lyrics)
+		}
+	}
 }
