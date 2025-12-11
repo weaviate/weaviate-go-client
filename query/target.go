@@ -36,5 +36,5 @@ func ManualWeights(vectors ...WeightedTarget) MultiVectorTarget {
 	}
 }
 
-// ToProto implements NearVectorTarget.
+// toProto implements NearVectorTarget.
 func (m MultiVectorTarget) ToProto() {}

@@ -1,0 +1,13 @@
+package types
+
+type Map map[string]any
+
+type Properties interface {
+	Map | any
+}
+
+type Object[P Properties] struct {
+	UUID       string
+	Properties P
+	Vectors    map[string]Vector
+}

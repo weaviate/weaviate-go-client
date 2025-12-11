@@ -1,15 +1,15 @@
 package weaviate
 
 import (
-	"github.com/weaviate/weaviate-go-client/v5/query"
+	"github.com/weaviate/weaviate-go-client/v5/collections"
 )
 
 func NewClient() (*Client, error) {
 	return &Client{
-		Query: *query.NewClient(nil),
+		Collections: *collections.NewClient("tramway"),
 	}, nil
 }
 
 type Client struct {
-	Query query.Client
+	Collections collections.Client
 }
