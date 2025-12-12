@@ -41,13 +41,6 @@ func (c *Client) Use(collectionName string, options ...HandleOption) *Handle {
 	return newHandle(c.t, rd)
 }
 
-func (c *Client) Create(ctx context.Context, collectionName string, options ...any) (*Handle, error) {
-	if err := c.t.Do(ctx, nil, nil); err != nil {
-		return nil, fmt.Errorf("create collection: %w", err)
-	}
-	return c.Use(collectionName), nil
-}
-
 type Handle struct {
 	transport internal.Transport
 	defaults  request.Defaults
@@ -75,4 +68,73 @@ func (h *Handle) WithOptions(options ...HandleOption) *Handle {
 		opt(&defaults)
 	}
 	return newHandle(h.transport, defaults)
+}
+
+type createCollectionRequest struct{ Collection }
+
+type CreateCollectionOption func(*createCollectionRequest)
+
+func WithProperties(properties ...Property) CreateCollectionOption {
+	return func(r *createCollectionRequest) {
+		if r.Collection.Properties == nil {
+			r.Collection.Properties = make(map[string]Property, len(properties))
+		}
+		for _, p := range properties {
+			r.Collection.Properties[p.Name] = p
+		}
+	}
+}
+
+func WithReferences(references ...ReferenceProperty) CreateCollectionOption {
+	return func(r *createCollectionRequest) {
+		if r.Collection.References == nil {
+			r.Collection.References = make(map[string]ReferenceProperty, len(references))
+		}
+		for _, ref := range references {
+			r.Collection.References[ref.Name] = ref
+		}
+	}
+}
+
+func (c *Client) Create(ctx context.Context, collectionName string, options ...CreateCollectionOption) (*Handle, error) {
+	if err := c.t.Do(ctx, nil, nil); err != nil {
+		return nil, fmt.Errorf("create collection: %w", err)
+	}
+	return c.Use(collectionName), nil
+}
+
+func (c *Client) GetConfig(ctx context.Context, collectionName string) (*Collection, error) {
+	if err := c.t.Do(ctx, nil, nil); err != nil {
+		return nil, fmt.Errorf("get collection config: %w", err)
+	}
+	return nil, nil
+}
+
+func (c *Client) List(ctx context.Context) ([]Collection, error) {
+	if err := c.t.Do(ctx, nil, nil); err != nil {
+		return nil, fmt.Errorf("list collections: %w", err)
+	}
+	return nil, nil
+}
+
+func (c *Client) Exists(ctx context.Context) (bool, error) {
+	// TODO: send the same request as in GetConfig, but pass nil-dest to skip unmarshaling.
+	if err := c.t.Do(ctx, nil, nil); err != nil {
+		return false, fmt.Errorf("check collection exists: %w", err)
+	}
+	return true, nil
+}
+
+func (c *Client) Delete(ctx context.Context, collectionName string) error {
+	if err := c.t.Do(ctx, nil, nil); err != nil {
+		return fmt.Errorf("delete collection: %w", err)
+	}
+	return nil
+}
+
+func (c *Client) DeleteAll(ctx context.Context) error {
+	if err := c.t.Do(ctx, nil, nil); err != nil {
+		return fmt.Errorf("delete all collections: %w", err)
+	}
+	return nil
 }
