@@ -3,7 +3,7 @@ syntax = "proto3";
 package weaviate.v1;
 import "google/protobuf/struct.proto";
 
-option go_package = "github.com/weaviate/weaviate/grpc/generated;protocol";
+option go_package = "github.com/weaviate/weaviate-go-client/v6/internal/gen;proto";
 option java_package = "io.weaviate.client.grpc.protocol.v1";
 option java_outer_classname = "WeaviateProtoBase";
 
@@ -16,8 +16,9 @@ enum ConsistencyLevel {
 
 message NumberArrayProperties {
   // will be removed in the future, use vector_bytes
-  // go client 5.4.1 depends on this field. Only remove after go client is deprecated
-  repeated double values = 1 [deprecated = true];
+  // go client 5.4.1 depends on this field. Only remove after go client is
+  // deprecated
+  repeated double values = 1 [ deprecated = true ];
   string prop_name = 2;
   bytes values_bytes = 3;
 }
@@ -58,22 +59,13 @@ message ObjectProperties {
   string prop_name = 2;
 }
 
+message TextArray { repeated string values = 1; }
 
-message TextArray {
-  repeated string values = 1;
-}
+message IntArray { repeated int64 values = 1; }
 
-message IntArray {
-  repeated int64 values = 1;
-}
+message NumberArray { repeated double values = 1; }
 
-message NumberArray {
-  repeated double values = 1;
-}
-
-message BooleanArray {
-  repeated bool values = 1;
-}
+message BooleanArray { repeated bool values = 1; }
 
 message Filters {
   enum Operator {
@@ -97,7 +89,8 @@ message Filters {
 
   Operator operator = 1;
   // protolint:disable:next REPEATED_FIELD_NAMES_PLURALIZED
-  repeated string on = 2  [deprecated = true];  // will be removed in the future, use path
+  repeated string on = 2
+      [ deprecated = true ]; // will be removed in the future, use path
   repeated Filters filters = 3;
   oneof test_value {
     string value_text = 4;
@@ -124,12 +117,10 @@ message FilterReferenceMultiTarget {
   string target_collection = 3;
 }
 
-message FilterReferenceCount {
-  string on = 1;
-}
+message FilterReferenceCount { string on = 1; }
 
 message FilterTarget {
-  oneof target{
+  oneof target {
     string property = 1;
     FilterReferenceSingleTarget single_target = 2;
     FilterReferenceMultiTarget multi_target = 3;
@@ -150,7 +141,7 @@ message Vectors {
     VECTOR_TYPE_MULTI_FP32 = 2;
   }
   string name = 1;
-  uint64 index = 2 [deprecated = true];  // for multi-vec
+  uint64 index = 2 [ deprecated = true ]; // for multi-vec
   bytes vector_bytes = 3;
   VectorType type = 4;
 }
