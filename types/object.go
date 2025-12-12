@@ -9,5 +9,5 @@ type Properties interface {
 type Object[P Properties] struct {
 	UUID       string
 	Properties P
-	Vectors    map[string]Vector
+	Vectors    Vectors
 }

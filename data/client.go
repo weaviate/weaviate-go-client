@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
+	"github.com/weaviate/weaviate-go-client/v6/internal/request"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
-func NewClient(t internal.Transport, rd internal.RequestDefaults) *Client {
+func NewClient(t internal.Transport, rd request.Defaults) *Client {
 	return &Client{
 		transport: t,
 		defaults:  rd,
@@ -16,7 +17,7 @@ func NewClient(t internal.Transport, rd internal.RequestDefaults) *Client {
 
 type Client struct {
 	transport internal.Transport
-	defaults  internal.RequestDefaults
+	defaults  request.Defaults
 }
 
 func (c *Client) Insert(context.Context, ...InsertOption) (string, error) {

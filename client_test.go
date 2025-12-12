@@ -1,28 +1,43 @@
 package weaviate_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
 	"github.com/weaviate/weaviate-go-client/v6"
+	"github.com/weaviate/weaviate-go-client/v6/collections"
+	"github.com/weaviate/weaviate-go-client/v6/data"
 	"github.com/weaviate/weaviate-go-client/v6/query"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
-func TestClient(*testing.T) {
+func TestClient(t *testing.T) {
 	c, err := weaviate.NewClient()
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Create a collection and get a handle
-	h := c.Collections.Create(ctx, "Songs")
+	h, err := c.Collections.Create(ctx, "Songs")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// YOLO: write with ConsistencyLevel=ONE
+	h = h.WithOptions(collections.WithConsistencyLevel(types.ConsistencyLevelOne))
 
 	var single []float32
 	var multi [][]float32
+
+	h.Data.Insert(ctx, data.WithProperties(map[string]any{
+		"album": "Killin Is My Business... And Business Is Good!",
+		"title": "Rattlehead",
+	}), data.WithVector(
+		types.Vector{Name: "title", Single: single},
+		types.Vector{Name: "lyrics", Multi: multi},
+	), data.WithUUID("uuid-0"))
 
 	h.Query.NearVector(ctx,
 		types.Vector{Single: single},
@@ -66,7 +81,7 @@ func TestClient(*testing.T) {
 			song.Properties.Title, song.Properties.Album, song.Properties.Lyrics)
 	}
 
-	albums := query.ScanGrouped[Song](grouped)
+	albums, _ := query.ScanGrouped[Song](grouped)
 	for _, album := range albums {
 		fmt.Printf("album %q has %d songs:", album.Name, album.Size)
 		for _, song := range album.Objects {

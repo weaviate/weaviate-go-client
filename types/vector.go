@@ -6,14 +6,16 @@ type Vector struct {
 	Multi  [][]float32
 }
 
+// Vector implements query.NearVectorTarget
 func (v Vector) ToProto() {}
 
 // Vectors is a map of named vectors. An empty string is an alias for "default" vector.
 type Vectors map[string]Vector
 
-func (vs Vectors) ToSlice() (out []Vector) {
+func (vs Vectors) ToSlice() []Vector {
+	out := make([]Vector, len(vs))
 	for _, v := range vs {
 		out = append(out, v)
 	}
-	return
+	return out
 }

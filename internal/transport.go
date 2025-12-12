@@ -2,45 +2,28 @@ package internal
 
 import "context"
 
-type Transport any
+type Transport interface {
+	// Do executes a request and populates the response object.
+	// Response dest SHOULD be nil if no response is expected and MUST
+	// be a non-nil pointer otherwise.
+	Do(_ context.Context, _ Request, dest any) error
+}
 
-// Custom context key type for internal application.
+// TODO: Transport defines its request types which map to protobuf / REST types, but in a separate `internal/request` package so that the execution is transparent to the caller.
+// Something like:
 //
-// Empty struct avoids heap allocation when passing it to
-// any / interface{} in context.WithValue().
-type contextKey struct{}
-
-// groupByKey is used to pass grouped query results from the transport layer.
-var groupByResultKey = contextKey{}
-
-// WithGroupByResult derives a new context, preserving the deadlines
-// and cancelation behaviour of the original context.
-func ContextWithGroupByResult(ctx context.Context) context.Context {
-	placeholder := (*GroupByResult)(nil)
-	return context.WithValue(ctx, groupByResultKey, &placeholder)
-}
-
-// GroupByResult is a placeholder for transport-layer grouped query response.
-type GroupByResult struct {
-	Objects []any
-	Groups  map[string]any
-}
-
-// Extract GroupByResult from a context.
-func GroupByResultFromContext(ctx context.Context) *GroupByResult {
-	v := ctx.Value(groupByResultKey).(**GroupByResult)
-	if v == nil {
-		return nil
-	}
-	return *v
-}
-
-// Set GroupByResult in the context to another value.
+//	type SearchRequest struct {
+//		NearText   request.NearText
+//		NearVector request.NearVector
+//		BM25       request.BM25
+//	}
 //
-// We want to update the context passed to us in the request,
-// rather than derive a new one. In the latter case the original
-// context will stay unchanged and the caller will not see the value.
-func setGroupByResult(ctx context.Context, r *GroupByResult) {
-	value := ctx.Value(groupByResultKey).(**GroupByResult)
-	*value = r
-}
+// Used like so:
+//
+//	func (c *Client) Insert(ctx, ...) {
+//		c.transport.Do(ctx, request.Insert{
+//			Object: 	object,
+//			Defaults: 	c.defaults, /* request.Defaults */
+//		})
+//	}
+type Request any
