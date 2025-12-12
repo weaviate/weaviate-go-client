@@ -5,19 +5,19 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
-type Client struct {
-	transport      internal.Transport
-	collectionName string
-
-	NearVector NearVectorFunc
+func NewClient(t internal.Transport, rd internal.RequestDefaults) *Client {
+	return &Client{
+		transport:  t,
+		defaults:   rd,
+		NearVector: nearVectorFunc(t),
+	}
 }
 
-func NewClient(t internal.Transport, collectionName string) *Client {
-	return &Client{
-		transport:      t,
-		collectionName: collectionName,
-		NearVector:     nearVectorFunc(t),
-	}
+type Client struct {
+	transport internal.Transport
+	defaults  internal.RequestDefaults
+
+	NearVector NearVectorFunc
 }
 
 type commonOptions struct {
