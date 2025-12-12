@@ -66,7 +66,7 @@ func TestClient(*testing.T) {
 			song.Properties.Title, song.Properties.Album, song.Properties.Lyrics)
 	}
 
-	albums := query.ScanGroups[Song](grouped)
+	albums := query.ScanGrouped[Song](grouped)
 	for _, album := range albums {
 		fmt.Printf("album %q has %d songs:", album.Name, album.Size)
 		for _, song := range album.Objects {

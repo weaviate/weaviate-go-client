@@ -6,6 +6,6 @@ func Scan[P types.Properties](r *Result) []types.Object[P] {
 	return nil
 }
 
-func ScanGroups[P types.Properties](r *GroupByResult) map[string]Group[P] {
+func ScanGrouped[P types.Properties](r *GroupByResult) map[string]Group[P] {
 	return nil
 }
