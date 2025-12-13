@@ -58,7 +58,7 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 		opt.apply(&nv)
 	}
 
-	req := api.SearchRequest{
+	req := &api.SearchRequest{
 		RequestDefaults:  rd,
 		Limit:            nv.Limit,
 		AutoLimit:        nv.AutoLimit,
@@ -109,7 +109,7 @@ func (opt returnPropertiesOption) apply(r *nearVectorRequest) {
 	r.ReturnProperties = opt
 }
 
-func (opt ReturnVectorsOption) apply(r *nearVectorRequest) {
+func (opt ReturnVectorOption) apply(r *nearVectorRequest) {
 	r.ReturnVectors = opt
 }
 

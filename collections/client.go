@@ -118,7 +118,7 @@ func (c *Client) List(ctx context.Context) ([]Collection, error) {
 }
 
 func (c *Client) Exists(ctx context.Context) (bool, error) {
-	// TODO: send the same request as in GetConfig, but pass nil-dest to skip unmarshaling.
+	// TODO(dyma): send the same request as in GetConfig, but pass nil-dest to skip unmarshaling.
 	if err := c.t.Do(ctx, nil, nil); err != nil {
 		return false, fmt.Errorf("check collection exists: %w", err)
 	}

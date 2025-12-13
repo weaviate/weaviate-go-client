@@ -14,11 +14,19 @@ type (
 var _ api.NearVectorTarget = (*Vector)(nil)
 
 // CombinationMethod implements NearVectorTarget.
-func (v *Vector) CombinationMethod() api.CombinationMethod {
+func (v Vector) CombinationMethod() api.CombinationMethod {
 	return v.CombinationMethod()
 }
 
 // Targets implements api.NearVectorTarget.
-func (v *Vector) Targets() []api.TargetVector {
-	return v.Targets()
+func (v Vector) Vectors() []api.TargetVector {
+	return v.Vectors()
+}
+
+func (vs Vectors) ToSlice() []Vector {
+	out := make([]Vector, len(vs))
+	for _, v := range vs {
+		out = append(out, Vector(v))
+	}
+	return out
 }

@@ -38,7 +38,10 @@ func GroupByResultFromContext(ctx context.Context) *GroupByResult {
 // We want to update the context passed to us in the request,
 // rather than derive a new one. In the latter case the original
 // context will stay unchanged and the caller will not see the value.
-func setGroupByResult(ctx context.Context, r *GroupByResult) {
+//
+// Populating api.GroupByResult is NOT a part of the Transport contract,
+// but rather a responsibility of the layer using ContextWithGroupByResult.
+func SetGroupByResult(ctx context.Context, r *GroupByResult) {
 	value := ctx.Value(groupByResultKey).(**GroupByResult)
 	*value = r
 }

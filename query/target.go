@@ -24,13 +24,13 @@ var _ api.NearVectorTarget = (*MultiVectorTarget)(nil)
 // Use Target() to construct one.
 type WeightedTarget struct {
 	v      api.Vector
-	weight float64
+	weight float32
 }
 
 // Compile-time assertion that WeighteTarget implements api.TargetVector
 var _ api.TargetVector = (*WeightedTarget)(nil)
 
-func (wt WeightedTarget) Weight() float64 {
+func (wt WeightedTarget) Weight() float32 {
 	return wt.weight
 }
 
@@ -38,7 +38,7 @@ func (wt WeightedTarget) Vector() *api.Vector {
 	return &wt.v
 }
 
-func Target(v types.Vector, weight float64) WeightedTarget {
+func Target(v types.Vector, weight float32) WeightedTarget {
 	return WeightedTarget{v: api.Vector(v), weight: weight}
 }
 
@@ -96,6 +96,6 @@ func (m MultiVectorTarget) CombinationMethod() api.CombinationMethod {
 	return m.combinationMethod
 }
 
-func (m MultiVectorTarget) Targets() []api.TargetVector {
+func (m MultiVectorTarget) Vectors() []api.TargetVector {
 	return m.targets
 }

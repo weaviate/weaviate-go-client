@@ -43,10 +43,10 @@ func WithProperties(p types.Properties) InsertOption {
 func WithVector(vectors ...types.Vector) InsertOption {
 	return func(r *insertRequest) {
 		if r.Object.Vectors == nil {
-			r.Object.Vectors = make(map[string]types.Vector, len(vectors))
+			r.Object.Vectors = make(map[string]api.Vector, len(vectors))
 		}
 		for _, v := range vectors {
-			r.Object.Vectors[v.Name] = v
+			r.Object.Vectors[v.Name] = api.Vector(v)
 		}
 	}
 }

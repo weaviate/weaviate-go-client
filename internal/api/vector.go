@@ -15,7 +15,7 @@ func (v *Vector) CombinationMethod() CombinationMethod {
 	return combinationMethodUnspecified
 }
 
-func (v Vector) Targets() []TargetVector {
+func (v Vector) Vectors() []TargetVector {
 	return []TargetVector{targetVector{v: v}}
 }
 
@@ -24,7 +24,7 @@ type targetVector struct{ v Vector }
 
 var _ TargetVector = (*targetVector)(nil)
 
-func (tv targetVector) Weight() float64 { return 0 }
+func (tv targetVector) Weight() float32 { return 0 }
 
 func (tv targetVector) Vector() *Vector { return &tv.v }
 

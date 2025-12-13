@@ -29,9 +29,9 @@ type commonOptions struct {
 	AutoLimit        *int
 	After            *string
 	ReturnProperties []api.ReturnProperty
-	ReturnReferences []api.ReturnReference // TODO: add functional option
+	ReturnReferences []api.ReturnReference // TODO(dyma): add functional option for this
 	ReturnVectors    []string
-	ReturnMetadata   []api.Metadata
+	ReturnMetadata   []api.MetadataRequest
 	GroupBy          *GroupBy
 }
 
@@ -59,16 +59,16 @@ type WithAfter string
 // Compile-time assertion that WithAfter implements NearVectorOption.
 var _ NearVectorOption = (*WithAfter)(nil)
 
-type ReturnVectorsOption []string
+// ReturnVectorOption selects vectors to include in the response.
+type ReturnVectorOption []string
 
 // Compile-time assertion that ReturnVectorsOption implements NearVectorOption.
-var _ NearVectorOption = (*ReturnVectorsOption)(nil)
+var _ NearVectorOption = (*ReturnVectorOption)(nil)
 
-func WithReturnVector(vectors ...string) ReturnVectorsOption {
-	if len(vectors) == 0 {
-		return api.ReturnOnlyVector
-	}
-	return ReturnVectorsOption(vectors)
+// ReturnVectorOption selects vectors to include in the response.
+// Use this option with no arguments to include the only vector in the collection.
+func WithReturnVector(vectors ...string) ReturnVectorOption {
+	return ReturnVectorOption(vectors)
 }
 
 // returnPropertiesOption selects properties to include in the response.
@@ -93,12 +93,12 @@ func WithReturnNestedProperties(propertyName string, nestedProperties ...string)
 	return returnPropertiesOption{{Name: propertyName, NestedProperties: nestedProperties}}
 }
 
-type returnMetadataOption []api.Metadata
+type returnMetadataOption []api.MetadataRequest
 
 // Compile-time assertion that returnMetadataOption implements NearVectorOption.
 var _ NearVectorOption = (*returnMetadataOption)(nil)
 
-type Metadata api.Metadata
+type Metadata api.MetadataRequest
 
 const (
 	MetadataCreationTimeUnix   Metadata = Metadata(api.MetadataCreationTimeUnix)
@@ -112,12 +112,12 @@ const (
 func WithReturnMetadataOption(metadata ...Metadata) returnMetadataOption {
 	out := make(returnMetadataOption, len(metadata))
 	for _, m := range metadata {
-		out = append(out, api.Metadata(m))
+		out = append(out, api.MetadataRequest(m))
 	}
 	return out
 }
 
-// TODO: define GroupBy parameters
+// TODO(dyma): define GroupBy parameters
 type GroupBy struct {
 	Property       string // Property to group by.
 	ObjectLimit    int    // Maximum number of objects per group.
