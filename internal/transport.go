@@ -1,29 +1,24 @@
 package internal
 
-import "context"
+import (
+	"context"
+
+	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+)
 
 type Transport interface {
 	// Do executes a request and populates the response object.
-	// Response dest SHOULD be nil if no response is expected and MUST
-	// be a non-nil pointer otherwise.
-	Do(_ context.Context, _ Request, dest any) error
+	// Response dest SHOULD be nil if no response is expected
+	// and MUST be a non-nil pointer otherwise.
+	//
+	// To keep execution transparent to the caller, the request type
+	// does not enforce any explicit constraints. E.g. were request
+	// an interface with a method like Type() "rest" | "grpc", the
+	// caller would have to be aware of the execution details.
+	//
+	// Instead, "internal/api" package defines structs for all
+	// supported requests. The contract is that Transport is
+	// able to execute any one of those. Similarly, `dest` must
+	// be a pointer to one of the response structs in "internal/api".
+	Do(_ context.Context, req api.Request, dest any) error
 }
-
-// TODO: Transport defines its request types which map to protobuf / REST types, but in a separate `internal/request` package so that the execution is transparent to the caller.
-// Something like:
-//
-//	type SearchRequest struct {
-//		NearText   request.NearText
-//		NearVector request.NearVector
-//		BM25       request.BM25
-//	}
-//
-// Used like so:
-//
-//	func (c *Client) Insert(ctx, ...) {
-//		c.transport.Do(ctx, request.Insert{
-//			Object: 	object,
-//			Defaults: 	c.defaults, /* request.Defaults */
-//		})
-//	}
-type Request any

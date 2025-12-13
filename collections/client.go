@@ -6,7 +6,7 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v6/data"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
-	"github.com/weaviate/weaviate-go-client/v6/internal/request"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/query"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
@@ -21,20 +21,20 @@ type Client struct {
 
 // WithConsistencyLevel default consistency level for all read / write requests made with this collection handle.
 func WithConsistencyLevel(cl types.ConsistencyLevel) HandleOption {
-	return func(rd *request.Defaults) {
-		rd.ConsistencyLevel = cl
+	return func(rd *api.RequestDefaults) {
+		rd.ConsistencyLevel = api.ConsistencyLevel(cl)
 	}
 }
 
 // WithConsistencyLevel default tenant for all read / write requests made with this collection handle.
 func WithTenant(tenant string) HandleOption {
-	return func(rd *request.Defaults) {
+	return func(rd *api.RequestDefaults) {
 		rd.Tenant = tenant
 	}
 }
 
 func (c *Client) Use(collectionName string, options ...HandleOption) *Handle {
-	rd := request.Defaults{CollectionName: collectionName}
+	rd := api.RequestDefaults{CollectionName: collectionName}
 	for _, opt := range options {
 		opt(&rd)
 	}
@@ -43,13 +43,13 @@ func (c *Client) Use(collectionName string, options ...HandleOption) *Handle {
 
 type Handle struct {
 	transport internal.Transport
-	defaults  request.Defaults
+	defaults  api.RequestDefaults
 
 	Query *query.Client
 	Data  *data.Client
 }
 
-func newHandle(t internal.Transport, rd request.Defaults) *Handle {
+func newHandle(t internal.Transport, rd api.RequestDefaults) *Handle {
 	return &Handle{
 		transport: t,
 		defaults:  rd,
@@ -59,7 +59,7 @@ func newHandle(t internal.Transport, rd request.Defaults) *Handle {
 }
 
 // HandleOption configures request defaults for collection handle.
-type HandleOption func(*request.Defaults)
+type HandleOption func(*api.RequestDefaults)
 
 // WithOptions returns a new handle with different defaults.
 func (h *Handle) WithOptions(options ...HandleOption) *Handle {

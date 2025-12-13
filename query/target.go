@@ -1,7 +1,7 @@
 package query
 
 import (
-	"github.com/weaviate/weaviate-go-client/v6/internal"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
@@ -9,59 +9,81 @@ import (
 // Construct an appropriate MultiVectorTarget using one of these functions:
 // - Sum
 // - Average
-// - Max
+// - Min
 // - ManualWeights
 // - RelativeScore
 type MultiVectorTarget struct {
-	combinationMethod internal.CombinationMethod
-	targets           []WeightedTarget
+	combinationMethod api.CombinationMethod
+	targets           []api.TargetVector
 }
 
-var _ NearVectorTarget = (*MultiVectorTarget)(nil)
+// Compile-time assertion that MultiVectorTarget implements api.NearVectorTarget.
+var _ api.NearVectorTarget = (*MultiVectorTarget)(nil)
 
 // WeightedTarget assigns a weight to a vector target used in a query.
 // Use Target() to construct one.
 type WeightedTarget struct {
-	types.Vector
+	v      api.Vector
 	weight float64
 }
 
-// Assign a weight to a target vector.
+// Compile-time assertion that WeighteTarget implements api.TargetVector
+var _ api.TargetVector = (*WeightedTarget)(nil)
+
+func (wt WeightedTarget) Weight() float64 {
+	return wt.weight
+}
+
+func (wt WeightedTarget) Vector() *api.Vector {
+	return &wt.v
+}
+
 func Target(v types.Vector, weight float64) WeightedTarget {
-	return WeightedTarget{Vector: v, weight: weight}
+	return WeightedTarget{v: api.Vector(v), weight: weight}
 }
 
 func Sum(vectors ...types.Vector) MultiVectorTarget {
-	return zeroWeightTargets(internal.CombinationMethodSum, vectors)
+	return zeroWeightTargets(api.CombinationMethodSum, vectors)
 }
 
-func Max(vectors ...types.Vector) MultiVectorTarget {
-	return zeroWeightTargets(internal.CombinationMethodMax, vectors)
+func Min(vectors ...types.Vector) MultiVectorTarget {
+	return zeroWeightTargets(api.CombinationMethodMin, vectors)
 }
 
 func Average(vectors ...types.Vector) MultiVectorTarget {
-	return zeroWeightTargets(internal.CombinationMethodAverage, vectors)
+	return zeroWeightTargets(api.CombinationMethodAverage, vectors)
 }
 
 func ManualWeights(vectors ...WeightedTarget) MultiVectorTarget {
+	// Explicitly cast []WeightedTarget to []api.TargetVector
+	targets := make([]api.TargetVector, len(vectors))
+	for _, v := range vectors {
+		targets = append(targets, v)
+	}
 	return MultiVectorTarget{
-		combinationMethod: internal.CombinationMethodManualWeights,
-		targets:           vectors,
+		combinationMethod: api.CombinationMethodManualWeights,
+		targets:           targets,
 	}
 }
 
 func RelativeScore(vectors ...WeightedTarget) MultiVectorTarget {
+	// Explicitly cast []WeightedTarget to []api.TargetVector
+	targets := make([]api.TargetVector, len(vectors))
+	for _, v := range vectors {
+		targets = append(targets, v)
+	}
 	return MultiVectorTarget{
-		combinationMethod: internal.CombinationMethodRelativeScore,
-		targets:           vectors,
+		combinationMethod: api.CombinationMethodRelativeScore,
+		targets:           targets,
 	}
 }
 
 // Combine target vectors into a MultiVectorTarget keeping the weight unset.
-func zeroWeightTargets(cm internal.CombinationMethod, vectors []types.Vector) MultiVectorTarget {
-	targets := make([]WeightedTarget, len(vectors))
+// The server will determine combination method will determine the weights
+func zeroWeightTargets(cm api.CombinationMethod, vectors []types.Vector) MultiVectorTarget {
+	targets := make([]api.TargetVector, len(vectors))
 	for _, v := range vectors {
-		targets = append(targets, WeightedTarget{Vector: v})
+		targets = append(targets, WeightedTarget{v: api.Vector(v)})
 	}
 
 	return MultiVectorTarget{
@@ -70,5 +92,10 @@ func zeroWeightTargets(cm internal.CombinationMethod, vectors []types.Vector) Mu
 	}
 }
 
-// toProto implements NearVectorTarget.
-func (m MultiVectorTarget) ToProto() {}
+func (m MultiVectorTarget) CombinationMethod() api.CombinationMethod {
+	return m.combinationMethod
+}
+
+func (m MultiVectorTarget) Targets() []api.TargetVector {
+	return m.targets
+}
