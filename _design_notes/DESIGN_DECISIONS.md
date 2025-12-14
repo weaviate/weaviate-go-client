@@ -137,7 +137,7 @@ songs.Data.Insert(ctx,
 
 ---
 
-## Example 6: Multi-Vector Search
+## Multi-Vector search
 
 ```go
 singleVec := types.Vector{Name: "single_vec", Single: []float32{0.1, 0.2, 0.3}}
@@ -150,8 +150,8 @@ result, err := songs.Query.NearVector(ctx,
 
 result, err := songs.Query.NearVector(ctx,
     query.ManualWeights(
-        query.Target(singleVec, 0.7),   // 70% single_vec
-        query.Target(matrixVec, 0.3),  // 30% matrix_vec
+        query.Target(singleVec, 0.7),
+        query.Target(matrixVec, 0.3),
     ),
     query.WithLimit(10),
 )
@@ -159,7 +159,7 @@ result, err := songs.Query.NearVector(ctx,
 
 ---
 
-## Reusing Vectors from Results
+## Reuse Vectors from results
 
 ```go
 result, err := songs.Query.NearVector(ctx, queryVector, query.WithLimit(10))
