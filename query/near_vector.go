@@ -121,46 +121,16 @@ func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc
 	}
 }
 
-func (opt WithLimit) apply(r *nearVectorRequest) {
-	r.Limit = (*int)(&opt)
-}
-
-func (opt WithOffset) apply(r *nearVectorRequest) {
-	r.Offset = (*int)(&opt)
-}
-
-func (opt WithAutoLimit) apply(r *nearVectorRequest) {
-	r.AutoLimit = (*int)(&opt)
-}
-
-func (opt WithAfter) apply(r *nearVectorRequest) {
-	r.After = (*string)(&opt)
-}
-
-func (opt returnPropertiesOption) apply(r *nearVectorRequest) {
-	r.ReturnProperties = opt
-}
-
-func (opt ReturnVectorOption) apply(r *nearVectorRequest) {
-	r.ReturnVectors = opt
-}
-
-func (opt returnMetadataOption) apply(r *nearVectorRequest) {
-	r.ReturnMetadata = opt
-}
-
-func (opt WithCertainty) apply(r *nearVectorRequest) {
-	r.Certainty = (*float64)(&opt)
-}
-
-func (opt WithDistance) apply(r *nearVectorRequest) {
-	r.Distance = (*float64)(&opt)
-}
-
-// apply implements NearVectorOption.
-func (gb groupByOption) apply(r *nearVectorRequest) {
-	r.GroupBy = (*GroupBy)(&gb)
-}
+func (opt WithLimit) apply(r *nearVectorRequest)              { r.Limit = (*int)(&opt) }
+func (opt WithOffset) apply(r *nearVectorRequest)             { r.Offset = (*int)(&opt) }
+func (opt WithAutoLimit) apply(r *nearVectorRequest)          { r.AutoLimit = (*int)(&opt) }
+func (opt WithAfter) apply(r *nearVectorRequest)              { r.After = (*string)(&opt) }
+func (opt returnPropertiesOption) apply(r *nearVectorRequest) { r.ReturnProperties = opt }
+func (opt ReturnVectorOption) apply(r *nearVectorRequest)     { r.ReturnVectors = opt }
+func (opt returnMetadataOption) apply(r *nearVectorRequest)   { r.ReturnMetadata = opt }
+func (opt WithCertainty) apply(r *nearVectorRequest)          { r.Certainty = (*float64)(&opt) }
+func (opt WithDistance) apply(r *nearVectorRequest)           { r.Distance = (*float64)(&opt) }
+func (gb groupByOption) apply(r *nearVectorRequest)           { r.GroupBy = (*GroupBy)(&gb) }
 
 // NearVectorOption can be applied as a single option,
 // in which case it will individually apply the options it comprises.
