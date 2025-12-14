@@ -162,12 +162,9 @@ result, err := songs.Query.NearVector(ctx,
 ## Reusing Vectors from Results
 
 ```go
-// Query returns objects with their vectors
-result, err := songs.Query.NearVector(ctx, queryVector),
-    query.WithLimit(10),
-)
+result, err := songs.Query.NearVector(ctx, queryVector, query.WithLimit(10))
 
-// Re-insert using the same vectors
+// Re-insert using returned vectors
 for _, obj := range result.Objects {
     newID, err := songs.Data.Insert(ctx,
         WithProperties(obj.Properties),  // Reuse properties map
