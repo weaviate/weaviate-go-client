@@ -16,8 +16,8 @@ type NearVectorFunc func(context.Context, NearVectorTarget, ...NearVectorOption)
 
 // GroupBy runs near vector search with a group by clause.
 func (nv NearVectorFunc) GroupBy(ctx context.Context, target NearVectorTarget, groupBy string, options ...NearVectorOption) (*GroupByResult, error) {
-	ctxcpy := contextWithGroupByResult(ctx)
-	_, err := nv(ctxcpy, target, NearVectorOptions(options).Add(withGroupBy(groupBy)))
+	ctx = contextWithGroupByResult(ctx) // safe to reassign since we hold the copy of the original context.
+	_, err := nv(ctx, target, NearVectorOptions(options).Add(withGroupBy(groupBy)))
 	if err != nil {
 		return nil, err
 	}

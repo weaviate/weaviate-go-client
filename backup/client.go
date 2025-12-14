@@ -27,6 +27,13 @@ type Info struct {
 	StartedAt           time.Time // Time at which the backup creation started.
 	CompletedAt         time.Time // Time at which the backup was completed, successfully or otherwise.
 	SizeGiB             float32   // Backup size in GiB.
+
+	operation api.BackupOperation
+}
+
+// IsCompleted returns true if the backup operation has completed, successfully or otherwise.
+func (i *Info) IsCompleted() bool {
+	return i.Status == StatusSuccess || i.Status == StatusFailed || i.Status == StatusCanceled
 }
 
 type (
