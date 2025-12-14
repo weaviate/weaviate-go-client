@@ -1,6 +1,8 @@
 package query
 
 import (
+	"maps"
+
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/types"
@@ -134,7 +136,12 @@ func withGroupBy(property string) groupByOption {
 }
 
 type Result struct {
-	Objects []types.Object[types.Map]
+	Objects []Object[types.Map]
+}
+
+type Object[P types.Properties] struct {
+	types.Object[P]
+	Metadata QueryMetadata
 }
 
 type QueryMetadata struct {
@@ -152,7 +159,7 @@ type Group[P types.Properties] struct {
 }
 
 type GroupByObject[P types.Properties] struct {
-	types.Object[P]
+	Object[P]
 	Metadata       QueryMetadata
 	BelongsToGroup string
 }
@@ -160,4 +167,27 @@ type GroupByObject[P types.Properties] struct {
 type GroupByResult struct {
 	Objects []GroupByObject[types.Map]
 	Groups  map[string]Group[types.Map]
+}
+
+func unmarshalObject(in api.Object) Object[types.Map] {
+	vectors := make(types.Vectors, len(in.Metadata.NamedVectors)+1)
+	maps.Copy(vectors, in.Metadata.NamedVectors)
+	vectors[api.DefaultVectorName] = in.Metadata.UnnamedVector
+
+	// TODO(dyma): unmarshal references
+	return Object[types.Map]{
+		Object: types.Object[types.Map]{
+			UUID:               in.Metadata.UUID,
+			Vectors:            types.Vectors(vectors),
+			Properties:         in.Properties,
+			CreationTimeUnix:   in.Metadata.CreationTimeUnix,
+			LastUpdateTimeUnix: in.Metadata.LastUpdateTimeUnix,
+		},
+		Metadata: QueryMetadata{
+			Distance:     in.Metadata.Distance,
+			Certainty:    in.Metadata.Certainty,
+			Score:        in.Metadata.Score,
+			ExplainScore: in.Metadata.ExplainScore,
+		},
+	}
 }

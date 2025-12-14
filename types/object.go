@@ -7,7 +7,9 @@ type Properties interface {
 }
 
 type Object[P Properties] struct {
-	UUID       string
-	Properties P
-	Vectors    Vectors
+	UUID               string
+	Properties         P
+	Vectors            Vectors
+	CreationTimeUnix   *int64
+	LastUpdateTimeUnix *int64
 }

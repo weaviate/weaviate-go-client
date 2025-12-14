@@ -6,42 +6,45 @@ import "context"
 //
 // Empty struct avoids heap allocation when passing it to
 // any / interface{} in context.WithValue().
-type contextKey struct{}
+//
+// Creating the key at call-site is a mistake -- no 2 instances of ContextKey
+// are equal. Declare a shared package-level context key per value type and use
+// it across the package.
+//
+//	package other
+//
+//	var numberKey internal.ContextKey
+//	internal.ContextWithPlaceholder[int](ctx, numberKey)
+//
+//	var textKey internal.ContextKey
+//	internal.ContextWithPlaceholder[string](ctx, textKey)
+type ContextKey struct{}
 
-// groupByKey is used to pass grouped query results from the transport layer.
-var groupByResultKey = contextKey{}
-
-// WithGroupByResult derives a new context, preserving the deadlines
+// ContextWithPlaceholder derives a new context, preserving the deadlines
 // and cancelation behaviour of the original context.
-func ContextWithGroupByResult(ctx context.Context) context.Context {
-	placeholder := (*GroupByResult)(nil)
-	return context.WithValue(ctx, groupByResultKey, &placeholder)
+//
+// It creates a nil-pointer to T in the context.Values. That pointer acts
+// as a placeholder, which can later be replaced using SetContextValue.
+func ContextWithPlaceholder[T any](ctx context.Context, key ContextKey) context.Context {
+	placeholder := new(*T)
+	return context.WithValue(ctx, key, &placeholder)
 }
 
-// GroupByResult is a placeholder for transport-layer grouped query response.
-type GroupByResult struct {
-	Objects []any
-	Groups  map[string]any
-}
-
-// Extract GroupByResult from a context.
-func GroupByResultFromContext(ctx context.Context) *GroupByResult {
-	v := ctx.Value(groupByResultKey).(**GroupByResult)
+// Extract value T from the context.
+func ValueFromContext[T any](ctx context.Context, key ContextKey) *T {
+	v := ctx.Value(key).(**T)
 	if v == nil {
 		return nil
 	}
 	return *v
 }
 
-// Set GroupByResult in the context to another value.
+// SetContextValue updates value placeholder created by ContextWithPlaceholder.
 //
 // We want to update the context passed to us in the request,
 // rather than derive a new one. In the latter case the original
 // context will stay unchanged and the caller will not see the value.
-//
-// Populating api.GroupByResult is NOT a part of the Transport contract,
-// but rather a responsibility of the layer using ContextWithGroupByResult.
-func SetGroupByResult(ctx context.Context, r *GroupByResult) {
-	value := ctx.Value(groupByResultKey).(**GroupByResult)
-	*value = r
+func SetContextValue[T any](ctx context.Context, key ContextKey, v *T) {
+	value := ctx.Value(key).(**T)
+	*value = v
 }

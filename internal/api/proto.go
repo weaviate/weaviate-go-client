@@ -72,7 +72,7 @@ type (
 		Certainty          *float32
 		Score              *float32
 		ExplainScore       *string
-		UnnamedVector      []float32
+		UnnamedVector      Vector
 		NamedVectors       Vectors
 	}
 )
@@ -393,8 +393,11 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) Objec
 			Certainty:          nilPresent(mr.GetCertainty(), mr.GetCertaintyPresent()),
 			Score:              nilPresent(mr.GetScore(), mr.GetScorePresent()),
 			ExplainScore:       nilPresent(mr.GetExplainScore(), mr.GetExplainScorePresent()),
-			UnnamedVector:      unmarshalSingle(mr.GetVectorBytes()),
 			NamedVectors:       unmarshalVectors(mr.GetVectors()),
+			UnnamedVector: Vector{
+				Name:   DefaultVectorName,
+				Single: unmarshalSingle(mr.GetVectorBytes()),
+			},
 		},
 	}
 }
