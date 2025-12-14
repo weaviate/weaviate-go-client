@@ -121,7 +121,9 @@ songs.Data.Insert(ctx,
     data.WithProperties(imageData),
     data.WithVector(types.Vector{
         Name:  "colbert",
-        Multi: [][]float32{{0.1, 0.2}, {0.3, 0.4}},
+        Multi: [][]float32{
+          {0.1, 0.2}, {0.3, 0.4}
+        },
     }),
 )
 
@@ -130,7 +132,9 @@ songs.Data.Insert(ctx,
     data.WithProperties(data),
     data.WithVector([]types.Vector{
         {Name: "single_vec", Single: []float32{0.1, 0.2, 0.3}},
-        {Name: "matrix_vec", Multi: [][]float32{{0.4, 0.5}, {0.6, 0.7}}},
+        {Name: "matrix_vec", Multi: [][]float32{
+            {0.4, 0.5}, {0.6, 0.7}
+        }},
     }
 )
 ```
