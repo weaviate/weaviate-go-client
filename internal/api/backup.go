@@ -135,7 +135,7 @@ func (r *ListBackupsRequest) Query() url.Values {
 	if !r.StartingTimeAsc {
 		return nil
 	}
-	return map[string][]string{"order": {"asc"}}
+	return url.Values{"order": {"asc"}}
 }
 
 type CancelBackupRequest struct {

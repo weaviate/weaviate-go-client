@@ -75,7 +75,8 @@ func (t *transport) search(ctx context.Context, req *api.SearchRequest, dest *ap
 
 func (t *transport) rest(ctx context.Context, req api.Endpoint, dest any) error {
 	url := req.Path()
-	if query := req.Query(); query != nil {
+	if query := req.Query(); len(query) > 0 {
+		url += "?" + query.Encode()
 	}
 
 	var body io.Reader
