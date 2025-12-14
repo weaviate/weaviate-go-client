@@ -45,7 +45,7 @@ type transport struct {
 	http *http.Client
 }
 
-// Compile-time assertion that transport implements Transport.
+// Compile-time assertion that [transport] implements [Transport].
 var _ Transport = (*transport)(nil)
 
 // Do switches dispatches to the appropriate execution method depending on the request type.
