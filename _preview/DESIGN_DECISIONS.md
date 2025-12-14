@@ -19,12 +19,12 @@ Here are some concrete examples illustrating the design choices.
 ```go
 songs := client.Collections.Use("Songs")
 songs.Data.Insert(ctx,
-    WithProperties(Song{
+    data.WithProperties(Song{
         Title:  "Bohemian Rhapsody",
         Artist: "Queen",
         Year:   1975,
     }),
-    WithVector(types.Vector{Single: []float32{0.1, 0.2, 0.3}}),
+    data.WithVector(types.Vector{Single: []float32{0.1, 0.2, 0.3}}),
 )
 ```
 
@@ -103,14 +103,14 @@ groups, err := songs.Query.NearVector.GroupBy(ctx, vector, "category", query.Wit
 ```go
 // Default vector (unnamed)
 songs.Data.Insert(ctx,
-    WithProperties(data),
-    WithVector(types.Vector{Single: []float32{0.1, 0.2, 0.3}}),
+    data.WithProperties(data),
+    data.WithVector(types.Vector{Single: []float32{0.1, 0.2, 0.3}}),
 )
 
 // Named single-dimensional vector
 songs.Data.Insert(ctx,
-    WithProperties(data),
-    WithVector(types.Vector{
+    data.WithProperties(data),
+    data.WithVector(types.Vector{
         Name:   "text_embedding",
         Single: []float32{0.1, 0.2, 0.3},
     }),
@@ -118,8 +118,8 @@ songs.Data.Insert(ctx,
 
 // Named multi-dimensional vector
 songs.Data.Insert(ctx,
-    WithProperties(imageData),
-    WithVector(types.Vector{
+    data.WithProperties(imageData),
+    data.WithVector(types.Vector{
         Name:  "colbert",
         Multi: [][]float32{{0.1, 0.2}, {0.3, 0.4}},
     }),
@@ -127,8 +127,8 @@ songs.Data.Insert(ctx,
 
 // Multiple vectors at once
 songs.Data.Insert(ctx,
-    WithProperties(data),
-    WithVector([]types.Vector{
+    data.WithProperties(data),
+    data.WithVector([]types.Vector{
         {Name: "single_vec", Single: []float32{0.1, 0.2, 0.3}},
         {Name: "matrix_vec", Multi: [][]float32{{0.4, 0.5}, {0.6, 0.7}}},
     }
@@ -167,8 +167,8 @@ result, err := songs.Query.NearVector(ctx, queryVector, query.WithLimit(10))
 // Re-insert using returned vectors
 for _, obj := range result.Objects {
     newID, err := songs.Data.Insert(ctx,
-        WithProperties(obj.Properties),  // Reuse properties map
-        WithVector(obj.Vectors),         // Reuse entire vector map
+        data.WithProperties(obj.Properties),  // Reuse properties map
+        data.WithVector(obj.Vectors),         // Reuse entire vector map
     )
 }
 ```
