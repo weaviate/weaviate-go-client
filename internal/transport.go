@@ -1,13 +1,20 @@
 package internal
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"net/http"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/internal/gen/proto/v1"
 )
+
+var ErrUnknownRequest = errors.New("unknown request type")
 
 type Transport interface {
 	// Do executes a request and populates the response object.
@@ -21,10 +28,11 @@ type Transport interface {
 	//
 	// Instead, "internal/api" package defines structs for all
 	// supported requests. The contract is that Transport is
-	// able to execute any one of those. Similarly,
-
-	// Both `req`  and `dest` MUST be pointers to an "internal/api" struct.
-	Do(_ context.Context, req api.Request, dest any) error
+	// able to execute any one of those. Alternatively, a "custom"
+	// `req` can implement [api.Endpoint].
+	//
+	// Transport should return [ErrUnknownRequest] if it cannot process the request.
+	Do(ctx context.Context, req api.Request, dest any) error
 }
 
 func NewTransport() Transport {
@@ -34,6 +42,7 @@ func NewTransport() Transport {
 
 type transport struct {
 	gRPC proto.WeaviateClient
+	http *http.Client
 }
 
 // Compile-time assertion that transport implements Transport.
@@ -44,6 +53,8 @@ func (t *transport) Do(ctx context.Context, req api.Request, dest any) error {
 	switch req := req.(type) {
 	case *api.SearchRequest:
 		return t.search(ctx, req, dev.AssertType[*api.SearchResponse](dest))
+	case api.Endpoint:
+		return t.rest(ctx, req, dest)
 	}
 	return nil
 }
@@ -59,5 +70,57 @@ func (t *transport) search(ctx context.Context, req *api.SearchRequest, dest *ap
 		return errors.New("nil response")
 	}
 	*dest = *api.UnmarshalSearchReply(reply)
+	return nil
+}
+
+func (t *transport) rest(ctx context.Context, req api.Endpoint, dest any) error {
+	url := req.Path()
+	if query := req.Query(); query != nil {
+	}
+
+	var body io.Reader
+	if b := req.Body(); b != nil {
+		marshaled, err := json.Marshal(b)
+		if err != nil {
+			return fmt.Errorf("marshal request body: %w", err)
+		}
+		body = bytes.NewReader(marshaled)
+	}
+
+	httpreq, err := http.NewRequestWithContext(ctx, req.Method(), url, body)
+	if err != nil {
+		return fmt.Errorf("create request: ", err)
+	}
+
+	res, err := t.http.Do(httpreq)
+	if err != nil {
+		return err
+	}
+
+	// Response body SHOULD always be read completely and closed
+	// to allow the underlying [http.Transport] to re-use the TCP connection.
+	// See: https://pkg.go.dev/net/http#Client.Do
+	resBody, err := io.ReadAll(res.Body)
+	res.Body.Close()
+
+	// TODO(dyma): not sure if we should always report this error.
+	// What if we don't need the body because dest=nil and status is OK?
+	if err != nil {
+		return fmt.Errorf("read response body: %w", err)
+	}
+
+	if res.StatusCode > 299 {
+		if res.StatusCode == http.StatusNotFound {
+			return nil // leave dest a nil
+		}
+		// TODO(dyma): better error handling?
+		return fmt.Errorf("HTTP %d: %s", res.StatusCode, resBody)
+	}
+
+	if dest != nil {
+		if err := json.Unmarshal(resBody, dest); err != nil {
+			fmt.Errorf("unmarshal response body: %w", err)
+		}
+	}
 	return nil
 }
