@@ -188,24 +188,22 @@ Implication: Use pointers for optional fields in structs to distinguish between 
 
 ## Transport
 
-Transport layer is responsible for executing requests to the Weaviate REST and gRPC API endpoints.
+Transport layer is responsible for executing requests to the Weaviate REST and gRPC endpoints.
 The key requirement for the transport layer is _transparency_: the caller (public layer, the `client`) should be
-entirely oblivious to the method (REST / gRPC, the _how?_) by which the request will be executed.
+entirely oblivious to the method (REST / gRPC, the _how?_) by which a request is executed.
 
 A good abstraction must be:
 
 - Flexible. Has to accomodate both REST and gRPC requests seamlessly.
-- Robust. Even though Transport is no user-facing, we want to reduce the chance of a developer mistake.
+- Robust. Even though Transport is not user-facing, we want to reduce the chance of a developer mistake.
 - Minimal. A small API is easy to mock in tests, reason about, and maintain.
 
 
 ### Transparency: ignoring the _how?_
 
-The easiest way to have the public ignore "how something should be done" is to let focus it entirely on "what should be done".
-"What should be done" is invariably about _data transformation_ (passing inputs and receiving outputs) and we can enumerate all possible inputs and outputs like so:
+The easiest way to have the client ignore "how something should be done" is to let focus it entirely on "what should be done".
 
-> [!IMPORTANT]
-> `api` is an **internal** package under "internal/api"
+"What should be done" is invariably about _data transformation_ (passing inputs and receiving outputs) and we can enumerate all possible inputs and outputs thusly:
 
 ```go
 package api
@@ -224,7 +222,10 @@ type (
 )
 ```
 
-To execute a request the public layer has to fill out the request parameters, pass the request to the transport and then receive the output.
+> [!IMPORTANT]
+> `api` is an **internal** package under "internal/api"
+
+To execute a request the client has to fill out the request parameters, pass the request to the transport and then receive the output.
 Something like this:
 
 ```go
@@ -249,26 +250,26 @@ func (c *Client) CreateBackupRequest() {
 }
 ```
 
-In both examples above `execute()` is some fixture that implements Transport interface.
-It is also worth noting that neither of the -Request structs has fields like `Endpoint` or `Uses127Api`
-or anything related to the underlying transport for that matter, only data pertinent to the request: `CollectionName`, `Tenant`, `Bucket`, etc.
+In both of the examples above `execute()` is some fixture that implements Transport interface.
+Also worth noting is the fact that neither of the -Request structs has fields like `Endpoint` or `Uses127Api`
+or anything related to the underlying transport for that matter -- only data pertinent to the request: `CollectionName`, `Tenant`, `Bucket`, etc.
 
-A collection of structs with parameter for each kind of request therefore is the outward-facing half of the transport layer.
+A set of structs with parameters for each of the supported requests therefore is the outward-facing half of the transport layer.
 
 
 ### Implementation: acknowledging the _how?_
 
 Let us ignore the actual shape of the Transport interface a bit longer and see how a hypothetical implementation
-might go about fulfilling the request above.
+might go about fulfilling the requests above.
 
-First, assume the said implementation holds both HTTP and gRPC transports as private dependencies.
+First, assume the said implementation holds both HTTP and gRPC transports as unexported dependencies.
 
 ```go
 type transport struct { gRPC, http any }
 ```
 
 Now it's task boils down to passing a request to the right handler based on... what?
-To answer that question let's see what information is needed to "describe" each type of the request:
+To answer that question let's see what information is needed to "describe" each type of the request.
 
 Rougly speaking, a **REST request** is described by its `method`, URL (`path` and `query` components), and `body`.
 The interface below captures that:
@@ -284,7 +285,7 @@ type RESTRequest interface{
 }
 ```
 
-Each **gRPC request** has a corresponding `message`, for which we generate Go stubs.
+Each **gRPC request** has a corresponding `message`, for which we generate a Go stub.
 The type of the message struct is therefore it's most concise discriminator. Put diffeerently,
 the _body_ of a gRPC request uniquely describes it. We can encode this notion in an interface:
 
@@ -333,18 +334,20 @@ default:
 }
 ```
 
-If `panic` made you frown, see the **Discussion** below. Before we wrap up let's quickly look at response handling.
+If `panic` made you frown, see the **Discussion** below.
+
+Before we wrap up let's quickly look at response handling.
 
 
 ### Love, `dest`, and Robots
 
 Previously we mentioned that the public layer of our client is only interested in data -- input and output, not behavior.
 In _structs_, not _interfaces_. The fact that something like `api.CreateBackupRequest` implements `api.Endpoint` is only relevant in the transport layer itself.
-Which is why we shouldn't try and come up with an interface, because there's simply no use for it. We want data!
+Which is why we shouldn't try and come up with an `api.Response` interface, there's _simply no use for it_. We want data!
 
-Similarly to the `json.Unmarshal` API, the caller owns the response struct, and the transport layer receives it as an opaque pointer `dest any`.
-Reading a REST response into such pointer is trivial using the same `json.Unmarshal` API. In case of gRPC, the transport needs to cast it back to
-the appropriate resopnse type before writing to it.
+In our design the caller owns the response struct, and the transport layer receives it as an opaque pointer `dest any`, much like in `json.Unmarshal`.
+Reading a REST response into such a pointer is trivial using the same `json.Unmarshal` API. In case of gRPC, the transport needs to cast it back to
+the appropriate response type before writing to it.
 
 
 ```go
@@ -360,7 +363,7 @@ func execute(req api.Request, dest any) {
 ```
 
 In that type-cast above lies a tiny opportunity for a bug: what if someone passes `*api.AggregateRequest` with an `*api.SearchRequest`?
-Luckily, this can be caught early on with a simple test:
+Luckily, this can be caught early with a simple test:
 
 ```go
 func mockTransport(t *testing.T) Transport {
@@ -379,14 +382,15 @@ func mockTransport(t *testing.T) Transport {
 // Now inject this interface into each client and call its public methods.
 // The `dest` type is independent from the input parameters, so calling each method once
 // is enough to assert that all of them use correct response types.
-// A small price to pay for not having a redundant Response interface. Which methods was it gonna have anyways?
+// A small price to pay for not having a redundant Response interface. What methods was it gonna have anyways?
 transport := mockTransport(t)
 query.NewClient(transport).NearVector()
 backup.NewClient(transport).Create()
 ```
 
-The above is only a rough sketch, but with a _minimal_ transport interface, mocking it out is extremely cheap and can be done in a handful of lines.
+The above is only a rough sketch, but with a _minimal_ interface, mocking transport out is extremely cheap and can be done in a handful of lines.
 Finally, if response is a pointer we get a neat property of passing a `nil` to tell transport we aren't interested in the response body and that it needn't bother unmarshaling it.
+
 Alright! This being said, we now have everything we need to formulate the Transport interface.
 
 
@@ -419,23 +423,22 @@ At a risk of repeating ourselves, here're the supporting docs for the `Do()` met
 	// and MUST be a non-nil pointer otherwise.
 	//
 	// To keep execution transparent to the caller, the request type
-	// does not enforce any explicit constraints. E.g. were request
-	// an interface with a method like Type() "rest" | "grpc", the
-	// caller would have to be aware of the execution details.
+	// only enforces a minimal constraint -- a request is anything
+    // that MAY have a body.
 	//
-	// Instead, "internal/api" package defines structs for all
+	// The "internal/api" package defines structs for all
 	// supported requests, which in turn implement api.Request.
     // The contract is that Transport is able to execute any
     // one of those requests.
     //
-    // The transport is also able to execute any custom [api.Endpoint]
+    // The transport is also able to execute any custom [api.Endpoint].
 ```
 
 ### Discussion
 
-1. Why not introduce generic paramters for `req` and `dest` to avoid type-casting altogether?
+1. Why not introduce generic parameters for `req` and `dest` to avoid type-casting altogether?
 
-Firstly, because that generic parameter would need to be defiend at the `interface` level like so:
+Firstly, because that generic parameter would need to be defined at the `interface` level:
 
 ```go
 interface Transport[Req any, Resp any] interface{
@@ -443,15 +446,17 @@ interface Transport[Req any, Resp any] interface{
 }
 ```
 and provided at transport instantiation!, which is only done once and not per-request.
+
 A `Transport[api.SearchRequest, api.SearchResponse]` cannot be used to create a backup or run an aggregation query.
 
 Secondly, because mismatching the request and response types is a _developer_ (our!) error.
-And if for every scenario where someone accidentaly passes a wrong response type as `dest`,
-there is an equally-likely scenario of someone passing a wrong generic parameter:
+And for every scenario where someone accidentaly passes a wrong response type as `dest`,
+there exists an equally-likely scenario of someone passing a wrong generic parameter:
 
 ```go
-c.transport.Do[api.SearchRequest, api.SearchResponse](ctx, req, dest)
+c.transport.Do[api.SearchRequest, api.AggregateResponse](ctx, req, dest)
 ```
+Not to mention that a developer from either scenario would have a really hard time converting `api.AggregateRespose` to `aggregate.Response` (remember, types from the `api` package are never relayed to the user directly and are always re-packaged into a another user-facing struct).
 
 To the best of my knowledge Go doesn't have a notion of conditional types (`T = X extends Y ? Z : never`).
 Even if there was a way to do it by arranging several interfaces in some way, I'd prefer to write that simple test at this point (also see pt. 2).
