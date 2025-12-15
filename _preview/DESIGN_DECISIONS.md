@@ -459,7 +459,7 @@ c.transport.Do[api.SearchRequest, api.AggregateResponse](ctx, req, dest) // not 
 Not to mention that a developer from either scenario would have a really hard time converting `api.AggregateRespose` to `query.Response` (remember, types from the `api` package are never relayed to the user directly and are always re-packaged into a another user-facing struct).
 
 To the best of my knowledge Go doesn't have a notion of conditional types (`T = X extends Y ? Z : never`).
-Even if there was a way to do it by arranging several interfaces in some way, I'd prefer to write that simple test at this point (also see pt. 2).
+Even if there was a way to do it by arranging several interfaces in some way, I'd prefer to write that simple test at this point.
 
 2. `panic("unknown request type")` -- what's that all about?
 
