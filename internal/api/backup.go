@@ -14,11 +14,11 @@ type (
 		CompressionLevel *string `json:"CompressionLevel,omitempty"`
 	}
 	RestoreBackupConfig struct {
-		Bucket           *string            `json:"Bucket,omitempty"`
-		Path             *string            `json:"Path,omitempty"`
-		MaxCPUPercentage *int               `json:"CPUPercentage,omitempty"`
-		RestoreUsers     *RBACRestoreOption `json:"restoreUsers,omitempty"`
-		RestoreRoles     *RBACRestoreOption `json:"restoreRoles,omitempty"`
+		Bucket           string            `json:"Bucket,omitempty"`
+		Path             string            `json:"Path,omitempty"`
+		MaxCPUPercentage int               `json:"CPUPercentage,omitempty"`
+		RestoreUsers     RBACRestoreOption `json:"restoreUsers,omitempty"`
+		RestoreRoles     RBACRestoreOption `json:"restoreRoles,omitempty"`
 	}
 	Backup struct {
 		ID                  string

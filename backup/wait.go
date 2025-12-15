@@ -18,6 +18,11 @@ const (
 	defaultPollingInterval pollingInterval = pollingInterval(1 * time.Second)
 )
 
+// To be awaited, backups need to have a valid [Info.operation] field
+// and a non-nil *Client in [Info.c]. Client correctly populates these
+// fields for Info returned from Create,  Restore,  GetCreateStatus, and GetRestoreStatus.
+var errBackupNotAwaitable = errors.New("only backups returned from Create / Restore and get-status are awaitable")
+
 // AwaitOption controls backup status polling.
 type AwaitOption func(*pollingInterval)
 
@@ -28,21 +33,44 @@ func WithPollingInterval(d time.Duration) AwaitOption {
 }
 
 // AwaitCompletion is an AwaitStatus wrapper that awaits [StatusSucess].
-func AwaitCompletion(ctx context.Context, c *Client, backup Info, options ...AwaitOption) (*Info, error) {
-	return AwaitStatus(ctx, c, backup, StatusSuccess, options...)
+func AwaitCompletion(ctx context.Context, backup *Info, options ...AwaitOption) (*Info, error) {
+	return AwaitStatus(ctx, backup, StatusSuccess, options...)
 }
 
 // AwaitStatus blocks until backup reaches the desired state or otherwise completes.
 //
 // By default, AwaitStatus will poll backup status once per second and time out after 1 hour.
 // The inverval can be adjusted via [WithPollingInterval]. Use [context.WithDeadline] to set a different deadline.
-func AwaitStatus(ctx context.Context, c *Client, backup Info, want Status, options ...AwaitOption) (*Info, error) {
+//
+// AwaitStatus SHOULD only be called with [Info] obtained from either Create / Restore,
+// or GetCreateStatus / GetRestoreStatus, as these will correcly populate the struct's private fields.
+//
+// Example:
+//
+//	// GOOD:
+//	bak, _ := c.Backup.Create(ctx, "bak-1", "filesystem")
+//	backup.AwaitStatus(ctx, bak, backup.StatusCanceled)
+//
+//	// ALSO GOOD:
+//	bak, _ := c.Backup.GetCreateStatus(ctx, "bak-1", "filesystem")
+//	backup.AwaitStatus(ctx, bak, backup.StatusCanceled)
+//
+//	// BAD:
+//	backup.AwaitStatus(ctx, &backup.Info{ID: "bak-1"}, backup.StatusCanceled)
+func AwaitStatus(ctx context.Context, backup *Info, want Status, options ...AwaitOption) (*Info, error) {
+	if backup == nil {
+		return nil, fmt.Errorf("nil backup")
+	}
 	if backup.Error != "" {
 		return nil, errors.New(backup.Error)
 	}
-
 	if backup.Status == want {
-		return &backup, nil
+		return backup, nil
+	}
+
+	c := backup.c
+	if c == nil {
+		return nil, errBackupNotAwaitable
 	}
 
 	interval := defaultPollingInterval

@@ -2,9 +2,12 @@ package weaviate_test
 
 import (
 	"fmt"
+	"log"
 	"testing"
+	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6"
+	"github.com/weaviate/weaviate-go-client/v6/backup"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/data"
 	"github.com/weaviate/weaviate-go-client/v6/query"
@@ -89,4 +92,17 @@ func TestClient(t *testing.T) {
 				song.Properties.Title, song.Properties.Lyrics)
 		}
 	}
+
+	// Backups
+	bak, err := c.Backup.Create(ctx, "bak-1", "filesystem",
+		backup.WithIncludeCollections("Songs", "Artists"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	backup.AwaitCompletion(ctx, bak, backup.WithPollingInterval(time.Minute))
+
+	c.Backup.Restore(ctx, bak.ID, bak.Backend, backup.RestoreOptions{
+		IncludeCollections: []string{"Songs", "Artists"},
+	})
 }

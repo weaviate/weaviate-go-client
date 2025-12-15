@@ -28,6 +28,7 @@ type Info struct {
 	CompletedAt         time.Time // Time at which the backup was completed, successfully or otherwise.
 	SizeGiB             float32   // Backup size in GiB.
 
+	c         *Client
 	operation api.BackupOperation
 }
 
@@ -120,49 +121,52 @@ func (c *Client) Create(ctx context.Context, id string, backend string, options 
 		StartedAt:           resp.StartedAt,
 		CompletedAt:         resp.CompletedAt,
 		SizeGiB:             resp.SizeGiB,
+
+		operation: api.CreateBackup,
+		c:         c,
 	}, nil
 }
 
-type restoreRequest struct {
-	Path               *string                // Path to backup in the backend storage.
-	Bucket             *string                // Dedicated bucket name.
-	IncludeCollections []string               // Collections to be included in the backup.
-	ExcludeCollections []string               // Collections to be excluded from the backup.
-	MaxCPUPercentage   *int                   // Maximum %CPU utilization.
-	OverwriteAlias     bool                   // Allow overwriting aliases.
-	RestoreUsers       *api.RBACRestoreOption // Select strategy for restoring RBAC users.
-	RestoreRoles       *api.RBACRestoreOption // Select strategy for restoring RBAC roles.
+type RestoreOptions struct {
+	Path               string                // Path to backup in the backend storage.
+	Bucket             string                // Dedicated bucket name.
+	IncludeCollections []string              // Collections to be included in the backup.
+	ExcludeCollections []string              // Collections to be excluded from the backup.
+	MaxCPUPercentage   int                   // Maximum %CPU utilization.
+	OverwriteAlias     bool                  // Allow overwriting aliases.
+	RestoreUsers       api.RBACRestoreOption // Select strategy for restoring RBAC users.
+	RestoreRoles       api.RBACRestoreOption // Select strategy for restoring RBAC roles.
 }
 
-type (
-	RestoreOption     interface{ restore(*restoreRequest) }
-	RestoreOptionFunc func(*restoreRequest)
-)
+// type (
+// 	RestoreOption     interface{ restore(*RestoreOptions) }
+// 	RestoreOptionFunc func(*RestoreOptions)
+// )
+//
+// func (f RestoreOptionFunc) restore(r *RestoreOptions) { f(r) }
+//
+// func WithOverwriteAlias(overwrite bool) RestoreOption {
+// 	return RestoreOptionFunc(func(r *RestoreOptions) {
+// 		r.OverwriteAlias = overwrite
+// 	})
+// }
+//
+// func WithRestoreUsers(opt RBACRestore) RestoreOption {
+// 	return RestoreOptionFunc(func(r *RestoreOptions) {
+// 		r.RestoreUsers = (*api.RBACRestoreOption)(&opt)
+// 	})
+// }
+//
+// func WithRestoreRoles(opt RBACRestore) RestoreOption {
+// 	return RestoreOptionFunc(func(r *RestoreOptions) {
+// 		r.RestoreRoles = (*api.RBACRestoreOption)(&opt)
+// 	})
+// }
 
-func (f RestoreOptionFunc) restore(r *restoreRequest) { f(r) }
-
-func WithOverwriteAlias(overwrite bool) RestoreOption {
-	return RestoreOptionFunc(func(r *restoreRequest) {
-		r.OverwriteAlias = overwrite
-	})
-}
-
-func WithRestoreUsers(opt RBACRestore) RestoreOption {
-	return RestoreOptionFunc(func(r *restoreRequest) {
-		r.RestoreUsers = (*api.RBACRestoreOption)(&opt)
-	})
-}
-
-func WithRestoreRoles(opt RBACRestore) RestoreOption {
-	return RestoreOptionFunc(func(r *restoreRequest) {
-		r.RestoreRoles = (*api.RBACRestoreOption)(&opt)
-	})
-}
-
-func (c *Client) Restore(ctx context.Context, id string, backend string, options ...RestoreOption) (*Info, error) {
-	var cfg restoreRequest
+func (c *Client) Restore(ctx context.Context, id string, backend string, options ...RestoreOptions) (*Info, error) {
+	var cfg RestoreOptions
 	for _, opt := range options {
-		opt.restore(&cfg)
+		cfg = opt
 	}
 
 	req := &api.RestoreBackupRequest{
@@ -196,6 +200,9 @@ func (c *Client) Restore(ctx context.Context, id string, backend string, options
 		StartedAt:           resp.StartedAt,
 		CompletedAt:         resp.CompletedAt,
 		SizeGiB:             resp.SizeGiB,
+
+		operation: api.RestoreBackup,
+		c:         c,
 	}, nil
 }
 
@@ -229,6 +236,9 @@ func (c *Client) getStatus(ctx context.Context, id string, backend string, opera
 		StartedAt:           resp.StartedAt,
 		CompletedAt:         resp.CompletedAt,
 		SizeGiB:             resp.SizeGiB,
+
+		operation: operation,
+		c:         c,
 	}, nil
 }
 
@@ -280,6 +290,7 @@ func (c *Client) List(ctx context.Context, id string, backend string, options ..
 	return backups, nil
 }
 
+// Cancel an in-progress backup.
 func (c *Client) Cancel(ctx context.Context, id string, backend string) error {
 	req := api.CancelBackupRequest{ID: id, Backend: backend}
 	err := c.transport.Do(ctx, req, nil)
@@ -292,64 +303,66 @@ func (c *Client) Cancel(ctx context.Context, id string, backend string) error {
 // Customize backup's path within the bucket.
 type WithPath string
 
-var (
-	_ CreateOption  = (*WithPath)(nil)
-	_ RestoreOption = (*WithPath)(nil)
-)
+var _ CreateOption = (*WithPath)(nil)
 
-func (opt WithPath) create(r *createRequest)   { r.Path = (*string)(&opt) }
-func (opt WithPath) restore(r *restoreRequest) { r.Path = (*string)(&opt) }
+// _ RestoreOption = (*WithPath)(nil)
+
+func (opt WithPath) create(r *createRequest) { r.Path = (*string)(&opt) }
+
+// func (opt WithPath) restore(r *RestoreOptions) { r.Path = (*string)(&opt) }
 
 // Set dedicated bucket for this backup.
 type WithBucket string
 
-var (
-	_ CreateOption  = (*WithBucket)(nil)
-	_ RestoreOption = (*WithBucket)(nil)
-)
+var _ CreateOption = (*WithBucket)(nil)
 
-func (opt WithBucket) create(r *createRequest)   { r.Bucket = (*string)(&opt) }
-func (opt WithBucket) restore(r *restoreRequest) { r.Bucket = (*string)(&opt) }
+// _ RestoreOption = (*WithBucket)(nil)
+
+func (opt WithBucket) create(r *createRequest) { r.Bucket = (*string)(&opt) }
+
+// func (opt WithBucket) restore(r *RestoreOptions) { r.Bucket = (*string)(&opt) }
 
 // Include collections in the backup.
-type WithIncludeCollections []string
+type IncludeCollectionsOption []string
 
-var (
-	_ CreateOption  = (*WithIncludeCollections)(nil)
-	_ RestoreOption = (*WithIncludeCollections)(nil)
-)
+var _ CreateOption = (*IncludeCollectionsOption)(nil)
 
-func (opt WithIncludeCollections) create(r *createRequest) {
+// _ RestoreOption = (*WithIncludeCollections)(nil)
+
+func WithIncludeCollections(collections ...string) CreateOption {
+	return IncludeCollectionsOption(collections)
+}
+
+func (opt IncludeCollectionsOption) create(r *createRequest) {
 	r.IncludeCollections = append(r.IncludeCollections, opt...)
 }
 
-func (opt WithIncludeCollections) restore(r *restoreRequest) {
+func (opt IncludeCollectionsOption) restore(r *RestoreOptions) {
 	r.IncludeCollections = append(r.IncludeCollections, opt...)
 }
 
 // Exclude collections from the backup.
 type WithExcludeCollections []string
 
-var (
-	_ CreateOption  = (*WithExcludeCollections)(nil)
-	_ RestoreOption = (*WithExcludeCollections)(nil)
-)
+var _ CreateOption = (*WithExcludeCollections)(nil)
+
+// _ RestoreOption = (*WithExcludeCollections)(nil)
 
 func (opt WithExcludeCollections) create(r *createRequest) {
 	r.ExcludeCollections = append(r.ExcludeCollections, opt...)
 }
 
-func (opt WithExcludeCollections) restore(r *restoreRequest) {
+func (opt WithExcludeCollections) restore(r *RestoreOptions) {
 	r.ExcludeCollections = append(r.ExcludeCollections, opt...)
 }
 
 // Limit CPU resources that will be allocated to the backup process.
 type WithMaxCPUPercentage int
 
-var (
-	_ CreateOption  = (*WithMaxCPUPercentage)(nil)
-	_ RestoreOption = (*WithMaxCPUPercentage)(nil)
-)
+var _ CreateOption = (*WithMaxCPUPercentage)(nil)
 
-func (opt WithMaxCPUPercentage) create(r *createRequest)   { r.MaxCPUPercentage = (*int)(&opt) }
-func (opt WithMaxCPUPercentage) restore(r *restoreRequest) { r.MaxCPUPercentage = (*int)(&opt) }
+// _ RestoreOption = (*WithMaxCPUPercentage)(nil)
+
+func (opt WithMaxCPUPercentage) create(r *createRequest) { r.MaxCPUPercentage = (*int)(&opt) }
+
+// func (opt WithMaxCPUPercentage) restore(r *RestoreOptions) { r.MaxCPUPercentage = (*int)(&opt) }
