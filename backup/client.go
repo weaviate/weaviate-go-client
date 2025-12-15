@@ -86,7 +86,7 @@ func WithCompressionLevel(cl CompressionLevel) CreateOption {
 	})
 }
 
-func (c *Client) Create(ctx context.Context, id string, backend string, options ...CreateOption) (*Info, error) {
+func (c *Client) Create(ctx context.Context, id, backend string, options ...CreateOption) (*Info, error) {
 	var cfg createRequest
 	for _, opt := range options {
 		opt.create(&cfg)
@@ -163,7 +163,7 @@ type RestoreOptions struct {
 // 	})
 // }
 
-func (c *Client) Restore(ctx context.Context, id string, backend string, options ...RestoreOptions) (*Info, error) {
+func (c *Client) Restore(ctx context.Context, id, backend string, options ...RestoreOptions) (*Info, error) {
 	var cfg RestoreOptions
 	for _, opt := range options {
 		cfg = opt
@@ -206,15 +206,15 @@ func (c *Client) Restore(ctx context.Context, id string, backend string, options
 	}, nil
 }
 
-func (c *Client) GetCreateStatus(ctx context.Context, id string, backend string) (*Info, error) {
+func (c *Client) GetCreateStatus(ctx context.Context, id, backend string) (*Info, error) {
 	return c.getStatus(ctx, id, backend, api.CreateBackup)
 }
 
-func (c *Client) GetRestoreStatus(ctx context.Context, id string, backend string) (*Info, error) {
+func (c *Client) GetRestoreStatus(ctx context.Context, id, backend string) (*Info, error) {
 	return c.getStatus(ctx, id, backend, api.RestoreBackup)
 }
 
-func (c *Client) getStatus(ctx context.Context, id string, backend string, operation api.BackupOperation) (*Info, error) {
+func (c *Client) getStatus(ctx context.Context, id, backend string, operation api.BackupOperation) (*Info, error) {
 	req := &api.BackupStatusRequest{
 		ID:        id,
 		Backend:   backend,
@@ -255,7 +255,7 @@ func WithStartingTimeAsc(asc bool) ListOption {
 	}
 }
 
-func (c *Client) List(ctx context.Context, id string, backend string, options ...ListOption) ([]Info, error) {
+func (c *Client) List(ctx context.Context, id, backend string, options ...ListOption) ([]Info, error) {
 	var cfg listRequest
 	for _, opt := range options {
 		opt(&cfg)
@@ -291,9 +291,9 @@ func (c *Client) List(ctx context.Context, id string, backend string, options ..
 }
 
 // Cancel an in-progress backup.
-func (c *Client) Cancel(ctx context.Context, id string, backend string) error {
+func (c *Client) Cancel(ctx context.Context, id, backend string) error {
 	req := api.CancelBackupRequest{ID: id, Backend: backend}
-	err := c.transport.Do(ctx, req, nil)
+	err := c.transport.Do(ctx, &req, nil)
 	if err != nil {
 		return fmt.Errorf("cancel backup: %w", err)
 	}
