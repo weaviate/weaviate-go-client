@@ -15,12 +15,16 @@ import (
 )
 
 func TestClient(t *testing.T) {
-	c, err := weaviate.NewClient()
+	ctx := t.Context()
+
+	c, err := weaviate.NewLocal(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ctx := t.Context()
+	// The disadvantage of the pattern below is that you can re-arrange the two
+	// parameters, in which case WithLocal would overwrite the overrides.
+	// 	weaviate.NewClient(ctx, weaviate.WithLocal(), weaviate.WithHTTPPort(8081))
 
 	// Create a collection and get a handle
 	h, err := c.Collections.Create(ctx, "Songs")
