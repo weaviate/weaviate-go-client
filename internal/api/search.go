@@ -5,8 +5,6 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/gen/proto/v1"
 )
 
-type Request any
-
 type (
 	SearchRequest struct {
 		RequestDefaults
@@ -76,6 +74,11 @@ type (
 		NamedVectors       Vectors
 	}
 )
+
+// Compile-time assertions that SearchRequest implements Request.
+var _ Request = (*SearchRequest)(nil)
+
+func (r *SearchRequest) Body() any { return r }
 
 // ReturnOnlyVector is a sentinel value the caller can pass in SearchRequest.ReturnVectors
 // to request the single vector in collection to be returned.

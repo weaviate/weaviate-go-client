@@ -14,8 +14,6 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/gen/proto/v1"
 )
 
-var ErrUnknownRequest = errors.New("unknown request type")
-
 type Transport interface {
 	// Do executes a request and populates the response object.
 	// Response dest SHOULD be nil if no response is expected
@@ -45,17 +43,21 @@ type transport struct {
 	http *http.Client
 }
 
-// Compile-time assertion that [transport] implements [Transport].
+// Compile-time assertion that transport implements Transport.
 var _ Transport = (*transport)(nil)
 
 // Do switches dispatches to the appropriate execution method depending on the request type.
 func (t *transport) Do(ctx context.Context, req api.Request, dest any) error {
 	switch req := req.(type) {
-	case *api.SearchRequest:
-		return t.search(ctx, req, dev.AssertType[*api.SearchResponse](dest))
 	case api.Endpoint:
 		return t.rest(ctx, req, dest)
+	default:
+		switch req := req.(type) {
+		case *api.SearchRequest:
+			return t.search(ctx, req, dev.AssertType[*api.SearchResponse](dest))
+		}
 	}
+	dev.Assert(false, "unknown request type %T", req)
 	return nil
 }
 
@@ -90,7 +92,7 @@ func (t *transport) rest(ctx context.Context, req api.Endpoint, dest any) error 
 
 	httpreq, err := http.NewRequestWithContext(ctx, req.Method(), url, body)
 	if err != nil {
-		return fmt.Errorf("create request: ", err)
+		return fmt.Errorf("create request: %w", err)
 	}
 
 	res, err := t.http.Do(httpreq)

@@ -4,11 +4,16 @@ import (
 	"net/url"
 )
 
+type Request interface {
+	Body() any
+}
+
 type Endpoint interface {
+	Request
+
 	Method() string
 	Path() string
 	Query() url.Values
-	Body() any
 }
 
 // endpoint implements Endpoint methods which may return nil.
