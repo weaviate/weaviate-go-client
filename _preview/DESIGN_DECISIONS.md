@@ -454,7 +454,7 @@ And for every scenario where someone accidentaly passes a wrong response type as
 there exists an equally-likely scenario of someone passing a wrong generic parameter:
 
 ```go
-c.transport.Do[api.SearchRequest, api.AggregateResponse](ctx, req, dest)
+c.transport.Do[api.SearchRequest, api.AggregateResponse](ctx, req, dest) // not a valid syntax
 ```
 Not to mention that a developer from either scenario would have a really hard time converting `api.AggregateRespose` to `query.Response` (remember, types from the `api` package are never relayed to the user directly and are always re-packaged into a another user-facing struct).
 
