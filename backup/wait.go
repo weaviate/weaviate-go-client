@@ -18,10 +18,17 @@ const (
 	defaultPollingInterval pollingInterval = pollingInterval(1 * time.Second)
 )
 
-// To be awaited, backups need to have a valid [Info.operation] field
-// and a non-nil *Client in [Info.c]. Client correctly populates these
-// fields for Info returned from Create,  Restore,  GetCreateStatus, and GetRestoreStatus.
-var errBackupNotAwaitable = errors.New("only backups returned from Create / Restore and get-status are awaitable")
+var (
+	// To be awaited, backups need to have a valid [Info.operation] field
+	// and a non-nil *Client in [Info.c]. Client correctly populates these
+	// fields for Info returned from Create,  Restore,  GetCreateStatus, and GetRestoreStatus.
+	errBackupNotAwaitable = errors.New("only backups returned from Create / Restore and get-status are awaitable")
+
+	// Backup completed without reaching desired state. For example, a backup might
+	// have been canceled while awaiting StatusSuccess, in which case it will never
+	// reach state. The next status check should recognize this and return errBackupStatusFallthrough.
+	errBackupStatusFallthrough = errors.New("backup completed without reaching desired status")
+)
 
 // AwaitOption controls backup status polling.
 type AwaitOption func(*pollingInterval)
@@ -57,15 +64,16 @@ func AwaitCompletion(ctx context.Context, backup *Info, options ...AwaitOption) 
 //
 //	// BAD:
 //	backup.AwaitStatus(ctx, &backup.Info{ID: "bak-1"}, backup.StatusCanceled)
+//
+// AwaitStatus returns immediately if the *Info is nil, the backup's completed,
+// or reached the desired status. In the first 2 cases the returned error is not nil.
 func AwaitStatus(ctx context.Context, backup *Info, want Status, options ...AwaitOption) (*Info, error) {
 	if backup == nil {
 		return nil, fmt.Errorf("nil backup")
-	}
-	if backup.Error != "" {
-		return nil, errors.New(backup.Error)
-	}
-	if backup.Status == want {
+	} else if backup.Status == want {
 		return backup, nil
+	} else if backup.IsCompleted() {
+		return nil, fmt.Errorf("await %s: %w", want, errBackupStatusFallthrough)
 	}
 
 	c := backup.c
@@ -106,10 +114,10 @@ func AwaitStatus(ctx context.Context, backup *Info, want Status, options ...Awai
 			if latest.Status == want {
 				return latest, nil
 			} else if latest.IsCompleted() {
-				return latest, fmt.Errorf("backup completed without reaching status %s", want)
+				return latest, fmt.Errorf("await %s: %w", want, errBackupStatusFallthrough)
 			}
 
-			// Sleep util the next poll interval. Respect context.
+			// Sleep util the next poll interval, respect context.
 			select {
 			case <-time.After(time.Duration(interval)):
 			case <-ctx.Done():
