@@ -182,3 +182,15 @@ for _, obj := range result.Objects {
 ### Pointers for optional values
 
 Implication: Use pointers for optional fields in structs to distinguish between zero values and unset fields.
+
+## Risks
+
+- Variadic options: Could lead to users unintentionally passing multiple instances of the same option type; e.g.:
+
+```go
+result, err := songs.Query.NearVector(ctx, queryVector,
+    query.WithLimit(10),
+    query.WithDistance(0.5),
+    query.WithLimit(20),  // <- repeated option
+)
+```
