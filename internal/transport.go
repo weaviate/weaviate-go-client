@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
-	"github.com/weaviate/weaviate-go-client/v6/internal/gen/proto/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"

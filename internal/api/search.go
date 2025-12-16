@@ -1,8 +1,8 @@
 package api
 
 import (
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
-	"github.com/weaviate/weaviate-go-client/v6/internal/gen/proto/v1"
 )
 
 type (
