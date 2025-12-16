@@ -182,3 +182,4 @@ for _, obj := range result.Objects {
 ### Pointers for optional values
 
 Implication: Use pointers for optional fields in structs to distinguish between zero values and unset fields.
+
