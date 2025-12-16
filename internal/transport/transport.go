@@ -63,8 +63,11 @@ type T struct {
 	http *httpClient
 }
 
-// Compile-time assertion that transport implements Transport.
-var _ io.Closer = (*T)(nil)
+var (
+	// Compile-time assertion that transport implements Transport.
+	_ internal.Transport = (*T)(nil)
+	_ io.Closer          = (*T)(nil)
+)
 
 // Close closes the underlying gRPC channel.
 func (t *T) Close() error {

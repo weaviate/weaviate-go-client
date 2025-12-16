@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"net/url"
 )
 
 type Transport interface {
@@ -26,28 +25,4 @@ type Transport interface {
 // Request is anything that can have a body.
 type Request interface {
 	Body() any
-}
-
-// Endpoint describes a REST request.
-type Endpoint interface {
-	Request
-
-	// Method returns an HTTP method appropriate for the request.
-	Method() string
-	// Path returns endpoint URL with path parameters populated.
-	Path() string
-	// Query returns query string, if the request supports query parameters.
-	// A request which does not have query parameters can safely return nil.
-	Query() url.Values
-}
-
-// Message describes a gRPC request.
-type Message interface {
-	Request
-
-	// Marshal creates a protobuf message holding the body of the request.
-	//
-	// In practice, the request struct will need to marshal itself
-	// into an appropriate protobuf stub from the "internal/api/gen/proto" package.
-	Marshal() any
 }
