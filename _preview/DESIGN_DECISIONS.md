@@ -190,7 +190,7 @@ Implication: Use pointers for optional fields in structs to distinguish between 
 
 Transport layer is responsible for executing requests to the Weaviate REST and gRPC endpoints.
 The key requirement for the transport layer is _transparency_: the caller (public layer, the `client`) should be
-entirely oblivious to the method (REST / gRPC, the _how?_) by which a request is executed.
+entirely oblivious to the method (REST / gRPC) by which a request is executed, the _how?_.
 
 A good abstraction must be:
 
