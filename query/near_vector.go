@@ -53,7 +53,7 @@ type WithCertainty float64
 var _ NearVectorOption = (*WithCertainty)(nil)
 
 func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefaults, target NearVectorTarget, options ...NearVectorOption) (*Result, error) {
-	var nv nearVectorRequest
+	nv := nearVectorRequest{Target: target}
 	for _, opt := range options {
 		opt.apply(&nv)
 	}
@@ -77,7 +77,7 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 
 	var resp api.SearchResponse
 	if err := t.Do(ctx, req, &resp); err != nil {
-		return nil, fmt.Errorf("near vector: %w")
+		return nil, fmt.Errorf("near vector: %w", err)
 	}
 
 	// nearVector was called from the NearVectorFunc.GroupBy() method.

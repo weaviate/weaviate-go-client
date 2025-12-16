@@ -150,7 +150,7 @@ func (cm CombinationMethod) proto() proto.CombinationMethod {
 }
 
 // MarshalSearchRequest() constructs a proto.SearchRequest.
-func MarshalSearchRequest(req *SearchRequest) *proto.SearchRequest {
+func (req *SearchRequest) NewMessage() *proto.SearchRequest {
 	sr := &proto.SearchRequest{
 		Collection:       req.CollectionName,
 		Tenant:           req.Tenant,
@@ -272,7 +272,8 @@ func marshalVector(v *Vector) *proto.Vectors {
 	return out
 }
 
-func UnmarshalSearchReply(reply *proto.SearchReply) *SearchResponse {
+// NewSearchResponse unmarshals proto.SearchReply into an api.SearchResponse
+func NewSearchResponse(reply *proto.SearchReply) *SearchResponse {
 	dev.Assert(reply != nil, "search reply is nil")
 
 	objects := make([]Object, len(reply.Results))

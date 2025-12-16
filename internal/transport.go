@@ -14,6 +14,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/internal/gen/proto/v1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -23,16 +24,15 @@ type Transport interface {
 	// and MUST be a non-nil pointer otherwise.
 	//
 	// To keep execution transparent to the caller, the request type
-	// does not enforce any explicit constraints. E.g. were request
-	// an interface with a method like Type() "rest" | "grpc", the
-	// caller would have to be aware of the execution details.
+	// only enforces a minimal constraint -- a request is anything
+	// that MAY have a body.
 	//
-	// Instead, "internal/api" package defines structs for all
-	// supported requests. The contract is that Transport is
-	// able to execute any one of those. Alternatively, a "custom"
-	// `req` can implement [api.Endpoint].
+	// The "internal/api" package defines structs for all
+	// supported requests, which in turn implement api.Request.
+	// The contract is that Transport is able to execute any
+	// one of those requests.
 	//
-	// Transport should return [ErrUnknownRequest] if it cannot process the request.
+	// The transport is also able to execute any custom [api.Endpoint].
 	Do(ctx context.Context, req api.Request, dest any) error
 }
 
@@ -40,6 +40,8 @@ func NewTransport(opt TransportOptions) (*transport, error) {
 	// TODO(dyma): apply relevant gRPC options.
 	channel, err := grpc.NewClient(
 		fmt.Sprintf("%s:%d", opt.GRPCHost, opt.GRPCPort),
+		// TODO(dyma): pass correct credentials if authentication is enabled or scheme == "https"
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(
 			grpc.Header((*metadata.MD)(&opt.Header)),
 		),
@@ -123,16 +125,16 @@ func (t *transport) Do(ctx context.Context, req api.Request, dest any) error {
 }
 
 func (t *transport) search(ctx context.Context, req *api.SearchRequest, dest *api.SearchResponse) error {
-	reply, err := t.gRPC.Search(ctx, api.MarshalSearchRequest(req))
+	reply, err := t.gRPC.Search(ctx, req.NewMessage())
 	if err != nil || dest == nil {
 		return err
 	}
 	if reply == nil {
 		// Since gRPC client is generated and is essentialy a third-party dependency,
 		// we cannot guarantee the response to be always non-nil, so we do not dev.Assert.
-		return errors.New("nil response")
+		return errors.New("nil reply")
 	}
-	*dest = *api.UnmarshalSearchReply(reply)
+	*dest = *api.NewSearchResponse(reply)
 	return nil
 }
 
