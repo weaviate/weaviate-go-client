@@ -45,9 +45,9 @@ type Endpoint interface {
 type Message interface {
 	Request
 
-	// NewMessage creates a protobuf message holding the body of the request.
+	// Marshal creates a protobuf message holding the body of the request.
 	//
 	// In practice, the request struct will need to marshal itself
 	// into an appropriate protobuf stub from the "internal/api/gen/proto" package.
-	NewMessage() any
+	Marshal() any
 }

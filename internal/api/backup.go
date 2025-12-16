@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
 type (
@@ -79,7 +81,8 @@ type CreateBackupRequest struct {
 	Config             *CreateBackupConfig `json:"config,omitempty"`
 }
 
-var _ Endpoint = (*CreateBackupRequest)(nil)
+// Compile-time assertion that CreateBackupRequest implements [tranport.Endpoint].
+var _ transport.Endpoint = (*CreateBackupRequest)(nil)
 
 func (*CreateBackupRequest) Method() string { return http.MethodPost }
 func (r *CreateBackupRequest) Path() string { return "/backups/" + r.Backend }
@@ -96,7 +99,8 @@ type RestoreBackupRequest struct {
 	Config             *RestoreBackupConfig `json:"config,omitempty"`
 }
 
-var _ Endpoint = (*RestoreBackupRequest)(nil)
+// Compile-time assertion that RestoreBackupRequest implements [tranport.Endpoint].
+var _ transport.Endpoint = (*RestoreBackupRequest)(nil)
 
 func (*RestoreBackupRequest) Method() string { return http.MethodPost }
 func (r *RestoreBackupRequest) Path() string { return "/backups/" + r.Backend }
@@ -109,7 +113,8 @@ type BackupStatusRequest struct {
 	Operation BackupOperation
 }
 
-var _ Endpoint = (*BackupStatusRequest)(nil)
+// Compile-time assertion that BackupStatusRequest implements [tranport.Endpoint].
+var _ transport.Endpoint = (*BackupStatusRequest)(nil)
 
 func (r *BackupStatusRequest) Method() string { return http.MethodGet }
 func (r *BackupStatusRequest) Path() string {
@@ -127,7 +132,8 @@ type ListBackupsRequest struct {
 	StartingTimeAsc bool
 }
 
-var _ Endpoint = (*ListBackupsRequest)(nil)
+// Compile-time assertion that ListBackupsRequest implements [tranport.Endpoint].
+var _ transport.Endpoint = (*ListBackupsRequest)(nil)
 
 func (r *ListBackupsRequest) Method() string { return http.MethodGet }
 func (r *ListBackupsRequest) Path() string   { return "/backups/" + r.Backend }
@@ -144,7 +150,8 @@ type CancelBackupRequest struct {
 	ID      string `json:"-"`
 }
 
-var _ Endpoint = (*CancelBackupRequest)(nil)
+// Compile-time assertion that CancelBackupRequest implements [tranport.Endpoint].
+var _ transport.Endpoint = (*CancelBackupRequest)(nil)
 
 func (r *CancelBackupRequest) Method() string { return http.MethodDelete }
 func (r *CancelBackupRequest) Path() string   { return "/backups/" + r.Backend + "/" + r.ID }

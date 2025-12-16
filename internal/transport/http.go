@@ -7,30 +7,26 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 )
 
-type httpClient struct {
-	c       *http.Client
-	baseURL string
-	header  http.Header
+// Endpoint describes a REST request.
+type Endpoint interface {
+	internal.Request
+
+	// Method returns an HTTP method appropriate for the request.
+	Method() string
+	// Path returns endpoint URL with path parameters populated.
+	Path() string
+	// Query returns query string, if the request supports query parameters.
+	// A request which does not have query parameters can safely return nil.
+	Query() url.Values
 }
 
-func newHTTP(opt Options) *httpClient {
-	baseURL := fmt.Sprintf(
-		"%s://%s:%d/%s/",
-		opt.Scheme, opt.HTTPHost, opt.HTTPPort, opt.Version,
-	)
-	return &httpClient{
-		c:       &http.Client{},
-		baseURL: baseURL,
-		header:  opt.Header,
-	}
-}
-
-func (c *httpClient) do(ctx context.Context, req internal.Endpoint, dest any) error {
+func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 	var body io.Reader
 	if b := req.Body(); b != nil {
 		marshaled, err := json.Marshal(b)
@@ -82,7 +78,25 @@ func (c *httpClient) do(ctx context.Context, req internal.Endpoint, dest any) er
 	return nil
 }
 
-func (c *httpClient) url(req internal.Endpoint) string {
+type httpClient struct {
+	c       *http.Client
+	baseURL string
+	header  http.Header
+}
+
+func newHTTP(opt Config) *httpClient {
+	baseURL := fmt.Sprintf(
+		"%s://%s:%d/%s/",
+		opt.Scheme, opt.HTTPHost, opt.HTTPPort, opt.Version,
+	)
+	return &httpClient{
+		c:       &http.Client{},
+		baseURL: baseURL,
+		header:  opt.Header,
+	}
+}
+
+func (c *httpClient) url(req Endpoint) string {
 	var url strings.Builder
 
 	url.WriteString(c.baseURL)

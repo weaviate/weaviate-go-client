@@ -7,21 +7,20 @@ import (
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
-	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
 
-// Do dispatches to the appropriate underlying transport depending on the request type.
+// Do dispatches to the appropriate underlying transport depending on the request shape.
 // [Endpoint] is executed as REST requests. [Message] is executed via gRPC.
 func (t *T) Do(ctx context.Context, req internal.Request, dest any) error {
 	switch req := req.(type) {
-	case internal.Endpoint:
+	case Endpoint:
 		return t.http.do(ctx, req, dest)
-	case internal.Message:
-		return t.gRPC.do(ctx, req, dest)
 	default:
-		dev.Assert(false, "unknown request type %T", req)
+		// The reason we do not have `case Message:` here and let gRPC requests
+		// fall into the default case is due to the generic parameters in the Message.
+		// We let gRPC client do its own type switch and handle unknown request types.
+		return t.gRPC.do(ctx, req, dest)
 	}
-	return nil
 }
 
 // Config options for [T].

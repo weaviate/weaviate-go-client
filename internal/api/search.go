@@ -1,8 +1,10 @@
 package api
 
 import (
+	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
 type (
@@ -76,7 +78,10 @@ type (
 )
 
 // Compile-time assertions that SearchRequest implements Request.
-var _ Request = (*SearchRequest)(nil)
+var (
+	_ internal.Request                                          = (*SearchRequest)(nil)
+	_ transport.Message[proto.SearchRequest, proto.SearchReply] = (*SearchRequest)(nil)
+)
 
 func (r *SearchRequest) Body() any { return r }
 
@@ -150,7 +155,7 @@ func (cm CombinationMethod) proto() proto.CombinationMethod {
 }
 
 // MarshalSearchRequest() constructs a proto.SearchRequest.
-func (req *SearchRequest) NewMessage() *proto.SearchRequest {
+func (req *SearchRequest) Marshal() *proto.SearchRequest {
 	sr := &proto.SearchRequest{
 		Collection:       req.CollectionName,
 		Tenant:           req.Tenant,
@@ -272,8 +277,8 @@ func marshalVector(v *Vector) *proto.Vectors {
 	return out
 }
 
-// NewSearchResponse unmarshals proto.SearchReply into an api.SearchResponse
-func NewSearchResponse(reply *proto.SearchReply) *SearchResponse {
+// Unmarshal unmarshals proto.SearchReply into an api.SearchResponse
+func (r SearchRequest) Unmarshal(reply *proto.SearchReply, dest any) {
 	dev.Assert(reply != nil, "search reply is nil")
 
 	objects := make([]Object, len(reply.Results))
@@ -322,10 +327,15 @@ func NewSearchResponse(reply *proto.SearchReply) *SearchResponse {
 		}
 	}
 
-	return &SearchResponse{
+	resp := SearchResponse{
 		TookSeconds:    reply.GetTook(),
 		Results:        objects,
 		GroupByResults: groups,
+	}
+
+	{
+		dest := dev.AssertType[*SearchResponse](dest)
+		*dest = resp
 	}
 }
 

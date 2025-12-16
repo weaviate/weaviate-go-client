@@ -7,7 +7,6 @@ import (
 	"io"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
-	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"google.golang.org/grpc"
@@ -15,22 +14,60 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+// Since gRPC client is generated and is essentialy a third-party dependency,
+// we cannot guarantee the response to be always non-nil, so we return an error
+// on nil replies instead of doing dev.Assert.
+var errNilReply = errors.New("nil reply")
+
+// Message describes a gRPC request.
+type Message[Request any, Reply any] interface {
+	// Marshal creates a protobuf message holding the body of the request.
+	//
+	// In practice, the request struct will need to marshal itself
+	// into an appropriate protobuf stub from the "internal/api/gen/proto" package.
+	Marshal() *Request
+
+	// Unmarshal converts the gRPC reply into a response type
+	// corresponding to the kind of request and assigns it to dest.
+	Unmarshal(r *Reply, dest any)
+}
+
 // do obtains a protobuf message from the request body and dispatches
 // to the appropriate proto.WeaviateClient method based on its kind.
-func (c *gRPCClient) do(ctx context.Context, req internal.Message, dest any) error {
+func (c *gRPCClient) do(ctx context.Context, req internal.Request, dest any) error {
 	dev.Assert(req != nil, "nil gRPC request")
 
-	msg := req.NewMessage()
-	dev.Assert(msg != nil, "nil gRPC message")
+	var err error
+	switch m := req.Body().(type) {
+	case Message[proto.SearchRequest, proto.SearchReply]:
+		err = c.search(ctx, m, dest)
+	default:
+		dev.Assert(false, "unknown gRPC message type %T", m)
+	}
 
-	switch msg := msg.(type) {
-	case *proto.SearchRequest:
-		return c.search(ctx, msg, dev.AssertType[*api.SearchResponse](dest))
+	if err != nil {
+		return fmt.Errorf("gRPC: %w", err)
 	}
 	return nil
 }
 
-func newGRPCClient(opt internal.TransportOptions) (*gRPCClient, error) {
+func (c *gRPCClient) search(ctx context.Context, m Message[proto.SearchRequest, proto.SearchReply], dest any) error {
+	reply, err := c.wc.Search(ctx, m.Marshal())
+	if err != nil {
+		return fmt.Errorf("search: %w", err)
+	}
+
+	if reply == nil {
+		// Since gRPC client is generated and is essentialy a third-party dependency,
+		// we cannot guarantee the response to be always non-nil, so we do not dev.Assert.
+		return fmt.Errorf("search: %w", errNilReply)
+	}
+
+	m.Unmarshal(reply, dest)
+	return nil
+}
+
+func newGRPCClient(opt Config) (*gRPCClient, error) {
 	// TODO(dyma): apply relevant gRPC options.
 	channel, err := grpc.NewClient(
 		fmt.Sprintf("%s:%d", opt.GRPCHost, opt.GRPCPort),
@@ -47,20 +84,6 @@ func newGRPCClient(opt internal.TransportOptions) (*gRPCClient, error) {
 		channel: channel,
 		wc:      proto.NewWeaviateClient(channel),
 	}, nil
-}
-
-func (c *gRPCClient) search(ctx context.Context, req *proto.SearchRequest, dest *api.SearchResponse) error {
-	reply, err := c.wc.Search(ctx, req)
-	if err != nil || dest == nil {
-		return err
-	}
-	if reply == nil {
-		// Since gRPC client is generated and is essentialy a third-party dependency,
-		// we cannot guarantee the response to be always non-nil, so we do not dev.Assert.
-		return errors.New("nil reply")
-	}
-	*dest = *api.NewSearchResponse(reply)
-	return nil
 }
 
 // gRPCClient is a wrapper around proto.WeaviateClient that dispatches protobuf messages
