@@ -8,8 +8,9 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v6/backup"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
-	"github.com/weaviate/weaviate-go-client/v6/internal"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
 func NewClient(_ context.Context, config ...ConnectionConfig) (*Client, error) {
@@ -19,14 +20,14 @@ func NewClient(_ context.Context, config ...ConnectionConfig) (*Client, error) {
 	}
 
 	// TODO(dyma): set X-Weaviate-Cluster-URL header
-
-	t, err := internal.NewTransport(internal.TransportOptions{
+	t, err := transport.New(transport.Config{
 		Scheme:   cfg.Scheme,
 		HTTPHost: cfg.HTTPHost,
 		GRPCHost: cfg.GRPCHost,
 		HTTPPort: cfg.HTTPPort,
 		GRPCPort: cfg.GRPCPort,
 		Header:   cfg.Header,
+		Version:  api.Version,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("weaviate: new client: %w", err)
