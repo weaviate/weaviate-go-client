@@ -384,7 +384,7 @@ and provided at transport instantiation!, which is only done once and not per-re
 
 A `Transport[api.SearchRequest, api.SearchResponse]` cannot be used to create a backup or run an aggregation query.
 
-This is crucial point to understand. By introducing generic `[Req, Resp]` arguments into our interface we are forced
+This is a crucial point to understand. By introducing generic `[Req, Resp]` arguments into our interface we are forced
 to write a _**separate** implementation for **every** single request-response pair_. Instead of 1 well-written and
 well-tested `Do()` method we would have to maintain 30-40(?) separate implementations. And that number will keep growing
 with each new request we add to the client.
