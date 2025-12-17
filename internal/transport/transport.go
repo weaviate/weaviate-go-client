@@ -52,9 +52,10 @@ func New(opt Config) (*T, error) {
 	}, nil
 }
 
-// T is an implementation of the [internal.Transport] interface.
-// It executes REST requests via an [http.Client] and
-// uses proto.WeaviateClient to perform gRPC requests.
+// T is an implementation of the [internal.Transport] interface,
+// which supports REST and gRPC requests.
+// REST requests are executed via an [http.Client]
+// and gRPC requests are delegated to [proto.WeaviateClient].
 //
 // Use [New] to create a new transport. Call Close()
 // when the T is not longer in use to free resources.
