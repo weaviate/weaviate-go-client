@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/weaviate/weaviate-go-client/v6/internal"
+	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
@@ -65,9 +65,9 @@ type (
 		BelongsToGroup string
 	}
 	ObjectMetadata struct {
-		UUID               string
-		CreationTimeUnix   *int64
-		LastUpdateTimeUnix *int64
+		UUID               uuid.UUID
+		CreationTimeUnix   int64
+		LastUpdateTimeUnix int64
 		Distance           *float32
 		Certainty          *float32
 		Score              *float32
@@ -79,7 +79,7 @@ type (
 
 // Compile-time assertions that SearchRequest implements Request.
 var (
-	_ internal.Request                                          = (*SearchRequest)(nil)
+	// _ internal.Request                                          = (*SearchRequest)(nil)
 	_ transport.Message[proto.SearchRequest, proto.SearchReply] = (*SearchRequest)(nil)
 )
 
@@ -104,10 +104,10 @@ const (
 type ConsistencyLevel string
 
 const (
-	_                      ConsistencyLevel = "" // unspecified
-	ConsistencyLevelOne    ConsistencyLevel = "ONE"
-	ConsistencyLevelQuorum ConsistencyLevel = "QUORUM"
-	ConsistencyLevelAll    ConsistencyLevel = "ALL"
+	consistencyLevelUndefined                  = "" // unspecified
+	ConsistencyLevelOne       ConsistencyLevel = "ONE"
+	ConsistencyLevelQuorum    ConsistencyLevel = "QUORUM"
+	ConsistencyLevelAll       ConsistencyLevel = "ALL"
 )
 
 // proto converts ConsistencyLevel into a protobuf value.
@@ -160,10 +160,10 @@ func (req *SearchRequest) Marshal() *proto.SearchRequest {
 		Collection:       req.CollectionName,
 		Tenant:           req.Tenant,
 		ConsistencyLevel: req.ConsistencyLevel.proto(),
-		Limit:            uint32(nilZero(req.Limit)),
-		Offset:           uint32(nilZero(req.Offset)),
-		Autocut:          uint32(nilZero(req.AutoLimit)),
-		After:            nilZero(req.After),
+		Limit:            uint32(zeroNil(req.Limit)),
+		Offset:           uint32(zeroNil(req.Offset)),
+		Autocut:          uint32(zeroNil(req.AutoLimit)),
+		After:            zeroNil(req.After),
 	}
 
 	var properties proto.PropertiesRequest
@@ -211,8 +211,8 @@ func (req *SearchRequest) Marshal() *proto.SearchRequest {
 	switch {
 	case req.NearVector != nil:
 		sr.NearVector = &proto.NearVector{
-			Distance:  nilZero(&req.NearVector.Distance),
-			Certainty: nilZero(&req.NearVector.Certainty),
+			Distance:  zeroNil(&req.NearVector.Distance),
+			Certainty: zeroNil(&req.NearVector.Certainty),
 		}
 
 		targets := req.NearVector.Target.Vectors()
@@ -278,7 +278,7 @@ func marshalVector(v *Vector) *proto.Vectors {
 }
 
 // Unmarshal unmarshals proto.SearchReply into an api.SearchResponse
-func (r SearchRequest) Unmarshal(reply *proto.SearchReply, dest any) {
+func (r SearchRequest) Unmarshal(reply *proto.SearchReply, dest any) error {
 	dev.Assert(reply != nil, "search reply is nil")
 
 	objects := make([]Object, len(reply.Results))
@@ -337,6 +337,7 @@ func (r SearchRequest) Unmarshal(reply *proto.SearchReply, dest any) {
 		dest := dev.AssertType[*SearchResponse](dest)
 		*dest = resp
 	}
+	return nil
 }
 
 func unmarshalVectors(vectors []*proto.Vectors) Vectors {
@@ -396,13 +397,21 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) Objec
 			)
 		}
 	}
+
+	// TODO(dyma): should we return error if the UUID was not valid?
+	var id uuid.UUID
+	if bytes := mr.GetIdAsBytes(); bytes != nil {
+		if fromBytes, err := uuid.FromBytes(bytes); err != nil {
+			id = fromBytes
+		}
+	}
 	return Object{
 		Properties: properties,
 		References: references,
 		Metadata: ObjectMetadata{
-			UUID:               unmarshalUUID(mr.GetIdAsBytes()),
-			CreationTimeUnix:   nilPresent(mr.GetCreationTimeUnix(), mr.GetCreationTimeUnixPresent()),
-			LastUpdateTimeUnix: nilPresent(mr.GetLastUpdateTimeUnix(), mr.GetLastUpdateTimeUnixPresent()),
+			UUID:               id,
+			CreationTimeUnix:   mr.GetCreationTimeUnix(),
+			LastUpdateTimeUnix: mr.GetLastUpdateTimeUnix(),
 			Distance:           nilPresent(mr.GetDistance(), mr.GetDistancePresent()),
 			Certainty:          nilPresent(mr.GetCertainty(), mr.GetCertaintyPresent()),
 			Score:              nilPresent(mr.GetScore(), mr.GetScorePresent()),
@@ -419,9 +428,9 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) Objec
 // ptr is a helper for exporting pointers to constants.
 func ptr[T any](v T) *T { return &v }
 
-// nilZero returns the dereferenced value if the pointer is not nil
+// zeroNil returns the dereferenced value if the pointer is not nil
 // and the zero value of type T otherwise.
-func nilZero[T any](v *T) T {
+func zeroNil[T any](v *T) T {
 	if v == nil {
 		return *new(T)
 	}

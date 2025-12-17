@@ -9,21 +9,22 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/weaviate/weaviate-go-client/v6/internal"
 )
 
 // Endpoint describes a REST request.
 type Endpoint interface {
-	internal.Request
-
 	// Method returns an HTTP method appropriate for the request.
 	Method() string
+
 	// Path returns endpoint URL with path parameters populated.
 	Path() string
+
 	// Query returns query string, if the request supports query parameters.
 	// A request which does not have query parameters can safely return nil.
 	Query() url.Values
+
+	// Body returns the request body, which will be marshaled to JSON.
+	Body() any
 }
 
 func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {

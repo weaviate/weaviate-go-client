@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"google.golang.org/grpc"
@@ -29,16 +28,16 @@ type Message[Request any, Reply any] interface {
 
 	// Unmarshal converts the gRPC reply into a response type
 	// corresponding to the kind of request and assigns it to dest.
-	Unmarshal(r *Reply, dest any)
+	Unmarshal(r *Reply, dest any) error
 }
 
 // do obtains a protobuf message from the request body and dispatches
 // to the appropriate proto.WeaviateClient method based on its kind.
-func (c *gRPCClient) do(ctx context.Context, req internal.Request, dest any) error {
+func (c *gRPCClient) do(ctx context.Context, req any, dest any) error {
 	dev.Assert(req != nil, "nil gRPC request")
 
 	var err error
-	switch m := req.Body().(type) {
+	switch m := req.(type) {
 	case Message[proto.SearchRequest, proto.SearchReply]:
 		err = c.search(ctx, m, dest)
 	default:
@@ -63,7 +62,9 @@ func (c *gRPCClient) search(ctx context.Context, m Message[proto.SearchRequest, 
 		return fmt.Errorf("search: %w", errNilReply)
 	}
 
-	m.Unmarshal(reply, dest)
+	if err := m.Unmarshal(reply, dest); err != nil {
+		return fmt.Errorf("search: unmarshal respose: %w", err)
+	}
 	return nil
 }
 

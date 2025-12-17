@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6"
 	"github.com/weaviate/weaviate-go-client/v6/backup"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
@@ -44,7 +45,7 @@ func TestClient(t *testing.T) {
 	}), data.WithVector(
 		types.Vector{Name: "title", Single: single},
 		types.Vector{Name: "lyrics", Multi: multi},
-	), data.WithUUID("uuid-0"))
+	), data.WithUUID(uuid.New()))
 
 	h.Query.NearVector(ctx,
 		types.Vector{Single: single},

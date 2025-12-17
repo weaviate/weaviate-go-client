@@ -99,7 +99,7 @@ type RestoreBackupRequest struct {
 	Config             *RestoreBackupConfig `json:"config,omitempty"`
 }
 
-// Compile-time assertion that RestoreBackupRequest implements [tranport.Endpoint].
+// Compile-time assertion that RestoreBackupRequest implements [transport.Endpoint].
 var _ transport.Endpoint = (*RestoreBackupRequest)(nil)
 
 func (*RestoreBackupRequest) Method() string { return http.MethodPost }

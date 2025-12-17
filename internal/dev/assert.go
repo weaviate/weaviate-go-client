@@ -20,6 +20,7 @@ func noAssert() bool {
 // should only fail due to a error in a package's code.
 func Assert(check bool, msg string, args ...any) {
 	if noAssert() {
+		return
 	}
 	if !check {
 		panic(fmt.Sprintf(msg, args...))

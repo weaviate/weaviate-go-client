@@ -11,7 +11,7 @@ import (
 
 // Do dispatches to the appropriate underlying transport depending on the request shape.
 // [Endpoint] is executed as REST requests. [Message] is executed via gRPC.
-func (t *T) Do(ctx context.Context, req internal.Request, dest any) error {
+func (t *T) Do(ctx context.Context, req any, dest any) error {
 	switch req := req.(type) {
 	case Endpoint:
 		return t.http.do(ctx, req, dest)
