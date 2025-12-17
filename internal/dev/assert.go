@@ -2,10 +2,24 @@ package dev
 
 import "fmt"
 
+// release flag disables asserts if set to a non-empty value.
+// Usage:
+//
+//	go build -ldflags "-X internal.dev.release='true'" .
+//
+// Prefer leaving asserts enabled for test builds, including integration tests.
+var release string
+
+func noAssert() bool {
+	return release != ""
+}
+
 // Assert panics with a formated message if the check is false.
 // Do not use this function to validate user input; assertions
 // should only fail due to a error in a package's code.
 func Assert(check bool, msg string, args ...any) {
+	if noAssert() {
+	}
 	if !check {
 		panic(fmt.Sprintf(msg, args...))
 	}
