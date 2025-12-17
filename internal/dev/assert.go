@@ -10,6 +10,7 @@ import "fmt"
 // Prefer leaving asserts enabled for test builds, including integration tests.
 var release string
 
+// noAssert returns true if [release] is set to a non-empty value.
 func noAssert() bool {
 	return release != ""
 }
