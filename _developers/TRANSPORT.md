@@ -264,16 +264,16 @@ Looking at the `Search` method, I think I'd be safe to assume `v5` would have th
 The key deficiency of this design is that it results in _so much more code_ than necessary.
 
 First, consider that `v5.Transport` has 8 methods, where `v6.Transport` only has 1.
-Well, in practice the `v6.Transport` implementation must actually have 3 methods: a public `Do()` and private `doREST()` and `doGRPC()`.
+In practice the `v6.Transport` implementation must actually have 3 methods: a public `Do()` and private `doREST()` and `doGRPC()`.
 Even so, it has 5 methods less. Most importantly though -- these 3 methods can service _any number of requests_. On the other hand,
 if tomorrow `backup` API was migrated to gRPC, the `v5.Transport` surface would grow to **14 methods** to accomodate the 6 requests in `backup`.
 
 Next, consider what using the `v5.Transport` looks like ([data.Creator.Do](https://github.com/weaviate/weaviate-go-client/blob/cf0624dc4258b33ac8b5c1139a64aec6b87e005b/weaviate/data/creator.go#L76)):
 
 ```go
+// EDIT: PayloadObject() and buildPath() are inlined for the purposes of this example.
+// Neither is re-used in any other place so I think it's fair to include them in full.
 func (creator *Creator) Do(ctx context.Context) (*ObjectWrapper, error) {
-    // EDIT: PayloadObject() and buildPath() are inlined for the purposes of this example.
-    // Neither is re-used in any other place so I think it's fair to include them in full.
     var err error
 	var responseData *connection.ResponseData
 
@@ -317,14 +317,14 @@ func (creator *Creator) Do(ctx context.Context) (*ObjectWrapper, error) {
 
 Remember, this is the API layer. In the API layer, why do we know that `consistecy_level` belongs into a URL query and not in the path parameters?
 Why do we need to know that `200` is the "OK" code  and not `201`? Why does the transport return what is essentially _raw bytes_ in a wrapper
-that we need needs to decode in a separate step? Why should we care if it's a REST or a gRPC request? Also, should we can `RunREST` or `RunRESTExternal` and what is the difference between the two?
+that we need to decode in a separate step? Why should we care if it's a REST or a gRPC request? Also, should we call `RunREST` or `RunRESTExternal` and what is the difference between the two?
 
-That's a lot of questions to answer in the API layer. And even after answering them and doing all this work we still return a `models.Object` to the user, albeit wrapped in an `ObjectWrapper { Object *models.Object }`! If we wanted to return a nice public-facing struct, we'd be _easily_ looking at another 20-30 lines of code, because `models.Object` has such niceties as `AdditionalProperties map[string]any` for metadata and `Vectors map[string]interface{}` for named vectors.
+That's a lot of questions to answer in the API layer. And even after answering them and doing all this work we still return a `models.Object` to the user, albeit wrapped in an `ObjectWrapper { Object *models.Object }`! If we wanted to return a nice public-facing struct, we'd be _easily_ looking at another 20-30 lines of code, because `models.Object` has such niceties as `AdditionalProperties map[string]any` for metadata and `Vectors map[string]any` for named vectors.
 
 Not to mention that the function above is 38 lines of code (+20-30 if we don't return `models.Object`). That's a lot of lines, considering we might need to recreate them across 20-25(?) requests. We need to write that code, test that code, and maintain that code.
-And the more code we write and the more questions we have to answer while doing that, the greater is the opportunity for mistake.
+And the more code we write and the more questions we have to answer while doing that, the greater is the opportunity for making a mistake.
 
-To summarize, our `v5` transport isn't doing any of the heavy lifting that it should. The proposed Transport design **drastically** reduces the amount of code we need to write now and in the future, when the API evolves.
+To summarize, our `v5` transport is a thin wrapper that isn't doing any of the heavy lifting it should be doing. Not because it the wrapper is thin, but because the abstraction is poorly designed. The proposed Transport interface **drastically** reduces the amount of code we need to write now and in the future, when the API evolves, by providing the right abstractions.
 
 To exemplify, here's what the `Insert()` method looks like in `v6` with the proposed transport design:
 
@@ -334,9 +334,10 @@ func (c *Client) Insert(ctx context.Context, options ...InsertOption) (*types.Ob
 	InsertOptions(options).Apply(&ir) // Build the request
 
 	req := &api.InsertObjectRequest{
-		UUID:       ir.UUID,
-		Properties: ir.Properties,
-		Vectors:    ir.Vectors,
+        RequestDefaults:    c.defaults, // tenant + consistency level, set once per collection handle
+		UUID:               ir.UUID,
+		Properties:         ir.Properties,
+		Vectors:            ir.Vectors,
 	}
 
 	var resp api.InsertObjectResponse
@@ -354,12 +355,12 @@ func (c *Client) Insert(ctx context.Context, options ...InsertOption) (*types.Ob
 }
 ```
 
-That's 23 lines, plus we return a user-facing `types.Object`. In the reference implementation The [code executing this request](https://github.com/weaviate/weaviate-go-client/blob/cf0624dc4258b33ac8b5c1139a64aec6b87e005b/weaviate/data/creator.go#L16) is ~60 lines long all told. Implementing `Insert` in `v5` takes roughly the same amount of code as implementing `Insert` _and_ the underlying transport which will be reused for all other requests.
+That's 24 lines, plus we return a user-facing `types.Object`. In the reference implementation The [code executing this request](https://github.com/weaviate/weaviate-go-client/blob/cf0624dc4258b33ac8b5c1139a64aec6b87e005b/weaviate/data/creator.go#L16) is ~60 lines long all told. Implementing `Insert` in `v5` takes roughly the same amount of code as implementing `Insert` _and_ the underlying transport which will be reused for all other requests.
 
 
 ## Discussion
 
-1. We could re-use the `v5` transport code as is, copy pasting most of it.
+1. We could re-use the `v5` transport code as is, copy-pasting most of it.
 
 That doesn't change the _test_ and _maintain_ parts -- we still need to do that.
 Also at this point we should treat `v5` transport as an external dependency that we're adding to the project and ask ourselves:
