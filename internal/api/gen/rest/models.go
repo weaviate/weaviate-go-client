@@ -323,58 +323,58 @@ type AdditionalProperties map[string]map[string]interface{}
 // Alias Represents the mapping between an alias name and a collection. An alias provides an alternative name for accessing a collection.
 type Alias struct {
 	// Alias The unique name of the alias that serves as an alternative identifier for the collection.
-	Alias *string `json:"alias,omitempty"`
+	Alias string `json:"alias,omitempty"`
 
 	// Class The name of the collection (class) to which this alias is mapped.
-	Class *string `json:"class,omitempty"`
+	Class string `json:"class,omitempty"`
 }
 
 // AliasResponse Response object containing a list of alias mappings.
 type AliasResponse struct {
 	// Aliases Array of alias objects, each containing an alias-to-collection mapping.
-	Aliases *[]Alias `json:"aliases,omitempty"`
+	Aliases []Alias `json:"aliases,omitempty"`
 }
 
 // AsyncReplicationStatus The status of the async replication.
 type AsyncReplicationStatus struct {
 	// ObjectsPropagated The number of objects propagated in the most recent iteration.
-	ObjectsPropagated *int64 `json:"objectsPropagated,omitempty"`
+	ObjectsPropagated int64 `json:"objectsPropagated,omitempty"`
 
 	// StartDiffTimeUnixMillis The start time of the most recent iteration.
-	StartDiffTimeUnixMillis *int64 `json:"startDiffTimeUnixMillis,omitempty"`
+	StartDiffTimeUnixMillis int64 `json:"startDiffTimeUnixMillis,omitempty"`
 
 	// TargetNode The target node of the replication, if set, otherwise empty.
-	TargetNode *string `json:"targetNode,omitempty"`
+	TargetNode string `json:"targetNode,omitempty"`
 }
 
 // BM25Config Tuning parameters for the BM25 algorithm.
 type BM25Config struct {
 	// B Calibrates term-weight scaling based on the document length (default: 0.75).
-	B *float32 `json:"b,omitempty"`
+	B float32 `json:"b,omitempty"`
 
 	// K1 Calibrates term-weight scaling based on the term frequency within a document (default: 1.2).
-	K1 *float32 `json:"k1,omitempty"`
+	K1 float32 `json:"k1,omitempty"`
 }
 
 // BackupConfig Backup custom configuration.
 type BackupConfig struct {
 	// Bucket Name of the bucket, container, volume, etc.
-	Bucket *string `json:"Bucket,omitempty"`
+	Bucket string `json:"Bucket,omitempty"`
 
 	// CPUPercentage Desired CPU core utilization ranging from 1%-80%
-	CPUPercentage *int `json:"CPUPercentage,omitempty"`
+	CPUPercentage int `json:"CPUPercentage,omitempty"`
 
 	// ChunkSize Aimed chunk size, with a minimum of 2MB, default of 128MB, and a maximum of 512MB. The actual chunk size may vary.
-	ChunkSize *int `json:"ChunkSize,omitempty"`
+	ChunkSize int `json:"ChunkSize,omitempty"`
 
 	// CompressionLevel compression level used by compression algorithm
-	CompressionLevel *BackupConfigCompressionLevel `json:"CompressionLevel,omitempty"`
+	CompressionLevel BackupConfigCompressionLevel `json:"CompressionLevel,omitempty"`
 
 	// Endpoint Name of the endpoint, e.g. s3.amazonaws.com.
-	Endpoint *string `json:"Endpoint,omitempty"`
+	Endpoint string `json:"Endpoint,omitempty"`
 
 	// Path Path or key within the bucket.
-	Path *string `json:"Path,omitempty"`
+	Path string `json:"Path,omitempty"`
 }
 
 // BackupConfigCompressionLevel compression level used by compression algorithm
@@ -383,40 +383,40 @@ type BackupConfigCompressionLevel string
 // BackupCreateRequest Request body for creating a backup for a set of collections.
 type BackupCreateRequest struct {
 	// Config Backup custom configuration.
-	Config *BackupConfig `json:"config,omitempty"`
+	Config BackupConfig `json:"config,omitempty"`
 
 	// Exclude List of collections to exclude from the backup creation process. If not set, all collections are included. Cannot be used together with `include`.
-	Exclude *[]string `json:"exclude,omitempty"`
+	Exclude []string `json:"exclude,omitempty"`
 
 	// Id The ID of the backup (required). Must be URL-safe and work as a filesystem path, only lowercase, numbers, underscore, minus characters allowed.
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id,omitempty"`
 
 	// Include List of collections to include in the backup creation process. If not set, all collections are included. Cannot be used together with `exclude`.
-	Include *[]string `json:"include,omitempty"`
+	Include []string `json:"include,omitempty"`
 }
 
 // BackupCreateResponse The definition of a backup create response body
 type BackupCreateResponse struct {
 	// Backend Backup backend name e.g. filesystem, gcs, s3.
-	Backend *string `json:"backend,omitempty"`
+	Backend string `json:"backend,omitempty"`
 
 	// Bucket Name of the bucket, container, volume, etc
-	Bucket *string `json:"bucket,omitempty"`
+	Bucket string `json:"bucket,omitempty"`
 
 	// Classes The list of collections (classes) for which the backup creation process was started.
-	Classes *[]string `json:"classes,omitempty"`
+	Classes []string `json:"classes,omitempty"`
 
 	// Error error message if creation failed
-	Error *string `json:"error,omitempty"`
+	Error string `json:"error,omitempty"`
 
 	// Id The ID of the backup. Must be URL-safe and work as a filesystem path, only lowercase, numbers, underscore, minus characters allowed.
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id,omitempty"`
 
 	// Path Path within bucket of backup
-	Path *string `json:"path,omitempty"`
+	Path string `json:"path,omitempty"`
 
 	// Status phase of backup creation process
-	Status *BackupCreateResponseStatus `json:"status,omitempty"`
+	Status BackupCreateResponseStatus `json:"status,omitempty"`
 }
 
 // BackupCreateResponseStatus phase of backup creation process
@@ -425,25 +425,25 @@ type BackupCreateResponseStatus string
 // BackupCreateStatusResponse The definition of a backup create metadata
 type BackupCreateStatusResponse struct {
 	// Backend Backup backend name e.g. filesystem, gcs, s3.
-	Backend *string `json:"backend,omitempty"`
+	Backend string `json:"backend,omitempty"`
 
 	// CompletedAt Timestamp when the backup process completed (successfully or with failure)
-	CompletedAt *time.Time `json:"completedAt,omitempty"`
+	CompletedAt time.Time `json:"completedAt,omitempty"`
 
 	// Error error message if creation failed
-	Error *string `json:"error,omitempty"`
+	Error string `json:"error,omitempty"`
 
 	// Id The ID of the backup. Must be URL-safe and work as a filesystem path, only lowercase, numbers, underscore, minus characters allowed.
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id,omitempty"`
 
 	// Path Destination path of backup files valid for the selected backend.
-	Path *string `json:"path,omitempty"`
+	Path string `json:"path,omitempty"`
 
 	// StartedAt Timestamp when the backup process started
-	StartedAt *time.Time `json:"startedAt,omitempty"`
+	StartedAt time.Time `json:"startedAt,omitempty"`
 
 	// Status phase of backup creation process
-	Status *BackupCreateStatusResponseStatus `json:"status,omitempty"`
+	Status BackupCreateStatusResponseStatus `json:"status,omitempty"`
 }
 
 // BackupCreateStatusResponseStatus phase of backup creation process
@@ -452,22 +452,22 @@ type BackupCreateStatusResponseStatus string
 // BackupListResponse The definition of a backup create response body.
 type BackupListResponse = []struct {
 	// Classes The list of collections (classes) for which the backup process was started.
-	Classes *[]string `json:"classes,omitempty"`
+	Classes []string `json:"classes,omitempty"`
 
 	// CompletedAt Timestamp when the backup process completed (successfully or with failure)
-	CompletedAt *time.Time `json:"completedAt,omitempty"`
+	CompletedAt time.Time `json:"completedAt,omitempty"`
 
 	// Id The ID of the backup. Must be URL-safe and work as a filesystem path, only lowercase, numbers, underscore, minus characters allowed.
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id,omitempty"`
 
 	// Size Size of the backup in Gibs
-	Size *float32 `json:"size,omitempty"`
+	Size float32 `json:"size,omitempty"`
 
 	// StartedAt Timestamp when the backup process started
-	StartedAt *time.Time `json:"startedAt,omitempty"`
+	StartedAt time.Time `json:"startedAt,omitempty"`
 
 	// Status Status of backup process.
-	Status *BackupListResponseStatus `json:"status,omitempty"`
+	Status BackupListResponseStatus `json:"status,omitempty"`
 }
 
 // BackupListResponseStatus Status of backup process.
@@ -476,40 +476,40 @@ type BackupListResponseStatus string
 // BackupRestoreRequest Request body for restoring a backup for a set of collections (classes).
 type BackupRestoreRequest struct {
 	// Config Backup custom configuration
-	Config *RestoreConfig `json:"config,omitempty"`
+	Config RestoreConfig `json:"config,omitempty"`
 
 	// Exclude List of collections (classes) to exclude from the backup restoration process.
-	Exclude *[]string `json:"exclude,omitempty"`
+	Exclude []string `json:"exclude,omitempty"`
 
 	// Include List of collections (classes) to include in the backup restoration process.
-	Include *[]string `json:"include,omitempty"`
+	Include []string `json:"include,omitempty"`
 
 	// NodeMapping Allows overriding the node names stored in the backup with different ones. Useful when restoring backups to a different environment.
-	NodeMapping *map[string]string `json:"node_mapping,omitempty"`
+	NodeMapping map[string]string `json:"node_mapping,omitempty"`
 
 	// OverwriteAlias Allows ovewriting the collection alias if there is a conflict
-	OverwriteAlias *bool `json:"overwriteAlias,omitempty"`
+	OverwriteAlias bool `json:"overwriteAlias,omitempty"`
 }
 
 // BackupRestoreResponse The definition of a backup restore response body.
 type BackupRestoreResponse struct {
 	// Backend Backup backend name e.g. filesystem, gcs, s3.
-	Backend *string `json:"backend,omitempty"`
+	Backend string `json:"backend,omitempty"`
 
 	// Classes The list of collections (classes) for which the backup restoration process was started.
-	Classes *[]string `json:"classes,omitempty"`
+	Classes []string `json:"classes,omitempty"`
 
 	// Error Error message if backup restoration failed.
-	Error *string `json:"error,omitempty"`
+	Error string `json:"error,omitempty"`
 
 	// Id The ID of the backup. Must be URL-safe and work as a filesystem path, only lowercase, numbers, underscore, minus characters allowed.
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id,omitempty"`
 
 	// Path Destination path of backup files valid for the selected backend.
-	Path *string `json:"path,omitempty"`
+	Path string `json:"path,omitempty"`
 
 	// Status Phase of backup restoration process.
-	Status *BackupRestoreResponseStatus `json:"status,omitempty"`
+	Status BackupRestoreResponseStatus `json:"status,omitempty"`
 }
 
 // BackupRestoreResponseStatus Phase of backup restoration process.
@@ -518,19 +518,19 @@ type BackupRestoreResponseStatus string
 // BackupRestoreStatusResponse The definition of a backup restore metadata.
 type BackupRestoreStatusResponse struct {
 	// Backend Backup backend name e.g. filesystem, gcs, s3.
-	Backend *string `json:"backend,omitempty"`
+	Backend string `json:"backend,omitempty"`
 
 	// Error Error message if backup restoration failed.
-	Error *string `json:"error,omitempty"`
+	Error string `json:"error,omitempty"`
 
 	// Id The ID of the backup. Must be URL-safe and work as a filesystem path, only lowercase, numbers, underscore, minus characters allowed.
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id,omitempty"`
 
 	// Path Destination path of backup files valid for the selected backup backend, contains bucket and path.
-	Path *string `json:"path,omitempty"`
+	Path string `json:"path,omitempty"`
 
 	// Status Phase of backup restoration process.
-	Status *BackupRestoreStatusResponseStatus `json:"status,omitempty"`
+	Status BackupRestoreStatusResponseStatus `json:"status,omitempty"`
 }
 
 // BackupRestoreStatusResponseStatus Phase of backup restoration process.
@@ -539,65 +539,65 @@ type BackupRestoreStatusResponseStatus string
 // BatchDelete defines model for BatchDelete.
 type BatchDelete struct {
 	// DeletionTimeUnixMilli Timestamp of deletion in milliseconds since epoch UTC.
-	DeletionTimeUnixMilli *int64 `json:"deletionTimeUnixMilli"`
+	DeletionTimeUnixMilli int64 `json:"deletionTimeUnixMilli"`
 
 	// DryRun If true, the call will show which objects would be matched using the specified filter without deleting any objects. <br/><br/>Depending on the configured verbosity, you will either receive a count of affected objects, or a list of IDs.
-	DryRun *bool `json:"dryRun,omitempty"`
+	DryRun bool `json:"dryRun,omitempty"`
 
 	// Match Outlines how to find the objects to be deleted.
-	Match *struct {
+	Match struct {
 		// Class The name of the collection (class) from which to delete objects.
-		Class *string `json:"class,omitempty"`
+		Class string `json:"class,omitempty"`
 
 		// Where Filter search results using a where filter.
-		Where *WhereFilter `json:"where,omitempty"`
+		Where WhereFilter `json:"where,omitempty"`
 	} `json:"match,omitempty"`
 
 	// Output Controls the verbosity of the output, possible values are: `minimal`, `verbose`. Defaults to `minimal`.
-	Output *string `json:"output,omitempty"`
+	Output string `json:"output,omitempty"`
 }
 
 // BatchDeleteResponse Delete Objects response.
 type BatchDeleteResponse struct {
 	// DeletionTimeUnixMilli Timestamp of deletion in milliseconds since epoch UTC.
-	DeletionTimeUnixMilli *int64 `json:"deletionTimeUnixMilli"`
+	DeletionTimeUnixMilli int64 `json:"deletionTimeUnixMilli"`
 
 	// DryRun If true, objects will not be deleted yet, but merely listed. Defaults to false.
-	DryRun *bool `json:"dryRun,omitempty"`
+	DryRun bool `json:"dryRun,omitempty"`
 
 	// Match Outlines how to find the objects to be deleted.
-	Match *struct {
+	Match struct {
 		// Class The name of the collection (class) from which to delete objects.
-		Class *string `json:"class,omitempty"`
+		Class string `json:"class,omitempty"`
 
 		// Where Filter search results using a where filter.
-		Where *WhereFilter `json:"where,omitempty"`
+		Where WhereFilter `json:"where,omitempty"`
 	} `json:"match,omitempty"`
 
 	// Output Controls the verbosity of the output, possible values are: `minimal`, `verbose`. Defaults to `minimal`.
-	Output  *string `json:"output,omitempty"`
-	Results *struct {
+	Output  string `json:"output,omitempty"`
+	Results struct {
 		// Failed How many objects should have been deleted but could not be deleted.
-		Failed *int64 `json:"failed"`
+		Failed int64 `json:"failed"`
 
 		// Limit The most amount of objects that can be deleted in a single query, equals [`QUERY_MAXIMUM_RESULTS`](https://docs.weaviate.io/deploy/configuration/env-vars#QUERY_MAXIMUM_RESULTS).
-		Limit *int64 `json:"limit"`
+		Limit int64 `json:"limit"`
 
 		// Matches How many objects were matched by the filter.
-		Matches *int64 `json:"matches"`
+		Matches int64 `json:"matches"`
 
 		// Objects With output set to `minimal` only objects with error occurred will the be described. Successfully deleted objects would be omitted. Output set to `verbose` will list all of the objects with their respective statuses.
-		Objects *[]struct {
+		Objects []struct {
 			// Errors An error response returned by Weaviate endpoints.
-			Errors *ErrorResponse `json:"errors,omitempty"`
+			Errors ErrorResponse `json:"errors,omitempty"`
 
 			// Id The UUID of the object.
-			Id     *openapi_types.UUID                      `json:"id,omitempty"`
-			Status *BatchDeleteResponseResultsObjectsStatus `json:"status,omitempty"`
+			Id     openapi_types.UUID                      `json:"id,omitempty"`
+			Status BatchDeleteResponseResultsObjectsStatus `json:"status,omitempty"`
 		} `json:"objects,omitempty"`
 
 		// Successful How many objects were successfully deleted in this round.
-		Successful *int64 `json:"successful"`
+		Successful int64 `json:"successful"`
 	} `json:"results,omitempty"`
 }
 
@@ -607,32 +607,32 @@ type BatchDeleteResponseResultsObjectsStatus string
 // BatchReference defines model for BatchReference.
 type BatchReference struct {
 	// From Long-form beacon-style URI to identify the source of the cross-reference, including the property name. Should be in the form of `weaviate://localhost/objects/<uuid>/<className>/<propertyName>`, where `<className>` and `<propertyName>` must represent the cross-reference property of the source class to be used.
-	From *string `json:"from,omitempty"`
+	From string `json:"from,omitempty"`
 
 	// Tenant Name of the reference tenant.
-	Tenant *string `json:"tenant,omitempty"`
+	Tenant string `json:"tenant,omitempty"`
 
 	// To Short-form URI to point to the cross-reference. Should be in the form of `weaviate://localhost/<uuid>` for the example of a local cross-reference to an object.
-	To *string `json:"to,omitempty"`
+	To string `json:"to,omitempty"`
 }
 
 // BatchReferenceResponse defines model for BatchReferenceResponse.
 type BatchReferenceResponse struct {
 	// From Long-form beacon-style URI to identify the source of the cross-reference, including the property name. Should be in the form of `weaviate://localhost/objects/<uuid>/<className>/<propertyName>`, where `<className>` and `<propertyName>` must represent the cross-reference property of the source class to be used.
-	From *string `json:"from,omitempty"`
+	From string `json:"from,omitempty"`
 
 	// Result Results for this specific reference.
-	Result *struct {
+	Result struct {
 		// Errors An error response returned by Weaviate endpoints.
-		Errors *ErrorResponse                      `json:"errors,omitempty"`
-		Status *BatchReferenceResponseResultStatus `json:"status,omitempty"`
+		Errors ErrorResponse                      `json:"errors,omitempty"`
+		Status BatchReferenceResponseResultStatus `json:"status,omitempty"`
 	} `json:"result,omitempty"`
 
 	// Tenant Name of the reference tenant.
-	Tenant *string `json:"tenant,omitempty"`
+	Tenant string `json:"tenant,omitempty"`
 
 	// To Short-form URI to point to the cross-reference. Should be in the form of `weaviate://localhost/<uuid>` for the example of a local cross-reference to an object.
-	To *string `json:"to,omitempty"`
+	To string `json:"to,omitempty"`
 }
 
 // BatchReferenceResponseResultStatus defines model for BatchReferenceResponse.Result.Status.
@@ -641,10 +641,10 @@ type BatchReferenceResponseResultStatus string
 // BatchStats The summary of a nodes batch queue congestion status.
 type BatchStats struct {
 	// QueueLength How many objects are currently in the batch queue.
-	QueueLength *int64 `json:"queueLength,omitempty"`
+	QueueLength int64 `json:"queueLength,omitempty"`
 
 	// RatePerSecond How many objects are approximately processed from the batch queue per second.
-	RatePerSecond *int64 `json:"ratePerSecond"`
+	RatePerSecond int64 `json:"ratePerSecond"`
 }
 
 // C11yVector A vector representation of the object in the Contextionary. If provided at object creation, this wil take precedence over any vectorizer setting.
@@ -653,80 +653,80 @@ type C11yVector = []float32
 // Class defines model for Class.
 type Class struct {
 	// Class Name of the collection (formerly 'class') (required). Multiple words should be concatenated in CamelCase, e.g. `ArticleAuthor`.
-	Class *string `json:"class,omitempty"`
+	Class string `json:"class,omitempty"`
 
 	// Description Description of the collection for metadata purposes.
-	Description *string `json:"description,omitempty"`
+	Description string `json:"description,omitempty"`
 
 	// InvertedIndexConfig Configure the inverted index built into Weaviate. See [Reference: Inverted index](https://docs.weaviate.io/weaviate/config-refs/indexing/inverted-index#inverted-index-parameters) for details.
-	InvertedIndexConfig *InvertedIndexConfig `json:"invertedIndexConfig,omitempty"`
+	InvertedIndexConfig InvertedIndexConfig `json:"invertedIndexConfig,omitempty"`
 
 	// ModuleConfig Configuration specific to modules in a collection context.
-	ModuleConfig *map[string]interface{} `json:"moduleConfig,omitempty"`
+	ModuleConfig map[string]interface{} `json:"moduleConfig,omitempty"`
 
 	// MultiTenancyConfig Configuration related to multi-tenancy within a collection (class)
-	MultiTenancyConfig *MultiTenancyConfig `json:"multiTenancyConfig,omitempty"`
+	MultiTenancyConfig MultiTenancyConfig `json:"multiTenancyConfig,omitempty"`
 
 	// Properties Define properties of the collection.
-	Properties *[]Property `json:"properties,omitempty"`
+	Properties []Property `json:"properties,omitempty"`
 
 	// ReplicationConfig Configure how replication is executed in a cluster
-	ReplicationConfig *ReplicationConfig `json:"replicationConfig,omitempty"`
+	ReplicationConfig ReplicationConfig `json:"replicationConfig,omitempty"`
 
 	// ShardingConfig Manage how the index should be sharded and distributed in the cluster
-	ShardingConfig *map[string]interface{} `json:"shardingConfig,omitempty"`
+	ShardingConfig map[string]interface{} `json:"shardingConfig,omitempty"`
 
 	// VectorConfig Configure named vectors. Either use this field or `vectorizer`, `vectorIndexType`, and `vectorIndexConfig` fields. Available from `v1.24.0`.
-	VectorConfig *map[string]VectorConfig `json:"vectorConfig,omitempty"`
+	VectorConfig map[string]VectorConfig `json:"vectorConfig,omitempty"`
 
 	// VectorIndexConfig Vector-index config, that is specific to the type of index selected in vectorIndexType
-	VectorIndexConfig *map[string]interface{} `json:"vectorIndexConfig,omitempty"`
+	VectorIndexConfig map[string]interface{} `json:"vectorIndexConfig,omitempty"`
 
 	// VectorIndexType Name of the vector index type to use for the collection (e.g. `hnsw` or `flat`).
-	VectorIndexType *string `json:"vectorIndexType,omitempty"`
+	VectorIndexType string `json:"vectorIndexType,omitempty"`
 
 	// Vectorizer Specify how the vectors for this collection should be determined. The options are either `none` - this means you have to import a vector with each object yourself - or the name of a module that provides vectorization capabilities, such as `text2vec-weaviate`. If left empty, it will use the globally configured default ([`DEFAULT_VECTORIZER_MODULE`](https://docs.weaviate.io/deploy/configuration/env-vars)) which can itself either be `none` or a specific module.
-	Vectorizer *string `json:"vectorizer,omitempty"`
+	Vectorizer string `json:"vectorizer,omitempty"`
 }
 
 // Classification Manage classifications, trigger them and view status of past classifications.
 type Classification struct {
 	// BasedOnProperties Base the text-based classification on these fields (of type text).
-	BasedOnProperties *[]string `json:"basedOnProperties,omitempty"`
+	BasedOnProperties []string `json:"basedOnProperties,omitempty"`
 
 	// Class The name of the collection (class) which is used in this classification.
-	Class *string `json:"class,omitempty"`
+	Class string `json:"class,omitempty"`
 
 	// ClassifyProperties Which ref-property to set as part of the classification.
-	ClassifyProperties *[]string `json:"classifyProperties,omitempty"`
+	ClassifyProperties []string `json:"classifyProperties,omitempty"`
 
 	// Error Error message if status == failed.
-	Error   *string `json:"error,omitempty"`
-	Filters *struct {
+	Error   string `json:"error,omitempty"`
+	Filters struct {
 		// SourceWhere Filter search results using a where filter.
-		SourceWhere *WhereFilter `json:"sourceWhere,omitempty"`
+		SourceWhere WhereFilter `json:"sourceWhere,omitempty"`
 
 		// TargetWhere Filter search results using a where filter.
-		TargetWhere *WhereFilter `json:"targetWhere,omitempty"`
+		TargetWhere WhereFilter `json:"targetWhere,omitempty"`
 
 		// TrainingSetWhere Filter search results using a where filter.
-		TrainingSetWhere *WhereFilter `json:"trainingSetWhere,omitempty"`
+		TrainingSetWhere WhereFilter `json:"trainingSetWhere,omitempty"`
 	} `json:"filters,omitempty"`
 
 	// Id ID to uniquely identify this classification run.
-	Id *openapi_types.UUID `json:"id,omitempty"`
+	Id openapi_types.UUID `json:"id,omitempty"`
 
 	// Meta Additional information to a specific classification.
-	Meta *ClassificationMeta `json:"meta,omitempty"`
+	Meta ClassificationMeta `json:"meta,omitempty"`
 
 	// Settings Classification-type specific settings.
-	Settings *map[string]interface{} `json:"settings,omitempty"`
+	Settings map[string]interface{} `json:"settings,omitempty"`
 
 	// Status Status of this classification.
-	Status *ClassificationStatus `json:"status,omitempty"`
+	Status ClassificationStatus `json:"status,omitempty"`
 
 	// Type Which algorithm to use for classifications.
-	Type *string `json:"type,omitempty"`
+	Type string `json:"type,omitempty"`
 }
 
 // ClassificationStatus Status of this classification.
@@ -735,25 +735,25 @@ type ClassificationStatus string
 // ClassificationMeta Additional information to a specific classification.
 type ClassificationMeta struct {
 	// Completed Time when this classification finished.
-	Completed *time.Time `json:"completed,omitempty"`
+	Completed time.Time `json:"completed,omitempty"`
 
 	// Count Number of objects which were taken into consideration for classification.
-	Count *int `json:"count,omitempty"`
+	Count int `json:"count,omitempty"`
 
 	// CountFailed Number of objects which could not be classified - see error message for details.
-	CountFailed *int `json:"countFailed,omitempty"`
+	CountFailed int `json:"countFailed,omitempty"`
 
 	// CountSucceeded Number of objects successfully classified.
-	CountSucceeded *int `json:"countSucceeded,omitempty"`
+	CountSucceeded int `json:"countSucceeded,omitempty"`
 
 	// Started Time when this classification was started.
-	Started *time.Time `json:"started,omitempty"`
+	Started time.Time `json:"started,omitempty"`
 }
 
 // ClusterStatisticsResponse The cluster statistics of all of the Weaviate nodes
 type ClusterStatisticsResponse struct {
-	Statistics   *[]Statistics `json:"statistics,omitempty"`
-	Synchronized *bool         `json:"synchronized"`
+	Statistics   []Statistics `json:"statistics,omitempty"`
+	Synchronized bool         `json:"synchronized"`
 }
 
 // DBUserInfo defines model for DBUserInfo.
@@ -777,64 +777,64 @@ type DBUserInfoDbUserType string
 // Deprecation defines model for Deprecation.
 type Deprecation struct {
 	// ApiType Describes which API is affected, usually one of: REST, GraphQL and gRPC.
-	ApiType *string `json:"apiType,omitempty"`
+	ApiType string `json:"apiType,omitempty"`
 
 	// Id The id that uniquely identifies this particular deprecation (mostly used internally).
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id,omitempty"`
 
 	// Locations The locations within the specified API affected by this deprecation.
-	Locations *[]string `json:"locations,omitempty"`
+	Locations []string `json:"locations,omitempty"`
 
 	// Mitigation User-required object to not be affected by the (planned) removal.
-	Mitigation *string `json:"mitigation,omitempty"`
+	Mitigation string `json:"mitigation,omitempty"`
 
 	// Msg What this deprecation is about.
-	Msg *string `json:"msg,omitempty"`
+	Msg string `json:"msg,omitempty"`
 
 	// PlannedRemovalVersion A best-effort guess of which upcoming version will remove the feature entirely.
-	PlannedRemovalVersion *string `json:"plannedRemovalVersion,omitempty"`
+	PlannedRemovalVersion string `json:"plannedRemovalVersion,omitempty"`
 
 	// RemovedIn If the feature has already been removed, it was removed in this version.
-	RemovedIn *string `json:"removedIn"`
+	RemovedIn string `json:"removedIn"`
 
 	// RemovedTime If the feature has already been removed, it was removed at this timestamp.
-	RemovedTime *time.Time `json:"removedTime"`
+	RemovedTime time.Time `json:"removedTime"`
 
 	// SinceTime The deprecation was introduced at this timestamp.
-	SinceTime *time.Time `json:"sinceTime,omitempty"`
+	SinceTime time.Time `json:"sinceTime,omitempty"`
 
 	// SinceVersion The deprecation was introduced in this version.
-	SinceVersion *string `json:"sinceVersion,omitempty"`
+	SinceVersion string `json:"sinceVersion,omitempty"`
 
 	// Status Whether the problematic API functionality is deprecated (planned to be removed) or already removed.
-	Status *string `json:"status,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // DistributedTask Distributed task metadata.
 type DistributedTask struct {
 	// Error The high level reason why the task failed.
-	Error *string `json:"error,omitempty"`
+	Error string `json:"error,omitempty"`
 
 	// FinishedAt The time when the task was finished.
-	FinishedAt *time.Time `json:"finishedAt,omitempty"`
+	FinishedAt time.Time `json:"finishedAt,omitempty"`
 
 	// FinishedNodes The nodes that finished the task.
-	FinishedNodes *[]string `json:"finishedNodes,omitempty"`
+	FinishedNodes []string `json:"finishedNodes,omitempty"`
 
 	// Id The ID of the task.
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id,omitempty"`
 
 	// Payload The payload of the task.
-	Payload *map[string]interface{} `json:"payload,omitempty"`
+	Payload map[string]interface{} `json:"payload,omitempty"`
 
 	// StartedAt The time when the task was created.
-	StartedAt *time.Time `json:"startedAt,omitempty"`
+	StartedAt time.Time `json:"startedAt,omitempty"`
 
 	// Status The status of the task.
-	Status *string `json:"status,omitempty"`
+	Status string `json:"status,omitempty"`
 
 	// Version The version of the task.
-	Version *int `json:"version,omitempty"`
+	Version int `json:"version,omitempty"`
 }
 
 // DistributedTasks Active distributed tasks by namespace.
@@ -842,28 +842,28 @@ type DistributedTasks map[string][]DistributedTask
 
 // ErrorResponse An error response returned by Weaviate endpoints.
 type ErrorResponse struct {
-	Error *[]struct {
-		Message *string `json:"message,omitempty"`
+	Error []struct {
+		Message string `json:"message,omitempty"`
 	} `json:"error,omitempty"`
 }
 
 // GeoCoordinates defines model for GeoCoordinates.
 type GeoCoordinates struct {
 	// Latitude The latitude of the point on earth in decimal form.
-	Latitude *float32 `json:"latitude"`
+	Latitude float32 `json:"latitude"`
 
 	// Longitude The longitude of the point on earth in decimal form.
-	Longitude *float32 `json:"longitude"`
+	Longitude float32 `json:"longitude"`
 }
 
 // GraphQLError An error response caused by a GraphQL query.
 type GraphQLError struct {
-	Locations *[]struct {
-		Column *int64 `json:"column,omitempty"`
-		Line   *int64 `json:"line,omitempty"`
+	Locations []struct {
+		Column int64 `json:"column,omitempty"`
+		Line   int64 `json:"line,omitempty"`
 	} `json:"locations,omitempty"`
-	Message *string   `json:"message,omitempty"`
-	Path    *[]string `json:"path,omitempty"`
+	Message string   `json:"message,omitempty"`
+	Path    []string `json:"path,omitempty"`
 }
 
 // GraphQLQueries A list of GraphQL queries.
@@ -872,22 +872,22 @@ type GraphQLQueries = []GraphQLQuery
 // GraphQLQuery GraphQL query based on: http://facebook.github.io/graphql/.
 type GraphQLQuery struct {
 	// OperationName The name of the operation if multiple exist in the query.
-	OperationName *string `json:"operationName,omitempty"`
+	OperationName string `json:"operationName,omitempty"`
 
 	// Query Query based on GraphQL syntax.
-	Query *string `json:"query,omitempty"`
+	Query string `json:"query,omitempty"`
 
 	// Variables Additional variables for the query.
-	Variables *map[string]interface{} `json:"variables,omitempty"`
+	Variables map[string]interface{} `json:"variables,omitempty"`
 }
 
 // GraphQLResponse GraphQL based response: http://facebook.github.io/graphql/.
 type GraphQLResponse struct {
 	// Data GraphQL data object.
-	Data *map[string]JsonObject `json:"data,omitempty"`
+	Data map[string]JsonObject `json:"data,omitempty"`
 
 	// Errors Array with errors.
-	Errors *[]GraphQLError `json:"errors,omitempty"`
+	Errors []GraphQLError `json:"errors,omitempty"`
 }
 
 // GraphQLResponses A list of GraphQL responses.
@@ -899,25 +899,25 @@ type GroupType string
 // InvertedIndexConfig Configure the inverted index built into Weaviate. See [Reference: Inverted index](https://docs.weaviate.io/weaviate/config-refs/indexing/inverted-index#inverted-index-parameters) for details.
 type InvertedIndexConfig struct {
 	// Bm25 Tuning parameters for the BM25 algorithm.
-	Bm25 *BM25Config `json:"bm25,omitempty"`
+	Bm25 BM25Config `json:"bm25,omitempty"`
 
 	// CleanupIntervalSeconds Asynchronous index clean up happens every n seconds (default: 60).
-	CleanupIntervalSeconds *int64 `json:"cleanupIntervalSeconds,omitempty"`
+	CleanupIntervalSeconds int64 `json:"cleanupIntervalSeconds,omitempty"`
 
 	// IndexNullState Index each object with the null state (default: `false`).
-	IndexNullState *bool `json:"indexNullState,omitempty"`
+	IndexNullState bool `json:"indexNullState,omitempty"`
 
 	// IndexPropertyLength Index length of properties (default: `false`).
-	IndexPropertyLength *bool `json:"indexPropertyLength,omitempty"`
+	IndexPropertyLength bool `json:"indexPropertyLength,omitempty"`
 
 	// IndexTimestamps Index each object by its internal timestamps (default: `false`).
-	IndexTimestamps *bool `json:"indexTimestamps,omitempty"`
+	IndexTimestamps bool `json:"indexTimestamps,omitempty"`
 
 	// Stopwords Fine-grained control over stopword list usage.
-	Stopwords *StopwordConfig `json:"stopwords,omitempty"`
+	Stopwords StopwordConfig `json:"stopwords,omitempty"`
 
 	// UsingBlockMaxWAND Using BlockMax WAND for query execution (default: `false`, will be `true` for new collections created after 1.30).
-	UsingBlockMaxWAND *bool `json:"usingBlockMaxWAND,omitempty"`
+	UsingBlockMaxWAND bool `json:"usingBlockMaxWAND,omitempty"`
 }
 
 // JsonObject JSON object value.
@@ -926,43 +926,43 @@ type JsonObject = map[string]interface{}
 // Link defines model for Link.
 type Link struct {
 	// DocumentationHref Weaviate documentation about this resource group.
-	DocumentationHref *string `json:"documentationHref,omitempty"`
+	DocumentationHref string `json:"documentationHref,omitempty"`
 
 	// Href Target of the link.
-	Href *string `json:"href,omitempty"`
+	Href string `json:"href,omitempty"`
 
 	// Name Human readable name of the resource group.
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
 
 	// Rel Relationship if both resources are related, e.g. 'next', 'previous', 'parent', etc.
-	Rel *string `json:"rel,omitempty"`
+	Rel string `json:"rel,omitempty"`
 }
 
 // Meta Contains meta information of the current Weaviate instance.
 type Meta struct {
 	// GrpcMaxMessageSize Max message size for GRPC connection in bytes.
-	GrpcMaxMessageSize *int `json:"grpcMaxMessageSize,omitempty"`
+	GrpcMaxMessageSize int `json:"grpcMaxMessageSize,omitempty"`
 
 	// Hostname The url of the host.
-	Hostname *string `json:"hostname,omitempty"`
+	Hostname string `json:"hostname,omitempty"`
 
 	// Modules Module-specific meta information.
-	Modules *map[string]interface{} `json:"modules,omitempty"`
+	Modules map[string]interface{} `json:"modules,omitempty"`
 
 	// Version The Weaviate server version.
-	Version *string `json:"version,omitempty"`
+	Version string `json:"version,omitempty"`
 }
 
 // MultiTenancyConfig Configuration related to multi-tenancy within a collection (class)
 type MultiTenancyConfig struct {
 	// AutoTenantActivation Existing tenants should (not) be turned HOT implicitly when they are accessed and in another activity status (default: `false`).
-	AutoTenantActivation *bool `json:"autoTenantActivation"`
+	AutoTenantActivation bool `json:"autoTenantActivation"`
 
 	// AutoTenantCreation Nonexistent tenants should (not) be created implicitly (default: `false`).
-	AutoTenantCreation *bool `json:"autoTenantCreation"`
+	AutoTenantCreation bool `json:"autoTenantCreation"`
 
 	// Enabled Whether or not multi-tenancy is enabled for this collection (class) (default: `false`).
-	Enabled *bool `json:"enabled"`
+	Enabled bool `json:"enabled"`
 }
 
 // MultipleRef Multiple instances of references to other objects.
@@ -970,16 +970,16 @@ type MultipleRef = []SingleRef
 
 // NestedProperty defines model for NestedProperty.
 type NestedProperty struct {
-	DataType          *[]string `json:"dataType,omitempty"`
-	Description       *string   `json:"description,omitempty"`
-	IndexFilterable   *bool     `json:"indexFilterable"`
-	IndexRangeFilters *bool     `json:"indexRangeFilters"`
-	IndexSearchable   *bool     `json:"indexSearchable"`
-	Name              *string   `json:"name,omitempty"`
+	DataType          []string `json:"dataType,omitempty"`
+	Description       string   `json:"description,omitempty"`
+	IndexFilterable   bool     `json:"indexFilterable"`
+	IndexRangeFilters bool     `json:"indexRangeFilters"`
+	IndexSearchable   bool     `json:"indexSearchable"`
+	Name              string   `json:"name,omitempty"`
 
 	// NestedProperties The properties of the nested object(s). Applies to object and object[] data types.
-	NestedProperties *[]NestedProperty           `json:"nestedProperties,omitempty"`
-	Tokenization     *NestedPropertyTokenization `json:"tokenization,omitempty"`
+	NestedProperties []NestedProperty           `json:"nestedProperties,omitempty"`
+	Tokenization     NestedPropertyTokenization `json:"tokenization,omitempty"`
 }
 
 // NestedPropertyTokenization defines model for NestedProperty.Tokenization.
@@ -988,61 +988,61 @@ type NestedPropertyTokenization string
 // NodeShardStatus The definition of a node shard status response body
 type NodeShardStatus struct {
 	// AsyncReplicationStatus The status of the async replication.
-	AsyncReplicationStatus *[]AsyncReplicationStatus `json:"asyncReplicationStatus,omitempty"`
+	AsyncReplicationStatus []AsyncReplicationStatus `json:"asyncReplicationStatus,omitempty"`
 
 	// Class The name of shard's collection (class).
-	Class *string `json:"class"`
+	Class string `json:"class"`
 
 	// Compressed The status of vector compression/quantization.
-	Compressed *map[string]interface{} `json:"compressed"`
+	Compressed map[string]interface{} `json:"compressed"`
 
 	// Loaded The load status of the shard.
-	Loaded *bool `json:"loaded"`
+	Loaded bool `json:"loaded"`
 
 	// Name The name of the shard.
-	Name *string `json:"name"`
+	Name string `json:"name"`
 
 	// ObjectCount The number of objects in shard.
-	ObjectCount *int64 `json:"objectCount"`
+	ObjectCount int64 `json:"objectCount"`
 
 	// VectorIndexingStatus The status of the vector indexing process.
-	VectorIndexingStatus *map[string]interface{} `json:"vectorIndexingStatus"`
+	VectorIndexingStatus map[string]interface{} `json:"vectorIndexingStatus"`
 
 	// VectorQueueLength The length of the vector indexing queue.
-	VectorQueueLength *int64 `json:"vectorQueueLength"`
+	VectorQueueLength int64 `json:"vectorQueueLength"`
 }
 
 // NodeStats The summary of Weaviate's statistics.
 type NodeStats struct {
 	// ObjectCount The total number of objects in DB.
-	ObjectCount *int64 `json:"objectCount"`
+	ObjectCount int64 `json:"objectCount"`
 
 	// ShardCount The count of Weaviate's shards. To see this value, set `output` to `verbose`.
-	ShardCount *int64 `json:"shardCount"`
+	ShardCount int64 `json:"shardCount"`
 }
 
 // NodeStatus The definition of a backup node status response body
 type NodeStatus struct {
 	// BatchStats The summary of a nodes batch queue congestion status.
-	BatchStats *BatchStats `json:"batchStats,omitempty"`
+	BatchStats BatchStats `json:"batchStats,omitempty"`
 
 	// GitHash The gitHash of Weaviate.
-	GitHash *string `json:"gitHash,omitempty"`
+	GitHash string `json:"gitHash,omitempty"`
 
 	// Name The name of the node.
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
 
 	// Shards The list of the shards with it's statistics.
-	Shards *[]NodeShardStatus `json:"shards,omitempty"`
+	Shards []NodeShardStatus `json:"shards,omitempty"`
 
 	// Stats The summary of Weaviate's statistics.
-	Stats *NodeStats `json:"stats,omitempty"`
+	Stats NodeStats `json:"stats,omitempty"`
 
 	// Status Node's status.
-	Status *NodeStatusStatus `json:"status,omitempty"`
+	Status NodeStatusStatus `json:"status,omitempty"`
 
 	// Version The version of Weaviate.
-	Version *string `json:"version,omitempty"`
+	Version string `json:"version,omitempty"`
 }
 
 // NodeStatusStatus Node's status.
@@ -1050,81 +1050,81 @@ type NodeStatusStatus string
 
 // NodesStatusResponse The status of all of the Weaviate nodes
 type NodesStatusResponse struct {
-	Nodes *[]NodeStatus `json:"nodes,omitempty"`
+	Nodes []NodeStatus `json:"nodes,omitempty"`
 }
 
 // Object defines model for Object.
 type Object struct {
 	// Additional (Response only) Additional meta information about a single object.
-	Additional *AdditionalProperties `json:"additional,omitempty"`
+	Additional AdditionalProperties `json:"additional,omitempty"`
 
 	// Class Name of the collection (class) the object belongs to.
-	Class *string `json:"class,omitempty"`
+	Class string `json:"class,omitempty"`
 
 	// CreationTimeUnix (Response only) Timestamp of creation of this object in milliseconds since epoch UTC.
-	CreationTimeUnix *int64 `json:"creationTimeUnix,omitempty"`
+	CreationTimeUnix int64 `json:"creationTimeUnix,omitempty"`
 
 	// Id The UUID of the object.
-	Id *openapi_types.UUID `json:"id,omitempty"`
+	Id openapi_types.UUID `json:"id,omitempty"`
 
 	// LastUpdateTimeUnix (Response only) Timestamp of the last object update in milliseconds since epoch UTC.
-	LastUpdateTimeUnix *int64 `json:"lastUpdateTimeUnix,omitempty"`
+	LastUpdateTimeUnix int64 `json:"lastUpdateTimeUnix,omitempty"`
 
 	// Properties Names and values of an individual property. A returned response may also contain additional metadata, such as from classification or feature projection.
-	Properties *PropertySchema `json:"properties,omitempty"`
+	Properties PropertySchema `json:"properties,omitempty"`
 
 	// Tenant The name of the tenant the object belongs to.
-	Tenant *string `json:"tenant,omitempty"`
+	Tenant string `json:"tenant,omitempty"`
 
 	// Vector A vector representation of the object in the Contextionary. If provided at object creation, this wil take precedence over any vectorizer setting.
-	Vector *C11yVector `json:"vector,omitempty"`
+	Vector C11yVector `json:"vector,omitempty"`
 
 	// VectorWeights Allow custom overrides of vector weights as math expressions. E.g. `pancake`: `7` will set the weight for the word pancake to 7 in the vectorization, whereas `w * 3` would triple the originally calculated word. This is an open object, with OpenAPI Specification 3.0 this will be more detailed. See Weaviate docs for more info. In the future this will become a key/value (string/string) object.
-	VectorWeights *VectorWeights `json:"vectorWeights,omitempty"`
+	VectorWeights VectorWeights `json:"vectorWeights,omitempty"`
 
 	// Vectors A map of named vectors for multi-vector representations.
-	Vectors *Vectors `json:"vectors,omitempty"`
+	Vectors Vectors `json:"vectors,omitempty"`
 }
 
 // ObjectsGetResponse defines model for ObjectsGetResponse.
 type ObjectsGetResponse struct {
 	// Additional (Response only) Additional meta information about a single object.
-	Additional *AdditionalProperties `json:"additional,omitempty"`
+	Additional AdditionalProperties `json:"additional,omitempty"`
 
 	// Class Name of the collection (class) the object belongs to.
-	Class *string `json:"class,omitempty"`
+	Class string `json:"class,omitempty"`
 
 	// CreationTimeUnix (Response only) Timestamp of creation of this object in milliseconds since epoch UTC.
-	CreationTimeUnix *int64         `json:"creationTimeUnix,omitempty"`
-	Deprecations     *[]Deprecation `json:"deprecations,omitempty"`
+	CreationTimeUnix int64         `json:"creationTimeUnix,omitempty"`
+	Deprecations     []Deprecation `json:"deprecations,omitempty"`
 
 	// Id The UUID of the object.
-	Id *openapi_types.UUID `json:"id,omitempty"`
+	Id openapi_types.UUID `json:"id,omitempty"`
 
 	// LastUpdateTimeUnix (Response only) Timestamp of the last object update in milliseconds since epoch UTC.
-	LastUpdateTimeUnix *int64 `json:"lastUpdateTimeUnix,omitempty"`
+	LastUpdateTimeUnix int64 `json:"lastUpdateTimeUnix,omitempty"`
 
 	// Properties Names and values of an individual property. A returned response may also contain additional metadata, such as from classification or feature projection.
-	Properties *PropertySchema `json:"properties,omitempty"`
+	Properties PropertySchema `json:"properties,omitempty"`
 
 	// Result Results for this specific object.
-	Result *struct {
+	Result struct {
 		// Errors An error response returned by Weaviate endpoints.
-		Errors *ErrorResponse                  `json:"errors,omitempty"`
-		Status *ObjectsGetResponseResultStatus `json:"status,omitempty"`
+		Errors ErrorResponse                  `json:"errors,omitempty"`
+		Status ObjectsGetResponseResultStatus `json:"status,omitempty"`
 	} `json:"result,omitempty"`
 
 	// Tenant The name of the tenant the object belongs to.
-	Tenant *string `json:"tenant,omitempty"`
+	Tenant string `json:"tenant,omitempty"`
 
 	// Vector A vector representation of the object in the Contextionary. If provided at object creation, this wil take precedence over any vectorizer setting.
-	Vector *C11yVector `json:"vector,omitempty"`
+	Vector C11yVector `json:"vector,omitempty"`
 
 	// VectorWeights Allow custom overrides of vector weights as math expressions. E.g. `pancake`: `7` will set the weight for the word pancake to 7 in the vectorization, whereas `w * 3` would triple the originally calculated word. This is an open object, with OpenAPI Specification 3.0 this will be more detailed. See Weaviate docs for more info. In the future this will become a key/value (string/string) object.
-	VectorWeights *VectorWeights `json:"vectorWeights,omitempty"`
+	VectorWeights VectorWeights `json:"vectorWeights,omitempty"`
 
 	// Vectors A map of named vectors for multi-vector representations.
-	Vectors *Vectors `json:"vectors,omitempty"`
+	Vectors Vectors `json:"vectors,omitempty"`
 }
 
 // ObjectsGetResponseResultStatus defines model for ObjectsGetResponse.Result.Status.
@@ -1132,13 +1132,13 @@ type ObjectsGetResponseResultStatus string
 
 // ObjectsListResponse List of objects.
 type ObjectsListResponse struct {
-	Deprecations *[]Deprecation `json:"deprecations,omitempty"`
+	Deprecations []Deprecation `json:"deprecations,omitempty"`
 
 	// Objects The actual list of objects.
-	Objects *[]Object `json:"objects,omitempty"`
+	Objects []Object `json:"objects,omitempty"`
 
 	// TotalResults The total number of objects for the query. The number of items in a response may be smaller due to paging.
-	TotalResults *int64 `json:"totalResults,omitempty"`
+	TotalResults int64 `json:"totalResults,omitempty"`
 }
 
 // Permission Permissions attached to a role.
@@ -1147,87 +1147,87 @@ type Permission struct {
 	Action PermissionAction `json:"action"`
 
 	// Aliases Resource definition for alias-related actions and permissions. Used to specify which aliases and collections can be accessed or modified.
-	Aliases *struct {
+	Aliases struct {
 		// Alias A string that specifies which aliases this permission applies to. Can be an exact alias name or a regex pattern. The default value `*` applies the permission to all aliases.
-		Alias *string `json:"alias,omitempty"`
+		Alias string `json:"alias,omitempty"`
 
 		// Collection A string that specifies which collections this permission applies to. Can be an exact collection name or a regex pattern. The default value `*` applies the permission to all collections.
-		Collection *string `json:"collection,omitempty"`
+		Collection string `json:"collection,omitempty"`
 	} `json:"aliases,omitempty"`
 
 	// Backups Resources applicable for backup actions.
-	Backups *struct {
+	Backups struct {
 		// Collection A string that specifies which collections this permission applies to. Can be an exact collection name or a regex pattern. The default value `*` applies the permission to all collections.
-		Collection *string `json:"collection,omitempty"`
+		Collection string `json:"collection,omitempty"`
 	} `json:"backups,omitempty"`
 
 	// Collections Resources applicable for collection and/or tenant actions.
-	Collections *struct {
+	Collections struct {
 		// Collection A string that specifies which collections this permission applies to. Can be an exact collection name or a regex pattern. The default value `*` applies the permission to all collections.
-		Collection *string `json:"collection,omitempty"`
+		Collection string `json:"collection,omitempty"`
 	} `json:"collections,omitempty"`
 
 	// Data Resources applicable for data actions.
-	Data *struct {
+	Data struct {
 		// Collection A string that specifies which collections this permission applies to. Can be an exact collection name or a regex pattern. The default value `*` applies the permission to all collections.
-		Collection *string `json:"collection,omitempty"`
+		Collection string `json:"collection,omitempty"`
 
 		// Object A string that specifies which objects this permission applies to. Can be an exact object ID or a regex pattern. The default value `*` applies the permission to all objects.
-		Object *string `json:"object,omitempty"`
+		Object string `json:"object,omitempty"`
 
 		// Tenant A string that specifies which tenants this permission applies to. Can be an exact tenant name or a regex pattern. The default value `*` applies the permission to all tenants.
-		Tenant *string `json:"tenant,omitempty"`
+		Tenant string `json:"tenant,omitempty"`
 	} `json:"data,omitempty"`
 
 	// Groups Resources applicable for group actions.
-	Groups *struct {
+	Groups struct {
 		// Group A string that specifies which groups this permission applies to. Can be an exact group name or a regex pattern. The default value `*` applies the permission to all groups.
-		Group *string `json:"group,omitempty"`
+		Group string `json:"group,omitempty"`
 
 		// GroupType If the group contains OIDC or database users.
-		GroupType *GroupType `json:"groupType,omitempty"`
+		GroupType GroupType `json:"groupType,omitempty"`
 	} `json:"groups,omitempty"`
 
 	// Nodes Resources applicable for cluster actions.
-	Nodes *struct {
+	Nodes struct {
 		// Collection A string that specifies which collections this permission applies to. Can be an exact collection name or a regex pattern. The default value `*` applies the permission to all collections.
-		Collection *string `json:"collection,omitempty"`
+		Collection string `json:"collection,omitempty"`
 
 		// Verbosity Whether to allow (verbose) returning shards and stats data in the response.
-		Verbosity *PermissionNodesVerbosity `json:"verbosity,omitempty"`
+		Verbosity PermissionNodesVerbosity `json:"verbosity,omitempty"`
 	} `json:"nodes,omitempty"`
 
 	// Replicate resources applicable for replicate actions
-	Replicate *struct {
+	Replicate struct {
 		// Collection string or regex. if a specific collection name, if left empty it will be ALL or *
-		Collection *string `json:"collection,omitempty"`
+		Collection string `json:"collection,omitempty"`
 
 		// Shard string or regex. if a specific shard name, if left empty it will be ALL or *
-		Shard *string `json:"shard,omitempty"`
+		Shard string `json:"shard,omitempty"`
 	} `json:"replicate,omitempty"`
 
 	// Roles Resources applicable for role actions.
-	Roles *struct {
+	Roles struct {
 		// Role A string that specifies which roles this permission applies to. Can be an exact role name or a regex pattern. The default value `*` applies the permission to all roles.
-		Role *string `json:"role,omitempty"`
+		Role string `json:"role,omitempty"`
 
 		// Scope Set the scope for the manage role permission.
-		Scope *PermissionRolesScope `json:"scope,omitempty"`
+		Scope PermissionRolesScope `json:"scope,omitempty"`
 	} `json:"roles,omitempty"`
 
 	// Tenants Resources applicable for tenant actions.
-	Tenants *struct {
+	Tenants struct {
 		// Collection A string that specifies which collections this permission applies to. Can be an exact collection name or a regex pattern. The default value `*` applies the permission to all collections.
-		Collection *string `json:"collection,omitempty"`
+		Collection string `json:"collection,omitempty"`
 
 		// Tenant A string that specifies which tenants this permission applies to. Can be an exact tenant name or a regex pattern. The default value `*` applies the permission to all tenants.
-		Tenant *string `json:"tenant,omitempty"`
+		Tenant string `json:"tenant,omitempty"`
 	} `json:"tenants,omitempty"`
 
 	// Users Resources applicable for user actions.
-	Users *struct {
+	Users struct {
 		// Users A string that specifies which users this permission applies to. Can be an exact user name or a regex pattern. The default value `*` applies the permission to all users.
-		Users *string `json:"users,omitempty"`
+		Users string `json:"users,omitempty"`
 	} `json:"users,omitempty"`
 }
 
@@ -1243,34 +1243,34 @@ type PermissionRolesScope string
 // Property defines model for Property.
 type Property struct {
 	// DataType Data type of the property (required). If it starts with a capital (for example Person), may be a reference to another type.
-	DataType *[]string `json:"dataType,omitempty"`
+	DataType []string `json:"dataType,omitempty"`
 
 	// Description Description of the property.
-	Description *string `json:"description,omitempty"`
+	Description string `json:"description,omitempty"`
 
 	// IndexFilterable Whether to include this property in the filterable, Roaring Bitmap index. If `false`, this property cannot be used in `where` filters. <br/><br/>Note: Unrelated to vectorization behavior.
-	IndexFilterable *bool `json:"indexFilterable"`
+	IndexFilterable bool `json:"indexFilterable"`
 
 	// IndexInverted (Deprecated). Whether to include this property in the inverted index. If `false`, this property cannot be used in `where` filters, `bm25` or `hybrid` search. <br/><br/>Unrelated to vectorization behavior (deprecated as of v1.19; use indexFilterable or/and indexSearchable instead)
-	IndexInverted *bool `json:"indexInverted"`
+	IndexInverted bool `json:"indexInverted"`
 
 	// IndexRangeFilters Whether to include this property in the filterable, range-based Roaring Bitmap index. Provides better performance for range queries compared to filterable index in large datasets. Applicable only to properties of data type int, number, date.
-	IndexRangeFilters *bool `json:"indexRangeFilters"`
+	IndexRangeFilters bool `json:"indexRangeFilters"`
 
 	// IndexSearchable Optional. Should this property be indexed in the inverted index. Defaults to true. Applicable only to properties of data type text and text[]. If you choose false, you will not be able to use this property in bm25 or hybrid search. This property has no affect on vectorization decisions done by modules
-	IndexSearchable *bool `json:"indexSearchable"`
+	IndexSearchable bool `json:"indexSearchable"`
 
 	// ModuleConfig Configuration specific to modules in a collection context.
-	ModuleConfig *map[string]interface{} `json:"moduleConfig,omitempty"`
+	ModuleConfig map[string]interface{} `json:"moduleConfig,omitempty"`
 
 	// Name The name of the property (required). Multiple words should be concatenated in camelCase, e.g. `nameOfAuthor`.
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
 
 	// NestedProperties The properties of the nested object(s). Applies to object and object[] data types.
-	NestedProperties *[]NestedProperty `json:"nestedProperties,omitempty"`
+	NestedProperties []NestedProperty `json:"nestedProperties,omitempty"`
 
 	// Tokenization Determines how a property is indexed. This setting applies to `text` and `text[]` data types. The following tokenization methods are available:<br/><br/>- `word` (default): Splits the text on any non-alphanumeric characters and lowercases the tokens.<br/>- `lowercase`: Splits the text on whitespace and lowercases the tokens.<br/>- `whitespace`: Splits the text on whitespace. This tokenization is case-sensitive.<br/>- `field`: Indexes the entire property value as a single token after trimming whitespace.<br/>- `trigram`: Splits the property into rolling trigrams (three-character sequences).<br/>- `gse`: Uses the `gse` tokenizer, suitable for Chinese language text. [See `gse` docs](https://pkg.go.dev/github.com/go-ego/gse#section-readme).<br/>- `kagome_ja`: Uses the `Kagome` tokenizer with a Japanese (IPA) dictionary. [See `kagome` docs](https://github.com/ikawaha/kagome).<br/>- `kagome_kr`: Uses the `Kagome` tokenizer with a Korean dictionary. [See `kagome` docs](https://github.com/ikawaha/kagome).<br/><br/>See [Reference: Tokenization](https://docs.weaviate.io/weaviate/config-refs/collections#tokenization) for details.
-	Tokenization *PropertyTokenization `json:"tokenization,omitempty"`
+	Tokenization PropertyTokenization `json:"tokenization,omitempty"`
 }
 
 // PropertyTokenization Determines how a property is indexed. This setting applies to `text` and `text[]` data types. The following tokenization methods are available:<br/><br/>- `word` (default): Splits the text on any non-alphanumeric characters and lowercases the tokens.<br/>- `lowercase`: Splits the text on whitespace and lowercases the tokens.<br/>- `whitespace`: Splits the text on whitespace. This tokenization is case-sensitive.<br/>- `field`: Indexes the entire property value as a single token after trimming whitespace.<br/>- `trigram`: Splits the property into rolling trigrams (three-character sequences).<br/>- `gse`: Uses the `gse` tokenizer, suitable for Chinese language text. [See `gse` docs](https://pkg.go.dev/github.com/go-ego/gse#section-readme).<br/>- `kagome_ja`: Uses the `Kagome` tokenizer with a Japanese (IPA) dictionary. [See `kagome` docs](https://github.com/ikawaha/kagome).<br/>- `kagome_kr`: Uses the `Kagome` tokenizer with a Korean dictionary. [See `kagome` docs](https://github.com/ikawaha/kagome).<br/><br/>See [Reference: Tokenization](https://docs.weaviate.io/weaviate/config-refs/collections#tokenization) for details.
@@ -1281,71 +1281,71 @@ type PropertySchema = map[string]interface{}
 
 // RaftStatistics The definition of Raft statistics.
 type RaftStatistics struct {
-	AppliedIndex      *string `json:"appliedIndex,omitempty"`
-	CommitIndex       *string `json:"commitIndex,omitempty"`
-	FsmPending        *string `json:"fsmPending,omitempty"`
-	LastContact       *string `json:"lastContact,omitempty"`
-	LastLogIndex      *string `json:"lastLogIndex,omitempty"`
-	LastLogTerm       *string `json:"lastLogTerm,omitempty"`
-	LastSnapshotIndex *string `json:"lastSnapshotIndex,omitempty"`
-	LastSnapshotTerm  *string `json:"lastSnapshotTerm,omitempty"`
+	AppliedIndex      string `json:"appliedIndex,omitempty"`
+	CommitIndex       string `json:"commitIndex,omitempty"`
+	FsmPending        string `json:"fsmPending,omitempty"`
+	LastContact       string `json:"lastContact,omitempty"`
+	LastLogIndex      string `json:"lastLogIndex,omitempty"`
+	LastLogTerm       string `json:"lastLogTerm,omitempty"`
+	LastSnapshotIndex string `json:"lastSnapshotIndex,omitempty"`
+	LastSnapshotTerm  string `json:"lastSnapshotTerm,omitempty"`
 
 	// LatestConfiguration Weaviate Raft nodes.
-	LatestConfiguration      *map[string]interface{} `json:"latestConfiguration,omitempty"`
-	LatestConfigurationIndex *string                 `json:"latestConfigurationIndex,omitempty"`
-	NumPeers                 *string                 `json:"numPeers,omitempty"`
-	ProtocolVersion          *string                 `json:"protocolVersion,omitempty"`
-	ProtocolVersionMax       *string                 `json:"protocolVersionMax,omitempty"`
-	ProtocolVersionMin       *string                 `json:"protocolVersionMin,omitempty"`
-	SnapshotVersionMax       *string                 `json:"snapshotVersionMax,omitempty"`
-	SnapshotVersionMin       *string                 `json:"snapshotVersionMin,omitempty"`
-	State                    *string                 `json:"state,omitempty"`
-	Term                     *string                 `json:"term,omitempty"`
+	LatestConfiguration      map[string]interface{} `json:"latestConfiguration,omitempty"`
+	LatestConfigurationIndex string                 `json:"latestConfigurationIndex,omitempty"`
+	NumPeers                 string                 `json:"numPeers,omitempty"`
+	ProtocolVersion          string                 `json:"protocolVersion,omitempty"`
+	ProtocolVersionMax       string                 `json:"protocolVersionMax,omitempty"`
+	ProtocolVersionMin       string                 `json:"protocolVersionMin,omitempty"`
+	SnapshotVersionMax       string                 `json:"snapshotVersionMax,omitempty"`
+	SnapshotVersionMin       string                 `json:"snapshotVersionMin,omitempty"`
+	State                    string                 `json:"state,omitempty"`
+	Term                     string                 `json:"term,omitempty"`
 }
 
 // ReferenceMetaClassification This meta field contains additional info about the classified reference property
 type ReferenceMetaClassification struct {
 	// ClosestLosingDistance The lowest distance of a neighbor in the losing group. Optional. If k equals the size of the winning group, there is no losing group
-	ClosestLosingDistance *float32 `json:"closestLosingDistance"`
+	ClosestLosingDistance float32 `json:"closestLosingDistance"`
 
 	// ClosestOverallDistance The lowest distance of any neighbor, regardless of whether they were in the winning or losing group
-	ClosestOverallDistance *float32 `json:"closestOverallDistance,omitempty"`
+	ClosestOverallDistance float32 `json:"closestOverallDistance,omitempty"`
 
 	// ClosestWinningDistance Closest distance of a neighbor from the winning group
-	ClosestWinningDistance *float32 `json:"closestWinningDistance,omitempty"`
+	ClosestWinningDistance float32 `json:"closestWinningDistance,omitempty"`
 
 	// LosingCount size of the losing group, can be 0 if the winning group size equals k
-	LosingCount *int64 `json:"losingCount,omitempty"`
+	LosingCount int64 `json:"losingCount,omitempty"`
 
 	// LosingDistance deprecated - do not use, to be removed in 0.23.0
-	LosingDistance *float32 `json:"losingDistance"`
+	LosingDistance float32 `json:"losingDistance"`
 
 	// MeanLosingDistance Mean distance of all neighbors from the losing group. Optional. If k equals the size of the winning group, there is no losing group.
-	MeanLosingDistance *float32 `json:"meanLosingDistance"`
+	MeanLosingDistance float32 `json:"meanLosingDistance"`
 
 	// MeanWinningDistance Mean distance of all neighbors from the winning group
-	MeanWinningDistance *float32 `json:"meanWinningDistance,omitempty"`
+	MeanWinningDistance float32 `json:"meanWinningDistance,omitempty"`
 
 	// OverallCount overall neighbors checked as part of the classification. In most cases this will equal k, but could be lower than k - for example if not enough data was present
-	OverallCount *int64 `json:"overallCount,omitempty"`
+	OverallCount int64 `json:"overallCount,omitempty"`
 
 	// WinningCount size of the winning group, a number between 1..k
-	WinningCount *int64 `json:"winningCount,omitempty"`
+	WinningCount int64 `json:"winningCount,omitempty"`
 
 	// WinningDistance deprecated - do not use, to be removed in 0.23.0
-	WinningDistance *float32 `json:"winningDistance,omitempty"`
+	WinningDistance float32 `json:"winningDistance,omitempty"`
 }
 
 // ReplicationConfig Configure how replication is executed in a cluster
 type ReplicationConfig struct {
 	// AsyncEnabled Enable asynchronous replication (default: `false`).
-	AsyncEnabled *bool `json:"asyncEnabled"`
+	AsyncEnabled bool `json:"asyncEnabled"`
 
 	// DeletionStrategy Conflict resolution strategy for deleted objects.
-	DeletionStrategy *ReplicationConfigDeletionStrategy `json:"deletionStrategy,omitempty"`
+	DeletionStrategy ReplicationConfigDeletionStrategy `json:"deletionStrategy,omitempty"`
 
 	// Factor Number of times a collection (class) is replicated (default: 1).
-	Factor *int `json:"factor,omitempty"`
+	Factor int `json:"factor,omitempty"`
 }
 
 // ReplicationConfigDeletionStrategy Conflict resolution strategy for deleted objects.
@@ -1360,10 +1360,10 @@ type ReplicationReplicateDetailsReplicaResponse struct {
 	Id openapi_types.UUID `json:"id"`
 
 	// ScheduledForCancel Whether the replica operation is scheduled for cancellation.
-	ScheduledForCancel *bool `json:"scheduledForCancel,omitempty"`
+	ScheduledForCancel bool `json:"scheduledForCancel,omitempty"`
 
 	// ScheduledForDelete Whether the replica operation is scheduled for deletion.
-	ScheduledForDelete *bool `json:"scheduledForDelete,omitempty"`
+	ScheduledForDelete bool `json:"scheduledForDelete,omitempty"`
 
 	// Shard The name of the shard involved in this replication operation.
 	Shard string `json:"shard"`
@@ -1375,7 +1375,7 @@ type ReplicationReplicateDetailsReplicaResponse struct {
 	Status ReplicationReplicateDetailsReplicaStatus `json:"status"`
 
 	// StatusHistory An array detailing the historical sequence of statuses the replication operation has transitioned through, if requested and available.
-	StatusHistory *[]ReplicationReplicateDetailsReplicaStatus `json:"statusHistory,omitempty"`
+	StatusHistory []ReplicationReplicateDetailsReplicaStatus `json:"statusHistory,omitempty"`
 
 	// TargetNode The identifier of the node to which the replica is being moved or copied (the target node).
 	TargetNode string `json:"targetNode"`
@@ -1384,10 +1384,10 @@ type ReplicationReplicateDetailsReplicaResponse struct {
 	Type ReplicationReplicateDetailsReplicaResponseType `json:"type"`
 
 	// Uncancelable Whether the replica operation can't be cancelled.
-	Uncancelable *bool `json:"uncancelable,omitempty"`
+	Uncancelable bool `json:"uncancelable,omitempty"`
 
 	// WhenStartedUnixMs The UNIX timestamp in ms when the replication operation was initiated. This is an approximate time and so should not be used for precise timing.
-	WhenStartedUnixMs *int64 `json:"whenStartedUnixMs,omitempty"`
+	WhenStartedUnixMs int64 `json:"whenStartedUnixMs,omitempty"`
 }
 
 // ReplicationReplicateDetailsReplicaResponseType Indicates whether the operation is a `COPY` (source replica remains) or a `MOVE` (source replica is removed after successful transfer).
@@ -1396,13 +1396,13 @@ type ReplicationReplicateDetailsReplicaResponseType string
 // ReplicationReplicateDetailsReplicaStatus Represents the current or historical status of a shard replica involved in a replication operation, including its operational state and any associated errors.
 type ReplicationReplicateDetailsReplicaStatus struct {
 	// Errors A list of error messages encountered by this replica during the replication operation, if any.
-	Errors *[]ReplicationReplicateDetailsReplicaStatusError `json:"errors,omitempty"`
+	Errors []ReplicationReplicateDetailsReplicaStatusError `json:"errors,omitempty"`
 
 	// State The current operational state of the replica during the replication process.
-	State *ReplicationReplicateDetailsReplicaStatusState `json:"state,omitempty"`
+	State ReplicationReplicateDetailsReplicaStatusState `json:"state,omitempty"`
 
 	// WhenStartedUnixMs The UNIX timestamp in ms when this state was first entered. This is an approximate time and so should not be used for precise timing.
-	WhenStartedUnixMs *int64 `json:"whenStartedUnixMs,omitempty"`
+	WhenStartedUnixMs int64 `json:"whenStartedUnixMs,omitempty"`
 }
 
 // ReplicationReplicateDetailsReplicaStatusState The current operational state of the replica during the replication process.
@@ -1411,37 +1411,37 @@ type ReplicationReplicateDetailsReplicaStatusState string
 // ReplicationReplicateDetailsReplicaStatusError Represents an error encountered during a replication operation, including its timestamp and a human-readable message.
 type ReplicationReplicateDetailsReplicaStatusError struct {
 	// Message A human-readable message describing the error.
-	Message *string `json:"message,omitempty"`
+	Message string `json:"message,omitempty"`
 
 	// WhenErroredUnixMs The unix timestamp in ms when the error occurred. This is an approximate time and so should not be used for precise timing.
-	WhenErroredUnixMs *int64 `json:"whenErroredUnixMs,omitempty"`
+	WhenErroredUnixMs int64 `json:"whenErroredUnixMs,omitempty"`
 }
 
 // ReplicationReplicateForceDeleteRequest Specifies the parameters available when force deleting replication operations.
 type ReplicationReplicateForceDeleteRequest struct {
 	// Collection The name of the collection to which the shard being replicated belongs.
-	Collection *string `json:"collection,omitempty"`
+	Collection string `json:"collection,omitempty"`
 
 	// DryRun If true, the operation will not actually delete anything but will return the expected outcome of the deletion.
-	DryRun *bool `json:"dryRun,omitempty"`
+	DryRun bool `json:"dryRun,omitempty"`
 
 	// Id The unique identifier (ID) of the replication operation to be forcefully deleted.
-	Id *openapi_types.UUID `json:"id,omitempty"`
+	Id openapi_types.UUID `json:"id,omitempty"`
 
 	// Node The name of the target node where the replication operations are registered.
-	Node *string `json:"node,omitempty"`
+	Node string `json:"node,omitempty"`
 
 	// Shard The identifier of the shard involved in the replication operations.
-	Shard *string `json:"shard,omitempty"`
+	Shard string `json:"shard,omitempty"`
 }
 
 // ReplicationReplicateForceDeleteResponse Provides the UUIDs that were successfully force deleted as part of the replication operation. If dryRun is true, this will return the expected outcome without actually deleting anything.
 type ReplicationReplicateForceDeleteResponse struct {
 	// Deleted The unique identifiers (IDs) of the replication operations that were forcefully deleted.
-	Deleted *[]openapi_types.UUID `json:"deleted,omitempty"`
+	Deleted []openapi_types.UUID `json:"deleted,omitempty"`
 
 	// DryRun Indicates whether the operation was a dry run (true) or an actual deletion (false).
-	DryRun *bool `json:"dryRun,omitempty"`
+	DryRun bool `json:"dryRun,omitempty"`
 }
 
 // ReplicationReplicateReplicaRequest Specifies the parameters required to initiate a shard replica movement operation between two nodes for a given collection and shard. This request defines the source and target node, the collection and type of transfer.
@@ -1459,7 +1459,7 @@ type ReplicationReplicateReplicaRequest struct {
 	TargetNode string `json:"targetNode"`
 
 	// Type Specifies the type of replication operation to perform. `COPY` creates a new replica on the target node while keeping the source replica. `MOVE` creates a new replica on the target node and then removes the source replica upon successful completion. Defaults to `COPY` if omitted.
-	Type *ReplicationReplicateReplicaRequestType `json:"type,omitempty"`
+	Type ReplicationReplicateReplicaRequestType `json:"type,omitempty"`
 }
 
 // ReplicationReplicateReplicaRequestType Specifies the type of replication operation to perform. `COPY` creates a new replica on the target node while keeping the source replica. `MOVE` creates a new replica on the target node and then removes the source replica upon successful completion. Defaults to `COPY` if omitted.
@@ -1473,44 +1473,44 @@ type ReplicationReplicateReplicaResponse struct {
 
 // ReplicationShardReplicas Represents a shard and lists the nodes that currently host its replicas.
 type ReplicationShardReplicas struct {
-	Replicas *[]string `json:"replicas,omitempty"`
-	Shard    *string   `json:"shard,omitempty"`
+	Replicas []string `json:"replicas,omitempty"`
+	Shard    string   `json:"shard,omitempty"`
 }
 
 // ReplicationShardingState Details the sharding layout for a specific collection, mapping each shard to its set of replicas across the cluster.
 type ReplicationShardingState struct {
 	// Collection The name of the collection.
-	Collection *string `json:"collection,omitempty"`
+	Collection string `json:"collection,omitempty"`
 
 	// Shards An array detailing each shard within the collection and the nodes hosting its replicas.
-	Shards *[]ReplicationShardReplicas `json:"shards,omitempty"`
+	Shards []ReplicationShardReplicas `json:"shards,omitempty"`
 }
 
 // ReplicationShardingStateResponse Provides the detailed sharding state for one or more collections, including the distribution of shards and their replicas across the cluster nodes.
 type ReplicationShardingStateResponse struct {
 	// ShardingState Details the sharding layout for a specific collection, mapping each shard to its set of replicas across the cluster.
-	ShardingState *ReplicationShardingState `json:"shardingState,omitempty"`
+	ShardingState ReplicationShardingState `json:"shardingState,omitempty"`
 }
 
 // RestoreConfig Backup custom configuration
 type RestoreConfig struct {
 	// Bucket Name of the bucket, container, volume, etc
-	Bucket *string `json:"Bucket,omitempty"`
+	Bucket string `json:"Bucket,omitempty"`
 
 	// CPUPercentage Desired CPU core utilization ranging from 1%-80%
-	CPUPercentage *int `json:"CPUPercentage,omitempty"`
+	CPUPercentage int `json:"CPUPercentage,omitempty"`
 
 	// Endpoint name of the endpoint, e.g. s3.amazonaws.com
-	Endpoint *string `json:"Endpoint,omitempty"`
+	Endpoint string `json:"Endpoint,omitempty"`
 
 	// Path Path within the bucket
-	Path *string `json:"Path,omitempty"`
+	Path string `json:"Path,omitempty"`
 
 	// RolesOptions How roles should be restored
-	RolesOptions *RestoreConfigRolesOptions `json:"rolesOptions,omitempty"`
+	RolesOptions RestoreConfigRolesOptions `json:"rolesOptions,omitempty"`
 
 	// UsersOptions How users should be restored
-	UsersOptions *RestoreConfigUsersOptions `json:"usersOptions,omitempty"`
+	UsersOptions RestoreConfigUsersOptions `json:"usersOptions,omitempty"`
 }
 
 // RestoreConfigRolesOptions How roles should be restored
@@ -1532,31 +1532,31 @@ type RolesListResponse = []Role
 // Schema Definitions of semantic schemas (also see: https://github.com/weaviate/weaviate-semantic-schemas).
 type Schema struct {
 	// Classes Semantic classes that are available.
-	Classes *[]Class `json:"classes,omitempty"`
+	Classes []Class `json:"classes,omitempty"`
 
 	// Maintainer Email of the maintainer.
-	Maintainer *openapi_types.Email `json:"maintainer,omitempty"`
+	Maintainer openapi_types.Email `json:"maintainer,omitempty"`
 
 	// Name Name of the schema.
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 // ShardStatus The status of a single shard
 type ShardStatus struct {
 	// Status Status of the shard
-	Status *string `json:"status,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // ShardStatusGetResponse Response body of shard status get request
 type ShardStatusGetResponse struct {
 	// Name Name of the shard
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
 
 	// Status Status of the shard
-	Status *string `json:"status,omitempty"`
+	Status string `json:"status,omitempty"`
 
 	// VectorQueueSize Size of the vector queue of the shard
-	VectorQueueSize *int `json:"vectorQueueSize"`
+	VectorQueueSize int `json:"vectorQueueSize"`
 }
 
 // ShardStatusList The status of all the shards of a Class
@@ -1565,42 +1565,42 @@ type ShardStatusList = []ShardStatusGetResponse
 // SingleRef Either set beacon (direct reference) or set collection (class) and schema (concept reference)
 type SingleRef struct {
 	// Beacon If using a direct reference, specify the URI to point to the cross-reference here. Should be in the form of weaviate://localhost/<uuid> for the example of a local cross-reference to an object
-	Beacon *string `json:"beacon,omitempty"`
+	Beacon string `json:"beacon,omitempty"`
 
 	// Class If using a concept reference (rather than a direct reference), specify the desired collection (class) name here.
-	Class *string `json:"class,omitempty"`
+	Class string `json:"class,omitempty"`
 
 	// Classification This meta field contains additional info about the classified reference property
-	Classification *ReferenceMetaClassification `json:"classification,omitempty"`
+	Classification ReferenceMetaClassification `json:"classification,omitempty"`
 
 	// Href If using a direct reference, this read-only fields provides a link to the referenced resource. If 'origin' is globally configured, an absolute URI is shown - a relative URI otherwise.
-	Href *string `json:"href,omitempty"`
+	Href string `json:"href,omitempty"`
 
 	// Schema Names and values of an individual property. A returned response may also contain additional metadata, such as from classification or feature projection.
-	Schema *PropertySchema `json:"schema,omitempty"`
+	Schema PropertySchema `json:"schema,omitempty"`
 }
 
 // Statistics The definition of node statistics.
 type Statistics struct {
-	Bootstrapped            *bool                   `json:"bootstrapped,omitempty"`
-	Candidates              *map[string]interface{} `json:"candidates,omitempty"`
-	DbLoaded                *bool                   `json:"dbLoaded,omitempty"`
-	InitialLastAppliedIndex *int64                  `json:"initialLastAppliedIndex,omitempty"`
-	IsVoter                 *bool                   `json:"isVoter,omitempty"`
-	LastAppliedIndex        *float32                `json:"lastAppliedIndex,omitempty"`
-	LeaderAddress           *map[string]interface{} `json:"leaderAddress,omitempty"`
-	LeaderId                *map[string]interface{} `json:"leaderId,omitempty"`
+	Bootstrapped            bool                   `json:"bootstrapped,omitempty"`
+	Candidates              map[string]interface{} `json:"candidates,omitempty"`
+	DbLoaded                bool                   `json:"dbLoaded,omitempty"`
+	InitialLastAppliedIndex int64                  `json:"initialLastAppliedIndex,omitempty"`
+	IsVoter                 bool                   `json:"isVoter,omitempty"`
+	LastAppliedIndex        float32                `json:"lastAppliedIndex,omitempty"`
+	LeaderAddress           map[string]interface{} `json:"leaderAddress,omitempty"`
+	LeaderId                map[string]interface{} `json:"leaderId,omitempty"`
 
 	// Name The name of the node.
-	Name *string `json:"name,omitempty"`
-	Open *bool   `json:"open,omitempty"`
+	Name string `json:"name,omitempty"`
+	Open bool   `json:"open,omitempty"`
 
 	// Raft The definition of Raft statistics.
-	Raft  *RaftStatistics `json:"raft,omitempty"`
-	Ready *bool           `json:"ready,omitempty"`
+	Raft  RaftStatistics `json:"raft,omitempty"`
+	Ready bool           `json:"ready,omitempty"`
 
 	// Status Node's status.
-	Status *StatisticsStatus `json:"status,omitempty"`
+	Status StatisticsStatus `json:"status,omitempty"`
 }
 
 // StatisticsStatus Node's status.
@@ -1609,22 +1609,22 @@ type StatisticsStatus string
 // StopwordConfig Fine-grained control over stopword list usage.
 type StopwordConfig struct {
 	// Additions Stopwords to be considered additionally (default: []). Can be any array of custom strings.
-	Additions *[]string `json:"additions,omitempty"`
+	Additions []string `json:"additions,omitempty"`
 
 	// Preset Pre-existing list of common words by language (default: `en`). Options: [`en`, `none`].
-	Preset *string `json:"preset,omitempty"`
+	Preset string `json:"preset,omitempty"`
 
 	// Removals Stopwords to be removed from consideration (default: []). Can be any array of custom strings.
-	Removals *[]string `json:"removals,omitempty"`
+	Removals []string `json:"removals,omitempty"`
 }
 
 // Tenant Attributes representing a single tenant within Weaviate.
 type Tenant struct {
 	// ActivityStatus The activity status of the tenant, which determines if it is queryable and where its data is stored.<br/><br/><b>Available Statuses:</b><br/>- `ACTIVE`: The tenant is fully operational and ready for queries. Data is stored on local, hot storage.<br/>- `INACTIVE`: The tenant is not queryable. Data is stored locally.<br/>- `OFFLOADED`: The tenant is inactive and its data is stored in a remote cloud backend.<br/><br/><b>Usage Rules:</b><br/>- <b>On Create:</b> This field is optional and defaults to `ACTIVE`. Allowed values are `ACTIVE` and `INACTIVE`.<br/>- <b>On Update:</b> This field is required. Allowed values are `ACTIVE`, `INACTIVE`, and `OFFLOADED`.<br/><br/><b>Read-Only Statuses:</b><br/>The following statuses are set by the server and indicate a tenant is transitioning between states:<br/>- `OFFLOADING`<br/>- `ONLOADING`<br/><br/><b>Note on Deprecated Names:</b><br/>For backward compatibility, deprecated names are still accepted and are mapped to their modern equivalents: `HOT` (now `ACTIVE`), `COLD` (now `INACTIVE`), `FROZEN` (now `OFFLOADED`), `FREEZING` (now `OFFLOADING`), `UNFREEZING` (now `ONLOADING`).
-	ActivityStatus *TenantActivityStatus `json:"activityStatus,omitempty"`
+	ActivityStatus TenantActivityStatus `json:"activityStatus,omitempty"`
 
 	// Name The name of the tenant (required).
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 // TenantActivityStatus The activity status of the tenant, which determines if it is queryable and where its data is stored.<br/><br/><b>Available Statuses:</b><br/>- `ACTIVE`: The tenant is fully operational and ready for queries. Data is stored on local, hot storage.<br/>- `INACTIVE`: The tenant is not queryable. Data is stored locally.<br/>- `OFFLOADED`: The tenant is inactive and its data is stored in a remote cloud backend.<br/><br/><b>Usage Rules:</b><br/>- <b>On Create:</b> This field is optional and defaults to `ACTIVE`. Allowed values are `ACTIVE` and `INACTIVE`.<br/>- <b>On Update:</b> This field is required. Allowed values are `ACTIVE`, `INACTIVE`, and `OFFLOADED`.<br/><br/><b>Read-Only Statuses:</b><br/>The following statuses are set by the server and indicate a tenant is transitioning between states:<br/>- `OFFLOADING`<br/>- `ONLOADING`<br/><br/><b>Note on Deprecated Names:</b><br/>For backward compatibility, deprecated names are still accepted and are mapped to their modern equivalents: `HOT` (now `ACTIVE`), `COLD` (now `INACTIVE`), `FROZEN` (now `OFFLOADED`), `FREEZING` (now `OFFLOADING`), `UNFREEZING` (now `ONLOADING`).
@@ -1639,8 +1639,8 @@ type UserApiKey struct {
 // UserOwnInfo defines model for UserOwnInfo.
 type UserOwnInfo struct {
 	// Groups The groups associated with the user.
-	Groups *[]string `json:"groups,omitempty"`
-	Roles  *[]Role   `json:"roles,omitempty"`
+	Groups []string `json:"groups,omitempty"`
+	Roles  []Role   `json:"roles,omitempty"`
 
 	// Username The name (ID) of the user.
 	Username string `json:"username"`
@@ -1653,18 +1653,18 @@ type UserTypeInput string
 type UserTypeOutput string
 
 // Vector A vector representation of the object. If provided at object creation, this wil take precedence over any vectorizer setting.
-type Vector = map[string]interface{}
+type Vector = interface{}
 
 // VectorConfig defines model for VectorConfig.
 type VectorConfig struct {
 	// VectorIndexConfig Vector-index config, that is specific to the type of index selected in vectorIndexType
-	VectorIndexConfig *map[string]interface{} `json:"vectorIndexConfig,omitempty"`
+	VectorIndexConfig map[string]interface{} `json:"vectorIndexConfig,omitempty"`
 
 	// VectorIndexType Name of the vector index to use, eg. (HNSW)
-	VectorIndexType *string `json:"vectorIndexType,omitempty"`
+	VectorIndexType string `json:"vectorIndexType,omitempty"`
 
 	// Vectorizer Configuration of a specific vectorizer used by this vector
-	Vectorizer *map[string]interface{} `json:"vectorizer,omitempty"`
+	Vectorizer map[string]interface{} `json:"vectorizer,omitempty"`
 }
 
 // VectorWeights Allow custom overrides of vector weights as math expressions. E.g. `pancake`: `7` will set the weight for the word pancake to 7 in the vectorization, whereas `w * 3` would triple the originally calculated word. This is an open object, with OpenAPI Specification 3.0 this will be more detailed. See Weaviate docs for more info. In the future this will become a key/value (string/string) object.
@@ -1676,52 +1676,52 @@ type Vectors map[string]Vector
 // WhereFilter Filter search results using a where filter.
 type WhereFilter struct {
 	// Operands Combine multiple where filters, requires 'And' or 'Or' operator.
-	Operands *[]WhereFilter `json:"operands,omitempty"`
+	Operands []WhereFilter `json:"operands,omitempty"`
 
 	// Operator Operator to use.
-	Operator *WhereFilterOperator `json:"operator,omitempty"`
+	Operator WhereFilterOperator `json:"operator,omitempty"`
 
 	// Path Path to the property currently being filtered.
-	Path *[]string `json:"path,omitempty"`
+	Path []string `json:"path,omitempty"`
 
 	// ValueBoolean value as boolean
-	ValueBoolean *bool `json:"valueBoolean"`
+	ValueBoolean bool `json:"valueBoolean"`
 
 	// ValueBooleanArray value as boolean
-	ValueBooleanArray *[]bool `json:"valueBooleanArray,omitempty"`
+	ValueBooleanArray []bool `json:"valueBooleanArray,omitempty"`
 
 	// ValueDate value as date (as string)
-	ValueDate *string `json:"valueDate"`
+	ValueDate string `json:"valueDate"`
 
 	// ValueDateArray value as date (as string)
-	ValueDateArray *[]string `json:"valueDateArray,omitempty"`
+	ValueDateArray []string `json:"valueDateArray,omitempty"`
 
 	// ValueGeoRange Filter within a distance of a georange.
-	ValueGeoRange *WhereFilterGeoRange `json:"valueGeoRange,omitempty"`
+	ValueGeoRange WhereFilterGeoRange `json:"valueGeoRange,omitempty"`
 
 	// ValueInt value as integer
-	ValueInt *int64 `json:"valueInt"`
+	ValueInt int64 `json:"valueInt"`
 
 	// ValueIntArray value as integer
-	ValueIntArray *[]int64 `json:"valueIntArray,omitempty"`
+	ValueIntArray []int64 `json:"valueIntArray,omitempty"`
 
 	// ValueNumber value as number/float
-	ValueNumber *float32 `json:"valueNumber"`
+	ValueNumber float32 `json:"valueNumber"`
 
 	// ValueNumberArray value as number/float
-	ValueNumberArray *[]float32 `json:"valueNumberArray,omitempty"`
+	ValueNumberArray []float32 `json:"valueNumberArray,omitempty"`
 
 	// ValueString value as text (deprecated as of v1.19; alias for valueText)
-	ValueString *string `json:"valueString"`
+	ValueString string `json:"valueString"`
 
 	// ValueStringArray value as text (deprecated as of v1.19; alias for valueText)
-	ValueStringArray *[]string `json:"valueStringArray,omitempty"`
+	ValueStringArray []string `json:"valueStringArray,omitempty"`
 
 	// ValueText value as text
-	ValueText *string `json:"valueText"`
+	ValueText string `json:"valueText"`
 
 	// ValueTextArray value as text
-	ValueTextArray *[]string `json:"valueTextArray,omitempty"`
+	ValueTextArray []string `json:"valueTextArray,omitempty"`
 }
 
 // WhereFilterOperator Operator to use.
@@ -1729,22 +1729,22 @@ type WhereFilterOperator string
 
 // WhereFilterGeoRange Filter within a distance of a georange.
 type WhereFilterGeoRange struct {
-	Distance *struct {
-		Max *float32 `json:"max,omitempty"`
+	Distance struct {
+		Max float32 `json:"max,omitempty"`
 	} `json:"distance,omitempty"`
-	GeoCoordinates *GeoCoordinates `json:"geoCoordinates,omitempty"`
+	GeoCoordinates GeoCoordinates `json:"geoCoordinates,omitempty"`
 }
 
 // AliasesGetParams defines parameters for AliasesGet.
 type AliasesGetParams struct {
 	// Class Optional filter to retrieve aliases for a specific collection (class) only. If not provided, returns all aliases.
-	Class *string `form:"class,omitempty" json:"class,omitempty"`
+	Class string `form:"class,omitempty" json:"class,omitempty"`
 }
 
 // AliasesUpdateJSONBody defines parameters for AliasesUpdate.
 type AliasesUpdateJSONBody struct {
 	// Class The new collection (class) that the alias should point to.
-	Class *string `json:"class,omitempty"`
+	Class string `json:"class,omitempty"`
 }
 
 // GetGroupsParamsGroupType defines parameters for GetGroups.
@@ -1753,25 +1753,25 @@ type GetGroupsParamsGroupType string
 // AssignRoleToGroupJSONBody defines parameters for AssignRoleToGroup.
 type AssignRoleToGroupJSONBody struct {
 	// GroupType If the group contains OIDC or database users.
-	GroupType *GroupType `json:"groupType,omitempty"`
+	GroupType GroupType `json:"groupType,omitempty"`
 
 	// Roles The roles to assign to the specified group.
-	Roles *[]string `json:"roles,omitempty"`
+	Roles []string `json:"roles,omitempty"`
 }
 
 // RevokeRoleFromGroupJSONBody defines parameters for RevokeRoleFromGroup.
 type RevokeRoleFromGroupJSONBody struct {
 	// GroupType If the group contains OIDC or database users.
-	GroupType *GroupType `json:"groupType,omitempty"`
+	GroupType GroupType `json:"groupType,omitempty"`
 
 	// Roles The roles to revoke from the specified group.
-	Roles *[]string `json:"roles,omitempty"`
+	Roles []string `json:"roles,omitempty"`
 }
 
 // GetRolesForGroupParams defines parameters for GetRolesForGroup.
 type GetRolesForGroupParams struct {
 	// IncludeFullRoles If true, the response will include the full role definitions with all associated permissions. If false, only role names are returned.
-	IncludeFullRoles *bool `form:"includeFullRoles,omitempty" json:"includeFullRoles,omitempty"`
+	IncludeFullRoles bool `form:"includeFullRoles,omitempty" json:"includeFullRoles,omitempty"`
 }
 
 // GetRolesForGroupParamsGroupType defines parameters for GetRolesForGroup.
@@ -1792,25 +1792,25 @@ type RemovePermissionsJSONBody struct {
 // AssignRoleToUserJSONBody defines parameters for AssignRoleToUser.
 type AssignRoleToUserJSONBody struct {
 	// Roles The roles that are assigned to the specified user.
-	Roles *[]string `json:"roles,omitempty"`
+	Roles []string `json:"roles,omitempty"`
 
 	// UserType The type of the user. `db` users are managed by Weaviate, `oidc` users are managed by an external OIDC provider.
-	UserType *UserTypeInput `json:"userType,omitempty"`
+	UserType UserTypeInput `json:"userType,omitempty"`
 }
 
 // RevokeRoleFromUserJSONBody defines parameters for RevokeRoleFromUser.
 type RevokeRoleFromUserJSONBody struct {
 	// Roles The roles to revoke from the specified user.
-	Roles *[]string `json:"roles,omitempty"`
+	Roles []string `json:"roles,omitempty"`
 
 	// UserType The type of the user. `db` users are managed by Weaviate, `oidc` users are managed by an external OIDC provider.
-	UserType *UserTypeInput `json:"userType,omitempty"`
+	UserType UserTypeInput `json:"userType,omitempty"`
 }
 
 // GetRolesForUserParams defines parameters for GetRolesForUser.
 type GetRolesForUserParams struct {
 	// IncludeFullRoles Whether to include detailed role information like its assigned permissions.
-	IncludeFullRoles *bool `form:"includeFullRoles,omitempty" json:"includeFullRoles,omitempty"`
+	IncludeFullRoles bool `form:"includeFullRoles,omitempty" json:"includeFullRoles,omitempty"`
 }
 
 // GetRolesForUserParamsUserType defines parameters for GetRolesForUser.
@@ -1819,7 +1819,7 @@ type GetRolesForUserParamsUserType string
 // BackupsListParams defines parameters for BackupsList.
 type BackupsListParams struct {
 	// Order Order of returned list of backups based on creation time. (asc or desc)
-	Order *BackupsListParamsOrder `form:"order,omitempty" json:"order,omitempty"`
+	Order BackupsListParamsOrder `form:"order,omitempty" json:"order,omitempty"`
 }
 
 // BackupsListParamsOrder defines parameters for BackupsList.
@@ -1828,52 +1828,52 @@ type BackupsListParamsOrder string
 // BackupsCancelParams defines parameters for BackupsCancel.
 type BackupsCancelParams struct {
 	// Bucket Optional: Specifies the bucket, container, or volume name if required by the backend.
-	Bucket *string `form:"bucket,omitempty" json:"bucket,omitempty"`
+	Bucket string `form:"bucket,omitempty" json:"bucket,omitempty"`
 
 	// Path Optional: Specifies the path within the bucket/container/volume if the backup is not at the root.
-	Path *string `form:"path,omitempty" json:"path,omitempty"`
+	Path string `form:"path,omitempty" json:"path,omitempty"`
 }
 
 // BackupsCreateStatusParams defines parameters for BackupsCreateStatus.
 type BackupsCreateStatusParams struct {
 	// Bucket Optional: Specifies the bucket, container, or volume name if required by the backend.
-	Bucket *string `form:"bucket,omitempty" json:"bucket,omitempty"`
+	Bucket string `form:"bucket,omitempty" json:"bucket,omitempty"`
 
 	// Path Optional: Specifies the path within the bucket/container/volume if the backup is not at the root.
-	Path *string `form:"path,omitempty" json:"path,omitempty"`
+	Path string `form:"path,omitempty" json:"path,omitempty"`
 }
 
 // BackupsRestoreStatusParams defines parameters for BackupsRestoreStatus.
 type BackupsRestoreStatusParams struct {
 	// Bucket Optional: Specifies the bucket, container, or volume name if required by the backend.
-	Bucket *string `form:"bucket,omitempty" json:"bucket,omitempty"`
+	Bucket string `form:"bucket,omitempty" json:"bucket,omitempty"`
 
 	// Path Optional: Specifies the path within the bucket.
-	Path *string `form:"path,omitempty" json:"path,omitempty"`
+	Path string `form:"path,omitempty" json:"path,omitempty"`
 }
 
 // BatchObjectsDeleteParams defines parameters for BatchObjectsDelete.
 type BatchObjectsDeleteParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 
 	// Tenant Specifies the tenant in a request targeting a multi-tenant collection (class).
-	Tenant *string `form:"tenant,omitempty" json:"tenant,omitempty"`
+	Tenant string `form:"tenant,omitempty" json:"tenant,omitempty"`
 }
 
 // BatchObjectsCreateJSONBody defines parameters for BatchObjectsCreate.
 type BatchObjectsCreateJSONBody struct {
 	// Fields Controls which fields are returned in the response for each object. Default is `ALL`.
-	Fields *[]BatchObjectsCreateJSONBodyFields `json:"fields,omitempty"`
+	Fields []BatchObjectsCreateJSONBodyFields `json:"fields,omitempty"`
 
 	// Objects Array of objects to be created.
-	Objects *[]Object `json:"objects,omitempty"`
+	Objects []Object `json:"objects,omitempty"`
 }
 
 // BatchObjectsCreateParams defines parameters for BatchObjectsCreate.
 type BatchObjectsCreateParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 }
 
 // BatchObjectsCreateJSONBodyFields defines parameters for BatchObjectsCreate.
@@ -1885,219 +1885,219 @@ type BatchReferencesCreateJSONBody = []BatchReference
 // BatchReferencesCreateParams defines parameters for BatchReferencesCreate.
 type BatchReferencesCreateParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 }
 
 // NodesGetParams defines parameters for NodesGet.
 type NodesGetParams struct {
 	// Output Controls the verbosity of the output, possible values are: `minimal`, `verbose`. Defaults to `minimal`.
-	Output *string `form:"output,omitempty" json:"output,omitempty"`
+	Output string `form:"output,omitempty" json:"output,omitempty"`
 }
 
 // NodesGetClassParams defines parameters for NodesGetClass.
 type NodesGetClassParams struct {
-	ShardName *string `form:"shardName,omitempty" json:"shardName,omitempty"`
+	ShardName string `form:"shardName,omitempty" json:"shardName,omitempty"`
 
 	// Output Controls the verbosity of the output, possible values are: `minimal`, `verbose`. Defaults to `minimal`.
-	Output *string `form:"output,omitempty" json:"output,omitempty"`
+	Output string `form:"output,omitempty" json:"output,omitempty"`
 }
 
 // ObjectsListParams defines parameters for ObjectsList.
 type ObjectsListParams struct {
 	// After A threshold UUID of the objects to retrieve after, using an UUID-based ordering. This object is not part of the set. <br/><br/>Must be used with collection name (`class`), typically in conjunction with `limit`. <br/><br/>Note `after` cannot be used with `offset` or `sort`. <br/><br/>For a null value similar to offset=0, set an empty string in the request, i.e. `after=` or `after`.
-	After *string `form:"after,omitempty" json:"after,omitempty"`
+	After string `form:"after,omitempty" json:"after,omitempty"`
 
 	// Offset The starting index of the result window. Note `offset` will retrieve `offset+limit` results and return `limit` results from the object with index `offset` onwards. Limited by the value of `QUERY_MAXIMUM_RESULTS`. <br/><br/>Should be used in conjunction with `limit`. <br/><br/>Cannot be used with `after`.
-	Offset *int64 `form:"offset,omitempty" json:"offset,omitempty"`
+	Offset int64 `form:"offset,omitempty" json:"offset,omitempty"`
 
 	// Limit The maximum number of items to be returned per page. The default is 25 unless set otherwise as an environment variable.
-	Limit *int64 `form:"limit,omitempty" json:"limit,omitempty"`
+	Limit int64 `form:"limit,omitempty" json:"limit,omitempty"`
 
 	// Include Include additional information, such as classification information. Allowed values include: `classification`, `vector` and `interpretation`.
-	Include *string `form:"include,omitempty" json:"include,omitempty"`
+	Include string `form:"include,omitempty" json:"include,omitempty"`
 
 	// Sort Name(s) of the property to sort by - e.g. `city`, or `country,city`.
-	Sort *string `form:"sort,omitempty" json:"sort,omitempty"`
+	Sort string `form:"sort,omitempty" json:"sort,omitempty"`
 
 	// Order Order parameter to tell how to order (asc or desc) data within given field. Should be used in conjunction with `sort` parameter. If providing multiple `sort` values, provide multiple `order` values in corresponding order, e.g.: `sort=author_name,title&order=desc,asc`.
-	Order *string `form:"order,omitempty" json:"order,omitempty"`
+	Order string `form:"order,omitempty" json:"order,omitempty"`
 
 	// Class The collection from which to query objects.  <br/><br/>Note that if the collection name (`class`) is not provided, the response will not include any objects.
-	Class *string `form:"class,omitempty" json:"class,omitempty"`
+	Class string `form:"class,omitempty" json:"class,omitempty"`
 
 	// Tenant Specifies the tenant in a request targeting a multi-tenant collection (class).
-	Tenant *string `form:"tenant,omitempty" json:"tenant,omitempty"`
+	Tenant string `form:"tenant,omitempty" json:"tenant,omitempty"`
 }
 
 // ObjectsCreateParams defines parameters for ObjectsCreate.
 type ObjectsCreateParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 }
 
 // ObjectsClassDeleteParams defines parameters for ObjectsClassDelete.
 type ObjectsClassDeleteParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 
 	// Tenant Specifies the tenant in a request targeting a multi-tenant collection (class).
-	Tenant *string `form:"tenant,omitempty" json:"tenant,omitempty"`
+	Tenant string `form:"tenant,omitempty" json:"tenant,omitempty"`
 }
 
 // ObjectsClassGetParams defines parameters for ObjectsClassGet.
 type ObjectsClassGetParams struct {
 	// Include Include additional information, such as classification information. Allowed values include: `classification`, `vector` and `interpretation`.
-	Include *string `form:"include,omitempty" json:"include,omitempty"`
+	Include string `form:"include,omitempty" json:"include,omitempty"`
 
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 
 	// NodeName The target node which should fulfill the request.
-	NodeName *string `form:"node_name,omitempty" json:"node_name,omitempty"`
+	NodeName string `form:"node_name,omitempty" json:"node_name,omitempty"`
 
 	// Tenant Specifies the tenant in a request targeting a multi-tenant collection (class).
-	Tenant *string `form:"tenant,omitempty" json:"tenant,omitempty"`
+	Tenant string `form:"tenant,omitempty" json:"tenant,omitempty"`
 }
 
 // ObjectsClassHeadParams defines parameters for ObjectsClassHead.
 type ObjectsClassHeadParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 
 	// Tenant Specifies the tenant in a request targeting a multi-tenant collection (class).
-	Tenant *string `form:"tenant,omitempty" json:"tenant,omitempty"`
+	Tenant string `form:"tenant,omitempty" json:"tenant,omitempty"`
 }
 
 // ObjectsClassPatchParams defines parameters for ObjectsClassPatch.
 type ObjectsClassPatchParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 }
 
 // ObjectsClassPutParams defines parameters for ObjectsClassPut.
 type ObjectsClassPutParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 }
 
 // ObjectsClassReferencesDeleteParams defines parameters for ObjectsClassReferencesDelete.
 type ObjectsClassReferencesDeleteParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 
 	// Tenant Specifies the tenant in a request targeting a multi-tenant collection (class).
-	Tenant *string `form:"tenant,omitempty" json:"tenant,omitempty"`
+	Tenant string `form:"tenant,omitempty" json:"tenant,omitempty"`
 }
 
 // ObjectsClassReferencesCreateParams defines parameters for ObjectsClassReferencesCreate.
 type ObjectsClassReferencesCreateParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 
 	// Tenant Specifies the tenant in a request targeting a multi-tenant collection (class).
-	Tenant *string `form:"tenant,omitempty" json:"tenant,omitempty"`
+	Tenant string `form:"tenant,omitempty" json:"tenant,omitempty"`
 }
 
 // ObjectsClassReferencesPutParams defines parameters for ObjectsClassReferencesPut.
 type ObjectsClassReferencesPutParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 
 	// Tenant Specifies the tenant in a request targeting a multi-tenant collection (class).
-	Tenant *string `form:"tenant,omitempty" json:"tenant,omitempty"`
+	Tenant string `form:"tenant,omitempty" json:"tenant,omitempty"`
 }
 
 // ObjectsDeleteParams defines parameters for ObjectsDelete.
 type ObjectsDeleteParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 
 	// Tenant Specifies the tenant in a request targeting a multi-tenant collection (class).
-	Tenant *string `form:"tenant,omitempty" json:"tenant,omitempty"`
+	Tenant string `form:"tenant,omitempty" json:"tenant,omitempty"`
 }
 
 // ObjectsGetParams defines parameters for ObjectsGet.
 type ObjectsGetParams struct {
 	// Include Include additional information, such as classification information. Allowed values include: `classification`, `vector` and `interpretation`.
-	Include *string `form:"include,omitempty" json:"include,omitempty"`
+	Include string `form:"include,omitempty" json:"include,omitempty"`
 }
 
 // ObjectsPatchParams defines parameters for ObjectsPatch.
 type ObjectsPatchParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 }
 
 // ObjectsUpdateParams defines parameters for ObjectsUpdate.
 type ObjectsUpdateParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
-	ConsistencyLevel *string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 }
 
 // ObjectsReferencesDeleteParams defines parameters for ObjectsReferencesDelete.
 type ObjectsReferencesDeleteParams struct {
 	// Tenant Specifies the tenant in a request targeting a multi-tenant collection (class).
-	Tenant *string `form:"tenant,omitempty" json:"tenant,omitempty"`
+	Tenant string `form:"tenant,omitempty" json:"tenant,omitempty"`
 }
 
 // ObjectsReferencesCreateParams defines parameters for ObjectsReferencesCreate.
 type ObjectsReferencesCreateParams struct {
 	// Tenant Specifies the tenant in a request targeting a multi-tenant collection (class).
-	Tenant *string `form:"tenant,omitempty" json:"tenant,omitempty"`
+	Tenant string `form:"tenant,omitempty" json:"tenant,omitempty"`
 }
 
 // ObjectsReferencesUpdateParams defines parameters for ObjectsReferencesUpdate.
 type ObjectsReferencesUpdateParams struct {
 	// Tenant Specifies the tenant in a request targeting a multi-tenant collection (class).
-	Tenant *string `form:"tenant,omitempty" json:"tenant,omitempty"`
+	Tenant string `form:"tenant,omitempty" json:"tenant,omitempty"`
 }
 
 // ListReplicationParams defines parameters for ListReplication.
 type ListReplicationParams struct {
 	// TargetNode The name of the target node to get details for.
-	TargetNode *string `form:"targetNode,omitempty" json:"targetNode,omitempty"`
+	TargetNode string `form:"targetNode,omitempty" json:"targetNode,omitempty"`
 
 	// Collection The name of the collection to get details for.
-	Collection *string `form:"collection,omitempty" json:"collection,omitempty"`
+	Collection string `form:"collection,omitempty" json:"collection,omitempty"`
 
 	// Shard The shard to get details for.
-	Shard *string `form:"shard,omitempty" json:"shard,omitempty"`
+	Shard string `form:"shard,omitempty" json:"shard,omitempty"`
 
 	// IncludeHistory Whether to include the history of the replication operation.
-	IncludeHistory *bool `form:"includeHistory,omitempty" json:"includeHistory,omitempty"`
+	IncludeHistory bool `form:"includeHistory,omitempty" json:"includeHistory,omitempty"`
 }
 
 // ReplicationDetailsParams defines parameters for ReplicationDetails.
 type ReplicationDetailsParams struct {
 	// IncludeHistory Whether to include the history of the replication operation.
-	IncludeHistory *bool `form:"includeHistory,omitempty" json:"includeHistory,omitempty"`
+	IncludeHistory bool `form:"includeHistory,omitempty" json:"includeHistory,omitempty"`
 }
 
 // GetCollectionShardingStateParams defines parameters for GetCollectionShardingState.
 type GetCollectionShardingStateParams struct {
 	// Collection The collection name to get the sharding state for.
-	Collection *string `form:"collection,omitempty" json:"collection,omitempty"`
+	Collection string `form:"collection,omitempty" json:"collection,omitempty"`
 
 	// Shard The shard to get the sharding state for.
-	Shard *string `form:"shard,omitempty" json:"shard,omitempty"`
+	Shard string `form:"shard,omitempty" json:"shard,omitempty"`
 }
 
 // SchemaDumpParams defines parameters for SchemaDump.
 type SchemaDumpParams struct {
 	// Consistency If true, the request is proxied to the cluster leader to ensure strong schema consistency. Default is true.
-	Consistency *bool `json:"consistency,omitempty"`
+	Consistency bool `json:"consistency,omitempty"`
 }
 
 // SchemaObjectsGetParams defines parameters for SchemaObjectsGet.
 type SchemaObjectsGetParams struct {
 	// Consistency If true, the request is proxied to the cluster leader to ensure strong schema consistency. Default is true.
-	Consistency *bool `json:"consistency,omitempty"`
+	Consistency bool `json:"consistency,omitempty"`
 }
 
 // SchemaObjectsShardsGetParams defines parameters for SchemaObjectsShardsGet.
 type SchemaObjectsShardsGetParams struct {
 	// Tenant The name of the tenant for which to retrieve shard statuses (only applicable for multi-tenant collections).
-	Tenant *string `form:"tenant,omitempty" json:"tenant,omitempty"`
+	Tenant string `form:"tenant,omitempty" json:"tenant,omitempty"`
 }
 
 // TenantsDeleteJSONBody defines parameters for TenantsDelete.
@@ -2106,7 +2106,7 @@ type TenantsDeleteJSONBody = []string
 // TenantsGetParams defines parameters for TenantsGet.
 type TenantsGetParams struct {
 	// Consistency If true, the request is proxied to the cluster leader to ensure strong schema consistency. Default is true.
-	Consistency *bool `json:"consistency,omitempty"`
+	Consistency bool `json:"consistency,omitempty"`
 }
 
 // TenantsCreateJSONBody defines parameters for TenantsCreate.
@@ -2118,40 +2118,40 @@ type TenantsUpdateJSONBody = []Tenant
 // TenantsGetOneParams defines parameters for TenantsGetOne.
 type TenantsGetOneParams struct {
 	// Consistency If true, the request is proxied to the cluster leader to ensure strong schema consistency. Default is true.
-	Consistency *bool `json:"consistency,omitempty"`
+	Consistency bool `json:"consistency,omitempty"`
 }
 
 // TenantExistsParams defines parameters for TenantExists.
 type TenantExistsParams struct {
 	// Consistency If true, the request is proxied to the cluster leader to ensure strong schema consistency. Default is true.
-	Consistency *bool `json:"consistency,omitempty"`
+	Consistency bool `json:"consistency,omitempty"`
 }
 
 // ListAllUsersParams defines parameters for ListAllUsers.
 type ListAllUsersParams struct {
 	// IncludeLastUsedTime Whether to include the last time the users were utilized.
-	IncludeLastUsedTime *bool `form:"includeLastUsedTime,omitempty" json:"includeLastUsedTime,omitempty"`
+	IncludeLastUsedTime bool `form:"includeLastUsedTime,omitempty" json:"includeLastUsedTime,omitempty"`
 }
 
 // GetUserInfoParams defines parameters for GetUserInfo.
 type GetUserInfoParams struct {
 	// IncludeLastUsedTime Whether to include the last used time of the given user
-	IncludeLastUsedTime *bool `form:"includeLastUsedTime,omitempty" json:"includeLastUsedTime,omitempty"`
+	IncludeLastUsedTime bool `form:"includeLastUsedTime,omitempty" json:"includeLastUsedTime,omitempty"`
 }
 
 // CreateUserJSONBody defines parameters for CreateUser.
 type CreateUserJSONBody struct {
 	// CreateTime EXPERIMENTAL, DONT USE. THIS WILL BE REMOVED AGAIN. - set the given time as creation time
-	CreateTime *time.Time `json:"createTime,omitempty"`
+	CreateTime time.Time `json:"createTime,omitempty"`
 
 	// Import EXPERIMENTAL, DONT USE. THIS WILL BE REMOVED AGAIN. - import api key from static user
-	Import *bool `json:"import,omitempty"`
+	Import bool `json:"import,omitempty"`
 }
 
 // DeactivateUserJSONBody defines parameters for DeactivateUser.
 type DeactivateUserJSONBody struct {
 	// RevokeKey Whether the API key should be revoked when deactivating the user.
-	RevokeKey *bool `json:"revoke_key,omitempty"`
+	RevokeKey bool `json:"revoke_key,omitempty"`
 }
 
 // AliasesCreateJSONRequestBody defines body for AliasesCreate for application/json ContentType.
