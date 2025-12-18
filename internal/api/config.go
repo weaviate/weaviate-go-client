@@ -130,6 +130,38 @@ func (r *CreateCollectionRequest) Method() string { return http.MethodPost }
 func (r *CreateCollectionRequest) Path() string   { return "/schema" }
 func (r *CreateCollectionRequest) Body() any      { return r.Collection }
 
+// GetCollectionRequest by collection name.
+type GetCollectionRequest string
+
+var _ transport.Endpoint = (*GetCollectionRequest)(nil)
+
+func (d GetCollectionRequest) Method() string    { return http.MethodGet }
+func (d GetCollectionRequest) Path() string      { return "/schema/" + string(d) }
+func (d GetCollectionRequest) Query() url.Values { return nil }
+func (d GetCollectionRequest) Body() any         { return nil }
+
+// CollectionExistsResponse does 2 important thigs:
+// - It prevents the transport from returning an error on HTTP 404.
+// - It sets its value to true when its UnmarshalJSON method is called.
+// This allows us to implement what essentially is a HEAD request without
+// unmarshaling the GetCollectionRequest's response.
+type CollectionExistsResponse bool
+
+var (
+	_ transport.ErrorStatusAccepter = (*CollectionExistsResponse)(nil)
+	_ json.Unmarshaler              = (*CollectionExistsResponse)(nil)
+)
+
+func (r CollectionExistsResponse) AcceptStatus(code int) bool {
+	return code == http.StatusNotFound
+}
+
+// UnmarshalJSON sets r to true and returns nil error.
+func (r *CollectionExistsResponse) UnmarshalJSON([]byte) error {
+	*r = true
+	return nil
+}
+
 // ListCollectionsRequest fetches definitions for all collections in the schema.
 var ListCollectionsRequest = listCollectionsRequest{}
 

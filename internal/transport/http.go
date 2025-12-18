@@ -27,6 +27,12 @@ type Endpoint interface {
 	Body() any
 }
 
+// ErrorStatusAccepter is an interface that response types can implement to
+// control which HTTP status codes > 299 should not result in an error.
+type ErrorStatusAccepter interface {
+	AcceptStatus(code int) bool
+}
+
 func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 	var body io.Reader
 	if b := req.Body(); b != nil {
@@ -45,6 +51,7 @@ func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 
 	// Clone default request headers.
 	httpreq.Header = c.header.Clone()
+	// TODO: add Content-Type header if body != nil
 
 	res, err := c.c.Do(httpreq)
 	if err != nil {
@@ -64,8 +71,14 @@ func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 	}
 
 	if res.StatusCode > 299 {
-		if res.StatusCode == http.StatusNotFound {
-			return nil // leave dest a nil
+		// Some request types may want to "swallow" an bad status code,
+		// and not return an error in that case. We will not try to unmarshal
+		// the body in this case as it may not contain valid JSON, in which case
+		// we'll have to return an error anyways.
+		if as, ok := dest.(ErrorStatusAccepter); ok {
+			if as.AcceptStatus(res.StatusCode) {
+				return nil
+			}
 		}
 		// TODO(dyma): better error handling?
 		return fmt.Errorf("HTTP %d: %s", res.StatusCode, resBody)

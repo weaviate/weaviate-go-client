@@ -80,6 +80,10 @@ type CreateOptions struct {
 	MultiTenancy  MultiTenancyConfig
 }
 
+// Create new collection in the schema. A collection can be created with just the name.
+// To configure the new collection, provide a single instance of CreateOptions as the options argument.
+//
+// Avoid passing multiple options arguments at once -- only the last one will be applied.
 func (c *Client) Create(ctx context.Context, collectionName string, options ...CreateOptions) (*Handle, error) {
 	var collection Collection
 	for _, opt := range options {
@@ -100,13 +104,18 @@ func (c *Client) Create(ctx context.Context, collectionName string, options ...C
 	return c.Use(collectionName), nil
 }
 
+// GetConfig returns configuration for the collection.
+// Returns nil with nil error if collections does not exist.
 func (c *Client) GetConfig(ctx context.Context, collectionName string) (*Collection, error) {
-	if err := c.t.Do(ctx, nil, nil); err != nil {
+	var resp api.Collection
+	if err := c.t.Do(ctx, api.GetCollectionRequest(collectionName), &resp); err != nil {
 		return nil, fmt.Errorf("get collection config: %w", err)
 	}
-	return nil, nil
+	out := fromAPI(resp)
+	return &out, nil
 }
 
+// List returns configurations for all collections defined in the schema.
 func (c *Client) List(ctx context.Context) ([]Collection, error) {
 	var resp []api.Collection
 	if err := c.t.Do(ctx, api.ListCollectionsRequest, &resp); err != nil {
@@ -120,14 +129,19 @@ func (c *Client) List(ctx context.Context) ([]Collection, error) {
 	return out, nil
 }
 
-func (c *Client) Exists(ctx context.Context) (bool, error) {
-	// TODO(dyma): send the same request as in GetConfig, but pass nil-dest to skip unmarshaling.
-	if err := c.t.Do(ctx, nil, nil); err != nil {
+// Exists check if collection with this name exists. Always check the returned error,
+// as Exists may return false with both nil (collection does not exist) and non-nil
+// errors (request failed en route).
+func (c *Client) Exists(ctx context.Context, collectionName string) (bool, error) {
+	var exists api.CollectionExistsResponse
+	if err := c.t.Do(ctx, api.GetCollectionRequest(collectionName), &exists); err != nil {
 		return false, fmt.Errorf("check collection exists: %w", err)
 	}
-	return true, nil
+	return bool(exists), nil
 }
 
+// Delete collection by name.
+// TODO(dyma): Should we return an error on "not found" or not?
 func (c *Client) Delete(ctx context.Context, collectionName string) error {
 	if err := c.t.Do(ctx, api.DeleteCollectionRequest(collectionName), nil); err != nil {
 		return fmt.Errorf("delete collection: %w", err)
@@ -135,6 +149,7 @@ func (c *Client) Delete(ctx context.Context, collectionName string) error {
 	return nil
 }
 
+// DeleteAll collections in the schema.
 func (c *Client) DeleteAll(ctx context.Context) error {
 	all, err := c.List(ctx)
 	if err != nil {
