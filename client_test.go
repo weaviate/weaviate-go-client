@@ -39,13 +39,17 @@ func TestClient(t *testing.T) {
 	var single []float32
 	var multi [][]float32
 
-	h.Data.Insert(ctx, data.WithProperties(map[string]any{
-		"album": "Killin Is My Business... And Business Is Good!",
-		"title": "Rattlehead",
-	}), data.WithVector(
-		types.Vector{Name: "title", Single: single},
-		types.Vector{Name: "lyrics", Multi: multi},
-	), data.WithUUID(uuid.New()))
+	h.Data.Insert(ctx, &data.Object{
+		UUID: uuid.New(),
+		Properties: map[string]any{
+			"album": "Killin Is My Business... And Business Is Good!",
+			"title": "Rattlehead",
+		},
+		Vectors: []types.Vector{
+			{Name: "title", Single: single},
+			{Name: "lyrics", Multi: multi},
+		},
+	})
 
 	h.Query.NearVector(ctx,
 		types.Vector{Single: single},

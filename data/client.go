@@ -22,30 +22,42 @@ type Client struct {
 	defaults  api.RequestDefaults
 }
 
-func (c *Client) Insert(ctx context.Context, options ...InsertOption) (*types.Object[types.Map], error) {
-	var ir insertRequest
-	InsertOptions(options).Apply(&ir)
+type Object struct {
+	UUID       uuid.UUID
+	Properties any
+	Vectors    []types.Vector
+}
 
-	req := &api.InsertObjectRequest{
-		UUID:       ir.UUID,
-		Properties: ir.Properties,
-		References: nil, // TODO(dyma)
-		Vectors:    api.Vectors(ir.Vectors),
+func (c *Client) Insert(ctx context.Context, ir *Object) (*types.Object[types.Map], error) {
+	var req api.InsertObjectRequest
+	if ir != nil {
+		req = api.InsertObjectRequest{
+			UUID:       ir.UUID,
+			Properties: ir.Properties,
+			Vectors:    newVectors(ir.Vectors),
+		}
 	}
 
 	var resp api.InsertObjectResponse
-	if err := c.transport.Do(ctx, req, &resp); err != nil {
+	if err := c.transport.Do(ctx, &req, &resp); err != nil {
 		return nil, fmt.Errorf("insert object: %w", err)
 	}
 
 	return &types.Object[types.Map]{
-		UUID:       resp.UUID,
-		Properties: resp.Properties,
-		// References: resp.References,
+		UUID:               resp.UUID,
+		Properties:         resp.Properties,
 		Vectors:            types.Vectors(resp.Vectors),
 		CreationTimeUnix:   resp.CreationTimeUnix,
 		LastUpdateTimeUnix: resp.LastUpdateTimeUnix,
 	}, nil
+}
+
+func newVectors(vectors []types.Vector) api.Vectors {
+	vs := make(api.Vectors, len(vectors))
+	for _, v := range vectors {
+		vs[v.Name] = api.Vector(v)
+	}
+	return vs
 }
 
 func (c *Client) Delete(ctx context.Context, id uuid.UUID) error {
@@ -57,35 +69,4 @@ func (c *Client) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("delete alias: %w", err)
 	}
 	return nil
-}
-
-type insertRequest struct{ types.Object[types.Properties] }
-
-type InsertOption func(*insertRequest)
-
-type InsertOptions []InsertOption
-
-func (opts InsertOptions) Apply(*insertRequest) {}
-
-func WithUUID(uuid uuid.UUID) InsertOption {
-	return func(r *insertRequest) {
-		r.Object.UUID = uuid
-	}
-}
-
-func WithProperties(p types.Properties) InsertOption {
-	return func(r *insertRequest) {
-		r.Object.Properties = p
-	}
-}
-
-func WithVector(vectors ...types.Vector) InsertOption {
-	return func(r *insertRequest) {
-		if r.Object.Vectors == nil {
-			r.Object.Vectors = make(map[string]api.Vector, len(vectors))
-		}
-		for _, v := range vectors {
-			r.Object.Vectors[v.Name] = api.Vector(v)
-		}
-	}
 }
