@@ -49,7 +49,7 @@ func TestClient(t *testing.T) {
 
 	h.Query.NearVector(ctx,
 		types.Vector{Single: single},
-		query.NearVectorRequest{
+		query.NearVector{
 			Limit:      5,
 			Similarity: query.Distance(.34),
 		},
@@ -73,7 +73,7 @@ func TestClient(t *testing.T) {
 	grouped, _ := h.Query.NearVector.GroupBy(ctx,
 		types.Vector{Single: single},
 		query.GroupBy{Property: "album"},
-		query.NearVectorRequest{
+		query.NearVector{
 			AutoLimit: 2,
 		},
 	)

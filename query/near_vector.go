@@ -10,7 +10,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
-type NearVectorRequest struct {
+type NearVector struct {
 	Limit                  int                   // Limit the number of results returned for the query.
 	Offset                 int                   // Skip the first N objects in the collection.
 	AutoLimit              int                   // Return objects in the first N similarity clusters.
@@ -46,10 +46,10 @@ func Certainty(d float64) *Similarity { return &Similarity{certainty: &d} }
 type NearVectorTarget api.NearVectorTarget
 
 // NearVectorFunc runs plain near vector search.
-type NearVectorFunc func(context.Context, NearVectorTarget, ...NearVectorRequest) (*Result, error)
+type NearVectorFunc func(context.Context, NearVectorTarget, ...NearVector) (*Result, error)
 
 // GroupBy runs near vector search with a group by clause.
-func (nv NearVectorFunc) GroupBy(ctx context.Context, target NearVectorTarget, groupBy GroupBy, option ...NearVectorRequest) (*GroupByResult, error) {
+func (nv NearVectorFunc) GroupBy(ctx context.Context, target NearVectorTarget, groupBy GroupBy, option ...NearVector) (*GroupByResult, error) {
 	ctx = contextWithGroupByResult(ctx) // safe to reassign since we hold the copy of the original context.
 
 	opt, _ := internal.Last(option...)
@@ -62,7 +62,7 @@ func (nv NearVectorFunc) GroupBy(ctx context.Context, target NearVectorTarget, g
 	return getGroupByResult(ctx), nil
 }
 
-func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefaults, target NearVectorTarget, option ...NearVectorRequest) (*Result, error) {
+func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefaults, target NearVectorTarget, option ...NearVector) (*Result, error) {
 	nv, _ := internal.Last(option...)
 
 	properties := make([]api.ReturnProperty, len(nv.ReturnProperties)+len(nv.ReturnNestedProperties))
@@ -140,7 +140,7 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 
 // nearVectorFunc makes internal.Transport available to nearVector via a closure.
 func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc {
-	return func(ctx context.Context, target NearVectorTarget, option ...NearVectorRequest) (*Result, error) {
+	return func(ctx context.Context, target NearVectorTarget, option ...NearVector) (*Result, error) {
 		return nearVector(ctx, t, rd, target, option...)
 	}
 }
