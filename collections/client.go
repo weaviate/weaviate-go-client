@@ -70,34 +70,31 @@ func (h *Handle) WithOptions(options ...HandleOption) *Handle {
 	return newHandle(h.transport, defaults)
 }
 
-type createCollectionRequest struct{ Collection }
-
-type CreateCollectionOption func(*createCollectionRequest)
-
-func WithProperties(properties ...Property) CreateCollectionOption {
-	return func(r *createCollectionRequest) {
-		if r.Collection.Properties == nil {
-			r.Collection.Properties = make(map[string]Property, len(properties))
-		}
-		for _, p := range properties {
-			r.Collection.Properties[p.Name] = p
-		}
-	}
+type CreateOptions struct {
+	Description   string
+	Properties    []Property
+	References    []Reference
+	Sharding      ShardingConfig
+	Replication   ReplicationConfig
+	InvertedIndex InvertedIndexConfig
+	MultiTenancy  MultiTenancyConfig
 }
 
-func WithReferences(references ...ReferenceProperty) CreateCollectionOption {
-	return func(r *createCollectionRequest) {
-		if r.Collection.References == nil {
-			r.Collection.References = make(map[string]ReferenceProperty, len(references))
-		}
-		for _, ref := range references {
-			r.Collection.References[ref.Name] = ref
-		}
+func (c *Client) Create(ctx context.Context, collectionName string, options ...CreateOptions) (*Handle, error) {
+	var collection Collection
+	for _, opt := range options {
+		collection.Description = opt.Description
+		collection.Properties = opt.Properties
+		collection.References = opt.References
+		collection.Sharding = opt.Sharding
+		collection.Replication = opt.Replication
+		collection.InvertedIndex = opt.InvertedIndex
+		collection.MultiTenancy = opt.MultiTenancy
 	}
-}
+	collection.Name = collectionName
 
-func (c *Client) Create(ctx context.Context, collectionName string, options ...CreateCollectionOption) (*Handle, error) {
-	if err := c.t.Do(ctx, nil, nil); err != nil {
+	req := &api.CreateCollectionRequest{Collection: collection.toAPI()}
+	if err := c.t.Do(ctx, req, nil); err != nil {
 		return nil, fmt.Errorf("create collection: %w", err)
 	}
 	return c.Use(collectionName), nil

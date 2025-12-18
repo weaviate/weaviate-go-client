@@ -18,10 +18,10 @@ type (
 	SearchRequest struct {
 		RequestDefaults
 
-		Limit            *int
-		Offset           *int
-		AutoLimit        *int
-		After            *string
+		Limit            int
+		Offset           int
+		AutoLimit        int
+		After            string
 		ReturnProperties []ReturnProperty
 		ReturnReferences []ReturnReference
 		ReturnVectors    []string
@@ -161,10 +161,10 @@ func (req *SearchRequest) MarshalMessage() *proto.SearchRequest {
 		Collection:       req.CollectionName,
 		Tenant:           req.Tenant,
 		ConsistencyLevel: req.ConsistencyLevel.proto(),
-		Limit:            uint32(zeroNil(req.Limit)),
-		Offset:           uint32(zeroNil(req.Offset)),
-		Autocut:          uint32(zeroNil(req.AutoLimit)),
-		After:            zeroNil(req.After),
+		Limit:            uint32(req.Limit),
+		Offset:           uint32(req.Offset),
+		Autocut:          uint32(req.AutoLimit),
+		After:            req.After,
 	}
 
 	var properties proto.PropertiesRequest
@@ -193,6 +193,7 @@ func (req *SearchRequest) MarshalMessage() *proto.SearchRequest {
 	} else {
 		// ReturnProperties were explicitly set to an empty slice, do not return any.
 	}
+	sr.Properties = &properties
 
 	// ReturnVectors were explicitly set to an empty slice, include the "only" vector.
 	returnTheOnlyVector := len(req.ReturnVectors) == 0 && req.ReturnVectors != nil

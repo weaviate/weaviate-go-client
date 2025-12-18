@@ -26,40 +26,16 @@ type Client struct {
 // commonOptions are parameters applicable to all search types.
 // Concrete request structs should embed this struct.
 type commonOptions struct {
-	Limit            *int
-	Offset           *int
-	AutoLimit        *int
-	After            *string
+	Limit            int
+	Offset           int
+	AutoLimit        int
+	After            string
 	ReturnProperties []api.ReturnProperty
 	ReturnReferences []api.ReturnReference // TODO(dyma): add functional option for this
 	ReturnVectors    []string
 	ReturnMetadata   []api.MetadataRequest
 	GroupBy          *GroupBy
 }
-
-// WithLimit sets the `limit` parameter.
-type WithLimit int
-
-// Compile-time assertion that WithLimit implements NearVectorOption.
-var _ NearVectorOption = (*WithLimit)(nil)
-
-// WithOffset sets the `offset` parameter.
-type WithOffset int
-
-// Compile-time assertion that WithOffset implements NearVectorOption.
-var _ NearVectorOption = (*WithOffset)(nil)
-
-// WithAutoLimit sets the `autocut` parameter.
-type WithAutoLimit int
-
-// Compile-time assertion that WithAutoLimit implements NearVectorOption.
-var _ NearVectorOption = (*WithAutoLimit)(nil)
-
-// WithAfter sets the `after` parameter.
-type WithAfter string
-
-// Compile-time assertion that WithAfter implements NearVectorOption.
-var _ NearVectorOption = (*WithAfter)(nil)
 
 // ReturnVectorOption selects vectors to include in the response.
 type ReturnVectorOption []string

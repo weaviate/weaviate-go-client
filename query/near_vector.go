@@ -24,15 +24,14 @@ func (nv NearVectorFunc) GroupBy(ctx context.Context, target NearVectorTarget, g
 	return getGroupByResult(ctx), nil
 }
 
-type nearVectorRequest struct {
+type NearVectorRequest struct {
 	commonOptions
-	Target              NearVectorTarget
 	Distance, Certainty *float64
 }
 
 // NearVectorOption populates nearVectorRequest.
 type NearVectorOption interface {
-	apply(*nearVectorRequest)
+	apply(*NearVectorRequest)
 }
 
 type NearVectorOptions []NearVectorOption
@@ -53,7 +52,7 @@ type WithCertainty float64
 var _ NearVectorOption = (*WithCertainty)(nil)
 
 func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefaults, target NearVectorTarget, options ...NearVectorOption) (*Result, error) {
-	nv := nearVectorRequest{Target: target}
+	nv := NearVectorRequest{}
 	for _, opt := range options {
 		opt.apply(&nv)
 	}
@@ -69,7 +68,7 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 		ReturnVectors:    nv.ReturnVectors,
 		ReturnMetadata:   api.NewSet(nv.ReturnMetadata),
 		NearVector: &api.NearVector{
-			Target:    nv.Target,
+			Target:    target,
 			Distance:  nv.Distance,
 			Certainty: nv.Certainty,
 		},
@@ -121,20 +120,16 @@ func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc
 	}
 }
 
-func (opt WithLimit) apply(r *nearVectorRequest)              { r.Limit = (*int)(&opt) }
-func (opt WithOffset) apply(r *nearVectorRequest)             { r.Offset = (*int)(&opt) }
-func (opt WithAutoLimit) apply(r *nearVectorRequest)          { r.AutoLimit = (*int)(&opt) }
-func (opt WithAfter) apply(r *nearVectorRequest)              { r.After = (*string)(&opt) }
-func (opt returnPropertiesOption) apply(r *nearVectorRequest) { r.ReturnProperties = opt }
-func (opt ReturnVectorOption) apply(r *nearVectorRequest)     { r.ReturnVectors = opt }
-func (opt returnMetadataOption) apply(r *nearVectorRequest)   { r.ReturnMetadata = opt }
-func (opt WithCertainty) apply(r *nearVectorRequest)          { r.Certainty = (*float64)(&opt) }
-func (opt WithDistance) apply(r *nearVectorRequest)           { r.Distance = (*float64)(&opt) }
-func (gb groupByOption) apply(r *nearVectorRequest)           { r.GroupBy = (*GroupBy)(&gb) }
+func (opt returnPropertiesOption) apply(r *NearVectorRequest) { r.ReturnProperties = opt }
+func (opt ReturnVectorOption) apply(r *NearVectorRequest)     { r.ReturnVectors = opt }
+func (opt returnMetadataOption) apply(r *NearVectorRequest)   { r.ReturnMetadata = opt }
+func (opt WithCertainty) apply(r *NearVectorRequest)          { r.Certainty = (*float64)(&opt) }
+func (opt WithDistance) apply(r *NearVectorRequest)           { r.Distance = (*float64)(&opt) }
+func (gb groupByOption) apply(r *NearVectorRequest)           { r.GroupBy = (*GroupBy)(&gb) }
 
 // NearVectorOption can be applied as a single option,
 // in which case it will individually apply the options it comprises.
-func (opts NearVectorOptions) apply(r *nearVectorRequest) {
+func (opts NearVectorOptions) apply(r *NearVectorRequest) {
 	for _, opt := range opts {
 		opt.apply(r)
 	}
