@@ -32,7 +32,7 @@ type Reference struct {
 	TargetCollection       string
 	ReturnProperties       []string
 	ReturnNestedProperties []NestedProperty // Return object properties and a subset of their nested properties.
-	ReturnMetadata         Set[MetadataRequest]
+	ReturnMetadata         []Metadata
 }
 
 type Metadata api.MetadataRequest

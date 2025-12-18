@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	weaviate "github.com/weaviate/weaviate-go-client/v6"
+	"github.com/weaviate/weaviate-go-client/v6"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
+	"github.com/weaviate/weaviate-go-client/v6/data"
 	"github.com/weaviate/weaviate-go-client/v6/query"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
@@ -21,7 +22,7 @@ func main() {
 	ctx := context.Background()
 
 	// Create client
-	client, _ := weaviate.NewClient()
+	client, _ := weaviate.NewLocal(ctx)
 
 	// Get collection handle
 	songs := client.Collections.Use("Songs")
@@ -41,18 +42,18 @@ func main() {
 
 func insertObjects(ctx context.Context, songs *collections.Handle) {
 	// Insert with struct and vector
-	song1 := Song{
+	_ = Song{
 		Title:  "Bohemian Rhapsody",
 		Artist: "Queen",
 		Year:   1975,
 		Genre:  "Rock",
 	}
 
-	id, _ := songs.Data.Insert(ctx,
-		data.WithProperties(song1),
-		data.WithVector(types.Vector{Single: []float32{0.1, 0.2, 0.3}}),
-	)
-	fmt.Printf("Inserted with ID: %s\n", id)
+	obj, _ := songs.Data.Insert(ctx, &data.Object{
+		Properties: nil,
+		Vectors:    []types.Vector{{Single: []float32{0.1, 0.2, 0.3}}},
+	})
+	fmt.Printf("Inserted with ID: %s\n", obj.UUID)
 
 	// Insert with map, no vector
 	song2 := map[string]any{
@@ -62,10 +63,8 @@ func insertObjects(ctx context.Context, songs *collections.Handle) {
 		"genre":  "Rock",
 	}
 
-	id, _ := songs.Data.Insert(ctx,
-		data.WithProperties(song2),
-	)
-	fmt.Printf("Inserted with ID: %s\n", id)
+	obj, _ = songs.Data.Insert(ctx, &data.Object{Properties: song2})
+	fmt.Printf("Inserted with ID: %s\n", obj.UUID)
 }
 
 func queryWithMaps(ctx context.Context, songs *collections.Handle) {
@@ -73,11 +72,11 @@ func queryWithMaps(ctx context.Context, songs *collections.Handle) {
 		Single: []float32{0.1, 0.2, 0.3, 0.4},
 	}
 
-	result, _ := songs.Query.NearVector(ctx, queryVector,
-		query.WithLimit(2),
-		query.WithDistance(0.5),
-		query.WithOffset(3),
-	)
+	result, _ := songs.Query.NearVector(ctx, queryVector, query.NearVector{
+		Limit:      2,
+		Similarity: query.Distance(0.5),
+		Offset:     3,
+	})
 
 	for i, obj := range result.Objects {
 		number := obj.Properties["number"].(string)
@@ -95,9 +94,9 @@ func queryWithTypes(ctx context.Context, songs *collections.Handle) {
 	}
 
 	// Get results as maps first
-	result, _ := songs.Query.NearVector(ctx, queryVector,
-		query.WithLimit(3),
-	)
+	result, _ := songs.Query.NearVector(ctx, queryVector, query.NearVector{
+		Limit: 3,
+	})
 
 	// Demonstrates type-safe scanning (Song struct would need to match actual data)
 	typedObjects := query.Scan[Song](result)
