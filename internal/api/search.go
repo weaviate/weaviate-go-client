@@ -7,6 +7,13 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
+// Compile-time assertions that SearchRequest/SearchResponse
+// implement valid gRPC message interfaces.
+var (
+	_ transport.MessageMarshaler[proto.SearchRequest] = (*SearchRequest)(nil)
+	_ transport.MessageUnmarshaler[proto.SearchReply] = (*SearchResponse)(nil)
+)
+
 type (
 	SearchRequest struct {
 		RequestDefaults
@@ -75,12 +82,6 @@ type (
 		UnnamedVector      Vector
 		NamedVectors       Vectors
 	}
-)
-
-// Compile-time assertions that SearchRequest implements Request.
-var (
-	// _ internal.Request                                          = (*SearchRequest)(nil)
-	_ transport.Message[proto.SearchRequest, proto.SearchReply] = (*SearchRequest)(nil)
 )
 
 func (r *SearchRequest) Body() any { return r }
@@ -155,7 +156,7 @@ func (cm CombinationMethod) proto() proto.CombinationMethod {
 }
 
 // MarshalSearchRequest() constructs a proto.SearchRequest.
-func (req *SearchRequest) Marshal() *proto.SearchRequest {
+func (req *SearchRequest) MarshalMessage() *proto.SearchRequest {
 	sr := &proto.SearchRequest{
 		Collection:       req.CollectionName,
 		Tenant:           req.Tenant,
@@ -277,8 +278,8 @@ func marshalVector(v *Vector) *proto.Vectors {
 	return out
 }
 
-// Unmarshal unmarshals proto.SearchReply into an api.SearchResponse
-func (r SearchRequest) Unmarshal(reply *proto.SearchReply, dest any) error {
+// UnmarshalMessage reads proto.SearchReply into this SearchResponse.
+func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
 	dev.Assert(reply != nil, "search reply is nil")
 
 	objects := make([]Object, len(reply.Results))
@@ -327,15 +328,10 @@ func (r SearchRequest) Unmarshal(reply *proto.SearchReply, dest any) error {
 		}
 	}
 
-	resp := SearchResponse{
+	*r = SearchResponse{
 		TookSeconds:    reply.GetTook(),
 		Results:        objects,
 		GroupByResults: groups,
-	}
-
-	{
-		dest := dev.AssertType[*SearchResponse](dest)
-		*dest = resp
 	}
 	return nil
 }

@@ -18,30 +18,50 @@ import (
 // on nil replies instead of doing dev.Assert.
 var errNilReply = errors.New("nil reply")
 
-// Message describes a gRPC request.
-type Message[Request any, Reply any] interface {
-	// Marshal creates a protobuf message holding the body of the request.
-	//
-	// In practice, the request struct will need to marshal itself
-	// into an appropriate protobuf stub from the "internal/api/gen/proto" package.
-	Marshal() *Request
-
-	// Unmarshal converts the gRPC reply into a response type
-	// corresponding to the kind of request and assigns it to dest.
-	Unmarshal(r *Reply, dest any) error
+// RequestMessage enumerates all gRPC requests accepted by this transport.
+type RequestMessage interface {
+	proto.SearchRequest |
+		proto.AggregateRequest |
+		proto.TenantsGetRequest |
+		proto.BatchDeleteRequest |
+		proto.BatchObjectsRequest |
+		proto.BatchReferencesRequest |
+		proto.BatchStreamRequest
 }
 
-// do obtains a protobuf message from the request body and dispatches
-// to the appropriate proto.WeaviateClient method based on its kind.
+// ReplyMessage enumerates gRPC replies this transport can produce.
+type ReplyMessage interface {
+	proto.SearchReply |
+		proto.AggregateReply |
+		proto.TenantsGetReply |
+		proto.BatchDeleteReply |
+		proto.BatchObjectsReply |
+		proto.BatchReferencesReply |
+		proto.BatchStreamReply
+}
+
+// MessageMarshaler marshals the body of the request into a protobuf message.
+type MessageMarshaler[R RequestMessage] interface {
+	MarshalMessage() *R
+}
+
+// UnmarshalMessage unmarshals a protobuf message into the response object.
+type MessageUnmarshaler[R ReplyMessage] interface {
+	UnmarshalMessage(*R) error
+}
+
+// do dispatches to the appropriate proto.WeaviateClient method based on
+// the request type. req MUST implement MessageMarshaler for one of RequestMessage types,
+// and dest MUST implement MessageUnmarshaler for the corresponding reply.
 func (c *gRPCClient) do(ctx context.Context, req any, dest any) error {
 	dev.Assert(req != nil, "nil gRPC request")
 
 	var err error
 	switch m := req.(type) {
-	case Message[proto.SearchRequest, proto.SearchReply]:
+	case MessageMarshaler[proto.SearchRequest]:
 		err = c.search(ctx, m, dest)
 	default:
-		dev.Assert(false, "unknown gRPC message type %T", m)
+		dev.Assert(false, "%T does not implement MessageMarshaler for any of the supported request types", m)
 	}
 
 	if err != nil {
@@ -50,8 +70,8 @@ func (c *gRPCClient) do(ctx context.Context, req any, dest any) error {
 	return nil
 }
 
-func (c *gRPCClient) search(ctx context.Context, m Message[proto.SearchRequest, proto.SearchReply], dest any) error {
-	reply, err := c.wc.Search(ctx, m.Marshal())
+func (c *gRPCClient) search(ctx context.Context, m MessageMarshaler[proto.SearchRequest], dest any) error {
+	reply, err := c.wc.Search(ctx, m.MarshalMessage())
 	if err != nil {
 		return fmt.Errorf("search: %w", err)
 	}
@@ -62,10 +82,23 @@ func (c *gRPCClient) search(ctx context.Context, m Message[proto.SearchRequest, 
 		return fmt.Errorf("search: %w", errNilReply)
 	}
 
-	if err := m.Unmarshal(reply, dest); err != nil {
-		return fmt.Errorf("search: unmarshal respose: %w", err)
+	if err := unmarshal(reply, dest); err != nil {
+		return fmt.Errorf("search: %w", err)
 	}
 	return nil
+}
+
+func unmarshal[R ReplyMessage](reply *R, dest any) error {
+	if dest == nil {
+		return nil
+	}
+	if u, ok := dest.(MessageUnmarshaler[R]); ok {
+		return u.UnmarshalMessage(reply)
+	}
+	return fmt.Errorf(
+		"cannot unmarshal %T into %T: dest does not implement %T",
+		reply, dest, *new(MessageUnmarshaler[R]),
+	)
 }
 
 func newGRPCClient(opt Config) (*gRPCClient, error) {

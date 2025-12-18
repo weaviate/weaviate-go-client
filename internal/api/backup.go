@@ -114,7 +114,9 @@ type BackupStatusRequest struct {
 }
 
 // Compile-time assertion that BackupStatusRequest implements [tranport.Endpoint].
-var _ transport.Endpoint = (*BackupStatusRequest)(nil)
+var (
+	_ transport.Endpoint = (*BackupStatusRequest)(nil)
+)
 
 func (r *BackupStatusRequest) Method() string { return http.MethodGet }
 func (r *BackupStatusRequest) Path() string {
