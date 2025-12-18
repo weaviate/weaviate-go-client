@@ -19,11 +19,7 @@ func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
 
 type Client struct {
 	transport internal.Transport
-
-	rest internal.Transport
-	grpc internal.Transport
-
-	defaults api.RequestDefaults
+	defaults  api.RequestDefaults
 }
 
 func (c *Client) Insert(ctx context.Context, options ...InsertOption) (*types.Object[types.Map], error) {
