@@ -123,15 +123,21 @@ func (c *Client) Exists(ctx context.Context) (bool, error) {
 }
 
 func (c *Client) Delete(ctx context.Context, collectionName string) error {
-	if err := c.t.Do(ctx, nil, nil); err != nil {
+	if err := c.t.Do(ctx, api.DeleteCollectionRequest(collectionName), nil); err != nil {
 		return fmt.Errorf("delete collection: %w", err)
 	}
 	return nil
 }
 
 func (c *Client) DeleteAll(ctx context.Context) error {
-	if err := c.t.Do(ctx, nil, nil); err != nil {
+	all, err := c.List(ctx)
+	if err != nil {
 		return fmt.Errorf("delete all collections: %w", err)
+	}
+	for _, collection := range all {
+		if err := c.Delete(ctx, collection.Name); err != nil {
+			return err
+		}
 	}
 	return nil
 }

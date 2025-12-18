@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/rest"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
@@ -108,6 +109,16 @@ var _ transport.Endpoint = (*CreateCollectionRequest)(nil)
 func (r *CreateCollectionRequest) Method() string { return http.MethodPost }
 func (r *CreateCollectionRequest) Path() string   { return "/schema" }
 func (r *CreateCollectionRequest) Body() any      { return r.toREST() }
+
+// DeleteCollectionRequest by collection name.
+type DeleteCollectionRequest string
+
+var _ transport.Endpoint = (*DeleteCollectionRequest)(nil)
+
+func (d DeleteCollectionRequest) Method() string    { return http.MethodDelete }
+func (d DeleteCollectionRequest) Path() string      { return "/schema/" + string(d) }
+func (d DeleteCollectionRequest) Query() url.Values { return nil }
+func (d DeleteCollectionRequest) Body() any         { return nil }
 
 // toREST repackages Collection into [rest.Class]
 // and returns a reference to it to avoid unnecessary copy.

@@ -1,6 +1,8 @@
 package api
 
-import "net/url"
+import (
+	"net/url"
+)
 
 const Version = "v1"
 
@@ -21,7 +23,7 @@ type RequestDefaults struct {
 //		Artist string
 //	}
 //
-//	// ListSongsRequest implements Endpoint.
+//	// ListSongsRequest implements transport.Endpoint.
 //	var _ transport.Endpoint = (*ListSongsRequest)(nil)
 //
 //	func (r *ListSongsRequest) Method() string { return http.MethodGet }
