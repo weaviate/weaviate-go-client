@@ -13,11 +13,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// Since gRPC client is generated and is essentialy a third-party dependency,
-// we cannot guarantee the response to be always non-nil, so we return an error
-// on nil replies instead of doing dev.Assert.
-var errNilReply = errors.New("nil reply")
-
 // RequestMessage enumerates all gRPC requests accepted by this transport.
 type RequestMessage interface {
 	proto.SearchRequest |
@@ -76,16 +71,33 @@ func (c *gRPCClient) do(ctx context.Context, req any, dest any) error {
 	return nil
 }
 
+// Unmarshal unmarshals reply R into dest. A nil dest means the reply can be ignored,
+// which returns with a nil error immediately. A nil reply returns an non-nil error.
+// A dest that does not implement MessageUnmarshaler[R] returns a non-nil error.
+// Otherwise UnmarshalMessage() is called with reply *R and the unmarshaling error is returned.
+func unmarshal[R ReplyMessage](reply *R, dest any) error {
+	if dest == nil {
+		return nil
+	}
+	if reply == nil {
+		// Since gRPC client is generated and is essentialy a third-party dependency,
+		// we cannot guarantee the response to be always non-nil, so we return an error
+		// on nil replies instead of doing dev.Assert.
+		return errors.New("nil reply")
+	}
+	if u, ok := dest.(MessageUnmarshaler[R]); ok {
+		return u.UnmarshalMessage(reply)
+	}
+	return fmt.Errorf(
+		"cannot unmarshal %T into %T: dest does not implement %T",
+		reply, dest, *new(MessageUnmarshaler[R]),
+	)
+}
+
 func (c *gRPCClient) search(ctx context.Context, m MessageMarshaler[proto.SearchRequest], dest any) error {
 	reply, err := c.wc.Search(ctx, m.MarshalMessage())
 	if err != nil {
 		return fmt.Errorf("search: %w", err)
-	}
-
-	if reply == nil {
-		// Since gRPC client is generated and is essentialy a third-party dependency,
-		// we cannot guarantee the response to be always non-nil, so we do not dev.Assert.
-		return fmt.Errorf("search: %w", errNilReply)
 	}
 
 	if err := unmarshal(reply, dest); err != nil {
@@ -100,12 +112,6 @@ func (c *gRPCClient) aggregate(ctx context.Context, m MessageMarshaler[proto.Agg
 		return fmt.Errorf("aggregate: %w", err)
 	}
 
-	if reply == nil {
-		// Since gRPC client is generated and is essentialy a third-party dependency,
-		// we cannot guarantee the response to be always non-nil, so we do not dev.Assert.
-		return fmt.Errorf("aggregate: %w", errNilReply)
-	}
-
 	if err := unmarshal(reply, dest); err != nil {
 		return fmt.Errorf("aggregate: %w", err)
 	}
@@ -116,12 +122,6 @@ func (c *gRPCClient) batchDelete(ctx context.Context, m MessageMarshaler[proto.B
 	reply, err := c.wc.BatchDelete(ctx, m.MarshalMessage())
 	if err != nil {
 		return fmt.Errorf("batchDelete: %w", err)
-	}
-
-	if reply == nil {
-		// Since gRPC client is generated and is essentialy a third-party dependency,
-		// we cannot guarantee the response to be always non-nil, so we do not dev.Assert.
-		return fmt.Errorf("batchDelete: %w", errNilReply)
 	}
 
 	if err := unmarshal(reply, dest); err != nil {
@@ -136,12 +136,6 @@ func (c *gRPCClient) batchObjects(ctx context.Context, m MessageMarshaler[proto.
 		return fmt.Errorf("batchObjects: %w", err)
 	}
 
-	if reply == nil {
-		// Since gRPC client is generated and is essentialy a third-party dependency,
-		// we cannot guarantee the response to be always non-nil, so we do not dev.Assert.
-		return fmt.Errorf("batchObjects: %w", errNilReply)
-	}
-
 	if err := unmarshal(reply, dest); err != nil {
 		return fmt.Errorf("batchObjects: %w", err)
 	}
@@ -154,29 +148,10 @@ func (c *gRPCClient) batchReferences(ctx context.Context, m MessageMarshaler[pro
 		return fmt.Errorf("batchReferences: %w", err)
 	}
 
-	if reply == nil {
-		// Since gRPC client is generated and is essentialy a third-party dependency,
-		// we cannot guarantee the response to be always non-nil, so we do not dev.Assert.
-		return fmt.Errorf("batchReferences: %w", errNilReply)
-	}
-
 	if err := unmarshal(reply, dest); err != nil {
 		return fmt.Errorf("batchReferences: %w", err)
 	}
 	return nil
-}
-
-func unmarshal[R ReplyMessage](reply *R, dest any) error {
-	if dest == nil {
-		return nil
-	}
-	if u, ok := dest.(MessageUnmarshaler[R]); ok {
-		return u.UnmarshalMessage(reply)
-	}
-	return fmt.Errorf(
-		"cannot unmarshal %T into %T: dest does not implement %T",
-		reply, dest, *new(MessageUnmarshaler[R]),
-	)
 }
 
 func newGRPCClient(opt Config) (*gRPCClient, error) {
