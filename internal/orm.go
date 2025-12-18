@@ -6,13 +6,13 @@ import "github.com/go-viper/mapstructure/v2"
 const tagName = "json"
 
 // Decode is a thin wrapper around mapstructure.Decode
-// that uses "json" tags instead of the default "mapstructure".
-func Decode[P any](m map[string]any) (*P, error) {
-	var out P
+// that decodes map[string]any into a Go struct.
+// It uses "json" tags instead of the default "mapstructure".
+func Decode[T any](m map[string]any) (*T, error) {
+	var out T
 	d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		TagName:    tagName,
-		ZeroFields: true,
-		Result:     &out,
+		TagName: tagName,
+		Result:  &out,
 	})
 	if err != nil {
 		return nil, err
@@ -21,4 +21,22 @@ func Decode[P any](m map[string]any) (*P, error) {
 		return nil, err
 	}
 	return &out, nil
+}
+
+// Decode is a thin wrapper around mapstructure.Decode
+// that encodes a Go struct into a map[string]any.
+// It uses "json" tags instead of the default "mapstructure".
+func Encode[T any](v *T) (map[string]any, error) {
+	out := make(map[string]any, 0)
+	d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		TagName: tagName,
+		Result:  &out,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err := d.Decode(v); err != nil {
+		return nil, err
+	}
+	return out, nil
 }

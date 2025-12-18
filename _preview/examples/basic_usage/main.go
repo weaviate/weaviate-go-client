@@ -43,15 +43,20 @@ func main() {
 
 func insertObjects(ctx context.Context, songs *collections.Handle) {
 	// Insert with struct and vector
-	_ = Song{
+	song1 := Song{
 		Title:  "Bohemian Rhapsody",
 		Artist: "Queen",
 		Year:   1975,
 		Genre:  "Rock",
 	}
 
+	m, err := data.Encode(&song1)
+	log.Print(m)
+	if err != nil {
+		log.Fatal(err)
+	}
 	obj, err := songs.Data.Insert(ctx, &data.Object{
-		Properties: nil,
+		Properties: m,
 		Vectors:    []types.Vector{{Single: []float32{0.1, 0.2, 0.3}}},
 	})
 	if err != nil {
