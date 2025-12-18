@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/weaviate/weaviate-go-client/v6"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
@@ -49,10 +50,13 @@ func insertObjects(ctx context.Context, songs *collections.Handle) {
 		Genre:  "Rock",
 	}
 
-	obj, _ := songs.Data.Insert(ctx, &data.Object{
+	obj, err := songs.Data.Insert(ctx, &data.Object{
 		Properties: nil,
 		Vectors:    []types.Vector{{Single: []float32{0.1, 0.2, 0.3}}},
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Printf("Inserted with ID: %s\n", obj.UUID)
 
 	// Insert with map, no vector
@@ -99,7 +103,7 @@ func queryWithTypes(ctx context.Context, songs *collections.Handle) {
 	})
 
 	// Demonstrates type-safe scanning (Song struct would need to match actual data)
-	typedObjects := query.Scan[Song](result)
+	typedObjects, _ := query.Decode[Song](result)
 
 	for i, song := range typedObjects {
 		fmt.Printf("%d. Title: %s, Artist: %s, Year: %d, Genre: %s (UUID: %s)\n",

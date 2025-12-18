@@ -68,7 +68,7 @@ func NewWeaviateCloud(ctx context.Context, hostname, apiKey string, config ...Co
 		strings.Contains(hostname, domainWeaviateCloud) ||
 		strings.Contains(hostname, domainSemiTechnology) {
 		clusterURL := cloud.Scheme + "://" + hostname + ":" + strconv.Itoa(cloud.HTTPPort)
-		cloud.Header.Add(headerWeaviateClusterURL, clusterURL)
+		cloud.Header = http.Header{headerWeaviateClusterURL: {clusterURL}}
 	}
 
 	cfg, _ := internal.Last(config...)
@@ -113,8 +113,13 @@ var defaultLocalConfig = ConnectionConfig{
 	GRPCPort: 50051,
 }
 
+// Default config for all connections.
+var defaultConfig = ConnectionConfig{
+	Header: http.Header{headerWeaviateClient: {clientName + "/" + version}},
+}
+
 func newClient(_ context.Context, cfg ConnectionConfig) (*Client, error) {
-	cfg.Header.Set(headerWeaviateClient, clientName+"/"+version)
+	defaultConfig.extend(&cfg)
 
 	t, err := transport.New(transport.Config{
 		Scheme:   cfg.Scheme,

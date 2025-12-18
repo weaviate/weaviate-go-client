@@ -110,23 +110,26 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 	if nv.groupBy != nil {
 		var res GroupByResult
 		groups := make(map[string]Group[types.Map], len(resp.GroupByResults))
+		objects := make([]GroupByObject[types.Map], len(resp.GroupByResults))
 		for name, group := range resp.GroupByResults {
-			var objects []GroupByObject[types.Map]
 			for _, obj := range group.Objects {
 				objects = append(objects, GroupByObject[types.Map]{
 					BelongsToGroup: name,
 					Object:         unmarshalObject(obj.Object),
 				})
 			}
-			res.Objects = append(res.Objects, objects...)
+
+			// Create a view into the Objects slice rather than allocating a separate one.
+			from, to := len(objects)-len(group.Objects), len(objects)-1
 			groups[name] = Group[types.Map]{
 				Name:        name,
 				MinDistance: group.MinDistance,
 				MaxDistance: group.MaxDistance,
 				Size:        group.Size,
-				Objects:     objects,
+				Objects:     objects[from:to],
 			}
 		}
+		res.Objects = objects
 		setGroupByResult(ctx, &res)
 		return nil, nil
 	}
