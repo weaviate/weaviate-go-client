@@ -84,9 +84,9 @@ type CreateOptions struct {
 // To configure the new collection, provide a single instance of CreateOptions as the options argument.
 //
 // Avoid passing multiple options arguments at once -- only the last one will be applied.
-func (c *Client) Create(ctx context.Context, collectionName string, options ...CreateOptions) (*Handle, error) {
-	var collection Collection
-	for _, opt := range options {
+func (c *Client) Create(ctx context.Context, collectionName string, option ...CreateOptions) (*Handle, error) {
+	collection := Collection{Name: collectionName}
+	if opt, ok := internal.Last(option...); ok {
 		collection.Description = opt.Description
 		collection.Properties = opt.Properties
 		collection.References = opt.References
@@ -95,9 +95,10 @@ func (c *Client) Create(ctx context.Context, collectionName string, options ...C
 		collection.InvertedIndex = opt.InvertedIndex
 		collection.MultiTenancy = opt.MultiTenancy
 	}
-	collection.Name = collectionName
 
 	req := &api.CreateCollectionRequest{Collection: collection.toAPI()}
+
+	// No need to read the result of the request, we only need the name to create a handle.
 	if err := c.t.Do(ctx, req, nil); err != nil {
 		return nil, fmt.Errorf("create collection: %w", err)
 	}

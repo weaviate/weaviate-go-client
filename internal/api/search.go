@@ -21,11 +21,11 @@ type (
 		Limit            int
 		Offset           int
 		AutoLimit        int
-		After            string
+		After            uuid.UUID
 		ReturnProperties []ReturnProperty
 		ReturnReferences []ReturnReference
 		ReturnVectors    []string
-		ReturnMetadata   Set[MetadataRequest]
+		ReturnMetadata   []MetadataRequest
 		NearVector       *NearVector
 	}
 	ReturnProperty struct {
@@ -94,6 +94,7 @@ var ReturnOnlyVector *[]string
 type MetadataRequest string
 
 const (
+	MetadataUUID               MetadataRequest = "UUID"
 	MetadataCreationTimeUnix   MetadataRequest = "CreationTimeUnix"
 	MetadataLastUpdateTimeUnix MetadataRequest = "LastUpdateTimeUnix"
 	MetadataDistance           MetadataRequest = "Distance"
@@ -164,7 +165,7 @@ func (req *SearchRequest) MarshalMessage() *proto.SearchRequest {
 		Limit:            uint32(req.Limit),
 		Offset:           uint32(req.Offset),
 		Autocut:          uint32(req.AutoLimit),
-		After:            req.After,
+		After:            req.After.String(),
 	}
 
 	var properties proto.PropertiesRequest
@@ -198,14 +199,15 @@ func (req *SearchRequest) MarshalMessage() *proto.SearchRequest {
 	// ReturnVectors were explicitly set to an empty slice, include the "only" vector.
 	returnTheOnlyVector := len(req.ReturnVectors) == 0 && req.ReturnVectors != nil
 
+	rm := NewSet(req.ReturnMetadata)
 	sr.Metadata = &proto.MetadataRequest{
-		Uuid:               true,
-		CreationTimeUnix:   req.ReturnMetadata.Contains(MetadataCreationTimeUnix),
-		LastUpdateTimeUnix: req.ReturnMetadata.Contains(MetadataLastUpdateTimeUnix),
-		Distance:           req.ReturnMetadata.Contains(MetadataDistance),
-		Certainty:          req.ReturnMetadata.Contains(MetadataCertainty),
-		Score:              req.ReturnMetadata.Contains(MetadataScore),
-		ExplainScore:       req.ReturnMetadata.Contains(MetadataExplainScore),
+		Uuid:               rm.Contains(MetadataUUID),
+		CreationTimeUnix:   rm.Contains(MetadataCreationTimeUnix),
+		LastUpdateTimeUnix: rm.Contains(MetadataLastUpdateTimeUnix),
+		Distance:           rm.Contains(MetadataDistance),
+		Certainty:          rm.Contains(MetadataCertainty),
+		Score:              rm.Contains(MetadataScore),
+		ExplainScore:       rm.Contains(MetadataExplainScore),
 		Vector:             returnTheOnlyVector,
 		Vectors:            req.ReturnVectors,
 	}

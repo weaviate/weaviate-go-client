@@ -23,10 +23,6 @@ func TestClient(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// The disadvantage of the pattern below is that you can re-arrange the two
-	// parameters, in which case WithLocal would overwrite the overrides.
-	// 	weaviate.NewClient(ctx, weaviate.WithLocal(), weaviate.WithHTTPPort(8081))
-
 	// Create a collection and get a handle
 	h, err := c.Collections.Create(ctx, "Songs")
 	if err != nil {
@@ -53,8 +49,10 @@ func TestClient(t *testing.T) {
 
 	h.Query.NearVector(ctx,
 		types.Vector{Single: single},
-		query.WithLimit(5),
-		query.WithDistance(.34),
+		query.NearVectorRequest{
+			Limit:      5,
+			Similarity: query.Distance(.34),
+		},
 	)
 
 	h.Query.NearVector(ctx, query.Average(
@@ -74,8 +72,10 @@ func TestClient(t *testing.T) {
 
 	grouped, _ := h.Query.NearVector.GroupBy(ctx,
 		types.Vector{Single: single},
-		"group by album",
-		query.WithAutoLimit(2),
+		query.GroupBy{Property: "album"},
+		query.NearVectorRequest{
+			AutoLimit: 2,
+		},
 	)
 
 	fmt.Printf("NearVector.GroupBy: got %d objects in %d groups\n", len(grouped.Objects), len(grouped.Groups))

@@ -23,58 +23,17 @@ type Client struct {
 	NearVector NearVectorFunc
 }
 
-// commonOptions are parameters applicable to all search types.
-// Concrete request structs should embed this struct.
-type commonOptions struct {
-	Limit            int
-	Offset           int
-	AutoLimit        int
-	After            string
-	ReturnProperties []api.ReturnProperty
-	ReturnReferences []api.ReturnReference // TODO(dyma): add functional option for this
-	ReturnVectors    []string
-	ReturnMetadata   []api.MetadataRequest
-	GroupBy          *GroupBy
+type NestedProperty struct {
+	Name       string
+	Properties []string
 }
-
-// ReturnVectorOption selects vectors to include in the response.
-type ReturnVectorOption []string
-
-// Compile-time assertion that ReturnVectorsOption implements NearVectorOption.
-var _ NearVectorOption = (*ReturnVectorOption)(nil)
-
-// ReturnVectorOption selects vectors to include in the response.
-// Use this option with no arguments to include the only vector in the collection.
-func WithReturnVector(vectors ...string) ReturnVectorOption {
-	return ReturnVectorOption(vectors)
+type Reference struct {
+	PropertyName           string
+	TargetCollection       string
+	ReturnProperties       []string
+	ReturnNestedProperties []NestedProperty // Return object properties and a subset of their nested properties.
+	ReturnMetadata         Set[MetadataRequest]
 }
-
-// returnPropertiesOption selects properties to include in the response.
-type returnPropertiesOption []api.ReturnProperty
-
-// Compile-time assertion that returnPropertiesOption implements NearVectorOption.
-var _ NearVectorOption = (*returnPropertiesOption)(nil)
-
-// WithReturnProperties selects properties to include in the response.
-// By default, all properties are returned.
-func WithReturnProperties(properties ...string) returnPropertiesOption {
-	out := make(returnPropertiesOption, len(properties))
-	for _, p := range properties {
-		out = append(out, api.ReturnProperty{Name: p})
-	}
-	return out
-}
-
-// WithReturnNestedProperties selects properties to include in the response.
-// By default, all properties are returned.
-func WithReturnNestedProperties(propertyName string, nestedProperties ...string) returnPropertiesOption {
-	return returnPropertiesOption{{Name: propertyName, NestedProperties: nestedProperties}}
-}
-
-type returnMetadataOption []api.MetadataRequest
-
-// Compile-time assertion that returnMetadataOption implements NearVectorOption.
-var _ NearVectorOption = (*returnMetadataOption)(nil)
 
 type Metadata api.MetadataRequest
 
@@ -87,28 +46,10 @@ const (
 	MetadataExplainScore       Metadata = Metadata(api.MetadataExplainScore)
 )
 
-func WithReturnMetadataOption(metadata ...Metadata) returnMetadataOption {
-	out := make(returnMetadataOption, len(metadata))
-	for _, m := range metadata {
-		out = append(out, api.MetadataRequest(m))
-	}
-	return out
-}
-
-// TODO(dyma): define GroupBy parameters
 type GroupBy struct {
 	Property       string // Property to group by.
 	ObjectLimit    int    // Maximum number of objects per group.
 	NumberOfGroups int    // Maximum number of groups to return.
-}
-
-// groupByOption is used internally to support grouped queries.
-type groupByOption GroupBy
-
-var _ NearVectorOption = (*groupByOption)(nil)
-
-func withGroupBy(property string) groupByOption {
-	return groupByOption(GroupBy{Property: property})
 }
 
 type Result struct {
