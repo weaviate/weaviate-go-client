@@ -5,7 +5,7 @@ import "fmt"
 // release flag disables asserts if set to a non-empty value.
 // Usage:
 //
-//	go build -ldflags "-X internal.dev.release='true'" .
+//	$ go build -ldflags "-X github.com/weaviate/weaviate-go-client/v6/internal/dev.release='true'" .
 //
 // Prefer leaving asserts enabled for test builds, including integration tests.
 var release string
