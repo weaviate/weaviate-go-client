@@ -77,6 +77,21 @@ func (i *InsertObjectResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ReplaceObjectRequest mirrors InsertObjectRequest but uses PUT method instead of POST.
+// Also the name of the collection is sent as a path parameter.
+type ReplaceObjectRequest InsertObjectRequest
+
+var _ transport.Endpoint = (*ReplaceObjectRequest)(nil)
+
+func (r *ReplaceObjectRequest) Method() string { return http.MethodPost }
+func (r *ReplaceObjectRequest) Path() string {
+	return "/objects/" + r.CollectionName + "/" + r.UUID.String()
+}
+func (r *ReplaceObjectRequest) Query() url.Values { return r.Query() }
+func (r *ReplaceObjectRequest) Body() any         { return r.Body() }
+
+type ReplaceObjectResponse InsertObjectResponse
+
 type DeleteObjectRequest struct {
 	endpoint
 	RequestDefaults
@@ -85,7 +100,7 @@ type DeleteObjectRequest struct {
 
 var _ transport.Endpoint = (*DeleteObjectRequest)(nil)
 
-func (r DeleteObjectRequest) Method() string { return http.MethodDelete }
-func (r DeleteObjectRequest) Path() string {
+func (r *DeleteObjectRequest) Method() string { return http.MethodDelete }
+func (r *DeleteObjectRequest) Path() string {
 	return "/objects/" + r.CollectionName + "/" + r.UUID.String()
 }

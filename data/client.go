@@ -52,6 +52,27 @@ func (c *Client) Insert(ctx context.Context, ir *Object) (*types.Object[types.Ma
 	}, nil
 }
 
+func (c *Client) Replace(ctx context.Context, ir Object) (*types.Object[types.Map], error) {
+	req := &api.ReplaceObjectRequest{
+		UUID:       ir.UUID,
+		Properties: ir.Properties,
+		Vectors:    newVectors(ir.Vectors),
+	}
+
+	var resp api.ReplaceObjectResponse
+	if err := c.transport.Do(ctx, req, &resp); err != nil {
+		return nil, fmt.Errorf("insert object: %w", err)
+	}
+
+	return &types.Object[types.Map]{
+		UUID:               resp.UUID,
+		Properties:         resp.Properties,
+		Vectors:            types.Vectors(resp.Vectors),
+		CreationTimeUnix:   resp.CreationTimeUnix,
+		LastUpdateTimeUnix: resp.LastUpdateTimeUnix,
+	}, nil
+}
+
 func newVectors(vectors []types.Vector) api.Vectors {
 	vs := make(api.Vectors, len(vectors))
 	for _, v := range vectors {
