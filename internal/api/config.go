@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/url"
 
@@ -31,8 +32,8 @@ type (
 		IndexSearchable   bool
 	}
 	ReferenceProperty struct {
-		Name      string
-		DataTypes []string // Collections that can be referenced.
+		Name        string
+		Collections []string // Collections that can be referenced.
 	}
 	ShardingConfig struct {
 		DesiredCount        int
@@ -77,6 +78,24 @@ const (
 	DataTypeObjectArray    DataType = "geoCoordinates[]"
 )
 
+// knownDataTypes are a set of all data types defined in the Weaviate server.
+// A property whose data type is not in knownDataTypes is assumed to be a reference.
+var knownDataTypes = NewSet([]DataType{
+	DataTypeText,
+	DataTypeBool,
+	DataTypeInt,
+	DataTypeNumber,
+	DataTypeDate,
+	DataTypeObject,
+	DataTypeGeoCoordinates,
+	DataTypeTextArray,
+	DataTypeBoolArray,
+	DataTypeIntArray,
+	DataTypeNumberArray,
+	DataTypeDateArray,
+	DataTypeObjectArray,
+})
+
 type Tokenization string
 
 const (
@@ -99,6 +118,7 @@ const (
 	TimeBasedResolution   DeletionStrategy = DeletionStrategy(rest.TimeBasedResolution)
 )
 
+// CreateCollectionsRequest creates a new collection in the schema.
 type CreateCollectionRequest struct {
 	endpoint
 	Collection
@@ -108,7 +128,17 @@ var _ transport.Endpoint = (*CreateCollectionRequest)(nil)
 
 func (r *CreateCollectionRequest) Method() string { return http.MethodPost }
 func (r *CreateCollectionRequest) Path() string   { return "/schema" }
-func (r *CreateCollectionRequest) Body() any      { return r.toREST() }
+func (r *CreateCollectionRequest) Body() any      { return r.Collection }
+
+// ListCollectionsRequest fetches definitions for all collections in the schema.
+var ListCollectionsRequest = listCollectionsRequest{}
+
+type listCollectionsRequest struct{ endpoint }
+
+var _ transport.Endpoint = (*listCollectionsRequest)(nil)
+
+func (r *listCollectionsRequest) Method() string { return http.MethodPost }
+func (r *listCollectionsRequest) Path() string   { return "/schema" }
 
 // DeleteCollectionRequest by collection name.
 type DeleteCollectionRequest string
@@ -119,6 +149,82 @@ func (d DeleteCollectionRequest) Method() string    { return http.MethodDelete }
 func (d DeleteCollectionRequest) Path() string      { return "/schema/" + string(d) }
 func (d DeleteCollectionRequest) Query() url.Values { return nil }
 func (d DeleteCollectionRequest) Body() any         { return nil }
+
+var (
+	_ json.Marshaler   = (*Collection)(nil)
+	_ json.Unmarshaler = (*Collection)(nil)
+)
+
+func (c *Collection) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.toREST())
+}
+
+func (c *Collection) UnmarshalJSON(data []byte) error {
+	var class rest.Class
+	if err := json.Unmarshal(data, &class); err != nil {
+		return err
+	}
+
+	properties := make([]Property, len(class.Properties))
+	references := make([]ReferenceProperty, len(class.Properties))
+	for _, p := range class.Properties {
+		notReference := len(p.DataType) == 1 && knownDataTypes.Contains(DataType(p.DataType[0]))
+		if notReference {
+			properties = append(properties, Property{
+				Name:              p.Name,
+				Description:       p.Description,
+				DataType:          DataType(p.DataType[0]),
+				NestedProperties:  makeNestedProperties(p.NestedProperties),
+				Tokenization:      Tokenization(p.Tokenization),
+				IndexInverted:     p.IndexInverted,
+				IndexFilterable:   p.IndexFilterable,
+				IndexRangeFilters: p.IndexRangeFilters,
+				IndexSearchable:   p.IndexSearchable,
+			})
+		} else {
+			references = append(references, ReferenceProperty{
+				Name:        p.Name,
+				Collections: p.DataType,
+			})
+		}
+	}
+
+	var sharding ShardingConfig
+	if len(class.ShardingConfig) > 0 {
+		// In case any of the fields are not ints, the cast will return a zero value.
+		// We explicitly ignore the checks _ to avoid runtime panics in such cases.
+		sharding.DesiredCount, _ = class.ShardingConfig["desiredCount"].(int)
+		sharding.DesiredVirtualCount, _ = class.ShardingConfig["desiredVirturlCount"].(int)
+		sharding.VirtualPerPhysical, _ = class.ShardingConfig["virtualPerPhysical"].(int)
+	}
+
+	*c = Collection{
+		Name:        class.Class,
+		Description: class.Description,
+		Properties:  properties,
+		References:  references,
+		Replication: ReplicationConfig{
+			AsyncEnabled:     class.ReplicationConfig.AsyncEnabled,
+			Factor:           class.ReplicationConfig.Factor,
+			DeletionStrategy: DeletionStrategy(class.ReplicationConfig.DeletionStrategy),
+		},
+		InvertedIndex: InvertedIndexConfig{
+			IndexNullState:         c.InvertedIndex.IndexNullState,
+			IndexPropertyLength:    c.InvertedIndex.IndexPropertyLength,
+			IndexTimestamps:        c.InvertedIndex.IndexTimestamps,
+			UsingBlockMaxWAND:      c.InvertedIndex.UsingBlockMaxWAND,
+			CleanupIntervalSeconds: c.InvertedIndex.CleanupIntervalSeconds,
+			Stopwords:              StopwordConfig(c.InvertedIndex.Stopwords),
+			BM25: BM25Config{
+				B:  c.InvertedIndex.BM25.B,
+				K1: c.InvertedIndex.BM25.K1,
+			},
+		},
+		Sharding: sharding,
+	}
+
+	return nil
+}
 
 // toREST repackages Collection into [rest.Class]
 // and returns a reference to it to avoid unnecessary copy.
@@ -140,7 +246,7 @@ func (c *Collection) toREST() *rest.Class {
 	for _, ref := range c.References {
 		properties = append(properties, rest.Property{
 			Name:     ref.Name,
-			DataType: ref.DataTypes,
+			DataType: ref.Collections,
 		})
 	}
 
@@ -175,6 +281,31 @@ func (c *Collection) toREST() *rest.Class {
 }
 
 type NestedProperties []Property
+
+func makeNestedProperties(nested []rest.NestedProperty) NestedProperties {
+	if len(nested) == 0 {
+		return nil
+	}
+
+	nps := make(NestedProperties, len(nested))
+	for _, np := range nested {
+		if len(np.DataType) == 1 {
+			nps = append(nps, Property{
+				Name:              np.Name,
+				Description:       np.Description,
+				DataType:          DataType(np.DataType[0]),
+				NestedProperties:  makeNestedProperties(np.NestedProperties),
+				Tokenization:      Tokenization(np.Tokenization),
+				IndexFilterable:   np.IndexFilterable,
+				IndexRangeFilters: np.IndexRangeFilters,
+				IndexSearchable:   np.IndexSearchable,
+			})
+		} else {
+			// Invalid response -- nested property has more than 1 data type.
+		}
+	}
+	return nps
+}
 
 func (nps NestedProperties) toREST() []rest.NestedProperty {
 	if len(nps) == 0 {

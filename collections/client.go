@@ -108,10 +108,16 @@ func (c *Client) GetConfig(ctx context.Context, collectionName string) (*Collect
 }
 
 func (c *Client) List(ctx context.Context) ([]Collection, error) {
-	if err := c.t.Do(ctx, nil, nil); err != nil {
+	var resp []api.Collection
+	if err := c.t.Do(ctx, api.ListCollectionsRequest, &resp); err != nil {
 		return nil, fmt.Errorf("list collections: %w", err)
 	}
-	return nil, nil
+
+	out := make([]Collection, len(resp))
+	for _, c := range resp {
+		out = append(out, fromAPI(c))
+	}
+	return out, nil
 }
 
 func (c *Client) Exists(ctx context.Context) (bool, error) {

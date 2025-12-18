@@ -112,8 +112,8 @@ func (r *Collection) toAPI() api.Collection {
 	references := make([]api.ReferenceProperty, len(r.References))
 	for _, ref := range r.References {
 		references = append(references, api.ReferenceProperty{
-			Name:      ref.Name,
-			DataTypes: ref.Collections,
+			Name:        ref.Name,
+			Collections: ref.Collections,
 		})
 	}
 
@@ -147,7 +147,82 @@ func (r *Collection) toAPI() api.Collection {
 	}
 }
 
+// fromAPI converts api.Collection into Collection.
+func fromAPI(c api.Collection) Collection {
+	properties := make([]Property, len(c.Properties))
+	for _, p := range c.Properties {
+		properties = append(properties, Property{
+			Name:              p.Name,
+			Description:       p.Description,
+			DataType:          DataType(p.DataType),
+			NestedProperties:  makeNestedProperties(p.NestedProperties),
+			Tokenization:      Tokenization(p.Tokenization),
+			IndexInverted:     p.IndexInverted,
+			IndexFilterable:   p.IndexFilterable,
+			IndexRangeFilters: p.IndexRangeFilters,
+			IndexSearchable:   p.IndexSearchable,
+		})
+	}
+	references := make([]Reference, len(c.Properties))
+	for _, ref := range c.References {
+		references = append(references, Reference{
+			Name:        ref.Name,
+			Collections: ref.Collections,
+		})
+	}
+
+	return Collection{
+		Name:        c.Name,
+		Description: c.Description,
+		Properties:  properties,
+		References:  references,
+		Replication: ReplicationConfig{
+			AsyncEnabled:     c.Replication.AsyncEnabled,
+			Factor:           c.Replication.Factor,
+			DeletionStrategy: DeletionStrategy(c.Replication.DeletionStrategy),
+		},
+		InvertedIndex: InvertedIndexConfig{
+			IndexNullState:         c.InvertedIndex.IndexNullState,
+			IndexPropertyLength:    c.InvertedIndex.IndexPropertyLength,
+			IndexTimestamps:        c.InvertedIndex.IndexTimestamps,
+			UsingBlockMaxWAND:      c.InvertedIndex.UsingBlockMaxWAND,
+			CleanupIntervalSeconds: c.InvertedIndex.CleanupIntervalSeconds,
+			Stopwords:              StopwordConfig(c.InvertedIndex.Stopwords),
+			BM25: BM25Config{
+				B:  c.InvertedIndex.BM25.B,
+				K1: c.InvertedIndex.BM25.K1,
+			},
+		},
+		Sharding: ShardingConfig{
+			DesiredCount:        c.Sharding.DesiredCount,
+			DesiredVirtualCount: c.Sharding.DesiredVirtualCount,
+			VirtualPerPhysical:  c.Sharding.VirtualPerPhysical,
+		},
+	}
+}
+
 type nestedProperties []Property
+
+func makeNestedProperties(nested []api.Property) []Property {
+	if len(nested) == 0 {
+		return nil
+	}
+
+	nps := make(nestedProperties, len(nested))
+	for _, np := range nested {
+		nps = append(nps, Property{
+			Name:              np.Name,
+			Description:       np.Description,
+			DataType:          DataType(np.DataType),
+			NestedProperties:  makeNestedProperties(np.NestedProperties),
+			Tokenization:      Tokenization(np.Tokenization),
+			IndexFilterable:   np.IndexFilterable,
+			IndexRangeFilters: np.IndexRangeFilters,
+			IndexSearchable:   np.IndexSearchable,
+		})
+	}
+	return nps
+}
 
 func (nps nestedProperties) toAPI() []api.Property {
 	if len(nps) == 0 {
