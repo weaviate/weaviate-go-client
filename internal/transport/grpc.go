@@ -25,8 +25,7 @@ type RequestMessage interface {
 		proto.TenantsGetRequest |
 		proto.BatchDeleteRequest |
 		proto.BatchObjectsRequest |
-		proto.BatchReferencesRequest |
-		proto.BatchStreamRequest
+		proto.BatchReferencesRequest
 }
 
 // ReplyMessage enumerates gRPC replies this transport can produce.
@@ -36,8 +35,7 @@ type ReplyMessage interface {
 		proto.TenantsGetReply |
 		proto.BatchDeleteReply |
 		proto.BatchObjectsReply |
-		proto.BatchReferencesReply |
-		proto.BatchStreamReply
+		proto.BatchReferencesReply
 }
 
 // MessageMarshaler marshals the body of the request into a protobuf message.
@@ -60,6 +58,14 @@ func (c *gRPCClient) do(ctx context.Context, req any, dest any) error {
 	switch m := req.(type) {
 	case MessageMarshaler[proto.SearchRequest]:
 		err = c.search(ctx, m, dest)
+	case MessageMarshaler[proto.AggregateRequest]:
+		err = c.aggregate(ctx, m, dest)
+	case MessageMarshaler[proto.BatchDeleteRequest]:
+		err = c.batchDelete(ctx, m, dest)
+	case MessageMarshaler[proto.BatchObjectsRequest]:
+		err = c.batchObjects(ctx, m, dest)
+	case MessageMarshaler[proto.BatchReferencesRequest]:
+		err = c.batchReferences(ctx, m, dest)
 	default:
 		dev.Assert(false, "%T does not implement MessageMarshaler for any of the supported request types", m)
 	}
@@ -84,6 +90,78 @@ func (c *gRPCClient) search(ctx context.Context, m MessageMarshaler[proto.Search
 
 	if err := unmarshal(reply, dest); err != nil {
 		return fmt.Errorf("search: %w", err)
+	}
+	return nil
+}
+
+func (c *gRPCClient) aggregate(ctx context.Context, m MessageMarshaler[proto.AggregateRequest], dest any) error {
+	reply, err := c.wc.Aggregate(ctx, m.MarshalMessage())
+	if err != nil {
+		return fmt.Errorf("aggregate: %w", err)
+	}
+
+	if reply == nil {
+		// Since gRPC client is generated and is essentialy a third-party dependency,
+		// we cannot guarantee the response to be always non-nil, so we do not dev.Assert.
+		return fmt.Errorf("aggregate: %w", errNilReply)
+	}
+
+	if err := unmarshal(reply, dest); err != nil {
+		return fmt.Errorf("aggregate: %w", err)
+	}
+	return nil
+}
+
+func (c *gRPCClient) batchDelete(ctx context.Context, m MessageMarshaler[proto.BatchDeleteRequest], dest any) error {
+	reply, err := c.wc.BatchDelete(ctx, m.MarshalMessage())
+	if err != nil {
+		return fmt.Errorf("batchDelete: %w", err)
+	}
+
+	if reply == nil {
+		// Since gRPC client is generated and is essentialy a third-party dependency,
+		// we cannot guarantee the response to be always non-nil, so we do not dev.Assert.
+		return fmt.Errorf("batchDelete: %w", errNilReply)
+	}
+
+	if err := unmarshal(reply, dest); err != nil {
+		return fmt.Errorf("batchDelete: %w", err)
+	}
+	return nil
+}
+
+func (c *gRPCClient) batchObjects(ctx context.Context, m MessageMarshaler[proto.BatchObjectsRequest], dest any) error {
+	reply, err := c.wc.BatchObjects(ctx, m.MarshalMessage())
+	if err != nil {
+		return fmt.Errorf("batchObjects: %w", err)
+	}
+
+	if reply == nil {
+		// Since gRPC client is generated and is essentialy a third-party dependency,
+		// we cannot guarantee the response to be always non-nil, so we do not dev.Assert.
+		return fmt.Errorf("batchObjects: %w", errNilReply)
+	}
+
+	if err := unmarshal(reply, dest); err != nil {
+		return fmt.Errorf("batchObjects: %w", err)
+	}
+	return nil
+}
+
+func (c *gRPCClient) batchReferences(ctx context.Context, m MessageMarshaler[proto.BatchReferencesRequest], dest any) error {
+	reply, err := c.wc.BatchReferences(ctx, m.MarshalMessage())
+	if err != nil {
+		return fmt.Errorf("batchReferences: %w", err)
+	}
+
+	if reply == nil {
+		// Since gRPC client is generated and is essentialy a third-party dependency,
+		// we cannot guarantee the response to be always non-nil, so we do not dev.Assert.
+		return fmt.Errorf("batchReferences: %w", errNilReply)
+	}
+
+	if err := unmarshal(reply, dest); err != nil {
+		return fmt.Errorf("batchReferences: %w", err)
 	}
 	return nil
 }
