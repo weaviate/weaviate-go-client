@@ -17,7 +17,7 @@ func NewClient(t internal.Transport) *Client {
 }
 
 func (c *Client) Delete(ctx context.Context, alias string) error {
-	req := api.DeleteAliasRequest{Alias: alias}
+	req := api.DeleteAliasRequest(alias)
 	if err := c.transport.Do(ctx, req, nil); err != nil {
 		return fmt.Errorf("delete alias: %w", err)
 	}
