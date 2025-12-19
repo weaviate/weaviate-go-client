@@ -14,12 +14,12 @@ type (
 var _ api.NearVectorTarget = (*Vector)(nil)
 
 // CombinationMethod implements NearVectorTarget.
-func (v Vector) CombinationMethod() api.CombinationMethod {
+func (v *Vector) CombinationMethod() api.CombinationMethod {
 	return v.CombinationMethod()
 }
 
 // Targets implements api.NearVectorTarget.
-func (v Vector) Vectors() []api.TargetVector {
+func (v *Vector) Vectors() []api.TargetVector {
 	return v.Vectors()
 }
 

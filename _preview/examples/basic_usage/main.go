@@ -23,7 +23,7 @@ func main() {
 	ctx := context.Background()
 
 	// Create client
-	client, _ := weaviate.NewLocal(ctx)
+	client, _ := weaviate.NewLocal(ctx, nil)
 
 	// Get collection handle
 	songs := client.Collections.Use("Songs")
@@ -50,14 +50,11 @@ func insertObjects(ctx context.Context, songs *collections.Handle) {
 		Genre:  "Rock",
 	}
 
-	m, err := data.Encode(&song1)
-	log.Print(m)
-	if err != nil {
-		log.Fatal(err)
-	}
 	obj, err := songs.Data.Insert(ctx, &data.Object{
-		Properties: m,
-		Vectors:    []types.Vector{{Single: []float32{0.1, 0.2, 0.3}}},
+		Properties: data.MustEncode(&song1),
+		Vectors: []*types.Vector{
+			{Single: []float32{0.1, 0.2, 0.3}},
+		},
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -77,11 +74,10 @@ func insertObjects(ctx context.Context, songs *collections.Handle) {
 }
 
 func queryWithMaps(ctx context.Context, songs *collections.Handle) {
-	queryVector := types.Vector{
-		Single: []float32{0.1, 0.2, 0.3, 0.4},
-	}
-
-	result, _ := songs.Query.NearVector(ctx, queryVector, query.NearVector{
+	result, _ := songs.Query.NearVector(ctx, query.NearVector{
+		Target: &types.Vector{
+			Single: []float32{0.1, 0.2, 0.3, 0.4},
+		},
 		Limit:      2,
 		Similarity: query.Distance(0.5),
 		Offset:     3,
@@ -98,12 +94,11 @@ func queryWithMaps(ctx context.Context, songs *collections.Handle) {
 }
 
 func queryWithTypes(ctx context.Context, songs *collections.Handle) {
-	queryVector := types.Vector{
-		Single: []float32{0.1, 0.2, 0.3, 0.4},
-	}
-
 	// Get results as maps first
-	result, _ := songs.Query.NearVector(ctx, queryVector, query.NearVector{
+	result, _ := songs.Query.NearVector(ctx, query.NearVector{
+		Target: &types.Vector{
+			Single: []float32{0.1, 0.2, 0.3, 0.4},
+		},
 		Limit: 3,
 	})
 
