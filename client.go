@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/weaviate/weaviate-go-client/v6/alias"
 	"github.com/weaviate/weaviate-go-client/v6/backup"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
@@ -78,6 +79,7 @@ func NewWeaviateCloud(ctx context.Context, hostname, apiKey string, config ...Co
 }
 
 type Client struct {
+	Alias       *alias.Client
 	Backup      *backup.Client
 	Collections *collections.Client
 }
@@ -134,6 +136,7 @@ func newClient(_ context.Context, cfg ConnectionConfig) (*Client, error) {
 		return nil, fmt.Errorf("weaviate: new client: %w", err)
 	}
 	return &Client{
+		Alias:       alias.NewClient(t),
 		Backup:      backup.NewClient(t),
 		Collections: collections.NewClient(t),
 	}, nil

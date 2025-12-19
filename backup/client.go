@@ -62,46 +62,28 @@ const (
 	RBACRestoreNone RBACRestore = RBACRestore(api.RBACRestoreNone)
 )
 
-type createRequest struct {
-	Path               *string           // Path to backup in the backend storage.
-	Bucket             *string           // Dedicated bucket name.
-	IncludeCollections []string          // Collections to be included in the backup.
-	ExcludeCollections []string          // Collections to be excluded from the backup.
-	MaxCPUPercentage   *int              // Maximum %CPU utilization.
-	CompressionLevel   *CompressionLevel // Hint for selecting the optimal compression algorithm.
+type Create struct {
+	Path               string           // Path to backup in the backend storage.
+	Bucket             string           // Dedicated bucket name.
+	IncludeCollections []string         // Collections to be included in the backup.
+	ExcludeCollections []string         // Collections to be excluded from the backup.
+	MaxCPUPercentage   int              // Maximum %CPU utilization.
+	CompressionLevel   CompressionLevel // Hint for selecting the optimal compression algorithm.
 }
 
-type (
-	CreateOption     interface{ create(*createRequest) }
-	CreateOptionFunc func(*createRequest)
-)
-
-func (f CreateOptionFunc) create(r *createRequest) { f(r) }
-
-// Specify desired compression level.
-// The server will select an appropriate compression algorithm based on this setting.
-func WithCompressionLevel(cl CompressionLevel) CreateOption {
-	return CreateOptionFunc(func(r *createRequest) {
-		r.CompressionLevel = &cl
-	})
-}
-
-func (c *Client) Create(ctx context.Context, id, backend string, options ...CreateOption) (*Info, error) {
-	var cfg createRequest
-	for _, opt := range options {
-		opt.create(&cfg)
-	}
+func (c *Client) Create(ctx context.Context, id, backend string, option ...Create) (*Info, error) {
+	opt, _ := internal.Last(option...)
 
 	req := &api.CreateBackupRequest{
 		ID:                 id,
 		Backend:            backend,
-		IncludeCollections: cfg.IncludeCollections,
-		ExcludeCollections: cfg.ExcludeCollections,
+		IncludeCollections: opt.IncludeCollections,
+		ExcludeCollections: opt.ExcludeCollections,
 		Config: &api.CreateBackupConfig{
-			Path:             cfg.Path,
-			Bucket:           cfg.Bucket,
-			MaxCPUPercentage: cfg.MaxCPUPercentage,
-			CompressionLevel: (*string)(cfg.CompressionLevel),
+			Path:             opt.Path,
+			Bucket:           opt.Bucket,
+			MaxCPUPercentage: opt.MaxCPUPercentage,
+			CompressionLevel: (*string)(opt.CompressionLevel),
 		},
 	}
 
@@ -127,7 +109,7 @@ func (c *Client) Create(ctx context.Context, id, backend string, options ...Crea
 	}, nil
 }
 
-type RestoreOptions struct {
+type Restore struct {
 	Path               string                // Path to backup in the backend storage.
 	Bucket             string                // Dedicated bucket name.
 	IncludeCollections []string              // Collections to be included in the backup.
@@ -138,49 +120,21 @@ type RestoreOptions struct {
 	RestoreRoles       api.RBACRestoreOption // Select strategy for restoring RBAC roles.
 }
 
-// type (
-// 	RestoreOption     interface{ restore(*RestoreOptions) }
-// 	RestoreOptionFunc func(*RestoreOptions)
-// )
-//
-// func (f RestoreOptionFunc) restore(r *RestoreOptions) { f(r) }
-//
-// func WithOverwriteAlias(overwrite bool) RestoreOption {
-// 	return RestoreOptionFunc(func(r *RestoreOptions) {
-// 		r.OverwriteAlias = overwrite
-// 	})
-// }
-//
-// func WithRestoreUsers(opt RBACRestore) RestoreOption {
-// 	return RestoreOptionFunc(func(r *RestoreOptions) {
-// 		r.RestoreUsers = (*api.RBACRestoreOption)(&opt)
-// 	})
-// }
-//
-// func WithRestoreRoles(opt RBACRestore) RestoreOption {
-// 	return RestoreOptionFunc(func(r *RestoreOptions) {
-// 		r.RestoreRoles = (*api.RBACRestoreOption)(&opt)
-// 	})
-// }
-
-func (c *Client) Restore(ctx context.Context, id, backend string, options ...RestoreOptions) (*Info, error) {
-	var cfg RestoreOptions
-	for _, opt := range options {
-		cfg = opt
-	}
+func (c *Client) Restore(ctx context.Context, id, backend string, option ...Restore) (*Info, error) {
+	opt, _ := internal.Last(option...)
 
 	req := &api.RestoreBackupRequest{
 		ID:                 id,
 		Backend:            backend,
-		IncludeCollections: cfg.IncludeCollections,
-		ExcludeCollections: cfg.ExcludeCollections,
-		OverwriteAlias:     cfg.OverwriteAlias,
+		IncludeCollections: opt.IncludeCollections,
+		ExcludeCollections: opt.ExcludeCollections,
+		OverwriteAlias:     opt.OverwriteAlias,
 		Config: &api.RestoreBackupConfig{
-			Bucket:           cfg.Bucket,
-			Path:             cfg.Path,
-			MaxCPUPercentage: cfg.MaxCPUPercentage,
-			RestoreUsers:     cfg.RestoreUsers,
-			RestoreRoles:     cfg.RestoreRoles,
+			Bucket:           opt.Bucket,
+			Path:             opt.Path,
+			MaxCPUPercentage: opt.MaxCPUPercentage,
+			RestoreUsers:     opt.RestoreUsers,
+			RestoreRoles:     opt.RestoreRoles,
 		},
 	}
 
@@ -242,29 +196,17 @@ func (c *Client) getStatus(ctx context.Context, id, backend string, operation ap
 	}, nil
 }
 
-type listRequest struct {
+type List struct {
 	StartingTimeAsc bool
 }
 
-type ListOption func(*listRequest)
-
-// Order backups by their starting time in ascending order.
-func WithStartingTimeAsc(asc bool) ListOption {
-	return func(r *listRequest) {
-		r.StartingTimeAsc = asc
-	}
-}
-
-func (c *Client) List(ctx context.Context, id, backend string, options ...ListOption) ([]Info, error) {
-	var cfg listRequest
-	for _, opt := range options {
-		opt(&cfg)
-	}
+func (c *Client) List(ctx context.Context, id, backend string, option ...List) ([]Info, error) {
+	opt, _ := internal.Last(option...)
 
 	req := &api.ListBackupsRequest{
 		ID:              id,
 		Backend:         backend,
-		StartingTimeAsc: cfg.StartingTimeAsc,
+		StartingTimeAsc: opt.StartingTimeAsc,
 	}
 
 	var resp []api.Backup
@@ -299,70 +241,3 @@ func (c *Client) Cancel(ctx context.Context, id, backend string) error {
 	}
 	return nil
 }
-
-// Customize backup's path within the bucket.
-type WithPath string
-
-var _ CreateOption = (*WithPath)(nil)
-
-// _ RestoreOption = (*WithPath)(nil)
-
-func (opt WithPath) create(r *createRequest) { r.Path = (*string)(&opt) }
-
-// func (opt WithPath) restore(r *RestoreOptions) { r.Path = (*string)(&opt) }
-
-// Set dedicated bucket for this backup.
-type WithBucket string
-
-var _ CreateOption = (*WithBucket)(nil)
-
-// _ RestoreOption = (*WithBucket)(nil)
-
-func (opt WithBucket) create(r *createRequest) { r.Bucket = (*string)(&opt) }
-
-// func (opt WithBucket) restore(r *RestoreOptions) { r.Bucket = (*string)(&opt) }
-
-// Include collections in the backup.
-type IncludeCollectionsOption []string
-
-var _ CreateOption = (*IncludeCollectionsOption)(nil)
-
-// _ RestoreOption = (*WithIncludeCollections)(nil)
-
-func WithIncludeCollections(collections ...string) CreateOption {
-	return IncludeCollectionsOption(collections)
-}
-
-func (opt IncludeCollectionsOption) create(r *createRequest) {
-	r.IncludeCollections = append(r.IncludeCollections, opt...)
-}
-
-func (opt IncludeCollectionsOption) restore(r *RestoreOptions) {
-	r.IncludeCollections = append(r.IncludeCollections, opt...)
-}
-
-// Exclude collections from the backup.
-type WithExcludeCollections []string
-
-var _ CreateOption = (*WithExcludeCollections)(nil)
-
-// _ RestoreOption = (*WithExcludeCollections)(nil)
-
-func (opt WithExcludeCollections) create(r *createRequest) {
-	r.ExcludeCollections = append(r.ExcludeCollections, opt...)
-}
-
-func (opt WithExcludeCollections) restore(r *RestoreOptions) {
-	r.ExcludeCollections = append(r.ExcludeCollections, opt...)
-}
-
-// Limit CPU resources that will be allocated to the backup process.
-type WithMaxCPUPercentage int
-
-var _ CreateOption = (*WithMaxCPUPercentage)(nil)
-
-// _ RestoreOption = (*WithMaxCPUPercentage)(nil)
-
-func (opt WithMaxCPUPercentage) create(r *createRequest) { r.MaxCPUPercentage = (*int)(&opt) }
-
-// func (opt WithMaxCPUPercentage) restore(r *RestoreOptions) { r.MaxCPUPercentage = (*int)(&opt) }

@@ -5,24 +5,13 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/rest"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
 type (
-	CreateBackupConfig struct {
-		Bucket           *string `json:"Bucket,omitempty"`
-		Path             *string `json:"Path,omitempty"`
-		MaxCPUPercentage *int    `json:"CPUPercentage,omitempty"`
-		CompressionLevel *string `json:"CompressionLevel,omitempty"`
-	}
-	RestoreBackupConfig struct {
-		Bucket           string            `json:"Bucket,omitempty"`
-		Path             string            `json:"Path,omitempty"`
-		MaxCPUPercentage int               `json:"CPUPercentage,omitempty"`
-		RestoreUsers     RBACRestoreOption `json:"restoreUsers,omitempty"`
-		RestoreRoles     RBACRestoreOption `json:"restoreRoles,omitempty"`
-	}
-	Backup struct {
+	RestoreBackupConfig struct{}
+	Backup              struct {
 		ID                  string
 		Path                string
 		Backend             string
@@ -72,13 +61,18 @@ const (
 )
 
 type CreateBackupRequest struct {
-	endpoint
-	Backend string `json:"-"`
+	transport.BaseEndpoint
 
-	ID                 string              `json:"id"`
-	IncludeCollections []string            `json:"include,omitempty"`
-	ExcludeCollections []string            `json:"exclude,omitempty"`
-	Config             *CreateBackupConfig `json:"config,omitempty"`
+	Backend            string
+	ID                 string
+	Bucket             string
+	BackupPath         string
+	Endpoint           string
+	IncludeCollections []string
+	ExcludeCollections []string
+	MaxCPUPercentage   int
+	ChunkSize          int
+	CompressionLevel   string
 }
 
 // Compile-time assertion that CreateBackupRequest implements [tranport.Endpoint].
@@ -86,17 +80,35 @@ var _ transport.Endpoint = (*CreateBackupRequest)(nil)
 
 func (*CreateBackupRequest) Method() string { return http.MethodPost }
 func (r *CreateBackupRequest) Path() string { return "/backups/" + r.Backend }
-func (r *CreateBackupRequest) Body() any    { return r }
+func (r *CreateBackupRequest) Body() any {
+	return &rest.BackupCreateRequest{
+		Id:      r.ID,
+		Include: r.IncludeCollections,
+		Exclude: r.ExcludeCollections,
+		Config: rest.BackupConfig{
+			Bucket:           r.Bucket,
+			Endpoint:         r.Endpoint,
+			CPUPercentage:    r.MaxCPUPercentage,
+			ChunkSize:        r.ChunkSize,
+			CompressionLevel: rest.BackupConfigCompressionLevel(r.CompressionLevel),
+		},
+	}
+}
 
 type RestoreBackupRequest struct {
-	endpoint
-	Backend string `json:"-"`
-	ID      string `json:"-"`
+	transport.BaseEndpoint
 
-	IncludeCollections []string             `json:"include,omitempty"`
-	ExcludeCollections []string             `json:"exclude,omitempty"`
-	OverwriteAlias     bool                 `json:"overwriteAlias,omitempty"`
-	Config             *RestoreBackupConfig `json:"config,omitempty"`
+	Backend            string
+	ID                 string
+	Bucket             string
+	BackupPath         string
+	Endpoint           string
+	IncludeCollections []string
+	ExcludeCollections []string
+	OverwriteAlias     bool
+	MaxCPUPercentage   int
+	RestoreUsers       RBACRestoreOption
+	RestoreRoles       RBACRestoreOption
 }
 
 // Compile-time assertion that RestoreBackupRequest implements [transport.Endpoint].
@@ -104,10 +116,26 @@ var _ transport.Endpoint = (*RestoreBackupRequest)(nil)
 
 func (*RestoreBackupRequest) Method() string { return http.MethodPost }
 func (r *RestoreBackupRequest) Path() string { return "/backups/" + r.Backend }
-func (r *RestoreBackupRequest) Body() any    { return r }
+func (r *RestoreBackupRequest) Body() any {
+	return &rest.BackupRestoreRequest{
+		Include:        r.IncludeCollections,
+		Exclude:        r.ExcludeCollections,
+		OverwriteAlias: r.OverwriteAlias,
+		// NodeMapping:    make(map[string]string), // TODO(dyma): what should this field be?
+		Config: rest.RestoreConfig{
+			Bucket:        r.Bucket,
+			Path:          r.BackupPath,
+			Endpoint:      r.Endpoint,
+			CPUPercentage: r.MaxCPUPercentage,
+			RolesOptions:  rest.RestoreConfigRolesOptions(r.RestoreRoles),
+			UsersOptions:  rest.RestoreConfigUsersOptions(r.RestoreUsers),
+		},
+	}
+}
 
 type BackupStatusRequest struct {
-	endpoint
+	transport.BaseEndpoint
+
 	Backend   string
 	ID        string
 	Operation BackupOperation
@@ -128,7 +156,8 @@ func (r *BackupStatusRequest) Path() string {
 }
 
 type ListBackupsRequest struct {
-	endpoint
+	transport.BaseEndpoint
+
 	Backend         string
 	ID              string
 	StartingTimeAsc bool
@@ -147,9 +176,10 @@ func (r *ListBackupsRequest) Query() url.Values {
 }
 
 type CancelBackupRequest struct {
-	endpoint
-	Backend string `json:"-"`
-	ID      string `json:"-"`
+	transport.BaseEndpoint
+
+	Backend string
+	ID      string
 }
 
 // Compile-time assertion that CancelBackupRequest implements [tranport.Endpoint].

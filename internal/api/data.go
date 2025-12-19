@@ -93,7 +93,7 @@ func (r *ReplaceObjectRequest) Body() any         { return r.Body() }
 type ReplaceObjectResponse InsertObjectResponse
 
 type DeleteObjectRequest struct {
-	endpoint
+	transport.BaseEndpoint
 	RequestDefaults
 	UUID uuid.UUID
 }

@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"net/url"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/rest"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
@@ -120,7 +119,7 @@ const (
 
 // CreateCollectionsRequest creates a new collection in the schema.
 type CreateCollectionRequest struct {
-	endpoint
+	transport.BaseEndpoint
 	Collection
 }
 
@@ -131,14 +130,7 @@ func (r *CreateCollectionRequest) Path() string   { return "/schema" }
 func (r *CreateCollectionRequest) Body() any      { return r.Collection }
 
 // GetCollectionRequest by collection name.
-type GetCollectionRequest string
-
-var _ transport.Endpoint = (*GetCollectionRequest)(nil)
-
-func (d GetCollectionRequest) Method() string    { return http.MethodGet }
-func (d GetCollectionRequest) Path() string      { return "/schema/" + string(d) }
-func (d GetCollectionRequest) Query() url.Values { return nil }
-func (d GetCollectionRequest) Body() any         { return nil }
+var GetCollectionRequest = transport.IdentityEndpoint[string](http.MethodGet, "/schema/%s")
 
 // CollectionExistsResponse does 2 important thigs:
 // - It prevents the transport from returning an error on HTTP 404.
@@ -163,24 +155,10 @@ func (r *CollectionExistsResponse) UnmarshalJSON([]byte) error {
 }
 
 // ListCollectionsRequest fetches definitions for all collections in the schema.
-var ListCollectionsRequest = listCollectionsRequest{}
-
-type listCollectionsRequest struct{ endpoint }
-
-var _ transport.Endpoint = (*listCollectionsRequest)(nil)
-
-func (r *listCollectionsRequest) Method() string { return http.MethodPost }
-func (r *listCollectionsRequest) Path() string   { return "/schema" }
+var ListCollectionsRequest transport.Endpoint = transport.StaticEndpoint(http.MethodGet, "/schema")
 
 // DeleteCollectionRequest by collection name.
-type DeleteCollectionRequest string
-
-var _ transport.Endpoint = (*DeleteCollectionRequest)(nil)
-
-func (d DeleteCollectionRequest) Method() string    { return http.MethodDelete }
-func (d DeleteCollectionRequest) Path() string      { return "/schema/" + string(d) }
-func (d DeleteCollectionRequest) Query() url.Values { return nil }
-func (d DeleteCollectionRequest) Body() any         { return nil }
+var DeleteCollectionRequest = transport.IdentityEndpoint[string](http.MethodDelete, "/schema/%s")
 
 var (
 	_ json.Marshaler   = (*Collection)(nil)

@@ -22,6 +22,7 @@ type Client struct {
 	defaults  api.RequestDefaults
 }
 
+// TODO(dyma): generic Properties
 type Object struct {
 	UUID       uuid.UUID
 	Properties any
