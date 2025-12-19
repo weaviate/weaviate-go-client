@@ -86,9 +86,7 @@ type Create struct {
 	CompressionLevel   CompressionLevel // Hint for selecting the optimal compression algorithm.
 }
 
-func (c *Client) Create(ctx context.Context, cfg *Create) (*Info, error) {
-	cfg = internal.Optional(cfg)
-
+func (c *Client) Create(ctx context.Context, cfg Create) (*Info, error) {
 	req := &api.CreateBackupRequest{
 		Backend:            cfg.Backend,
 		ID:                 cfg.ID,
@@ -123,9 +121,7 @@ type Restore struct {
 	NodeMapping        map[string]string // Remap node names stored in the backup.
 }
 
-func (c *Client) Restore(ctx context.Context, cfg *Restore) (*Info, error) {
-	cfg = internal.Optional(cfg)
-
+func (c *Client) Restore(ctx context.Context, cfg Restore) (*Info, error) {
 	req := &api.RestoreBackupRequest{
 		Backend:            cfg.Backend,
 		ID:                 cfg.ID,

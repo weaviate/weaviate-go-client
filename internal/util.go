@@ -10,6 +10,9 @@ package internal
 //		opt = internal.Optional(opt)
 //		print(opt.Word) // opt can be safely dereferenced
 //	}
+//
+// Use pointer options judiciously -- it's best to avoid the pointer and
+// internal.Optional in requests that have at least 1 required parameter.
 func Optional[T any](v *T) *T {
 	if v != nil {
 		return v

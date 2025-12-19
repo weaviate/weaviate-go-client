@@ -53,6 +53,8 @@ func NewLocal(ctx context.Context, cfg *ConnectionConfig) (*Client, error) {
 //		 Headers: http.Header{"Custom-X-Value": []string{"my-header"}}
 //	)}
 func NewWeaviateCloud(ctx context.Context, hostname, apiKey string, cfg *ConnectionConfig) (*Client, error) {
+	cfg = internal.Optional(cfg)
+
 	// Handle invalid hostnames that specify a scheme.
 	hostname = strings.TrimLeft(hostname, "http://")
 	hostname = strings.TrimLeft(hostname, "https://")
@@ -72,9 +74,7 @@ func NewWeaviateCloud(ctx context.Context, hostname, apiKey string, cfg *Connect
 		cloud.Header = http.Header{headerWeaviateClusterURL: {clusterURL}}
 	}
 
-	cfg = internal.Optional(cfg)
 	cloud.extend(cfg)
-
 	return newClient(ctx, cfg)
 }
 
