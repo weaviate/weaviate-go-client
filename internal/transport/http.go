@@ -171,7 +171,7 @@ var _ Endpoint = (*staticEndpoint)(nil)
 func (e *staticEndpoint) Method() string { return e.method }
 func (e *staticEndpoint) Path() string   { return e.path }
 
-// IdentityEndpoint returns a function to create requests to identity endpoints.
+// IdentityEndpoint returns a factory for requests to identity endpoints.
 //
 // Example:
 //
@@ -185,14 +185,14 @@ func (e *staticEndpoint) Path() string   { return e.path }
 // the formatting directive most appropriate to the identity type, e.g. %s for strings,
 // but %d for numbers.
 //
-// IdentityEndpoint will panic on invalid pathFmt _before_ it returns the generator.
+// IdentityEndpoint will panic on invalid pathFmt _before_ the factory is created.
 //
 //	// BAD: panics because pathFmt contains 2 formatting directives.
 //	var DeleteSongsRequest = transport.IdentityEndpoint[uuid.UUID](http.MethodGet, "/albums/%v/songs/%v")
-func IdentityEndpoint[I any](method, pathFmt string) func(I) Endpoint {
+func IdentityEndpoint[I any](method, pathFmt string) func(I) any {
 	dev.Assert(strings.Count(pathFmt, "%") == 1, "%s must have a single formatting directive", pathFmt)
 
-	return func(id I) Endpoint {
+	return func(id I) any {
 		return &identityEndpoint[I]{
 			method:  method,
 			pathFmt: pathFmt,
