@@ -22,8 +22,8 @@ type (
 		Offset           int
 		AutoLimit        int
 		After            uuid.UUID
-		ReturnProperties []*ReturnProperty
-		ReturnReferences []*ReturnReference // TODO(dyma): marshal to proto
+		ReturnProperties []ReturnProperty
+		ReturnReferences []ReturnReference // TODO(dyma): marshal to proto
 		ReturnVectors    []string
 		ReturnMetadata   []MetadataRequest
 		NearVector       *NearVector
@@ -35,7 +35,7 @@ type (
 	ReturnReference struct {
 		PropertyName     string
 		TargetCollection string
-		ReturnProperties []*ReturnProperty
+		ReturnProperties []ReturnProperty
 		ReturnMetadata   []MetadataRequest
 	}
 	NearVector struct {
@@ -53,19 +53,19 @@ type (
 	}
 	SearchResponse struct {
 		TookSeconds    float32
-		Results        []*Object
-		GroupByResults map[string]*Group
+		Results        []Object
+		GroupByResults map[string]Group
 	}
 	Object struct {
 		Metadata   ObjectMetadata
 		Properties map[string]any
-		References map[string][]*Object
+		References map[string][]Object
 	}
 	Group struct {
 		Name                     string
 		MinDistance, MaxDistance float32
 		Size                     int64
-		Objects                  []*GroupByObject
+		Objects                  []GroupByObject
 	}
 	GroupByObject struct {
 		Object
@@ -241,21 +241,19 @@ func (req *SearchRequest) MarshalMessage() *proto.SearchRequest {
 				Combination:       combination,
 			}
 
-			for _, target := range targets {
+			for i, target := range targets {
 				v := target.Vector()
-				sr.NearVector.Targets.TargetVectors = append(sr.NearVector.Targets.TargetVectors, v.Name)
-				sr.NearVector.Targets.WeightsForTargets = append(
-					sr.NearVector.Targets.WeightsForTargets, &proto.WeightsForTarget{
-						Target: v.Name,
-						Weight: target.Weight(),
-					})
-				sr.NearVector.VectorForTargets = append(
-					sr.NearVector.VectorForTargets, &proto.VectorForTarget{
-						Name: v.Name,
-						Vectors: []*proto.Vectors{
-							marshalVector(v),
-						},
-					})
+				sr.NearVector.Targets.TargetVectors[i] = v.Name
+				sr.NearVector.Targets.WeightsForTargets[i] = &proto.WeightsForTarget{
+					Target: v.Name,
+					Weight: target.Weight(),
+				}
+				sr.NearVector.VectorForTargets[i] = &proto.VectorForTarget{
+					Name: v.Name,
+					Vectors: []*proto.Vectors{
+						marshalVector(v),
+					},
+				}
 			}
 		}
 	default:
@@ -285,7 +283,7 @@ func marshalVector(v *Vector) *proto.Vectors {
 func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
 	dev.Assert(reply != nil, "search reply is nil")
 
-	objects := make([]*Object, len(reply.Results))
+	objects := make([]Object, 0, len(reply.Results))
 	for _, r := range reply.Results {
 		if r == nil {
 			continue
@@ -298,8 +296,8 @@ func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
 		objects = append(objects, unmarshalObject(r.Properties, r.Metadata))
 	}
 
-	groups := make(map[string]*Group, len(reply.GroupByResults))
-	groupedObjects := make([]*GroupByObject, len(r.GroupByResults))
+	groups := make(map[string]Group, len(reply.GroupByResults))
+	groupedObjects := make([]GroupByObject, 0, len(r.GroupByResults))
 	for _, group := range reply.GroupByResults {
 		if group == nil {
 			continue
@@ -316,17 +314,15 @@ func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
 			}
 			dev.Assert(obj != nil, "group object is nil")
 
-			unmarshaled := unmarshalObject(obj.Properties, obj.Metadata)
-			dev.Assert(unmarshaled != nil, "nil object")
-			groupedObjects = append(groupedObjects, &GroupByObject{
+			groupedObjects = append(groupedObjects, GroupByObject{
 				BelongsToGroup: group.Name,
-				Object:         *unmarshaled,
+				Object:         unmarshalObject(obj.Properties, obj.Metadata),
 			})
 		}
 
 		// Create a view into the Objects slice rather than allocating a separate one.
 		from, to := len(groupedObjects)-len(group.Objects), len(groupedObjects)-1
-		groups[group.Name] = &Group{
+		groups[group.Name] = Group{
 			Name:        group.Name,
 			MinDistance: group.MinDistance,
 			MaxDistance: group.MaxDistance,
@@ -346,7 +342,7 @@ func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
 func unmarshalVectors(vectors []*proto.Vectors) Vectors {
 	out := make(Vectors, len(vectors))
 	for _, vector := range vectors {
-		v := &Vector{Name: vector.Name}
+		v := Vector{Name: vector.Name}
 		bytes := vector.GetVectorBytes()
 		switch vector.Type {
 		case proto.Vectors_VECTOR_TYPE_SINGLE_FP32:
@@ -359,7 +355,7 @@ func unmarshalVectors(vectors []*proto.Vectors) Vectors {
 	return out
 }
 
-func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) *Object {
+func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) Object {
 	properties := make(map[string]any, len(pr.GetNonRefProps().GetFields()))
 	for name, property := range pr.GetNonRefProps().GetFields() {
 		var v any
@@ -384,14 +380,14 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) *Obje
 		properties[name] = v
 	}
 
-	references := make(map[string][]*Object, len(pr.GetRefProps()))
+	references := make(map[string][]Object, len(pr.GetRefProps()))
 	for _, ref := range pr.GetRefProps() {
 		if ref == nil {
 			continue
 		}
 		dev.Assert(ref != nil, "reference is nil")
 		if _, ok := references[ref.PropName]; !ok {
-			references[ref.PropName] = make([]*Object, len(ref.Properties))
+			references[ref.PropName] = make([]Object, 0, len(ref.Properties))
 		}
 		for _, p := range ref.Properties {
 			references[ref.PropName] = append(
@@ -416,7 +412,7 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) *Obje
 			Single: unmarshalSingle(v),
 		}
 	}
-	return &Object{
+	return Object{
 		Properties: properties,
 		References: references,
 		Metadata: ObjectMetadata{

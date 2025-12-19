@@ -13,10 +13,10 @@ import (
 )
 
 type Song struct {
-	Title  string `json:"title"`
-	Artist string `json:"artist"`
-	Year   int    `json:"year"`
-	Genre  string `json:"genre"`
+	Title  string   `json:"title"`
+	Artist string   `json:"artist"`
+	Year   int      `json:"year"`
+	Genre  []string `json:"genre"`
 }
 
 func main() {
@@ -25,8 +25,23 @@ func main() {
 	// Create client
 	client, _ := weaviate.NewLocal(ctx, nil)
 
+	if err := client.Collections.DeleteAll(ctx); err != nil {
+		log.Fatal(err)
+	}
+
 	// Get collection handle
-	songs := client.Collections.Use("Songs")
+	songs, err := client.Collections.Create(ctx, collections.Collection{
+		Name: "Songs",
+		Properties: []collections.Property{
+			{Name: "title", DataType: collections.DataTypeText},
+			{Name: "artist", DataType: collections.DataTypeText},
+			{Name: "year", DataType: collections.DataTypeInt},
+			{Name: "genre", DataType: collections.DataTypeTextArray},
+		},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Example 1: Insert objects
 	fmt.Println("=== Example 1: Insert objects ===")
@@ -47,12 +62,12 @@ func insertObjects(ctx context.Context, songs *collections.Handle) {
 		Title:  "Bohemian Rhapsody",
 		Artist: "Queen",
 		Year:   1975,
-		Genre:  "Rock",
+		Genre:  []string{"Rock", "Opera"},
 	}
 
 	obj, err := songs.Data.Insert(ctx, &data.Object{
 		Properties: data.MustEncode(&song1),
-		Vectors: []*types.Vector{
+		Vectors: []types.Vector{
 			{Single: []float32{0.1, 0.2, 0.3}},
 		},
 	})

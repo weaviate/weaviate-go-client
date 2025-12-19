@@ -1251,9 +1251,6 @@ type Property struct {
 	// IndexFilterable Whether to include this property in the filterable, Roaring Bitmap index. If `false`, this property cannot be used in `where` filters. <br/><br/>Note: Unrelated to vectorization behavior.
 	IndexFilterable bool `json:"indexFilterable"`
 
-	// IndexInverted (Deprecated). Whether to include this property in the inverted index. If `false`, this property cannot be used in `where` filters, `bm25` or `hybrid` search. <br/><br/>Unrelated to vectorization behavior (deprecated as of v1.19; use indexFilterable or/and indexSearchable instead)
-	IndexInverted bool `json:"indexInverted"`
-
 	// IndexRangeFilters Whether to include this property in the filterable, range-based Roaring Bitmap index. Provides better performance for range queries compared to filterable index in large datasets. Applicable only to properties of data type int, number, date.
 	IndexRangeFilters bool `json:"indexRangeFilters"`
 

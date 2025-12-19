@@ -57,8 +57,8 @@ func Average(vectors ...types.Vector) MultiVectorTarget {
 func ManualWeights(vectors ...WeightedTarget) MultiVectorTarget {
 	// Explicitly cast []WeightedTarget to []api.TargetVector
 	targets := make([]api.TargetVector, len(vectors))
-	for _, v := range vectors {
-		targets = append(targets, &v)
+	for i, v := range vectors {
+		targets[i] = &v
 	}
 	return MultiVectorTarget{
 		combinationMethod: api.CombinationMethodManualWeights,
@@ -69,8 +69,8 @@ func ManualWeights(vectors ...WeightedTarget) MultiVectorTarget {
 func RelativeScore(vectors ...WeightedTarget) MultiVectorTarget {
 	// Explicitly cast []WeightedTarget to []api.TargetVector
 	targets := make([]api.TargetVector, len(vectors))
-	for _, v := range vectors {
-		targets = append(targets, &v)
+	for i, v := range vectors {
+		targets[i] = &v
 	}
 	return MultiVectorTarget{
 		combinationMethod: api.CombinationMethodRelativeScore,
@@ -82,8 +82,8 @@ func RelativeScore(vectors ...WeightedTarget) MultiVectorTarget {
 // The server will determine combination method will determine the weights
 func zeroWeightTargets(cm api.CombinationMethod, vectors []types.Vector) MultiVectorTarget {
 	targets := make([]api.TargetVector, len(vectors))
-	for _, v := range vectors {
-		targets = append(targets, &WeightedTarget{v: (*api.Vector)(&v)})
+	for i, v := range vectors {
+		targets[i] = &WeightedTarget{v: (*api.Vector)(&v)}
 	}
 
 	return MultiVectorTarget{

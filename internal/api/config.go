@@ -12,12 +12,12 @@ type (
 	Collection struct {
 		Name          string
 		Description   string
-		Properties    []*Property
-		References    []*ReferenceProperty
-		Sharding      ShardingConfig
-		Replication   ReplicationConfig
-		InvertedIndex InvertedIndexConfig
-		MultiTenancy  MultiTenancyConfig
+		Properties    []Property
+		References    []ReferenceProperty
+		Sharding      *ShardingConfig
+		Replication   *ReplicationConfig
+		InvertedIndex *InvertedIndexConfig
+		MultiTenancy  *MultiTenancyConfig
 	}
 	Property struct {
 		Name              string
@@ -25,7 +25,6 @@ type (
 		DataType          DataType
 		NestedProperties  NestedProperties
 		Tokenization      Tokenization
-		IndexInverted     bool
 		IndexFilterable   bool
 		IndexRangeFilters bool
 		IndexSearchable   bool
@@ -45,13 +44,13 @@ type (
 		DeletionStrategy DeletionStrategy // Conflict resolution strategy for deleted objects.
 	}
 	InvertedIndexConfig struct {
-		IndexNullState         bool           // Index each object with the null state.
-		IndexPropertyLength    bool           // Index length of properties.
-		IndexTimestamps        bool           // Index each object by its internal timestamps.
-		UsingBlockMaxWAND      bool           // Toggle UsingBlockMaxWAND usage for BM25 search.
-		CleanupIntervalSeconds int64          // Asynchronous index cleanup internal.
-		BM25                   BM25Config     // Tuning parameters for the BM25 algorithm.
-		Stopwords              StopwordConfig // Fine-grained control over stopword list usage.
+		IndexNullState         bool            // Index each object with the null state.
+		IndexPropertyLength    bool            // Index length of properties.
+		IndexTimestamps        bool            // Index each object by its internal timestamps.
+		UsingBlockMaxWAND      bool            // Toggle UsingBlockMaxWAND usage for BM25 search.
+		CleanupIntervalSeconds int64           // Asynchronous index cleanup internal.
+		BM25                   *BM25Config     // Tuning parameters for the BM25 algorithm.
+		Stopwords              *StopwordConfig // Fine-grained control over stopword list usage.
 	}
 	BM25Config         rest.BM25Config
 	StopwordConfig     rest.StopwordConfig
@@ -127,7 +126,7 @@ var _ transport.Endpoint = (*CreateCollectionRequest)(nil)
 
 func (r *CreateCollectionRequest) Method() string { return http.MethodPost }
 func (r *CreateCollectionRequest) Path() string   { return "/schema" }
-func (r *CreateCollectionRequest) Body() any      { return r.Collection }
+func (r *CreateCollectionRequest) Body() any      { return &r.Collection }
 
 // GetCollectionRequest by collection name.
 var GetCollectionRequest = transport.IdentityEndpoint[string](http.MethodGet, "/schema/%s")
@@ -157,6 +156,21 @@ func (r *CollectionExistsResponse) UnmarshalJSON([]byte) error {
 // ListCollectionsRequest fetches definitions for all collections in the schema.
 var ListCollectionsRequest transport.Endpoint = transport.StaticEndpoint(http.MethodGet, "/schema")
 
+type ListCollectionsResponse []Collection
+
+var _ json.Unmarshaler = (*ListCollectionsResponse)(nil)
+
+func (r *ListCollectionsResponse) UnmarshalJSON(data []byte) error {
+	var schema struct {
+		Collections []Collection `json:"classes"`
+	}
+	if err := json.Unmarshal(data, &schema); err != nil {
+		return err
+	}
+	*r = schema.Collections
+	return nil
+}
+
 // DeleteCollectionRequest by collection name.
 var DeleteCollectionRequest = transport.IdentityEndpoint[string](http.MethodDelete, "/schema/%s")
 
@@ -166,7 +180,74 @@ var (
 )
 
 func (c *Collection) MarshalJSON() ([]byte, error) {
-	return json.Marshal(c.toREST())
+	properties := make([]rest.Property, 0, len(c.Properties)+len(c.References))
+	for _, p := range c.Properties {
+		properties = append(properties, rest.Property{
+			Name:              p.Name,
+			Description:       p.Description,
+			DataType:          []string{string(p.DataType)},
+			NestedProperties:  p.NestedProperties.toREST(),
+			Tokenization:      rest.PropertyTokenization(p.Tokenization),
+			IndexFilterable:   p.IndexFilterable,
+			IndexRangeFilters: p.IndexRangeFilters,
+			IndexSearchable:   p.IndexSearchable,
+		})
+	}
+	for _, ref := range c.References {
+		properties = append(properties, rest.Property{
+			Name:     ref.Name,
+			DataType: ref.Collections,
+		})
+	}
+
+	out := &rest.Class{
+		Class:       c.Name,
+		Description: c.Description,
+		Properties:  properties,
+	}
+
+	if c.Sharding != nil {
+		out.ShardingConfig = map[string]any{
+			"desiredCount":        c.Sharding.DesiredCount,
+			"desiredVirturlCount": c.Sharding.DesiredVirtualCount,
+			"virtualPerPhysical":  c.Sharding.VirtualPerPhysical,
+		}
+	}
+
+	if c.Replication != nil {
+		out.ReplicationConfig = rest.ReplicationConfig{
+			AsyncEnabled:     c.Replication.AsyncEnabled,
+			Factor:           c.Replication.Factor,
+			DeletionStrategy: rest.ReplicationConfigDeletionStrategy(c.Replication.DeletionStrategy),
+		}
+	}
+
+	if c.InvertedIndex != nil {
+		out.InvertedIndexConfig = rest.InvertedIndexConfig{
+			IndexNullState:         c.InvertedIndex.IndexNullState,
+			IndexPropertyLength:    c.InvertedIndex.IndexPropertyLength,
+			IndexTimestamps:        c.InvertedIndex.IndexTimestamps,
+			UsingBlockMaxWAND:      c.InvertedIndex.UsingBlockMaxWAND,
+			CleanupIntervalSeconds: c.InvertedIndex.CleanupIntervalSeconds,
+		}
+
+		if c.InvertedIndex.Stopwords != nil {
+			out.InvertedIndexConfig.Stopwords = rest.StopwordConfig(*c.InvertedIndex.Stopwords)
+		}
+
+		if c.InvertedIndex.BM25 != nil {
+			out.InvertedIndexConfig.Bm25 = rest.BM25Config{
+				B:  c.InvertedIndex.BM25.B,
+				K1: c.InvertedIndex.BM25.K1,
+			}
+		}
+	}
+
+	if c.MultiTenancy != nil {
+		out.MultiTenancyConfig = rest.MultiTenancyConfig(*c.MultiTenancy)
+	}
+
+	return json.Marshal(&out)
 }
 
 func (c *Collection) UnmarshalJSON(data []byte) error {
@@ -175,24 +256,23 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	properties := make([]*Property, len(class.Properties))
-	references := make([]*ReferenceProperty, len(class.Properties))
+	properties := make([]Property, 0, len(class.Properties))
+	references := make([]ReferenceProperty, 0, len(class.Properties))
 	for _, p := range class.Properties {
 		notReference := len(p.DataType) == 1 && knownDataTypes.Contains(DataType(p.DataType[0]))
 		if notReference {
-			properties = append(properties, &Property{
+			properties = append(properties, Property{
 				Name:              p.Name,
 				Description:       p.Description,
 				DataType:          DataType(p.DataType[0]),
 				NestedProperties:  makeNestedProperties(p.NestedProperties),
 				Tokenization:      Tokenization(p.Tokenization),
-				IndexInverted:     p.IndexInverted,
 				IndexFilterable:   p.IndexFilterable,
 				IndexRangeFilters: p.IndexRangeFilters,
 				IndexSearchable:   p.IndexSearchable,
 			})
 		} else {
-			references = append(references, &ReferenceProperty{
+			references = append(references, ReferenceProperty{
 				Name:        p.Name,
 				Collections: p.DataType,
 			})
@@ -213,94 +293,40 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 		Description: class.Description,
 		Properties:  properties,
 		References:  references,
-		Replication: ReplicationConfig{
+		Replication: &ReplicationConfig{
 			AsyncEnabled:     class.ReplicationConfig.AsyncEnabled,
 			Factor:           class.ReplicationConfig.Factor,
 			DeletionStrategy: DeletionStrategy(class.ReplicationConfig.DeletionStrategy),
 		},
-		InvertedIndex: InvertedIndexConfig{
-			IndexNullState:         c.InvertedIndex.IndexNullState,
-			IndexPropertyLength:    c.InvertedIndex.IndexPropertyLength,
-			IndexTimestamps:        c.InvertedIndex.IndexTimestamps,
-			UsingBlockMaxWAND:      c.InvertedIndex.UsingBlockMaxWAND,
-			CleanupIntervalSeconds: c.InvertedIndex.CleanupIntervalSeconds,
-			Stopwords:              StopwordConfig(c.InvertedIndex.Stopwords),
-			BM25: BM25Config{
-				B:  c.InvertedIndex.BM25.B,
-				K1: c.InvertedIndex.BM25.K1,
+		InvertedIndex: &InvertedIndexConfig{
+			IndexNullState:         class.InvertedIndexConfig.IndexNullState,
+			IndexPropertyLength:    class.InvertedIndexConfig.IndexPropertyLength,
+			IndexTimestamps:        class.InvertedIndexConfig.IndexTimestamps,
+			UsingBlockMaxWAND:      class.InvertedIndexConfig.UsingBlockMaxWAND,
+			CleanupIntervalSeconds: class.InvertedIndexConfig.CleanupIntervalSeconds,
+			Stopwords:              (*StopwordConfig)(&class.InvertedIndexConfig.Stopwords),
+			BM25: &BM25Config{
+				B:  class.InvertedIndexConfig.Bm25.B,
+				K1: class.InvertedIndexConfig.Bm25.K1,
 			},
 		},
-		Sharding: sharding,
+		Sharding: &sharding,
 	}
 
 	return nil
 }
 
-// toREST repackages Collection into [rest.Class]
-// and returns a reference to it to avoid unnecessary copy.
-func (c *Collection) toREST() *rest.Class {
-	properties := make([]rest.Property, len(c.Properties)+len(c.References))
-	for _, p := range c.Properties {
-		properties = append(properties, rest.Property{
-			Name:              p.Name,
-			Description:       p.Description,
-			DataType:          []string{string(p.DataType)},
-			NestedProperties:  p.NestedProperties.toREST(),
-			Tokenization:      rest.PropertyTokenization(p.Tokenization),
-			IndexInverted:     p.IndexInverted,
-			IndexFilterable:   p.IndexFilterable,
-			IndexRangeFilters: p.IndexRangeFilters,
-			IndexSearchable:   p.IndexSearchable,
-		})
-	}
-	for _, ref := range c.References {
-		properties = append(properties, rest.Property{
-			Name:     ref.Name,
-			DataType: ref.Collections,
-		})
-	}
-
-	return &rest.Class{
-		Class:       c.Name,
-		Description: c.Description,
-		Properties:  properties,
-		ShardingConfig: map[string]any{
-			"desiredCount":        c.Sharding.DesiredCount,
-			"desiredVirturlCount": c.Sharding.DesiredVirtualCount,
-			"virtualPerPhysical":  c.Sharding.VirtualPerPhysical,
-		},
-		ReplicationConfig: rest.ReplicationConfig{
-			AsyncEnabled:     c.Replication.AsyncEnabled,
-			Factor:           c.Replication.Factor,
-			DeletionStrategy: rest.ReplicationConfigDeletionStrategy(c.Replication.DeletionStrategy),
-		},
-		InvertedIndexConfig: rest.InvertedIndexConfig{
-			IndexNullState:         c.InvertedIndex.IndexNullState,
-			IndexPropertyLength:    c.InvertedIndex.IndexPropertyLength,
-			IndexTimestamps:        c.InvertedIndex.IndexTimestamps,
-			UsingBlockMaxWAND:      c.InvertedIndex.UsingBlockMaxWAND,
-			CleanupIntervalSeconds: c.InvertedIndex.CleanupIntervalSeconds,
-			Stopwords:              rest.StopwordConfig(c.InvertedIndex.Stopwords),
-			Bm25: rest.BM25Config{
-				B:  c.InvertedIndex.BM25.B,
-				K1: c.InvertedIndex.BM25.K1,
-			},
-		},
-		MultiTenancyConfig: rest.MultiTenancyConfig(c.MultiTenancy),
-	}
-}
-
-type NestedProperties []*Property
+type NestedProperties []Property
 
 func makeNestedProperties(nested []rest.NestedProperty) NestedProperties {
 	if len(nested) == 0 {
 		return nil
 	}
 
-	nps := make(NestedProperties, len(nested))
+	nps := make(NestedProperties, 0, len(nested))
 	for _, np := range nested {
 		if len(np.DataType) == 1 {
-			nps = append(nps, &Property{
+			nps = append(nps, Property{
 				Name:              np.Name,
 				Description:       np.Description,
 				DataType:          DataType(np.DataType[0]),
@@ -323,8 +349,8 @@ func (nps NestedProperties) toREST() []rest.NestedProperty {
 	}
 
 	properties := make([]rest.NestedProperty, len(nps))
-	for _, p := range nps {
-		properties = append(properties, rest.NestedProperty{
+	for i, p := range nps {
+		properties[i] = rest.NestedProperty{
 			Name:              p.Name,
 			Description:       p.Description,
 			DataType:          []string{string(p.DataType)},
@@ -333,7 +359,7 @@ func (nps NestedProperties) toREST() []rest.NestedProperty {
 			IndexFilterable:   p.IndexFilterable,
 			IndexRangeFilters: p.IndexRangeFilters,
 			IndexSearchable:   p.IndexSearchable,
-		})
+		}
 	}
 
 	return properties

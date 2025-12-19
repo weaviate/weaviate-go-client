@@ -103,7 +103,9 @@ func (c *Client) Create(ctx context.Context, cfg Create) (*Info, error) {
 	if err := c.transport.Do(ctx, req, &resp); err != nil {
 		return nil, fmt.Errorf("create backup: %w", err)
 	}
-	return newInfo(&resp, c, api.CreateBackup), nil
+
+	info := newInfo(&resp, c, api.CreateBackup)
+	return &info, nil
 }
 
 type Restore struct {
@@ -141,7 +143,9 @@ func (c *Client) Restore(ctx context.Context, cfg Restore) (*Info, error) {
 	if err := c.transport.Do(ctx, req, &resp); err != nil {
 		return nil, fmt.Errorf("restore backup: %w", err)
 	}
-	return newInfo(&resp, c, api.RestoreBackup), nil
+
+	info := newInfo(&resp, c, api.RestoreBackup)
+	return &info, nil
 }
 
 type GetStatus struct {
@@ -168,7 +172,9 @@ func (c *Client) getStatus(ctx context.Context, cfg GetStatus, operation api.Bac
 	if err := c.transport.Do(ctx, req, &resp); err != nil {
 		return nil, fmt.Errorf("get create backup status: %w", err)
 	}
-	return newInfo(&resp, c, operation), nil
+
+	info := newInfo(&resp, c, operation)
+	return &info, nil
 }
 
 type List struct {
@@ -176,20 +182,20 @@ type List struct {
 	StartingTimeAsc bool   // Set to true to order backups by their StartedAt time in ascending order.
 }
 
-func (c *Client) List(ctx context.Context, cfg List) ([]*Info, error) {
+func (c *Client) List(ctx context.Context, cfg List) ([]Info, error) {
 	req := &api.ListBackupsRequest{
 		Backend:         cfg.Backend,
 		StartingTimeAsc: cfg.StartingTimeAsc,
 	}
 
-	var resp []*api.BackupInfo
+	var resp []api.BackupInfo
 	if err := c.transport.Do(ctx, req, &resp); err != nil {
 		return nil, fmt.Errorf("list backups: %w", err)
 	}
 
-	infos := make([]*Info, len(resp))
-	for _, bak := range resp {
-		infos = append(infos, newInfo(bak, c, completed))
+	infos := make([]Info, len(resp))
+	for i, bak := range resp {
+		infos[i] = newInfo(&bak, c, completed)
 	}
 	return infos, nil
 }
@@ -217,8 +223,8 @@ func (c *Client) Cancel(ctx context.Context, cfg Cancel) error {
 // and, since they are already completed, we can give awaiters a hint.
 const completed api.BackupOperation = api.BackupOperation(api.CreateBackup - 1)
 
-func newInfo(bak *api.BackupInfo, c *Client, op api.BackupOperation) *Info {
-	return &Info{
+func newInfo(bak *api.BackupInfo, c *Client, op api.BackupOperation) Info {
+	return Info{
 		ID:                  bak.ID,
 		Path:                bak.Path,
 		Backend:             bak.Backend,

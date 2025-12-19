@@ -7,19 +7,18 @@ import (
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
-	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
 type NearVector struct {
-	Limit                  int               // Limit the number of results returned for the query.
-	Offset                 int               // Skip the first N objects in the collection.
-	AutoLimit              int               // Return objects in the first N similarity clusters.
-	After                  uuid.UUID         // Skip all objects before the one with this ID.
-	ReturnReferences       []*Reference      // Select reference properties to return.
-	ReturnMetadata         []Metadata        // Select query and object metadata to return for each object.
-	ReturnVectors          []string          // List vectors to return for each object in the result set.
-	ReturnNestedProperties []*NestedProperty // Return object properties and a subset of their nested properties.
+	Limit                  int              // Limit the number of results returned for the query.
+	Offset                 int              // Skip the first N objects in the collection.
+	AutoLimit              int              // Return objects in the first N similarity clusters.
+	After                  uuid.UUID        // Skip all objects before the one with this ID.
+	ReturnReferences       []Reference      // Select reference properties to return.
+	ReturnMetadata         []Metadata       // Select query and object metadata to return for each object.
+	ReturnVectors          []string         // List vectors to return for each object in the result set.
+	ReturnNestedProperties []NestedProperty // Return object properties and a subset of their nested properties.
 
 	// Select a subset of properties to return. By default, all properties are returned.
 	// To not return any properties, initialize this value to an empty slice explicitly.
@@ -90,21 +89,19 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 	// return value will be discarded.
 	if nv.groupBy != nil {
 		var res GroupByResult
-		groups := make(map[string]*Group[types.Map], len(resp.GroupByResults))
-		objects := make([]*GroupByObject[types.Map], len(resp.GroupByResults))
+		groups := make(map[string]Group[types.Map], len(resp.GroupByResults))
+		objects := make([]GroupByObject[types.Map], 0, len(resp.GroupByResults))
 		for name, group := range resp.GroupByResults {
 			for _, obj := range group.Objects {
-				unmarshaled := unmarshalObject(&obj.Object)
-				dev.Assert(unmarshaled != nil, "nil object")
-				objects = append(objects, &GroupByObject[types.Map]{
+				objects = append(objects, GroupByObject[types.Map]{
 					BelongsToGroup: name,
-					Object:         *unmarshaled,
+					Object:         unmarshalObject(&obj.Object),
 				})
 			}
 
 			// Create a view into the Objects slice rather than allocating a separate one.
 			from, to := len(objects)-len(group.Objects), len(objects)-1
-			groups[name] = &Group[types.Map]{
+			groups[name] = Group[types.Map]{
 				Name:        name,
 				MinDistance: group.MinDistance,
 				MaxDistance: group.MaxDistance,
@@ -117,9 +114,9 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 		return nil, nil
 	}
 
-	var objects []*Object[types.Map]
-	for _, obj := range resp.Results {
-		objects = append(objects, unmarshalObject(obj))
+	objects := make([]Object[types.Map], len(resp.Results))
+	for i, obj := range resp.Results {
+		objects[i] = unmarshalObject(&obj)
 	}
 	return &Result{Objects: objects}, nil
 }

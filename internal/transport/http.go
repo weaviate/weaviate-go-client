@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -42,6 +43,7 @@ func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 		if err != nil {
 			return fmt.Errorf("marshal request body: %w", err)
 		}
+		log.Printf("%s", marshaled)
 		body = bytes.NewReader(marshaled)
 	}
 
@@ -53,11 +55,16 @@ func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 
 	// Clone default request headers.
 	httpreq.Header = c.header.Clone()
-	// TODO: add Content-Type header if body != nil
+
+	// Accept JSON even if dest is nil, as we don't want to spoof the request.
+	httpreq.Header.Set("Accept", "application/json")
+	if body != nil {
+		httpreq.Header.Set("Content-Type", "application/json")
+	}
 
 	res, err := c.c.Do(httpreq)
 	if err != nil {
-		return err
+		return fmt.Errorf("execute request: %q", err)
 	}
 
 	// Response body SHOULD always be read completely and closed

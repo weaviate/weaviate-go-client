@@ -2,7 +2,7 @@ module examples/basic_usage
 
 go 1.24.10
 
-replace github.com/weaviate/weaviate-go-client/v6 => ../../../
+replace github.com/weaviate/weaviate-go-client/v6 => ../../
 
 require github.com/weaviate/weaviate-go-client/v6 v6.0.0
 
