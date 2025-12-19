@@ -27,11 +27,12 @@ type NestedProperty struct {
 	Name       string
 	Properties []string
 }
+
 type Reference struct {
 	PropertyName           string
 	TargetCollection       string
 	ReturnProperties       []string
-	ReturnNestedProperties []NestedProperty // Return object properties and a subset of their nested properties.
+	ReturnNestedProperties []*NestedProperty // Return object properties and a subset of their nested properties.
 	ReturnMetadata         []Metadata
 }
 
@@ -53,7 +54,7 @@ type GroupBy struct {
 }
 
 type Result struct {
-	Objects []Object[types.Map]
+	Objects []*Object[types.Map]
 }
 
 type Object[P types.Properties] struct {
@@ -72,7 +73,7 @@ type Group[P types.Properties] struct {
 	Name                     string
 	MinDistance, MaxDistance float32
 	Size                     int64
-	Objects                  []GroupByObject[P]
+	Objects                  []*GroupByObject[P]
 }
 
 type GroupByObject[P types.Properties] struct {
@@ -82,17 +83,55 @@ type GroupByObject[P types.Properties] struct {
 }
 
 type GroupByResult struct {
-	Objects []GroupByObject[types.Map]
-	Groups  map[string]Group[types.Map]
+	Objects []*GroupByObject[types.Map]
+	Groups  map[string]*Group[types.Map]
 }
 
-func unmarshalObject(in api.Object) Object[types.Map] {
+func marshalReturnMetadata(metadata []Metadata) []api.MetadataRequest {
+	out := make([]api.MetadataRequest, len(metadata)+1)
+	for _, m := range metadata {
+		out = append(out, api.MetadataRequest(m))
+	}
+	out = append(out, api.MetadataUUID)
+	return out
+}
+
+func marshalReturnProperties(properties []string, nested []*NestedProperty) []*api.ReturnProperty {
+	out := make([]*api.ReturnProperty, len(properties)+len(nested))
+	for _, p := range properties {
+		out = append(out, &api.ReturnProperty{Name: p})
+	}
+	for _, np := range nested {
+		out = append(out, &api.ReturnProperty{
+			Name:             np.Name,
+			NestedProperties: np.Properties,
+		})
+	}
+	return out
+}
+
+func marshalReturnReferences(references []*Reference) []*api.ReturnReference {
+	out := make([]*api.ReturnReference, len(references))
+	for _, ref := range references {
+		out = append(out, &api.ReturnReference{
+			PropertyName:     ref.PropertyName,
+			TargetCollection: ref.TargetCollection,
+			ReturnMetadata:   marshalReturnMetadata(ref.ReturnMetadata),
+			ReturnProperties: marshalReturnProperties(ref.ReturnProperties, ref.ReturnNestedProperties),
+		})
+	}
+	return out
+}
+
+func unmarshalObject(in *api.Object) *Object[types.Map] {
 	vectors := make(types.Vectors, len(in.Metadata.NamedVectors)+1)
 	maps.Copy(vectors, in.Metadata.NamedVectors)
-	vectors[api.DefaultVectorName] = in.Metadata.UnnamedVector
+	if in.Metadata.UnnamedVector != nil {
+		vectors[api.DefaultVectorName] = in.Metadata.UnnamedVector
+	}
 
 	// TODO(dyma): unmarshal references
-	return Object[types.Map]{
+	return &Object[types.Map]{
 		Object: types.Object[types.Map]{
 			UUID:               in.Metadata.UUID,
 			Vectors:            types.Vectors(vectors),

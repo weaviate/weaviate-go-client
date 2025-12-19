@@ -67,16 +67,16 @@ func AwaitCompletion(ctx context.Context, backup *Info, options ...AwaitOption) 
 //
 // AwaitStatus returns immediately if the *Info is nil, the backup's completed,
 // or reached the desired status. In the first 2 cases the returned error is not nil.
-func AwaitStatus(ctx context.Context, backup *Info, want Status, options ...AwaitOption) (*Info, error) {
-	if backup == nil {
+func AwaitStatus(ctx context.Context, bak *Info, want Status, options ...AwaitOption) (*Info, error) {
+	if bak == nil {
 		return nil, fmt.Errorf("nil backup")
-	} else if backup.Status == want {
-		return backup, nil
-	} else if backup.IsCompleted() {
+	} else if bak.Status == want {
+		return bak, nil
+	} else if bak.IsCompleted() {
 		return nil, fmt.Errorf("await %s: %w", want, errBackupStatusFallthrough)
 	}
 
-	c := backup.c
+	c := bak.c
 	if c == nil {
 		return nil, errBackupNotAwaitable
 	}
@@ -95,7 +95,8 @@ func AwaitStatus(ctx context.Context, backup *Info, want Status, options ...Awai
 	_, hasDeadline := ctx.Deadline()
 	dev.Assert(hasDeadline, "unbounded await context")
 
-	latest, err := c.getStatus(ctx, backup.ID, backup.Backend, backup.operation)
+	cfg := GetStatus{Backend: bak.Backend, ID: bak.ID}
+	latest, err := c.getStatus(ctx, cfg, bak.operation)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +105,7 @@ func AwaitStatus(ctx context.Context, backup *Info, want Status, options ...Awai
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		default:
-			latest, err = c.getStatus(ctx, backup.ID, backup.Backend, backup.operation)
+			latest, err = c.getStatus(ctx, cfg, bak.operation)
 			if err != nil {
 				return nil, err
 			}

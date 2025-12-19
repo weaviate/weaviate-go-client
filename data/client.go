@@ -26,21 +26,19 @@ type Client struct {
 type Object struct {
 	UUID       uuid.UUID
 	Properties any
-	Vectors    []types.Vector
+	Vectors    []*types.Vector
 }
 
 func (c *Client) Insert(ctx context.Context, ir *Object) (*types.Object[types.Map], error) {
-	var req api.InsertObjectRequest
-	if ir != nil {
-		req = api.InsertObjectRequest{
-			UUID:       ir.UUID,
-			Properties: ir.Properties,
-			Vectors:    newVectors(ir.Vectors),
-		}
+	ir = internal.Optional(ir)
+	req := &api.InsertObjectRequest{
+		UUID:       ir.UUID,
+		Properties: ir.Properties,
+		Vectors:    newVectors(ir.Vectors),
 	}
 
 	var resp api.InsertObjectResponse
-	if err := c.transport.Do(ctx, &req, &resp); err != nil {
+	if err := c.transport.Do(ctx, req, &resp); err != nil {
 		return nil, fmt.Errorf("insert object: %w", err)
 	}
 
@@ -74,10 +72,10 @@ func (c *Client) Replace(ctx context.Context, ir Object) (*types.Object[types.Ma
 	}, nil
 }
 
-func newVectors(vectors []types.Vector) api.Vectors {
+func newVectors(vectors []*types.Vector) api.Vectors {
 	vs := make(api.Vectors, len(vectors))
 	for _, v := range vectors {
-		vs[v.Name] = api.Vector(v)
+		vs[v.Name] = (*api.Vector)(v)
 	}
 	return vs
 }

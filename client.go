@@ -17,8 +17,8 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
-func NewClient(ctx context.Context, config ConnectionConfig) (*Client, error) {
-	return newClient(ctx, config)
+func NewClient(ctx context.Context, cfg ConnectionConfig) (*Client, error) {
+	return newClient(ctx, &cfg)
 }
 
 // NewLocal sets default connections options for a local connection
@@ -33,9 +33,9 @@ func NewClient(ctx context.Context, config ConnectionConfig) (*Client, error) {
 //	c, err := weaviate.NewLocal(weaviate.ConnectionConfig{
 //		 HTTPPort: 8081,
 //	)}
-func NewLocal(ctx context.Context, config ...ConnectionConfig) (*Client, error) {
-	cfg, _ := internal.Last(config...)
-	defaultLocalConfig.extend(&cfg)
+func NewLocal(ctx context.Context, cfg *ConnectionConfig) (*Client, error) {
+	cfg = internal.Optional(cfg)
+	defaultLocalConfig.extend(cfg)
 	return newClient(ctx, cfg)
 }
 
@@ -52,7 +52,7 @@ func NewLocal(ctx context.Context, config ...ConnectionConfig) (*Client, error) 
 //	c, err := weaviate.NewWeaviateCloud(weaviate.ConnectionConfig{
 //		 Headers: http.Header{"Custom-X-Value": []string{"my-header"}}
 //	)}
-func NewWeaviateCloud(ctx context.Context, hostname, apiKey string, config ...ConnectionConfig) (*Client, error) {
+func NewWeaviateCloud(ctx context.Context, hostname, apiKey string, cfg *ConnectionConfig) (*Client, error) {
 	// Handle invalid hostnames that specify a scheme.
 	hostname = strings.TrimLeft(hostname, "http://")
 	hostname = strings.TrimLeft(hostname, "https://")
@@ -72,8 +72,8 @@ func NewWeaviateCloud(ctx context.Context, hostname, apiKey string, config ...Co
 		cloud.Header = http.Header{headerWeaviateClusterURL: {clusterURL}}
 	}
 
-	cfg, _ := internal.Last(config...)
-	cloud.extend(&cfg)
+	cfg = internal.Optional(cfg)
+	cloud.extend(cfg)
 
 	return newClient(ctx, cfg)
 }
@@ -120,8 +120,8 @@ var defaultConfig = ConnectionConfig{
 	Header: http.Header{headerWeaviateClient: {clientName + "/" + version}},
 }
 
-func newClient(_ context.Context, cfg ConnectionConfig) (*Client, error) {
-	defaultConfig.extend(&cfg)
+func newClient(_ context.Context, cfg *ConnectionConfig) (*Client, error) {
+	defaultConfig.extend(cfg)
 
 	t, err := transport.New(transport.Config{
 		Scheme:   cfg.Scheme,

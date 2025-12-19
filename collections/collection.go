@@ -6,8 +6,8 @@ type (
 	Collection struct {
 		Name          string
 		Description   string
-		Properties    []Property
-		References    []Reference
+		Properties    []*Property
+		References    []*Reference
 		Sharding      ShardingConfig
 		Replication   ReplicationConfig
 		InvertedIndex InvertedIndexConfig
@@ -17,7 +17,7 @@ type (
 		Name              string
 		Description       string
 		DataType          DataType
-		NestedProperties  []Property
+		NestedProperties  []*Property
 		Tokenization      Tokenization
 		IndexInverted     bool
 		IndexFilterable   bool
@@ -94,9 +94,9 @@ const (
 )
 
 func (r *Collection) toAPI() api.Collection {
-	properties := make([]api.Property, len(r.Properties))
+	properties := make([]*api.Property, len(r.Properties))
 	for _, p := range r.Properties {
-		properties = append(properties, api.Property{
+		properties = append(properties, &api.Property{
 			Name:              p.Name,
 			Description:       p.Description,
 			DataType:          api.DataType(p.DataType),
@@ -109,9 +109,9 @@ func (r *Collection) toAPI() api.Collection {
 		})
 	}
 
-	references := make([]api.ReferenceProperty, len(r.References))
+	references := make([]*api.ReferenceProperty, len(r.References))
 	for _, ref := range r.References {
-		references = append(references, api.ReferenceProperty{
+		references = append(references, &api.ReferenceProperty{
 			Name:        ref.Name,
 			Collections: ref.Collections,
 		})
@@ -121,6 +121,7 @@ func (r *Collection) toAPI() api.Collection {
 		Name:        r.Name,
 		Description: r.Description,
 		Properties:  properties,
+		References:  references,
 		Sharding: api.ShardingConfig{
 			DesiredCount:        r.Sharding.DesiredCount,
 			DesiredVirtualCount: r.Sharding.DesiredVirtualCount,
@@ -148,10 +149,10 @@ func (r *Collection) toAPI() api.Collection {
 }
 
 // fromAPI converts api.Collection into Collection.
-func fromAPI(c api.Collection) Collection {
-	properties := make([]Property, len(c.Properties))
+func fromAPI(c *api.Collection) *Collection {
+	properties := make([]*Property, len(c.Properties))
 	for _, p := range c.Properties {
-		properties = append(properties, Property{
+		properties = append(properties, &Property{
 			Name:              p.Name,
 			Description:       p.Description,
 			DataType:          DataType(p.DataType),
@@ -163,15 +164,15 @@ func fromAPI(c api.Collection) Collection {
 			IndexSearchable:   p.IndexSearchable,
 		})
 	}
-	references := make([]Reference, len(c.Properties))
+	references := make([]*Reference, len(c.Properties))
 	for _, ref := range c.References {
-		references = append(references, Reference{
+		references = append(references, &Reference{
 			Name:        ref.Name,
 			Collections: ref.Collections,
 		})
 	}
 
-	return Collection{
+	return &Collection{
 		Name:        c.Name,
 		Description: c.Description,
 		Properties:  properties,
@@ -201,16 +202,16 @@ func fromAPI(c api.Collection) Collection {
 	}
 }
 
-type nestedProperties []Property
+type nestedProperties []*Property
 
-func makeNestedProperties(nested []api.Property) []Property {
+func makeNestedProperties(nested []*api.Property) []*Property {
 	if len(nested) == 0 {
 		return nil
 	}
 
 	nps := make(nestedProperties, len(nested))
 	for _, np := range nested {
-		nps = append(nps, Property{
+		nps = append(nps, &Property{
 			Name:              np.Name,
 			Description:       np.Description,
 			DataType:          DataType(np.DataType),
@@ -224,14 +225,14 @@ func makeNestedProperties(nested []api.Property) []Property {
 	return nps
 }
 
-func (nps nestedProperties) toAPI() []api.Property {
+func (nps nestedProperties) toAPI() []*api.Property {
 	if len(nps) == 0 {
 		return nil
 	}
 
-	properties := make([]api.Property, len(nps))
+	properties := make([]*api.Property, len(nps))
 	for _, p := range nps {
-		properties = append(properties, api.Property{
+		properties = append(properties, &api.Property{
 			Name:              p.Name,
 			Description:       p.Description,
 			DataType:          api.DataType(p.DataType),

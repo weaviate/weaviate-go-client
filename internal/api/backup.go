@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"time"
@@ -9,27 +10,27 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
-type (
-	RestoreBackupConfig struct{}
-	Backup              struct {
-		ID                  string
-		Path                string
-		Backend             string
-		IncludesCollections []string
-		Status              string
-		Error               string
-		StartedAt           time.Time
-		CompletedAt         time.Time
-		SizeGiB             float32
-	}
-)
+type BackupInfo struct {
+	Backend     string
+	ID          string
+	Path        string
+	Error       string
+	Status      BackupStatus
+	StartedAt   time.Time
+	CompletedAt time.Time
+
+	IncludesCollections []string
+	SizeGiB             *float32
+}
+
+var _ json.Unmarshaler = (*BackupInfo)(nil)
 
 type BackupCompressionLevel string
 
 const (
-	BackupCompressionLevelDefault             BackupCompressionLevel = "DefaultCompression"
-	BackupCompressionLevelBestSpeed           BackupCompressionLevel = "BestSpeed"
-	BackupCompressionLevelBestCompression     BackupCompressionLevel = "BestCompression"
+	BackupCompressionLevelDefault             BackupCompressionLevel = BackupCompressionLevel(rest.DefaultCompression)
+	BackupCompressionLevelBestSpeed           BackupCompressionLevel = BackupCompressionLevel(rest.BestSpeed)
+	BackupCompressionLevelBestCompression     BackupCompressionLevel = BackupCompressionLevel(rest.BestCompression)
 	BackupCompressionLevelZstdDefault         BackupCompressionLevel = "ZstdDefaultCompression"
 	BackupCompressionLevelZstdBestSpeed       BackupCompressionLevel = "ZstdBestSpeed"
 	BackupCompressionLevelZstdBestCompression BackupCompressionLevel = "ZstdBestCompression"
@@ -39,18 +40,19 @@ const (
 type BackupStatus string
 
 const (
-	BackupStatusStarted      BackupStatus = "STARTED"
-	BackupStatusTransferring BackupStatus = "TRANSFERRING"
-	BackupStatusSuccess      BackupStatus = "SUCCESS"
-	BackupStatusFailed       BackupStatus = "FAILED"
-	BackupStatusCanceled     BackupStatus = "CANCELED"
+	BackupStatusStarted      BackupStatus = BackupStatus(rest.BackupListResponseStatusSTARTED)
+	BackupStatusTransferring BackupStatus = BackupStatus(rest.BackupListResponseStatusTRANSFERRING)
+	BackupStatusTransferred  BackupStatus = BackupStatus(rest.BackupListResponseStatusTRANSFERRED)
+	BackupStatusSuccess      BackupStatus = BackupStatus(rest.BackupListResponseStatusSUCCESS)
+	BackupStatusFailed       BackupStatus = BackupStatus(rest.BackupListResponseStatusFAILED)
+	BackupStatusCanceled     BackupStatus = BackupStatus(rest.BackupListResponseStatusCANCELED)
 )
 
 type RBACRestoreOption string
 
 const (
-	RBACRestoreAll  RBACRestoreOption = "all"
-	RBACRestoreNone RBACRestoreOption = "noRestore"
+	RBACRestoreAll  RBACRestoreOption = RBACRestoreOption(rest.All)
+	RBACRestoreNone RBACRestoreOption = RBACRestoreOption(rest.NoRestore)
 )
 
 type BackupOperation int
@@ -72,7 +74,7 @@ type CreateBackupRequest struct {
 	ExcludeCollections []string
 	MaxCPUPercentage   int
 	ChunkSize          int
-	CompressionLevel   string
+	CompressionLevel   BackupCompressionLevel
 }
 
 // Compile-time assertion that CreateBackupRequest implements [tranport.Endpoint].
@@ -105,10 +107,11 @@ type RestoreBackupRequest struct {
 	Endpoint           string
 	IncludeCollections []string
 	ExcludeCollections []string
-	OverwriteAlias     bool
 	MaxCPUPercentage   int
+	OverwriteAlias     bool
 	RestoreUsers       RBACRestoreOption
 	RestoreRoles       RBACRestoreOption
+	NodeMapping        map[string]string
 }
 
 // Compile-time assertion that RestoreBackupRequest implements [transport.Endpoint].
@@ -121,7 +124,7 @@ func (r *RestoreBackupRequest) Body() any {
 		Include:        r.IncludeCollections,
 		Exclude:        r.ExcludeCollections,
 		OverwriteAlias: r.OverwriteAlias,
-		// NodeMapping:    make(map[string]string), // TODO(dyma): what should this field be?
+		NodeMapping:    r.NodeMapping,
 		Config: rest.RestoreConfig{
 			Bucket:        r.Bucket,
 			Path:          r.BackupPath,
@@ -142,9 +145,7 @@ type BackupStatusRequest struct {
 }
 
 // Compile-time assertion that BackupStatusRequest implements [tranport.Endpoint].
-var (
-	_ transport.Endpoint = (*BackupStatusRequest)(nil)
-)
+var _ transport.Endpoint = (*BackupStatusRequest)(nil)
 
 func (r *BackupStatusRequest) Method() string { return http.MethodGet }
 func (r *BackupStatusRequest) Path() string {
@@ -155,11 +156,11 @@ func (r *BackupStatusRequest) Path() string {
 	return path
 }
 
+// ListBackupsRequest fetches all requests in a backend storage.
 type ListBackupsRequest struct {
 	transport.BaseEndpoint
 
 	Backend         string
-	ID              string
 	StartingTimeAsc bool
 }
 
@@ -187,3 +188,36 @@ var _ transport.Endpoint = (*CancelBackupRequest)(nil)
 
 func (r *CancelBackupRequest) Method() string { return http.MethodDelete }
 func (r *CancelBackupRequest) Path() string   { return "/backups/" + r.Backend + "/" + r.ID }
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (b *BackupInfo) UnmarshalJSON(data []byte) error {
+	var bak struct {
+		ID          string       `json:"id,omitempty"`
+		Path        string       `json:"path,omitempty"`
+		Backend     string       `json:"backend,omitempty"`
+		Error       string       `json:"error,omitempty"`
+		Status      BackupStatus `json:"status,omitempty"`
+		StartedAt   time.Time    `json:"startedAt"`
+		CompletedAt time.Time    `json:"completedAt"`
+
+		IncludesCollections []string `json:"classes,omitempty"`
+		SizeGiB             *float32 `json:"size,omitempty"`
+	}
+
+	if err := json.Unmarshal(data, &bak); err != nil {
+		return err
+	}
+
+	*b = BackupInfo{
+		Backend:             bak.Backend,
+		ID:                  bak.ID,
+		Path:                bak.Path,
+		Error:               bak.Error,
+		Status:              bak.Status,
+		StartedAt:           bak.StartedAt,
+		CompletedAt:         bak.CompletedAt,
+		IncludesCollections: bak.IncludesCollections,
+		SizeGiB:             bak.SizeGiB,
+	}
+	return nil
+}

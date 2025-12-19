@@ -23,10 +23,10 @@ func (v Vector) Vectors() []api.TargetVector {
 	return v.Vectors()
 }
 
-func (vs Vectors) ToSlice() []Vector {
-	out := make([]Vector, len(vs))
+func (vs Vectors) ToSlice() []*Vector {
+	out := make([]*Vector, len(vs))
 	for _, v := range vs {
-		out = append(out, Vector(v))
+		out = append(out, (*Vector)(v))
 	}
 	return out
 }

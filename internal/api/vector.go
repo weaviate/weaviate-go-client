@@ -29,10 +29,10 @@ func (tv targetVector) Weight() float32 { return 0 }
 func (tv targetVector) Vector() *Vector { return &tv.v }
 
 // Vectors is a map of named vectors. An empty string is an alias for "default" vector.
-type Vectors map[string]Vector
+type Vectors map[string]*Vector
 
-func (vs Vectors) ToSlice() []Vector {
-	out := make([]Vector, len(vs))
+func (vs Vectors) ToSlice() []*Vector {
+	out := make([]*Vector, len(vs))
 	for _, v := range vs {
 		out = append(out, v)
 	}

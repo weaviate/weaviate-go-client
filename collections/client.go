@@ -7,6 +7,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/data"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/query"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
@@ -84,25 +85,14 @@ type CreateOptions struct {
 // To configure the new collection, provide a single instance of CreateOptions as the options argument.
 //
 // Avoid passing multiple options arguments at once -- only the last one will be applied.
-func (c *Client) Create(ctx context.Context, collectionName string, option ...CreateOptions) (*Handle, error) {
-	collection := Collection{Name: collectionName}
-	if opt, ok := internal.Last(option...); ok {
-		collection.Description = opt.Description
-		collection.Properties = opt.Properties
-		collection.References = opt.References
-		collection.Sharding = opt.Sharding
-		collection.Replication = opt.Replication
-		collection.InvertedIndex = opt.InvertedIndex
-		collection.MultiTenancy = opt.MultiTenancy
-	}
-
+func (c *Client) Create(ctx context.Context, collection Collection) (*Handle, error) {
 	req := &api.CreateCollectionRequest{Collection: collection.toAPI()}
 
 	// No need to read the result of the request, we only need the name to create a handle.
 	if err := c.t.Do(ctx, req, nil); err != nil {
 		return nil, fmt.Errorf("create collection: %w", err)
 	}
-	return c.Use(collectionName), nil
+	return c.Use(collection.Name), nil
 }
 
 // GetConfig returns configuration for the collection.
@@ -112,18 +102,17 @@ func (c *Client) GetConfig(ctx context.Context, collectionName string) (*Collect
 	if err := c.t.Do(ctx, api.GetCollectionRequest(collectionName), &resp); err != nil {
 		return nil, fmt.Errorf("get collection config: %w", err)
 	}
-	out := fromAPI(resp)
-	return &out, nil
+	return fromAPI(&resp), nil
 }
 
 // List returns configurations for all collections defined in the schema.
-func (c *Client) List(ctx context.Context) ([]Collection, error) {
-	var resp []api.Collection
+func (c *Client) List(ctx context.Context) ([]*Collection, error) {
+	var resp []*api.Collection
 	if err := c.t.Do(ctx, api.ListCollectionsRequest, &resp); err != nil {
 		return nil, fmt.Errorf("list collections: %w", err)
 	}
 
-	out := make([]Collection, len(resp))
+	out := make([]*Collection, len(resp))
 	for _, c := range resp {
 		out = append(out, fromAPI(c))
 	}
@@ -157,6 +146,7 @@ func (c *Client) DeleteAll(ctx context.Context) error {
 		return fmt.Errorf("delete all collections: %w", err)
 	}
 	for _, collection := range all {
+		dev.Assert(collection != nil, "nil collection")
 		if err := c.Delete(ctx, collection.Name); err != nil {
 			return err
 		}

@@ -7,18 +7,19 @@ import (
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
 type NearVector struct {
-	Limit                  int                   // Limit the number of results returned for the query.
-	Offset                 int                   // Skip the first N objects in the collection.
-	AutoLimit              int                   // Return objects in the first N similarity clusters.
-	After                  uuid.UUID             // Skip all objects before the one with this ID.
-	ReturnReferences       []api.ReturnReference // TODO(dyma): add functional option for this
-	ReturnMetadata         []Metadata            // Select query and object metadata to return for each object.
-	ReturnVectors          []string              // List vectors to return for each object in the result set.
-	ReturnNestedProperties []NestedProperty      // Return object properties and a subset of their nested properties.
+	Limit                  int               // Limit the number of results returned for the query.
+	Offset                 int               // Skip the first N objects in the collection.
+	AutoLimit              int               // Return objects in the first N similarity clusters.
+	After                  uuid.UUID         // Skip all objects before the one with this ID.
+	ReturnReferences       []*Reference      // Select reference properties to return.
+	ReturnMetadata         []Metadata        // Select query and object metadata to return for each object.
+	ReturnVectors          []string          // List vectors to return for each object in the result set.
+	ReturnNestedProperties []*NestedProperty // Return object properties and a subset of their nested properties.
 
 	// Select a subset of properties to return. By default, all properties are returned.
 	// To not return any properties, initialize this value to an empty slice explicitly.
@@ -29,6 +30,9 @@ type NearVector struct {
 	// Use Certainty() to set it to a normalized value between 0 and 1.
 	// Prefer expressing Similarity in terms of vector distance, as it is a more conventional metric.
 	Similarity *Similarity
+
+	// TODO(dyma): document
+	Target NearVectorTarget
 
 	// groupBy can only be set by NearVeectorFunc.GroupBy, as it affects the shape of the response.
 	groupBy *GroupBy
@@ -46,54 +50,31 @@ func Certainty(d float64) *Similarity { return &Similarity{certainty: &d} }
 type NearVectorTarget api.NearVectorTarget
 
 // NearVectorFunc runs plain near vector search.
-type NearVectorFunc func(context.Context, NearVectorTarget, ...NearVector) (*Result, error)
+type NearVectorFunc func(context.Context, NearVector) (*Result, error)
 
 // GroupBy runs near vector search with a group by clause.
-func (nv NearVectorFunc) GroupBy(ctx context.Context, target NearVectorTarget, groupBy GroupBy, option ...NearVector) (*GroupByResult, error) {
+func (nvf NearVectorFunc) GroupBy(ctx context.Context, nv NearVector, groupBy GroupBy) (*GroupByResult, error) {
+	nv.groupBy = &groupBy
 	ctx = contextWithGroupByResult(ctx) // safe to reassign since we hold the copy of the original context.
-
-	opt, _ := internal.Last(option...)
-	opt.groupBy = &groupBy
-
-	_, err := nv(ctx, target, opt)
-	if err != nil {
+	if _, err := nvf(ctx, nv); err != nil {
 		return nil, err
 	}
 	return getGroupByResult(ctx), nil
 }
 
-func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefaults, target NearVectorTarget, option ...NearVector) (*Result, error) {
-	nv, _ := internal.Last(option...)
-
-	properties := make([]api.ReturnProperty, len(nv.ReturnProperties)+len(nv.ReturnNestedProperties))
-	for _, p := range nv.ReturnProperties {
-		properties = append(properties, api.ReturnProperty{Name: p})
-	}
-	for _, np := range nv.ReturnNestedProperties {
-		properties = append(properties, api.ReturnProperty{
-			Name:             np.Name,
-			NestedProperties: np.Properties,
-		})
-	}
-
-	metadata := make([]api.MetadataRequest, len(nv.ReturnMetadata)+1)
-	for _, m := range nv.ReturnMetadata {
-		metadata = append(metadata, api.MetadataRequest(m))
-	}
-	metadata = append(metadata, api.MetadataUUID)
-
+func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefaults, nv NearVector) (*Result, error) {
 	req := &api.SearchRequest{
 		RequestDefaults:  rd,
 		Limit:            nv.Limit,
 		AutoLimit:        nv.AutoLimit,
 		Offset:           nv.Offset,
 		After:            nv.After,
-		ReturnProperties: properties,
-		ReturnReferences: nv.ReturnReferences,
 		ReturnVectors:    nv.ReturnVectors,
-		ReturnMetadata:   metadata,
+		ReturnMetadata:   marshalReturnMetadata(nv.ReturnMetadata),
+		ReturnProperties: marshalReturnProperties(nv.ReturnProperties, nv.ReturnNestedProperties),
+		ReturnReferences: marshalReturnReferences(nv.ReturnReferences),
 		NearVector: &api.NearVector{
-			Target:    target,
+			Target:    nv.Target,
 			Distance:  nv.Similarity.distance,
 			Certainty: nv.Similarity.certainty,
 		},
@@ -109,19 +90,21 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 	// return value will be discarded.
 	if nv.groupBy != nil {
 		var res GroupByResult
-		groups := make(map[string]Group[types.Map], len(resp.GroupByResults))
-		objects := make([]GroupByObject[types.Map], len(resp.GroupByResults))
+		groups := make(map[string]*Group[types.Map], len(resp.GroupByResults))
+		objects := make([]*GroupByObject[types.Map], len(resp.GroupByResults))
 		for name, group := range resp.GroupByResults {
 			for _, obj := range group.Objects {
-				objects = append(objects, GroupByObject[types.Map]{
+				unmarshaled := unmarshalObject(&obj.Object)
+				dev.Assert(unmarshaled != nil, "nil object")
+				objects = append(objects, &GroupByObject[types.Map]{
 					BelongsToGroup: name,
-					Object:         unmarshalObject(obj.Object),
+					Object:         *unmarshaled,
 				})
 			}
 
 			// Create a view into the Objects slice rather than allocating a separate one.
 			from, to := len(objects)-len(group.Objects), len(objects)-1
-			groups[name] = Group[types.Map]{
+			groups[name] = &Group[types.Map]{
 				Name:        name,
 				MinDistance: group.MinDistance,
 				MaxDistance: group.MaxDistance,
@@ -134,7 +117,7 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 		return nil, nil
 	}
 
-	var objects []Object[types.Map]
+	var objects []*Object[types.Map]
 	for _, obj := range resp.Results {
 		objects = append(objects, unmarshalObject(obj))
 	}
@@ -143,8 +126,8 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 
 // nearVectorFunc makes internal.Transport available to nearVector via a closure.
 func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc {
-	return func(ctx context.Context, target NearVectorTarget, option ...NearVector) (*Result, error) {
-		return nearVector(ctx, t, rd, target, option...)
+	return func(ctx context.Context, nv NearVector) (*Result, error) {
+		return nearVector(ctx, t, rd, nv)
 	}
 }
 

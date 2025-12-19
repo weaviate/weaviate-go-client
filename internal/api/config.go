@@ -12,8 +12,8 @@ type (
 	Collection struct {
 		Name          string
 		Description   string
-		Properties    []Property
-		References    []ReferenceProperty
+		Properties    []*Property
+		References    []*ReferenceProperty
 		Sharding      ShardingConfig
 		Replication   ReplicationConfig
 		InvertedIndex InvertedIndexConfig
@@ -175,12 +175,12 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	properties := make([]Property, len(class.Properties))
-	references := make([]ReferenceProperty, len(class.Properties))
+	properties := make([]*Property, len(class.Properties))
+	references := make([]*ReferenceProperty, len(class.Properties))
 	for _, p := range class.Properties {
 		notReference := len(p.DataType) == 1 && knownDataTypes.Contains(DataType(p.DataType[0]))
 		if notReference {
-			properties = append(properties, Property{
+			properties = append(properties, &Property{
 				Name:              p.Name,
 				Description:       p.Description,
 				DataType:          DataType(p.DataType[0]),
@@ -192,7 +192,7 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 				IndexSearchable:   p.IndexSearchable,
 			})
 		} else {
-			references = append(references, ReferenceProperty{
+			references = append(references, &ReferenceProperty{
 				Name:        p.Name,
 				Collections: p.DataType,
 			})
@@ -290,7 +290,7 @@ func (c *Collection) toREST() *rest.Class {
 	}
 }
 
-type NestedProperties []Property
+type NestedProperties []*Property
 
 func makeNestedProperties(nested []rest.NestedProperty) NestedProperties {
 	if len(nested) == 0 {
@@ -300,7 +300,7 @@ func makeNestedProperties(nested []rest.NestedProperty) NestedProperties {
 	nps := make(NestedProperties, len(nested))
 	for _, np := range nested {
 		if len(np.DataType) == 1 {
-			nps = append(nps, Property{
+			nps = append(nps, &Property{
 				Name:              np.Name,
 				Description:       np.Description,
 				DataType:          DataType(np.DataType[0]),
