@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/backup"
-	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 )
 
 func TestAwaitStatus(t *testing.T) {
@@ -31,8 +31,8 @@ func TestAwaitStatus(t *testing.T) {
 	})
 
 	t.Run("backup in desired state", func(t *testing.T) {
-		transport := newTransport(t, []response[api.BackupInfo]{
-			{value: api.BackupInfo{Status: api.BackupStatusTransferred}},
+		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
+			{Value: api.BackupInfo{Status: api.BackupStatusTransferred}},
 		})
 		c := backup.NewClient(transport)
 
@@ -46,8 +46,8 @@ func TestAwaitStatus(t *testing.T) {
 	})
 
 	t.Run("backup is already completed (status fallthrough)", func(t *testing.T) {
-		transport := newTransport(t, []response[api.BackupInfo]{
-			{value: api.BackupInfo{Status: api.BackupStatusSuccess}},
+		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
+			{Value: api.BackupInfo{Status: api.BackupStatusSuccess}},
 		})
 		c := backup.NewClient(transport)
 
@@ -63,11 +63,11 @@ func TestAwaitStatus(t *testing.T) {
 	})
 
 	t.Run("successful await", func(t *testing.T) {
-		transport := newTransport(t, []response[api.BackupInfo]{
-			{value: api.BackupInfo{Status: api.BackupStatusStarted}},
-			{value: api.BackupInfo{Status: api.BackupStatusTransferring}},
-			{value: api.BackupInfo{Status: api.BackupStatusTransferring}},
-			{value: api.BackupInfo{Status: api.BackupStatusTransferred}},
+		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
+			{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
+			{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
+			{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
+			{Value: api.BackupInfo{Status: api.BackupStatusTransferred}},
 		})
 		c := backup.NewClient(transport)
 
@@ -85,11 +85,11 @@ func TestAwaitStatus(t *testing.T) {
 	})
 
 	t.Run("backup is canceled abruptly (status fallthrough)", func(t *testing.T) {
-		transport := newTransport(t, []response[api.BackupInfo]{
-			{value: api.BackupInfo{Status: api.BackupStatusStarted}},
-			{value: api.BackupInfo{Status: api.BackupStatusTransferring}},
-			{value: api.BackupInfo{Status: api.BackupStatusTransferring}},
-			{value: api.BackupInfo{Status: api.BackupStatusCanceled}},
+		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
+			{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
+			{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
+			{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
+			{Value: api.BackupInfo{Status: api.BackupStatusCanceled}},
 		})
 		c := backup.NewClient(transport)
 
@@ -107,10 +107,10 @@ func TestAwaitStatus(t *testing.T) {
 	})
 
 	t.Run("error while awaiting", func(t *testing.T) {
-		transport := newTransport(t, []response[api.BackupInfo]{
-			{value: api.BackupInfo{Status: api.BackupStatusStarted}},
-			{value: api.BackupInfo{Status: api.BackupStatusTransferring}},
-			{err: errors.New("whaam!")},
+		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
+			{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
+			{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
+			{Err: errors.New("whaam!")},
 		})
 		c := backup.NewClient(transport)
 
@@ -128,9 +128,9 @@ func TestAwaitStatus(t *testing.T) {
 	})
 
 	t.Run("context is canceled", func(t *testing.T) {
-		transport := newTransport(t, []response[api.BackupInfo]{
-			{value: api.BackupInfo{Status: api.BackupStatusStarted}}, // consumed before await
-			{value: api.BackupInfo{Status: api.BackupStatusStarted}}, // first status check
+		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
+			{Value: api.BackupInfo{Status: api.BackupStatusStarted}}, // consumed before await
+			{Value: api.BackupInfo{Status: api.BackupStatusStarted}}, // first status check
 		})
 		c := backup.NewClient(transport)
 
@@ -151,9 +151,9 @@ func TestAwaitStatus(t *testing.T) {
 		assert.Equal(t, backup.StatusStarted, got.Status, "latest status")
 	})
 	t.Run("context times out", func(t *testing.T) {
-		transport := newTransport(t, []response[api.BackupInfo]{
-			{value: api.BackupInfo{Status: api.BackupStatusStarted}}, // consumed before await
-			{value: api.BackupInfo{Status: api.BackupStatusStarted}}, // first status check
+		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
+			{Value: api.BackupInfo{Status: api.BackupStatusStarted}}, // consumed before await
+			{Value: api.BackupInfo{Status: api.BackupStatusStarted}}, // first status check
 		})
 		c := backup.NewClient(transport)
 
@@ -192,8 +192,8 @@ func TestInfo_IsCompleted(t *testing.T) {
 	}
 
 	t.Run("listed backups", func(t *testing.T) {
-		transport := newTransport(t, []response[[]api.BackupInfo]{
-			{value: []api.BackupInfo{
+		transport := testkit.NewResponder(t, []testkit.Response[[]api.BackupInfo]{
+			{Value: []api.BackupInfo{
 				{ID: "1"}, {ID: "2"}, {ID: "3"},
 			}},
 		})
@@ -208,41 +208,3 @@ func TestInfo_IsCompleted(t *testing.T) {
 		}
 	})
 }
-
-// TODO(dyma): move to testkit
-func newTransport[T any](t *testing.T, responses []response[T]) *transport[T] {
-	tt := &transport[T]{
-		t:         t,
-		responses: responses,
-	}
-	t.Cleanup(func() {
-		require.True(t, tt.Done(), "requests were not fully consumed")
-	})
-	return tt
-}
-
-type response[T any] struct {
-	value T
-	err   error
-}
-
-// transport uses responses one by one until the slice is exhausted.
-// Each sub-test should refill the slice.
-type transport[T any] struct {
-	t         *testing.T
-	responses []response[T]
-}
-
-var _ internal.Transport = (*transport[any])(nil)
-
-func (t *transport[T]) Do(_ context.Context, _, dest any) error {
-	require.IsType(t.t, (*T)(nil), dest)
-	require.NotEmpty(t.t, t.responses, "too many requests")
-
-	var resp response[T]
-	resp, t.responses = t.responses[0], t.responses[1:] // pop front
-	*dest.(*T) = resp.value
-	return resp.err
-}
-
-func (t *transport[T]) Done() bool { return len(t.responses) == 0 }
