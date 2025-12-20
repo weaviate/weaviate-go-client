@@ -74,7 +74,10 @@ func (c *Client) Replace(ctx context.Context, ir Object) (*types.Object[types.Ma
 }
 
 func (c *Client) Exists(ctx context.Context, id uuid.UUID) (bool, error) {
-	req := &api.GetObjectRequest{UUID: id}
+	req := &api.GetObjectRequest{
+		RequestDefaults: c.defaults,
+		UUID:            id,
+	}
 
 	var exists api.ResourceExistsResponse
 	if err := c.transport.Do(ctx, req, &exists); err != nil {

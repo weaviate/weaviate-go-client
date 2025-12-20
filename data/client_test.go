@@ -14,12 +14,11 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 )
 
+// Test data.Client.Exists:
+//   - Passes the right UUID and request defaults
+//   - Uses api.ResourceExistsResponse as dest
+//   - Propagates any error from the transport
 func TestDataClient_Exists(t *testing.T) {
-	// Requirements:
-	// Passes the right request (uuid)
-	// Passes an zero value for api.ResourceExistsResponse
-	// Propagates the error
-
 	id := uuid.New()
 	rd := api.RequestDefaults{
 		CollectionName:   "Exists",
@@ -43,7 +42,8 @@ func TestDataClient_Exists(t *testing.T) {
 
 				if assert.IsType(t, (*api.GetObjectRequest)(nil), req, "bad request") {
 					get := req.(*api.GetObjectRequest)
-					assert.Equal(t, id, get.UUID)
+					assert.Equal(t, id, get.UUID, "object uuid")
+					assert.Equal(t, rd, get.RequestDefaults, "request defaults")
 				}
 
 				// Imitate ResourceExistsResponse.UnmarshalMessage.
