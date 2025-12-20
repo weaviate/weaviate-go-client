@@ -14,9 +14,9 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
-	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
+// NewClient returns a new client with provided configurations.
 func NewClient(ctx context.Context, cfg ConnectionConfig) (*Client, error) {
 	return newClient(ctx, &cfg)
 }
@@ -117,20 +117,19 @@ var defaultLocalConfig = ConnectionConfig{
 
 // Default config for all connections.
 var defaultConfig = ConnectionConfig{
-	Header: http.Header{headerWeaviateClient: {clientName + "/" + version}},
+	Header: http.Header{headerWeaviateClient: {clientName + "/" + Version()}},
 }
 
 func newClient(_ context.Context, cfg *ConnectionConfig) (*Client, error) {
 	defaultConfig.extend(cfg)
 
-	t, err := transport.New(transport.Config{
+	t, err := api.NewTransport(api.TransportConfig{
 		Scheme:   cfg.Scheme,
 		HTTPHost: cfg.HTTPHost,
 		GRPCHost: cfg.GRPCHost,
 		HTTPPort: cfg.HTTPPort,
 		GRPCPort: cfg.GRPCPort,
 		Header:   cfg.Header,
-		Version:  api.Version,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("weaviate: new client: %w", err)
