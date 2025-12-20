@@ -42,7 +42,7 @@ func TestResourceExistsResponse(t *testing.T) {
 		} {
 			require.NoError(t,
 				json.Unmarshal([]byte(body), &exists),
-				"headResponse.UnmarshalJSON must accept any input",
+				"headResponse.UnmarshalJSON must accept any valid input",
 			)
 		}
 
@@ -76,10 +76,19 @@ func TestResourceExistsResponse(t *testing.T) {
 	})
 }
 
-// Test that we have an assertions guarding against nil input.
+// Test that we have an assertions guarding against nil pointer derefence.
 func TestResourceExistsResponse_UnmarshalMessage(t *testing.T) {
-	var exists api.ResourceExistsResponse
-	require.PanicsWithValue(t, "search reply is nil", func() {
-		exists.UnmarshalMessage(nil)
+	t.Run("nil input", func(t *testing.T) {
+		var exists api.ResourceExistsResponse
+		require.PanicsWithValue(t, "search reply is nil", func() {
+			exists.UnmarshalMessage(nil)
+		})
+	})
+
+	t.Run("nil receiver", func(t *testing.T) {
+		var exists *api.ResourceExistsResponse
+		require.PanicsWithValue(t, "unmarshal called with nil receiver", func() {
+			exists.UnmarshalMessage(&proto.SearchReply{})
+		})
 	})
 }

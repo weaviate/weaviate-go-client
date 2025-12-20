@@ -62,6 +62,7 @@ func (exists *ResourceExistsResponse) UnmarshalJSON(_ []byte) error {
 
 // UnmarshalMessage implements transport.MessageUnmarshaler.
 func (exists *ResourceExistsResponse) UnmarshalMessage(r *proto.SearchReply) error {
+	dev.Assert(exists != nil, "unmarshal called with nil receiver")
 	dev.Assert(r != nil, "search reply is nil")
 	*exists = len(r.Results) > 0
 	return nil
