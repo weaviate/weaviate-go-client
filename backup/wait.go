@@ -73,7 +73,7 @@ func AwaitStatus(ctx context.Context, bak *Info, want Status, options ...AwaitOp
 	} else if bak.Status == want {
 		return bak, nil
 	} else if bak.IsCompleted() {
-		return nil, fmt.Errorf("await %s: %w", want, errBackupStatusFallthrough)
+		return bak, fmt.Errorf("await %s: %w", want, errBackupStatusFallthrough)
 	}
 
 	c := bak.c
@@ -96,19 +96,20 @@ func AwaitStatus(ctx context.Context, bak *Info, want Status, options ...AwaitOp
 	dev.Assert(hasDeadline, "unbounded await context")
 
 	cfg := GetStatus{Backend: bak.Backend, ID: bak.ID}
-	latest, err := c.getStatus(ctx, cfg, bak.operation)
+	current, err := c.getStatus(ctx, cfg, bak.operation)
 	if err != nil {
-		return nil, err
+		return bak, err
 	}
 	for {
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		default:
-			latest, err = c.getStatus(ctx, cfg, bak.operation)
+			latest, err := c.getStatus(ctx, cfg, bak.operation)
 			if err != nil {
-				return nil, err
+				return current, err
 			}
+			current = latest
 
 			dev.Assert(latest != nil, "getStatus returned nil backup.Info")
 

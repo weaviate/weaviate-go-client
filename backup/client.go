@@ -65,6 +65,7 @@ const (
 
 	StatusStarted      Status = Status(api.BackupStatusStarted)
 	StatusTransferring Status = Status(api.BackupStatusTransferring)
+	StatusTransferred  Status = Status(api.BackupStatusTransferred)
 	StatusSuccess      Status = Status(api.BackupStatusSuccess)
 	StatusFailed       Status = Status(api.BackupStatusFailed)
 	StatusCanceled     Status = Status(api.BackupStatusCanceled)
