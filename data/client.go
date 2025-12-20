@@ -73,6 +73,16 @@ func (c *Client) Replace(ctx context.Context, ir Object) (*types.Object[types.Ma
 	}, nil
 }
 
+func (c *Client) Exists(ctx context.Context, id uuid.UUID) (bool, error) {
+	req := &api.GetObjectRequest{UUID: id}
+
+	var exists api.ResourceExistsResponse
+	if err := c.transport.Do(ctx, req, &exists); err != nil {
+		return false, fmt.Errorf("check object exists: %w", err)
+	}
+	return exists.Bool(), nil
+}
+
 func newVectors(vectors []types.Vector) api.Vectors {
 	vs := make(api.Vectors, len(vectors))
 	for _, v := range vectors {

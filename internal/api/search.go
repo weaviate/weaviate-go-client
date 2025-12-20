@@ -7,13 +7,6 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
-// Compile-time assertions that SearchRequest/SearchResponse
-// implement valid gRPC message interfaces.
-var (
-	_ transport.MessageMarshaler[proto.SearchRequest] = (*SearchRequest)(nil)
-	_ transport.MessageUnmarshaler[proto.SearchReply] = (*SearchResponse)(nil)
-)
-
 type (
 	SearchRequest struct {
 		RequestDefaults
@@ -28,6 +21,35 @@ type (
 		ReturnMetadata   []MetadataRequest
 		NearVector       *NearVector
 	}
+	SearchResponse struct {
+		TookSeconds    float32
+		Results        []Object
+		GroupByResults map[string]Group
+	}
+)
+
+// Compile-time assertions that SearchRequest/SearchResponse
+// implement valid gRPC message interfaces.
+var (
+	_ transport.MessageMarshaler[proto.SearchRequest] = (*SearchRequest)(nil)
+	_ transport.MessageUnmarshaler[proto.SearchReply] = (*SearchResponse)(nil)
+)
+
+type GetObjectRequest struct {
+	RequestDefaults
+	UUID uuid.UUID
+}
+
+var _ transport.MessageMarshaler[proto.SearchRequest] = (*GetObjectRequest)(nil)
+
+// MarshalMessage implements transport.MessageMarshaler.
+func (r *GetObjectRequest) MarshalMessage() *proto.SearchRequest {
+	// TODO(dyma): add a UUID filter with r.UUID
+	search := &SearchRequest{}
+	return search.MarshalMessage()
+}
+
+type (
 	ReturnProperty struct {
 		Name             string
 		NestedProperties []string
@@ -50,11 +72,6 @@ type (
 	TargetVector interface {
 		Vector() *Vector
 		Weight() float32
-	}
-	SearchResponse struct {
-		TookSeconds    float32
-		Results        []Object
-		GroupByResults map[string]Group
 	}
 	Object struct {
 		Metadata   ObjectMetadata
@@ -83,8 +100,6 @@ type (
 		NamedVectors       Vectors
 	}
 )
-
-func (r *SearchRequest) Body() any { return r }
 
 // ReturnOnlyVector is a sentinel value the caller can pass in SearchRequest.ReturnVectors
 // to request the single vector in collection to be returned.
