@@ -103,7 +103,7 @@ func AwaitStatus(ctx context.Context, bak *Info, want Status, options ...AwaitOp
 	for {
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return current, ctx.Err()
 		default:
 			latest, err := c.getStatus(ctx, cfg, bak.operation)
 			if err != nil {
@@ -123,7 +123,7 @@ func AwaitStatus(ctx context.Context, bak *Info, want Status, options ...AwaitOp
 			select {
 			case <-time.After(time.Duration(interval)):
 			case <-ctx.Done():
-				return nil, ctx.Err()
+				return latest, ctx.Err()
 			}
 		}
 	}

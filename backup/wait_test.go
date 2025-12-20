@@ -3,7 +3,9 @@ package backup_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -86,6 +88,7 @@ func TestAwaitStatus(t *testing.T) {
 		transport := newTransport(t, []response[api.BackupInfo]{
 			{value: api.BackupInfo{Status: api.BackupStatusStarted}},
 			{value: api.BackupInfo{Status: api.BackupStatusTransferring}},
+			{value: api.BackupInfo{Status: api.BackupStatusTransferring}},
 			{value: api.BackupInfo{Status: api.BackupStatusCanceled}},
 		})
 		c := backup.NewClient(transport)
@@ -122,6 +125,87 @@ func TestAwaitStatus(t *testing.T) {
 		assert.Error(t, err, "must propagate get-status error")
 		assert.NotNil(t, got, "must return latest backup status")
 		assert.Equal(t, backup.StatusTransferring, got.Status, "latest status")
+	})
+
+	t.Run("context is canceled", func(t *testing.T) {
+		transport := newTransport(t, []response[api.BackupInfo]{
+			{value: api.BackupInfo{Status: api.BackupStatusStarted}}, // consumed before await
+			{value: api.BackupInfo{Status: api.BackupStatusStarted}}, // first status check
+		})
+		c := backup.NewClient(transport)
+
+		bak, err := c.GetCreateStatus(t.Context(), backup.GetStatus{})
+		require.NoError(t, err)
+
+		// Cancel the context right away
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		got, err := backup.AwaitStatus(ctx,
+			bak, backup.StatusSuccess,
+			backup.WithPollingInterval(0),
+		)
+
+		assert.ErrorIs(t, err, context.Canceled)
+		assert.NotNil(t, got, "must return latest backup status")
+		assert.Equal(t, backup.StatusStarted, got.Status, "latest status")
+	})
+	t.Run("context times out", func(t *testing.T) {
+		transport := newTransport(t, []response[api.BackupInfo]{
+			{value: api.BackupInfo{Status: api.BackupStatusStarted}}, // consumed before await
+			{value: api.BackupInfo{Status: api.BackupStatusStarted}}, // first status check
+		})
+		c := backup.NewClient(transport)
+
+		bak, err := c.GetCreateStatus(t.Context(), backup.GetStatus{})
+		require.NoError(t, err)
+
+		ctx, cancel := context.WithDeadline(t.Context(), time.Now().Add(time.Nanosecond))
+		defer cancel()
+
+		got, err := backup.AwaitStatus(ctx,
+			bak, backup.StatusSuccess,
+			backup.WithPollingInterval(10*time.Nanosecond),
+		)
+
+		assert.ErrorIs(t, err, context.DeadlineExceeded)
+		assert.NotNil(t, got, "must return latest backup status")
+		assert.Equal(t, backup.StatusStarted, got.Status, "latest status")
+	})
+}
+
+func TestInfo_IsCompleted(t *testing.T) {
+	for _, tt := range []struct {
+		bak  backup.Info
+		want bool
+	}{
+		{bak: backup.Info{Status: backup.StatusStarted}, want: false},
+		{bak: backup.Info{Status: backup.StatusTransferring}, want: false},
+		{bak: backup.Info{Status: backup.StatusTransferred}, want: false},
+		{bak: backup.Info{Status: backup.StatusSuccess}, want: true},
+		{bak: backup.Info{Status: backup.StatusFailed}, want: true},
+		{bak: backup.Info{Status: backup.StatusCanceled}, want: true},
+	} {
+		t.Run(fmt.Sprintf("status=%s", tt.bak.Status), func(t *testing.T) {
+			require.Equal(t, tt.want, tt.bak.IsCompleted())
+		})
+	}
+
+	t.Run("listed backups", func(t *testing.T) {
+		transport := newTransport(t, []response[[]api.BackupInfo]{
+			{value: []api.BackupInfo{
+				{ID: "1"}, {ID: "2"}, {ID: "3"},
+			}},
+		})
+
+		c := backup.NewClient(transport)
+		require.NotNil(t, c, "nil backup client")
+
+		all, err := c.List(t.Context(), backup.List{})
+		assert.NoError(t, err)
+		for _, bak := range all {
+			assert.True(t, bak.IsCompleted(), "bak-%s: List must return completed backups", bak.ID)
+		}
 	})
 }
 
