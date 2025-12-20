@@ -30,102 +30,93 @@ func TestAwaitStatus(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("backup in desired state", func(t *testing.T) {
-		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
-			{Value: api.BackupInfo{Status: api.BackupStatusTransferred}},
+	// The cases below describe valid backups. The first of the responses
+	// is always consumed to fetch status outside of the await.
+	// It follows that the cases with only 1 response expect AwaitStatus
+	// to return without making any more requests.
+	for _, tt := range []struct {
+		name         string
+		responses    []testkit.Response[api.BackupInfo]
+		awaitStatus  backup.Status // Passed to AwaitStatus.
+		expectStatus backup.Status // Latest observed status.
+		errMsg       string        // Clarifying message for assert.Error.
+	}{
+		{
+			name: "backup in desired state",
+			responses: []testkit.Response[api.BackupInfo]{
+				{Value: api.BackupInfo{Status: api.BackupStatusTransferred}},
+			},
+			awaitStatus:  backup.StatusTransferred,
+			expectStatus: backup.StatusTransferred,
+		},
+		{
+			name: "backup is already completed (status fallthrough)",
+			responses: []testkit.Response[api.BackupInfo]{
+				{Value: api.BackupInfo{Status: api.BackupStatusSuccess}},
+			},
+			awaitStatus:  backup.StatusTransferring,
+			expectStatus: backup.StatusSuccess,
+			errMsg:       "must not await a completed backup",
+		},
+		{
+			name: "successful await",
+			responses: []testkit.Response[api.BackupInfo]{
+				{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
+				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
+				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
+				{Value: api.BackupInfo{Status: api.BackupStatusTransferred}},
+			},
+			awaitStatus:  backup.StatusTransferred,
+			expectStatus: backup.StatusTransferred,
+		},
+		{
+			name: "backup is canceled abruptly (status fallthrough)",
+			responses: []testkit.Response[api.BackupInfo]{
+				{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
+				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
+				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
+				{Value: api.BackupInfo{Status: api.BackupStatusCanceled}},
+			},
+			awaitStatus:  backup.StatusTransferred,
+			expectStatus: backup.StatusCanceled,
+			errMsg:       "must not await a completed backup",
+		},
+		{
+			name: "error while awaiting",
+			responses: []testkit.Response[api.BackupInfo]{
+				{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
+				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
+				{Err: errors.New("whaam!")},
+			},
+			awaitStatus:  backup.StatusSuccess,
+			expectStatus: backup.StatusTransferring,
+			errMsg:       "must propagate get-status error",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewResponder(t, tt.responses)
+			c := backup.NewClient(transport)
+			require.NotNil(t, c, "nil client")
+
+			bak, err := c.GetCreateStatus(t.Context(), backup.GetStatus{})
+			require.NoError(t, err)
+			require.NotNil(t, bak, "nil backup")
+
+			got, err := backup.AwaitStatus(t.Context(),
+				bak, tt.awaitStatus,
+				backup.WithPollingInterval(0),
+			)
+
+			if tt.errMsg == "" {
+				require.NoError(t, err, "await error")
+			} else {
+				assert.Error(t, err, tt.errMsg)
+			}
+
+			assert.NotNil(t, got, "must return latest backup status")
+			assert.Equal(t, tt.expectStatus, got.Status, "latest status")
 		})
-		c := backup.NewClient(transport)
-
-		bak, err := c.GetCreateStatus(t.Context(), backup.GetStatus{})
-		require.NoError(t, err)
-
-		got, err := backup.AwaitStatus(t.Context(), bak, backup.StatusTransferred)
-
-		assert.Equal(t, *bak, *got)
-		assert.NoError(t, err, "await error")
-	})
-
-	t.Run("backup is already completed (status fallthrough)", func(t *testing.T) {
-		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
-			{Value: api.BackupInfo{Status: api.BackupStatusSuccess}},
-		})
-		c := backup.NewClient(transport)
-
-		bak, err := c.GetCreateStatus(t.Context(), backup.GetStatus{})
-		require.NoError(t, err)
-		require.NotNil(t, bak, "nil backup")
-
-		got, err := backup.AwaitStatus(t.Context(), bak, backup.StatusCanceled)
-
-		assert.NotNil(t, got, "must return completed backup")
-		assert.Equal(t, *bak, *got)
-		assert.Error(t, err, "cannot await a completed backup")
-	})
-
-	t.Run("successful await", func(t *testing.T) {
-		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
-			{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
-			{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
-			{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
-			{Value: api.BackupInfo{Status: api.BackupStatusTransferred}},
-		})
-		c := backup.NewClient(transport)
-
-		bak, err := c.GetCreateStatus(t.Context(), backup.GetStatus{})
-		require.NoError(t, err)
-
-		got, err := backup.AwaitStatus(t.Context(),
-			bak, backup.StatusTransferred,
-			backup.WithPollingInterval(0),
-		)
-
-		require.NoError(t, err, "await error")
-		assert.NotNil(t, got, "must return latest backup status")
-		assert.Equal(t, backup.StatusTransferred, got.Status, "latest status")
-	})
-
-	t.Run("backup is canceled abruptly (status fallthrough)", func(t *testing.T) {
-		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
-			{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
-			{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
-			{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
-			{Value: api.BackupInfo{Status: api.BackupStatusCanceled}},
-		})
-		c := backup.NewClient(transport)
-
-		bak, err := c.GetCreateStatus(t.Context(), backup.GetStatus{})
-		require.NoError(t, err)
-
-		got, err := backup.AwaitStatus(t.Context(),
-			bak, backup.StatusTransferred,
-			backup.WithPollingInterval(0),
-		)
-
-		assert.Error(t, err, "cannot await a completed backup")
-		assert.NotNil(t, got, "must return latest backup status")
-		assert.Equal(t, backup.StatusCanceled, got.Status, "latest status")
-	})
-
-	t.Run("error while awaiting", func(t *testing.T) {
-		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
-			{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
-			{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
-			{Err: errors.New("whaam!")},
-		})
-		c := backup.NewClient(transport)
-
-		bak, err := c.GetCreateStatus(t.Context(), backup.GetStatus{})
-		require.NoError(t, err)
-
-		got, err := backup.AwaitStatus(t.Context(),
-			bak, backup.StatusSuccess,
-			backup.WithPollingInterval(0),
-		)
-
-		assert.Error(t, err, "must propagate get-status error")
-		assert.NotNil(t, got, "must return latest backup status")
-		assert.Equal(t, backup.StatusTransferring, got.Status, "latest status")
-	})
+	}
 
 	t.Run("context is canceled", func(t *testing.T) {
 		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
@@ -133,9 +124,7 @@ func TestAwaitStatus(t *testing.T) {
 			{Value: api.BackupInfo{Status: api.BackupStatusStarted}}, // first status check
 		})
 		c := backup.NewClient(transport)
-
-		bak, err := c.GetCreateStatus(t.Context(), backup.GetStatus{})
-		require.NoError(t, err)
+		bak, _ := c.GetCreateStatus(t.Context(), backup.GetStatus{})
 
 		// Cancel the context right away
 		ctx, cancel := context.WithCancel(t.Context())
@@ -150,15 +139,14 @@ func TestAwaitStatus(t *testing.T) {
 		assert.NotNil(t, got, "must return latest backup status")
 		assert.Equal(t, backup.StatusStarted, got.Status, "latest status")
 	})
-	t.Run("context times out", func(t *testing.T) {
+
+	t.Run("context timed out", func(t *testing.T) {
 		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
 			{Value: api.BackupInfo{Status: api.BackupStatusStarted}}, // consumed before await
 			{Value: api.BackupInfo{Status: api.BackupStatusStarted}}, // first status check
 		})
 		c := backup.NewClient(transport)
-
-		bak, err := c.GetCreateStatus(t.Context(), backup.GetStatus{})
-		require.NoError(t, err)
+		bak, _ := c.GetCreateStatus(t.Context(), backup.GetStatus{})
 
 		ctx, cancel := context.WithDeadline(t.Context(), time.Now().Add(time.Nanosecond))
 		defer cancel()
