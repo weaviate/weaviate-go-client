@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
@@ -37,22 +39,30 @@ import (
 type ResourceExistsResponse bool
 
 // Bool returns bool value of ResourceExistsResponse.
-func (hr ResourceExistsResponse) Bool() bool {
-	return bool(hr)
+func (exists ResourceExistsResponse) Bool() bool {
+	return bool(exists)
 }
 
 var (
-	_ json.Unmarshaler         = (*ResourceExistsResponse)(nil)
-	_ transport.StatusAccepter = (*ResourceExistsResponse)(nil)
+	_ json.Unmarshaler                                = (*ResourceExistsResponse)(nil)
+	_ transport.StatusAccepter                        = (*ResourceExistsResponse)(nil)
+	_ transport.MessageUnmarshaler[proto.SearchReply] = (*ResourceExistsResponse)(nil)
 )
 
 // AcceptStatus implements transport.StatusAccepter.
-func (hr ResourceExistsResponse) AcceptStatus(code int) bool {
+func (exists ResourceExistsResponse) AcceptStatus(code int) bool {
 	return code == http.StatusNotFound
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (hr *ResourceExistsResponse) UnmarshalJSON(_ []byte) error {
-	*hr = true
+func (exists *ResourceExistsResponse) UnmarshalJSON(_ []byte) error {
+	*exists = true
+	return nil
+}
+
+// UnmarshalMessage implements transport.MessageUnmarshaler.
+func (exists *ResourceExistsResponse) UnmarshalMessage(r *proto.SearchReply) error {
+	dev.Assert(r != nil, "search reply is nil")
+	*exists = len(r.Results) > 0
 	return nil
 }
