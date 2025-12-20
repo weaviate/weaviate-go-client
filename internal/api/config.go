@@ -139,8 +139,8 @@ var GetCollectionRequest = transport.IdentityEndpoint[string](http.MethodGet, "/
 type CollectionExistsResponse bool
 
 var (
-	_ transport.ErrorStatusAccepter = (*CollectionExistsResponse)(nil)
-	_ json.Unmarshaler              = (*CollectionExistsResponse)(nil)
+	_ transport.StatusAccepter = (*CollectionExistsResponse)(nil)
+	_ json.Unmarshaler         = (*CollectionExistsResponse)(nil)
 )
 
 func (r CollectionExistsResponse) AcceptStatus(code int) bool {

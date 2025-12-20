@@ -30,9 +30,13 @@ type Endpoint interface {
 	Body() any
 }
 
-// ErrorStatusAccepter is an interface that response types can implement to
+// StatusAccepter is an interface that response types can implement to
 // control which HTTP status codes > 299 should not result in an error.
-type ErrorStatusAccepter interface {
+//
+// Transport always treats codes < 299 as successful and only call
+// AcceptStatus with codes > 299.
+type StatusAccepter interface {
+	// AcceptStatus returns true if a status code is acceptable.
 	AcceptStatus(code int) bool
 }
 
@@ -84,8 +88,8 @@ func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 		// and not return an error in that case. We will not try to unmarshal
 		// the body in this case as it may not contain valid JSON, in which case
 		// we'll have to return an error anyways.
-		if as, ok := dest.(ErrorStatusAccepter); ok {
-			if as.AcceptStatus(res.StatusCode) {
+		if acc, ok := dest.(StatusAccepter); ok {
+			if acc.AcceptStatus(res.StatusCode) {
 				return nil
 			}
 		}
