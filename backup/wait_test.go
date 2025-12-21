@@ -142,7 +142,8 @@ func TestAwaitStatus(t *testing.T) {
 			c := backup.NewClient(transport)
 			require.NotNil(t, c, "nil client")
 
-			bak, err := c.GetCreateStatus(ctx, backup.GetStatus{})
+			// GetCreateStatus is part of test setup, always called with t.Context()
+			bak, err := c.GetCreateStatus(t.Context(), backup.GetStatus{})
 			require.NoError(t, err)
 			require.NotNil(t, bak, "nil backup from get-status")
 

@@ -2,12 +2,19 @@ package testkit
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 )
+
+// ErrWhaam is a stub error tests can use to verify some error is being propagated.
+// The error message is an allusion to [Roy Lichtenstein's dyptich].
+//
+// [Roy Lichtenstein's dyptich]: https://en.wikipedia.org/wiki/Whaam!
+var ErrWhaam = errors.New("Whaam!")
 
 // TransportFunc implements internal.Transport to allow mocking it
 // in tests with a single function.
@@ -81,7 +88,7 @@ var _ internal.Transport = (*MockTransport[any, any])(nil)
 // Do type-asserts dest to ensure it matches the expected type T,
 // and consumes the next response, assigning it to dest.
 // Returns Response.Err.
-func (t *MockTransport[Req, Resp]) Do(_ context.Context, req, dest any) error {
+func (t *MockTransport[Req, Resp]) Do(ctx context.Context, req, dest any) error {
 	t.t.Helper()
 
 	if len(t.stubs) == 0 {
@@ -90,6 +97,10 @@ func (t *MockTransport[Req, Resp]) Do(_ context.Context, req, dest any) error {
 
 	var stub Stub[Req, Resp]
 	stub, t.stubs = t.stubs[0], t.stubs[1:] // pop front
+
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 
 	if stub.Request != nil && assert.IsType(t.t, (*Req)(nil), req, "bad request") {
 		assert.Equal(t.t, stub.Request, req, "bad request")
