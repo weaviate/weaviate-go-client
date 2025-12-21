@@ -1,7 +1,6 @@
 package data_test
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -26,7 +25,6 @@ func TestDataClient_Exists(t *testing.T) {
 		Tenant:           "john_doe",
 	}
 
-	var nop testkit.NopTransport
 	for _, tt := range []struct {
 		exists bool
 		err    error
@@ -36,37 +34,24 @@ func TestDataClient_Exists(t *testing.T) {
 		{false, errors.New("whaaam!")},
 	} {
 		t.Run(fmt.Sprintf("exists=%t error=%v", tt.exists, tt.err), func(t *testing.T) {
-			transport := testkit.TransportFunc(func(ctx context.Context, req, dest any) error {
-				nop.Do(ctx, req, dest)
-				assert.Equal(t, ctx, t.Context(), "bad contenxt")
-
-				if assert.IsType(t, (*api.GetObjectRequest)(nil), req, "bad request") {
-					get := req.(*api.GetObjectRequest)
-					assert.Equal(t, id, get.UUID, "object uuid")
-					assert.Equal(t, rd, get.RequestDefaults, "request defaults")
-				}
-
-				// Imitate ResourceExistsResponse.UnmarshalMessage.
-				if assert.IsType(t, (*api.ResourceExistsResponse)(nil), dest, "bad response") {
-					exists := (dest).(*api.ResourceExistsResponse)
-					*exists = api.ResourceExistsResponse(tt.exists)
-				}
-
-				return tt.err
+			transport := testkit.NewTransport(t, []testkit.Stub[api.GetObjectRequest, api.ResourceExistsResponse]{
+				{
+					Request:  &api.GetObjectRequest{UUID: id, RequestDefaults: rd},
+					Response: api.ResourceExistsResponse(tt.exists),
+					Err:      tt.err,
+				},
 			})
-
 			c := data.NewClient(transport, rd)
-			require.NotNil(t, c, "NewClient returned nil client")
+			require.NotNil(t, c, "nil client")
 
 			exists, err := c.Exists(t.Context(), id)
-			require.True(t, nop.Used(), "must call transport.Do")
 
 			if tt.err == nil {
 				assert.NoError(t, err, "returned error")
 			} else {
 				assert.ErrorIs(t, err, tt.err, "returned error")
 			}
-			assert.Equal(t, tt.exists, exists, "return value")
+			assert.Equal(t, tt.exists, exists, "object exists")
 		})
 	}
 }

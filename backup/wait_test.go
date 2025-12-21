@@ -53,13 +53,13 @@ func TestAwaitStatus(t *testing.T) {
 	// expect AwaitStatus to return without making any more requests.
 	for _, tt := range []struct {
 		name            string
-		initStatus      backup.Status                      // Initial backup status, Started by default.
-		responses       []testkit.Response[api.BackupInfo] // Responses for AwaitStatus.
-		awaitStatus     backup.Status                      // Passed to AwaitStatus.
-		expectStatus    backup.Status                      // Latest observed status.
-		ctx             context.Context                    // Using t.Context() if nil.
-		pollingInterval time.Duration                      // Increase sleep between polls.
-		expectErr       func(*testing.T, error)            // Using require.NoError if nil.
+		initStatus      backup.Status                       // Initial backup status, Started by default.
+		responses       []testkit.Stub[any, api.BackupInfo] // Responses for AwaitStatus.
+		awaitStatus     backup.Status                       // Passed to AwaitStatus.
+		expectStatus    backup.Status                       // Latest observed status.
+		ctx             context.Context                     // Using t.Context() if nil.
+		pollingInterval time.Duration                       // Increase sleep between polls.
+		expectErr       func(*testing.T, error)             // Using require.NoError if nil.
 	}{
 		{
 			name:         "backup in desired state",
@@ -76,20 +76,20 @@ func TestAwaitStatus(t *testing.T) {
 		},
 		{
 			name: "successful await",
-			responses: []testkit.Response[api.BackupInfo]{
-				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
-				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
-				{Value: api.BackupInfo{Status: api.BackupStatusTransferred}},
+			responses: []testkit.Stub[any, api.BackupInfo]{
+				{Response: api.BackupInfo{Status: api.BackupStatusTransferring}},
+				{Response: api.BackupInfo{Status: api.BackupStatusTransferring}},
+				{Response: api.BackupInfo{Status: api.BackupStatusTransferred}},
 			},
 			awaitStatus:  backup.StatusTransferred,
 			expectStatus: backup.StatusTransferred,
 		},
 		{
 			name: "backup is canceled abruptly (status fallthrough)",
-			responses: []testkit.Response[api.BackupInfo]{
-				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
-				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
-				{Value: api.BackupInfo{Status: api.BackupStatusCanceled}},
+			responses: []testkit.Stub[any, api.BackupInfo]{
+				{Response: api.BackupInfo{Status: api.BackupStatusTransferring}},
+				{Response: api.BackupInfo{Status: api.BackupStatusTransferring}},
+				{Response: api.BackupInfo{Status: api.BackupStatusCanceled}},
 			},
 			awaitStatus:  backup.StatusTransferred,
 			expectStatus: backup.StatusCanceled,
@@ -97,8 +97,8 @@ func TestAwaitStatus(t *testing.T) {
 		},
 		{
 			name: "error while awaiting",
-			responses: []testkit.Response[api.BackupInfo]{
-				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
+			responses: []testkit.Stub[any, api.BackupInfo]{
+				{Response: api.BackupInfo{Status: api.BackupStatusTransferring}},
 				{Err: errors.New("whaam!")},
 			},
 			awaitStatus:  backup.StatusSuccess,
@@ -114,8 +114,8 @@ func TestAwaitStatus(t *testing.T) {
 		},
 		{
 			name: "context deadline exceeded",
-			responses: []testkit.Response[api.BackupInfo]{
-				{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
+			responses: []testkit.Stub[any, api.BackupInfo]{
+				{Response: api.BackupInfo{Status: api.BackupStatusStarted}},
 			},
 			ctx:          ctxDoneOnSecondCheck(),
 			awaitStatus:  backup.StatusSuccess,
@@ -136,15 +136,15 @@ func TestAwaitStatus(t *testing.T) {
 			}
 
 			// The first response is always consumed by the test itself to GetCreateStatus.
-			transport := testkit.NewResponder(t, append([]testkit.Response[api.BackupInfo]{
-				{Value: api.BackupInfo{Status: initStatus}},
+			transport := testkit.NewTransport(t, append([]testkit.Stub[any, api.BackupInfo]{
+				{Response: api.BackupInfo{Status: initStatus}},
 			}, tt.responses...))
 			c := backup.NewClient(transport)
 			require.NotNil(t, c, "nil client")
 
 			bak, err := c.GetCreateStatus(ctx, backup.GetStatus{})
 			require.NoError(t, err)
-			require.NotNil(t, bak, "nil backup")
+			require.NotNil(t, bak, "nil backup from get-status")
 
 			// Act
 			got, err := backup.AwaitStatus(
@@ -154,7 +154,7 @@ func TestAwaitStatus(t *testing.T) {
 
 			// Assert
 			if tt.expectErr == nil {
-				require.NoError(t, err, "await error")
+				assert.NoError(t, err, "await error")
 			} else {
 				tt.expectErr(t, err)
 			}
@@ -200,8 +200,8 @@ func TestInfo_IsCompleted(t *testing.T) {
 	}
 
 	t.Run("listed backups", func(t *testing.T) {
-		transport := testkit.NewResponder(t, []testkit.Response[[]api.BackupInfo]{
-			{Value: []api.BackupInfo{
+		transport := testkit.NewTransport(t, []testkit.Stub[any, []api.BackupInfo]{
+			{Response: []api.BackupInfo{
 				{ID: "1"}, {ID: "2"}, {ID: "3"},
 			}},
 		})
