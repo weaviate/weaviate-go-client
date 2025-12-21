@@ -26,6 +26,7 @@ func TestDataClient_Exists(t *testing.T) {
 		Tenant:           "john_doe",
 	}
 
+	var nop testkit.NopTransport
 	for _, tt := range []struct {
 		exists bool
 		err    error
@@ -35,9 +36,8 @@ func TestDataClient_Exists(t *testing.T) {
 		{false, errors.New("whaaam!")},
 	} {
 		t.Run(fmt.Sprintf("exists=%t error=%v", tt.exists, tt.err), func(t *testing.T) {
-			var called bool
 			transport := testkit.TransportFunc(func(ctx context.Context, req, dest any) error {
-				called = true
+				nop.Do(ctx, req, dest)
 				assert.Equal(t, ctx, t.Context(), "bad contenxt")
 
 				if assert.IsType(t, (*api.GetObjectRequest)(nil), req, "bad request") {
@@ -59,7 +59,7 @@ func TestDataClient_Exists(t *testing.T) {
 			require.NotNil(t, c, "NewClient returned nil client")
 
 			exists, err := c.Exists(t.Context(), id)
-			require.True(t, called, "must call transport.Do")
+			require.True(t, nop.Used(), "must call transport.Do")
 
 			if tt.err == nil {
 				assert.NoError(t, err, "returned error")
