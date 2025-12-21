@@ -33,16 +33,16 @@ func TestAwaitStatus(t *testing.T) {
 	// Helper function wrapping assert.Error with an assertion error message.
 	// See usage in the test cases below.
 	expectErr := func(msgAndArgs ...any) func(*testing.T, error) {
-		t.Helper()
 		return func(t *testing.T, err error) {
+			t.Helper()
 			assert.Error(t, err, msgAndArgs...)
 		}
 	}
 
 	// Helper function wrapping assert.ErrorIs.
 	errorIs := func(is error, msgAndArgs ...any) func(*testing.T, error) {
-		t.Helper()
 		return func(t *testing.T, err error) {
+			t.Helper()
 			assert.ErrorIs(t, err, is, msgAndArgs...)
 		}
 	}
