@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -47,7 +46,6 @@ func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 		if err != nil {
 			return fmt.Errorf("marshal request body: %w", err)
 		}
-		log.Printf("%s", marshaled)
 		body = bytes.NewReader(marshaled)
 	}
 
