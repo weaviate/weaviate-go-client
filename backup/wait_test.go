@@ -30,38 +30,53 @@ func TestAwaitStatus(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	// The cases below describe valid backups. The first of the responses
-	// is always consumed to fetch status outside of the await.
-	// It follows that the cases with only 1 response expect AwaitStatus
-	// to return without making any more requests.
+	// Helper function wrapping assert.Error with an assertion error message.
+	// See usage in the test cases below.
+	expectErr := func(msgAndArgs ...any) func(*testing.T, error) {
+		t.Helper()
+		return func(t *testing.T, err error) {
+			assert.Error(t, err, msgAndArgs...)
+		}
+	}
+
+	// Helper function wrapping assert.ErrorIs.
+	errorIs := func(is error, msgAndArgs ...any) func(*testing.T, error) {
+		t.Helper()
+		return func(t *testing.T, err error) {
+			assert.ErrorIs(t, err, is, msgAndArgs...)
+		}
+	}
+
+	// The cases below describe valid backups. Each case must prepare
+	// resposes that AwaitStatus is expected to consume.
+	// It follows that the cases with nil/empty responses slice
+	// expect AwaitStatus to return without making any more requests.
 	for _, tt := range []struct {
-		name         string
-		responses    []testkit.Response[api.BackupInfo]
-		awaitStatus  backup.Status // Passed to AwaitStatus.
-		expectStatus backup.Status // Latest observed status.
-		errMsg       string        // Clarifying message for assert.Error.
+		name            string
+		initStatus      backup.Status                      // Initial backup status, Started by default.
+		responses       []testkit.Response[api.BackupInfo] // Responses for AwaitStatus.
+		awaitStatus     backup.Status                      // Passed to AwaitStatus.
+		expectStatus    backup.Status                      // Latest observed status.
+		ctx             context.Context                    // Using t.Context() if nil.
+		pollingInterval time.Duration                      // Increase sleep between polls.
+		expectErr       func(*testing.T, error)            // Using require.NoError if nil.
 	}{
 		{
-			name: "backup in desired state",
-			responses: []testkit.Response[api.BackupInfo]{
-				{Value: api.BackupInfo{Status: api.BackupStatusTransferred}},
-			},
-			awaitStatus:  backup.StatusTransferred,
-			expectStatus: backup.StatusTransferred,
+			name:         "backup in desired state",
+			initStatus:   backup.StatusTransferring,
+			awaitStatus:  backup.StatusTransferring,
+			expectStatus: backup.StatusTransferring,
 		},
 		{
-			name: "backup is already completed (status fallthrough)",
-			responses: []testkit.Response[api.BackupInfo]{
-				{Value: api.BackupInfo{Status: api.BackupStatusSuccess}},
-			},
+			name:         "backup is already completed (status fallthrough)",
+			initStatus:   backup.StatusSuccess,
 			awaitStatus:  backup.StatusTransferring,
 			expectStatus: backup.StatusSuccess,
-			errMsg:       "must not await a completed backup",
+			expectErr:    expectErr("must not await a completed backup"),
 		},
 		{
 			name: "successful await",
 			responses: []testkit.Response[api.BackupInfo]{
-				{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
 				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
 				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
 				{Value: api.BackupInfo{Status: api.BackupStatusTransferred}},
@@ -72,94 +87,138 @@ func TestAwaitStatus(t *testing.T) {
 		{
 			name: "backup is canceled abruptly (status fallthrough)",
 			responses: []testkit.Response[api.BackupInfo]{
-				{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
 				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
 				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
 				{Value: api.BackupInfo{Status: api.BackupStatusCanceled}},
 			},
 			awaitStatus:  backup.StatusTransferred,
 			expectStatus: backup.StatusCanceled,
-			errMsg:       "must not await a completed backup",
+			expectErr:    expectErr("must not await a completed backup"),
 		},
 		{
 			name: "error while awaiting",
 			responses: []testkit.Response[api.BackupInfo]{
-				{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
 				{Value: api.BackupInfo{Status: api.BackupStatusTransferring}},
 				{Err: errors.New("whaam!")},
 			},
 			awaitStatus:  backup.StatusSuccess,
 			expectStatus: backup.StatusTransferring,
-			errMsg:       "must propagate get-status error",
+			expectErr:    expectErr("must propagate get-status error"),
+		},
+		{
+			name: "context is canceled",
+			responses: []testkit.Response[api.BackupInfo]{
+				{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
+			},
+			ctx:          ctxCanceled(),
+			awaitStatus:  backup.StatusSuccess,
+			expectStatus: backup.StatusStarted,
+			expectErr:    errorIs(context.Canceled),
+		},
+		{
+			name: "context deadline exceeded",
+			responses: []testkit.Response[api.BackupInfo]{
+				{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
+			},
+			ctx:          ctxDoneOnSecondCheck(),
+			awaitStatus:  backup.StatusSuccess,
+			expectStatus: backup.StatusStarted,
+			expectErr:    errorIs(context.DeadlineExceeded),
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			transport := testkit.NewResponder(t, tt.responses)
+			// Arrange
+			ctx := t.Context()
+			if tt.ctx != nil {
+				ctx = tt.ctx
+			}
+
+			initStatus := api.BackupStatusStarted
+			if tt.initStatus != "" {
+				initStatus = api.BackupStatus(tt.initStatus)
+			}
+
+			// The first response is always consumed by the test to call GetCreateStatus.
+			transport := testkit.NewResponder(t, append([]testkit.Response[api.BackupInfo]{
+				{Value: api.BackupInfo{Status: initStatus}},
+			}, tt.responses...))
 			c := backup.NewClient(transport)
 			require.NotNil(t, c, "nil client")
 
-			bak, err := c.GetCreateStatus(t.Context(), backup.GetStatus{})
+			bak, err := c.GetCreateStatus(ctx, backup.GetStatus{})
 			require.NoError(t, err)
 			require.NotNil(t, bak, "nil backup")
 
-			got, err := backup.AwaitStatus(t.Context(),
-				bak, tt.awaitStatus,
-				backup.WithPollingInterval(0),
+			// Act
+			got, err := backup.AwaitStatus(
+				ctx, bak, tt.awaitStatus,
+				backup.WithPollingInterval(tt.pollingInterval),
 			)
 
-			if tt.errMsg == "" {
+			// Assert
+			if tt.expectErr == nil {
 				require.NoError(t, err, "await error")
 			} else {
-				assert.Error(t, err, tt.errMsg)
+				tt.expectErr(t, err)
 			}
-
 			assert.NotNil(t, got, "must return latest backup status")
 			assert.Equal(t, tt.expectStatus, got.Status, "latest status")
 		})
 	}
+}
 
-	t.Run("context is canceled", func(t *testing.T) {
-		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
-			{Value: api.BackupInfo{Status: api.BackupStatusStarted}}, // consumed before await
-			{Value: api.BackupInfo{Status: api.BackupStatusStarted}}, // first status check
-		})
-		c := backup.NewClient(transport)
-		bak, _ := c.GetCreateStatus(t.Context(), backup.GetStatus{})
+// ctxCanceled returns a canceled context.
+func ctxCanceled() context.Context {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	return ctx
+}
 
-		// Cancel the context right away
-		ctx, cancel := context.WithCancel(t.Context())
-		cancel()
+// ctxDoneOnSecondCheck returns a context that is Done
+// after its Done method has been called twice.
+//
+// While this breaches the boundaries black-box testing,
+// this lets us reach a case in AwaitStatus where the deadline
+// expires while the goroutine is asleep without relying on the
+// goroutine timing.
+func ctxDoneOnSecondCheck() *tickingContext {
+	return newTickingContext(2)
+}
 
-		got, err := backup.AwaitStatus(ctx,
-			bak, backup.StatusSuccess,
-			backup.WithPollingInterval(0),
-		)
+func newTickingContext(ticks int) *tickingContext {
+	done := make(chan struct{}, 1)
+	done <- struct{}{}
+	return &tickingContext{
+		ticks:   ticks - 1, // ticks are "0-indexed" for convenience
+		done:    done,
+		notDone: make(<-chan struct{}),
+	}
+}
 
-		assert.ErrorIs(t, err, context.Canceled)
-		assert.NotNil(t, got, "must return latest backup status")
-		assert.Equal(t, backup.StatusStarted, got.Status, "latest status")
-	})
+type tickingContext struct {
+	ticks   int             // remaining ticks, "0-indexed" (ticks==1 means there are 2 ticks remaining)
+	done    <-chan struct{} // done channel is returned when ticks expire.
+	notDone <-chan struct{} // notDone channel is never sent on.
+}
 
-	t.Run("context timed out", func(t *testing.T) {
-		transport := testkit.NewResponder(t, []testkit.Response[api.BackupInfo]{
-			{Value: api.BackupInfo{Status: api.BackupStatusStarted}}, // consumed before await
-			{Value: api.BackupInfo{Status: api.BackupStatusStarted}}, // first status check
-		})
-		c := backup.NewClient(transport)
-		bak, _ := c.GetCreateStatus(t.Context(), backup.GetStatus{})
+var _ context.Context = (*tickingContext)(nil)
 
-		ctx, cancel := context.WithDeadline(t.Context(), time.Now().Add(time.Nanosecond))
-		defer cancel()
+func (t *tickingContext) Deadline() (deadline time.Time, ok bool) { return time.Time{}, true }
+func (t *tickingContext) Value(key any) any                       { return nil }
 
-		got, err := backup.AwaitStatus(ctx,
-			bak, backup.StatusSuccess,
-			backup.WithPollingInterval(10*time.Nanosecond),
-		)
+func (t *tickingContext) Done() <-chan struct{} {
+	if t.ticks == 0 {
+		return t.notDone
+	}
+	t.ticks--
+	return t.done
+}
 
-		assert.ErrorIs(t, err, context.DeadlineExceeded)
-		assert.NotNil(t, got, "must return latest backup status")
-		assert.Equal(t, backup.StatusStarted, got.Status, "latest status")
-	})
+func (t *tickingContext) Err() error {
+	if t.ticks == 0 {
+		return context.DeadlineExceeded
+	}
+	return nil
 }
 
 func TestInfo_IsCompleted(t *testing.T) {
