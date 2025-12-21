@@ -47,26 +47,23 @@ type TickingContext struct {
 	ticks   int             // remaining ticks, "0-indexed" (ticks==1 means there are 2 ticks remaining)
 	done    <-chan struct{} // done channel is returned when ticks expire.
 	notDone <-chan struct{} // notDone channel is never sent on.
+	err     error           // not safe for concurrent access.
 }
 
 var _ context.Context = (*TickingContext)(nil)
 
 // Deadline always returns ok==true, so that from the outside it looks like this
 // this context has a deadline. In does, in fact, but it's tick-based and not time-based.
-func (t *TickingContext) Deadline() (deadline time.Time, ok bool) { return time.Time{}, true }
-func (t *TickingContext) Value(key any) any                       { return nil }
+func (ctx *TickingContext) Deadline() (deadline time.Time, ok bool) { return time.Time{}, true }
+func (ctx *TickingContext) Value(key any) any                       { return nil }
 
-func (t *TickingContext) Done() <-chan struct{} {
-	if t.ticks == 0 {
-		return t.notDone
+func (ctx *TickingContext) Done() <-chan struct{} {
+	if ctx.ticks == 0 {
+		ctx.err = context.DeadlineExceeded
+		return ctx.done
 	}
-	t.ticks--
-	return t.done
+	ctx.ticks--
+	return ctx.notDone
 }
 
-func (t *TickingContext) Err() error {
-	if t.ticks == 0 {
-		return context.DeadlineExceeded
-	}
-	return nil
-}
+func (ctx *TickingContext) Err() error { return ctx.err }

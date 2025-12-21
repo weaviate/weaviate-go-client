@@ -80,11 +80,13 @@ var _ internal.Transport = (*ResponderTransport[any])(nil)
 // Do type-asserts dest to ensure it matches the expected type T,
 // and consumes the next response, assigning it to dest.
 // Returns Response.Err.
-func (t *ResponderTransport[T]) Do(_ context.Context, _, dest any) error {
+func (t *ResponderTransport[T]) Do(_ context.Context, req, dest any) error {
 	t.t.Helper()
 
 	require.IsType(t.t, (*T)(nil), dest)
-	require.NotEmpty(t.t, t.responses, "too many requests")
+	if len(t.responses) == 0 {
+		require.Failf(t.t, "too many requests", "%#v is not expected", req)
+	}
 
 	var resp Response[T]
 	resp, t.responses = t.responses[0], t.responses[1:] // pop front
