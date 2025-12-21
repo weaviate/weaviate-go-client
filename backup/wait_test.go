@@ -177,48 +177,12 @@ func ctxCanceled() context.Context {
 // ctxDoneOnSecondCheck returns a context that is Done
 // after its Done method has been called twice.
 //
-// While this breaches the boundaries black-box testing,
-// this lets us reach a case in AwaitStatus where the deadline
-// expires while the goroutine is asleep without relying on the
-// goroutine timing.
-func ctxDoneOnSecondCheck() *tickingContext {
-	return newTickingContext(2)
-}
-
-func newTickingContext(ticks int) *tickingContext {
-	done := make(chan struct{}, 1)
-	done <- struct{}{}
-	return &tickingContext{
-		ticks:   ticks - 1, // ticks are "0-indexed" for convenience
-		done:    done,
-		notDone: make(<-chan struct{}),
-	}
-}
-
-type tickingContext struct {
-	ticks   int             // remaining ticks, "0-indexed" (ticks==1 means there are 2 ticks remaining)
-	done    <-chan struct{} // done channel is returned when ticks expire.
-	notDone <-chan struct{} // notDone channel is never sent on.
-}
-
-var _ context.Context = (*tickingContext)(nil)
-
-func (t *tickingContext) Deadline() (deadline time.Time, ok bool) { return time.Time{}, true }
-func (t *tickingContext) Value(key any) any                       { return nil }
-
-func (t *tickingContext) Done() <-chan struct{} {
-	if t.ticks == 0 {
-		return t.notDone
-	}
-	t.ticks--
-	return t.done
-}
-
-func (t *tickingContext) Err() error {
-	if t.ticks == 0 {
-		return context.DeadlineExceeded
-	}
-	return nil
+// While this breaches the boundaries black-box testing, this
+// lets us reach a case in AwaitStatus where the deadline
+// expires while the goroutine is asleep without relying
+// on the real clock.
+func ctxDoneOnSecondCheck() context.Context {
+	return testkit.NewTickingContext(2)
 }
 
 func TestInfo_IsCompleted(t *testing.T) {
