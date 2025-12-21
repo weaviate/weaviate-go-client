@@ -106,10 +106,7 @@ func TestAwaitStatus(t *testing.T) {
 			expectErr:    expectErr("must propagate get-status error"),
 		},
 		{
-			name: "context is canceled",
-			responses: []testkit.Response[api.BackupInfo]{
-				{Value: api.BackupInfo{Status: api.BackupStatusStarted}},
-			},
+			name:         "context is canceled",
 			ctx:          ctxCanceled(),
 			awaitStatus:  backup.StatusSuccess,
 			expectStatus: backup.StatusStarted,
@@ -138,7 +135,7 @@ func TestAwaitStatus(t *testing.T) {
 				initStatus = api.BackupStatus(tt.initStatus)
 			}
 
-			// The first response is always consumed by the test to call GetCreateStatus.
+			// The first response is always consumed by the test itself to GetCreateStatus.
 			transport := testkit.NewResponder(t, append([]testkit.Response[api.BackupInfo]{
 				{Value: api.BackupInfo{Status: initStatus}},
 			}, tt.responses...))

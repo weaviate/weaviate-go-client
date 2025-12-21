@@ -96,10 +96,7 @@ func AwaitStatus(ctx context.Context, bak *Info, want Status, options ...AwaitOp
 	dev.Assert(hasDeadline, "unbounded await context")
 
 	cfg := GetStatus{Backend: bak.Backend, ID: bak.ID}
-	current, err := c.getStatus(ctx, cfg, bak.operation)
-	if err != nil {
-		return bak, err
-	}
+	current := bak
 	for {
 		select {
 		case <-ctx.Done():
