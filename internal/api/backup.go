@@ -77,26 +77,15 @@ type CreateBackupRequest struct {
 	CompressionLevel   BackupCompressionLevel
 }
 
-// Compile-time assertion that CreateBackupRequest implements [tranport.Endpoint].
-var _ transport.Endpoint = (*CreateBackupRequest)(nil)
+// Compile-time assertion that CreateBackupRequest implements [transport.Endpoint].
+var (
+	_ transport.Endpoint = (*CreateBackupRequest)(nil)
+	_ json.Marshaler     = (*CreateBackupRequest)(nil)
+)
 
 func (*CreateBackupRequest) Method() string { return http.MethodPost }
 func (r *CreateBackupRequest) Path() string { return "/backups/" + r.Backend }
-func (r *CreateBackupRequest) Body() any {
-	return &rest.BackupCreateRequest{
-		Id:      r.ID,
-		Include: r.IncludeCollections,
-		Exclude: r.ExcludeCollections,
-		Config: rest.BackupConfig{
-			Path:             r.BackupPath,
-			Bucket:           r.Bucket,
-			Endpoint:         r.Endpoint,
-			CPUPercentage:    r.MaxCPUPercentage,
-			ChunkSize:        r.ChunkSizeMiB,
-			CompressionLevel: rest.BackupConfigCompressionLevel(r.CompressionLevel),
-		},
-	}
-}
+func (r *CreateBackupRequest) Body() any    { return r }
 
 type RestoreBackupRequest struct {
 	transport.BaseEndpoint
@@ -116,29 +105,16 @@ type RestoreBackupRequest struct {
 }
 
 // Compile-time assertion that RestoreBackupRequest implements [transport.Endpoint].
-var _ transport.Endpoint = (*RestoreBackupRequest)(nil)
+var (
+	_ transport.Endpoint = (*RestoreBackupRequest)(nil)
+	_ json.Marshaler     = (*RestoreBackupRequest)(nil)
+)
 
 func (*RestoreBackupRequest) Method() string { return http.MethodPost }
 func (r *RestoreBackupRequest) Path() string {
 	return "/backups/" + r.Backend + "/" + r.ID + "/restore"
 }
-
-func (r *RestoreBackupRequest) Body() any {
-	return &rest.BackupRestoreRequest{
-		Include:        r.IncludeCollections,
-		Exclude:        r.ExcludeCollections,
-		OverwriteAlias: r.OverwriteAlias,
-		NodeMapping:    r.NodeMapping,
-		Config: rest.RestoreConfig{
-			Bucket:        r.Bucket,
-			Path:          r.BackupPath,
-			Endpoint:      r.Endpoint,
-			CPUPercentage: r.MaxCPUPercentage,
-			RolesOptions:  rest.RestoreConfigRolesOptions(r.RestoreRoles),
-			UsersOptions:  rest.RestoreConfigUsersOptions(r.RestoreUsers),
-		},
-	}
-}
+func (r *RestoreBackupRequest) Body() any { return r }
 
 type BackupStatusRequest struct {
 	transport.BaseEndpoint
@@ -148,7 +124,7 @@ type BackupStatusRequest struct {
 	Operation BackupOperation
 }
 
-// Compile-time assertion that BackupStatusRequest implements [tranport.Endpoint].
+// Compile-time assertion that BackupStatusRequest implements [transport.Endpoint].
 var _ transport.Endpoint = (*BackupStatusRequest)(nil)
 
 func (r *BackupStatusRequest) Method() string { return http.MethodGet }
@@ -168,7 +144,7 @@ type ListBackupsRequest struct {
 	StartingTimeAsc bool
 }
 
-// Compile-time assertion that ListBackupsRequest implements [tranport.Endpoint].
+// Compile-time assertion that ListBackupsRequest implements [transport.Endpoint].
 var _ transport.Endpoint = (*ListBackupsRequest)(nil)
 
 func (r *ListBackupsRequest) Method() string { return http.MethodGet }
@@ -187,11 +163,48 @@ type CancelBackupRequest struct {
 	ID      string
 }
 
-// Compile-time assertion that CancelBackupRequest implements [tranport.Endpoint].
+// Compile-time assertion that CancelBackupRequest implements [transport.Endpoint].
 var _ transport.Endpoint = (*CancelBackupRequest)(nil)
 
 func (r *CancelBackupRequest) Method() string { return http.MethodDelete }
 func (r *CancelBackupRequest) Path() string   { return "/backups/" + r.Backend + "/" + r.ID }
+
+// MarshalJSON implements json.Marshaler via rest.BackupCreateRequest.
+func (r *CreateBackupRequest) MarshalJSON() ([]byte, error) {
+	req := &rest.BackupCreateRequest{
+		Id:      r.ID,
+		Include: r.IncludeCollections,
+		Exclude: r.ExcludeCollections,
+		Config: rest.BackupConfig{
+			Path:             r.BackupPath,
+			Bucket:           r.Bucket,
+			Endpoint:         r.Endpoint,
+			CPUPercentage:    r.MaxCPUPercentage,
+			ChunkSize:        r.ChunkSizeMiB,
+			CompressionLevel: rest.BackupConfigCompressionLevel(r.CompressionLevel),
+		},
+	}
+	return json.Marshal(req)
+}
+
+// MarshalJSON implements json.Marshaler via rest.BackupRestoreRequest.
+func (r *RestoreBackupRequest) MarshalJSON() ([]byte, error) {
+	req := &rest.BackupRestoreRequest{
+		Include:        r.IncludeCollections,
+		Exclude:        r.ExcludeCollections,
+		OverwriteAlias: r.OverwriteAlias,
+		NodeMapping:    r.NodeMapping,
+		Config: rest.RestoreConfig{
+			Bucket:        r.Bucket,
+			Path:          r.BackupPath,
+			Endpoint:      r.Endpoint,
+			CPUPercentage: r.MaxCPUPercentage,
+			RolesOptions:  rest.RestoreConfigRolesOptions(r.RestoreRoles),
+			UsersOptions:  rest.RestoreConfigUsersOptions(r.RestoreUsers),
+		},
+	}
+	return json.Marshal(req)
+}
 
 // UnmarshalJSON implements json.Unmarshaler.
 func (b *BackupInfo) UnmarshalJSON(data []byte) error {
