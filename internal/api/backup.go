@@ -65,15 +65,15 @@ const (
 type CreateBackupRequest struct {
 	transport.BaseEndpoint
 
-	Backend            string
-	ID                 string
-	Bucket             string
+	Backend            string // Required: backend storage.
+	ID                 string // Required: backup ID.
 	BackupPath         string
 	Endpoint           string
+	Bucket             string
 	IncludeCollections []string
 	ExcludeCollections []string
 	MaxCPUPercentage   int
-	ChunkSize          int
+	ChunkSizeMiB       int
 	CompressionLevel   BackupCompressionLevel
 }
 
@@ -88,10 +88,11 @@ func (r *CreateBackupRequest) Body() any {
 		Include: r.IncludeCollections,
 		Exclude: r.ExcludeCollections,
 		Config: rest.BackupConfig{
+			Path:             r.BackupPath,
 			Bucket:           r.Bucket,
 			Endpoint:         r.Endpoint,
 			CPUPercentage:    r.MaxCPUPercentage,
-			ChunkSize:        r.ChunkSize,
+			ChunkSize:        r.ChunkSizeMiB,
 			CompressionLevel: rest.BackupConfigCompressionLevel(r.CompressionLevel),
 		},
 	}
@@ -102,9 +103,9 @@ type RestoreBackupRequest struct {
 
 	Backend            string
 	ID                 string
-	Bucket             string
 	BackupPath         string
 	Endpoint           string
+	Bucket             string
 	IncludeCollections []string
 	ExcludeCollections []string
 	MaxCPUPercentage   int
@@ -118,7 +119,10 @@ type RestoreBackupRequest struct {
 var _ transport.Endpoint = (*RestoreBackupRequest)(nil)
 
 func (*RestoreBackupRequest) Method() string { return http.MethodPost }
-func (r *RestoreBackupRequest) Path() string { return "/backups/" + r.Backend }
+func (r *RestoreBackupRequest) Path() string {
+	return "/backups/" + r.Backend + "/" + r.ID + "/restore"
+}
+
 func (r *RestoreBackupRequest) Body() any {
 	return &rest.BackupRestoreRequest{
 		Include:        r.IncludeCollections,

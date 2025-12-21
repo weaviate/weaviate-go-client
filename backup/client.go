@@ -83,7 +83,7 @@ type Create struct {
 	IncludeCollections []string         // Collections to be included in the backup.
 	ExcludeCollections []string         // Collections to be excluded from the backup.
 	MaxCPUPercentage   int              // Maximum %CPU utilization.
-	ChunkSize          int              // Target chunk size.
+	ChunkSizeMiB       int              // Target chunk size in MiB.
 	CompressionLevel   CompressionLevel // Hint for selecting the optimal compression algorithm.
 }
 
