@@ -1,13 +1,9 @@
+# Internal MacOS file
 .DS_Store
 
-tmp
-**/.idea/*
-.idea/*
-
-**.secret
-
-vendor/
+# IDE configurations
 .vscode/
 .idea/
+
+# Environment variables
 .env
-test/scratch_test.go
