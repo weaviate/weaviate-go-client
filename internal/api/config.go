@@ -124,9 +124,9 @@ type CreateCollectionRequest struct {
 
 var _ transport.Endpoint = (*CreateCollectionRequest)(nil)
 
-func (r *CreateCollectionRequest) Method() string { return http.MethodPost }
-func (r *CreateCollectionRequest) Path() string   { return "/schema" }
-func (r *CreateCollectionRequest) Body() any      { return &r.Collection }
+func (*CreateCollectionRequest) Method() string { return http.MethodPost }
+func (*CreateCollectionRequest) Path() string   { return "/schema" }
+func (r *CreateCollectionRequest) Body() any    { return &r.Collection }
 
 // GetCollectionRequest by collection name.
 var GetCollectionRequest = transport.IdentityEndpoint[string](http.MethodGet, "/schema/%s")

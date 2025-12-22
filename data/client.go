@@ -25,7 +25,7 @@ type Client struct {
 // TODO(dyma): generic Properties
 type Object struct {
 	UUID       uuid.UUID
-	Properties any
+	Properties types.Map
 	Vectors    []types.Vector
 }
 
@@ -86,10 +86,10 @@ func (c *Client) Exists(ctx context.Context, id uuid.UUID) (bool, error) {
 	return exists.Bool(), nil
 }
 
-func newVectors(vectors []types.Vector) api.Vectors {
-	vs := make(api.Vectors, len(vectors))
-	for _, v := range vectors {
-		vs[v.Name] = api.Vector(v)
+func newVectors(vectors []types.Vector) []api.Vector {
+	vs := make([]api.Vector, len(vectors))
+	for i, v := range vectors {
+		vs[i] = api.Vector(v)
 	}
 	return vs
 }

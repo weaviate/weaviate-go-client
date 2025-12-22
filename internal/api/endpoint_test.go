@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
@@ -335,6 +336,152 @@ func TestRESTEndpoints(t *testing.T) {
 			req:        api.DeleteCollectionRequest("Songs"),
 			wantMethod: http.MethodDelete,
 			wantPath:   "/schema/Songs",
+		},
+		{
+			name: "insert object (consistency_level=ONE)",
+			req: &api.InsertObjectRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				UUID: uuid.Nil,
+				Properties: map[string]any{
+					"title":  "High Speed Dirt",
+					"genres": []string{"thrash metal", "blues"},
+					"single": false,
+					"year":   1992,
+				},
+				References: nil,
+				Vectors: []api.Vector{
+					{Name: "lyrics", Single: []float32{1, 2, 3}},
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/objects",
+			wantQuery:  url.Values{"consistency_level": {string(api.ConsistencyLevelOne)}},
+			wantBody: &rest.Object{
+				Class:  "Songs",
+				Tenant: "john_doe",
+				Id:     uuid.Nil,
+				Properties: map[string]any{
+					"title":  "High Speed Dirt",
+					"genres": []string{"thrash metal", "blues"},
+					"single": false,
+					"year":   1992,
+				},
+				Vectors: map[string]any{
+					"lyrics": []float32{1, 2, 3},
+				},
+			},
+		},
+		{
+			name: "insert object (no consistency_level)",
+			req: &api.InsertObjectRequest{
+				RequestDefaults: api.RequestDefaults{CollectionName: "Songs"},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/objects",
+			wantBody:   &rest.Object{Class: "Songs"},
+		},
+		{
+			name: "replace object (consistency_level=ONE)",
+			req: &api.ReplaceObjectRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				UUID: uuid.Nil,
+				Properties: map[string]any{
+					"title":  "High Speed Dirt",
+					"genres": []string{"thrash metal", "blues"},
+					"single": false,
+					"year":   1992,
+				},
+				References: nil,
+				Vectors: []api.Vector{
+					{Name: "lyrics", Single: []float32{1, 2, 3}},
+				},
+			},
+			wantMethod: http.MethodPut,
+			wantPath:   "/objects",
+			wantQuery:  url.Values{"consistency_level": {string(api.ConsistencyLevelOne)}},
+			wantBody: &rest.Object{
+				Class:  "Songs",
+				Tenant: "john_doe",
+				Id:     uuid.Nil,
+				Properties: map[string]any{
+					"title":  "High Speed Dirt",
+					"genres": []string{"thrash metal", "blues"},
+					"single": false,
+					"year":   1992,
+				},
+				Vectors: map[string]any{
+					"lyrics": []float32{1, 2, 3},
+				},
+			},
+		},
+		{
+			name: "replace object (no consistency_level)",
+			req: &api.ReplaceObjectRequest{
+				RequestDefaults: api.RequestDefaults{CollectionName: "Songs"},
+			},
+			wantMethod: http.MethodPut,
+			wantPath:   "/objects",
+			wantBody:   &rest.Object{Class: "Songs"},
+		},
+		{
+			name: "delete object (tenant+consistency_level)",
+			req: &api.DeleteObjectRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+					Tenant:           "john_doe",
+				},
+				UUID: uuid.Nil,
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
+			wantQuery: url.Values{
+				"consistency_level": {string(api.ConsistencyLevelOne)},
+				"tenant":            {"john_doe"},
+			},
+		},
+		{
+			name: "delete object (no consistency_level)",
+			req: &api.DeleteObjectRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+					Tenant:         "john_doe",
+				},
+				UUID: uuid.Nil,
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
+			wantQuery:  url.Values{"tenant": {"john_doe"}},
+		},
+		{
+			name: "delete object (no tenant)",
+			req: &api.DeleteObjectRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				UUID: uuid.Nil,
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
+			wantQuery:  url.Values{"consistency_level": {string(api.ConsistencyLevelOne)}},
+		},
+		{
+			name: "delete object (no tenant, no consistency_level)",
+			req: &api.DeleteObjectRequest{
+				RequestDefaults: api.RequestDefaults{CollectionName: "Songs"},
+				UUID:            uuid.Nil,
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
 		},
 	} {
 		t.Run(fmt.Sprintf("%s (%T)", tt.name, tt.req), func(t *testing.T) {

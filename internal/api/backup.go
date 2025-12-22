@@ -127,7 +127,7 @@ type BackupStatusRequest struct {
 // Compile-time assertion that BackupStatusRequest implements [transport.Endpoint].
 var _ transport.Endpoint = (*BackupStatusRequest)(nil)
 
-func (r *BackupStatusRequest) Method() string { return http.MethodGet }
+func (*BackupStatusRequest) Method() string { return http.MethodGet }
 func (r *BackupStatusRequest) Path() string {
 	path := "/backups/" + r.Backend + "/" + r.ID
 	if r.Operation == RestoreBackup {
@@ -147,8 +147,8 @@ type ListBackupsRequest struct {
 // Compile-time assertion that ListBackupsRequest implements [transport.Endpoint].
 var _ transport.Endpoint = (*ListBackupsRequest)(nil)
 
-func (r *ListBackupsRequest) Method() string { return http.MethodGet }
-func (r *ListBackupsRequest) Path() string   { return "/backups/" + r.Backend }
+func (*ListBackupsRequest) Method() string { return http.MethodGet }
+func (r *ListBackupsRequest) Path() string { return "/backups/" + r.Backend }
 func (r *ListBackupsRequest) Query() url.Values {
 	if !r.StartingTimeAsc {
 		return nil
@@ -166,8 +166,8 @@ type CancelBackupRequest struct {
 // Compile-time assertion that CancelBackupRequest implements [transport.Endpoint].
 var _ transport.Endpoint = (*CancelBackupRequest)(nil)
 
-func (r *CancelBackupRequest) Method() string { return http.MethodDelete }
-func (r *CancelBackupRequest) Path() string   { return "/backups/" + r.Backend + "/" + r.ID }
+func (*CancelBackupRequest) Method() string { return http.MethodDelete }
+func (r *CancelBackupRequest) Path() string { return "/backups/" + r.Backend + "/" + r.ID }
 
 // MarshalJSON implements json.Marshaler via rest.BackupCreateRequest.
 func (r *CreateBackupRequest) MarshalJSON() ([]byte, error) {
