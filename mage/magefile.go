@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -13,6 +14,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/magefile/mage/mg"
 )
 
 const (
@@ -29,7 +32,20 @@ const (
 	OpenAPISchemaV3    = "schema.v3.json"
 )
 
-func Contracts(ctx context.Context, action string) error {
+type Contracts mg.Namespace
+
+// Checksums "api/proto" and "api/rest" specs against their latest versions in weaviate/weaviate.
+// Best used in CI scripts to ensure the sources of our generated stubs stay up-to-date.
+func (Contracts) Check(ctx context.Context) error { return validate(ctx, false) }
+
+// Updates "api/proto" and "api/rest" specs to their latest versions.
+// Use locally to pull new changes or fix broken / missing / out-of-date specs.
+func (Contracts) Update(ctx context.Context) error { return validate(ctx, true) }
+
+// validate calculates hashes for the OpenAPI schema.json and the protobufs in "api/"
+// and compares them against their latest versions in the weaviate/weaviate repo.
+// If update returns
+func validate(ctx context.Context, update bool) error {
 	openapi, err := headOpenAPISpecs(ctx)
 	if err != nil {
 		return err
@@ -66,10 +82,9 @@ func Contracts(ctx context.Context, action string) error {
 	}
 
 	if len(contracts) == 0 {
-		return nil
+		return errors.New("no specs in weaviate/weaviate")
 	}
 
-	update := action == "update"
 	ok := true
 	for _, file := range contracts {
 		if file.SHA == file.Upstream.SHA {
@@ -89,7 +104,11 @@ func Contracts(ctx context.Context, action string) error {
 		}
 	}
 	if !ok {
-		os.Exit(1)
+		return fmt.Errorf(`
+Contracts in weaviate-go-client are out-of-sync with weaviate/weaviate repository.
+Update them to the latest version by running this command:
+	./bin/mage contracts:update
+`)
 	}
 	log.Print("Done")
 	return nil
