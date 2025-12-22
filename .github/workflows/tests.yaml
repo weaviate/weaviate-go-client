@@ -1,17 +1,18 @@
-name: Tests
+name: Run tests
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - LICENSE
-      - README.md
-      - CONTRIBUTE.md
-      - CODE_OF_CONDUCT.md
-  # pull_request:
+  pull_request:
 
 jobs:
-  tests:
-    uses: ./.github/workflows/workflow-tests.yaml
-    secrets: inherit
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.24"
+          cache: true
+      - name: Run tests
+        run: go test -cover ./...
