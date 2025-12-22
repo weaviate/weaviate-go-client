@@ -137,7 +137,7 @@ func (c *httpClient) url(req Endpoint) string {
 
 // BaseEndpoint implements [Endpoint] methods which may return nil.
 // These values are usually optional in the request.
-// BaseEndpoint can be embeded in a another request struct to reduce boilerplate.
+// BaseEndpoint can be embedded in a another request struct to reduce boilerplate.
 //
 // Example:
 //

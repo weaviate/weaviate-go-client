@@ -364,6 +364,9 @@ func unmarshalVectors(vectors []*proto.Vectors) Vectors {
 			v.Single = unmarshalSingle(bytes)
 		case proto.Vectors_VECTOR_TYPE_MULTI_FP32:
 			v.Multi = unmarshalMulti(bytes)
+		default:
+			// Leave both Single and Multi fields unset --
+			// this is a server's error, not ours.
 		}
 		out[v.Name] = v
 	}

@@ -80,7 +80,7 @@ func unmarshal[R ReplyMessage](reply *R, dest any) error {
 		return nil
 	}
 	if reply == nil {
-		// Since gRPC client is generated and is essentialy a third-party dependency,
+		// Since gRPC client is generated and is essentially a third-party dependency,
 		// we cannot guarantee the response to be always non-nil, so we return an error
 		// on nil replies instead of doing dev.Assert.
 		return errors.New("nil reply")

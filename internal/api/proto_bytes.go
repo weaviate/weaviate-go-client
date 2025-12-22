@@ -11,7 +11,7 @@ func unmarshalSingle([]byte) []float32 {
 	return nil
 }
 
-// marshalMulti encodes a multi-dimentional vector into a byte-slice.
+// marshalMulti encodes a multi-dimensional vector into a byte-slice.
 func marshalMulti([][]float32) []byte {
 	return nil
 }
@@ -20,9 +20,4 @@ func marshalMulti([][]float32) []byte {
 // It is safe to pass nil-slice -- the return is also a nil.
 func unmarshalMulti([]byte) [][]float32 {
 	return nil
-}
-
-// unmarshalUUID decodes a byte-slice into a valid UUID.
-func unmarshalUUID([]byte) string {
-	return ""
 }
