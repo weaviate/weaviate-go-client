@@ -1,6 +1,9 @@
 name: Run tests
 
 on:
+  push:
+    branches:
+      - dyma/v6
   pull_request:
 
 jobs:
