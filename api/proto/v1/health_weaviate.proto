@@ -27,13 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// This is a copy of the google health check file with changed namespace. This
-// enables our clients to use the health check without having to import google's
-// proto files which might have dependency conflicts.
+// This is a copy of the google health check file with changed namespace. This enables our clients to use the health
+// check without having to import google's proto files which might have dependency conflicts.
 //
-// This file should NOT be used to start our own health check server in Weaviate
-// itself, but only for clients to generate their protobufs and grpc code from
-// it.
+// This file should NOT be used to start our own health check server in Weaviate itself, but only for clients to
+// generate their protobufs and grpc code from it.
 //
 // See: https://github.com/weaviate/weaviate-python-client/issues/1807 and
 //      https://github.com/weaviate/weaviate-python-client/issues/1786
@@ -43,9 +41,11 @@ syntax = "proto3";
 package weaviate.v1;
 option java_package = "io.weaviate.client.grpc.protocol.v1";
 option java_outer_classname = "WeaviateHealth";
-option go_package = "github.com/weaviate/weaviate-go-client/v6/internal/gen;proto";
+option go_package = "github.com/weaviate/weaviate/grpc/generated;protocol";
 
-message WeaviateHealthCheckRequest { string service = 1; }
+message WeaviateHealthCheckRequest {
+  string service = 1;
+}
 message WeaviateHealthCheckResponse {
   // keep compatibility with google health check
   // protolint:disable ENUM_FIELD_NAMES_PREFIX

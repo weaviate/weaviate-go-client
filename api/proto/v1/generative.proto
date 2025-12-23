@@ -4,7 +4,7 @@ package weaviate.v1;
 
 import "v1/base.proto";
 
-option go_package = "github.com/weaviate/weaviate-go-client/v6/internal/gen;proto";
+option go_package = "github.com/weaviate/weaviate/grpc/generated;protocol";
 option java_package = "io.weaviate.client.grpc.protocol.v1";
 option java_outer_classname = "WeaviateProtoGenerative";
 
@@ -13,9 +13,9 @@ message GenerativeSearch {
     string prompt = 1;
     bool debug = 2;
     // only allow one at the beginning, but multiple in the future
-    repeated GenerativeProvider queries = 3;
+    repeated GenerativeProvider queries = 3;  
   }
-
+  
   message Grouped {
     string task = 1;
     optional TextArray properties = 2;
@@ -24,9 +24,9 @@ message GenerativeSearch {
     bool debug = 4;
   }
 
-  string single_response_prompt = 1 [ deprecated = true ];
-  string grouped_response_task = 2 [ deprecated = true ];
-  repeated string grouped_properties = 3 [ deprecated = true ];
+  string single_response_prompt = 1 [deprecated = true];
+  string grouped_response_task = 2 [deprecated = true];
+  repeated string grouped_properties = 3 [deprecated = true];
   Single single = 4;
   Grouped grouped = 5;
 }
@@ -51,7 +51,7 @@ message GenerativeProvider {
   }
 }
 
-message GenerativeAnthropic {
+message GenerativeAnthropic{
   optional string base_url = 1;
   optional int64 max_tokens = 2;
   optional string model = 3;
@@ -63,13 +63,13 @@ message GenerativeAnthropic {
   optional TextArray image_properties = 9;
 }
 
-message GenerativeAnyscale {
+message GenerativeAnyscale{
   optional string base_url = 1;
   optional string model = 2;
   optional double temperature = 3;
 }
 
-message GenerativeAWS {
+message GenerativeAWS{
   optional string model = 3;
   optional double temperature = 8;
   optional string service = 9;
@@ -83,7 +83,7 @@ message GenerativeAWS {
   optional TextArray stop_sequences = 17;
 }
 
-message GenerativeCohere {
+message GenerativeCohere{
   optional string base_url = 1;
   optional double frequency_penalty = 2;
   optional int64 max_tokens = 3;
@@ -97,9 +97,10 @@ message GenerativeCohere {
   optional TextArray image_properties = 11;
 }
 
-message GenerativeDummy {}
+message GenerativeDummy{
+}
 
-message GenerativeMistral {
+message GenerativeMistral{
   optional string base_url = 1;
   optional int64 max_tokens = 2;
   optional string model = 3;
@@ -107,7 +108,7 @@ message GenerativeMistral {
   optional double top_p = 5;
 }
 
-message GenerativeOllama {
+message GenerativeOllama{
   optional string api_endpoint = 1;
   optional string model = 2;
   optional double temperature = 3;
@@ -115,7 +116,7 @@ message GenerativeOllama {
   optional TextArray image_properties = 5;
 }
 
-message GenerativeOpenAI {
+message GenerativeOpenAI{
   enum ReasoningEffort {
     REASONING_EFFORT_UNSPECIFIED = 0;
     REASONING_EFFORT_MINIMAL = 1;
@@ -148,7 +149,7 @@ message GenerativeOpenAI {
   optional Verbosity verbosity = 17;
 }
 
-message GenerativeGoogle {
+message GenerativeGoogle{
   optional double frequency_penalty = 1;
   optional int64 max_tokens = 2;
   optional string model = 3;
@@ -165,7 +166,7 @@ message GenerativeGoogle {
   optional TextArray image_properties = 14;
 }
 
-message GenerativeDatabricks {
+message GenerativeDatabricks{
   optional string endpoint = 1;
   optional string model = 2;
   optional double frequency_penalty = 3;
@@ -179,7 +180,7 @@ message GenerativeDatabricks {
   optional double top_p = 11;
 }
 
-message GenerativeFriendliAI {
+message GenerativeFriendliAI{
   optional string base_url = 1;
   optional string model = 2;
   optional int64 max_tokens = 3;
@@ -188,7 +189,7 @@ message GenerativeFriendliAI {
   optional double top_p = 6;
 }
 
-message GenerativeNvidia {
+message GenerativeNvidia{
   optional string base_url = 1;
   optional string model = 2;
   optional double temperature = 3;
@@ -196,7 +197,7 @@ message GenerativeNvidia {
   optional int64 max_tokens = 5;
 }
 
-message GenerativeXAI {
+message GenerativeXAI{
   optional string base_url = 1;
   optional string model = 2;
   optional double temperature = 3;
@@ -206,7 +207,7 @@ message GenerativeXAI {
   optional TextArray image_properties = 7;
 }
 
-message GenerativeContextualAI {
+message GenerativeContextualAI{
   optional string model = 1;
   optional double temperature = 2;
   optional double top_p = 3;
@@ -224,9 +225,11 @@ message GenerativeAnthropicMetadata {
   Usage usage = 1;
 }
 
-message GenerativeAnyscaleMetadata {}
+message GenerativeAnyscaleMetadata {
+}
 
-message GenerativeAWSMetadata {}
+message GenerativeAWSMetadata {
+}
 
 message GenerativeCohereMetadata {
   message ApiVersion {
@@ -250,7 +253,8 @@ message GenerativeCohereMetadata {
   optional TextArray warnings = 4;
 }
 
-message GenerativeDummyMetadata {}
+message GenerativeDummyMetadata {
+}
 
 message GenerativeMistralMetadata {
   message Usage {
@@ -261,7 +265,8 @@ message GenerativeMistralMetadata {
   optional Usage usage = 1;
 }
 
-message GenerativeOllamaMetadata {}
+message GenerativeOllamaMetadata {
+}
 
 message GenerativeOpenAIMetadata {
   message Usage {
@@ -281,7 +286,9 @@ message GenerativeGoogleMetadata {
     optional TokenCount input_token_count = 1;
     optional TokenCount output_token_count = 2;
   }
-  message Metadata { optional TokenMetadata token_metadata = 1; }
+  message Metadata {
+    optional TokenMetadata token_metadata = 1;
+  }
   message UsageMetadata {
     optional int64 prompt_token_count = 1;
     optional int64 candidates_token_count = 2;
@@ -351,6 +358,10 @@ message GenerativeReply {
   optional GenerativeMetadata metadata = 3;
 }
 
-message GenerativeResult { repeated GenerativeReply values = 1; }
+message GenerativeResult {
+  repeated GenerativeReply values = 1;
+}
 
-message GenerativeDebug { optional string full_prompt = 1; }
+message GenerativeDebug {
+  optional string full_prompt = 1;
+}

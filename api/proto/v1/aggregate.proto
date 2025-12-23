@@ -5,7 +5,7 @@ package weaviate.v1;
 import "v1/base.proto";
 import "v1/base_search.proto";
 
-option go_package = "github.com/weaviate/weaviate-go-client/v6/internal/gen;proto";
+option go_package = "github.com/weaviate/weaviate/grpc/generated;protocol";
 option java_package = "io.weaviate.client.grpc.protocol.v1";
 option java_outer_classname = "WeaviateProtoAggregate";
 
@@ -194,7 +194,9 @@ message AggregateReply {
     optional Aggregations aggregations = 2;
     optional GroupedBy grouped_by = 3;
   }
-  message Grouped { repeated Group groups = 1; }
+  message Grouped {
+    repeated Group groups = 1;
+  }
   float took = 1;
   oneof result {
     Single single_result = 2;
