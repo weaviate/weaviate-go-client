@@ -62,8 +62,7 @@ func validate(ctx context.Context, update bool) error {
 
 	var contracts []Contract
 	{
-		path := filepath.Join(LocalOpenAPIDir, SchemaCheck)
-		c, err := newContract(ctx, path, *openapi, convertOpenAPIToV3)
+		c, err := newContract(ctx, LocalOpenAPIDir, SchemaCheck, *openapi, convertOpenAPIToV3)
 		if err != nil {
 			return err
 		}
@@ -71,8 +70,7 @@ func validate(ctx context.Context, update bool) error {
 	}
 
 	for _, file := range protobufs {
-		path := filepath.Join(LocalProtobufDir, file.Name)
-		c, err := newContract(ctx, path, file, nil)
+		c, err := newContract(ctx, LocalProtobufDir, file.Name, file, nil)
 		if err != nil {
 			return err
 		}
@@ -97,7 +95,7 @@ func validate(ctx context.Context, update bool) error {
 
 			// Clone contents of the updated file to buf to make them
 			// available to the callback without re-opening the file.
-			var buf *bytes.Buffer
+			var buf io.ReadWriter = nil
 			if file.Callback != nil {
 				buf = new(bytes.Buffer)
 			}
@@ -106,9 +104,11 @@ func validate(ctx context.Context, update bool) error {
 				ok = false
 			} else {
 				updated = true
-				if err := file.Callback(ctx, buf); err != nil {
-					log.Printf("\tERROR: %s", err)
-					ok = false
+				if file.Callback != nil {
+					if err := file.Callback(ctx, buf); err != nil {
+						log.Printf("\tERROR: %s", err)
+						ok = false
+					}
 				}
 			}
 		} else {
@@ -208,23 +208,24 @@ func updateContract(ctx context.Context, c Contract, w io.Writer) error {
 	return nil
 }
 
-func newContract(ctx context.Context, local string, upstream GithubFile, cb CallbackFunc) (*Contract, error) {
-	if _, err := os.Stat(local); errors.Is(err, os.ErrNotExist) {
+func newContract(ctx context.Context, dir, local string, upstream GithubFile, cb CallbackFunc) (*Contract, error) {
+	path := filepath.Join(dir, local)
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		return &Contract{
 			Upstream: upstream,
-			Path:     local,
+			Path:     path,
 			SHA:      "<file not found>",
 			Callback: cb,
 		}, nil
 	}
 	// os.Stat might've failed for a different reason, still try to get the hash.
-	sha, err := gitSHA(ctx, local)
+	sha, err := gitSHA(ctx, path)
 	if err != nil {
 		return nil, err
 	}
 	return &Contract{
 		Upstream: upstream,
-		Path:     local,
+		Path:     path,
 		SHA:      sha,
 		Exists:   true,
 		Callback: cb,
@@ -400,7 +401,7 @@ func convertExistingToV3(ctx context.Context) error {
 // performs a rename, and cleans up the .tmp file.
 func writeAtomic(file string, r io.Reader) (int64, error) {
 	if err := os.MkdirAll(filepath.Dir(file), 0o775); err != nil {
-		log.Print(err)
+		return 0, err
 	}
 
 	f, err := os.Create(file + ".tmp")
