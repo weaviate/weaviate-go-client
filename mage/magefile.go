@@ -52,7 +52,7 @@ func validate(ctx context.Context, update bool) error {
 		return err
 	}
 
-	log.Printf("Fetching metadata for %s", WeaviateProtobufs)
+	log.Printf("Fetching metadata for %s/*.proto", WeaviateProtobufs)
 	protobufs, err := headProtobufs(ctx)
 	if err != nil {
 		return err
@@ -82,6 +82,7 @@ func validate(ctx context.Context, update bool) error {
 	}
 
 	ok := true
+	updated := false
 	for _, file := range contracts {
 		if file.SHA == file.Upstream.SHA {
 			log.Printf("check %s: ok", file.Path)
@@ -94,6 +95,8 @@ func validate(ctx context.Context, update bool) error {
 			if err := updateContract(ctx, file); err != nil {
 				log.Printf("\tERROR: %s", err)
 				ok = false
+			} else {
+				updated = true
 			}
 		} else {
 			ok = false
@@ -103,7 +106,15 @@ func validate(ctx context.Context, update bool) error {
 		return fmt.Errorf(`
 Contracts in weaviate-go-client are out-of-sync with weaviate/weaviate repository.
 Update them to the latest version by running this command:
-	./bin/mage contracts:update
+	./bin/mage -v contracts:update
+`)
+	}
+	if updated {
+		log.Println(`
+Contracts were successfully updated, run:
+	go generate ./...
+
+to re-generate REST and gRPC stubs.
 `)
 	}
 	log.Print("Done")
@@ -151,6 +162,10 @@ func updateContract(ctx context.Context, c Contract) error {
 	}
 	defer rc.Close()
 
+	if err := os.MkdirAll(filepath.Dir(c.Path), 0o775); err != nil {
+		log.Print(err)
+	}
+
 	f, err := os.Create(c.Path + ".tmp")
 	if err != nil {
 		return err
@@ -167,9 +182,9 @@ func updateContract(ctx context.Context, c Contract) error {
 	}
 
 	if c.Exists {
-		log.Printf("Updated %s (written %dB)", c.Path, written)
+		log.Printf("Updated %s [written %dB]", c.Path, written)
 	} else {
-		log.Printf("Added new file at %s (written %dB)", c.Path, written)
+		log.Printf("Added new file at %s [written %dB]", c.Path, written)
 	}
 
 	if os.Remove(f.Name()); err != nil {
