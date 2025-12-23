@@ -7,7 +7,6 @@ on:
     paths-ignore:
       - readme.md
       - license.md
-  pull_request:
 
 permissions:
   contents: read
