@@ -12,7 +12,7 @@ type Vector struct {
 var _ NearVectorTarget = (*Vector)(nil)
 
 func (v *Vector) CombinationMethod() CombinationMethod {
-	return combinationMethodUnspecified
+	return CombinationMethodUnspecified
 }
 
 func (v Vector) Vectors() []TargetVector {

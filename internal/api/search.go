@@ -145,7 +145,7 @@ type CombinationMethod string
 
 const (
 	// Return from NearVectorTarget implementations which represent a single vector.
-	combinationMethodUnspecified   CombinationMethod = ""
+	CombinationMethodUnspecified   CombinationMethod = ""
 	CombinationMethodSum           CombinationMethod = "SUM"
 	CombinationMethodMin           CombinationMethod = "MIN"
 	CombinationMethodAverage       CombinationMethod = "AVERAGE"
