@@ -169,7 +169,7 @@ func updateContract(ctx context.Context, c Contract) error {
 	if c.Exists {
 		log.Printf("Updated %s (written %dB)", c.Path, written)
 	} else {
-		log.Println("Added new file at %s (written %dB)", c.Path, written)
+		log.Printf("Added new file at %s (written %dB)", c.Path, written)
 	}
 
 	if os.Remove(f.Name()); err != nil {
