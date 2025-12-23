@@ -338,8 +338,8 @@ func convertOpenAPIToV3(ctx context.Context, r io.Reader) error {
 		}
 	}
 
-	walk("", v2, func(kout string, m map[string]any) {
-		if kout == "Vector" {
+	walk("", v2, func(k string, m map[string]any) {
+		if k == "Vector" {
 			if _, ok := m["x-go-type"]; !ok {
 				m["x-go-type"] = "interface{}"
 			}
