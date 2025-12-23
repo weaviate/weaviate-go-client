@@ -64,7 +64,7 @@ func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 		httpreq.Header.Set("Content-Type", "application/json")
 	}
 
-	res, err := c.c.Do(httpreq)
+	res, err := c.hc.Do(httpreq)
 	if err != nil {
 		return fmt.Errorf("execute request: %q", err)
 	}
@@ -104,7 +104,7 @@ func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 }
 
 type httpClient struct {
-	c       *http.Client
+	hc      *http.Client
 	baseURL string
 	header  http.Header
 }
@@ -115,7 +115,7 @@ func newHTTP(opt Config) *httpClient {
 		opt.Scheme, opt.HTTPHost, opt.HTTPPort, opt.Version,
 	)
 	return &httpClient{
-		c:       &http.Client{},
+		hc:      &http.Client{},
 		baseURL: baseURL,
 		header:  opt.Header,
 	}
