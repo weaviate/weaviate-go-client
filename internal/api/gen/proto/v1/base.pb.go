@@ -4,7 +4,7 @@
 // 	protoc        v6.33.2
 // source: v1/base.proto
 
-package proto
+package protocol
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -214,8 +214,7 @@ func (Vectors_VectorType) EnumDescriptor() ([]byte, []int) {
 type NumberArrayProperties struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// will be removed in the future, use vector_bytes
-	// go client 5.4.1 depends on this field. Only remove after go client is
-	// deprecated
+	// go client 5.4.1 depends on this field. Only remove after go client is deprecated
 	//
 	// Deprecated: Marked as deprecated in v1/base.proto.
 	Values        []float64 `protobuf:"fixed64,1,rep,packed,name=values,proto3" json:"values,omitempty"`
@@ -1554,8 +1553,8 @@ const file_v1_base_proto_rawDesc = "" +
 	"\x1dCONSISTENCY_LEVEL_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15CONSISTENCY_LEVEL_ONE\x10\x01\x12\x1c\n" +
 	"\x18CONSISTENCY_LEVEL_QUORUM\x10\x02\x12\x19\n" +
-	"\x15CONSISTENCY_LEVEL_ALL\x10\x03Bv\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x11WeaviateProtoBaseZ<github.com/weaviate/weaviate-go-client/v6/internal/gen;protob\x06proto3"
+	"\x15CONSISTENCY_LEVEL_ALL\x10\x03Bn\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x11WeaviateProtoBaseZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
 
 var (
 	file_v1_base_proto_rawDescOnce sync.Once

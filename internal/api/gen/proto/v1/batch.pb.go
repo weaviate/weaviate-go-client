@@ -4,7 +4,7 @@
 // 	protoc        v6.33.2
 // source: v1/batch.proto
 
-package proto
+package protocol
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -1314,9 +1314,8 @@ type BatchObject_Properties struct {
 	BooleanArrayProperties []*BooleanArrayProperties           `protobuf:"bytes,7,rep,name=boolean_array_properties,json=booleanArrayProperties,proto3" json:"boolean_array_properties,omitempty"`
 	ObjectProperties       []*ObjectProperties                 `protobuf:"bytes,8,rep,name=object_properties,json=objectProperties,proto3" json:"object_properties,omitempty"`
 	ObjectArrayProperties  []*ObjectArrayProperties            `protobuf:"bytes,9,rep,name=object_array_properties,json=objectArrayProperties,proto3" json:"object_array_properties,omitempty"`
-	// empty lists do not have a type in many languages and clients do not know
-	// which datatype the property has. Weaviate can get the datatype from its
-	// schema
+	// empty lists do not have a type in many languages and clients do not know which datatype the property has.
+	// Weaviate can get the datatype from its schema
 	EmptyListProps []string `protobuf:"bytes,10,rep,name=empty_list_props,json=emptyListProps,proto3" json:"empty_list_props,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -1756,8 +1755,8 @@ const file_v1_batch_proto_rawDesc = "" +
 	"\n" +
 	"BatchError\x12\x14\n" +
 	"\x05index\x18\x01 \x01(\x05R\x05index\x12\x14\n" +
-	"\x05error\x18\x02 \x01(\tR\x05errorBw\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x12WeaviateProtoBatchZ<github.com/weaviate/weaviate-go-client/v6/internal/gen;protob\x06proto3"
+	"\x05error\x18\x02 \x01(\tR\x05errorBo\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x12WeaviateProtoBatchZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
 
 var (
 	file_v1_batch_proto_rawDescOnce sync.Once

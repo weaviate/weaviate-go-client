@@ -4,7 +4,7 @@
 // 	protoc        v6.33.2
 // source: v1/base_search.proto
 
-package proto
+package protocol
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -1617,8 +1617,8 @@ const file_v1_base_search_proto_rawDesc = "" +
 	"\x1bCOMBINATION_METHOD_TYPE_MIN\x10\x02\x12#\n" +
 	"\x1fCOMBINATION_METHOD_TYPE_AVERAGE\x10\x03\x12*\n" +
 	"&COMBINATION_METHOD_TYPE_RELATIVE_SCORE\x10\x04\x12\"\n" +
-	"\x1eCOMBINATION_METHOD_TYPE_MANUAL\x10\x05B|\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x17WeaviateProtoBaseSearchZ<github.com/weaviate/weaviate-go-client/v6/internal/gen;protob\x06proto3"
+	"\x1eCOMBINATION_METHOD_TYPE_MANUAL\x10\x05Bt\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x17WeaviateProtoBaseSearchZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
 
 var (
 	file_v1_base_search_proto_rawDescOnce sync.Once

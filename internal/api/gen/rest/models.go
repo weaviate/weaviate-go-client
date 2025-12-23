@@ -15,9 +15,13 @@ const (
 
 // Defines values for BackupConfigCompressionLevel.
 const (
-	BestCompression    BackupConfigCompressionLevel = "BestCompression"
-	BestSpeed          BackupConfigCompressionLevel = "BestSpeed"
-	DefaultCompression BackupConfigCompressionLevel = "DefaultCompression"
+	BestCompression        BackupConfigCompressionLevel = "BestCompression"
+	BestSpeed              BackupConfigCompressionLevel = "BestSpeed"
+	DefaultCompression     BackupConfigCompressionLevel = "DefaultCompression"
+	NoCompression          BackupConfigCompressionLevel = "NoCompression"
+	ZstdBestCompression    BackupConfigCompressionLevel = "ZstdBestCompression"
+	ZstdBestSpeed          BackupConfigCompressionLevel = "ZstdBestSpeed"
+	ZstdDefaultCompression BackupConfigCompressionLevel = "ZstdDefaultCompression"
 )
 
 // Defines values for BackupCreateResponseStatus.
@@ -112,6 +116,14 @@ const (
 	NestedPropertyTokenizationTrigram    NestedPropertyTokenization = "trigram"
 	NestedPropertyTokenizationWhitespace NestedPropertyTokenization = "whitespace"
 	NestedPropertyTokenizationWord       NestedPropertyTokenization = "word"
+)
+
+// Defines values for NodeStatusOperationalMode.
+const (
+	ReadOnly  NodeStatusOperationalMode = "ReadOnly"
+	ReadWrite NodeStatusOperationalMode = "ReadWrite"
+	ScaleOut  NodeStatusOperationalMode = "ScaleOut"
+	WriteOnly NodeStatusOperationalMode = "WriteOnly"
 )
 
 // Defines values for NodeStatusStatus.
@@ -364,7 +376,7 @@ type BackupConfig struct {
 	// CPUPercentage Desired CPU core utilization ranging from 1%-80%
 	CPUPercentage int `json:"CPUPercentage,omitempty"`
 
-	// ChunkSize Aimed chunk size, with a minimum of 2MB, default of 128MB, and a maximum of 512MB. The actual chunk size may vary.
+	// ChunkSize Deprecated, has no effect.
 	ChunkSize int `json:"ChunkSize,omitempty"`
 
 	// CompressionLevel compression level used by compression algorithm
@@ -641,10 +653,10 @@ type BatchReferenceResponseResultStatus string
 // BatchStats The summary of a nodes batch queue congestion status.
 type BatchStats struct {
 	// QueueLength How many objects are currently in the batch queue.
-	QueueLength int64 `json:"queueLength,omitempty"`
+	QueueLength int32 `json:"queueLength,omitempty"`
 
 	// RatePerSecond How many objects are approximately processed from the batch queue per second.
-	RatePerSecond int64 `json:"ratePerSecond"`
+	RatePerSecond int32 `json:"ratePerSecond"`
 }
 
 // C11yVector A vector representation of the object in the Contextionary. If provided at object creation, this wil take precedence over any vectorizer setting.
@@ -666,6 +678,9 @@ type Class struct {
 
 	// MultiTenancyConfig Configuration related to multi-tenancy within a collection (class)
 	MultiTenancyConfig MultiTenancyConfig `json:"multiTenancyConfig,omitempty"`
+
+	// ObjectTtlConfig Configuration of objects' time-to-live
+	ObjectTtlConfig ObjectTtlConfig `json:"objectTtlConfig,omitempty"`
 
 	// Properties Define properties of the collection.
 	Properties []Property `json:"properties,omitempty"`
@@ -902,7 +917,7 @@ type InvertedIndexConfig struct {
 	Bm25 BM25Config `json:"bm25,omitempty"`
 
 	// CleanupIntervalSeconds Asynchronous index clean up happens every n seconds (default: 60).
-	CleanupIntervalSeconds int64 `json:"cleanupIntervalSeconds,omitempty"`
+	CleanupIntervalSeconds int32 `json:"cleanupIntervalSeconds,omitempty"`
 
 	// IndexNullState Index each object with the null state (default: `false`).
 	IndexNullState bool `json:"indexNullState,omitempty"`
@@ -915,6 +930,9 @@ type InvertedIndexConfig struct {
 
 	// Stopwords Fine-grained control over stopword list usage.
 	Stopwords StopwordConfig `json:"stopwords,omitempty"`
+
+	// TokenizerUserDict User-defined dictionary for tokenization.
+	TokenizerUserDict []TokenizerUserDictConfig `json:"tokenizerUserDict,omitempty"`
 
 	// UsingBlockMaxWAND Using BlockMax WAND for query execution (default: `false`, will be `true` for new collections created after 1.30).
 	UsingBlockMaxWAND bool `json:"usingBlockMaxWAND,omitempty"`
@@ -994,7 +1012,7 @@ type NodeShardStatus struct {
 	Class string `json:"class"`
 
 	// Compressed The status of vector compression/quantization.
-	Compressed map[string]interface{} `json:"compressed"`
+	Compressed bool `json:"compressed"`
 
 	// Loaded The load status of the shard.
 	Loaded bool `json:"loaded"`
@@ -1006,7 +1024,7 @@ type NodeShardStatus struct {
 	ObjectCount int64 `json:"objectCount"`
 
 	// VectorIndexingStatus The status of the vector indexing process.
-	VectorIndexingStatus map[string]interface{} `json:"vectorIndexingStatus"`
+	VectorIndexingStatus string `json:"vectorIndexingStatus"`
 
 	// VectorQueueLength The length of the vector indexing queue.
 	VectorQueueLength int64 `json:"vectorQueueLength"`
@@ -1018,7 +1036,7 @@ type NodeStats struct {
 	ObjectCount int64 `json:"objectCount"`
 
 	// ShardCount The count of Weaviate's shards. To see this value, set `output` to `verbose`.
-	ShardCount int64 `json:"shardCount"`
+	ShardCount int32 `json:"shardCount"`
 }
 
 // NodeStatus The definition of a backup node status response body
@@ -1032,6 +1050,9 @@ type NodeStatus struct {
 	// Name The name of the node.
 	Name string `json:"name,omitempty"`
 
+	// OperationalMode Which mode of operation the node is running in.
+	OperationalMode NodeStatusOperationalMode `json:"operationalMode,omitempty"`
+
 	// Shards The list of the shards with it's statistics.
 	Shards []NodeShardStatus `json:"shards,omitempty"`
 
@@ -1044,6 +1065,9 @@ type NodeStatus struct {
 	// Version The version of Weaviate.
 	Version string `json:"version,omitempty"`
 }
+
+// NodeStatusOperationalMode Which mode of operation the node is running in.
+type NodeStatusOperationalMode string
 
 // NodeStatusStatus Node's status.
 type NodeStatusStatus string
@@ -1084,6 +1108,21 @@ type Object struct {
 
 	// Vectors A map of named vectors for multi-vector representations.
 	Vectors Vectors `json:"vectors,omitempty"`
+}
+
+// ObjectTtlConfig Configuration of objects' time-to-live
+type ObjectTtlConfig struct {
+	// DefaultTtl Interval (in seconds) to be added to `deleteOn` value, denoting object's expiration time. Has to be positive for `deleteOn` set to `_creationTimeUnix` or `_lastUpdateTimeUnix`, any for custom property (default: `0`).
+	DefaultTtl int `json:"defaultTtl"`
+
+	// DeleteOn Name of the property holding base time to compute object's expiration time (ttl = value of deleteOn property + defaultTtl). Can be set to `_creationTimeUnix`, `_lastUpdateTimeUnix` or custom property of `date` datatype.
+	DeleteOn string `json:"deleteOn"`
+
+	// Enabled Whether or not object ttl is enabled for this collection (default: `false`).
+	Enabled bool `json:"enabled"`
+
+	// FilterExpiredObjects Whether remove from resultset expired, but not yet deleted by background process objects (default: `false`).
+	FilterExpiredObjects bool `json:"filterExpiredObjects"`
 }
 
 // ObjectsGetResponse defines model for ObjectsGetResponse.
@@ -1250,6 +1289,9 @@ type Property struct {
 
 	// IndexFilterable Whether to include this property in the filterable, Roaring Bitmap index. If `false`, this property cannot be used in `where` filters. <br/><br/>Note: Unrelated to vectorization behavior.
 	IndexFilterable bool `json:"indexFilterable"`
+
+	// IndexInverted (Deprecated). Whether to include this property in the inverted index. If `false`, this property cannot be used in `where` filters, `bm25` or `hybrid` search. <br/><br/>Unrelated to vectorization behavior (deprecated as of v1.19; use indexFilterable or/and indexSearchable instead)
+	IndexInverted bool `json:"indexInverted"`
 
 	// IndexRangeFilters Whether to include this property in the filterable, range-based Roaring Bitmap index. Provides better performance for range queries compared to filterable index in large datasets. Applicable only to properties of data type int, number, date.
 	IndexRangeFilters bool `json:"indexRangeFilters"`
@@ -1468,6 +1510,36 @@ type ReplicationReplicateReplicaResponse struct {
 	Id openapi_types.UUID `json:"id"`
 }
 
+// ReplicationScaleApplyResponse Response for the POST /replication/scale endpoint containing the list of initiated shard copy operation IDs.
+type ReplicationScaleApplyResponse struct {
+	// Collection The name of the collection associated with this replication scaling plan.
+	Collection string `json:"collection"`
+
+	// OperationIds List of shard copy operation IDs created during scaling.
+	OperationIds []openapi_types.UUID `json:"operationIds"`
+
+	// PlanId The unique identifier of the replication scaling plan that generated these operations.
+	PlanId openapi_types.UUID `json:"planId"`
+}
+
+// ReplicationScalePlan Defines a complete plan for scaling replication within a collection. Each shard entry specifies nodes to remove and nodes to add. Added nodes may either be initialized empty (null) or created by replicating data from a source node specified as a string. If a source node is also marked for removal in the same shard, it represents a move operation and can only be used once as a source for that shard. If a source node is not marked for removal, it represents a copy operation and can be used as the source for multiple additions in that shard. Nodes listed in 'removeNodes' cannot also appear as targets in 'addNodes' for the same shard, and the same node cannot be specified for both addition and removal in a single shard.
+type ReplicationScalePlan struct {
+	// Collection The name of the collection to which this replication scaling plan applies.
+	Collection string `json:"collection"`
+
+	// PlanId A unique identifier for this replication scaling plan, useful for tracking and auditing purposes.
+	PlanId openapi_types.UUID `json:"planId"`
+
+	// ShardScaleActions A mapping of shard names to their corresponding scaling actions. Each key corresponds to a shard name, and its value defines which nodes should be removed and which should be added for that shard. If a source node listed for an addition is also in 'removeNodes' for the same shard, that addition is treated as a move operation. Such a node can appear only once as a source in that shard. Otherwise, if the source node is not being removed, it represents a copy operation and can be referenced multiple times as a source for additions.
+	ShardScaleActions map[string]struct {
+		// AddNodes A mapping of target node identifiers to their addition configuration. Each key represents a target node where a new replica will be added. The value may be null, which means an empty replica will be created, or a string specifying the source node from which shard data will be copied. If the source node is also marked for removal in the same shard, this addition is treated as a move operation, and that source node can only appear once as a source node for that shard. If the source node is not being removed, it can be used as the source for multiple additions (copy operations).
+		AddNodes map[string]interface{} `json:"addNodes,omitempty"`
+
+		// RemoveNodes List of node identifiers from which replicas of this shard should be removed. Nodes listed here must not appear in 'addNodes' for the same shard, and cannot be used as a source node for any addition in this shard except in the implicit move case, where they appear as both a source and a node to remove.
+		RemoveNodes []string `json:"removeNodes,omitempty"`
+	} `json:"shardScaleActions"`
+}
+
 // ReplicationShardReplicas Represents a shard and lists the nodes that currently host its replicas.
 type ReplicationShardReplicas struct {
 	Replicas []string `json:"replicas,omitempty"`
@@ -1626,6 +1698,20 @@ type Tenant struct {
 
 // TenantActivityStatus The activity status of the tenant, which determines if it is queryable and where its data is stored.<br/><br/><b>Available Statuses:</b><br/>- `ACTIVE`: The tenant is fully operational and ready for queries. Data is stored on local, hot storage.<br/>- `INACTIVE`: The tenant is not queryable. Data is stored locally.<br/>- `OFFLOADED`: The tenant is inactive and its data is stored in a remote cloud backend.<br/><br/><b>Usage Rules:</b><br/>- <b>On Create:</b> This field is optional and defaults to `ACTIVE`. Allowed values are `ACTIVE` and `INACTIVE`.<br/>- <b>On Update:</b> This field is required. Allowed values are `ACTIVE`, `INACTIVE`, and `OFFLOADED`.<br/><br/><b>Read-Only Statuses:</b><br/>The following statuses are set by the server and indicate a tenant is transitioning between states:<br/>- `OFFLOADING`<br/>- `ONLOADING`<br/><br/><b>Note on Deprecated Names:</b><br/>For backward compatibility, deprecated names are still accepted and are mapped to their modern equivalents: `HOT` (now `ACTIVE`), `COLD` (now `INACTIVE`), `FROZEN` (now `OFFLOADED`), `FREEZING` (now `OFFLOADING`), `UNFREEZING` (now `ONLOADING`).
 type TenantActivityStatus string
+
+// TokenizerUserDictConfig A list of pairs of strings that should be replaced with another string during tokenization.
+type TokenizerUserDictConfig struct {
+	Replacements []struct {
+		// Source The string to be replaced.
+		Source string `json:"source"`
+
+		// Target The string to replace with.
+		Target string `json:"target"`
+	} `json:"replacements,omitempty"`
+
+	// Tokenizer The tokenizer to which the user dictionary should be applied. Currently, only the `kagame` ja and kr tokenizers supports user dictionaries.
+	Tokenizer string `json:"tokenizer,omitempty"`
+}
 
 // UserApiKey defines model for UserApiKey.
 type UserApiKey struct {
@@ -2070,6 +2156,15 @@ type ReplicationDetailsParams struct {
 	IncludeHistory bool `form:"includeHistory,omitempty" json:"includeHistory,omitempty"`
 }
 
+// GetReplicationScalePlanParams defines parameters for GetReplicationScalePlan.
+type GetReplicationScalePlanParams struct {
+	// Collection The collection name to get the scaling plan for.
+	Collection string `form:"collection" json:"collection"`
+
+	// ReplicationFactor The desired replication factor to scale to. Must be a positive integer greater than zero.
+	ReplicationFactor int `form:"replicationFactor" json:"replicationFactor"`
+}
+
 // GetCollectionShardingStateParams defines parameters for GetCollectionShardingState.
 type GetCollectionShardingStateParams struct {
 	// Collection The collection name to get the sharding state for.
@@ -2246,6 +2341,9 @@ type ReplicateJSONRequestBody = ReplicationReplicateReplicaRequest
 
 // ForceDeleteReplicationsJSONRequestBody defines body for ForceDeleteReplications for application/json ContentType.
 type ForceDeleteReplicationsJSONRequestBody = ReplicationReplicateForceDeleteRequest
+
+// ApplyReplicationScalePlanJSONRequestBody defines body for ApplyReplicationScalePlan for application/json ContentType.
+type ApplyReplicationScalePlanJSONRequestBody = ReplicationScalePlan
 
 // SchemaObjectsCreateJSONRequestBody defines body for SchemaObjectsCreate for application/json ContentType.
 type SchemaObjectsCreateJSONRequestBody = Class

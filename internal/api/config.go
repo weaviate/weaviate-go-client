@@ -48,7 +48,7 @@ type (
 		IndexPropertyLength    bool            // Index length of properties.
 		IndexTimestamps        bool            // Index each object by its internal timestamps.
 		UsingBlockMaxWAND      bool            // Toggle UsingBlockMaxWAND usage for BM25 search.
-		CleanupIntervalSeconds int64           // Asynchronous index cleanup internal.
+		CleanupIntervalSeconds int32           // Asynchronous index cleanup internal.
 		BM25                   *BM25Config     // Tuning parameters for the BM25 algorithm.
 		Stopwords              *StopwordConfig // Fine-grained control over stopword list usage.
 	}

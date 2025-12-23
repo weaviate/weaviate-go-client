@@ -4,7 +4,7 @@
 // 	protoc        v6.33.2
 // source: v1/properties.proto
 
-package proto
+package protocol
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -241,8 +241,7 @@ type Value_NumberValue struct {
 }
 
 type Value_BoolValue struct {
-	// dont reuse 2, old field that has been removed; Was "string string_value =
-	// 2;"
+	// dont reuse 2, old field that has been removed; Was "string string_value = 2;"
 	BoolValue bool `protobuf:"varint,3,opt,name=bool_value,json=boolValue,proto3,oneof"`
 }
 
@@ -475,9 +474,8 @@ func (*ListValue_TextValues) isListValue_Kind() {}
 type NumberValues struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// *
-	// The values are stored as a byte array, where each 8 bytes represent a
-	// single float64 value. The byte array is stored in little-endian order using
-	// uint64 encoding.
+	// The values are stored as a byte array, where each 8 bytes represent a single float64 value.
+	// The byte array is stored in little-endian order using uint64 encoding.
 	Values        []byte `protobuf:"bytes,1,opt,name=values,proto3" json:"values,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -743,9 +741,8 @@ func (x *UuidValues) GetValues() []string {
 type IntValues struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// *
-	// The values are stored as a byte array, where each 8 bytes represent a
-	// single int64 value. The byte array is stored in little-endian order using
-	// uint64 encoding.
+	// The values are stored as a byte array, where each 8 bytes represent a single int64 value.
+	// The byte array is stored in little-endian order using uint64 encoding.
 	Values        []byte `protobuf:"bytes,1,opt,name=values,proto3" json:"values,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1008,8 +1005,8 @@ const file_v1_properties_proto_rawDesc = "" +
 	"\x17international_formatted\x18\x04 \x01(\tR\x16internationalFormatted\x12\x1a\n" +
 	"\bnational\x18\x05 \x01(\x04R\bnational\x12-\n" +
 	"\x12national_formatted\x18\x06 \x01(\tR\x11nationalFormatted\x12\x14\n" +
-	"\x05valid\x18\a \x01(\bR\x05validB|\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x17WeaviateProtoPropertiesZ<github.com/weaviate/weaviate-go-client/v6/internal/gen;protob\x06proto3"
+	"\x05valid\x18\a \x01(\bR\x05validBt\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x17WeaviateProtoPropertiesZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
 
 var (
 	file_v1_properties_proto_rawDescOnce sync.Once

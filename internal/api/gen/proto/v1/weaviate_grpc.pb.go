@@ -4,7 +4,7 @@
 // - protoc             v6.33.2
 // source: v1/weaviate.proto
 
-package proto
+package protocol
 
 import (
 	context "context"

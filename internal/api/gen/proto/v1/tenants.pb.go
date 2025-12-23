@@ -4,7 +4,7 @@
 // 	protoc        v6.33.2
 // source: v1/tenants.proto
 
-package proto
+package protocol
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -30,8 +30,7 @@ const (
 	TenantActivityStatus_TENANT_ACTIVITY_STATUS_FROZEN      TenantActivityStatus = 4
 	TenantActivityStatus_TENANT_ACTIVITY_STATUS_UNFREEZING  TenantActivityStatus = 5
 	TenantActivityStatus_TENANT_ACTIVITY_STATUS_FREEZING    TenantActivityStatus = 6
-	// not used yet - added to let the clients already add code to handle this in
-	// the future
+	// not used yet - added to let the clients already add code to handle this in the future
 	TenantActivityStatus_TENANT_ACTIVITY_STATUS_ACTIVE     TenantActivityStatus = 7
 	TenantActivityStatus_TENANT_ACTIVITY_STATUS_INACTIVE   TenantActivityStatus = 8
 	TenantActivityStatus_TENANT_ACTIVITY_STATUS_OFFLOADED  TenantActivityStatus = 9
@@ -99,8 +98,7 @@ func (TenantActivityStatus) EnumDescriptor() ([]byte, []int) {
 type TenantsGetRequest struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
 	Collection string                 `protobuf:"bytes,1,opt,name=collection,proto3" json:"collection,omitempty"`
-	// we might need to add a tenant-cursor api at some point, make this easily
-	// extendable
+	// we might need to add a tenant-cursor api at some point, make this easily extendable
 	//
 	// Types that are valid to be assigned to Params:
 	//
@@ -352,8 +350,8 @@ const file_v1_tenants_proto_rawDesc = "" +
 	" TENANT_ACTIVITY_STATUS_OFFLOADED\x10\t\x12%\n" +
 	"!TENANT_ACTIVITY_STATUS_OFFLOADING\x10\n" +
 	"\x12$\n" +
-	" TENANT_ACTIVITY_STATUS_ONLOADING\x10\v\"\x04\b\x03\x10\x03By\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x14WeaviateProtoTenantsZ<github.com/weaviate/weaviate-go-client/v6/internal/gen;protob\x06proto3"
+	" TENANT_ACTIVITY_STATUS_ONLOADING\x10\v\"\x04\b\x03\x10\x03Bq\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x14WeaviateProtoTenantsZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
 
 var (
 	file_v1_tenants_proto_rawDescOnce sync.Once

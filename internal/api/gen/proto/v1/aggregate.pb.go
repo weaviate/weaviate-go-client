@@ -4,7 +4,7 @@
 // 	protoc        v6.33.2
 // source: v1/aggregate.proto
 
-package proto
+package protocol
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -2449,8 +2449,8 @@ const file_v1_aggregate_proto_rawDesc = "" +
 	"\v_grouped_by\x1aD\n" +
 	"\aGrouped\x129\n" +
 	"\x06groups\x18\x01 \x03(\v2!.weaviate.v1.AggregateReply.GroupR\x06groupsB\b\n" +
-	"\x06resultB{\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x16WeaviateProtoAggregateZ<github.com/weaviate/weaviate-go-client/v6/internal/gen;protob\x06proto3"
+	"\x06resultBs\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x16WeaviateProtoAggregateZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
 
 var (
 	file_v1_aggregate_proto_rawDescOnce sync.Once

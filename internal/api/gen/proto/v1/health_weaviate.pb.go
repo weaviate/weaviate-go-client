@@ -27,13 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// This is a copy of the google health check file with changed namespace. This
-// enables our clients to use the health check without having to import google's
-// proto files which might have dependency conflicts.
+// This is a copy of the google health check file with changed namespace. This enables our clients to use the health
+// check without having to import google's proto files which might have dependency conflicts.
 //
-// This file should NOT be used to start our own health check server in Weaviate
-// itself, but only for clients to generate their protobufs and grpc code from
-// it.
+// This file should NOT be used to start our own health check server in Weaviate itself, but only for clients to
+// generate their protobufs and grpc code from it.
 //
 // See: https://github.com/weaviate/weaviate-python-client/issues/1807 and
 //      https://github.com/weaviate/weaviate-python-client/issues/1786
@@ -45,7 +43,7 @@
 // 	protoc        v6.33.2
 // source: v1/health_weaviate.proto
 
-package proto
+package protocol
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -211,8 +209,8 @@ const file_v1_health_weaviate_proto_rawDesc = "" +
 	"\rServingStatus\x12\v\n" +
 	"\aUNKNOWN\x10\x00\x12\v\n" +
 	"\aSERVING\x10\x01\x12\x0f\n" +
-	"\vNOT_SERVING\x10\x02Bs\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x0eWeaviateHealthZ<github.com/weaviate/weaviate-go-client/v6/internal/gen;protob\x06proto3"
+	"\vNOT_SERVING\x10\x02Bk\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x0eWeaviateHealthZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
 
 var (
 	file_v1_health_weaviate_proto_rawDescOnce sync.Once

@@ -4,7 +4,7 @@
 // 	protoc        v6.33.2
 // source: v1/weaviate.proto
 
-package proto
+package protocol
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -33,8 +33,8 @@ const file_v1_weaviate_proto_rawDesc = "" +
 	"\n" +
 	"TenantsGet\x12\x1e.weaviate.v1.TenantsGetRequest\x1a\x1c.weaviate.v1.TenantsGetReply\"\x00\x12I\n" +
 	"\tAggregate\x12\x1d.weaviate.v1.AggregateRequest\x1a\x1b.weaviate.v1.AggregateReply\"\x00\x12S\n" +
-	"\vBatchStream\x12\x1f.weaviate.v1.BatchStreamRequest\x1a\x1d.weaviate.v1.BatchStreamReply\"\x00(\x010\x01Br\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\rWeaviateProtoZ<github.com/weaviate/weaviate-go-client/v6/internal/gen;protob\x06proto3"
+	"\vBatchStream\x12\x1f.weaviate.v1.BatchStreamRequest\x1a\x1d.weaviate.v1.BatchStreamReply\"\x00(\x010\x01Bj\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\rWeaviateProtoZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
 
 var file_v1_weaviate_proto_goTypes = []any{
 	(*SearchRequest)(nil),          // 0: weaviate.v1.SearchRequest

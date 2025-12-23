@@ -4,7 +4,7 @@
 // 	protoc        v6.33.2
 // source: v1/search_get.proto
 
-package proto
+package protocol
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -1598,8 +1598,8 @@ const file_v1_search_get_proto_rawDesc = "" +
 	"\n" +
 	"properties\x18\x01 \x03(\v2\x1d.weaviate.v1.PropertiesResultR\n" +
 	"properties\x12\x1b\n" +
-	"\tprop_name\x18\x02 \x01(\tR\bpropNameB{\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x16WeaviateProtoSearchGetZ<github.com/weaviate/weaviate-go-client/v6/internal/gen;protob\x06proto3"
+	"\tprop_name\x18\x02 \x01(\tR\bpropNameBs\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x16WeaviateProtoSearchGetZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
 
 var (
 	file_v1_search_get_proto_rawDescOnce sync.Once

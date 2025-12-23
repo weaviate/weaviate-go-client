@@ -4,7 +4,7 @@
 // 	protoc        v6.33.2
 // source: v1/generative.proto
 
-package proto
+package protocol
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -4271,8 +4271,8 @@ const file_v1_generative_proto_rawDesc = "" +
 	"\x0fGenerativeDebug\x12$\n" +
 	"\vfull_prompt\x18\x01 \x01(\tH\x00R\n" +
 	"fullPrompt\x88\x01\x01B\x0e\n" +
-	"\f_full_promptB|\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x17WeaviateProtoGenerativeZ<github.com/weaviate/weaviate-go-client/v6/internal/gen;protob\x06proto3"
+	"\f_full_promptBt\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x17WeaviateProtoGenerativeZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
 
 var (
 	file_v1_generative_proto_rawDescOnce sync.Once

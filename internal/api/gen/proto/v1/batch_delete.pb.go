@@ -4,7 +4,7 @@
 // 	protoc        v6.33.2
 // source: v1/batch_delete.proto
 
-package proto
+package protocol
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -271,8 +271,8 @@ const file_v1_batch_delete_proto_rawDesc = "" +
 	"successful\x18\x02 \x01(\bR\n" +
 	"successful\x12\x19\n" +
 	"\x05error\x18\x03 \x01(\tH\x00R\x05error\x88\x01\x01B\b\n" +
-	"\x06_errorB}\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x18WeaviateProtoBatchDeleteZ<github.com/weaviate/weaviate-go-client/v6/internal/gen;protob\x06proto3"
+	"\x06_errorBu\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x18WeaviateProtoBatchDeleteZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
 
 var (
 	file_v1_batch_delete_proto_rawDescOnce sync.Once
