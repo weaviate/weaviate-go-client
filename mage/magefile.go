@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -21,15 +22,17 @@ import (
 const (
 	EnvGithubToken = "GITHUB_TOKEN"
 
-	WeaviateRoot         = "https://api.github.com/repos/weaviate/weaviate/contents"
-	WeaviateProtobufs    = "grpc/proto/v1"
-	WeaviateOpenAPISpecs = "openapi-specs/schema.json"
+	WeaviateRoot        = "https://api.github.com/repos/weaviate/weaviate/contents"
+	WeaviateProtobufDir = "grpc/proto/v1"
+	WeaviateOpenAPIDir  = "openapi-specs/schema.json"
 
-	LocalOpenAPISpecs = "./api/rest"
-	LocalProtobufs    = "./api/proto/v1"
+	LocalOpenAPIDir  = "./api/rest"
+	LocalProtobufDir = "./api/proto/v1"
 
-	OpenAPISchemaCheck = "schema.check.json"
-	OpenAPISchemaV3    = "schema.v3.json"
+	SchemaCheck = "schema.check.json"
+	SchemaV3    = "schema.v3.json"
+
+	SwaggerConverterURL = "https://converter.swagger.io/api/convert"
 )
 
 type Contracts mg.Namespace
@@ -44,15 +47,14 @@ func (Contracts) Update(ctx context.Context) error { return validate(ctx, true) 
 
 // validate calculates hashes for the OpenAPI schema.json and the protobufs in "api/"
 // and compares them against their latest versions in the weaviate/weaviate repo.
-// If update returns
 func validate(ctx context.Context, update bool) error {
-	log.Printf("Fetching metadata for %s", WeaviateOpenAPISpecs)
+	log.Printf("Fetching metadata for %s", WeaviateOpenAPIDir)
 	openapi, err := headOpenAPISpecs(ctx)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Fetching metadata for %s/*.proto", WeaviateProtobufs)
+	log.Printf("Fetching metadata for %s/*.proto", WeaviateProtobufDir)
 	protobufs, err := headProtobufs(ctx)
 	if err != nil {
 		return err
@@ -60,8 +62,8 @@ func validate(ctx context.Context, update bool) error {
 
 	var contracts []Contract
 	{
-		path := filepath.Join(LocalOpenAPISpecs, OpenAPISchemaCheck)
-		c, err := newContract(ctx, path, *openapi)
+		path := filepath.Join(LocalOpenAPIDir, SchemaCheck)
+		c, err := newContract(ctx, path, *openapi, convertOpenAPIToV3)
 		if err != nil {
 			return err
 		}
@@ -69,8 +71,8 @@ func validate(ctx context.Context, update bool) error {
 	}
 
 	for _, file := range protobufs {
-		path := filepath.Join(LocalProtobufs, file.Name)
-		c, err := newContract(ctx, path, file)
+		path := filepath.Join(LocalProtobufDir, file.Name)
+		c, err := newContract(ctx, path, file, nil)
 		if err != nil {
 			return err
 		}
@@ -92,16 +94,38 @@ func validate(ctx context.Context, update bool) error {
 		log.Printf("check %s:\n\twant:\t%s\n\tgot:\t%s", file.Path, file.Upstream.SHA, file.SHA)
 		if update {
 			log.Print("Downloading latest ", file.Upstream.DownloadURL)
-			if err := updateContract(ctx, file); err != nil {
+
+			// Clone contents of the updated file to buf to make them
+			// available to the callback without re-opening the file.
+			var buf *bytes.Buffer
+			if file.Callback != nil {
+				buf = new(bytes.Buffer)
+			}
+			if err := updateContract(ctx, file, buf); err != nil {
 				log.Printf("\tERROR: %s", err)
 				ok = false
 			} else {
 				updated = true
+				if err := file.Callback(ctx, buf); err != nil {
+					log.Printf("\tERROR: %s", err)
+					ok = false
+				}
 			}
 		} else {
 			ok = false
 		}
 	}
+
+	// If schema.check.json was present but schema.v3.json wasn't,
+	// the convertOpenAPIToV3 did not run as a callback and we need
+	// to force it manually.
+	if ok && update && !updated {
+		if err := convertExistingToV3(ctx); err != nil {
+			log.Printf("\tERROR: convert existing %s to v3: %s", SchemaCheck, err)
+			ok = false
+		}
+	}
+
 	if !ok {
 		return fmt.Errorf(`
 Contracts in weaviate-go-client are out-of-sync with weaviate/weaviate repository.
@@ -122,11 +146,14 @@ to re-generate REST and gRPC stubs.
 }
 
 type Contract struct {
-	Upstream GithubFile // Upstream file metadata.
-	Exists   bool       // False if the file does not exist locally.
-	Path     string     // Local filepath.
-	SHA      string     // Local file SHA.
+	Upstream GithubFile   // Upstream file metadata.
+	Exists   bool         // False if the file does not exist locally.
+	Path     string       // Local filepath.
+	SHA      string       // Local file SHA.
+	Callback CallbackFunc // Callback is called after the contract's been updated.
 }
+
+type CallbackFunc func(context.Context, io.Reader) error
 
 type GithubFile struct {
 	Name        string `json:"name"`
@@ -136,7 +163,7 @@ type GithubFile struct {
 
 // headProtobufs fetches metadata for schema.json.
 func headOpenAPISpecs(ctx context.Context) (*GithubFile, error) {
-	dir, basename := filepath.Split(WeaviateOpenAPISpecs)
+	dir, basename := filepath.Split(WeaviateOpenAPIDir)
 	specs, err := ghFiles(ctx, dir)
 	if err != nil {
 		return nil, err
@@ -146,38 +173,30 @@ func headOpenAPISpecs(ctx context.Context) (*GithubFile, error) {
 			return &file, nil
 		}
 	}
-	return nil, fmt.Errorf("%s/%s not found", WeaviateRoot, WeaviateOpenAPISpecs)
+	return nil, fmt.Errorf("%s/%s not found", WeaviateRoot, WeaviateOpenAPIDir)
 }
 
 // headProtobufs fetches metadata for protobuf files.
 func headProtobufs(ctx context.Context) ([]GithubFile, error) {
-	return ghFiles(ctx, WeaviateProtobufs)
+	return ghFiles(ctx, WeaviateProtobufDir)
 }
 
 // updateContract fetches the latest version of the [c.Upstream] and writes it to [c.Path].
-func updateContract(ctx context.Context, c Contract) error {
+// If w is not nil, it will receive the file's contents via an io.TeeReader.
+func updateContract(ctx context.Context, c Contract, w io.Writer) error {
 	rc, err := ghGet(ctx, c.Upstream.DownloadURL)
 	if err != nil {
 		return err
 	}
 	defer rc.Close()
 
-	if err := os.MkdirAll(filepath.Dir(c.Path), 0o775); err != nil {
-		log.Print(err)
+	var r io.Reader = rc
+	if w != nil {
+		r = io.TeeReader(r, w)
 	}
 
-	f, err := os.Create(c.Path + ".tmp")
+	written, err := writeAtomic(c.Path, r)
 	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	written, err := io.Copy(f, rc)
-	if err != nil {
-		return err
-	}
-
-	if err := os.Rename(f.Name(), c.Path); err != nil {
 		return err
 	}
 
@@ -186,19 +205,16 @@ func updateContract(ctx context.Context, c Contract) error {
 	} else {
 		log.Printf("Added new file at %s [written %dB]", c.Path, written)
 	}
-
-	if os.Remove(f.Name()); err != nil {
-		log.Print(err)
-	}
 	return nil
 }
 
-func newContract(ctx context.Context, local string, upstream GithubFile) (*Contract, error) {
+func newContract(ctx context.Context, local string, upstream GithubFile, cb CallbackFunc) (*Contract, error) {
 	if _, err := os.Stat(local); errors.Is(err, os.ErrNotExist) {
 		return &Contract{
 			Upstream: upstream,
 			Path:     local,
 			SHA:      "<file not found>",
+			Callback: cb,
 		}, nil
 	}
 	// os.Stat might've failed for a different reason, still try to get the hash.
@@ -211,11 +227,14 @@ func newContract(ctx context.Context, local string, upstream GithubFile) (*Contr
 		Path:     local,
 		SHA:      sha,
 		Exists:   true,
+		Callback: cb,
 	}, nil
 }
 
-// gitSHA returns SHA-1 hash of a file from the local Git storage.
+// gitSHA returns [SHA-1] hash of a file from the local Git storage.
 // This SHA is comparable to SHAs returned in Github file metadata.
+//
+// [SHA-1]: https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
 func gitSHA(ctx context.Context, file string) (string, error) {
 	cmd := exec.CommandContext(ctx, "git", "hash-object", file)
 	stdout, err := cmd.Output()
@@ -261,5 +280,143 @@ func ghGet(ctx context.Context, url string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, fmt.Errorf("gh get: %w", err)
 	}
+
+	if res.StatusCode > 299 {
+		body, _ := io.ReadAll(res.Body)
+		res.Body.Close()
+		return nil, fmt.Errorf("HTTP %d: %s", res.StatusCode, string(body))
+	}
+
 	return res.Body, nil
+}
+
+// convertToV3 uses Swagger's public OpenAPI converter service to convert v2 docs to v3 docs.
+// Swagger's conversion is best-effort, and won't be able to fix some of the invalid syntax:
+//   - "Vector" in "components" -> "parameters" -> "Vector" must defined "x-go-type": "interface{}",
+//     otherwise it is generated as map[string]any.
+//   - Values with "format": "int64" or "uint64" => "type": "integer" (not "number") and "format": "int64".
+//   - Values with "format": "int" or "int32" => "type": "integer" (not "number") and "format": "int32".
+//   - Values with "type": "number" => "format": "float", not "float32" or "float64".
+func convertOpenAPIToV3(ctx context.Context, r io.Reader) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, SwaggerConverterURL, r)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	data, err := io.ReadAll(res.Body)
+	res.Body.Close()
+
+	if res.StatusCode > 299 {
+		body := make(map[string]any)
+		_ = json.Unmarshal(data, &body)
+		return fmt.Errorf("HTTP %d: %s", res.StatusCode, body["message"])
+	} else if err != nil {
+		return err
+	}
+
+	var v2 map[string]any
+	if err := json.Unmarshal(data, &v2); err != nil {
+		return err
+	}
+
+	var walk func(k string, m map[string]any, f func(string, map[string]any))
+
+	walk = func(kout string, m map[string]any, f func(string, map[string]any)) {
+		if kout != "" { // do not call f on the root map
+			f(kout, m)
+		}
+		for k, v := range m {
+			if v, ok := v.(map[string]any); ok {
+				walk(k, v, f)
+			}
+		}
+	}
+
+	walk("", v2, func(kout string, m map[string]any) {
+		if kout == "Vector" {
+			if _, ok := m["x-go-type"]; !ok {
+				m["x-go-type"] = "interface{}"
+			}
+			return
+		}
+
+		if format, ok := m["format"]; ok {
+			switch format {
+			case "int64", "uint64":
+				m["type"] = "integer"
+				m["format"] = "int64"
+			case "int32", "int":
+				m["type"] = "integer"
+				m["format"] = "int32"
+			}
+		}
+
+		if t, ok := m["type"]; ok && t == "number" {
+			m["format"] = "float"
+		}
+	})
+
+	v3, err := json.MarshalIndent(v2, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	path := filepath.Join(LocalOpenAPIDir, SchemaV3)
+	written, err := writeAtomic(path, bytes.NewReader(v3))
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Converted OpenAPI schema to v3, new file at %s [written %dB]", path, written)
+	return nil
+}
+
+func convertExistingToV3(ctx context.Context) error {
+	if _, err := os.Stat(filepath.Join(LocalOpenAPIDir, SchemaV3)); err == nil {
+		return nil
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+
+	f, err := os.Open(filepath.Join(LocalOpenAPIDir, SchemaCheck))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if err := convertOpenAPIToV3(ctx, f); err != nil {
+		return err
+	}
+	return nil
+}
+
+// writeAtomic writes the contents of Reader r to a .tmp file,
+// performs a rename, and cleans up the .tmp file.
+func writeAtomic(file string, r io.Reader) (int64, error) {
+	if err := os.MkdirAll(filepath.Dir(file), 0o775); err != nil {
+		log.Print(err)
+	}
+
+	f, err := os.Create(file + ".tmp")
+	if err != nil {
+		return 0, err
+	}
+	defer f.Close()
+	defer func() { os.Remove(f.Name()) }()
+
+	written, err := io.Copy(f, r)
+	if err != nil {
+		return 0, err
+	}
+
+	if err := os.Rename(f.Name(), file); err != nil {
+		return 0, err
+	}
+	return written, nil
 }
