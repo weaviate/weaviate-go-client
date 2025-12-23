@@ -46,10 +46,13 @@ func (Contracts) Update(ctx context.Context) error { return validate(ctx, true) 
 // and compares them against their latest versions in the weaviate/weaviate repo.
 // If update returns
 func validate(ctx context.Context, update bool) error {
+	log.Printf("Fetching metadata for %s", WeaviateOpenAPISpecs)
 	openapi, err := headOpenAPISpecs(ctx)
 	if err != nil {
 		return err
 	}
+
+	log.Printf("Fetching metadata for %s", WeaviateProtobufs)
 	protobufs, err := headProtobufs(ctx)
 	if err != nil {
 		return err
@@ -58,27 +61,20 @@ func validate(ctx context.Context, update bool) error {
 	var contracts []Contract
 	{
 		path := filepath.Join(LocalOpenAPISpecs, OpenAPISchemaCheck)
-		sha, err := gitSHA(path)
+		c, err := newContract(ctx, path, *openapi)
 		if err != nil {
 			return err
 		}
-		contracts = append(contracts, Contract{
-			Upstream: *openapi,
-			Path:     path,
-			SHA:      sha,
-		})
+		contracts = append(contracts, *c)
 	}
+
 	for _, file := range protobufs {
 		path := filepath.Join(LocalProtobufs, file.Name)
-		sha, err := gitSHA(path)
+		c, err := newContract(ctx, path, file)
 		if err != nil {
 			return err
 		}
-		contracts = append(contracts, Contract{
-			Upstream: file,
-			Path:     path,
-			SHA:      sha,
-		})
+		contracts = append(contracts, *c)
 	}
 
 	if len(contracts) == 0 {
@@ -116,6 +112,7 @@ Update them to the latest version by running this command:
 
 type Contract struct {
 	Upstream GithubFile // Upstream file metadata.
+	Exists   bool       // False if the file does not exist locally.
 	Path     string     // Local filepath.
 	SHA      string     // Local file SHA.
 }
@@ -146,6 +143,7 @@ func headProtobufs(ctx context.Context) ([]GithubFile, error) {
 	return ghFiles(ctx, WeaviateProtobufs)
 }
 
+// updateContract fetches the latest version of the [c.Upstream] and writes it to [c.Path].
 func updateContract(ctx context.Context, c Contract) error {
 	rc, err := ghGet(ctx, c.Upstream.DownloadURL)
 	if err != nil {
@@ -159,12 +157,19 @@ func updateContract(ctx context.Context, c Contract) error {
 	}
 	defer f.Close()
 
-	if _, err := io.Copy(f, rc); err != nil {
+	written, err := io.Copy(f, rc)
+	if err != nil {
 		return err
 	}
 
 	if err := os.Rename(f.Name(), c.Path); err != nil {
 		return err
+	}
+
+	if c.Exists {
+		log.Printf("Updated %s (written %dB)", c.Path, written)
+	} else {
+		log.Println("Added new file at %s (written %dB)", c.Path, written)
 	}
 
 	if os.Remove(f.Name()); err != nil {
@@ -173,10 +178,31 @@ func updateContract(ctx context.Context, c Contract) error {
 	return nil
 }
 
+func newContract(ctx context.Context, local string, upstream GithubFile) (*Contract, error) {
+	if _, err := os.Stat(local); errors.Is(err, os.ErrNotExist) {
+		return &Contract{
+			Upstream: upstream,
+			Path:     local,
+			SHA:      "<file not found>",
+		}, nil
+	}
+	// os.Stat might've failed for a different reason, still try to get the hash.
+	sha, err := gitSHA(ctx, local)
+	if err != nil {
+		return nil, err
+	}
+	return &Contract{
+		Upstream: upstream,
+		Path:     local,
+		SHA:      sha,
+		Exists:   true,
+	}, nil
+}
+
 // gitSHA returns SHA-1 hash of a file from the local Git storage.
 // This SHA is comparable to SHAs returned in Github file metadata.
-func gitSHA(file string) (string, error) {
-	cmd := exec.CommandContext(context.TODO(), "git", "hash-object", file)
+func gitSHA(ctx context.Context, file string) (string, error) {
+	cmd := exec.CommandContext(ctx, "git", "hash-object", file)
 	stdout, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("git hash-object: %w", err)
