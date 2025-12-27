@@ -4,11 +4,13 @@ import (
 	"cmp"
 	"fmt"
 	"iter"
+	"log"
 	"maps"
 	"slices"
 	"time"
 
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
+	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
@@ -145,6 +147,9 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 				if err != nil {
 					return fmt.Errorf("%q minimum: %w", property, err)
 				}
+				log.Print(testkit.Now.Format(time.RFC3339))
+				log.Print(date.GetMinimum())
+				log.Print(minimum)
 				maximum, err := parseDate(date.GetMaximum())
 				if err != nil {
 					return fmt.Errorf("%q maximum: %w", property, err)
@@ -164,6 +169,8 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 					Mode:    mode,
 					Median:  median,
 				}
+				log.Print(testkit.Now)
+				log.Print(result.Date[property].Minimum)
 			case agg.GetInt() != nil:
 				result.Integer[property] = (*AggregateIntegerResult)(agg.GetInt())
 			case agg.GetNumber() != nil:

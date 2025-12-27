@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"testing"
-	"time"
 )
 
 // EnvSeed can be used to set a seed for this run via an environment variable.
@@ -28,7 +27,7 @@ func init() {
 		}
 		seed = i
 	} else {
-		seed = time.Now().UnixNano()
+		seed = Now.UnixNano()
 	}
 }
 
