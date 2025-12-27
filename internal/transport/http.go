@@ -82,7 +82,7 @@ func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 	}
 
 	if res.StatusCode > 299 {
-		// Some request types may want to "swallow" an bad status code,
+		// Some request types may want to "swallow" a bad status code,
 		// and not return an error in that case. We will not try to unmarshal
 		// the body in this case as it may not contain valid JSON, in which case
 		// we'll have to return an error anyways.
