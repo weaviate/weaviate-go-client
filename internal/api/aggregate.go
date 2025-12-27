@@ -1,7 +1,11 @@
 package api
 
 import (
+	"cmp"
 	"fmt"
+	"iter"
+	"maps"
+	"slices"
 	"time"
 
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
@@ -17,15 +21,16 @@ type AggregateRequest struct {
 	Boolean map[string]*AggregateBooleanRequest
 	Date    map[string]*AggregateDateRequest
 
-	TotalCount bool
-	Limit      int32
+	TotalCount  bool
+	Limit       int32
+	ObjectLimit int32
 }
 
 var _ transport.MessageMarshaler[proto.AggregateRequest] = (*AggregateRequest)(nil)
 
 func (r *AggregateRequest) MarshalMessage() *proto.AggregateRequest {
 	var aggs []*proto.AggregateRequest_Aggregation
-	for property, txt := range r.Text {
+	for property, txt := range sortedMap(r.Text) {
 		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
 			Property: property,
 			Aggregation: &proto.AggregateRequest_Aggregation_Text_{
@@ -37,15 +42,15 @@ func (r *AggregateRequest) MarshalMessage() *proto.AggregateRequest {
 			},
 		})
 	}
-	for property, int := range r.Integer {
+	for property, int := range sortedMap(r.Integer) {
 		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
 			Property: property,
-			Aggregation: &proto.AggregateRequest_Aggregation_Number_{
-				Number: (*proto.AggregateRequest_Aggregation_Number)(int),
+			Aggregation: &proto.AggregateRequest_Aggregation_Int{
+				Int: (*proto.AggregateRequest_Aggregation_Integer)(int),
 			},
 		})
 	}
-	for property, num := range r.Number {
+	for property, num := range sortedMap(r.Number) {
 		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
 			Property: property,
 			Aggregation: &proto.AggregateRequest_Aggregation_Number_{
@@ -53,7 +58,7 @@ func (r *AggregateRequest) MarshalMessage() *proto.AggregateRequest {
 			},
 		})
 	}
-	for property, bool := range r.Boolean {
+	for property, bool := range sortedMap(r.Boolean) {
 		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
 			Property: property,
 			Aggregation: &proto.AggregateRequest_Aggregation_Boolean_{
@@ -61,7 +66,7 @@ func (r *AggregateRequest) MarshalMessage() *proto.AggregateRequest {
 			},
 		})
 	}
-	for property, date := range r.Date {
+	for property, date := range sortedMap(r.Date) {
 		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
 			Property: property,
 			Aggregation: &proto.AggregateRequest_Aggregation_Date_{
@@ -75,6 +80,7 @@ func (r *AggregateRequest) MarshalMessage() *proto.AggregateRequest {
 
 		ObjectsCount: r.TotalCount,
 		Limit:        nilZero(uint32(r.Limit)),
+		ObjectLimit:  nilZero(uint32(r.ObjectLimit)),
 		Aggregations: aggs,
 	}
 }
@@ -204,4 +210,16 @@ func parseDate(date string) (*time.Time, error) {
 		return nil, err
 	}
 	return &t, nil
+}
+
+// sortedMap returns an iterator over key-value pairs from m;
+// similar to [maps.All], but with pairs sorted by key.
+func sortedMap[Map ~map[K]V, K cmp.Ordered, V any](m Map) iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		for _, k := range slices.Sorted(maps.Keys(m)) {
+			if !yield(k, m[k]) {
+				return
+			}
+		}
+	}
 }

@@ -18,8 +18,9 @@ type NearVector struct {
 	Boolean []Boolean
 	Date    []Date
 
-	TotalCount bool
-	Limit      int32
+	TotalCount  bool
+	Limit       int32
+	ObjectLimit int32
 }
 
 type NearVectorFunc func(context.Context, NearVector) (any, error)
@@ -29,6 +30,7 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 		RequestDefaults: rd,
 		TotalCount:      nv.TotalCount,
 		Limit:           nv.Limit,
+		ObjectLimit:     nv.ObjectLimit,
 
 		Text:    make(map[string]*api.AggregateTextRequest, len(nv.Text)),
 		Integer: make(map[string]*api.AggregateIntegerRequest, len(nv.Integer)),
