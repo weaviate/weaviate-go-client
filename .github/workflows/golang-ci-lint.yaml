@@ -5,8 +5,8 @@ on:
     branches:
       - dyma/v6
     paths-ignore:
-      - readme.md
-      - license.md
+      - README.md
+      - LICENSE.md
 
 permissions:
   contents: read
@@ -14,14 +14,13 @@ permissions:
 
 jobs:
   golangci:
-    name: lint
+    name: golangci-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
         with:
           go-version: stable
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v9
+      - uses: golangci/golangci-lint-action@v9
         with:
           version: v2.7.2
