@@ -42,15 +42,15 @@ func Target(v types.Vector, weight float32) WeightedTarget {
 	return WeightedTarget{v: (*api.Vector)(&v), weight: weight}
 }
 
-func Sum(vectors ...types.Vector) MultiVectorTarget {
+func Sum(vectors ...types.Vector) *MultiVectorTarget {
 	return zeroWeightTargets(api.CombinationMethodSum, vectors)
 }
 
-func Min(vectors ...types.Vector) MultiVectorTarget {
+func Min(vectors ...types.Vector) *MultiVectorTarget {
 	return zeroWeightTargets(api.CombinationMethodMin, vectors)
 }
 
-func Average(vectors ...types.Vector) MultiVectorTarget {
+func Average(vectors ...types.Vector) *MultiVectorTarget {
 	return zeroWeightTargets(api.CombinationMethodAverage, vectors)
 }
 
@@ -80,13 +80,13 @@ func RelativeScore(vectors ...WeightedTarget) MultiVectorTarget {
 
 // Combine target vectors into a MultiVectorTarget keeping the weight unset.
 // The server will determine combination method will determine the weights
-func zeroWeightTargets(cm api.CombinationMethod, vectors []types.Vector) MultiVectorTarget {
+func zeroWeightTargets(cm api.CombinationMethod, vectors []types.Vector) *MultiVectorTarget {
 	targets := make([]api.TargetVector, len(vectors))
 	for i, v := range vectors {
 		targets[i] = &WeightedTarget{v: (*api.Vector)(&v)}
 	}
 
-	return MultiVectorTarget{
+	return &MultiVectorTarget{
 		combinationMethod: cm,
 		targets:           targets,
 	}
