@@ -86,7 +86,10 @@ func unmarshal[R ReplyMessage](reply *R, dest any) error {
 		return errors.New("nil reply")
 	}
 	if u, ok := dest.(MessageUnmarshaler[R]); ok {
-		return u.UnmarshalMessage(reply)
+		if err := u.UnmarshalMessage(reply); err != nil {
+			return fmt.Errorf("unmarshal %T: %w", reply, err)
+		}
+		return nil
 	}
 	return fmt.Errorf(
 		"cannot unmarshal %T into %T: dest does not implement %T",

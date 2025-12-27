@@ -459,6 +459,15 @@ func zeroNil[T any](v *T) T {
 	return *v
 }
 
+// nilZero returns a pointer to v if it is not the zero value for T and nil otherwise.
+func nilZero[T comparable](v T) *T {
+	if v == *new(T) {
+		return nil
+	}
+	return &v
+}
+
+// nilPresent returns a pointer to v if present == true and nil otherwise.
 func nilPresent[T any](v T, present bool) *T {
 	if !present {
 		return nil
