@@ -1,5 +1,7 @@
 package types
 
+import "github.com/google/uuid"
+
 type Map map[string]any
 
 type Properties interface {
@@ -7,7 +9,9 @@ type Properties interface {
 }
 
 type Object[P Properties] struct {
-	UUID       string
-	Properties P
-	Vectors    map[string]Vector
+	UUID               uuid.UUID
+	Properties         P
+	Vectors            Vectors
+	CreationTimeUnix   int64
+	LastUpdateTimeUnix int64
 }

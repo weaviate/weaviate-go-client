@@ -1,77 +1,77 @@
 package weaviate_test
 
 import (
-	"context"
-	"fmt"
+	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v6"
-	"github.com/weaviate/weaviate-go-client/v6/query"
-	"github.com/weaviate/weaviate-go-client/v6/types"
+	"github.com/weaviate/weaviate-go-client/v6/internal"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 )
 
-func TestClient(*testing.T) {
-	c, err := weaviate.NewClient()
-	if err != nil {
-		panic(err)
-	}
+// DO NOT enable t.Parallel() for this test as it messes with the global state.
+func TestNewLocal(t *testing.T) {
+	tf := api.GetTransportFactory()
+	t.Cleanup(func() { api.SetTransportFactory(tf) })
 
-	ctx := context.Background()
+	var nop testkit.NopTransport
 
-	// Create a collection and get a handle
-	h := c.Collections.Create(ctx, "Songs")
+	t.Run("default", func(t *testing.T) {
+		var got api.TransportConfig
+		api.SetTransportFactory(func(cfg api.TransportConfig) (internal.Transport, error) {
+			got = cfg
+			return &nop, nil
+		})
 
-	var single []float32
-	var multi [][]float32
+		c, err := weaviate.NewLocal(t.Context(), nil)
+		assert.NotNil(t, c, "nil client")
+		assert.NoError(t, err)
 
-	h.Query.NearVector(ctx,
-		types.Vector{Single: single},
-		query.WithLimit(5),
-		query.WithDistance(.34),
-	)
+		assert.Equal(t, api.TransportConfig{
+			Scheme:   "http",
+			HTTPHost: "localhost",
+			GRPCHost: "localhost",
+			HTTPPort: 8080,
+			GRPCPort: 50051,
+			Header: http.Header{
+				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
+			},
+		}, got, "default local config")
+	})
 
-	h.Query.NearVector(ctx, query.Average(
-		types.Vector{Name: "title", Single: single},
-		types.Vector{Name: "lyrics", Multi: multi},
-	))
+	t.Run("custom", func(t *testing.T) {
+		var got api.TransportConfig
+		api.SetTransportFactory(func(cfg api.TransportConfig) (internal.Transport, error) {
+			got = cfg
+			return &nop, nil
+		})
 
-	res, _ := h.Query.NearVector(ctx, query.ManualWeights(
-		query.Target(types.Vector{Name: "title", Single: single}, 0.4),
-		query.Target(types.Vector{Name: "lyrics", Multi: multi}, 0.6),
-	))
+		c, err := weaviate.NewLocal(t.Context(), &weaviate.ConnectionConfig{
+			Scheme:   "https",
+			HTTPPort: 7070,
+			GRPCPort: 54321,
+			Header: http.Header{
+				"X-Test": {"heads", "up"},
+			},
+		})
+		assert.NotNil(t, c, "nil client")
+		assert.NoError(t, err)
 
-	fmt.Printf("NearVector: got %d objects\n", len(res.Objects))
-	for i, obj := range res.Objects {
-		fmt.Printf("#%d: id=%s\n\tproperties=%v\n", i, obj.UUID, obj.Properties)
-	}
+		assert.Equal(t, api.TransportConfig{
+			// Defaults
+			HTTPHost: "localhost",
+			GRPCHost: "localhost",
 
-	grouped, _ := h.Query.NearVector.GroupBy(ctx,
-		types.Vector{Single: single},
-		"group by album",
-		query.WithAutoLimit(2),
-	)
-
-	fmt.Printf("NearVector.GroupBy: got %d objects in %d groups\n", len(grouped.Objects), len(grouped.Groups))
-	for key, group := range grouped.Groups {
-		fmt.Printf("Group %q has %d objects \n", key, group.Size)
-	}
-
-	// Scan results differently
-	type Song struct{ Title, Album, Lyrics string }
-
-	songs := query.Scan[Song](res)
-
-	for _, song := range songs {
-		fmt.Printf("%q (%s) - %s\n",
-			song.Properties.Title, song.Properties.Album, song.Properties.Lyrics)
-	}
-
-	albums := query.ScanGrouped[Song](grouped)
-	for _, album := range albums {
-		fmt.Printf("album %q has %d songs:", album.Name, album.Size)
-		for _, song := range album.Objects {
-			fmt.Printf("\t%q - %s\n",
-				song.Properties.Title, song.Properties.Lyrics)
-		}
-	}
+			// Custom
+			Scheme:   "https",
+			HTTPPort: 7070,
+			GRPCPort: 54321,
+			Header: http.Header{
+				"X-Test":            {"heads", "up"},
+				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
+			},
+		}, got, "default local config")
+	})
 }
