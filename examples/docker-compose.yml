@@ -8,6 +8,19 @@ services:
       - --scheme
       - http
       - --write-timeout=600s
+    # Healthcheck allows mage examples:run to wait for Weaviate to become
+    # available before running the test cases. The 20s timeout allows for
+    # possibly slow CI runners; locally it should spin up in ~5s.
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:8080/v1/.well-known/live || exit 1",
+        ]
+      interval: 1s
+      timeout: 20s
+      retries: 50
+      start_period: 2s
     image: semitechnologies/weaviate:${WEAVIATE_VERSION:-latest}
     ports:
       - "8080:8080"

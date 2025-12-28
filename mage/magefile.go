@@ -15,58 +15,56 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/magefile/mage/mg"
 	"gopkg.in/yaml.v3"
 )
 
 const (
-	FileFileMode     = 0666  // os.FileMode for writing a new file
-	DirFileMode      = 0o775 // os.FileMode for creating a new directory
-	ExamplesDir      = "./examples"
-	MainGo           = "main.go"
-	WeaviateGoClient = "github.com/weaviate/weaviate-go-client/v6"
-	DummyVersion     = "v6.0.0-example" // fake weaviate-go-client version used in the example's go.mod
-	RootRelative     = "../../"         // path to weaviate-go-client module relative to this example's dir
+	ExamplesDir         = "./examples"
+	All                 = "all" // reserved example name to run all examples
+	MainGo              = "main.go"
+	WeaviateGoClient    = "github.com/weaviate/weaviate-go-client/v6"
+	DummyVersion        = "v6.0.0-example" // fake weaviate-go-client version used in the example's go.mod
+	RootRelative        = "../../"         // path to weaviate-go-client module relative to this example's dir
+	DockerComposeYAML   = "docker-compose.yml"
+	DockerComposeLog    = "docker-compose.log"
+	EnvGithubRunnerTemp = "RUNNER_TEMP" // Github Actions provide its own temp directory via $RUNNER_TEMP.
 )
 
 type Examples mg.Namespace
 
 // Init a new example module in examples/ directory.
-func (Examples) Init(name string) error {
+func (Examples) Init(ctx context.Context, name string) error {
 	if name == "" {
 		return errors.New("example name cannot be empty")
+	} else if name == All {
+		return fmt.Errorf("%q is a reserved name", All)
 	}
 
 	path := filepath.Join(ExamplesDir, name)
-	if err := os.MkdirAll(path, DirFileMode); err != nil {
+	if err := os.MkdirAll(path, 0o775); err != nil {
 		return fmt.Errorf("create module directory: %w", err)
 	}
 
-	pwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	if err := os.Chdir(path); err != nil {
-		return fmt.Errorf("cd into %s: %w", path, err)
-	}
-	defer os.Chdir(pwd)
-
-	if err := runCmd("go", "mod", "init", path); err != nil {
+	if err := runCmd(ctx, path, "go", "mod", "init", path); err != nil {
 		return fmt.Errorf("go mod init %s: %w", path, err)
 	}
-	if err := runCmd("go", "mod", "edit", "-replace", WeaviateGoClient+"="+RootRelative); err != nil {
+	if err := runCmd(ctx, path, "go", "mod", "edit", "-replace", WeaviateGoClient+"="+RootRelative); err != nil {
 		return fmt.Errorf("replace %s: %w", WeaviateGoClient, err)
 	}
-	if err := runCmd("go", "mod", "edit", "-require", WeaviateGoClient+"@"+DummyVersion); err != nil {
+	if err := runCmd(ctx, path, "go", "mod", "edit", "-require", WeaviateGoClient+"@"+DummyVersion); err != nil {
 		return fmt.Errorf("require %s: %w", WeaviateGoClient, err)
 	}
-	if err := os.WriteFile(MainGo, []byte(mainGoScaffold), FileFileMode); err != nil {
+	if err := os.WriteFile(filepath.Join(path, MainGo), []byte(mainGoScaffold), 0666); err != nil {
 		return fmt.Errorf("bootstrap %s: %w", MainGo, err)
 	}
-	if err := runCmd("go", "mod", "tidy"); err != nil {
+	if err := runCmd(ctx, path, "go", "mod", "tidy"); err != nil {
 		return fmt.Errorf("go mod tidy %s: %w", WeaviateGoClient, err)
 	}
+
+	log.Print("Done")
 	return nil
 }
 
@@ -89,10 +87,97 @@ func main() {
 }
 `
 
+func (Examples) Run(ctx context.Context, name string) error {
+	examples, err := listExamples(name)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Starting containers in %s/%s", ExamplesDir, DockerComposeYAML)
+	if err := runCmd(ctx, ExamplesDir, "docker", "compose", "up", "-d", "--wait"); err != nil {
+		return fmt.Errorf("start docker containers:\n%w", err)
+	}
+
+	ok := true
+	defer func() { stopContainers(ctx, ok) }()
+
+	// Run examples
+	for _, example := range examples {
+		start := time.Now()
+		dir := filepath.Join(ExamplesDir, example)
+		if err := runCmd(ctx, dir, "go", "run", "."); err != nil {
+			log.Printf("FAIL %s/%s\n\tERROR: %s", ExamplesDir, example, err)
+			ok = false
+			continue
+		}
+		log.Printf("ok\t%s/%s\t(%.2fs)", ExamplesDir, example, time.Since(start).Seconds())
+	}
+
+	if ok {
+		log.Print("Done")
+	}
+	return nil
+}
+
+func listExamples(name string) ([]string, error) {
+	entries, err := os.ReadDir(ExamplesDir)
+	if err != nil {
+		return nil, err
+	}
+
+	var examples []string
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+
+		if e.Name() == name || name == All {
+			examples = append(examples, e.Name())
+		}
+	}
+
+	if len(examples) == 0 {
+		return nil, fmt.Errorf("no example with name %q", name)
+	}
+
+	return examples, nil
+}
+
+func stopContainers(ctx context.Context, ok bool) error {
+	if !ok {
+		temp := os.TempDir()
+		if ghTemp, ok := os.LookupEnv(EnvGithubRunnerTemp); ok {
+			temp = ghTemp
+		}
+		logFile := filepath.Join(temp, DockerComposeLog)
+
+		// Write logs from the Docker containers.
+		cmd := exec.CommandContext(ctx, "docker", "compose", "logs")
+		cmd.Dir = ExamplesDir
+		r, err := cmd.StdoutPipe()
+		if err != nil {
+			return err
+		}
+		if err := cmd.Start(); err != nil {
+			return fmt.Errorf("read container logs: %w", err)
+		}
+		if _, err := writeAtomic(logFile, r); err != nil {
+			return fmt.Errorf("write container logs: %w", err)
+		}
+		defer log.Printf("Container logs are available at %s", logFile)
+	}
+	log.Printf("Stopping containers in %s/%s", ExamplesDir, DockerComposeYAML)
+	return runCmd(ctx, ExamplesDir, "docker", "compose", "down")
+}
+
 // runCmd is a wrapper around exec.Cmd that returns its CombinedOutput (stdout + stderr)
 // as error if the command exits with a non-zero code.
-func runCmd(name string, args ...string) error {
-	if out, err := exec.Command(name, args...).CombinedOutput(); err != nil {
+// The dir argument changes directory in which the command is executed.
+func runCmd(ctx context.Context, dir, name string, args ...string) error {
+	cmd := exec.CommandContext(ctx, name, args...)
+	cmd.Dir = dir
+	if out, err := cmd.CombinedOutput(); err != nil {
+		out, _, _ = bytes.Cut(out, []byte("\n")) // remove trailing "\nexit status 1"
 		return errors.New(string(out))
 	}
 	return nil
@@ -489,7 +574,7 @@ func convertSchemaToV3(ctx context.Context) error {
 // writeAtomic writes the contents of Reader r to a .tmp file,
 // performs a rename, and cleans up the .tmp file.
 func writeAtomic(file string, r io.Reader) (int64, error) {
-	if err := os.MkdirAll(filepath.Dir(file), DirFileMode); err != nil {
+	if err := os.MkdirAll(filepath.Dir(file), 0o775); err != nil {
 		return 0, err
 	}
 
