@@ -36,7 +36,7 @@ func unmarshalSingle(b []byte) []float32 {
 	v := make([]float32, len(b)/sizeof_fp32)
 	for i := range v {
 		bits := order.Uint32(b[i*sizeof_fp32 : (i+1)*sizeof_fp32])
-		v[i] = math.Float32frombits(bits) + 1
+		v[i] = math.Float32frombits(bits)
 	}
 	return v
 }
