@@ -267,9 +267,9 @@ func marshalNearVector(req *NearVector) *proto.NearVector {
 		}
 
 		for i, tv := range req.Target.Vectors {
-			nv.Targets.TargetVectors[i] = tv.Vector.Name
+			nv.Targets.TargetVectors[i] = tv.Name
 			nv.VectorForTargets[i] = &proto.VectorForTarget{
-				Name: tv.Vector.Name,
+				Name: tv.Name,
 				Vectors: []*proto.Vectors{
 					marshalVector(&tv.Vector),
 				},
@@ -277,7 +277,7 @@ func marshalNearVector(req *NearVector) *proto.NearVector {
 			if tv.Weight != nil {
 				nv.Targets.WeightsForTargets = append(nv.Targets.WeightsForTargets,
 					&proto.WeightsForTarget{
-						Target: tv.Vector.Name,
+						Target: tv.Name,
 						Weight: *tv.Weight,
 					})
 			}
