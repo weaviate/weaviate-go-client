@@ -172,27 +172,27 @@ func (cm CombinationMethod) proto() proto.CombinationMethod {
 }
 
 // MarshalSearchRequest() constructs a proto.SearchRequest.
-func (req *SearchRequest) MarshalMessage() *proto.SearchRequest {
-	sr := &proto.SearchRequest{
-		Collection:       req.CollectionName,
-		Tenant:           req.Tenant,
-		ConsistencyLevel: req.ConsistencyLevel.proto(),
-		Limit:            uint32(req.Limit),
-		Offset:           uint32(req.Offset),
-		Autocut:          uint32(req.AutoLimit),
-		After:            req.After.String(),
+func (r *SearchRequest) MarshalMessage() *proto.SearchRequest {
+	req := &proto.SearchRequest{
+		Collection:       r.CollectionName,
+		Tenant:           r.Tenant,
+		ConsistencyLevel: r.ConsistencyLevel.proto(),
+		Limit:            uint32(r.Limit),
+		Offset:           uint32(r.Offset),
+		Autocut:          uint32(r.AutoLimit),
+		After:            r.After.String(),
 	}
 
 	var properties proto.PropertiesRequest
-	if req.ReturnProperties == nil {
+	if r.ReturnProperties == nil {
 		// ReturnProperties were not set at all, default to all properties
 		properties.ReturnAllNonrefProperties = true
-	} else if len(req.ReturnProperties) > 0 {
+	} else if len(r.ReturnProperties) > 0 {
 		// Only return selected properties
 		var nonRef []string
 		var nested []*proto.ObjectPropertiesRequest
 
-		for _, p := range req.ReturnProperties {
+		for _, p := range r.ReturnProperties {
 			if len(p.NestedProperties) == 0 {
 				nonRef = append(nonRef, p.Name)
 			} else {
@@ -209,13 +209,13 @@ func (req *SearchRequest) MarshalMessage() *proto.SearchRequest {
 	} else {
 		// ReturnProperties were explicitly set to an empty slice, do not return any.
 	}
-	sr.Properties = &properties
+	req.Properties = &properties
 
 	// ReturnVectors were explicitly set to an empty slice, include the "only" vector.
-	returnTheOnlyVector := len(req.ReturnVectors) == 0 && req.ReturnVectors != nil
+	returnTheOnlyVector := len(r.ReturnVectors) == 0 && r.ReturnVectors != nil
 
-	rm := NewSet(req.ReturnMetadata)
-	sr.Metadata = &proto.MetadataRequest{
+	rm := NewSet(r.ReturnMetadata)
+	req.Metadata = &proto.MetadataRequest{
 		Uuid:               rm.Contains(MetadataUUID),
 		CreationTimeUnix:   rm.Contains(MetadataCreationTimeUnix),
 		LastUpdateTimeUnix: rm.Contains(MetadataLastUpdateTimeUnix),
@@ -224,59 +224,67 @@ func (req *SearchRequest) MarshalMessage() *proto.SearchRequest {
 		Score:              rm.Contains(MetadataScore),
 		ExplainScore:       rm.Contains(MetadataExplainScore),
 		Vector:             returnTheOnlyVector,
-		Vectors:            req.ReturnVectors,
+		Vectors:            r.ReturnVectors,
 	}
 
 	switch {
-	case req.NearVector != nil:
-		sr.NearVector = &proto.NearVector{
-			Distance:  zeroNil(&req.NearVector.Distance),
-			Certainty: zeroNil(&req.NearVector.Certainty),
-		}
-
-		targets := req.NearVector.Target.Vectors()
-		if len(targets) == 0 {
-			break
-		}
-
-		if len(targets) == 1 {
-			v := targets[0].Vector()
-			dev.Assert(v != nil, "nil target vector")
-			sr.NearVector.Vectors = []*proto.Vectors{
-				marshalVector(v),
-			}
-		} else {
-			combination := req.NearVector.Target.CombinationMethod().proto()
-
-			// Pre-allocate slices for vectors, targets, and target weights.
-			sr.NearVector.VectorForTargets = make([]*proto.VectorForTarget, len(targets))
-			sr.NearVector.Targets = &proto.Targets{
-				TargetVectors:     make([]string, len(targets)),
-				WeightsForTargets: make([]*proto.WeightsForTarget, len(targets)),
-				Combination:       combination,
-			}
-
-			for i, target := range targets {
-				v := target.Vector()
-				sr.NearVector.Targets.TargetVectors[i] = v.Name
-				sr.NearVector.Targets.WeightsForTargets[i] = &proto.WeightsForTarget{
-					Target: v.Name,
-					Weight: target.Weight(),
-				}
-				sr.NearVector.VectorForTargets[i] = &proto.VectorForTarget{
-					Name: v.Name,
-					Vectors: []*proto.Vectors{
-						marshalVector(v),
-					},
-				}
-			}
-		}
+	case r.NearVector != nil:
+		req.NearVector = marshalNearVector(r.NearVector)
 	default:
 		// It is not a mistake to leave search method unset.
 		// This would be the case when fetch objects with a conventional filter.
 	}
 
-	return sr
+	return req
+}
+
+func marshalNearVector(req *NearVector) *proto.NearVector {
+	targets := req.Target.Vectors()
+	if len(targets) == 0 {
+		return nil
+	}
+
+	nv := &proto.NearVector{
+		Distance:  req.Distance,
+		Certainty: req.Certainty,
+	}
+
+	if len(targets) == 1 {
+		v := targets[0].Vector()
+		dev.Assert(v != nil, "nil target vector")
+		nv.Vectors = []*proto.Vectors{
+			marshalVector(v),
+		}
+	} else {
+		combination := req.Target.CombinationMethod().proto()
+
+		// Pre-allocate slices for vectors and targets.
+		// Do not allocate WeightsForTarget, as targets may have no weights.
+		nv.VectorForTargets = make([]*proto.VectorForTarget, len(targets))
+		nv.Targets = &proto.Targets{
+			TargetVectors: make([]string, len(targets)),
+			Combination:   combination,
+		}
+
+		for i, target := range targets {
+			v := target.Vector()
+			nv.Targets.TargetVectors[i] = v.Name
+			nv.VectorForTargets[i] = &proto.VectorForTarget{
+				Name: v.Name,
+				Vectors: []*proto.Vectors{
+					marshalVector(v),
+				},
+			}
+			if w := target.Weight(); w != 0 {
+				nv.Targets.WeightsForTargets = append(nv.Targets.WeightsForTargets,
+					&proto.WeightsForTarget{
+						Target: v.Name,
+						Weight: w,
+					})
+			}
+		}
+	}
+	return nv
 }
 
 func marshalVector(v *Vector) *proto.Vectors {
@@ -449,15 +457,6 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) Objec
 
 // ptr is a helper for exporting pointers to constants.
 func ptr[T any](v T) *T { return &v }
-
-// zeroNil returns the dereferenced value if the pointer is not nil
-// and the zero value of type T otherwise.
-func zeroNil[T any](v *T) T {
-	if v == nil {
-		return *new(T)
-	}
-	return *v
-}
 
 // nilZero returns a pointer to v if it is not the zero value for T and nil otherwise.
 func nilZero[T comparable](v T) *T {

@@ -8,25 +8,17 @@ type Vector struct {
 	Multi  [][]float32
 }
 
-// Compile-time assertion that Vector implements NearVectorTarget.
-var _ NearVectorTarget = (*Vector)(nil)
+var (
+	_ NearVectorTarget = (*Vector)(nil)
+	_ TargetVector     = (*Vector)(nil)
+)
 
 func (v *Vector) CombinationMethod() CombinationMethod {
 	return CombinationMethodUnspecified
 }
-
-func (v Vector) Vectors() []TargetVector {
-	return []TargetVector{targetVector{v: v}}
-}
-
-// targetVector implements TargetVector for a single Vector.
-type targetVector struct{ v Vector }
-
-var _ TargetVector = (*targetVector)(nil)
-
-func (tv targetVector) Weight() float32 { return 0 }
-
-func (tv targetVector) Vector() *Vector { return &tv.v }
+func (v *Vector) Vectors() []TargetVector { return []TargetVector{v} }
+func (v *Vector) Vector() *Vector         { return v }
+func (v *Vector) Weight() float32         { return 0 }
 
 // Vectors is a map of named vectors. An empty string is an alias for "default" vector.
 type Vectors map[string]Vector

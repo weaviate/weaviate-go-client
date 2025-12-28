@@ -25,10 +25,29 @@ func testMessageMarshaler[R transport.RequestMessage](t *testing.T, tests []Mess
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.req.MarshalMessage()
-			require.Equal(t, tt.want, got)
+			require.EqualExportedValues(t, tt.want, got)
 		})
 	}
 }
+
+var (
+	singleVector      = []float32{1, 2, 3}
+	singleVectorBytes = []byte{
+		0x0, 0x0, 0x80, 0x3f,
+		0x0, 0x0, 0x0, 0x40,
+		0x0, 0x0, 0x40, 0x40,
+	}
+	multiVector      = [][]float32{{1, 2, 3}, {1, 2, 3}}
+	multiVectorBytes = []byte{
+		0x3, 0x0, // inner array size, uint16(3)
+		0x0, 0x0, 0x80, 0x3f, // first vector
+		0x0, 0x0, 0x0, 0x40,
+		0x0, 0x0, 0x40, 0x40,
+		0x0, 0x0, 0x80, 0x3f, // second vector
+		0x0, 0x0, 0x0, 0x40,
+		0x0, 0x0, 0x40, 0x40,
+	}
+)
 
 // TestAggregateRequest_MarshalMessage tests that api.AggregateRequest creates
 // the expected proto.AggregateRequest when its MarshalMessage is called.
@@ -169,8 +188,164 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 				}),
 			},
 		},
+		{
+			name: "near vector (single vector)",
+			req: &api.AggregateRequest{
+				NearVector: &api.NearVector{
+					Distance: testkit.Ptr(0.5),
+					Target:   &api.Vector{Name: "1d", Single: singleVector},
+				},
+			},
+			want: &proto.AggregateRequest{
+				Search: &proto.AggregateRequest_NearVector{
+					NearVector: &proto.NearVector{
+						Distance: testkit.Ptr(0.5),
+						Vectors: []*proto.Vectors{{
+							Name:        "1d",
+							VectorBytes: singleVectorBytes,
+							Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+						}},
+					},
+				},
+			},
+		},
+		{
+			name: "near vector (multi vector)",
+			req: &api.AggregateRequest{
+				NearVector: &api.NearVector{
+					Distance: testkit.Ptr(0.5),
+					Target:   &api.Vector{Name: "2d", Multi: multiVector},
+				},
+			},
+			want: &proto.AggregateRequest{
+				Search: &proto.AggregateRequest_NearVector{
+					NearVector: &proto.NearVector{
+						Distance: testkit.Ptr(0.5),
+						Vectors: []*proto.Vectors{{
+							Name:        "2d",
+							VectorBytes: multiVectorBytes,
+							Type:        proto.Vectors_VECTOR_TYPE_MULTI_FP32,
+						}},
+					},
+				},
+			},
+		},
+		{
+			name: "near vector (multi-target average)",
+			req: &api.AggregateRequest{
+				NearVector: &api.NearVector{
+					Distance: testkit.Ptr(0.5),
+					Target: &multiVectorTarget{
+						combinationMethod: api.CombinationMethodAverage,
+						targets: []api.TargetVector{
+							&api.Vector{Name: "1d", Single: singleVector},
+							&api.Vector{Name: "2d", Multi: multiVector},
+						},
+					},
+				},
+			},
+			want: &proto.AggregateRequest{
+				Search: &proto.AggregateRequest_NearVector{
+					NearVector: &proto.NearVector{
+						Distance: testkit.Ptr(0.5),
+						Targets: &proto.Targets{
+							Combination:   proto.CombinationMethod_COMBINATION_METHOD_TYPE_AVERAGE,
+							TargetVectors: []string{"1d", "2d"},
+						},
+						VectorForTargets: []*proto.VectorForTarget{
+							{Name: "1d", Vectors: []*proto.Vectors{{
+								Name:        "1d",
+								VectorBytes: singleVectorBytes,
+								Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+							}}},
+							{Name: "2d", Vectors: []*proto.Vectors{{
+								Name:        "2d",
+								VectorBytes: multiVectorBytes,
+								Type:        proto.Vectors_VECTOR_TYPE_MULTI_FP32,
+							}}},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "near vector (multi-target manual weights)",
+			req: &api.AggregateRequest{
+				NearVector: &api.NearVector{
+					Distance: testkit.Ptr(0.5),
+					Target: &multiVectorTarget{
+						combinationMethod: api.CombinationMethodManualWeights,
+						targets: []api.TargetVector{
+							&weightedTarget{weight: .3, v: &api.Vector{Name: "1d_3", Single: singleVector}},
+							&weightedTarget{weight: .5, v: &api.Vector{Name: "1d_5", Single: singleVector}},
+							&weightedTarget{weight: .2, v: &api.Vector{Name: "2d", Multi: multiVector}},
+						},
+					},
+				},
+			},
+			want: &proto.AggregateRequest{
+				Search: &proto.AggregateRequest_NearVector{
+					NearVector: &proto.NearVector{
+						Distance: testkit.Ptr(0.5),
+						Targets: &proto.Targets{
+							Combination:   proto.CombinationMethod_COMBINATION_METHOD_TYPE_MANUAL,
+							TargetVectors: []string{"1d_3", "1d_5", "2d"},
+							WeightsForTargets: []*proto.WeightsForTarget{
+								{Target: "1d_3", Weight: .3},
+								{Target: "1d_5", Weight: .5},
+								{Target: "2d", Weight: .2},
+							},
+						},
+						VectorForTargets: []*proto.VectorForTarget{
+							{Name: "1d_3", Vectors: []*proto.Vectors{{
+								Name:        "1d_3",
+								VectorBytes: singleVectorBytes,
+								Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+							}}},
+							{Name: "1d_5", Vectors: []*proto.Vectors{{
+								Name:        "1d_5",
+								VectorBytes: singleVectorBytes,
+								Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+							}}},
+							{Name: "2d", Vectors: []*proto.Vectors{{
+								Name:        "2d",
+								VectorBytes: multiVectorBytes,
+								Type:        proto.Vectors_VECTOR_TYPE_MULTI_FP32,
+							}}},
+						},
+					},
+				},
+			},
+		},
 	})
 }
+
+// multiVectorTarget provides a simple api.NearVectorTarget implementation.
+// Technically, it mirrors the implementation in [query], but we keep them separate.
+type multiVectorTarget struct {
+	combinationMethod api.CombinationMethod
+	targets           []api.TargetVector
+}
+
+var _ api.NearVectorTarget = (*multiVectorTarget)(nil)
+
+func (m *multiVectorTarget) CombinationMethod() api.CombinationMethod { return m.combinationMethod }
+func (m *multiVectorTarget) Vectors() []api.TargetVector              { return m.targets }
+
+// weightedTarget provides a simple api.TargetVector implementation.
+// Technically, it mirrors the implementation in [query], but we keep them separate.
+type weightedTarget struct {
+	v      *api.Vector
+	weight float32
+}
+
+var _ api.TargetVector = (*weightedTarget)(nil)
+
+func (wt *weightedTarget) Weight() float32 { return wt.weight }
+
+func (wt weightedTarget) Vector() *api.Vector { return wt.v }
+
+// ----------------------------------------------------------------------------
 
 type MessageUnmarshalerTest[R transport.ReplyMessage, Dest any] struct {
 	name      string
@@ -197,7 +372,7 @@ func testMessageUnmarshaler[R transport.ReplyMessage, Dest any](t *testing.T, te
 			} else {
 				tt.expectErr(t, err)
 			}
-			require.Equal(t, tt.want, dest)
+			require.EqualExportedValues(t, tt.want, dest)
 		})
 	}
 }

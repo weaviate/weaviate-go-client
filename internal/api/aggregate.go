@@ -4,13 +4,11 @@ import (
 	"cmp"
 	"fmt"
 	"iter"
-	"log"
 	"maps"
 	"slices"
 	"time"
 
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
-	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
@@ -26,6 +24,8 @@ type AggregateRequest struct {
 	TotalCount  bool
 	Limit       int32
 	ObjectLimit int32
+
+	*NearVector
 }
 
 var _ transport.MessageMarshaler[proto.AggregateRequest] = (*AggregateRequest)(nil)
@@ -76,7 +76,7 @@ func (r *AggregateRequest) MarshalMessage() *proto.AggregateRequest {
 			},
 		})
 	}
-	return &proto.AggregateRequest{
+	req := &proto.AggregateRequest{
 		Collection: r.CollectionName,
 		Tenant:     r.Tenant,
 
@@ -85,6 +85,18 @@ func (r *AggregateRequest) MarshalMessage() *proto.AggregateRequest {
 		ObjectLimit:  nilZero(uint32(r.ObjectLimit)),
 		Aggregations: aggs,
 	}
+
+	switch {
+	case r.NearVector != nil:
+		req.Search = &proto.AggregateRequest_NearVector{
+			NearVector: marshalNearVector(r.NearVector),
+		}
+	default:
+		// It is not a mistake to leave search method unset.
+		// This would be the case when fetch objects with a conventional filter.
+	}
+
+	return req
 }
 
 type (
@@ -147,9 +159,6 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 				if err != nil {
 					return fmt.Errorf("%q minimum: %w", property, err)
 				}
-				log.Print(testkit.Now.Format(time.RFC3339))
-				log.Print(date.GetMinimum())
-				log.Print(minimum)
 				maximum, err := parseDate(date.GetMaximum())
 				if err != nil {
 					return fmt.Errorf("%q maximum: %w", property, err)
@@ -169,8 +178,6 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 					Mode:    mode,
 					Median:  median,
 				}
-				log.Print(testkit.Now)
-				log.Print(result.Date[property].Minimum)
 			case agg.GetInt() != nil:
 				result.Integer[property] = (*AggregateIntegerResult)(agg.GetInt())
 			case agg.GetNumber() != nil:
