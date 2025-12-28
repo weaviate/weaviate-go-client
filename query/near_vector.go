@@ -31,7 +31,7 @@ type NearVector struct {
 	Similarity *Similarity
 
 	// TODO(dyma): document
-	Target NearVectorTarget
+	Target VectorTarget
 
 	// groupBy can only be set by NearVeectorFunc.GroupBy, as it affects the shape of the response.
 	groupBy *GroupBy
@@ -45,8 +45,6 @@ func Distance(d float64) *Similarity { return &Similarity{distance: &d} }
 
 // Certainty sets a similarity cutoff in terms of certainty.
 func Certainty(d float64) *Similarity { return &Similarity{certainty: &d} }
-
-type NearVectorTarget api.NearVectorTarget
 
 // NearVectorFunc runs plain near vector search.
 type NearVectorFunc func(context.Context, NearVector) (*Result, error)
@@ -73,7 +71,7 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 		ReturnProperties: marshalReturnProperties(nv.ReturnProperties, nv.ReturnNestedProperties),
 		ReturnReferences: marshalReturnReferences(nv.ReturnReferences),
 		NearVector: &api.NearVector{
-			Target:    nv.Target,
+			Target:    marshalSearchTarget(nv.Target),
 			Distance:  nv.Similarity.distance,
 			Certainty: nv.Similarity.certainty,
 		},

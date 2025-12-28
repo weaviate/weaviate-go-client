@@ -19,7 +19,8 @@ type (
 		ReturnReferences []ReturnReference // TODO(dyma): marshal to proto
 		ReturnVectors    []string
 		ReturnMetadata   []MetadataRequest
-		NearVector       *NearVector
+
+		NearVector *NearVector
 	}
 	SearchResponse struct {
 		TookSeconds    float32
@@ -50,6 +51,23 @@ func (r *GetObjectRequest) MarshalMessage() *proto.SearchRequest {
 }
 
 type (
+	SearchTarget struct {
+		CombinationMethod CombinationMethod
+		Vectors           []TargetVector
+	}
+	TargetVector struct {
+		Vector
+		Weight *float32
+	}
+)
+
+type NearVector struct {
+	Target    SearchTarget
+	Certainty *float64
+	Distance  *float64
+}
+
+type (
 	ReturnProperty struct {
 		Name             string
 		NestedProperties []string
@@ -59,19 +77,6 @@ type (
 		TargetCollection string
 		ReturnProperties []ReturnProperty
 		ReturnMetadata   []MetadataRequest
-	}
-	NearVector struct {
-		Target    NearVectorTarget
-		Certainty *float64
-		Distance  *float64
-	}
-	NearVectorTarget interface {
-		CombinationMethod() CombinationMethod
-		Vectors() []TargetVector
-	}
-	TargetVector interface {
-		Vector() *Vector
-		Weight() float32
 	}
 	Object struct {
 		Metadata   ObjectMetadata
@@ -144,8 +149,7 @@ func (cl ConsistencyLevel) proto() *proto.ConsistencyLevel {
 type CombinationMethod string
 
 const (
-	// Return from NearVectorTarget implementations which represent a single vector.
-	CombinationMethodUnspecified   CombinationMethod = ""
+	_                              CombinationMethod = ""
 	CombinationMethodSum           CombinationMethod = "SUM"
 	CombinationMethodMin           CombinationMethod = "MIN"
 	CombinationMethodAverage       CombinationMethod = "AVERAGE"
@@ -239,8 +243,7 @@ func (r *SearchRequest) MarshalMessage() *proto.SearchRequest {
 }
 
 func marshalNearVector(req *NearVector) *proto.NearVector {
-	targets := req.Target.Vectors()
-	if len(targets) == 0 {
+	if len(req.Target.Vectors) == 0 {
 		return nil
 	}
 
@@ -249,37 +252,33 @@ func marshalNearVector(req *NearVector) *proto.NearVector {
 		Certainty: req.Certainty,
 	}
 
-	if len(targets) == 1 {
-		v := targets[0].Vector()
-		dev.Assert(v != nil, "nil target vector")
+	if len(req.Target.Vectors) == 1 {
+		tv := req.Target.Vectors[0]
 		nv.Vectors = []*proto.Vectors{
-			marshalVector(v),
+			marshalVector(&tv.Vector),
 		}
 	} else {
-		combination := req.Target.CombinationMethod().proto()
-
 		// Pre-allocate slices for vectors and targets.
 		// Do not allocate WeightsForTarget, as targets may have no weights.
-		nv.VectorForTargets = make([]*proto.VectorForTarget, len(targets))
+		nv.VectorForTargets = make([]*proto.VectorForTarget, len(req.Target.Vectors))
 		nv.Targets = &proto.Targets{
-			TargetVectors: make([]string, len(targets)),
-			Combination:   combination,
+			TargetVectors: make([]string, len(req.Target.Vectors)),
+			Combination:   req.Target.CombinationMethod.proto(),
 		}
 
-		for i, target := range targets {
-			v := target.Vector()
-			nv.Targets.TargetVectors[i] = v.Name
+		for i, tv := range req.Target.Vectors {
+			nv.Targets.TargetVectors[i] = tv.Vector.Name
 			nv.VectorForTargets[i] = &proto.VectorForTarget{
-				Name: v.Name,
+				Name: tv.Vector.Name,
 				Vectors: []*proto.Vectors{
-					marshalVector(v),
+					marshalVector(&tv.Vector),
 				},
 			}
-			if w := target.Weight(); w != 0 {
+			if tv.Weight != nil {
 				nv.Targets.WeightsForTargets = append(nv.Targets.WeightsForTargets,
 					&proto.WeightsForTarget{
-						Target: v.Name,
-						Weight: w,
+						Target: tv.Vector.Name,
+						Weight: *tv.Weight,
 					})
 			}
 		}

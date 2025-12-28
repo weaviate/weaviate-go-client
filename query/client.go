@@ -87,6 +87,18 @@ type GroupByResult struct {
 	Groups  map[string]Group[types.Map]
 }
 
+type VectorTarget interface {
+	Vectors() []api.TargetVector
+}
+
+func marshalSearchTarget(in VectorTarget) api.SearchTarget {
+	out := api.SearchTarget{Vectors: in.Vectors()}
+	if cm, ok := in.(interface{ CombinationMethod() api.CombinationMethod }); ok {
+		out.CombinationMethod = cm.CombinationMethod()
+	}
+	return out
+}
+
 func marshalReturnMetadata(metadata []Metadata) []api.MetadataRequest {
 	out := make([]api.MetadataRequest, 0, len(metadata)+1)
 	for _, m := range metadata {

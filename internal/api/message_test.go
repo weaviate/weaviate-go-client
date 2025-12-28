@@ -193,7 +193,9 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 			req: &api.AggregateRequest{
 				NearVector: &api.NearVector{
 					Distance: testkit.Ptr(0.5),
-					Target:   &api.Vector{Name: "1d", Single: singleVector},
+					Target: api.SearchTarget{Vectors: []api.TargetVector{
+						{Vector: api.Vector{Name: "1d", Single: singleVector}},
+					}},
 				},
 			},
 			want: &proto.AggregateRequest{
@@ -214,7 +216,9 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 			req: &api.AggregateRequest{
 				NearVector: &api.NearVector{
 					Distance: testkit.Ptr(0.5),
-					Target:   &api.Vector{Name: "2d", Multi: multiVector},
+					Target: api.SearchTarget{Vectors: []api.TargetVector{
+						{Vector: api.Vector{Name: "2d", Multi: multiVector}},
+					}},
 				},
 			},
 			want: &proto.AggregateRequest{
@@ -235,11 +239,11 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 			req: &api.AggregateRequest{
 				NearVector: &api.NearVector{
 					Distance: testkit.Ptr(0.5),
-					Target: &multiVectorTarget{
-						combinationMethod: api.CombinationMethodAverage,
-						targets: []api.TargetVector{
-							&api.Vector{Name: "1d", Single: singleVector},
-							&api.Vector{Name: "2d", Multi: multiVector},
+					Target: api.SearchTarget{
+						CombinationMethod: api.CombinationMethodAverage,
+						Vectors: []api.TargetVector{
+							{Vector: api.Vector{Name: "1d", Single: singleVector}},
+							{Vector: api.Vector{Name: "2d", Multi: multiVector}},
 						},
 					},
 				},
@@ -273,12 +277,21 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 			req: &api.AggregateRequest{
 				NearVector: &api.NearVector{
 					Distance: testkit.Ptr(0.5),
-					Target: &multiVectorTarget{
-						combinationMethod: api.CombinationMethodManualWeights,
-						targets: []api.TargetVector{
-							&weightedTarget{weight: .3, v: &api.Vector{Name: "1d_3", Single: singleVector}},
-							&weightedTarget{weight: .5, v: &api.Vector{Name: "1d_5", Single: singleVector}},
-							&weightedTarget{weight: .2, v: &api.Vector{Name: "2d", Multi: multiVector}},
+					Target: api.SearchTarget{
+						CombinationMethod: api.CombinationMethodManualWeights,
+						Vectors: []api.TargetVector{
+							{
+								Vector: api.Vector{Name: "1d_3", Single: singleVector},
+								Weight: testkit.Ptr[float32](.3),
+							},
+							{
+								Vector: api.Vector{Name: "1d_5", Single: singleVector},
+								Weight: testkit.Ptr[float32](.5),
+							},
+							{
+								Vector: api.Vector{Name: "2d", Multi: multiVector},
+								Weight: testkit.Ptr[float32](.2),
+							},
 						},
 					},
 				},
@@ -319,31 +332,6 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 		},
 	})
 }
-
-// multiVectorTarget provides a simple api.NearVectorTarget implementation.
-// Technically, it mirrors the implementation in [query], but we keep them separate.
-type multiVectorTarget struct {
-	combinationMethod api.CombinationMethod
-	targets           []api.TargetVector
-}
-
-var _ api.NearVectorTarget = (*multiVectorTarget)(nil)
-
-func (m *multiVectorTarget) CombinationMethod() api.CombinationMethod { return m.combinationMethod }
-func (m *multiVectorTarget) Vectors() []api.TargetVector              { return m.targets }
-
-// weightedTarget provides a simple api.TargetVector implementation.
-// Technically, it mirrors the implementation in [query], but we keep them separate.
-type weightedTarget struct {
-	v      *api.Vector
-	weight float32
-}
-
-var _ api.TargetVector = (*weightedTarget)(nil)
-
-func (wt *weightedTarget) Weight() float32 { return wt.weight }
-
-func (wt weightedTarget) Vector() *api.Vector { return wt.v }
 
 // ----------------------------------------------------------------------------
 

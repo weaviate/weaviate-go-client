@@ -10,25 +10,11 @@ type (
 	Vectors api.Vectors
 )
 
-var (
-	// Compile-time assertion that Vector implements NearVectorTarget.
-	_ api.NearVectorTarget = (*Vector)(nil)
-	// Compile-time assertion that Vector implements TargetVector.
-	_ api.TargetVector = (*Vector)(nil)
-)
+// Vector implements [query.VectorKind].
+func (v Vector) Vector() api.Vector { return api.Vector(v) }
 
-// CombinationMethod implements NearVectorTarget.
-func (v *Vector) CombinationMethod() api.CombinationMethod {
-	return api.CombinationMethodUnspecified
-}
-
-// Targets implements api.NearVectorTarget.
-func (v *Vector) Vectors() []api.TargetVector {
-	return []api.TargetVector{v}
-}
-
-func (v *Vector) Weight() float32     { return 0 }
-func (v *Vector) Vector() *api.Vector { return (*api.Vector)(v) }
+// Vectors implements [query.VectorTarget].
+func (v Vector) Vectors() []api.TargetVector { return []api.TargetVector{{Vector: v.Vector()}} }
 
 func (vs Vectors) ToSlice() []Vector {
 	out := make([]Vector, 0, len(vs))

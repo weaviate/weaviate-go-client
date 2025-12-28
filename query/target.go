@@ -2,8 +2,42 @@ package query
 
 import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
-	"github.com/weaviate/weaviate-go-client/v6/types"
 )
+
+// VectorKind defines what "vector" can mean in the context of search.
+// For NearVector, NearObject, NearText, and NearMedia search, 2 meanings
+// are possible:
+//
+//   - User provides one or more _embeddings_, which should be compared to
+//     embeddings stored in one or more _vector indices_.
+//
+//   - User provides a _string input_, which should be vectorized first and
+//     then compared to embeddings stored in one or more _vector indices_.
+//
+// Each "vector" can be assigned a specific weight, which [WeightedVector]
+// encodes. Several vector targets can be combined in a [MultiVectorTarget].
+//
+// At the time of writing Weaviate allows a query to contain multiple _embeddings_,
+// but only one _string input_ (be that text, UUID or a base64-encoded image).
+// For this reason, embedding and vector index name can be provided as a single
+// value [types.Vector], but string input and index vector name must be passed
+// separately in NearText, NearMedia, and NearObject queries.
+type VectorKind interface{ Vector() api.Vector }
+
+type VectorName string
+
+var (
+	_ VectorKind   = (*VectorName)(nil)
+	_ VectorTarget = (*VectorName)(nil)
+)
+
+func (name VectorName) Vector() api.Vector {
+	return api.Vector{Name: string(name)}
+}
+
+func (name VectorName) Vectors() []api.TargetVector {
+	return []api.TargetVector{{Vector: name.Vector()}}
+}
 
 // MultiVectorTarget comprises multiple target vectors and their respective weights.
 // Construct an appropriate MultiVectorTarget using one of these functions:
@@ -17,62 +51,48 @@ type MultiVectorTarget struct {
 	targets           []api.TargetVector
 }
 
-// Compile-time assertion that MultiVectorTarget implements api.NearVectorTarget.
-var _ api.NearVectorTarget = (*MultiVectorTarget)(nil)
+var _ VectorTarget = (*MultiVectorTarget)(nil)
 
-// WeightedTarget assigns a weight to a vector target used in a query.
+// WeightedVector assigns a weight to a vector target used in a query.
 // Use Target() to construct one.
-type WeightedTarget struct {
-	v      *api.Vector
+type WeightedVector[V VectorKind] struct {
+	v      V
 	weight float32
 }
 
-// Compile-time assertion that WeighteTarget implements api.TargetVector
-var _ api.TargetVector = (*WeightedTarget)(nil)
-
-func (wt *WeightedTarget) Weight() float32 {
-	return wt.weight
+func Weighted[V VectorKind](v V, weight float32) WeightedVector[V] {
+	return WeightedVector[V]{v: v, weight: weight}
 }
 
-func (wt WeightedTarget) Vector() *api.Vector {
-	return wt.v
-}
-
-func Target(v types.Vector, weight float32) WeightedTarget {
-	return WeightedTarget{v: (*api.Vector)(&v), weight: weight}
-}
-
-func Sum(vectors ...types.Vector) *MultiVectorTarget {
+func Sum[V VectorKind](vectors []V) *MultiVectorTarget {
 	return zeroWeightTargets(api.CombinationMethodSum, vectors)
 }
 
-func Min(vectors ...types.Vector) *MultiVectorTarget {
+func Min[V VectorKind](vectors []V) *MultiVectorTarget {
 	return zeroWeightTargets(api.CombinationMethodMin, vectors)
 }
 
-func Average(vectors ...types.Vector) *MultiVectorTarget {
+func Average[V VectorKind](vectors []V) *MultiVectorTarget {
 	return zeroWeightTargets(api.CombinationMethodAverage, vectors)
 }
 
-func ManualWeights(vectors ...WeightedTarget) MultiVectorTarget {
-	// Explicitly cast []WeightedTarget to []api.TargetVector
+func ManualWeights[V VectorKind](vectors []WeightedVector[V]) *MultiVectorTarget {
 	targets := make([]api.TargetVector, len(vectors))
 	for i, v := range vectors {
-		targets[i] = &v
+		targets[i] = api.TargetVector{Vector: v.v.Vector(), Weight: &v.weight}
 	}
-	return MultiVectorTarget{
+	return &MultiVectorTarget{
 		combinationMethod: api.CombinationMethodManualWeights,
 		targets:           targets,
 	}
 }
 
-func RelativeScore(vectors ...WeightedTarget) MultiVectorTarget {
-	// Explicitly cast []WeightedTarget to []api.TargetVector
+func RelativeScore[V VectorKind](vectors []WeightedVector[V]) *MultiVectorTarget {
 	targets := make([]api.TargetVector, len(vectors))
 	for i, v := range vectors {
-		targets[i] = &v
+		targets[i] = api.TargetVector{Vector: v.v.Vector(), Weight: &v.weight}
 	}
-	return MultiVectorTarget{
+	return &MultiVectorTarget{
 		combinationMethod: api.CombinationMethodRelativeScore,
 		targets:           targets,
 	}
@@ -80,10 +100,10 @@ func RelativeScore(vectors ...WeightedTarget) MultiVectorTarget {
 
 // Combine target vectors into a MultiVectorTarget keeping the weight unset.
 // The server will determine combination method will determine the weights
-func zeroWeightTargets(cm api.CombinationMethod, vectors []types.Vector) *MultiVectorTarget {
+func zeroWeightTargets[V VectorKind](cm api.CombinationMethod, vectors []V) *MultiVectorTarget {
 	targets := make([]api.TargetVector, len(vectors))
 	for i, v := range vectors {
-		targets[i] = &WeightedTarget{v: (*api.Vector)(&v)}
+		targets[i] = api.TargetVector{Vector: v.Vector()}
 	}
 
 	return &MultiVectorTarget{
