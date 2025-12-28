@@ -4,7 +4,7 @@ go 1.24.10
 
 replace github.com/weaviate/weaviate-go-client/v6 => ../../
 
-require github.com/weaviate/weaviate-go-client/v6 v6.0.0
+require github.com/weaviate/weaviate-go-client/v6 v6.0.0-example
 
 require (
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect

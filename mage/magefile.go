@@ -21,6 +21,86 @@ import (
 )
 
 const (
+	FileFileMode     = 0666  // os.FileMode for writing a new file
+	DirFileMode      = 0o775 // os.FileMode for creating a new directory
+	ExamplesDir      = "./examples"
+	MainGo           = "main.go"
+	WeaviateGoClient = "github.com/weaviate/weaviate-go-client/v6"
+	DummyVersion     = "v6.0.0-example" // fake weaviate-go-client version used in the example's go.mod
+	RootRelative     = "../../"         // path to weaviate-go-client module relative to this example's dir
+)
+
+type Examples mg.Namespace
+
+// Init a new example module in examples/ directory.
+func (Examples) Init(name string) error {
+	if name == "" {
+		return errors.New("example name cannot be empty")
+	}
+
+	path := filepath.Join(ExamplesDir, name)
+	if err := os.MkdirAll(path, DirFileMode); err != nil {
+		return fmt.Errorf("create module directory: %w", err)
+	}
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	if err := os.Chdir(path); err != nil {
+		return fmt.Errorf("cd into %s: %w", path, err)
+	}
+	defer os.Chdir(pwd)
+
+	if err := runCmd("go", "mod", "init", path); err != nil {
+		return fmt.Errorf("go mod init %s: %w", path, err)
+	}
+	if err := runCmd("go", "mod", "edit", "-replace", WeaviateGoClient+"="+RootRelative); err != nil {
+		return fmt.Errorf("replace %s: %w", WeaviateGoClient, err)
+	}
+	if err := runCmd("go", "mod", "edit", "-require", WeaviateGoClient+"@"+DummyVersion); err != nil {
+		return fmt.Errorf("require %s: %w", WeaviateGoClient, err)
+	}
+	if err := os.WriteFile(MainGo, []byte(mainGoScaffold), FileFileMode); err != nil {
+		return fmt.Errorf("bootstrap %s: %w", MainGo, err)
+	}
+	if err := runCmd("go", "mod", "tidy"); err != nil {
+		return fmt.Errorf("go mod tidy %s: %w", WeaviateGoClient, err)
+	}
+	return nil
+}
+
+const mainGoScaffold = `package main
+
+import (
+	"context"
+	"log"
+
+	"github.com/weaviate/weaviate-go-client/v6"
+)
+
+func main() {
+	ctx := context.Background()
+
+	c, err := weaviate.NewLocal(ctx, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+`
+
+// runCmd is a wrapper around exec.Cmd that returns its CombinedOutput (stdout + stderr)
+// as error if the command exits with a non-zero code.
+func runCmd(name string, args ...string) error {
+	if out, err := exec.Command(name, args...).CombinedOutput(); err != nil {
+		return errors.New(string(out))
+	}
+	return nil
+}
+
+// ----------------------------------------------------------------------------
+
+const (
 	EnvGithubToken = "GITHUB_TOKEN"
 
 	WeaviateRoot        = "https://api.github.com/repos/weaviate/weaviate/contents"
@@ -38,11 +118,11 @@ const (
 
 type Contracts mg.Namespace
 
-// Checksums "api/proto" and "api/rest" specs against their latest versions in weaviate/weaviate.
+// Check "api/proto" and "api/rest" specs against their latest versions in weaviate/weaviate (checksum).
 // Best used in CI scripts to ensure the sources of our generated stubs stay up-to-date.
 func (Contracts) Check(ctx context.Context) error { return validate(ctx, false) }
 
-// Updates "api/proto" and "api/rest" specs to their latest versions.
+// Update "api/proto" and "api/rest" specs to their latest versions.
 // Use locally to pull new changes or fix broken / missing / out-of-date specs.
 func (Contracts) Update(ctx context.Context) error { return validate(ctx, true) }
 
@@ -409,7 +489,7 @@ func convertSchemaToV3(ctx context.Context) error {
 // writeAtomic writes the contents of Reader r to a .tmp file,
 // performs a rename, and cleans up the .tmp file.
 func writeAtomic(file string, r io.Reader) (int64, error) {
-	if err := os.MkdirAll(filepath.Dir(file), 0o775); err != nil {
+	if err := os.MkdirAll(filepath.Dir(file), DirFileMode); err != nil {
 		return 0, err
 	}
 
