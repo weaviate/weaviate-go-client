@@ -345,7 +345,7 @@ func TestRESTEndpoints(t *testing.T) {
 					Tenant:           "john_doe",
 					ConsistencyLevel: api.ConsistencyLevelOne,
 				},
-				UUID: uuid.Nil,
+				UUID: &uuid.Nil,
 				Properties: map[string]any{
 					"title":  "High Speed Dirt",
 					"genres": []string{"thrash metal", "blues"},
@@ -363,7 +363,7 @@ func TestRESTEndpoints(t *testing.T) {
 			wantBody: &rest.Object{
 				Class:  "Songs",
 				Tenant: "john_doe",
-				Id:     uuid.Nil,
+				Id:     &uuid.Nil,
 				Properties: map[string]any{
 					"title":  "High Speed Dirt",
 					"genres": []string{"thrash metal", "blues"},
@@ -392,7 +392,7 @@ func TestRESTEndpoints(t *testing.T) {
 					Tenant:           "john_doe",
 					ConsistencyLevel: api.ConsistencyLevelOne,
 				},
-				UUID: uuid.Nil,
+				UUID: &uuid.Nil,
 				Properties: map[string]any{
 					"title":  "High Speed Dirt",
 					"genres": []string{"thrash metal", "blues"},
@@ -410,7 +410,7 @@ func TestRESTEndpoints(t *testing.T) {
 			wantBody: &rest.Object{
 				Class:  "Songs",
 				Tenant: "john_doe",
-				Id:     uuid.Nil,
+				Id:     &uuid.Nil,
 				Properties: map[string]any{
 					"title":  "High Speed Dirt",
 					"genres": []string{"thrash metal", "blues"},

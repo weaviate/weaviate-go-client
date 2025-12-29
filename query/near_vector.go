@@ -40,6 +40,7 @@ type NearVector struct {
 // Similarity is a cutoff point for query results.
 type Similarity struct{ distance, certainty *float64 }
 
+// TODO(dyma): unit test
 func (s *Similarity) Distance() *float64 {
 	if s == nil {
 		return nil
