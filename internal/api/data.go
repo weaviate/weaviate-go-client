@@ -12,7 +12,7 @@ import (
 
 type InsertObjectRequest struct {
 	RequestDefaults
-	UUID       uuid.UUID
+	UUID       *uuid.UUID
 	Properties map[string]any
 	References any // TODO(dyma): define
 	Vectors    []Vector
@@ -100,6 +100,7 @@ func (r *InsertObjectRequest) MarshalJSON() ([]byte, error) {
 			vectors[v.Name] = v.Multi
 		}
 	}
+
 	req := &rest.Object{
 		Class:      r.CollectionName,
 		Tenant:     r.Tenant,
@@ -118,7 +119,7 @@ func (i *InsertObjectResponse) UnmarshalJSON(data []byte) error {
 	}
 
 	*i = InsertObjectResponse{
-		UUID:       res.Id,
+		UUID:       *res.Id,
 		Properties: res.Properties,
 		References: nil,
 	}

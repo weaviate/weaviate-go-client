@@ -24,7 +24,7 @@ type Client struct {
 
 // TODO(dyma): generic Properties
 type Object struct {
-	UUID       uuid.UUID
+	UUID       *uuid.UUID
 	Properties types.Map
 	Vectors    []types.Vector
 }

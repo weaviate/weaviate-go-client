@@ -604,7 +604,7 @@ type BatchDeleteResponse struct {
 			Errors ErrorResponse `json:"errors,omitempty"`
 
 			// Id The UUID of the object.
-			Id     openapi_types.UUID                      `json:"id,omitempty"`
+			Id     *openapi_types.UUID                     `json:"id,omitempty"`
 			Status BatchDeleteResponseResultsObjectsStatus `json:"status,omitempty"`
 		} `json:"objects,omitempty"`
 
@@ -729,7 +729,7 @@ type Classification struct {
 	} `json:"filters,omitempty"`
 
 	// Id ID to uniquely identify this classification run.
-	Id openapi_types.UUID `json:"id,omitempty"`
+	Id *openapi_types.UUID `json:"id,omitempty"`
 
 	// Meta Additional information to a specific classification.
 	Meta ClassificationMeta `json:"meta,omitempty"`
@@ -1089,7 +1089,7 @@ type Object struct {
 	CreationTimeUnix int64 `json:"creationTimeUnix,omitempty"`
 
 	// Id The UUID of the object.
-	Id openapi_types.UUID `json:"id,omitempty"`
+	Id *openapi_types.UUID `json:"id,omitempty"`
 
 	// LastUpdateTimeUnix (Response only) Timestamp of the last object update in milliseconds since epoch UTC.
 	LastUpdateTimeUnix int64 `json:"lastUpdateTimeUnix,omitempty"`
@@ -1138,7 +1138,7 @@ type ObjectsGetResponse struct {
 	Deprecations     []Deprecation `json:"deprecations,omitempty"`
 
 	// Id The UUID of the object.
-	Id openapi_types.UUID `json:"id,omitempty"`
+	Id *openapi_types.UUID `json:"id,omitempty"`
 
 	// LastUpdateTimeUnix (Response only) Timestamp of the last object update in milliseconds since epoch UTC.
 	LastUpdateTimeUnix int64 `json:"lastUpdateTimeUnix,omitempty"`
@@ -1396,7 +1396,7 @@ type ReplicationReplicateDetailsReplicaResponse struct {
 	Collection string `json:"collection"`
 
 	// Id The unique identifier (ID) of this specific replication operation.
-	Id openapi_types.UUID `json:"id"`
+	Id *openapi_types.UUID `json:"id"`
 
 	// ScheduledForCancel Whether the replica operation is scheduled for cancellation.
 	ScheduledForCancel bool `json:"scheduledForCancel,omitempty"`
@@ -1465,7 +1465,7 @@ type ReplicationReplicateForceDeleteRequest struct {
 	DryRun bool `json:"dryRun,omitempty"`
 
 	// Id The unique identifier (ID) of the replication operation to be forcefully deleted.
-	Id openapi_types.UUID `json:"id,omitempty"`
+	Id *openapi_types.UUID `json:"id,omitempty"`
 
 	// Node The name of the target node where the replication operations are registered.
 	Node string `json:"node,omitempty"`
@@ -1507,7 +1507,7 @@ type ReplicationReplicateReplicaRequestType string
 // ReplicationReplicateReplicaResponse Contains the unique identifier for a successfully initiated asynchronous replica movement operation. This ID can be used to track the progress of the operation.
 type ReplicationReplicateReplicaResponse struct {
 	// Id The unique identifier (ID) assigned to the registered replication operation.
-	Id openapi_types.UUID `json:"id"`
+	Id *openapi_types.UUID `json:"id"`
 }
 
 // ReplicationScaleApplyResponse Response for the POST /replication/scale endpoint containing the list of initiated shard copy operation IDs.

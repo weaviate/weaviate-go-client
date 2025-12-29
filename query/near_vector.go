@@ -40,6 +40,20 @@ type NearVector struct {
 // Similarity is a cutoff point for query results.
 type Similarity struct{ distance, certainty *float64 }
 
+func (s *Similarity) Distance() *float64 {
+	if s == nil {
+		return nil
+	}
+	return s.distance
+}
+
+func (s *Similarity) Certainty() *float64 {
+	if s == nil {
+		return nil
+	}
+	return s.certainty
+}
+
 // Distance sets a similarity cutoff in terms of maximum vector distance.
 func Distance(d float64) *Similarity { return &Similarity{distance: &d} }
 
@@ -72,8 +86,8 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 		ReturnReferences: marshalReturnReferences(nv.ReturnReferences),
 		NearVector: &api.NearVector{
 			Target:    marshalSearchTarget(nv.Target),
-			Distance:  nv.Similarity.distance,
-			Certainty: nv.Similarity.certainty,
+			Distance:  nv.Similarity.Distance(),
+			Certainty: nv.Similarity.Certainty(),
 		},
 	}
 

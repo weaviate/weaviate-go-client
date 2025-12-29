@@ -451,6 +451,7 @@ components:
                                         description: The UUID of the object.
                                         format: uuid
                                         type: string
+                                        x-go-type: '*openapi_types.UUID'
                                     status:
                                         default: SUCCESS
                                         enum:
@@ -698,6 +699,7 @@ components:
                     example: ee722219-b8ec-4db1-8f8d-5150bb1a9e0c
                     format: uuid
                     type: string
+                    x-go-type: '*openapi_types.UUID'
                 meta:
                     $ref: '#/components/schemas/ClassificationMeta'
                 settings:
@@ -1190,6 +1192,7 @@ components:
                     description: The UUID of the object.
                     format: uuid
                     type: string
+                    x-go-type: '*openapi_types.UUID'
                 lastUpdateTimeUnix:
                     description: (Response only) Timestamp of the last object update in milliseconds since epoch UTC.
                     format: int64
@@ -1331,6 +1334,7 @@ components:
                     description: The session ID of the peer.
                     format: uuid
                     type: string
+                    x-go-type: '*openapi_types.UUID'
                 name:
                     description: Human readable name.
                     type: string
@@ -1752,6 +1756,7 @@ components:
                     description: The unique identifier (ID) of this specific replication operation.
                     format: uuid
                     type: string
+                    x-go-type: '*openapi_types.UUID'
                 scheduledForCancel:
                     description: Whether the replica operation is scheduled for cancellation.
                     type: boolean
@@ -1844,6 +1849,7 @@ components:
                     description: The unique identifier (ID) of the replication operation to be forcefully deleted.
                     format: uuid
                     type: string
+                    x-go-type: '*openapi_types.UUID'
                 node:
                     description: The name of the target node where the replication operations are registered.
                     type: string
@@ -1899,6 +1905,7 @@ components:
                     description: The unique identifier (ID) assigned to the registered replication operation.
                     format: uuid
                     type: string
+                    x-go-type: '*openapi_types.UUID'
             required:
                 - id
             type: object

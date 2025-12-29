@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 
 	"github.com/weaviate/weaviate-go-client/v6"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
@@ -73,9 +74,11 @@ func insertObjects(ctx context.Context, songs *collections.Handle) error {
 
 	obj, err := songs.Data.Insert(ctx, &data.Object{
 		Properties: data.MustEncode(&song1),
-		Vectors: []types.Vector{
-			{Single: []float32{0.1, 0.2, 0.3}},
-		},
+		// This synax works, but we can't provide our own vectors
+		// because the collection only has a default vectorizer.
+		// Vectors: []types.Vector{
+		// 	{Single: []float32{0.1, 0.2, 0.3}},
+		// },
 	})
 	if err != nil {
 		return err
@@ -87,7 +90,7 @@ func insertObjects(ctx context.Context, songs *collections.Handle) error {
 		"title":  "Song 2",
 		"artist": "Blur",
 		"year":   1997,
-		"genre":  "Rock",
+		"genre":  []string{"Rock"},
 	}
 
 	obj, err = songs.Data.Insert(ctx, &data.Object{Properties: song2})
@@ -99,10 +102,14 @@ func insertObjects(ctx context.Context, songs *collections.Handle) error {
 }
 
 func queryWithMaps(ctx context.Context, songs *collections.Handle) error {
+	// model2vec-text2vec (default vectorizer) generates vectors with 128 dimensions.
+	v := make([]float32, 128)
+	for i := range v {
+		v[i] = rand.Float32()
+	}
+
 	result, err := songs.Query.NearVector(ctx, query.NearVector{
-		Target: &types.Vector{
-			Single: []float32{0.1, 0.2, 0.3, 0.4},
-		},
+		Target:     &types.Vector{Single: v},
 		Limit:      2,
 		Similarity: query.Distance(0.5),
 		Offset:     3,
@@ -123,19 +130,26 @@ func queryWithMaps(ctx context.Context, songs *collections.Handle) error {
 }
 
 func queryWithTypes(ctx context.Context, songs *collections.Handle) error {
+	// model2vec-text2vec (default vectorizer) generates vectors with 128 dimensions.
+	v := make([]float32, 128)
+	for i := range v {
+		v[i] = rand.Float32()
+	}
 	// Get results as maps first
+
 	result, err := songs.Query.NearVector(ctx, query.NearVector{
-		Target: &types.Vector{
-			Single: []float32{0.1, 0.2, 0.3, 0.4},
-		},
-		Limit: 3,
+		Target: &types.Vector{Single: v},
+		Limit:  3,
 	})
 	if err != nil {
 		return err
 	}
 
 	// Demonstrates type-safe scanning (Song struct would need to match actual data)
-	typedObjects, _ := query.Decode[Song](result)
+	typedObjects, err := query.Decode[Song](result)
+	if err != nil {
+		return err
+	}
 
 	for i, song := range typedObjects {
 		fmt.Printf("%d. Title: %s, Artist: %s, Year: %d, Genre: %s (UUID: %s)\n",

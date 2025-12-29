@@ -175,8 +175,15 @@ func (cm CombinationMethod) proto() proto.CombinationMethod {
 	}
 }
 
+// TODO(dyma): add unit test
+var zeroUUID uuid.UUID
+
 // MarshalSearchRequest() constructs a proto.SearchRequest.
 func (r *SearchRequest) MarshalMessage() *proto.SearchRequest {
+	after := r.After.String()
+	if r.After == zeroUUID {
+		after = ""
+	}
 	req := &proto.SearchRequest{
 		Collection:       r.CollectionName,
 		Tenant:           r.Tenant,
@@ -184,7 +191,7 @@ func (r *SearchRequest) MarshalMessage() *proto.SearchRequest {
 		Limit:            uint32(r.Limit),
 		Offset:           uint32(r.Offset),
 		Autocut:          uint32(r.AutoLimit),
-		After:            r.After.String(),
+		After:            after,
 	}
 
 	var properties proto.PropertiesRequest
