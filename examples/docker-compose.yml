@@ -27,16 +27,16 @@ services:
       - "50051:50051"
     restart: on-failure:0
     environment:
+      AUTOSCHEMA_ENABLED: "false"
+      ENABLE_MODULES: text2vec-model2vec,backup-filesystem
+      DEFAULT_VECTORIZER_MODULE: text2vec-model2vec
       MODEL2VEC_INFERENCE_API: http://model2vec:8080
-      DEFAULT_VECTORIZER_MODULE: "text2vec-model2vec"
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
       PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
-      ENABLE_MODULES: text2vec-model2vec,backup-filesystem
       BACKUP_FILESYSTEM_PATH: "/tmp/backups"
       CLUSTER_GOSSIP_BIND_PORT: "7100"
       CLUSTER_DATA_BIND_PORT: "7101"
       CLUSTER_HOSTNAME: "node1"
-      AUTOSCHEMA_ENABLED: "false"
       DISABLE_TELEMETRY: "true"
       DISABLE_LAZY_LOAD_SHARDS: "true"
       GRPC_MAX_MESSAGE_SIZE: 100000000 # 100MB

@@ -45,18 +45,24 @@ func main() {
 
 	// Example 1: Insert objects
 	fmt.Println("=== Example 1: Insert objects ===")
-	insertObjects(ctx, songs)
+	if err := insertObjects(ctx, songs); err != nil {
+		log.Fatal(err)
+	}
 
 	// Example 2: Query with map-based results
 	fmt.Println("\n=== Example 2: Query with map-based results ===")
-	queryWithMaps(ctx, songs)
+	if err := queryWithMaps(ctx, songs); err != nil {
+		log.Fatal(err)
+	}
 
 	// Example 3: Query with typed results
 	fmt.Println("\n=== Example 3: Query with typed results ===")
-	queryWithTypes(ctx, songs)
+	if err := queryWithTypes(ctx, songs); err != nil {
+		log.Fatal(err)
+	}
 }
 
-func insertObjects(ctx context.Context, songs *collections.Handle) {
+func insertObjects(ctx context.Context, songs *collections.Handle) error {
 	// Insert with struct and vector
 	song1 := Song{
 		Title:  "Bohemian Rhapsody",
@@ -72,7 +78,7 @@ func insertObjects(ctx context.Context, songs *collections.Handle) {
 		},
 	})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	fmt.Printf("Inserted with ID: %s\n", obj.UUID)
 
@@ -84,12 +90,16 @@ func insertObjects(ctx context.Context, songs *collections.Handle) {
 		"genre":  "Rock",
 	}
 
-	obj, _ = songs.Data.Insert(ctx, &data.Object{Properties: song2})
+	obj, err = songs.Data.Insert(ctx, &data.Object{Properties: song2})
+	if err != nil {
+		return err
+	}
 	fmt.Printf("Inserted with ID: %s\n", obj.UUID)
+	return nil
 }
 
-func queryWithMaps(ctx context.Context, songs *collections.Handle) {
-	result, _ := songs.Query.NearVector(ctx, query.NearVector{
+func queryWithMaps(ctx context.Context, songs *collections.Handle) error {
+	result, err := songs.Query.NearVector(ctx, query.NearVector{
 		Target: &types.Vector{
 			Single: []float32{0.1, 0.2, 0.3, 0.4},
 		},
@@ -97,6 +107,9 @@ func queryWithMaps(ctx context.Context, songs *collections.Handle) {
 		Similarity: query.Distance(0.5),
 		Offset:     3,
 	})
+	if err != nil {
+		return err
+	}
 
 	for i, obj := range result.Objects {
 		number := obj.Properties["number"].(string)
@@ -106,16 +119,20 @@ func queryWithMaps(ctx context.Context, songs *collections.Handle) {
 			fmt.Printf("   Vector: %v\n", vec)
 		}
 	}
+	return nil
 }
 
-func queryWithTypes(ctx context.Context, songs *collections.Handle) {
+func queryWithTypes(ctx context.Context, songs *collections.Handle) error {
 	// Get results as maps first
-	result, _ := songs.Query.NearVector(ctx, query.NearVector{
+	result, err := songs.Query.NearVector(ctx, query.NearVector{
 		Target: &types.Vector{
 			Single: []float32{0.1, 0.2, 0.3, 0.4},
 		},
 		Limit: 3,
 	})
+	if err != nil {
+		return err
+	}
 
 	// Demonstrates type-safe scanning (Song struct would need to match actual data)
 	typedObjects, _ := query.Decode[Song](result)
@@ -125,4 +142,5 @@ func queryWithTypes(ctx context.Context, songs *collections.Handle) {
 			i+1, song.Properties.Title, song.Properties.Artist,
 			song.Properties.Year, song.Properties.Genre, song.UUID)
 	}
+	return nil
 }
