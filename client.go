@@ -6,7 +6,7 @@ import (
 
 func NewClient() (*Client, error) {
 	return &Client{
-		Collections: *collections.NewClient("tramway"),
+		Collections: *collections.NewClient(nil),
 	}, nil
 }
 
