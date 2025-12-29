@@ -1,22 +1,18 @@
 package query
 
-import (
-	"github.com/weaviate/weaviate-go-client/v6/internal"
-	"github.com/weaviate/weaviate-go-client/v6/types"
-)
+import "github.com/weaviate/weaviate-go-client/v6/types"
 
 type Client struct {
-	transport      internal.Transport
-	collectionName string
+	gRPC any // gRPCClient
 
-	NearVector NearVectorFunc
+	collectionName string
+	NearVector     NearVectorFunc
 }
 
-func NewClient(t internal.Transport, collectionName string) *Client {
+func NewClient(gRPC any, collectionName string) *Client {
 	return &Client{
-		transport:      t,
-		collectionName: collectionName,
-		NearVector:     nearVectorFunc(t),
+		gRPC:       gRPC,
+		NearVector: nearVectorFunc(gRPC),
 	}
 }
 
@@ -26,40 +22,66 @@ type commonOptions struct {
 	AutoLimit        *int
 	After            *string
 	ReturnProperties []string
+	ReturnMetadata   []Metadata
 	IncludeVectors   []string
-	GroupBy          *GroupBy
 }
 
-// LimitOption sets the `limit` parameter.
-type LimitOption int
+// WithLimit sets the `limit` parameter.
+type WithLimit int
 
-var _ NearVectorOption = (*LimitOption)(nil)
+// Compile-time assertion that WithLimit implements NearVectorOption.
+var _ NearVectorOption = (*WithLimit)(nil)
 
-func WithLimit(l int) LimitOption {
-	return LimitOption(l)
+// WithOffset sets the `offset` parameter.
+type WithOffset int
+
+// Compile-time assertion that WithOffset implements NearVectorOption.
+var _ NearVectorOption = (*WithOffset)(nil)
+
+// WithAutoLimit sets the `autocut` parameter.
+type WithAutoLimit int
+
+// Compile-time assertion that WithAutoLimit implements NearVectorOption.
+var _ NearVectorOption = (*WithAutoLimit)(nil)
+
+// WithAfter sets the `after` parameter.
+type WithAfter string
+
+// Compile-time assertion that WithAfter implements NearVectorOption.
+var _ NearVectorOption = (*WithAfter)(nil)
+
+// returnPropertiesOption selects properties to include in the response.
+type returnPropertiesOption []string
+
+// Compile-time assertion that returnPropertiesOption implements NearVectorOption.
+var _ NearVectorOption = (*returnPropertiesOption)(nil)
+
+// WithReturnProperties selects properties to include in the response.
+// By default, all properties are returned.
+func WithReturnProperties(properties ...string) returnPropertiesOption {
+	return returnPropertiesOption(properties)
 }
 
-// OffsetOption sets the `limit` parameter.
-type OffsetOption int
+type returnMetadataOption []Metadata
 
-var _ NearVectorOption = (*OffsetOption)(nil)
+// Compile-time assertion that returnMetadataOption implements NearVectorOption.
+var _ NearVectorOption = (*returnMetadataOption)(nil)
 
-func WithOffset(l int) OffsetOption {
-	return OffsetOption(l)
-}
+type Metadata string
 
-// AutoLimitOption sets the `limit` parameter.
-type AutoLimitOption int
+const (
+	MetadataCreationTimeUnix   Metadata = "CreationTimeUnix"
+	MetadataLastUpdateTimeUnix Metadata = "LastUpdateTimeUnix"
+	MetadataDistance           Metadata = "Distance"
+	MetadataCertainty          Metadata = "Certainty"
+	MetadataScore              Metadata = "Score"
+	MetadataExplainScore       Metadata = "ExplainScore"
+)
 
-var _ NearVectorOption = (*AutoLimitOption)(nil)
-
-func WithAutoLimit(l int) AutoLimitOption {
-	return AutoLimitOption(l)
-}
-
-// TODO: define GroupBy parameters
 type GroupBy struct {
-	Property string
+	Property       string // Property to group by.
+	ObjectLimit    int    // Maximum number of objects per group.
+	NumberOfGroups int    // Maximum number of groups to return.
 }
 
 // groupByOption is used internally to support grouped queries.
@@ -72,15 +94,19 @@ func withGroupBy(property string) groupByOption {
 }
 
 type Result struct {
-	Objects []types.Object[types.Map]
+	Objects []Object[types.Map]
+}
+
+type Object[P types.Properties] struct {
+	types.Object[P]
+	Metadata QueryMetadata
 }
 
 type QueryMetadata struct {
-	// Should these be pointers? *float32
-	Distance     float32
-	Certainty    float32
-	Score        float32
-	ExplainScore string
+	Distance     *float32
+	Certainty    *float32
+	Score        *float32
+	ExplainScore *string
 }
 
 type Group[P types.Properties] struct {
@@ -91,12 +117,12 @@ type Group[P types.Properties] struct {
 }
 
 type GroupByObject[P types.Properties] struct {
-	types.Object[P]
+	Object[P]
 	Metadata       QueryMetadata
 	BelongsToGroup string
 }
 
-type GroupByResult struct {
-	Objects []GroupByObject[types.Map]
-	Groups  map[string]Group[types.Map]
+type GroupByResult[P types.Properties] struct {
+	Objects []GroupByObject[P]
+	Groups  map[string]Group[P]
 }

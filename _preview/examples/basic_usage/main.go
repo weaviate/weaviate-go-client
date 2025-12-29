@@ -6,6 +6,7 @@ import (
 
 	weaviate "github.com/weaviate/weaviate-go-client/v6"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
+	"github.com/weaviate/weaviate-go-client/v6/data"
 	"github.com/weaviate/weaviate-go-client/v6/query"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
@@ -21,7 +22,14 @@ func main() {
 	ctx := context.Background()
 
 	// Create client
-	client, _ := weaviate.NewClient()
+	client, _ := weaviate.NewClient("http", "localhost", 8080, 50051)
+
+	client.Collections.Create(ctx, "Songs", collections.WithProperties(
+		collections.Property{Name: "title", DataType: collections.DataTypeText},
+		collections.Property{Name: "artist", DataType: collections.DataTypeText},
+		collections.Property{Name: "year", DataType: collections.DataTypeInt},
+		collections.Property{Name: "genre", DataType: collections.DataTypeText},
+	))
 
 	// Get collection handle
 	songs := client.Collections.Use("Songs")
@@ -37,6 +45,8 @@ func main() {
 	// Example 3: Query with typed results
 	fmt.Println("\n=== Example 3: Query with typed results ===")
 	queryWithTypes(ctx, songs)
+
+	client.Collections.Delete(ctx, "Songs")
 }
 
 func insertObjects(ctx context.Context, songs *collections.Handle) {
@@ -106,5 +116,20 @@ func queryWithTypes(ctx context.Context, songs *collections.Handle) {
 		fmt.Printf("%d. Title: %s, Artist: %s, Year: %d, Genre: %s (UUID: %s)\n",
 			i+1, song.Properties.Title, song.Properties.Artist,
 			song.Properties.Year, song.Properties.Genre, song.UUID)
+	}
+
+	grouped, _ := songs.Query.NearVector.GroupBy(ctx,
+		types.Vector{Single: single},
+		"group by album",
+		query.WithAutoLimit(2),
+	)
+
+	albums := query.ScanGrouped[Song](grouped)
+	for _, album := range albums.Groups {
+		fmt.Printf("album %q has %d songs:", album.Name, album.Size)
+		for _, song := range album.Objects {
+			fmt.Printf("\t%q - %s\n",
+				song.Properties.Title, song.Properties.Lyrics)
+		}
 	}
 }

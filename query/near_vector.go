@@ -7,71 +7,21 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
-// For demo purposes only
-var (
-	mockObject_1 = types.Object[types.Map]{
-		UUID:       "uuid-1",
-		Properties: map[string]any{"number": "one"},
-		Vectors: map[string]types.Vector{
-			"1d": {Name: "1d", Single: []float32{1, 2, 3}},
-			"2d": {Name: "2d", Multi: [][]float32{{1, 2, 3}, {1, 2, 3}}},
-		},
-	}
-	mockObject_2 = types.Object[types.Map]{
-		UUID:       "uuid-2",
-		Properties: map[string]any{"number": "two"},
-		Vectors: map[string]types.Vector{
-			"1d": {Name: "1d", Single: []float32{1, 2, 3}},
-			"2d": {Name: "2d", Multi: [][]float32{{1, 2, 3}, {1, 2, 3}}},
-		},
-	}
-	mockObject_3 = types.Object[types.Map]{
-		UUID:       "uuid-3",
-		Properties: map[string]any{"number": "three"},
-		Vectors: map[string]types.Vector{
-			"1d": {Name: "1d", Single: []float32{1, 2, 3}},
-			"2d": {Name: "2d", Multi: [][]float32{{1, 2, 3}, {1, 2, 3}}},
-		},
-	}
-)
+type NearVectorTarget any
 
 // NearVectorFunc runs plain near vector search.
 type NearVectorFunc func(context.Context, NearVectorTarget, ...NearVectorOption) (*Result, error)
 
 // GroupBy runs near vector search with a group by clause.
-func (nv NearVectorFunc) GroupBy(ctx context.Context, target NearVectorTarget, groupBy string, options ...NearVectorOption) (*GroupByResult, error) {
-	ctxcpy := internal.ContextWithGroupByResult(ctx)
-	_, err := nv(ctxcpy, target, NearVectorOptions(options).Add(withGroupBy(groupBy)))
-	if err != nil {
-		return nil, err
-	}
-	_ = internal.GroupByResultFromContext(ctxcpy)
-	return &GroupByResult{
-		Objects: []GroupByObject[types.Map]{
-			{Object: mockObject_1, BelongsToGroup: "a"},
-			{Object: mockObject_2, BelongsToGroup: "b"},
-			{Object: mockObject_3, BelongsToGroup: "b"},
-		},
-		Groups: map[string]Group[types.Map]{
-			"a": {
-				Name: "a", Size: 1, Objects: []GroupByObject[types.Map]{
-					{Object: mockObject_1, BelongsToGroup: "a"},
-				},
-			},
-			"b": {
-				Name: "b", Size: 2, Objects: []GroupByObject[types.Map]{
-					{Object: mockObject_2, BelongsToGroup: "b"},
-					{Object: mockObject_3, BelongsToGroup: "b"},
-				},
-			},
-		},
-	}, nil
+func (nv NearVectorFunc) GroupBy(ctx context.Context, target NearVectorTarget, groupBy string, options ...NearVectorOption) (*GroupByResult[types.Map], error) {
+	return &GroupByResult[types.Map]{}, nil
 }
 
 type nearVectorRequest struct {
 	commonOptions
 	Target              NearVectorTarget
-	Distance, Certainty *float32
+	Distance, Certainty *float64
+	GroupBy             *GroupBy
 }
 
 // NearVectorOption populates nearVectorRequest.
@@ -86,28 +36,22 @@ func (opts NearVectorOptions) Add(options ...NearVectorOption) NearVectorOptions
 	return opts
 }
 
-// DistanceOption sets the `distance` parameter.
-type DistanceOption float32
+// WithDistance sets the `distance` parameter.
+type WithDistance float64
 
-var _ NearVectorOption = (*DistanceOption)(nil)
+var _ NearVectorOption = (*WithDistance)(nil)
 
-func WithDistance(l float32) DistanceOption {
-	return DistanceOption(l)
-}
+// WithCertainty sets the `certainty` parameter.
+type WithCertainty float64
 
-// CertaintyOption sets the `certainty` parameter.
-type CertaintyOption float32
+var _ NearVectorOption = (*WithCertainty)(nil)
 
-var _ NearVectorOption = (*CertaintyOption)(nil)
-
-func WithCertainty(l float32) CertaintyOption {
-	return CertaintyOption(l)
-}
-
-func nearVector(context.Context, internal.Transport, NearVectorTarget, ...NearVectorOption) (*Result, error) {
-	return &Result{
-		Objects: []types.Object[types.Map]{mockObject_1, mockObject_2, mockObject_3},
-	}, nil
+func nearVector(ctx context.Context, t internal.Transport, target NearVectorTarget, options ...NearVectorOption) (*Result, error) {
+	var nv nearVectorRequest
+	for _, opt := range options {
+		opt.apply(&nv)
+	}
+	return &Result{}, nil
 }
 
 // nearVectorFunc makes internal.Transport available to nearVector via a closure.
@@ -117,37 +61,48 @@ func nearVectorFunc(t internal.Transport) NearVectorFunc {
 	}
 }
 
-func (l LimitOption) apply(r *nearVectorRequest) {
-	r.commonOptions.Limit = (*int)(&l)
+func (opt WithLimit) apply(r *nearVectorRequest) {
+	r.Limit = (*int)(&opt)
 }
 
-func (l OffsetOption) apply(r *nearVectorRequest) {
-	r.commonOptions.Offset = (*int)(&l)
+func (opt WithOffset) apply(r *nearVectorRequest) {
+	r.Offset = (*int)(&opt)
 }
 
-func (l AutoLimitOption) apply(r *nearVectorRequest) {
-	r.commonOptions.AutoLimit = (*int)(&l)
+func (opt WithAutoLimit) apply(r *nearVectorRequest) {
+	r.AutoLimit = (*int)(&opt)
 }
 
-func (d CertaintyOption) apply(r *nearVectorRequest) {
-	r.Certainty = (*float32)(&d)
+func (opt WithAfter) apply(r *nearVectorRequest) {
+	r.After = (*string)(&opt)
 }
 
-func (d DistanceOption) apply(r *nearVectorRequest) {
-	r.Distance = (*float32)(&d)
+func (opt returnPropertiesOption) apply(r *nearVectorRequest) {
+	r.ReturnProperties = opt
+}
+
+func (opt WithCertainty) apply(r *nearVectorRequest) {
+	r.Certainty = (*float64)(&opt)
+}
+
+func (opt WithDistance) apply(r *nearVectorRequest) {
+	r.Distance = (*float64)(&opt)
+}
+
+// apply implements NearVectorOption.
+func (r *returnMetadataOption) apply(req *nearVectorRequest) {
+	req.ReturnMetadata = append(req.ReturnMetadata, *r...)
 }
 
 // apply implements NearVectorOption.
 func (gb groupByOption) apply(r *nearVectorRequest) {
-	r.commonOptions.GroupBy = (*GroupBy)(&gb)
+	r.GroupBy = (*GroupBy)(&gb)
 }
 
+// NearVectorOption can be applied as a single option,
+// in which case it will individually apply the options it comprises.
 func (opts NearVectorOptions) apply(r *nearVectorRequest) {
 	for _, opt := range opts {
 		opt.apply(r)
 	}
-}
-
-type NearVectorTarget interface {
-	ToProto()
 }
