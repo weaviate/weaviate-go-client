@@ -4,7 +4,6 @@ import (
 	"github.com/google/uuid"
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
-	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
 type (
@@ -32,8 +31,8 @@ type (
 // Compile-time assertions that SearchRequest/SearchResponse
 // implement valid gRPC message interfaces.
 var (
-	_ transport.MessageMarshaler[proto.SearchRequest] = (*SearchRequest)(nil)
-	_ transport.MessageUnmarshaler[proto.SearchReply] = (*SearchResponse)(nil)
+	_ MessageMarshaler[proto.SearchRequest] = (*SearchRequest)(nil)
+	_ MessageUnmarshaler[proto.SearchReply] = (*SearchResponse)(nil)
 )
 
 type GetObjectRequest struct {
@@ -41,10 +40,10 @@ type GetObjectRequest struct {
 	UUID uuid.UUID
 }
 
-var _ transport.MessageMarshaler[proto.SearchRequest] = (*GetObjectRequest)(nil)
+var _ MessageMarshaler[proto.SearchRequest] = (*GetObjectRequest)(nil)
 
 // MarshalMessage implements transport.MessageMarshaler.
-func (r *GetObjectRequest) MarshalMessage() *proto.SearchRequest {
+func (r *GetObjectRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	// TODO(dyma): add a UUID filter with r.UUID
 	search := &SearchRequest{}
 	return search.MarshalMessage()
@@ -176,7 +175,7 @@ func (cm CombinationMethod) proto() proto.CombinationMethod {
 }
 
 // MarshalSearchRequest() constructs a proto.SearchRequest.
-func (r *SearchRequest) MarshalMessage() *proto.SearchRequest {
+func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	after := r.After.String()
 	if r.After == uuid.Nil {
 		after = ""
@@ -243,7 +242,7 @@ func (r *SearchRequest) MarshalMessage() *proto.SearchRequest {
 		// This would be the case when fetch objects with a conventional filter.
 	}
 
-	return req
+	return req, nil
 }
 
 func marshalNearVector(req *NearVector) *proto.NearVector {

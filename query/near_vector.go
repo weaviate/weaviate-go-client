@@ -74,7 +74,7 @@ func (nvf NearVectorFunc) GroupBy(ctx context.Context, nv NearVector, groupBy Gr
 	return getGroupByResult(ctx), nil
 }
 
-func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefaults, nv NearVector) (*Result, error) {
+func nearVector(ctx context.Context, t api.SearchTransport, rd api.RequestDefaults, nv NearVector) (*Result, error) {
 	req := &api.SearchRequest{
 		RequestDefaults:  rd,
 		Limit:            nv.Limit,
@@ -135,7 +135,7 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 }
 
 // nearVectorFunc makes internal.Transport available to nearVector via a closure.
-func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc {
+func nearVectorFunc(t api.SearchTransport, rd api.RequestDefaults) NearVectorFunc {
 	return func(ctx context.Context, nv NearVector) (*Result, error) {
 		return nearVector(ctx, t, rd, nv)
 	}

@@ -3,11 +3,10 @@ package aggregate
 import (
 	"time"
 
-	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 )
 
-func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
+func NewClient(t api.AggregateTransport, rd api.RequestDefaults) *Client {
 	return &Client{
 		transport:  t,
 		defaults:   rd,
@@ -16,7 +15,7 @@ func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
 }
 
 type Client struct {
-	transport internal.Transport
+	transport api.AggregateTransport
 	defaults  api.RequestDefaults
 
 	NearVector NearVectorFunc

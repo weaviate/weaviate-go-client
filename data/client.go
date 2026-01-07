@@ -10,16 +10,18 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
-func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
+func NewClient(r api.REST, g api.GRPC, rd api.RequestDefaults) *Client {
 	return &Client{
-		transport: t,
-		defaults:  rd,
+		rest:     r,
+		gRPC:     g,
+		defaults: rd,
 	}
 }
 
 type Client struct {
-	transport internal.Transport
-	defaults  api.RequestDefaults
+	rest     api.REST
+	gRPC     api.GRPC
+	defaults api.RequestDefaults
 }
 
 // TODO(dyma): generic Properties
@@ -39,7 +41,7 @@ func (c *Client) Insert(ctx context.Context, ir *Object) (*types.Object[types.Ma
 	}
 
 	var resp api.InsertObjectResponse
-	if err := c.transport.Do(ctx, req, &resp); err != nil {
+	if err := c.rest.Do(ctx, req, &resp); err != nil {
 		return nil, fmt.Errorf("insert object: %w", err)
 	}
 
@@ -60,7 +62,7 @@ func (c *Client) Replace(ctx context.Context, ir Object) (*types.Object[types.Ma
 	}
 
 	var resp api.ReplaceObjectResponse
-	if err := c.transport.Do(ctx, req, &resp); err != nil {
+	if err := c.rest.Do(ctx, req, &resp); err != nil {
 		return nil, fmt.Errorf("insert object: %w", err)
 	}
 
@@ -80,7 +82,7 @@ func (c *Client) Exists(ctx context.Context, id uuid.UUID) (bool, error) {
 	}
 
 	var exists api.ResourceExistsResponse
-	if err := c.transport.Do(ctx, req, &exists); err != nil {
+	if err := c.gRPC.Search(ctx, req, &exists); err != nil {
 		return false, fmt.Errorf("check object exists: %w", err)
 	}
 	return exists.Bool(), nil
@@ -95,11 +97,11 @@ func newVectors(vectors []types.Vector) []api.Vector {
 }
 
 func (c *Client) Delete(ctx context.Context, id uuid.UUID) error {
-	req := api.DeleteObjectRequest{
+	req := &api.DeleteObjectRequest{
 		RequestDefaults: c.defaults,
 		UUID:            id,
 	}
-	if err := c.transport.Do(ctx, req, nil); err != nil {
+	if err := c.rest.Do(ctx, req, nil); err != nil {
 		return fmt.Errorf("delete alias: %w", err)
 	}
 	return nil

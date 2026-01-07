@@ -9,9 +9,22 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
+	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
+
+// RESTConfig options for [Transport].
+type RESTConfig struct {
+	Scheme  string // Scheme for request URLs, "http" or "https".
+	Host    string // Hostname of the REST host.
+	Port    int    // Port number of the REST host
+	Header  http.Header
+	Timeout time.Duration
+	Version string // Version of the REST API.
+	// TODO: Authentication, Timeout
+}
 
 // Endpoint describes a REST request.
 type Endpoint interface {
@@ -39,7 +52,7 @@ type StatusAccepter interface {
 	AcceptStatus(code int) bool
 }
 
-func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
+func (t *Transport) Do(ctx context.Context, req Endpoint, dest any) error {
 	var body io.Reader
 	if b := req.Body(); b != nil {
 		marshaled, err := json.Marshal(b)
@@ -49,14 +62,14 @@ func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 		body = bytes.NewReader(marshaled)
 	}
 
-	url := c.url(req)
+	url := t.url(req)
 	httpreq, err := http.NewRequestWithContext(ctx, req.Method(), url, body)
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}
 
 	// Clone default request headers.
-	httpreq.Header = c.header.Clone()
+	httpreq.Header = t.header.Clone()
 
 	// Accept JSON even if dest is nil, as we don't want to spoof the request.
 	httpreq.Header.Set("Accept", "application/json")
@@ -64,7 +77,7 @@ func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 		httpreq.Header.Set("Content-Type", "application/json")
 	}
 
-	res, err := c.hc.Do(httpreq)
+	res, err := t.hc.Do(httpreq)
 	if err != nil {
 		return fmt.Errorf("execute request: %q", err)
 	}
@@ -103,28 +116,10 @@ func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 	return nil
 }
 
-type httpClient struct {
-	hc      *http.Client
-	baseURL string
-	header  http.Header
-}
-
-func newHTTP(opt Config) *httpClient {
-	baseURL := fmt.Sprintf(
-		"%s://%s:%d/%s/",
-		opt.Scheme, opt.HTTPHost, opt.HTTPPort, opt.Version,
-	)
-	return &httpClient{
-		hc:      &http.Client{},
-		baseURL: baseURL,
-		header:  opt.Header,
-	}
-}
-
-func (c *httpClient) url(req Endpoint) string {
+func (t *Transport) url(req Endpoint) string {
 	var url strings.Builder
 
-	url.WriteString(c.baseURL)
+	url.WriteString(t.baseURL)
 	url.WriteString(strings.TrimLeft(req.Path(), "/"))
 
 	if query := req.Query(); len(query) > 0 {
@@ -134,6 +129,34 @@ func (c *httpClient) url(req Endpoint) string {
 
 	return url.String()
 }
+
+func NewREST(opt RESTConfig) (*Transport, error) {
+	baseURL := fmt.Sprintf(
+		"%s://%s:%d/%s/",
+		opt.Scheme, opt.Host, opt.Port, opt.Version,
+	)
+	return &Transport{
+		hc:      &http.Client{},
+		baseURL: baseURL,
+		header:  opt.Header,
+	}, nil
+}
+
+// Transport is an implementation of the [internal.Transport] interface,
+// which supports REST and gRPC requests.
+// REST requests are executed via an [http.Client]
+// and gRPC requests are delegated to [proto.WeaviateClient].
+//
+// Use [NewREST] to create a new transport. Call Close()
+// when the Transport is not longer in use to free resources.
+type Transport struct {
+	hc      *http.Client
+	baseURL string
+	header  http.Header
+}
+
+// Compile-time assertion that transport implements Transport.
+var _ internal.Transport[Endpoint, any] = (*Transport)(nil)
 
 // BaseEndpoint implements [Endpoint] methods which may return nil.
 // These values are usually optional in the request.
@@ -198,10 +221,10 @@ func (e *staticEndpoint) Path() string   { return e.path }
 //
 //	// BAD: panics because pathFmt contains 2 formatting directives.
 //	var DeleteSongsRequest = transport.IdentityEndpoint[uuid.UUID](http.MethodGet, "/albums/%v/songs/%v")
-func IdentityEndpoint[I any](method, pathFmt string) func(I) any {
+func IdentityEndpoint[I any](method, pathFmt string) func(I) Endpoint {
 	dev.Assert(strings.Count(pathFmt, "%") == 1, "%s must have a single formatting directive", pathFmt)
 
-	return func(id I) any {
+	return func(id I) Endpoint {
 		return &identityEndpoint[I]{
 			method:  method,
 			pathFmt: pathFmt,

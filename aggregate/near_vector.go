@@ -23,9 +23,9 @@ type NearVector struct {
 	ObjectLimit int32
 }
 
-type NearVectorFunc func(context.Context, NearVector) (any, error)
+type NearVectorFunc func(context.Context, NearVector) (*Result, error)
 
-func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefaults, nv NearVector) (any, error) {
+func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefaults, nv NearVector) (*Result, error) {
 	req := &api.AggregateRequest{
 		RequestDefaults: rd,
 		TotalCount:      nv.TotalCount,
@@ -154,7 +154,7 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 }
 
 func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc {
-	return func(ctx context.Context, nv NearVector) (any, error) {
+	return func(ctx context.Context, nv NearVector) (*Result, error) {
 		return nearVector(ctx, t, rd, nv)
 	}
 }

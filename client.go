@@ -122,15 +122,25 @@ var defaultConfig = ConnectionConfig{
 
 func newClient(_ context.Context, cfg *ConnectionConfig) (*Client, error) {
 	defaultConfig.extend(cfg)
-
-	t, err := api.NewTransport(api.TransportConfig{
+	tc := api.TransportConfig{
 		Scheme:   cfg.Scheme,
 		HTTPHost: cfg.HTTPHost,
 		GRPCHost: cfg.GRPCHost,
 		HTTPPort: cfg.HTTPPort,
 		GRPCPort: cfg.GRPCPort,
 		Header:   cfg.Header,
-	})
+	}
+
+	rest, err := api.NewREST(tc)
+	if err != nil {
+		return nil, fmt.Errorf("weaviate: new client: %w", err)
+	}
+
+	gRPC, err := api.NewGRPC(tc)
+	if err != nil {
+		return nil, fmt.Errorf("weaviate: new client: %w", err)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("weaviate: new client: %w", err)
 	}

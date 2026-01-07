@@ -5,16 +5,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 )
 
-func NewClient(t internal.Transport) *Client {
+func NewClient(t api.RESTTransport) *Client {
 	return &Client{transport: t}
 }
 
 type Client struct {
-	transport internal.Transport
+	transport api.RESTTransport
 }
 
 type Info struct {

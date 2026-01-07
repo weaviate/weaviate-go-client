@@ -3,12 +3,11 @@ package query
 import (
 	"maps"
 
-	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
-func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
+func NewClient(t api.SearchTransport, rd api.RequestDefaults) *Client {
 	return &Client{
 		transport:  t,
 		defaults:   rd,
@@ -17,7 +16,7 @@ func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
 }
 
 type Client struct {
-	transport internal.Transport
+	transport api.SearchTransport
 	defaults  api.RequestDefaults
 
 	NearVector NearVectorFunc

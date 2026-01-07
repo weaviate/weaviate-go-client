@@ -28,9 +28,9 @@ type AggregateRequest struct {
 	*NearVector
 }
 
-var _ transport.MessageMarshaler[proto.AggregateRequest] = (*AggregateRequest)(nil)
+var _ messageMarshaler[proto.AggregateRequest] = (*AggregateRequest)(nil)
 
-func (r *AggregateRequest) MarshalMessage() *proto.AggregateRequest {
+func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 	var aggs []*proto.AggregateRequest_Aggregation
 	for property, txt := range sortedMap(r.Text) {
 		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
@@ -96,7 +96,7 @@ func (r *AggregateRequest) MarshalMessage() *proto.AggregateRequest {
 		// This would be the case when fetch objects with a conventional filter.
 	}
 
-	return req
+	return req, nil
 }
 
 type (
