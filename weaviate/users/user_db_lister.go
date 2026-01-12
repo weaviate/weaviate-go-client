@@ -16,11 +16,17 @@ type UserInfoList []UserInfo
 type UserDBLister struct {
 	connection *connection.Connection
 
-	userID string
+	userID              string
+	includeLastUsedTime bool
 }
 
 func (r *UserDBLister) WithUserID(id string) *UserDBLister {
 	r.userID = id
+	return r
+}
+
+func (r *UserDBLister) WithLastUsedTime() *UserDBLister {
+	r.includeLastUsedTime = true
 	return r
 }
 
@@ -35,11 +41,13 @@ func (r *UserDBLister) Do(ctx context.Context) (UserInfoList, error) {
 		data := make(UserInfoList, len(response))
 		for i, user := range response {
 			data[i] = UserInfo{
-				Active:    *user.Active,
-				CreatedAt: time.Time(user.CreatedAt),
-				UserType:  rbac.UserType(*user.DbUserType),
-				UserID:    *user.UserID,
-				Roles:     []*rbac.Role{},
+				Active:             *user.Active,
+				CreatedAt:          time.Time(user.CreatedAt),
+				UserType:           rbac.UserType(*user.DbUserType),
+				UserID:             *user.UserID,
+				Roles:              []*rbac.Role{},
+				ApiKeyFirstLetters: user.APIKeyFirstLetters,
+				LastUsedAt:         time.Time(user.LastUsedAt),
 			}
 			for _, role := range user.Roles {
 				data[i].Roles = append(data[i].Roles, &rbac.Role{
@@ -53,5 +61,10 @@ func (r *UserDBLister) Do(ctx context.Context) (UserInfoList, error) {
 }
 
 func (r *UserDBLister) path() string {
-	return "/users/db"
+	p := "/users/db"
+	if r.includeLastUsedTime {
+		p += "?includeLastUsedTime=true"
+	}
+
+	return p
 }

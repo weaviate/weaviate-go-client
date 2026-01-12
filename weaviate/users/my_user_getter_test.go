@@ -52,6 +52,17 @@ func TestUserInfo_UnmarshalJSON(t *testing.T) {
 			want: users.UserInfo{CreatedAt: time.Date(2025, time.April, 8, 9, 33, 0, 0,
 				time.UTC), UserID: "John Doe"},
 		},
+		{
+			name: "has last used at specific time",
+			json: `{"lastUsedAt": "2025-05-10T15:20:00+00:00", "username": "John Doe"}`,
+			want: users.UserInfo{LastUsedAt: time.Date(2025, time.May, 10, 15, 20, 0, 0,
+				time.UTC), UserID: "John Doe"},
+		},
+		{
+			name: "returns first letters of api key",
+			json: `{"apiKeyFirstLetters": "abcd1234", "username": "John Doe"}`,
+			want: users.UserInfo{ApiKeyFirstLetters: "abcd1234", UserID: "John Doe"},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			var got users.UserInfo

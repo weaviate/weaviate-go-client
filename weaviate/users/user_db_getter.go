@@ -13,11 +13,17 @@ import (
 type UserDBGetter struct {
 	connection *connection.Connection
 
-	userID string
+	userID              string
+	includeLastUsedTime bool
 }
 
 func (r *UserDBGetter) WithUserID(id string) *UserDBGetter {
 	r.userID = id
+	return r
+}
+
+func (r *UserDBGetter) WithLastUsedTime() *UserDBGetter {
+	r.includeLastUsedTime = true
 	return r
 }
 
@@ -35,5 +41,10 @@ func (r *UserDBGetter) Do(ctx context.Context) (UserInfo, error) {
 }
 
 func (r *UserDBGetter) path() string {
-	return fmt.Sprintf("/users/db/%s", url.PathEscape(r.userID))
+	p := fmt.Sprintf("/users/db/%s", url.PathEscape(r.userID))
+	if r.includeLastUsedTime {
+		p += "?includeLastUsedTime=true"
+	}
+
+	return p
 }
