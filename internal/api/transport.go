@@ -47,6 +47,10 @@ func newTransport(cfg TransportConfig) (internal.Transport, error) {
 		return nil, fmt.Errorf("get instance metadata: %w", err)
 	}
 
+	if !isVersionSupported(meta.Version) {
+		return nil, ErrVersionNotSupported
+	}
+
 	gRPC, err := transports.NewGRPC(transports.GRPCConfig[proto.WeaviateClient]{
 		Scheme:  cfg.Scheme,
 		Host:    cfg.GRPCHost,
@@ -71,6 +75,12 @@ func newTransport(cfg TransportConfig) (internal.Transport, error) {
 type TransportFactory func(TransportConfig) (internal.Transport, error)
 
 var NewTransport TransportFactory = newTransport
+
+// Request structs can implement Requester to control how the request is sent
+// depending on the server version.
+type Requester interface {
+	Request(version string) any
+}
 
 // RequestMessage enumerates all gRPC requests accepted by versionedTransport.
 type RequestMessage interface {
@@ -108,7 +118,7 @@ type MessageUnmarshaler[Out ReplyMessage] interface {
 }
 
 type versionedTransport struct {
-	version string // TODO: put behind internal/semver
+	version string
 	rest    *transports.REST
 	gRPC    *transports.GRPC[proto.WeaviateClient]
 }
@@ -119,6 +129,9 @@ var (
 )
 
 func (vt *versionedTransport) Do(ctx context.Context, req any, dest any) error {
+	if r, ok := req.(Requester); ok {
+		req = r.Request(vt.version)
+	}
 	switch req := req.(type) {
 	case transports.Endpoint:
 		return vt.rest.Do(ctx, req, dest)
