@@ -10,21 +10,21 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
-	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
-type MessageMarshalerTest[R transport.RequestMessage] struct {
+type MessageMarshalerTest[In api.RequestMessage, Out api.ReplyMessage] struct {
 	name string
-	req  transport.MessageMarshaler[R]
-	want *R
+	req  api.Message[In, Out]
+	want *In
 }
 
-// testMessageMarshaler runs test cases for [transport.MessageMarshaler] implementations.
-func testMessageMarshaler[R transport.RequestMessage](t *testing.T, tests []MessageMarshalerTest[R]) {
+// testMessageMarshaler runs test cases for [transports.MessageMarshaler] implementations.
+func testMessageMarshaler[In api.RequestMessage, Out api.ReplyMessage](t *testing.T, tests []MessageMarshalerTest[In, Out]) {
 	t.Helper()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.req.MarshalMessage()
+			got, err := tt.req.MarshalMessage()
+			require.NoError(t, err)
 			require.EqualExportedValues(t, tt.want, got)
 		})
 	}
@@ -62,7 +62,7 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 		})
 		return in
 	}
-	testMessageMarshaler(t, []MessageMarshalerTest[proto.AggregateRequest]{
+	testMessageMarshaler(t, []MessageMarshalerTest[proto.AggregateRequest, proto.AggregateReply]{
 		{
 			name: "with limit",
 			req:  &api.AggregateRequest{Limit: 10},
@@ -335,24 +335,24 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 
 // ----------------------------------------------------------------------------
 
-type MessageUnmarshalerTest[R transport.ReplyMessage, Dest any] struct {
+type MessageUnmarshalerTest[R api.ReplyMessage, Dest any] struct {
 	name      string
 	reply     *R
 	want      *Dest
 	expectErr func(*testing.T, error) // Use require.NoError if nil.
 }
 
-// testMessageMarshaler runs test cases for [transport.MessageUnmarshaler] implementations.
-func testMessageUnmarshaler[R transport.ReplyMessage, Dest any](t *testing.T, tests []MessageUnmarshalerTest[R, Dest]) {
+// testMessageMarshaler runs test cases for [api.MessageUnmarshaler] implementations.
+func testMessageUnmarshaler[R api.ReplyMessage, Dest any](t *testing.T, tests []MessageUnmarshalerTest[R, Dest]) {
 	t.Helper()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
 			var dest any = new(Dest)
-			require.Implements(t, (*transport.MessageUnmarshaler[R])(nil), dest)
+			require.Implements(t, (*api.MessageUnmarshaler[R])(nil), dest)
 
 			// Act
-			err := dest.(transport.MessageUnmarshaler[R]).UnmarshalMessage(tt.reply)
+			err := dest.(api.MessageUnmarshaler[R]).UnmarshalMessage(tt.reply)
 
 			// Assert
 			if tt.expectErr == nil {

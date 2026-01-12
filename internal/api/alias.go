@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
-var DeleteAliasRequest = transport.IdentityEndpoint[string](http.MethodDelete, "/aliases/%s")
+var DeleteAliasRequest = transports.IdentityEndpoint[string](http.MethodDelete, "/aliases/%s")

@@ -1,4 +1,4 @@
-package transport
+package transports
 
 import (
 	"bytes"
@@ -9,9 +9,21 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
+
+// Config options for [REST].
+type RESTConfig struct {
+	Scheme  string // Scheme for request URLs, "http" or "https".
+	Host    string // Hostname of the REST host.
+	Port    int    // Port number of the REST host
+	Header  http.Header
+	Timeout time.Duration
+	Version string // Version of the REST API.
+	// TODO(dyma): Authentication
+}
 
 // Endpoint describes a REST request.
 type Endpoint interface {
@@ -39,7 +51,7 @@ type StatusAccepter interface {
 	AcceptStatus(code int) bool
 }
 
-func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
+func (c *REST) Do(ctx context.Context, req Endpoint, dest any) error {
 	var body io.Reader
 	if b := req.Body(); b != nil {
 		marshaled, err := json.Marshal(b)
@@ -103,25 +115,25 @@ func (c *httpClient) do(ctx context.Context, req Endpoint, dest any) error {
 	return nil
 }
 
-type httpClient struct {
+type REST struct {
 	hc      *http.Client
 	baseURL string
 	header  http.Header
 }
 
-func newHTTP(opt Config) *httpClient {
+func NewREST(cfg RESTConfig) *REST {
 	baseURL := fmt.Sprintf(
 		"%s://%s:%d/%s/",
-		opt.Scheme, opt.HTTPHost, opt.HTTPPort, opt.Version,
+		cfg.Scheme, cfg.Host, cfg.Port, cfg.Version,
 	)
-	return &httpClient{
+	return &REST{
 		hc:      &http.Client{},
 		baseURL: baseURL,
-		header:  opt.Header,
+		header:  cfg.Header,
 	}
 }
 
-func (c *httpClient) url(req Endpoint) string {
+func (c *REST) url(req Endpoint) string {
 	var url strings.Builder
 
 	url.WriteString(c.baseURL)

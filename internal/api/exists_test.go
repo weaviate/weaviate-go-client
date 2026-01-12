@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
-	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
 // Test how api.ResourceExistsResponse unmarshals supported HTTP and gRPC reponses.
@@ -19,8 +19,8 @@ func TestResourceExistsResponse(t *testing.T) {
 		var exists api.ResourceExistsResponse
 		assert.False(t, exists.Bool(), "Bool() of zero value")
 
-		if assert.Implements(t, (*transport.StatusAccepter)(nil), exists) {
-			acc := (any(exists)).(transport.StatusAccepter)
+		if assert.Implements(t, (*transports.StatusAccepter)(nil), exists) {
+			acc := (any(exists)).(transports.StatusAccepter)
 			assert.True(t, acc.AcceptStatus(http.StatusNotFound), "must accept 404 Not Found")
 
 			// Check all other error status codes, fail fast.
@@ -53,7 +53,7 @@ func TestResourceExistsResponse(t *testing.T) {
 		var zero api.ResourceExistsResponse
 		assert.False(t, zero.Bool(), "Bool() of zero value")
 
-		require.Implements(t, (*transport.MessageUnmarshaler[proto.SearchReply])(nil), &zero)
+		require.Implements(t, (*api.MessageUnmarshaler[proto.SearchReply])(nil), &zero)
 
 		for _, tt := range []struct {
 			reply *proto.SearchReply // Cannot be nil, but we mustn't copy the lock in proto.SearchReply.
@@ -66,7 +66,7 @@ func TestResourceExistsResponse(t *testing.T) {
 			t.Run(fmt.Sprintf("reply with %d results", len(tt.reply.Results)), func(t *testing.T) {
 				var exists api.ResourceExistsResponse
 
-				u := (any(&exists)).(transport.MessageUnmarshaler[proto.SearchReply])
+				u := (any(&exists)).(api.MessageUnmarshaler[proto.SearchReply])
 				err := u.UnmarshalMessage(tt.reply)
 				require.NoError(t, err, "unmashal reply message")
 

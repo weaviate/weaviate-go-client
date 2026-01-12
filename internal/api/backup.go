@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/rest"
-	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
 type BackupInfo struct {
@@ -63,7 +63,7 @@ const (
 )
 
 type CreateBackupRequest struct {
-	transport.BaseEndpoint
+	transports.BaseEndpoint
 
 	Backend            string // Required: backend storage.
 	ID                 string // Required: backup ID.
@@ -77,10 +77,10 @@ type CreateBackupRequest struct {
 	CompressionLevel   BackupCompressionLevel
 }
 
-// Compile-time assertion that CreateBackupRequest implements [transport.Endpoint].
+// Compile-time assertion that CreateBackupRequest implements [transports.Endpoint].
 var (
-	_ transport.Endpoint = (*CreateBackupRequest)(nil)
-	_ json.Marshaler     = (*CreateBackupRequest)(nil)
+	_ transports.Endpoint = (*CreateBackupRequest)(nil)
+	_ json.Marshaler      = (*CreateBackupRequest)(nil)
 )
 
 func (*CreateBackupRequest) Method() string { return http.MethodPost }
@@ -88,7 +88,7 @@ func (r *CreateBackupRequest) Path() string { return "/backups/" + r.Backend }
 func (r *CreateBackupRequest) Body() any    { return r }
 
 type RestoreBackupRequest struct {
-	transport.BaseEndpoint
+	transports.BaseEndpoint
 
 	Backend            string
 	ID                 string
@@ -104,10 +104,10 @@ type RestoreBackupRequest struct {
 	NodeMapping        map[string]string
 }
 
-// Compile-time assertion that RestoreBackupRequest implements [transport.Endpoint].
+// Compile-time assertion that RestoreBackupRequest implements [transports.Endpoint].
 var (
-	_ transport.Endpoint = (*RestoreBackupRequest)(nil)
-	_ json.Marshaler     = (*RestoreBackupRequest)(nil)
+	_ transports.Endpoint = (*RestoreBackupRequest)(nil)
+	_ json.Marshaler      = (*RestoreBackupRequest)(nil)
 )
 
 func (*RestoreBackupRequest) Method() string { return http.MethodPost }
@@ -117,15 +117,15 @@ func (r *RestoreBackupRequest) Path() string {
 func (r *RestoreBackupRequest) Body() any { return r }
 
 type BackupStatusRequest struct {
-	transport.BaseEndpoint
+	transports.BaseEndpoint
 
 	Backend   string
 	ID        string
 	Operation BackupOperation
 }
 
-// Compile-time assertion that BackupStatusRequest implements [transport.Endpoint].
-var _ transport.Endpoint = (*BackupStatusRequest)(nil)
+// Compile-time assertion that BackupStatusRequest implements [transports.Endpoint].
+var _ transports.Endpoint = (*BackupStatusRequest)(nil)
 
 func (*BackupStatusRequest) Method() string { return http.MethodGet }
 func (r *BackupStatusRequest) Path() string {
@@ -138,14 +138,14 @@ func (r *BackupStatusRequest) Path() string {
 
 // ListBackupsRequest fetches all requests in a backend storage.
 type ListBackupsRequest struct {
-	transport.BaseEndpoint
+	transports.BaseEndpoint
 
 	Backend         string
 	StartingTimeAsc bool
 }
 
-// Compile-time assertion that ListBackupsRequest implements [transport.Endpoint].
-var _ transport.Endpoint = (*ListBackupsRequest)(nil)
+// Compile-time assertion that ListBackupsRequest implements [transports.Endpoint].
+var _ transports.Endpoint = (*ListBackupsRequest)(nil)
 
 func (*ListBackupsRequest) Method() string { return http.MethodGet }
 func (r *ListBackupsRequest) Path() string { return "/backups/" + r.Backend }
@@ -157,14 +157,14 @@ func (r *ListBackupsRequest) Query() url.Values {
 }
 
 type CancelBackupRequest struct {
-	transport.BaseEndpoint
+	transports.BaseEndpoint
 
 	Backend string
 	ID      string
 }
 
-// Compile-time assertion that CancelBackupRequest implements [transport.Endpoint].
-var _ transport.Endpoint = (*CancelBackupRequest)(nil)
+// Compile-time assertion that CancelBackupRequest implements [transports.Endpoint].
+var _ transports.Endpoint = (*CancelBackupRequest)(nil)
 
 func (*CancelBackupRequest) Method() string { return http.MethodDelete }
 func (r *CancelBackupRequest) Path() string { return "/backups/" + r.Backend + "/" + r.ID }

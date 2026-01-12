@@ -1,46 +1,198 @@
 package api
 
 import (
-	"sync"
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
-	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
+	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
+
+type TransportConfig struct {
+	Scheme   string // Scheme for request URLs, "http" or "https".
+	RESTHost string // Hostname of the REST host.
+	RESTPort int    // Port number of the REST host
+	GRPCHost string // Hostname of the gRPC host.
+	GRPCPort int    // Port number of the gRPC host.
+	Header   http.Header
+	Timeout  time.Duration
+	// TODO(dyma): Authentication, Timeout
+
+	// Ping forces [NewTransport] to try and connect to the gRPC server.
+	// By default [grpc.Client] will only establish a connection on the first call
+	// to one of its methods to avoid I/O on instantiation.
+	Ping bool
+}
+
+func newTransport(cfg TransportConfig) (internal.Transport, error) {
+	rest := transports.NewREST(transports.RESTConfig{
+		Scheme:  cfg.Scheme,
+		Host:    cfg.RESTHost,
+		Port:    cfg.RESTPort,
+		Header:  cfg.Header,
+		Timeout: cfg.Timeout,
+		Version: Version,
+	})
+
+	gRPC, err := transports.NewGRPC(transports.GRPCConfig[proto.WeaviateClient]{
+		Scheme:  cfg.Scheme,
+		Host:    cfg.GRPCHost,
+		Port:    cfg.GRPCPort,
+		Header:  (*metadata.MD)(&cfg.Header),
+		Timeout: cfg.Timeout,
+
+		NewGRPCClient: proto.NewWeaviateClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &versionedTransport{
+		rest: rest,
+		gRPC: gRPC,
+	}, nil
+}
 
 // TransportFactory returns an internal.Transport instance for TransportConfig.
 type TransportFactory func(TransportConfig) (internal.Transport, error)
 
+var NewTransport TransportFactory = newTransport
+
+// RequestMessage enumerates all gRPC requests accepted by versionedTransport.
+type RequestMessage interface {
+	proto.SearchRequest |
+		proto.AggregateRequest |
+		proto.TenantsGetRequest |
+		proto.BatchDeleteRequest |
+		proto.BatchObjectsRequest |
+		proto.BatchReferencesRequest
+}
+
+// ReplyMessage enumerates gRPC replies versionedTransport supports.
+type ReplyMessage interface {
+	proto.SearchReply |
+		proto.AggregateReply |
+		proto.TenantsGetReply |
+		proto.BatchDeleteReply |
+		proto.BatchObjectsReply |
+		proto.BatchReferencesReply
+}
+
+type WeaviateClient interface{ proto.WeaviateClient }
+
+type RPC[In RequestMessage, Out ReplyMessage] func(proto.WeaviateClient, context.Context, *In, ...grpc.CallOption) (*Out, error)
+
+// Message marshals the body of the request into a protobuf message.
+type Message[In RequestMessage, Out ReplyMessage] interface {
+	RPC() RPC[In, Out]
+	MarshalMessage() (*In, error)
+}
+
+// UnmarshalMessage unmarshals a protobuf message into the response object.
+type MessageUnmarshaler[Out ReplyMessage] interface {
+	UnmarshalMessage(*Out) error
+}
+
+type versionedTransport struct {
+	version string // TODO: put behind internal/semver
+	rest    *transports.REST
+	gRPC    *transports.GRPC[proto.WeaviateClient]
+}
+
 var (
-	tfMu sync.RWMutex                    // tfMu guards tf.
-	tf   TransportFactory = newTransport // tf is the default TransportFactory.
+	_ internal.Transport = (*versionedTransport)(nil)
+	_ io.Closer          = (*versionedTransport)(nil)
 )
 
-// SetTransportFactory changes the transport factory for this package.
-// This is a test helper and MUST NOT be used in the public layer.
-func SetTransportFactory(newtf TransportFactory) {
-	tfMu.Lock()
-	defer tfMu.Unlock()
-	tf = newtf
+func (vt *versionedTransport) Do(ctx context.Context, req any, dest any) error {
+	switch req := req.(type) {
+	case transports.Endpoint:
+		return vt.rest.Do(ctx, req, dest)
+	default:
+		var m transports.RPC[proto.WeaviateClient]
+		client := vt.gRPC.Client()
+		switch req := req.(type) {
+		case Message[proto.SearchRequest, proto.SearchReply]:
+			m = newMessage(client, req, dest)
+		case Message[proto.AggregateRequest, proto.AggregateReply]:
+			m = newMessage(client, req, dest)
+		case Message[proto.BatchDeleteRequest, proto.BatchDeleteReply]:
+			m = newMessage(client, req, dest)
+		case Message[proto.BatchObjectsRequest, proto.BatchObjectsReply]:
+			m = newMessage(client, req, dest)
+		case Message[proto.BatchReferencesRequest, proto.BatchReferencesReply]:
+			m = newMessage(client, req, dest)
+		default:
+			dev.Assert(false, "%T does not implement MessageMarshaler for any of the supported request types", req)
+		}
+		return vt.gRPC.Do(ctx, m)
+	}
 }
 
-// GetTransportFactory returns the current transport factory.
-// GetTransportFactory is exported for testing purposes in production.
-// Use NewTransport to obtain a new transport.
-func GetTransportFactory() TransportFactory {
-	tfMu.RLock()
-	defer tfMu.RUnlock()
-	return tf
+func newMessage[In RequestMessage, Out ReplyMessage](wc proto.WeaviateClient, req Message[In, Out], dest any) messageFunc {
+	out := dev.AssertType[MessageUnmarshaler[Out]](dest)
+
+	return messageFunc(func(ctx context.Context, wc proto.WeaviateClient) error {
+		in, err := req.MarshalMessage()
+		if err != nil {
+			return fmt.Errorf("%s: marshal message: %w", req, err)
+		}
+
+		rpc := req.RPC()
+		reply, err := rpc(wc, ctx, in)
+		if err != nil {
+			return fmt.Errorf("%s: %w", req, err)
+		}
+
+		if err := unmarshal[Out](reply, out); err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
-type TransportConfig transport.Config
+type messageFunc func(context.Context, proto.WeaviateClient) error
 
-// NewTransport returns internal.Transport for this API version.
-func NewTransport(cfg TransportConfig) (internal.Transport, error) {
-	newT := GetTransportFactory()
-	return newT(cfg)
+var _ transports.RPC[proto.WeaviateClient] = (*messageFunc)(nil)
+
+func (f messageFunc) Do(ctx context.Context, wc proto.WeaviateClient) error {
+	return f(ctx, wc)
 }
 
-func newTransport(cfg TransportConfig) (internal.Transport, error) {
-	cfg.Version = Version
-	return transport.New(transport.Config(cfg))
+// unmarshal unmarshals reply Out into dest. A nil dest means the reply can be ignored,
+// which returns with a nil error immediately. A nil reply returns an non-nil error.
+// A dest that does not implement MessageUnmarshaler[R] returns a non-nil error.
+// Otherwise UnmarshalMessage() is called with reply *R and the unmarshaling error is returned.
+func unmarshal[Out ReplyMessage](reply *Out, dest any) error {
+	if dest == nil {
+		return nil
+	}
+	if reply == nil {
+		// Since gRPC client is generated and is essentially a third-party dependency,
+		// we cannot guarantee the response to be always non-nil, so we return an error
+		// on nil replies instead of doing dev.Assert.
+		return errors.New("nil reply")
+	}
+	if out, ok := dest.(MessageUnmarshaler[Out]); ok {
+		if err := out.UnmarshalMessage(reply); err != nil {
+			return fmt.Errorf("unmarshal %T: %w", reply, err)
+		}
+		return nil
+	}
+	return fmt.Errorf(
+		"cannot unmarshal %T into %T: dest does not implement %T",
+		reply, dest, *new(MessageUnmarshaler[Out]),
+	)
+}
+
+// Close closes the gRPC transport.
+func (vt *versionedTransport) Close() error {
+	return vt.gRPC.Close()
 }

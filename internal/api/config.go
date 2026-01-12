@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/rest"
-	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
 type (
@@ -118,21 +118,21 @@ const (
 
 // CreateCollectionsRequest creates a new collection in the schema.
 type CreateCollectionRequest struct {
-	transport.BaseEndpoint
+	transports.BaseEndpoint
 	Collection
 }
 
-var _ transport.Endpoint = (*CreateCollectionRequest)(nil)
+var _ transports.Endpoint = (*CreateCollectionRequest)(nil)
 
 func (*CreateCollectionRequest) Method() string { return http.MethodPost }
 func (*CreateCollectionRequest) Path() string   { return "/schema" }
 func (r *CreateCollectionRequest) Body() any    { return &r.Collection }
 
 // GetCollectionRequest by collection name.
-var GetCollectionRequest = transport.IdentityEndpoint[string](http.MethodGet, "/schema/%s")
+var GetCollectionRequest = transports.IdentityEndpoint[string](http.MethodGet, "/schema/%s")
 
 // ListCollectionsRequest fetches definitions for all collections in the schema.
-var ListCollectionsRequest transport.Endpoint = transport.StaticEndpoint(http.MethodGet, "/schema")
+var ListCollectionsRequest transports.Endpoint = transports.StaticEndpoint(http.MethodGet, "/schema")
 
 type ListCollectionsResponse []Collection
 
@@ -150,7 +150,7 @@ func (r *ListCollectionsResponse) UnmarshalJSON(data []byte) error {
 }
 
 // DeleteCollectionRequest by collection name.
-var DeleteCollectionRequest = transport.IdentityEndpoint[string](http.MethodDelete, "/schema/%s")
+var DeleteCollectionRequest = transports.IdentityEndpoint[string](http.MethodDelete, "/schema/%s")
 
 var (
 	_ json.Marshaler   = (*Collection)(nil)

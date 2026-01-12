@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/rest"
-	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
 type InsertObjectRequest struct {
@@ -19,8 +19,8 @@ type InsertObjectRequest struct {
 }
 
 var (
-	_ transport.Endpoint = (*InsertObjectRequest)(nil)
-	_ json.Marshaler     = (*InsertObjectRequest)(nil)
+	_ transports.Endpoint = (*InsertObjectRequest)(nil)
+	_ json.Marshaler      = (*InsertObjectRequest)(nil)
 )
 
 func (*InsertObjectRequest) Method() string { return http.MethodPost }
@@ -48,7 +48,7 @@ var _ json.Unmarshaler = (*InsertObjectResponse)(nil)
 // Also the name of the collection is sent as a path parameter.
 type ReplaceObjectRequest InsertObjectRequest
 
-var _ transport.Endpoint = (*ReplaceObjectRequest)(nil)
+var _ transports.Endpoint = (*ReplaceObjectRequest)(nil)
 
 func (*ReplaceObjectRequest) Method() string { return http.MethodPut }
 func (*ReplaceObjectRequest) Path() string   { return "/objects" }
@@ -63,12 +63,12 @@ func (r *ReplaceObjectRequest) Body() any { return (*InsertObjectRequest)(r) }
 type ReplaceObjectResponse InsertObjectResponse
 
 type DeleteObjectRequest struct {
-	transport.BaseEndpoint
+	transports.BaseEndpoint
 	RequestDefaults
 	UUID uuid.UUID
 }
 
-var _ transport.Endpoint = (*DeleteObjectRequest)(nil)
+var _ transports.Endpoint = (*DeleteObjectRequest)(nil)
 
 func (*DeleteObjectRequest) Method() string { return http.MethodDelete }
 func (r *DeleteObjectRequest) Path() string {

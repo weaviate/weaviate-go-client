@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/rest"
-	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
 // TestRESTEndpoints
@@ -485,8 +485,8 @@ func TestRESTEndpoints(t *testing.T) {
 		},
 	} {
 		t.Run(fmt.Sprintf("%s (%T)", tt.name, tt.req), func(t *testing.T) {
-			require.Implements(t, (*transport.Endpoint)(nil), tt.req)
-			endpoint := (tt.req).(transport.Endpoint)
+			require.Implements(t, (*transports.Endpoint)(nil), tt.req)
+			endpoint := (tt.req).(transports.Endpoint)
 
 			assert.Equal(t, tt.wantMethod, endpoint.Method(), "bad method")
 			assert.Equal(t, tt.wantPath, endpoint.Path(), "bad path")

@@ -125,9 +125,9 @@ func newClient(_ context.Context, cfg *ConnectionConfig) (*Client, error) {
 
 	t, err := api.NewTransport(api.TransportConfig{
 		Scheme:   cfg.Scheme,
-		HTTPHost: cfg.HTTPHost,
+		RESTHost: cfg.HTTPHost,
 		GRPCHost: cfg.GRPCHost,
-		HTTPPort: cfg.HTTPPort,
+		RESTPort: cfg.HTTPPort,
 		GRPCPort: cfg.GRPCPort,
 		Header:   cfg.Header,
 	})

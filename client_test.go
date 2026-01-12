@@ -13,17 +13,17 @@ import (
 
 // DO NOT enable t.Parallel() for this test as it messes with the global state.
 func TestNewLocal(t *testing.T) {
-	tf := api.GetTransportFactory()
-	t.Cleanup(func() { api.SetTransportFactory(tf) })
+	tf := api.NewTransport
+	t.Cleanup(func() { api.NewTransport = tf })
 
 	var nop testkit.NopTransport
 
 	t.Run("default", func(t *testing.T) {
 		var got api.TransportConfig
-		api.SetTransportFactory(func(cfg api.TransportConfig) (internal.Transport, error) {
+		api.NewTransport = func(cfg api.TransportConfig) (internal.Transport, error) {
 			got = cfg
 			return &nop, nil
-		})
+		}
 
 		c, err := weaviate.NewLocal(t.Context(), nil)
 		assert.NotNil(t, c, "nil client")
@@ -31,9 +31,9 @@ func TestNewLocal(t *testing.T) {
 
 		assert.Equal(t, api.TransportConfig{
 			Scheme:   "http",
-			HTTPHost: "localhost",
+			RESTHost: "localhost",
 			GRPCHost: "localhost",
-			HTTPPort: 8080,
+			RESTPort: 8080,
 			GRPCPort: 50051,
 			Header: http.Header{
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
@@ -43,10 +43,10 @@ func TestNewLocal(t *testing.T) {
 
 	t.Run("custom", func(t *testing.T) {
 		var got api.TransportConfig
-		api.SetTransportFactory(func(cfg api.TransportConfig) (internal.Transport, error) {
+		api.NewTransport = func(cfg api.TransportConfig) (internal.Transport, error) {
 			got = cfg
 			return &nop, nil
-		})
+		}
 
 		c, err := weaviate.NewLocal(t.Context(), &weaviate.ConnectionConfig{
 			Scheme:   "https",
@@ -61,12 +61,12 @@ func TestNewLocal(t *testing.T) {
 
 		assert.Equal(t, api.TransportConfig{
 			// Defaults
-			HTTPHost: "localhost",
+			RESTHost: "localhost",
 			GRPCHost: "localhost",
 
 			// Custom
 			Scheme:   "https",
-			HTTPPort: 7070,
+			RESTPort: 7070,
 			GRPCPort: 54321,
 			Header: http.Header{
 				"X-Test":            {"heads", "up"},

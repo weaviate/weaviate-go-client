@@ -9,28 +9,42 @@ import (
 	"time"
 
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
-	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
 )
 
-type AggregateRequest struct {
-	RequestDefaults
+type (
+	AggregateRequest struct {
+		RequestDefaults
 
-	Text    map[string]*AggregateTextRequest
-	Integer map[string]*AggregateIntegerRequest
-	Number  map[string]*AggregateNumberRequest
-	Boolean map[string]*AggregateBooleanRequest
-	Date    map[string]*AggregateDateRequest
+		Text    map[string]*AggregateTextRequest
+		Integer map[string]*AggregateIntegerRequest
+		Number  map[string]*AggregateNumberRequest
+		Boolean map[string]*AggregateBooleanRequest
+		Date    map[string]*AggregateDateRequest
 
-	TotalCount  bool
-	Limit       int32
-	ObjectLimit int32
+		TotalCount  bool
+		Limit       int32
+		ObjectLimit int32
 
-	*NearVector
+		*NearVector
+	}
+	AggregateResponse struct {
+		Results Aggregations
+
+		TookSeconds float32
+	}
+)
+
+var (
+	_ Message[proto.AggregateRequest, proto.AggregateReply] = (*AggregateRequest)(nil)
+	_ MessageUnmarshaler[proto.AggregateReply]              = (*AggregateResponse)(nil)
+)
+
+func (r *AggregateRequest) RPC() RPC[proto.AggregateRequest, proto.AggregateReply] {
+	return proto.WeaviateClient.Aggregate
 }
 
-var _ transport.MessageMarshaler[proto.AggregateRequest] = (*AggregateRequest)(nil)
-
-func (r *AggregateRequest) MarshalMessage() *proto.AggregateRequest {
+// MarshalMessage implements [Message].
+func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 	var aggs []*proto.AggregateRequest_Aggregation
 	for property, txt := range sortedMap(r.Text) {
 		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
@@ -96,7 +110,7 @@ func (r *AggregateRequest) MarshalMessage() *proto.AggregateRequest {
 		// This would be the case when fetch objects with a conventional filter.
 	}
 
-	return req
+	return req, nil
 }
 
 type (
@@ -120,14 +134,6 @@ type Aggregations struct {
 
 	TotalCount *int64
 }
-
-type AggregateResponse struct {
-	Results Aggregations
-
-	TookSeconds float32
-}
-
-var _ transport.MessageUnmarshaler[proto.AggregateReply] = (*AggregateResponse)(nil)
 
 func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error {
 	result := Aggregations{

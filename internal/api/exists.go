@@ -6,7 +6,7 @@ import (
 
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
-	"github.com/weaviate/weaviate-go-client/v6/internal/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
 // ResourceExistsResponse is true if the requested resource exists.
@@ -44,9 +44,9 @@ func (exists ResourceExistsResponse) Bool() bool {
 }
 
 var (
-	_ json.Unmarshaler                                = (*ResourceExistsResponse)(nil)
-	_ transport.StatusAccepter                        = (*ResourceExistsResponse)(nil)
-	_ transport.MessageUnmarshaler[proto.SearchReply] = (*ResourceExistsResponse)(nil)
+	_ json.Unmarshaler                      = (*ResourceExistsResponse)(nil)
+	_ transports.StatusAccepter             = (*ResourceExistsResponse)(nil)
+	_ MessageUnmarshaler[proto.SearchReply] = (*ResourceExistsResponse)(nil)
 )
 
 // AcceptStatus implements transport.StatusAccepter.
