@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/google/uuid"
-	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
+	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
 

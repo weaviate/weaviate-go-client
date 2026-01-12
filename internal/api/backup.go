@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/weaviate/weaviate-go-client/v6/internal/api/gen/rest"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 

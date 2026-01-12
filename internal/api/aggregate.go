@@ -8,7 +8,7 @@ import (
 	"slices"
 	"time"
 
-	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/gen/proto/v1"
+	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 )
 
 type (

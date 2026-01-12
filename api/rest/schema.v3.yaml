@@ -236,6 +236,10 @@ components:
                 path:
                     description: Destination path of backup files valid for the selected backend.
                     type: string
+                size:
+                    description: Size of the backup in Gibs
+                    format: float
+                    type: number
                 startedAt:
                     description: Timestamp when the backup process started
                     format: date-time
@@ -3964,7 +3968,7 @@ paths:
                 - weaviate.local.backup
     /backups/{backend}/{id}:
         delete:
-            description: Deletes a backup identified by its ID from the specified backend storage.
+            description: Cancels an ongoing backup operation identified by its ID.
             operationId: backups.cancel
             parameters:
                 - description: Specifies the backend storage system where the backup resides (e.g., `filesystem`, `gcs`, `s3`, `azure`).
@@ -3973,7 +3977,7 @@ paths:
                   required: true
                   schema:
                     type: string
-                - description: The unique identifier of the backup to delete. Must be URL-safe and compatible with filesystem paths (only lowercase, numbers, underscore, minus characters allowed).
+                - description: The unique identifier of the backup to cancel. Must be URL-safe and compatible with filesystem paths (only lowercase, numbers, underscore, minus characters allowed).
                   in: path
                   name: id
                   required: true
@@ -3992,7 +3996,7 @@ paths:
             responses:
                 "204":
                     content: {}
-                    description: Backup deleted successfully.
+                    description: Backup canceled successfully.
                 "401":
                     content: {}
                     description: Unauthorized or invalid credentials.
@@ -4007,14 +4011,14 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
-                    description: Invalid backup deletion request.
+                    description: Invalid backup cancellation request.
                 "500":
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
-                    description: An internal server error occurred during backup deletion. Check the ErrorResponse for details.
-            summary: Delete a backup
+                    description: An internal server error occurred during backup cancellation. Check the ErrorResponse for details.
+            summary: Cancel a backup
             tags:
                 - backups
             x-serviceIds:
