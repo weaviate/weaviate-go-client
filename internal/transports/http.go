@@ -235,3 +235,27 @@ var _ Endpoint = (*identityEndpoint[any])(nil)
 
 func (r *identityEndpoint[T]) Method() string { return r.method }
 func (r *identityEndpoint[T]) Path() string   { return fmt.Sprintf(r.pathFmt, r.id) }
+
+// BooleanResponse is true if request does not return an error.
+type BooleanResponse bool
+
+// Bool returns bool value of BooleanResponse.
+func (exists BooleanResponse) Bool() bool {
+	return bool(exists)
+}
+
+var (
+	_ json.Unmarshaler = (*BooleanResponse)(nil)
+	_ StatusAccepter   = (*BooleanResponse)(nil)
+)
+
+// AcceptStatus implements transport.StatusAccepter.
+func (exists BooleanResponse) AcceptStatus(code int) bool {
+	return code == http.StatusNotFound
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (exists *BooleanResponse) UnmarshalJSON(_ []byte) error {
+	*exists = true
+	return nil
+}

@@ -38,6 +38,8 @@ import (
 //	}
 type ResourceExistsResponse bool
 
+// TODO(dyma): unify with transports.BooleanResponse
+
 // Bool returns bool value of ResourceExistsResponse.
 func (exists ResourceExistsResponse) Bool() bool {
 	return bool(exists)

@@ -42,6 +42,11 @@ func newTransport(cfg TransportConfig) (internal.Transport, error) {
 		Version: Version,
 	})
 
+	var meta GetInstanceMetadataResponse
+	if err := rest.Do(context.TODO(), GetInstanceMetadataRequest, &meta); err != nil {
+		return nil, fmt.Errorf("get instance metadata: %w", err)
+	}
+
 	gRPC, err := transports.NewGRPC(transports.GRPCConfig[proto.WeaviateClient]{
 		Scheme:  cfg.Scheme,
 		Host:    cfg.GRPCHost,
@@ -49,14 +54,16 @@ func newTransport(cfg TransportConfig) (internal.Transport, error) {
 		Header:  (*metadata.MD)(&cfg.Header),
 		Timeout: cfg.Timeout,
 
-		NewGRPCClient: proto.NewWeaviateClient,
+		MaxMessageSize: meta.GRPCMaxMessageSize,
+		NewGRPCClient:  proto.NewWeaviateClient,
 	})
 	if err != nil {
 		return nil, err
 	}
 	return &versionedTransport{
-		rest: rest,
-		gRPC: gRPC,
+		version: meta.Version,
+		rest:    rest,
+		gRPC:    gRPC,
 	}, nil
 }
 

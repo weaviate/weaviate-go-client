@@ -50,16 +50,22 @@ func (c *GRPC[C]) Do(ctx context.Context, rpc RPC[C]) error {
 }
 
 func NewGRPC[C any](cfg GRPCConfig[C]) (*GRPC[C], error) {
+	callOpts := []grpc.CallOption{
+		grpc.Header(cfg.Header),
+	}
+	if cfg.MaxMessageSize > 0 {
+		callOpts = append(callOpts,
+			grpc.MaxCallSendMsgSize(cfg.MaxMessageSize),
+			grpc.MaxCallRecvMsgSize(cfg.MaxMessageSize),
+		)
+	}
+
 	// TODO(dyma): apply relevant gRPC options.
 	channel, err := grpc.NewClient(
 		fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
 		// TODO(dyma): pass correct credentials if authentication is enabled or scheme == "https"
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultCallOptions(
-			grpc.Header(cfg.Header),
-			grpc.MaxCallSendMsgSize(cfg.MaxMessageSize),
-			grpc.MaxCallRecvMsgSize(cfg.MaxMessageSize),
-		),
+		grpc.WithDefaultCallOptions(callOpts...),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create gRPC channel: %w", err)
