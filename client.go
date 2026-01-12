@@ -56,7 +56,6 @@ func NewWeaviateCloud(ctx context.Context, hostname, apiKey string, cfg *Connect
 	cfg = internal.Optional(cfg)
 
 	// Handle invalid hostnames that specify a scheme.
-	hostname = strings.TrimLeft(hostname, "htp:/")
 	hostname = strings.TrimLeft(hostname, "htps:/")
 
 	cloud := ConnectionConfig{

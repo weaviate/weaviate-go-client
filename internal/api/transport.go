@@ -48,7 +48,7 @@ func newTransport(cfg TransportConfig) (internal.Transport, error) {
 	}
 
 	if !isVersionSupported(meta.Version) {
-		return nil, ErrVersionNotSupported
+		return nil, errVersionNotSupported
 	}
 
 	gRPC, err := transports.NewGRPC(transports.GRPCConfig[proto.WeaviateClient]{

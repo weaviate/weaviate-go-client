@@ -11,9 +11,9 @@ const (
 	EarliestSupportedVersion = "v1.28"
 )
 
-// ErrVersionNotSupported is returned when the Weaviate server version
+// errVersionNotSupported is returned when the Weaviate server version
 // is outside of the supported version range.
-var ErrVersionNotSupported = errors.New("server version is not supported")
+var errVersionNotSupported = errors.New("server version is not supported")
 
 // isVersionSupported returns true if server version v lies withing
 // [EarliestSupportedVersion, LatestSupportedVersion] range.
