@@ -22,21 +22,25 @@ type API struct {
 }
 
 type UserInfo struct {
-	Active    bool
-	CreatedAt time.Time
-	UserType  rbac.UserType
-	UserID    string
-	Roles     []*rbac.Role
+	Active             bool
+	CreatedAt          time.Time
+	UserType           rbac.UserType
+	UserID             string
+	Roles              []*rbac.Role
+	ApiKeyFirstLetters string
+	LastUsedAt         time.Time
 }
 
 func (info *UserInfo) UnmarshalJSON(data []byte) error {
 	var tmp struct {
-		Active    bool            `json:"active"`
-		CreatedAt strfmt.DateTime `json:"createdAt,omitempty"`
-		UserType  string          `json:"dbUserType"`
-		UserID    string          `json:"user_id"`
-		Username  string          `json:"username"`
-		Roles     []*rbac.Role    `json:"roles"`
+		Active             bool            `json:"active"`
+		CreatedAt          strfmt.DateTime `json:"createdAt,omitempty"`
+		UserType           string          `json:"dbUserType"`
+		UserID             string          `json:"user_id"`
+		Username           string          `json:"username"`
+		Roles              []*rbac.Role    `json:"roles"`
+		ApiKeyFirstLetters string          `json:"apiKeyFirstLetters,omitempty"`
+		LastUsedAt         strfmt.DateTime `json:"lastUsedAt,omitempty"`
 	}
 
 	if err := json.Unmarshal(data, &tmp); err != nil {
@@ -49,11 +53,13 @@ func (info *UserInfo) UnmarshalJSON(data []byte) error {
 	}
 
 	*info = UserInfo{
-		Active:    tmp.Active,
-		CreatedAt: time.Time(tmp.CreatedAt),
-		UserType:  rbac.UserType(tmp.UserType),
-		UserID:    id,
-		Roles:     tmp.Roles,
+		Active:             tmp.Active,
+		CreatedAt:          time.Time(tmp.CreatedAt),
+		UserType:           rbac.UserType(tmp.UserType),
+		UserID:             id,
+		Roles:              tmp.Roles,
+		ApiKeyFirstLetters: tmp.ApiKeyFirstLetters,
+		LastUsedAt:         time.Time(tmp.LastUsedAt),
 	}
 	return nil
 }

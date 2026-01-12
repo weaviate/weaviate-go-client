@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -13,6 +14,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/auth"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/rbac"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/testenv"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/users"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -296,5 +298,95 @@ func TestUsers_integration(t *testing.T) {
 		myUser, err := client.Users().MyUserGetter().Do(ctx)
 		require.NoError(t, err)
 		require.Equal(t, myUser.UserID, userId)
+	})
+
+	t.Run("create user, login user, get last used time", func(t *testing.T) {
+		userId := "test-user-" + uuid.New().String()
+		apikey, err := usersClient.DB().Creator().WithUserID(userId).Do(ctx)
+		require.NoError(t, err)
+		require.NotEmpty(t, apikey)
+		defer func() {
+			_, errd := usersClient.DB().Deleter().WithUserID(userId).Do(ctx)
+			require.NoError(t, errd)
+		}()
+
+		cfg := weaviate.Config{
+			Host:   container.HTTPAddress(),
+			Scheme: "http",
+			AuthConfig: auth.ApiKey{
+				Value: apikey,
+			},
+		}
+
+		client, err := weaviate.NewClient(cfg)
+		require.NoError(t, err, "create test client")
+
+		_, err = client.Users().MyUserGetter().Do(ctx)
+		require.NoError(t, err)
+
+		userInfo, err := usersClient.DB().Getter().WithUserID(userId).WithLastUsedTime().Do(ctx)
+		require.NoError(t, err)
+
+		require.False(t, userInfo.LastUsedAt.IsZero(), "expected last used time to be set")
+		require.WithinDuration(t,
+			// user has been used the last minute
+			time.Now(), userInfo.LastUsedAt, time.Minute,
+			"expected last used time to be within the last minute")
+	})
+
+	t.Run("create two users, login  with one user, apiKeyFirstLetters are returned, only one has last used time updated", func(t *testing.T) {
+		userId1 := "test-user-" + uuid.New().String()
+		apikey1, err := usersClient.DB().Creator().WithUserID(userId1).Do(ctx)
+		require.NoError(t, err)
+		require.NotEmpty(t, apikey1)
+		defer func() {
+			_, errd := usersClient.DB().Deleter().WithUserID(userId1).Do(ctx)
+			require.NoError(t, errd)
+		}()
+
+		userId2 := "test-user-" + uuid.New().String()
+		apikey2, err := usersClient.DB().Creator().WithUserID(userId2).Do(ctx)
+		require.NoError(t, err)
+		require.NotEmpty(t, apikey2)
+		defer func() {
+			_, errd := usersClient.DB().Deleter().WithUserID(userId2).Do(ctx)
+			require.NoError(t, errd)
+		}()
+
+		cfg := weaviate.Config{
+			Host:   container.HTTPAddress(),
+			Scheme: "http",
+			AuthConfig: auth.ApiKey{
+				Value: apikey1,
+			},
+		}
+
+		client, err := weaviate.NewClient(cfg)
+		require.NoError(t, err, "create test client")
+
+		_, err = client.Users().MyUserGetter().Do(ctx)
+		require.NoError(t, err)
+
+		usersList, err := usersClient.DB().Lister().WithLastUsedTime().Do(ctx)
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, len(usersList), 2, "expect at least two users in the list")
+
+		var user1Info, user2Info *users.UserInfo
+		for _, u := range usersList {
+			if u.UserID == userId1 {
+				user1Info = &u
+			}
+			if u.UserID == userId2 {
+				user2Info = &u
+			}
+		}
+
+		require.WithinDuration(t,
+			// user has been used the last minute
+			time.Now(), user1Info.LastUsedAt, time.Minute,
+			"expected last used time to be within the last minute")
+		require.True(t, user2Info.LastUsedAt.IsZero(), "expected user2 last used time to be zero")
+		require.Equal(t, user1Info.ApiKeyFirstLetters, apikey1[:3], "expected first 3 letters to match")
+		require.Equal(t, user2Info.ApiKeyFirstLetters, apikey2[:3], "expected first 3 letters to match")
 	})
 }
