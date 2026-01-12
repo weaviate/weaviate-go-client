@@ -70,6 +70,20 @@ func (h *Handle) WithOptions(options ...HandleOption) *Handle {
 	return newHandle(h.transport, defaults)
 }
 
+// Count returns the number of objects stored in the collection.
+// If tenant is set for this [Handle], only objects under this
+// tenant will be counted.
+func (h *Handle) Count(ctx context.Context) (int64, error) {
+	req := &api.CountObjectsRequest{RequestDefaults: h.defaults}
+
+	var resp api.CountObjectsResponse
+	if err := h.transport.Do(ctx, req, &resp); err != nil {
+		return 0, fmt.Errorf("count objects: %w", err)
+	}
+
+	return resp.Int64(), nil
+}
+
 // Create new collection in the schema. A collection can be created with just the name.
 // To configure the new collection, provide a single instance of CreateOptions as the options argument.
 //

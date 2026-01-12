@@ -219,6 +219,47 @@ type (
 	}
 )
 
+type (
+	CountObjectsRequest struct {
+		RequestDefaults
+	}
+	CountObjectsResponse int64
+)
+
+var (
+	_ Message[proto.AggregateRequest, proto.AggregateReply] = (*CountObjectsRequest)(nil)
+	_ MessageUnmarshaler[proto.AggregateReply]              = (*CountObjectsResponse)(nil)
+)
+
+func (r *CountObjectsRequest) RPC() RPC[proto.AggregateRequest, proto.AggregateReply] {
+	return proto.WeaviateClient.Aggregate
+}
+
+// MarshalMessage implements [Message].
+func (r *CountObjectsRequest) MarshalMessage() (*proto.AggregateRequest, error) {
+	req := &AggregateRequest{
+		RequestDefaults: r.RequestDefaults,
+		TotalCount:      true,
+	}
+	return req.MarshalMessage()
+}
+
+func (r *CountObjectsResponse) UnmarshalMessage(reply *proto.AggregateReply) error {
+	var resp AggregateResponse
+	if err := resp.UnmarshalMessage(reply); err != nil {
+		return err
+	}
+	if resp.Results.TotalCount == nil {
+		return fmt.Errorf("nil total count")
+	}
+	*r = CountObjectsResponse(*resp.Results.TotalCount)
+	return nil
+}
+
+func (r CountObjectsResponse) Int64() int64 {
+	return int64(r)
+}
+
 // parseDate parse date string assuming RFC3339 format.
 // It returns nil if the input string is empty.
 func parseDate(date string) (*time.Time, error) {
