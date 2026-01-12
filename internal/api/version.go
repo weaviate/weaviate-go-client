@@ -15,7 +15,7 @@ const (
 // is outside of the supported version range.
 var errVersionNotSupported = errors.New("server version is not supported")
 
-// isVersionSupported returns true if server version v lies withing
+// isVersionSupported returns true if server version v lies within
 // [EarliestSupportedVersion, LatestSupportedVersion] range.
 func isVersionSupported(v string) bool {
 	return semver.AfterMajorMinor(v, EarliestSupportedVersion) &&
