@@ -38,11 +38,6 @@ func TestTickingContext(t *testing.T) {
 }
 
 func TestMockTransport(t *testing.T) {
-	// Test Do:
-	// 	- compares non-nil request
-	// 	- writes to non-nil dest
-	// Test Done => true when done, but not before.
-
 	t.Run("respects context", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		cancel()
@@ -88,4 +83,42 @@ func TestMockTransport(t *testing.T) {
 		require.Equal(t, n, 0, "mistake in test code")
 		require.True(t, transport.Done(), "done: all requests consumed")
 	})
+}
+
+func TestRunOnly(t *testing.T) {
+	type test struct{ testkit.Only }
+
+	for _, tt := range []struct {
+		name  string // Test case name.
+		tests []test // Exclusive test cases.
+		want  int    // How many tt.tests should actually run.
+	}{
+		{
+			name: "all tests",
+			tests: []test{
+				{}, {}, {},
+			},
+			want: 3,
+		},
+		{
+			name: "only 1",
+			tests: []test{
+				{}, {Only: true}, {},
+			},
+			want: 1,
+		},
+		{
+			name: "only 2",
+			tests: []test{
+				{}, {Only: true}, {Only: true},
+			},
+			want: 2,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var got int
+			testkit.RunOnly(t, tt.tests, func(*testing.T, test) { got++ })
+			require.Equal(t, tt.want, got, "wrong number of tests executed")
+		})
+	}
 }
