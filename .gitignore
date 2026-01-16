@@ -4,6 +4,7 @@
 # IDE configurations
 .vscode/
 .idea/
+vendor/
 
 # Environment variables
 .env
