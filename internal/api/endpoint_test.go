@@ -2,7 +2,6 @@ package api_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"testing"
@@ -12,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
+	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
@@ -30,7 +30,9 @@ import (
 // from internal/api/gen/rest package, as it is guaranteed to produce a valid
 // JSON, giving you a more useful comparison in the tests.
 func TestRESTEndpoints(t *testing.T) {
-	for _, tt := range []struct {
+	type test struct {
+		testkit.Only
+
 		name string
 		req  any // Request object.
 
@@ -38,7 +40,9 @@ func TestRESTEndpoints(t *testing.T) {
 		wantPath   string     // Expected endpoint + path parameters.
 		wantQuery  url.Values // Expected query parameters.
 		wantBody   any        // Expected request body. JSON strings are compared.
-	}{
+	}
+
+	testkit.RunOnly(t, []test{
 		{
 			name:       "check is live",
 			req:        api.IsLiveRequest,
@@ -495,8 +499,8 @@ func TestRESTEndpoints(t *testing.T) {
 			wantMethod: http.MethodDelete,
 			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
 		},
-	} {
-		t.Run(fmt.Sprintf("%s (%T)", tt.name, tt.req), func(t *testing.T) {
+	}, func(t *testing.T, tt test) {
+		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)
 			endpoint := (tt.req).(transports.Endpoint)
 
@@ -517,5 +521,5 @@ func TestRESTEndpoints(t *testing.T) {
 
 			assert.JSONEq(t, string(wantJSON), string(gotJSON), "bad body")
 		})
-	}
+	})
 }
