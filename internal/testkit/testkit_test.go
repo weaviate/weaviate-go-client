@@ -116,9 +116,8 @@ func TestRunOnly(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			var got int
-			testkit.RunOnly(t, tt.tests, func(*testing.T, test) { got++ })
-			require.Equal(t, tt.want, got, "wrong number of tests executed")
+			got := testkit.WithOnly(t, tt.tests)
+			require.Len(t, got, tt.want, "wrong number of tests")
 		})
 	}
 }

@@ -42,7 +42,7 @@ func TestRESTEndpoints(t *testing.T) {
 		wantBody   any        // Expected request body. JSON strings are compared.
 	}
 
-	testkit.RunOnly(t, []test{
+	for _, tt := range testkit.WithOnly(t, []test{
 		{
 			name:       "check is live",
 			req:        api.IsLiveRequest,
@@ -499,7 +499,7 @@ func TestRESTEndpoints(t *testing.T) {
 			wantMethod: http.MethodDelete,
 			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
 		},
-	}, func(t *testing.T, tt test) {
+	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)
 			endpoint := (tt.req).(transports.Endpoint)
@@ -521,5 +521,5 @@ func TestRESTEndpoints(t *testing.T) {
 
 			assert.JSONEq(t, string(wantJSON), string(gotJSON), "bad body")
 		})
-	})
+	}
 }
