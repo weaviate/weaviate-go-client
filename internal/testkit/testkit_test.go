@@ -2,6 +2,7 @@ package testkit_test
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -85,41 +86,45 @@ func TestMockTransport(t *testing.T) {
 	})
 }
 
-func TestRunOnly(t *testing.T) {
+func TestWithOnly(t *testing.T) {
 	type test struct{ testkit.Only }
 
-	t.Run("filter tests", func(t *testing.T) {
-		for _, tt := range []struct {
-			name  string // Test case name.
-			tests []test // Exclusive test cases.
-			want  int    // How many tt.tests should actually run.
-		}{
-			{
-				name: "all tests",
-				tests: []test{
-					{}, {}, {},
-				},
-				want: 3,
+	// We disable testkit.WithOnly in CI, so this test will always fail.
+	// To isolate it, we unset the variable and re-set it on cleanup.
+	noWithOnly := os.Getenv(testkit.EnvNoWithOnly)
+	require.NoErrorf(t, os.Unsetenv(testkit.EnvNoWithOnly), "unset %s", testkit.EnvNoWithOnly)
+	t.Cleanup(func() { os.Setenv(testkit.EnvNoWithOnly, noWithOnly) })
+
+	for _, tt := range []struct {
+		name  string // Test case name.
+		tests []test // Exclusive test cases.
+		want  int    // How many tt.tests should actually run.
+	}{
+		{
+			name: "all tests",
+			tests: []test{
+				{}, {}, {},
 			},
-			{
-				name: "only 1",
-				tests: []test{
-					{}, {Only: true}, {},
-				},
-				want: 1,
+			want: 3,
+		},
+		{
+			name: "only 1",
+			tests: []test{
+				{}, {Only: true}, {},
 			},
-			{
-				name: "only 2",
-				tests: []test{
-					{}, {Only: true}, {Only: true},
-				},
-				want: 2,
+			want: 1,
+		},
+		{
+			name: "only 2",
+			tests: []test{
+				{}, {Only: true}, {Only: true},
 			},
-		} {
-			t.Run(tt.name, func(t *testing.T) {
-				got := testkit.WithOnly(t, tt.tests)
-				require.Len(t, got, tt.want, "wrong number of tests")
-			})
-		}
-	})
+			want: 2,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			got := testkit.WithOnly(t, tt.tests)
+			require.Len(t, got, tt.want, "wrong number of tests")
+		})
+	}
 }
