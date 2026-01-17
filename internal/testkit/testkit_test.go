@@ -88,36 +88,38 @@ func TestMockTransport(t *testing.T) {
 func TestRunOnly(t *testing.T) {
 	type test struct{ testkit.Only }
 
-	for _, tt := range []struct {
-		name  string // Test case name.
-		tests []test // Exclusive test cases.
-		want  int    // How many tt.tests should actually run.
-	}{
-		{
-			name: "all tests",
-			tests: []test{
-				{}, {}, {},
+	t.Run("filter tests", func(t *testing.T) {
+		for _, tt := range []struct {
+			name  string // Test case name.
+			tests []test // Exclusive test cases.
+			want  int    // How many tt.tests should actually run.
+		}{
+			{
+				name: "all tests",
+				tests: []test{
+					{}, {}, {},
+				},
+				want: 3,
 			},
-			want: 3,
-		},
-		{
-			name: "only 1",
-			tests: []test{
-				{}, {Only: true}, {},
+			{
+				name: "only 1",
+				tests: []test{
+					{}, {Only: true}, {},
+				},
+				want: 1,
 			},
-			want: 1,
-		},
-		{
-			name: "only 2",
-			tests: []test{
-				{}, {Only: true}, {Only: true},
+			{
+				name: "only 2",
+				tests: []test{
+					{}, {Only: true}, {Only: true},
+				},
+				want: 2,
 			},
-			want: 2,
-		},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			got := testkit.WithOnly(t, tt.tests)
-			require.Len(t, got, tt.want, "wrong number of tests")
-		})
-	}
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				got := testkit.WithOnly(t, tt.tests)
+				require.Len(t, got, tt.want, "wrong number of tests")
+			})
+		}
+	})
 }
