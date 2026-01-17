@@ -30,7 +30,7 @@ import (
 // from internal/api/gen/rest package, as it is guaranteed to produce a valid
 // JSON, giving you a more useful comparison in the tests.
 func TestRESTEndpoints(t *testing.T) {
-	type test struct {
+	for _, tt := range testkit.WithOnly(t, []struct {
 		testkit.Only
 
 		name string
@@ -40,9 +40,7 @@ func TestRESTEndpoints(t *testing.T) {
 		wantPath   string     // Expected endpoint + path parameters.
 		wantQuery  url.Values // Expected query parameters.
 		wantBody   any        // Expected request body. JSON strings are compared.
-	}
-
-	for _, tt := range testkit.WithOnly(t, []test{
+	}{
 		{
 			name:       "check is live",
 			req:        api.IsLiveRequest,
