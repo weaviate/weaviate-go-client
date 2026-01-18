@@ -104,11 +104,13 @@ type ReplyMessage interface {
 
 type WeaviateClient interface{ proto.WeaviateClient }
 
-type RPC[In RequestMessage, Out ReplyMessage] func(proto.WeaviateClient, context.Context, *In, ...grpc.CallOption) (*Out, error)
+// methodFunc is a method of the proto.WeaviateClient interface
+// that accepts request In and returns reply Out.
+type methodFunc[In RequestMessage, Out ReplyMessage] func(proto.WeaviateClient, context.Context, *In, ...grpc.CallOption) (*Out, error)
 
 // Message marshals the body of the request into a protobuf message.
 type Message[In RequestMessage, Out ReplyMessage] interface {
-	RPC() RPC[In, Out]
+	Method() methodFunc[In, Out]
 	MarshalMessage() (*In, error)
 }
 
@@ -119,8 +121,12 @@ type MessageUnmarshaler[Out ReplyMessage] interface {
 
 type versionedTransport struct {
 	version string
-	rest    *transports.REST
-	gRPC    *transports.GRPC[proto.WeaviateClient]
+	rest    interface {
+		Do(context.Context, transports.Endpoint, any) error
+	}
+	gRPC interface {
+		Do(context.Context, transports.RPC[proto.WeaviateClient]) error
+	}
 }
 
 var (
@@ -136,53 +142,52 @@ func (vt *versionedTransport) Do(ctx context.Context, req any, dest any) error {
 	case transports.Endpoint:
 		return vt.rest.Do(ctx, req, dest)
 	default:
-		var m transports.RPC[proto.WeaviateClient]
-		client := vt.gRPC.Client()
-		switch req := req.(type) {
+		var rpc transports.RPC[proto.WeaviateClient]
+		switch msg := req.(type) {
 		case Message[proto.SearchRequest, proto.SearchReply]:
-			m = newMessage(client, req, dest)
+			rpc = newRPC(msg, dest)
 		case Message[proto.AggregateRequest, proto.AggregateReply]:
-			m = newMessage(client, req, dest)
+			rpc = newRPC(msg, dest)
 		case Message[proto.BatchDeleteRequest, proto.BatchDeleteReply]:
-			m = newMessage(client, req, dest)
+			rpc = newRPC(msg, dest)
 		case Message[proto.BatchObjectsRequest, proto.BatchObjectsReply]:
-			m = newMessage(client, req, dest)
+			rpc = newRPC(msg, dest)
 		case Message[proto.BatchReferencesRequest, proto.BatchReferencesReply]:
-			m = newMessage(client, req, dest)
+			rpc = newRPC(msg, dest)
 		default:
-			dev.Assert(false, "%T does not implement MessageMarshaler for any of the supported request types", req)
+			dev.Assert(false, "%T does not implement MessageMarshaler for any of the supported request types", msg)
 		}
-		return vt.gRPC.Do(ctx, m)
+		return vt.gRPC.Do(ctx, rpc)
 	}
 }
 
-func newMessage[In RequestMessage, Out ReplyMessage](wc proto.WeaviateClient, req Message[In, Out], dest any) messageFunc {
+func newRPC[In RequestMessage, Out ReplyMessage](req Message[In, Out], dest any) rpcFunc {
 	out := dev.AssertType[MessageUnmarshaler[Out]](dest)
 
-	return messageFunc(func(ctx context.Context, wc proto.WeaviateClient) error {
+	return rpcFunc(func(ctx context.Context, wc proto.WeaviateClient) error {
 		in, err := req.MarshalMessage()
 		if err != nil {
 			return fmt.Errorf("%s: marshal message: %w", req, err)
 		}
 
-		rpc := req.RPC()
+		rpc := req.Method()
 		reply, err := rpc(wc, ctx, in)
 		if err != nil {
 			return fmt.Errorf("%s: %w", req, err)
 		}
 
-		if err := unmarshal[Out](reply, out); err != nil {
+		if err := unmarshal(reply, out); err != nil {
 			return err
 		}
 		return nil
 	})
 }
 
-type messageFunc func(context.Context, proto.WeaviateClient) error
+type rpcFunc func(context.Context, proto.WeaviateClient) error
 
-var _ transports.RPC[proto.WeaviateClient] = (*messageFunc)(nil)
+var _ transports.RPC[proto.WeaviateClient] = (*rpcFunc)(nil)
 
-func (f messageFunc) Do(ctx context.Context, wc proto.WeaviateClient) error {
+func (f rpcFunc) Do(ctx context.Context, wc proto.WeaviateClient) error {
 	return f(ctx, wc)
 }
 
@@ -214,5 +219,8 @@ func unmarshal[Out ReplyMessage](reply *Out, dest any) error {
 
 // Close closes the gRPC transport.
 func (vt *versionedTransport) Close() error {
-	return vt.gRPC.Close()
+	if c, ok := vt.gRPC.(io.Closer); ok {
+		return c.Close()
+	}
+	return nil
 }

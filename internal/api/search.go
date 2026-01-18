@@ -42,7 +42,7 @@ type GetObjectRequest struct {
 }
 
 // MarshalMessage implements [Message].
-func (r *GetObjectRequest) RPC() RPC[proto.SearchRequest, proto.SearchReply] {
+func (r *GetObjectRequest) Method() methodFunc[proto.SearchRequest, proto.SearchReply] {
 	return proto.WeaviateClient.Search
 }
 
@@ -179,7 +179,7 @@ func (cm CombinationMethod) proto() proto.CombinationMethod {
 }
 
 // RPC implements [Message].
-func (r *SearchRequest) RPC() RPC[proto.SearchRequest, proto.SearchReply] {
+func (r *SearchRequest) Method() methodFunc[proto.SearchRequest, proto.SearchReply] {
 	return proto.WeaviateClient.Search
 }
 
