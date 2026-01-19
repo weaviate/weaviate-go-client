@@ -19,13 +19,6 @@ import (
 )
 
 func TestREST_Do(t *testing.T) {
-	// 1. start a server
-	// 2. send some request
-	// 3. verify payload / query / body correct
-	// 4. verify status code accepter
-	// 5. verify unmarshaled JSON correctly
-	// 6. verify errors correclty
-
 	contentTypeHeader := http.Header{"Content-Type": {"application/json"}}
 	defaultHeader := http.Header{"X-Default": {"a", "b"}}
 	version := "v0"
