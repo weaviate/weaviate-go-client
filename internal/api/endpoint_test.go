@@ -60,6 +60,13 @@ func TestRESTEndpoints(t *testing.T) {
 			wantPath:   "/aliases/abc",
 		},
 		{
+			name:       "create alias",
+			req:        &api.CreateAliasRequest{Alias: "Alias", Collection: "Collection"},
+			wantMethod: http.MethodPost,
+			wantPath:   "/aliases",
+			wantBody:   &rest.Alias{Alias: "Alias", Class: "Collection"},
+		},
+		{
 			name: "create backup request",
 			req: &api.CreateBackupRequest{
 				Backend:            "filesystem",
