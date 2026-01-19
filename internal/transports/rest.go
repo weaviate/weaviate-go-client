@@ -103,11 +103,10 @@ func (c *REST) Do(ctx context.Context, req Endpoint, dest any) error {
 				return nil
 			}
 		}
-		// TODO(dyma): better error handling?
-		return fmt.Errorf("HTTP %d: %s", res.StatusCode, resBody)
+		return &HTTPError{Code: res.StatusCode, Body: string(resBody)}
 	}
 
-	if dest != nil {
+	if dest != nil && len(resBody) > 0 {
 		if err := json.Unmarshal(resBody, dest); err != nil {
 			return fmt.Errorf("unmarshal response body: %w", err)
 		}
@@ -145,6 +144,17 @@ func (c *REST) url(req Endpoint) string {
 	}
 
 	return url.String()
+}
+
+type HTTPError struct {
+	Code int
+	Body string
+}
+
+var _ error = (*HTTPError)(nil)
+
+func (e *HTTPError) Error() string {
+	return fmt.Sprintf("HTTP %d: %s", e.Code, e.Body)
 }
 
 // BaseEndpoint implements [Endpoint] methods which may return nil.
