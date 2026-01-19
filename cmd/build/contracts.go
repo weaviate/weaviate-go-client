@@ -41,6 +41,22 @@ Options:
 `
 )
 
+// Contracts validates API contracts in ./api against their upstream
+// versions in github.com/weaviate/weaviate.
+//
+// It works by fetching hashes for these files from the main repo
+// and comparing them to hashes in the local .git object storage.
+// If these differ, Contracts downloads the latest version of the
+// contract and writes it to ./api.
+//
+// If --check flag is set to true, Contracts will return an error
+// if the checksum fails. Useful in the context of a CI pipeline.
+//
+// Weaviate server defines its REST API schema in OpenAPI v2, which
+// oapi-codegen does not support. After an update, Contracts will
+// generate a v3 schema from the one we pull from the main repo.
+//
+// Models and protobuf stubs are not re-generated automatically.
 func Contracts(ctx context.Context, args []string) error {
 	cmd := flag.NewFlagSet("contracts", flag.ExitOnError)
 	h := cmd.Bool("help", false, "Print help message.")
@@ -137,20 +153,20 @@ to re-generate REST and gRPC stubs.
 }
 
 type contract struct {
-	Upstream GithubFile // Upstream file metadata.
+	Upstream githubFile // Upstream file metadata.
 	Exists   bool       // False if the file does not exist locally.
 	Path     string     // Local filepath.
 	SHA      string     // Local file SHA.
 }
 
-type GithubFile struct {
+type githubFile struct {
 	Name        string `json:"name"`
 	SHA         string `json:"sha"`
 	DownloadURL string `json:"download_url"`
 }
 
 // headProtobufs fetches metadata for schema.json.
-func headOpenAPISpecs(ctx context.Context) (*GithubFile, error) {
+func headOpenAPISpecs(ctx context.Context) (*githubFile, error) {
 	dir, basename := filepath.Split(WeaviateOpenAPIDir)
 	specs, err := ghFiles(ctx, dir)
 	if err != nil {
@@ -165,7 +181,7 @@ func headOpenAPISpecs(ctx context.Context) (*GithubFile, error) {
 }
 
 // headProtobufs fetches metadata for protobuf files.
-func headProtobufs(ctx context.Context) ([]GithubFile, error) {
+func headProtobufs(ctx context.Context) ([]githubFile, error) {
 	return ghFiles(ctx, WeaviateProtobufDir)
 }
 
@@ -191,7 +207,7 @@ func updateContract(ctx context.Context, c contract) error {
 	return nil
 }
 
-func newContract(ctx context.Context, dir, local string, upstream GithubFile) (*contract, error) {
+func newContract(ctx context.Context, dir, local string, upstream githubFile) (*contract, error) {
 	path := filepath.Join(dir, local)
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		return &contract{
@@ -227,7 +243,7 @@ func gitSHA(ctx context.Context, file string) (string, error) {
 }
 
 // ghFiles fetches metadata for files in a given weaviate/weaviate project directory.
-func ghFiles(ctx context.Context, dir string) ([]GithubFile, error) {
+func ghFiles(ctx context.Context, dir string) ([]githubFile, error) {
 	rc, err := ghGet(ctx, WeaviateRoot+"/"+dir)
 	if err != nil {
 		return nil, err
@@ -239,7 +255,7 @@ func ghFiles(ctx context.Context, dir string) ([]GithubFile, error) {
 		return nil, err
 	}
 
-	var files []GithubFile
+	var files []githubFile
 	if err := json.Unmarshal(body, &files); err != nil {
 		return nil, err
 	}
