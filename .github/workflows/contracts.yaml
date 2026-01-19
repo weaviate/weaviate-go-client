@@ -12,6 +12,8 @@ jobs:
   check:
     name: contracts --check
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v3
       - name: Set up Go

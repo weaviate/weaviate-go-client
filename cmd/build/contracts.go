@@ -38,6 +38,9 @@ const (
 Options:
 	--check	Exit with non-zero exit code if checksums do not match.
 	--help	Print this message.
+
+Environment variables:
+	GITHUB_TOKEN	GitHub token for authenticated requests.
 `
 )
 
