@@ -1,0 +1,19 @@
+Package ./api contains contracts for REST and gRPC APIs in the Weaviate server.
+
+- oapi-codegen.yaml -- config file for ./bin/oapi-codegen.
+- proto/ -- Protobufs definitions for gRPC stubs.
+- rest/ -- OpenAPI schema for REST models.
+    - `schema.check.json` -- Original OpenAPI v2 schema definition from the server.
+    Source: https://github.com/weaviate/weaviate/blob/main/openapi-specs/schema.json
+    - `schema.v3.yaml` -- Generated v3 schema, as oapi-codegen does not support v2.
+    Converted using Swagger Converter API. Uses YAML to enable comments.
+    See: https://converter.swagger.io/api/convert
+
+It is OK to delete proto/ and rest/ directories, as they can be re-created by ./cmd/build.go.
+DO NOT DELETE `oapi-codegen.yaml`
+
+Generated artifacts are committed to VCS, but will change as the contracts get updated.
+To re-generate them locally, run:
+
+    go generate ./...
+
