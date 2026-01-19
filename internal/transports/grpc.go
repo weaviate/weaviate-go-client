@@ -36,10 +36,6 @@ type RPC[Client any] interface {
 	Do(context.Context, Client) error
 }
 
-func (g *GRPC[C]) Client() C {
-	return g.client
-}
-
 func (c *GRPC[C]) Do(ctx context.Context, rpc RPC[C]) error {
 	dev.Assert(rpc != nil, "nil rpc")
 

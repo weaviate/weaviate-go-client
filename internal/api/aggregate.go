@@ -39,7 +39,7 @@ var (
 	_ MessageUnmarshaler[proto.AggregateReply]              = (*AggregateResponse)(nil)
 )
 
-func (r *AggregateRequest) RPC() RPC[proto.AggregateRequest, proto.AggregateReply] {
+func (r *AggregateRequest) Method() methodFunc[proto.AggregateRequest, proto.AggregateReply] {
 	return proto.WeaviateClient.Aggregate
 }
 
@@ -231,7 +231,7 @@ var (
 	_ MessageUnmarshaler[proto.AggregateReply]              = (*CountObjectsResponse)(nil)
 )
 
-func (r *CountObjectsRequest) RPC() RPC[proto.AggregateRequest, proto.AggregateReply] {
+func (r *CountObjectsRequest) Method() methodFunc[proto.AggregateRequest, proto.AggregateReply] {
 	return proto.WeaviateClient.Aggregate
 }
 
