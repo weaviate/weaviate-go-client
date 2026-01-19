@@ -9,7 +9,7 @@ Package ./api contains contracts for REST and gRPC APIs in the Weaviate server.
     Converted using Swagger Converter API. Uses YAML to enable comments.
     See: https://converter.swagger.io/api/convert
 
-It is OK to delete proto/ and rest/ directories, as they can be re-created by ./cmd/build.go.
+It is OK to delete proto/ and rest/ directories, as they can be re-created by ./cmd/build.
 DO NOT DELETE `oapi-codegen.yaml`
 
 Generated artifacts are committed to VCS, but will change as the contracts get updated.
