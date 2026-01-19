@@ -16,13 +16,11 @@ func TestNewLocal(t *testing.T) {
 	tf := api.NewTransport
 	t.Cleanup(func() { api.NewTransport = tf })
 
-	var nop testkit.NopTransport
-
 	t.Run("default", func(t *testing.T) {
 		var got api.TransportConfig
 		api.NewTransport = func(cfg api.TransportConfig) (internal.Transport, error) {
 			got = cfg
-			return &nop, nil
+			return testkit.NopTransport, nil
 		}
 
 		c, err := weaviate.NewLocal(t.Context(), nil)
@@ -45,7 +43,7 @@ func TestNewLocal(t *testing.T) {
 		var got api.TransportConfig
 		api.NewTransport = func(cfg api.TransportConfig) (internal.Transport, error) {
 			got = cfg
-			return &nop, nil
+			return testkit.NopTransport, nil
 		}
 
 		c, err := weaviate.NewLocal(t.Context(), &weaviate.ConnectionConfig{

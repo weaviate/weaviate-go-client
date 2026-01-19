@@ -38,6 +38,11 @@ func TestTickingContext(t *testing.T) {
 	}
 }
 
+func TestNopTransport(t *testing.T) {
+	require.NotNil(t, testkit.NopTransport, "testkit.NopTransport")
+	require.NoError(t, testkit.NopTransport.Do(t.Context(), nil, nil), "testkit.NopTransport.Do()")
+}
+
 func TestMockTransport(t *testing.T) {
 	t.Run("respects context", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
