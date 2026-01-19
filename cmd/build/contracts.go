@@ -1,3 +1,4 @@
+//nolint:errcheck
 package main
 
 import (
@@ -121,7 +122,7 @@ func Contracts(ctx context.Context, args []string) error {
 Contracts in weaviate-go-client are out-of-sync with weaviate/weaviate repository.
 Update them to the latest version by running this command:
 	go run ./cmd/build contracts
-`)
+			`) // nolint:staticcheck
 	}
 	if updated {
 		log.Print(`

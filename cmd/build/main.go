@@ -43,6 +43,9 @@ func main() {
 	case "contracts":
 		err = Contracts(ctx, os.Args[2:])
 	default:
+		// Ignore linter errors about errors formatting.
+		// In this case "help" is our error message.
+		// nolint:staticcheck
 		err = errors.New(help)
 	}
 
