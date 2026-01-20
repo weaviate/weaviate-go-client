@@ -1,0 +1,24 @@
+name: Validate API contracts
+
+on:
+  push:
+    branches:
+      - v6
+  pull_request:
+    branches:
+      - v6
+
+jobs:
+  check:
+    name: contracts --check
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.24"
+          cache: true
+      - run: go run ./cmd/build contracts --check
