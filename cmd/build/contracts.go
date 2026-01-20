@@ -61,15 +61,19 @@ Environment variables:
 //
 // Models and protobuf stubs are not re-generated automatically.
 func Contracts(ctx context.Context, args []string) error {
+	var opt struct {
+		Help  bool
+		Check bool
+	}
 	cmd := flag.NewFlagSet("contracts", flag.ExitOnError)
-	h := cmd.Bool("help", false, "Print help message.")
-	check := cmd.Bool("check", false, "Exit with non-zero exit code if checksums do not match.")
+	cmd.BoolVar(&opt.Help, "help", false, "Print help message.")
+	cmd.BoolVar(&opt.Check, "check", false, "Exit with non-zero exit code if checksums do not match.")
 
 	if err := cmd.Parse(args); err != nil {
 		return err
 	}
 
-	if *h {
+	if opt.Help {
 		fmt.Print(ContractsHelp)
 		return nil
 	}
@@ -116,7 +120,7 @@ func Contracts(ctx context.Context, args []string) error {
 		}
 
 		log.Printf("check %s:\n\twant:\t%s\n\tgot:\t%s", file.Path, file.Upstream.SHA, file.SHA)
-		if *check {
+		if opt.Check {
 			ok = false
 			continue
 		}
@@ -129,14 +133,14 @@ func Contracts(ctx context.Context, args []string) error {
 	}
 
 	// Regenerate schema.v3.json if files were updated successfully.
-	if !*check && ok {
+	if !opt.Check && ok {
 		log.Printf("Converting %s to OpenAPI v3", SchemaCheck)
 		if err := convertSchemaToV3(ctx); err != nil {
 			log.Printf("\tERROR: %s", err)
 		}
 	}
 
-	if *check && !ok {
+	if opt.Check && !ok {
 		return fmt.Errorf(`
 Contracts in weaviate-go-client are out-of-sync with weaviate/weaviate repository.
 Update them to the latest version by running this command:
@@ -197,15 +201,8 @@ func updateContract(ctx context.Context, c contract) error {
 	}
 	defer rc.Close()
 
-	written, err := writeAtomic(c.Path, rc)
-	if err != nil {
+	if _, err := writeAtomic(c.Path, rc, false); err != nil {
 		return err
-	}
-
-	if c.Exists {
-		log.Printf("Updated %s [written %dB]", c.Path, written)
-	} else {
-		log.Printf("Added new file at %s [written %dB]", c.Path, written)
 	}
 	return nil
 }
@@ -409,22 +406,21 @@ func convertSchemaToV3(ctx context.Context) error {
 	header := fmt.Sprintf(headerGenerated, path)
 	v3 = append([]byte(header), v3...)
 
-	written, err := writeAtomic(path, bytes.NewReader(v3))
-	if err != nil {
+	if _, err := writeAtomic(path, bytes.NewReader(v3), false); err != nil {
 		return err
 	}
 
-	if notExists {
-		log.Printf("Added new file at %s [written %dB]", path, written)
-	} else {
-		log.Printf("Updated %s [written %dB]", path, written)
-	}
 	return nil
 }
 
 // writeAtomic writes the contents of Reader r to a .tmp file,
 // performs a rename, and cleans up the .tmp file.
-func writeAtomic(file string, r io.Reader) (int64, error) {
+func writeAtomic(file string, r io.Reader, silent bool) (int64, error) {
+	// Check if the file existed before the write to log
+	// a more informative message on exit.
+	_, err := os.Stat(filepath.Join(LocalOpenAPIDir, SchemaV3))
+	existed := errors.Is(err, os.ErrNotExist)
+
 	if err := os.MkdirAll(filepath.Dir(file), 0o775); err != nil {
 		return 0, err
 	}
@@ -443,6 +439,14 @@ func writeAtomic(file string, r io.Reader) (int64, error) {
 
 	if err := os.Rename(f.Name(), file); err != nil {
 		return 0, err
+	}
+
+	if !silent {
+		if existed {
+			log.Printf("Updated %s [written %dB]", file, written)
+		} else {
+			log.Printf("Added new file at %s [written %dB]", file, written)
+		}
 	}
 	return written, nil
 }

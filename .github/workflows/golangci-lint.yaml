@@ -23,4 +23,4 @@ jobs:
           go-version: stable
       - uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.7.2
+          version: v2.8.0

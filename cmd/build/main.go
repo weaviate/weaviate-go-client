@@ -13,6 +13,7 @@ const help = `Usage: go run ./cmd/build/main.go [OPTIONS] COMMAND
 CLI tools for weaviate-go-client maintainers.
 
 Commands:
+	onboard		Bootstrap local development environment.
 	contracts	Update ./api/proto/ and ./api/rest specs to their latest versions in github.com/weaviate/weaviate.
 
 Run go run ./cmd/build COMMAND --help for more information on the command.
@@ -40,6 +41,8 @@ func main() {
 
 	var err error
 	switch os.Args[1] {
+	case "onboard":
+		err = Onboard(ctx, os.Args[2:])
 	case "contracts":
 		err = Contracts(ctx, os.Args[2:])
 	default:
