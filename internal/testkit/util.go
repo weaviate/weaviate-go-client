@@ -23,7 +23,7 @@ var Now = time.Date(6, time.Month(5), 4, 3, 2, 1, 0, time.Local)
 // The error message is an allusion to [Roy Lichtenstein's dyptich].
 //
 // [Roy Lichtenstein's dyptich]: https://en.wikipedia.org/wiki/Whaam!
-var ErrWhaam = errors.New("Whaam!")
+var ErrWhaam = errors.New("Whaam!") // nolint:staticcheck
 
 // IsPointer asserts that v is a pointer. If the assertion fails,
 // the test t will fail immediately. Use IsPointer as a pre-condition
