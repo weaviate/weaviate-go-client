@@ -91,7 +91,7 @@ func TestRESTRequests(t *testing.T) {
 			},
 		},
 		{
-			name: "insert object (no consistency_level)",
+			name: "insert object (consistency_level=ONE)",
 			req: &api.InsertObjectRequest{
 				RequestDefaults: api.RequestDefaults{
 					CollectionName:   "Songs",
@@ -102,6 +102,69 @@ func TestRESTRequests(t *testing.T) {
 			wantPath:   "/objects",
 			wantQuery:  url.Values{"consistency_level": {string(api.ConsistencyLevelOne)}},
 			wantBody:   &rest.Object{Class: "Songs"},
+		},
+		{
+			name: "replace object (no consistency_level)",
+			req: &api.ReplaceObjectRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+					Tenant:         "john_doe",
+				},
+				UUID: uuid.Nil,
+				Properties: map[string]any{
+					"title":  "High Speed Dirt",
+					"genres": []string{"thrash metal", "blues"},
+					"single": false,
+					"year":   1992,
+				},
+				References: api.ObjectReferences{
+					"band": {
+						{UUID: uuid.Nil, Collection: "Drummers"},
+						{UUID: uuid.Nil, Collection: "Basists"},
+					},
+					"label": {
+						{UUID: uuid.Nil},
+					},
+				},
+				Vectors: []api.Vector{
+					{Name: "lyrics", Single: []float32{1, 2, 3}},
+				},
+			},
+			wantMethod: http.MethodPut,
+			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
+			wantBody: &rest.Object{
+				Tenant: "john_doe",
+				Properties: map[string]any{
+					"title":  "High Speed Dirt",
+					"genres": []string{"thrash metal", "blues"},
+					"single": false,
+					"year":   1992,
+					"band": []string{
+						"weaviate://localhost/Drummers/" + uuid.Nil.String(),
+						"weaviate://localhost/Basists/" + uuid.Nil.String(),
+					},
+					"label": []string{
+						"weaviate://localhost/" + uuid.Nil.String(),
+					},
+				},
+				Vectors: map[string]any{
+					"lyrics": []float32{1, 2, 3},
+				},
+			},
+		},
+		{
+			name: "replace object (consistency_level=ONE)",
+			req: &api.ReplaceObjectRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				UUID: uuid.Nil,
+			},
+			wantMethod: http.MethodPut,
+			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
+			wantQuery:  url.Values{"consistency_level": {string(api.ConsistencyLevelOne)}},
+			wantBody:   &rest.Object{},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -160,6 +223,56 @@ func TestRESTResponses(t *testing.T) {
 			},
 			dest: new(api.InsertObjectResponse),
 			want: &api.InsertObjectResponse{
+				UUID:          uuid.Nil,
+				CreatedAt:     testkit.Now,
+				LastUpdatedAt: testkit.Now,
+				Properties: map[string]any{
+					"title":  "High Speed Dirt",
+					"genres": []any{"thrash metal", "blues"},
+					"single": false,
+					"year":   float64(1992), // json.Marshal treats numbers as float64 by default
+				},
+				References: api.ObjectReferences{
+					"band": {
+						{UUID: uuid.Nil, Collection: "Drummers"},
+						{UUID: uuid.Nil, Collection: "Basists"},
+					},
+					"label": {
+						{UUID: uuid.Nil},
+					},
+				},
+				Vectors: map[string]api.Vector{
+					"lyrics": {Name: "lyrics", Single: []float32{1, 2, 3}},
+				},
+			},
+		},
+		{
+			name: "replaced object",
+			body: &rest.Object{
+				Class:              "Songs",
+				Tenant:             "john_doe",
+				Id:                 &uuid.Nil,
+				CreationTimeUnix:   testkit.Now.UnixMilli(),
+				LastUpdateTimeUnix: testkit.Now.UnixMilli(),
+				Properties: map[string]any{
+					"title":  "High Speed Dirt",
+					"genres": []string{"thrash metal", "blues"},
+					"single": false,
+					"year":   1992,
+					"band": []string{
+						"weaviate://localhost/Drummers/" + uuid.Nil.String(),
+						"weaviate://localhost/Basists/" + uuid.Nil.String(),
+					},
+					"label": []string{
+						"weaviate://localhost/" + uuid.Nil.String(),
+					},
+				},
+				Vectors: map[string]any{
+					"lyrics": []float32{1, 2, 3},
+				},
+			},
+			dest: new(api.ReplaceObjectResponse),
+			want: &api.ReplaceObjectResponse{
 				UUID:          uuid.Nil,
 				CreatedAt:     testkit.Now,
 				LastUpdatedAt: testkit.Now,

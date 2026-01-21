@@ -175,3 +175,56 @@ func (i *InsertObjectResponse) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
+
+// ReplaceObjectRequest mirrors InsertObjectRequest but uses PUT method.
+// The collection name is sent as a path parameter.
+type ReplaceObjectRequest struct {
+	RequestDefaults
+	UUID       uuid.UUID
+	Properties map[string]any
+	References ObjectReferences
+	Vectors    []Vector
+}
+
+var _ transports.Endpoint = (*ReplaceObjectRequest)(nil)
+
+func (*ReplaceObjectRequest) Method() string { return http.MethodPut }
+func (r *ReplaceObjectRequest) Path() string {
+	return "/objects/" + r.CollectionName + "/" + r.UUID.String()
+}
+
+func (r *ReplaceObjectRequest) Query() url.Values {
+	if r.ConsistencyLevel != consistencyLevelUndefined {
+		return url.Values{"consistency_level": {string(r.ConsistencyLevel)}}
+	}
+	return nil
+}
+
+func (r *ReplaceObjectRequest) Body() any {
+	// InsertObjectRequest already implements json.Marshaler.
+	// For replace, CollectionName and UUID should not part of the payload.
+	return &InsertObjectRequest{
+		RequestDefaults: RequestDefaults{
+			Tenant:           r.Tenant,
+			ConsistencyLevel: r.ConsistencyLevel,
+		},
+		Properties: r.Properties,
+		References: r.References,
+		Vectors:    r.Vectors,
+	}
+}
+
+type ReplaceObjectResponse InsertObjectResponse
+
+var _ json.Unmarshaler = (*ReplaceObjectResponse)(nil)
+
+func (r *ReplaceObjectResponse) UnmarshalJSON(data []byte) error {
+	// InsertObjectResponse implements json.Unmarshaler,
+	// and response structs are identical.
+	var ior InsertObjectResponse
+	if err := json.Unmarshal(data, &ior); err != nil {
+		return err
+	}
+	*r = ReplaceObjectResponse(ior)
+	return nil
+}
