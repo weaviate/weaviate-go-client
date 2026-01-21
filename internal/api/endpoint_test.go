@@ -110,7 +110,7 @@ func TestRESTRequests(t *testing.T) {
 					CollectionName: "Songs",
 					Tenant:         "john_doe",
 				},
-				UUID: uuid.Nil,
+				UUID: &uuid.Nil,
 				Properties: map[string]any{
 					"title":  "High Speed Dirt",
 					"genres": []string{"thrash metal", "blues"},
@@ -159,7 +159,7 @@ func TestRESTRequests(t *testing.T) {
 					CollectionName:   "Songs",
 					ConsistencyLevel: api.ConsistencyLevelOne,
 				},
-				UUID: uuid.Nil,
+				UUID: &uuid.Nil,
 			},
 			wantMethod: http.MethodPut,
 			wantPath:   "/objects/Songs/" + uuid.Nil.String(),

@@ -34,4 +34,11 @@ func TestVectors_UnmarshalJSON(t *testing.T) {
 		err := json.Unmarshal(data, &got)
 		require.Error(t, err)
 	})
+
+	t.Run("empty vectors map", func(t *testing.T) {
+		var got api.Vectors
+		err := json.Unmarshal([]byte(`{}`), &got)
+		require.NoError(t, err, "unmarshal vectors")
+		require.Nil(t, got, "vectors map was initialized")
+	})
 }

@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
@@ -178,13 +179,7 @@ func (i *InsertObjectResponse) UnmarshalJSON(data []byte) error {
 
 // ReplaceObjectRequest mirrors InsertObjectRequest but uses PUT method.
 // The collection name is sent as a path parameter.
-type ReplaceObjectRequest struct {
-	RequestDefaults
-	UUID       uuid.UUID
-	Properties map[string]any
-	References ObjectReferences
-	Vectors    []Vector
-}
+type ReplaceObjectRequest InsertObjectRequest
 
 var _ transports.Endpoint = (*ReplaceObjectRequest)(nil)
 
@@ -201,6 +196,8 @@ func (r *ReplaceObjectRequest) Query() url.Values {
 }
 
 func (r *ReplaceObjectRequest) Body() any {
+	dev.AssertNotNil(r.UUID, "object uuid")
+
 	// InsertObjectRequest already implements json.Marshaler.
 	// For replace, CollectionName and UUID should not part of the payload.
 	return &InsertObjectRequest{

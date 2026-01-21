@@ -41,6 +41,10 @@ func (vs *Vectors) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	if len(vectors) == 0 {
+		return nil
+	}
+
 	*vs = Vectors{}
 	for k, data := range vectors {
 		var v Vector
