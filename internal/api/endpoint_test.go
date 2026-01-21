@@ -166,6 +166,41 @@ func TestRESTRequests(t *testing.T) {
 			wantQuery:  url.Values{"consistency_level": {string(api.ConsistencyLevelOne)}},
 			wantBody:   &rest.Object{},
 		},
+		{
+			name: "delete object (no consistency_level)",
+			req: &api.DeleteObjectRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+					Tenant:         "john_doe",
+				},
+				UUID: uuid.Nil,
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
+			wantQuery:  url.Values{"tenant": {"john_doe"}},
+		},
+		{
+			name: "delete object (no tenant)",
+			req: &api.DeleteObjectRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				UUID: uuid.Nil,
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
+			wantQuery:  url.Values{"consistency_level": {string(api.ConsistencyLevelOne)}},
+		},
+		{
+			name: "delete object (no tenant, no consistency_level)",
+			req: &api.DeleteObjectRequest{
+				RequestDefaults: api.RequestDefaults{CollectionName: "Songs"},
+				UUID:            uuid.Nil,
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)

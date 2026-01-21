@@ -18,3 +18,24 @@ type Endpoint interface {
 	// Requests that do not have a payload should return nil.
 	Body() any
 }
+
+// BaseEndpoint implements [Endpoint] methods which may return nil.
+// These values are usually optional in the request.
+// BaseEndpoint can be embedded in a another request struct to reduce boilerplate.
+//
+// Example:
+//
+//	type DeleteSongRequest struct {
+//		transport.BaseEndpoint
+//		SongID string
+//	}
+//
+//	// DeleteSongRequest implements transport.Endpoint.
+//	var _ transport.Endpoint = (*DeleteSongRequest)(nil)
+//
+//	func (r *DeleteSongRequest) Method() string { return http.MethodDelete }
+//	func (r *DeleteSongRequest) Path() string   { return "/songs/" + r.SongID }
+type BaseEndpoint struct{}
+
+func (*BaseEndpoint) Query() url.Values { return nil }
+func (*BaseEndpoint) Body() any         { return nil }

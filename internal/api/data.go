@@ -228,3 +228,33 @@ func (r *ReplaceObjectResponse) UnmarshalJSON(data []byte) error {
 	*r = ReplaceObjectResponse(ior)
 	return nil
 }
+
+// DeleteObjectRequest deletes an object by its UUID.
+type DeleteObjectRequest struct {
+	transports.BaseEndpoint
+
+	RequestDefaults
+	UUID uuid.UUID
+}
+
+var _ transports.Endpoint = (*DeleteObjectRequest)(nil)
+
+func (*DeleteObjectRequest) Method() string { return http.MethodDelete }
+func (r *DeleteObjectRequest) Path() string {
+	return "/objects/" + r.CollectionName + "/" + r.UUID.String()
+}
+
+func (r *DeleteObjectRequest) Query() url.Values {
+	if r.Tenant == "" && r.ConsistencyLevel == consistencyLevelUndefined {
+		return nil
+	}
+
+	q := make(url.Values)
+	if r.Tenant != "" {
+		q.Add("tenant", r.Tenant)
+	}
+	if r.ConsistencyLevel != consistencyLevelUndefined {
+		q.Add("consistency_level", string(r.ConsistencyLevel))
+	}
+	return q
+}
