@@ -39,12 +39,11 @@ func TestRESTEndpoints(t *testing.T) {
 		wantBody   any        // Expected request body. JSON strings are compared.
 	}{
 		{
-			name: "insert object (consistency_level=ONE)",
+			name: "insert object (no consistency_level)",
 			req: &api.InsertObjectRequest{
 				RequestDefaults: api.RequestDefaults{
-					CollectionName:   "Songs",
-					Tenant:           "john_doe",
-					ConsistencyLevel: api.ConsistencyLevelOne,
+					CollectionName: "Songs",
+					Tenant:         "john_doe",
 				},
 				UUID: &uuid.Nil,
 				Properties: map[string]any{
@@ -53,13 +52,21 @@ func TestRESTEndpoints(t *testing.T) {
 					"single": false,
 					"year":   1992,
 				},
+				References: api.ObjectReferences{
+					"band": {
+						{UUID: uuid.Nil, Collection: "Drummers"},
+						{UUID: uuid.Nil, Collection: "Basists"},
+					},
+					"label": {
+						{UUID: uuid.Nil},
+					},
+				},
 				Vectors: []api.Vector{
 					{Name: "lyrics", Single: []float32{1, 2, 3}},
 				},
 			},
 			wantMethod: http.MethodPost,
 			wantPath:   "/objects",
-			wantQuery:  url.Values{"consistency_level": {string(api.ConsistencyLevelOne)}},
 			wantBody: &rest.Object{
 				Class:  "Songs",
 				Tenant: "john_doe",
@@ -69,6 +76,13 @@ func TestRESTEndpoints(t *testing.T) {
 					"genres": []string{"thrash metal", "blues"},
 					"single": false,
 					"year":   1992,
+					"band": []string{
+						"weaviate://localhost/Drummers/" + uuid.Nil.String(),
+						"weaviate://localhost/Basists/" + uuid.Nil.String(),
+					},
+					"label": []string{
+						"weaviate://localhost/" + uuid.Nil.String(),
+					},
 				},
 				Vectors: map[string]any{
 					"lyrics": []float32{1, 2, 3},
@@ -78,10 +92,14 @@ func TestRESTEndpoints(t *testing.T) {
 		{
 			name: "insert object (no consistency_level)",
 			req: &api.InsertObjectRequest{
-				RequestDefaults: api.RequestDefaults{CollectionName: "Songs"},
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
 			},
 			wantMethod: http.MethodPost,
 			wantPath:   "/objects",
+			wantQuery:  url.Values{"consistency_level": {string(api.ConsistencyLevelOne)}},
 			wantBody:   &rest.Object{Class: "Songs"},
 		},
 	} {
@@ -94,10 +112,6 @@ func TestRESTEndpoints(t *testing.T) {
 			assert.Equal(t, tt.wantQuery, endpoint.Query(), "bad query")
 
 			gotBody := endpoint.Body()
-			if gotBody == tt.wantBody {
-				return // If two objects are equal, so will be their JSON representations.
-			}
-
 			gotJSON, err := json.Marshal(gotBody)
 			require.NoError(t, err, "marshal request body")
 

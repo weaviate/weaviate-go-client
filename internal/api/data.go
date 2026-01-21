@@ -1,7 +1,9 @@
 package api
 
 import (
+	"encoding"
 	"encoding/json"
+	"maps"
 	"net/http"
 	"net/url"
 
@@ -15,6 +17,7 @@ type InsertObjectRequest struct {
 	RequestDefaults
 	UUID       *uuid.UUID
 	Properties map[string]any
+	References ObjectReferences
 	Vectors    []Vector
 }
 
@@ -44,6 +47,30 @@ type InsertObjectResponse struct {
 
 var _ json.Unmarshaler = (*InsertObjectResponse)(nil)
 
+type (
+	ObjectReferences map[string][]ObjectReference
+	ObjectReference  struct {
+		Collection string    // Collection the referenced object belongs to.
+		UUID       uuid.UUID // UUID of the referenced object.
+	}
+)
+
+var _ encoding.TextMarshaler = (*ObjectReference)(nil)
+
+// MarshalText formats the object reference as a beacon.
+// json.Marshal will call this method and encode the result as a JSON string.
+func (o *ObjectReference) MarshalText() ([]byte, error) {
+	id, err := o.UUID.MarshalText()
+	if err != nil {
+		return nil, err
+	}
+	b := []byte("weaviate://localhost/")
+	if o.Collection != "" {
+		b = append(b, o.Collection+"/"...)
+	}
+	return append(b, id...), nil
+}
+
 // MarshalJSON implements json.Marshaler via [rest.Object].
 func (r *InsertObjectRequest) MarshalJSON() ([]byte, error) {
 	vectors := make(map[string]any, len(r.Vectors))
@@ -55,13 +82,21 @@ func (r *InsertObjectRequest) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	properties := make(map[string]any, len(r.Properties)+len(r.References))
+	maps.Copy(properties, r.Properties)
+
+	for name, ref := range r.References {
+		properties[name] = ref
+	}
+
 	req := &rest.Object{
 		Class:      r.CollectionName,
 		Tenant:     r.Tenant,
 		Id:         r.UUID,
-		Properties: r.Properties,
+		Properties: properties,
 		Vectors:    vectors,
 	}
+
 	return json.Marshal(req)
 }
 
