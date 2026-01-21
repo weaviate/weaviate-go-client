@@ -32,6 +32,11 @@ func TestObjectReference(t *testing.T) {
 				got, err := strconv.Unquote(string(beacon))
 				require.NoError(t, err, "unquote beacon")
 				require.Equal(t, tt.want, got, "beacon")
+
+				var ref api.ObjectReference
+				err = json.Unmarshal(beacon, &ref)
+				require.NoError(t, err, "unmarshal beacon")
+				require.Equal(t, tt.ref, &ref, "same as input")
 			})
 		}
 	})
