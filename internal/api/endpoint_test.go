@@ -11,12 +11,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
+	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
-// TestRESTEndpoints
-// Because of its exhaustive nature, this test doubles as a documentation of the
-// REST requests supported by the client and their declarative implementation.
+// TestRESTRequests verifies the parameters of REST requests provided by the 'api' package.
+// Because of its exhaustive nature, this test doubles as a documentation
+// of the REST requests supported by the client.
 //
 // Important: we do not impose any restrictions on how each request implements Body().
 // I.e., an endpoint may choose to return a stub from internal/api/gen/rest directly,
@@ -28,7 +29,7 @@ import (
 // it defies the purpose of this test. Instead, populate wantBody with a stub
 // from internal/api/gen/rest package, as it is guaranteed to produce a valid
 // JSON, giving you a more useful comparison in the tests.
-func TestRESTEndpoints(t *testing.T) {
+func TestRESTRequests(t *testing.T) {
 	for _, tt := range []struct {
 		name string
 		req  any // Request object.
@@ -119,6 +120,81 @@ func TestRESTEndpoints(t *testing.T) {
 			require.NoError(t, err, "marshal wantBody")
 
 			assert.JSONEq(t, string(wantJSON), string(gotJSON), "bad body")
+		})
+	}
+}
+
+// TestRESTResponses verifies that response objects in the 'api' package
+// unmarshal response JSONs correctly.
+func TestRESTResponses(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		body any // Response body.
+		dest any // Set dest to a pointer to the response struct.
+		want any // Expected value after deserialization.
+	}{
+		{
+			name: "inserted object",
+			body: &rest.Object{
+				Class:              "Songs",
+				Tenant:             "john_doe",
+				Id:                 &uuid.Nil,
+				CreationTimeUnix:   testkit.Now.UnixMilli(),
+				LastUpdateTimeUnix: testkit.Now.UnixMilli(),
+				Properties: map[string]any{
+					"title":  "High Speed Dirt",
+					"genres": []string{"thrash metal", "blues"},
+					"single": false,
+					"year":   1992,
+					"band": []string{
+						"weaviate://localhost/Drummers/" + uuid.Nil.String(),
+						"weaviate://localhost/Basists/" + uuid.Nil.String(),
+					},
+					"label": []string{
+						"weaviate://localhost/" + uuid.Nil.String(),
+					},
+				},
+				Vectors: map[string]any{
+					"lyrics": []float32{1, 2, 3},
+				},
+			},
+			dest: new(api.InsertObjectResponse),
+			want: &api.InsertObjectResponse{
+				UUID:          uuid.Nil,
+				CreatedAt:     testkit.Now,
+				LastUpdatedAt: testkit.Now,
+				Properties: map[string]any{
+					"title":  "High Speed Dirt",
+					"genres": []any{"thrash metal", "blues"},
+					"single": false,
+					"year":   float64(1992), // json.Marshal treats numbers as float64 by default
+				},
+				References: api.ObjectReferences{
+					"band": {
+						{UUID: uuid.Nil, Collection: "Drummers"},
+						{UUID: uuid.Nil, Collection: "Basists"},
+					},
+					"label": {
+						{UUID: uuid.Nil},
+					},
+				},
+				Vectors: map[string]api.Vector{
+					"lyrics": {Name: "lyrics", Single: []float32{1, 2, 3}},
+				},
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			require.NotNil(t, tt.body, "incomplete test case: body is nil")
+			testkit.IsPointer(t, tt.body, "body")
+			testkit.IsPointer(t, tt.dest, "dest")
+
+			body, err := json.Marshal(tt.body)
+			require.NoError(t, err, "marshal expected body")
+
+			err = json.Unmarshal(body, tt.dest)
+			assert.NoError(t, err, "unmarshal response body")
+			assert.Equal(t, tt.want, tt.dest, "bad unmarshaled value")
 		})
 	}
 }

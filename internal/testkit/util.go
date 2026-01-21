@@ -1,0 +1,27 @@
+package testkit
+
+import (
+	"reflect"
+	"testing"
+	"time"
+
+	"github.com/go-openapi/testify/v2/require"
+)
+
+// Now is constant across the entire test run.
+// To make time comparable with time parsed from a string,
+// Now is has no ns precision and always uses the local TZ.
+//
+// This is only important in test where we use stretchr/testify
+// packages, which do not [compare time] correctly.
+//
+// [compare time]: https://github.com/stretchr/testify/issues/502
+var Now = time.Date(6, time.Month(5), 4, 3, 2, 1, 0, time.Local)
+
+// IsPointer asserts that v is a pointer. If the assertion fails,
+// the test t will fail immediately. Use IsPointer as a pre-condition
+// in unit tests to ensure the test cases are valid.
+func IsPointer(t *testing.T, v any, name string) {
+	t.Helper()
+	require.Equalf(t, reflect.Pointer, reflect.TypeOf(v).Kind(), "%q must be a pointer", name)
+}

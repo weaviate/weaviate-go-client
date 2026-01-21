@@ -1,11 +1,15 @@
 package api
 
 import (
+	"bytes"
 	"encoding"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"maps"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
@@ -38,11 +42,12 @@ func (r *InsertObjectRequest) Body() any { return r }
 
 // InsertObjectResponses reads the data for the newly inserted object.
 type InsertObjectResponse struct {
-	UUID               uuid.UUID
-	Properties         map[string]any
-	Vectors            Vectors
-	CreationTimeUnix   int64
-	LastUpdateTimeUnix int64
+	UUID          uuid.UUID
+	Properties    map[string]any
+	References    ObjectReferences
+	Vectors       Vectors
+	CreatedAt     time.Time
+	LastUpdatedAt time.Time
 }
 
 var _ json.Unmarshaler = (*InsertObjectResponse)(nil)
@@ -55,7 +60,15 @@ type (
 	}
 )
 
-var _ encoding.TextMarshaler = (*ObjectReference)(nil)
+var (
+	_ encoding.TextMarshaler   = (*ObjectReference)(nil)
+	_ encoding.TextUnmarshaler = (*ObjectReference)(nil)
+)
+
+var (
+	beaconPrefix = []byte("weaviate://localhost/")
+	beaconSep    = []byte("/")
+)
 
 // MarshalText formats the object reference as a beacon.
 // json.Marshal will call this method and encode the result as a JSON string.
@@ -64,11 +77,35 @@ func (o *ObjectReference) MarshalText() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	b := []byte("weaviate://localhost/")
+	b := append([]byte(nil), beaconPrefix...)
 	if o.Collection != "" {
-		b = append(b, o.Collection+"/"...)
+		b = append(b, o.Collection...)
+		b = append(b, beaconSep...)
 	}
 	return append(b, id...), nil
+}
+
+func (o *ObjectReference) UnmarshalText(text []byte) error {
+	text, ok := bytes.CutPrefix(text, beaconPrefix)
+	if !ok {
+		return errors.New("not a beacon")
+	}
+	parts := bytes.Split(text, beaconSep)
+
+	if len(parts) == 2 {
+		o.Collection, parts = string(parts[0]), parts[1:]
+	}
+
+	if len(parts) != 1 {
+		return fmt.Errorf("beacon %s is malformed", string(text))
+	}
+
+	id, err := uuid.ParseBytes(parts[0])
+	if err != nil {
+		return err
+	}
+	o.UUID = id
+	return nil
 }
 
 // MarshalJSON implements json.Marshaler via [rest.Object].
@@ -102,14 +139,39 @@ func (r *InsertObjectRequest) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler via [rest.Object].
 func (i *InsertObjectResponse) UnmarshalJSON(data []byte) error {
-	var res rest.Object
-	if err := json.Unmarshal(data, &res); err != nil {
+	var o struct {
+		rest.Object
+		Properties map[string]json.RawMessage `json:"properties,omitempty"`
+		Vectors    Vectors                    `json:"vectors,omitempty"`
+	}
+	if err := json.Unmarshal(data, &o); err != nil {
 		return err
 	}
 
+	// Expect most of the properties will be data, not references.
+	properties := make(map[string]any, len(o.Properties))
+	references := make(ObjectReferences)
+	for k, data := range o.Properties {
+		var refs []ObjectReference
+		if err := json.Unmarshal(data, &refs); err == nil {
+			references[k] = refs
+			continue
+		}
+
+		var v any
+		if err := json.Unmarshal(data, &v); err != nil {
+			return err
+		}
+		properties[k] = v
+	}
+
 	*i = InsertObjectResponse{
-		UUID:       *res.Id,
-		Properties: res.Properties,
+		UUID:          *o.Id,
+		CreatedAt:     time.UnixMilli(o.CreationTimeUnix),
+		LastUpdatedAt: time.UnixMilli(o.LastUpdateTimeUnix),
+		Vectors:       o.Vectors,
+		Properties:    properties,
+		References:    references,
 	}
 	return nil
 }
