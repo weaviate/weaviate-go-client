@@ -2,6 +2,7 @@ package testkit_test
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/go-openapi/testify/v2/assert"
@@ -60,4 +61,47 @@ func TestMockTransport(t *testing.T) {
 		require.Equal(t, n, 0, "mistake in test code")
 		require.True(t, transport.Done(), "done: all requests consumed")
 	})
+}
+
+func TestWithOnly(t *testing.T) {
+	type test struct{ testkit.Only }
+
+	// We disable testkit.WithOnly in CI, so this test will always fail.
+	// To isolate it, we unset the variable and re-set it on cleanup.
+	noWithOnly := os.Getenv(testkit.EnvNoWithOnly)
+	require.NoErrorf(t, os.Unsetenv(testkit.EnvNoWithOnly), "unset %s", testkit.EnvNoWithOnly)
+	t.Cleanup(func() { os.Setenv(testkit.EnvNoWithOnly, noWithOnly) })
+
+	for _, tt := range []struct {
+		name  string // Test case name.
+		tests []test // Exclusive test cases.
+		want  int    // How many tt.tests should actually run.
+	}{
+		{
+			name: "all tests",
+			tests: []test{
+				{}, {}, {},
+			},
+			want: 3,
+		},
+		{
+			name: "only 1",
+			tests: []test{
+				{}, {Only: true}, {},
+			},
+			want: 1,
+		},
+		{
+			name: "only 2",
+			tests: []test{
+				{}, {Only: true}, {Only: true},
+			},
+			want: 2,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			got := testkit.WithOnly(t, tt.tests)
+			require.Len(t, got, tt.want, "wrong number of tests")
+		})
+	}
 }
