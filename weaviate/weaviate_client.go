@@ -21,6 +21,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/groups"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/grpc"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/internal"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/misc"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/rbac"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/schema"
@@ -157,6 +158,7 @@ func NewClient(config Config) (*Client, error) {
 			config.Headers["X-Weaviate-Api-Key"] = *config.AuthConfig.ApiKey()
 			config.Headers["X-Weaviate-Cluster-URL"] = "https://" + config.Host
 		}
+		config.Headers["X-Weaviate-Client"] = internal.GetClientVersionHeader()
 	}
 
 	con := connection.NewConnection(config.Scheme, config.Host, config.ConnectionClient, config.getTimeout(), config.Headers)

@@ -62,6 +62,10 @@ sed -i '' \
     -e "s|\($PACKAGE\)/v${CURRENT_MAJOR_VERSION}|\1/v${TARGET_MAJOR_VERSION}|g" \
     -e "/require/s/ v[0-9]*.[0-9]*.[0-9]*$/ $TARGET_VERSION/g" README.md
 
+
+# Update clientVersion in version.go
+sed -i '' "s/^const clientVersion = \".*\"/const clientVersion = \"$TARGET_VERSION\"/" weaviate/internal/version.go
+
 git commit -a -m "Release $TARGET_VERSION version"
 
 git tag -a "$TARGET_VERSION" -m "$TARGET_VERSION"
