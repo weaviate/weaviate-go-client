@@ -39,8 +39,9 @@ const (
 const ENV_INTEGRATION_TESTS_AUTH = "INTEGRATION_TESTS_AUTH"
 
 var (
-	authEnabled  = os.Getenv(ENV_INTEGRATION_TESTS_AUTH) == "auth_enabled"
-	openAIApiKey = os.Getenv("OPENAI_APIKEY")
+	authEnabled    = os.Getenv(ENV_INTEGRATION_TESTS_AUTH) == "auth_enabled"
+	openAIApiKey   = os.Getenv("OPENAI_APIKEY")
+	voyageAIApiKey = os.Getenv("VOYAGEAI_APIKEY")
 )
 
 func GetPortAndAuthPw() (int, int, bool) {
@@ -236,6 +237,9 @@ func CreateTestClient(enableGRPC bool) *weaviate.Client {
 	if openAIApiKey != "" {
 		headers["X-OpenAI-Api-Key"] = openAIApiKey
 	}
+	if voyageAIApiKey != "" {
+		headers["X-VoyageAI-Api-Key"] = voyageAIApiKey
+	}
 
 	cfg := weaviate.Config{
 		Host:    fmt.Sprintf("localhost:%v", port),
@@ -271,8 +275,12 @@ func CreateTestClientForContainer(t *testing.T, container test.Container) *weavi
 		Scheme: "http",
 	}
 
+	cfg.Headers = map[string]string{}
 	if openAIApiKey != "" {
-		cfg.Headers = map[string]string{"X-OpenAI-Api-Key": openAIApiKey}
+		cfg.Headers["X-OpenAI-Api-Key"] = openAIApiKey
+	}
+	if voyageAIApiKey != "" {
+		cfg.Headers["X-VoyageAI-Api-Key"] = voyageAIApiKey
 	}
 
 	if container.EnableGRPC() {

@@ -40,6 +40,7 @@ jobs:
       OKTA_DUMMY_CI_PW: ${{ secrets.OKTA_DUMMY_CI_PW }}
       INTEGRATION_TESTS_AUTH: ${{ matrix.auth_integration }}
       OPENAI_APIKEY: ${{ secrets.OPENAI_APIKEY }}
+      VOYAGEAI_APIKEY: ${{ secrets.VOYAGEAI_APIKEY }}
     steps:
       - uses: actions/checkout@v3
       - name: Login to Docker Hub
