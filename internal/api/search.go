@@ -17,6 +17,8 @@ type SearchRequest struct {
 	ReturnReferences []ReturnReference
 	ReturnVectors    []string
 	ReturnMetadata   ReturnMetadata
+
+	NearVector *NearVector
 }
 
 var (
@@ -53,6 +55,22 @@ type (
 	}
 )
 
+type (
+	SearchTarget struct {
+		CombinationMethod CombinationMethod
+		Vectors           []TargetVector
+	}
+	TargetVector struct {
+		Vector
+		Weight *float32
+	}
+	NearVector struct {
+		Target    SearchTarget
+		Certainty *float64
+		Distance  *float64
+	}
+)
+
 func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	after := r.After.String()
 	if r.After == uuid.Nil {
@@ -81,6 +99,11 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	marshalReturnVectors(req.Metadata, r.ReturnVectors)
 	marshalReturnProperties(req.Properties, r.ReturnProperties)
 	marshalReturnReferences(req.Properties, r.ReturnReferences)
+
+	switch {
+	case r.NearVector != nil:
+		req.NearVector = marshalNearVector(r.NearVector)
+	}
 
 	return req, nil
 }
@@ -160,6 +183,101 @@ func marshalReturnVectors(req *proto.MetadataRequest, vectors []string) {
 		req.Vectors = nil
 	} else {
 		req.Vectors = vectors
+	}
+}
+
+func marshalNearVector(req *NearVector) *proto.NearVector {
+	nv := &proto.NearVector{
+		Distance:  req.Distance,
+		Certainty: req.Certainty,
+	}
+
+	switch len(req.Target.Vectors) {
+	case 0:
+		return nil
+	case 1:
+		tv := req.Target.Vectors[0]
+		v := marshalVector(&tv.Vector)
+		if tv.Name == "" {
+			nv.Vectors = append(nv.Vectors, v)
+		} else {
+			vft := &proto.VectorForTarget{Name: tv.Name}
+			if v != nil {
+				vft.Vectors = append(vft.Vectors, v)
+			}
+			nv.VectorForTargets = append(nv.VectorForTargets, vft)
+		}
+		return nv
+	}
+
+	// Pre-allocate slices for vectors and targets.
+	// Do not allocate WeightsForTarget, as targets may have no weights.
+	nv.VectorForTargets = make([]*proto.VectorForTarget, len(req.Target.Vectors))
+	nv.Targets = &proto.Targets{
+		TargetVectors: make([]string, len(req.Target.Vectors)),
+		Combination:   req.Target.CombinationMethod.proto(),
+	}
+
+	for i, tv := range req.Target.Vectors {
+		nv.Targets.TargetVectors[i] = tv.Name
+		nv.VectorForTargets[i] = &proto.VectorForTarget{
+			Name: tv.Name,
+			Vectors: []*proto.Vectors{
+				marshalVector(&tv.Vector),
+			},
+		}
+		if tv.Weight != nil {
+			nv.Targets.WeightsForTargets = append(nv.Targets.WeightsForTargets,
+				&proto.WeightsForTarget{
+					Target: tv.Name,
+					Weight: *tv.Weight,
+				})
+		}
+	}
+	return nv
+}
+
+func marshalVector(v *Vector) *proto.Vectors {
+	out := &proto.Vectors{Name: v.Name}
+	switch {
+	case v.Single != nil:
+		out.Type = proto.Vectors_VECTOR_TYPE_SINGLE_FP32
+		out.VectorBytes = marshalSingle(v.Single)
+	case v.Multi != nil:
+		out.Type = proto.Vectors_VECTOR_TYPE_MULTI_FP32
+		out.VectorBytes = marshalMulti(v.Multi)
+	default:
+		return nil
+	}
+	return out
+}
+
+type CombinationMethod string
+
+const (
+	_                              CombinationMethod = ""
+	CombinationMethodSum           CombinationMethod = "SUM"
+	CombinationMethodMin           CombinationMethod = "MIN"
+	CombinationMethodAverage       CombinationMethod = "AVERAGE"
+	CombinationMethodManualWeights CombinationMethod = "MANUAL_WEIGHTS"
+	CombinationMethodRelativeScore CombinationMethod = "RELATIVE_SCORE"
+)
+
+// proto converts CombinationMethod into a protobuf value.
+func (cm CombinationMethod) proto() proto.CombinationMethod {
+	switch cm {
+	case CombinationMethodSum:
+		return proto.CombinationMethod_COMBINATION_METHOD_TYPE_SUM
+	case CombinationMethodMin:
+		return proto.CombinationMethod_COMBINATION_METHOD_TYPE_MIN
+	case CombinationMethodAverage:
+		return proto.CombinationMethod_COMBINATION_METHOD_TYPE_AVERAGE
+	case CombinationMethodManualWeights:
+		return proto.CombinationMethod_COMBINATION_METHOD_TYPE_MANUAL
+	case CombinationMethodRelativeScore:
+		return proto.CombinationMethod_COMBINATION_METHOD_TYPE_RELATIVE_SCORE
+	default:
+		return proto.CombinationMethod_COMBINATION_METHOD_UNSPECIFIED
 	}
 }
 

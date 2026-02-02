@@ -19,8 +19,8 @@ type MessageMarshalerTest[In api.RequestMessage, Out api.ReplyMessage] struct {
 	testkit.Only
 
 	name string
-	req  api.Message[In, Out]
-	want *In // Expected protobuf request message.
+	req  api.Message[In, Out] // Request struct.
+	want *In                  // Expected protobuf request message.
 }
 
 // testMessageMarshaler runs [MessageMarshalerTest] test cases.
@@ -325,6 +325,222 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 							Metadata: &proto.MetadataRequest{Uuid: true},
 						},
 					},
+				},
+			},
+		},
+		{
+			name: "near vector no targets",
+			req: &api.SearchRequest{
+				NearVector: &api.NearVector{
+					Target: api.SearchTarget{
+						Vectors: []api.TargetVector{},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				NearVector: nil,
+				Metadata:   &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "near vector single target named",
+			req: &api.SearchRequest{
+				NearVector: &api.NearVector{
+					Distance: testkit.Ptr(.123),
+					Target: api.SearchTarget{
+						Vectors: []api.TargetVector{
+							{
+								Vector: api.Vector{
+									Name:   "title_vec",
+									Single: singleVector,
+								},
+							},
+						},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				NearVector: &proto.NearVector{
+					Distance: testkit.Ptr(.123),
+					VectorForTargets: []*proto.VectorForTarget{
+						{
+							Name: "title_vec",
+							Vectors: []*proto.Vectors{
+								{
+									Name:        "title_vec",
+									VectorBytes: singleVectorBytes,
+									Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+								},
+							},
+						},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "near vector single target anonymous",
+			req: &api.SearchRequest{
+				NearVector: &api.NearVector{
+					Distance: testkit.Ptr(.123),
+					Target: api.SearchTarget{
+						Vectors: []api.TargetVector{
+							{
+								Vector: api.Vector{
+									Single: singleVector,
+								},
+							},
+						},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				NearVector: &proto.NearVector{
+					Distance: testkit.Ptr(.123),
+					Vectors: []*proto.Vectors{
+						{
+							VectorBytes: singleVectorBytes,
+							Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+						},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "near vector multi target average",
+			req: &api.SearchRequest{
+				NearVector: &api.NearVector{
+					Target: api.SearchTarget{
+						CombinationMethod: api.CombinationMethodAverage,
+						Vectors: []api.TargetVector{
+							{
+								Vector: api.Vector{
+									Name:   "title_vec",
+									Single: singleVector,
+								},
+							},
+							{
+								Vector: api.Vector{
+									Name:  "lyrics_vec",
+									Multi: multiVector,
+								},
+							},
+						},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				NearVector: &proto.NearVector{
+					Targets: &proto.Targets{
+						TargetVectors: []string{"title_vec", "lyrics_vec"},
+						Combination:   proto.CombinationMethod_COMBINATION_METHOD_TYPE_AVERAGE,
+					},
+					VectorForTargets: []*proto.VectorForTarget{
+						{
+							Name: "title_vec",
+							Vectors: []*proto.Vectors{
+								{
+									Name:        "title_vec",
+									VectorBytes: singleVectorBytes,
+									Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+								},
+							},
+						},
+						{
+							Name: "lyrics_vec",
+							Vectors: []*proto.Vectors{
+								{
+									Name:        "lyrics_vec",
+									VectorBytes: multiVectorBytes,
+									Type:        proto.Vectors_VECTOR_TYPE_MULTI_FP32,
+								},
+							},
+						},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "near vector multi target manual weights",
+			req: &api.SearchRequest{
+				NearVector: &api.NearVector{
+					Target: api.SearchTarget{
+						CombinationMethod: api.CombinationMethodManualWeights,
+						Vectors: []api.TargetVector{
+							{
+								Vector: api.Vector{
+									Name:   "title_vec",
+									Single: singleVector,
+								},
+								Weight: testkit.Ptr[float32](.4),
+							},
+							{
+								Vector: api.Vector{
+									Name:  "lyrics_vec",
+									Multi: multiVector,
+								},
+								Weight: testkit.Ptr[float32](.6),
+							},
+						},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				NearVector: &proto.NearVector{
+					Targets: &proto.Targets{
+						TargetVectors: []string{"title_vec", "lyrics_vec"},
+						Combination:   proto.CombinationMethod_COMBINATION_METHOD_TYPE_MANUAL,
+						WeightsForTargets: []*proto.WeightsForTarget{
+							{
+								Target: "title_vec",
+								Weight: .4,
+							},
+							{
+								Target: "lyrics_vec",
+								Weight: .6,
+							},
+						},
+					},
+					VectorForTargets: []*proto.VectorForTarget{
+						{
+							Name: "title_vec",
+							Vectors: []*proto.Vectors{
+								{
+									Name:        "title_vec",
+									VectorBytes: singleVectorBytes,
+									Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+								},
+							},
+						},
+						{
+							Name: "lyrics_vec",
+							Vectors: []*proto.Vectors{
+								{
+									Name:        "lyrics_vec",
+									VectorBytes: multiVectorBytes,
+									Type:        proto.Vectors_VECTOR_TYPE_MULTI_FP32,
+								},
+							},
+						},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
 				},
 			},
 		},
