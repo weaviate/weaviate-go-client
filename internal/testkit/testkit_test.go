@@ -105,3 +105,41 @@ func TestWithOnly(t *testing.T) {
 		})
 	}
 }
+
+func TestError(t *testing.T) {
+	require.NotNil(t, testkit.ErrWhaam, "invalid test: ErrWhaam is nil")
+
+	t.Run("nil value", func(t *testing.T) {
+		var e testkit.Error
+
+		t.Run("assert", func(t *testing.T) {
+			var ok bool
+			require.NotPanics(t, func() {
+				ok = e.Assert(t, nil)
+			})
+			require.True(t, ok, "return value")
+		})
+
+		t.Run("require", func(t *testing.T) {
+			require.NotPanics(t, func() {
+				e.Require(t, nil)
+			})
+		})
+	})
+
+	t.Run("ExpectError", func(t *testing.T) {
+		t.Run("assert", func(t *testing.T) {
+			var ok bool
+			require.NotPanics(t, func() {
+				ok = testkit.ExpectError.Assert(t, testkit.ErrWhaam)
+			})
+			require.True(t, ok, "return value")
+		})
+
+		t.Run("require", func(t *testing.T) {
+			require.NotPanics(t, func() {
+				testkit.ExpectError.Require(t, testkit.ErrWhaam)
+			})
+		})
+	})
+}

@@ -18,10 +18,10 @@ import (
 type MessageMarshalerTest[In api.RequestMessage, Out api.ReplyMessage] struct {
 	testkit.Only
 
-	name         string
-	req          api.Message[In, Out]       // Request struct.
-	want         *In                        // Expected protobuf request message.
-	requireError require.ErrorAssertionFunc // Set to require.Error to expect an error.
+	name string
+	req  api.Message[In, Out] // Request struct.
+	want *In                  // Expected protobuf request message.
+	err  testkit.Error        // Set to testkit.ExpectError to expect an error.
 }
 
 // testMessageMarshaler runs [MessageMarshalerTest] test cases.
@@ -31,16 +31,11 @@ func testMessageMarshaler[In api.RequestMessage, Out api.ReplyMessage](t *testin
 		t.Run(tt.name, func(t *testing.T) {
 			require.NotNil(t, tt.req, "invalid test: nil req")
 
-			requireError := require.NoError
-			if tt.requireError != nil {
-				requireError = tt.requireError
-			}
-
 			body := tt.req.Body()
 			require.NotNil(t, body, "request body")
 
 			got, err := body.MarshalMessage()
-			requireError(t, err)
+			tt.err.Require(t, err)
 			require.EqualExportedValues(t, tt.want, got)
 		})
 	}
@@ -362,7 +357,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 					},
 				},
 			},
-			requireError: require.Error,
+			err: testkit.ExpectError,
 		},
 		{
 			name: "near vector single target named",

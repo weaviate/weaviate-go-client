@@ -25,11 +25,11 @@ func TestClient_Insert(t *testing.T) {
 	}
 
 	for _, tt := range []struct {
-		name         string
-		object       *data.Object                  // Object to be inserted.
-		want         *types.Object[map[string]any] // Expected return value.
-		stubs        []testkit.Stub[api.InsertObjectRequest, api.InsertObjectResponse]
-		requireError require.ErrorAssertionFunc // Set to require.Error to expect an error.
+		name   string
+		object *data.Object                  // Object to be inserted.
+		want   *types.Object[map[string]any] // Expected return value.
+		stubs  []testkit.Stub[api.InsertObjectRequest, api.InsertObjectResponse]
+		err    testkit.Error
 	}{
 		{
 			name: "nil object",
@@ -113,7 +113,7 @@ func TestClient_Insert(t *testing.T) {
 			stubs: []testkit.Stub[api.InsertObjectRequest, api.InsertObjectResponse]{
 				{Err: testkit.ErrWhaam},
 			},
-			requireError: require.Error,
+			err: testkit.ExpectError,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -121,13 +121,8 @@ func TestClient_Insert(t *testing.T) {
 			c := data.NewClient(transport, rd)
 			require.NotNil(t, c, "nil client")
 
-			requireError := require.NoError
-			if tt.requireError != nil {
-				requireError = tt.requireError
-			}
-
 			got, err := c.Insert(t.Context(), tt.object)
-			requireError(t, err, "insert error")
+			tt.err.Require(t, err, "insert error")
 			require.Equal(t, tt.want, got, "returned object")
 		})
 	}
@@ -141,11 +136,11 @@ func TestClient_Replace(t *testing.T) {
 	}
 
 	for _, tt := range []struct {
-		name         string
-		object       data.Object                   // Object to be replaced.
-		want         *types.Object[map[string]any] // Expected return value.
-		stub         []testkit.Stub[api.ReplaceObjectRequest, api.ReplaceObjectResponse]
-		requireError require.ErrorAssertionFunc // Set to require.Error to expect an error.
+		name   string
+		object data.Object                   // Object to be replaced.
+		want   *types.Object[map[string]any] // Expected return value.
+		stub   []testkit.Stub[api.ReplaceObjectRequest, api.ReplaceObjectResponse]
+		err    testkit.Error
 	}{
 		{
 			name: "with data",
@@ -204,8 +199,8 @@ func TestClient_Replace(t *testing.T) {
 			},
 		},
 		{
-			name:         "error on nil uuid",
-			requireError: require.Error,
+			name: "error on nil uuid",
+			err:  testkit.ExpectError,
 		},
 		{
 			name:   "with error",
@@ -213,7 +208,7 @@ func TestClient_Replace(t *testing.T) {
 			stub: []testkit.Stub[api.ReplaceObjectRequest, api.ReplaceObjectResponse]{
 				{Err: testkit.ErrWhaam},
 			},
-			requireError: require.Error,
+			err: testkit.ExpectError,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -221,13 +216,8 @@ func TestClient_Replace(t *testing.T) {
 			c := data.NewClient(transport, rd)
 			require.NotNil(t, c, "nil client")
 
-			requireError := require.NoError
-			if tt.requireError != nil {
-				requireError = tt.requireError
-			}
-
 			got, err := c.Replace(t.Context(), tt.object)
-			requireError(t, err, "replace error")
+			tt.err.Require(t, err, "replace error")
 			require.Equal(t, tt.want, got, "returned object")
 		})
 	}
@@ -241,10 +231,10 @@ func TestClient_Delete(t *testing.T) {
 	}
 
 	for _, tt := range []struct {
-		name         string
-		uuid         uuid.UUID // ID of the object to be deleted.
-		stub         []testkit.Stub[api.DeleteObjectRequest, any]
-		requireError require.ErrorAssertionFunc // Set to require.Error to expect an error.
+		name string
+		uuid uuid.UUID // ID of the object to be deleted.
+		stub []testkit.Stub[api.DeleteObjectRequest, any]
+		err  testkit.Error
 	}{
 		{
 			name: "ok",
@@ -262,7 +252,7 @@ func TestClient_Delete(t *testing.T) {
 			stub: []testkit.Stub[api.DeleteObjectRequest, any]{
 				{Err: testkit.ErrWhaam},
 			},
-			requireError: require.Error,
+			err: testkit.ExpectError,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -270,13 +260,8 @@ func TestClient_Delete(t *testing.T) {
 			c := data.NewClient(transport, rd)
 			require.NotNil(t, c, "nil client")
 
-			requireError := require.NoError
-			if tt.requireError != nil {
-				requireError = tt.requireError
-			}
-
 			err := c.Delete(t.Context(), tt.uuid)
-			requireError(t, err, "delete error")
+			tt.err.Require(t, err, "delete error")
 		})
 	}
 }

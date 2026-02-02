@@ -1,7 +1,6 @@
 package testkit
 
 import (
-	"errors"
 	"reflect"
 	"testing"
 	"time"
@@ -18,12 +17,6 @@ import (
 //
 // [compare time]: https://github.com/stretchr/testify/issues/502
 var Now = time.Date(6, time.Month(5), 4, 3, 2, 1, 0, time.Local)
-
-// ErrWhaam is a stub error tests can use to verify some error is being propagated.
-// The error message is an allusion to [Roy Lichtenstein's dyptich].
-//
-// [Roy Lichtenstein's dyptich]: https://en.wikipedia.org/wiki/Whaam!
-var ErrWhaam = errors.New("Whaam!") // nolint:staticcheck
 
 // Ptr is a helper for passing pointers to constants.
 func Ptr[T any](v T) *T { return &v }
