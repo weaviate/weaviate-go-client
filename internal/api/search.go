@@ -47,7 +47,7 @@ type (
 		PropertyName     string
 		TargetCollection string
 		ReturnProperties []ReturnProperty
-		ReturnReference  []ReturnReference
+		ReturnReferences []ReturnReference
 		ReturnVectors    []string
 		ReturnMetadata   ReturnMetadata
 	}
@@ -74,53 +74,24 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 			LastUpdateTimeUnix: r.ReturnMetadata.LastUpdateAt,
 			Score:              r.ReturnMetadata.Score,
 			ExplainScore:       r.ReturnMetadata.ExplainScore,
-			Vectors:            r.ReturnVectors,
 		},
+		Properties: new(proto.PropertiesRequest),
 	}
 
-	// ReturnVectors were explicitly set to an empty slice, include the "only" vector.
-	if len(r.ReturnVectors) == 0 && r.ReturnVectors != nil {
-		req.Metadata.Vector = true
-		req.Metadata.Vectors = nil
-	}
+	marshalReturnVectors(req.Metadata, r.ReturnVectors)
+	marshalReturnProperties(req.Properties, r.ReturnProperties)
+	marshalReturnReferences(req.Properties, r.ReturnReferences)
 
-	marshalReturnProperties(&req.Properties, r.ReturnProperties)
-
-	for _, rr := range r.ReturnReferences {
-		ref := &proto.RefPropertiesRequest{
-			ReferenceProperty: rr.PropertyName,
-			TargetCollection:  rr.TargetCollection,
-			Metadata: &proto.MetadataRequest{
-				Uuid:               true,
-				CreationTimeUnix:   rr.ReturnMetadata.CreatedAt,
-				LastUpdateTimeUnix: rr.ReturnMetadata.LastUpdateAt,
-				Vectors:            rr.ReturnVectors,
-			},
-		}
-		// ReturnVectors were explicitly set to an empty slice, include the "only" vector.
-		if len(rr.ReturnVectors) == 0 && rr.ReturnVectors != nil {
-			ref.Metadata.Vector = true
-			ref.Metadata.Vectors = nil
-		}
-
-		marshalReturnProperties(&ref.Properties, rr.ReturnProperties)
-		req.Properties.RefProperties = append(req.Properties.RefProperties, ref)
-	}
 	return req, nil
 }
 
-func marshalReturnProperties(preq **proto.PropertiesRequest, rps []ReturnProperty) {
-	dev.AssertNotNil(preq, "nil **req")
+func marshalReturnProperties(req *proto.PropertiesRequest, rps []ReturnProperty) {
+	dev.AssertNotNil(req, "nil req")
 
 	if len(rps) == 0 && rps != nil {
 		// ReturnProperties were explicitly set to an empty slice, do not return any.
 		return
 	}
-
-	if *preq == nil {
-		*preq = &proto.PropertiesRequest{}
-	}
-	req := *preq
 
 	if rps == nil {
 		// ReturnProperties were not set at all, default to all properties.
@@ -128,17 +99,19 @@ func marshalReturnProperties(preq **proto.PropertiesRequest, rps []ReturnPropert
 		return
 	}
 
-	// visit traverses the ReturnProperty tree and
-	// collects requested nested object properties.
-	var visit func(*[]*proto.ObjectPropertiesRequest, *ReturnProperty)
+	// walk traverses the ReturnProperty tree and collects requested nested object properties.
+	//
+	// The reason we cannot recursively call marshalReturnProperties itself is
+	// that PropertiesRequest has a different shape from ObjectPropertiesRequest.
+	var walk func(*[]*proto.ObjectPropertiesRequest, *ReturnProperty)
 
-	visit = func(os *[]*proto.ObjectPropertiesRequest, rp *ReturnProperty) {
+	walk = func(os *[]*proto.ObjectPropertiesRequest, rp *ReturnProperty) {
 		o := &proto.ObjectPropertiesRequest{PropName: rp.Name}
 		for _, np := range rp.NestedProperties {
 			if len(np.NestedProperties) == 0 {
 				o.PrimitiveProperties = append(o.PrimitiveProperties, np.Name)
 			} else {
-				visit(&o.ObjectProperties, &np)
+				walk(&o.ObjectProperties, &np)
 			}
 		}
 		*os = append(*os, o)
@@ -149,8 +122,44 @@ func marshalReturnProperties(preq **proto.PropertiesRequest, rps []ReturnPropert
 		if len(rp.NestedProperties) == 0 {
 			req.NonRefProperties = append(req.NonRefProperties, rp.Name)
 		} else {
-			visit(&req.ObjectProperties, &rp)
+			walk(&req.ObjectProperties, &rp)
 		}
+	}
+}
+
+// marshalReturnReferences traverses each ReturnReference tree in the slice
+// and collects requested references and properties.
+func marshalReturnReferences(req *proto.PropertiesRequest, rrs []ReturnReference) {
+	dev.AssertNotNil(req, "nil req")
+
+	for _, rr := range rrs {
+		ref := &proto.RefPropertiesRequest{
+			ReferenceProperty: rr.PropertyName,
+			TargetCollection:  rr.TargetCollection,
+			Metadata: &proto.MetadataRequest{
+				Uuid:               true,
+				CreationTimeUnix:   rr.ReturnMetadata.CreatedAt,
+				LastUpdateTimeUnix: rr.ReturnMetadata.LastUpdateAt,
+				Vectors:            rr.ReturnVectors,
+			},
+			Properties: new(proto.PropertiesRequest),
+		}
+
+		marshalReturnVectors(ref.Metadata, rr.ReturnVectors)
+		marshalReturnProperties(ref.Properties, rr.ReturnProperties)
+		marshalReturnReferences(ref.Properties, rr.ReturnReferences)
+
+		req.RefProperties = append(req.RefProperties, ref)
+	}
+}
+
+func marshalReturnVectors(req *proto.MetadataRequest, vectors []string) {
+	if len(vectors) == 0 && vectors != nil {
+		// ReturnVectors were explicitly set to an empty slice, include the "only" vector.
+		req.Vector = true
+		req.Vectors = nil
+	} else {
+		req.Vectors = vectors
 	}
 }
 

@@ -84,6 +84,9 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				Offset:           2,
 				Autocut:          3,
 				After:            uuid.Max.String(),
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
 			},
 		},
 		{
@@ -110,6 +113,9 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 					ExplainScore:       true,
 					Vectors:            []string{"title_vec", "lyrics_vec"},
 				},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
 			},
 		},
 		{
@@ -121,6 +127,9 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				Metadata: &proto.MetadataRequest{
 					Uuid:   true,
 					Vector: true,
+				},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
 				},
 			},
 		},
@@ -218,7 +227,6 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
-			Only: true,
 			name: "return references",
 			req: &api.SearchRequest{
 				ReturnProperties: []api.ReturnProperty{},
@@ -230,30 +238,34 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 							CreatedAt: true,
 						},
 					},
-					// {
-					// 	PropertyName:     "hasAwards",
-					// 	TargetCollection: "GrammyAward",
-					// 	ReturnProperties: []api.ReturnProperty{
-					// 		{Name: "categories"},
-					// 	},
-					// },
-					// {
-					// 	PropertyName:     "hasAwards",
-					// 	TargetCollection: "TonyAward",
-					// TODO(dyma): add vectors
-					// },
-					// {
-					// 	PropertyName: "writtenBy",
-					// 	ReturnReference: []api.ReturnReference{
-					// 		{
-					// 			PropertyName:     "belongsToBand",
-					// 			TargetCollection: "MetalBands",
-					// 			ReturnProperties: []api.ReturnProperty{
-					// 				{Name: "name"},
-					// 			},
-					// 		},
-					// 	},
-					// },
+					{
+						PropertyName:     "hasAwards",
+						TargetCollection: "GrammyAward",
+						ReturnProperties: []api.ReturnProperty{
+							{Name: "categories"},
+						},
+					},
+					{
+						PropertyName:     "hasAwards",
+						TargetCollection: "TonyAward",
+						ReturnVectors:    []string{"recoding_vec"},
+					},
+					{
+						PropertyName:     "writtenBy",
+						ReturnProperties: []api.ReturnProperty{},
+						ReturnReferences: []api.ReturnReference{
+							{
+								PropertyName:     "belongsToBand",
+								TargetCollection: "MetalBands",
+								ReturnProperties: []api.ReturnProperty{
+									{Name: "name"},
+								},
+								ReturnReferences: []api.ReturnReference{
+									{PropertyName: "foundedBy"},
+								},
+							},
+						},
+					},
 				},
 			},
 			want: &proto.SearchRequest{
@@ -266,39 +278,52 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 								Uuid:             true,
 								CreationTimeUnix: true,
 							},
+							Properties: new(proto.PropertiesRequest),
 						},
-						// {
-						// 	ReferenceProperty: "hasAwards",
-						// 	TargetCollection:  "GrammyAward",
-						// 	Properties: &proto.PropertiesRequest{
-						// 		NonRefProperties: []string{"categories"},
-						// 	},
-						// 	Metadata: &proto.MetadataRequest{Uuid: true},
-						// },
-						// {
-						// 	ReferenceProperty: "hasAwards",
-						// 	TargetCollection:  "TonyAward",
-						// 	Properties: &proto.PropertiesRequest{
-						// 		ReturnAllNonrefProperties: true,
-						// 	},
-						// 	Metadata: &proto.MetadataRequest{Uuid: true},
-						// },
-						// {
-						// 	ReferenceProperty: "writtenBy",
-						// 	Properties: &proto.PropertiesRequest{
-						// 		RefProperties: []*proto.RefPropertiesRequest{
-						// 			{
-						// 				ReferenceProperty: "belongsToBand",
-						// 				TargetCollection:  "MetalBands",
-						// 				Properties: &proto.PropertiesRequest{
-						// 					NonRefProperties: []string{"name"},
-						// 				},
-						// 				Metadata: &proto.MetadataRequest{Uuid: true},
-						// 			},
-						// 		},
-						// 	},
-						// 	Metadata: &proto.MetadataRequest{Uuid: true},
-						// },
+						{
+							ReferenceProperty: "hasAwards",
+							TargetCollection:  "GrammyAward",
+							Properties: &proto.PropertiesRequest{
+								NonRefProperties: []string{"categories"},
+							},
+							Metadata: &proto.MetadataRequest{Uuid: true},
+						},
+						{
+							ReferenceProperty: "hasAwards",
+							TargetCollection:  "TonyAward",
+							Properties: &proto.PropertiesRequest{
+								ReturnAllNonrefProperties: true,
+							},
+							Metadata: &proto.MetadataRequest{
+								Uuid:    true,
+								Vectors: []string{"recoding_vec"},
+							},
+						},
+						{
+							ReferenceProperty: "writtenBy",
+							Properties: &proto.PropertiesRequest{
+								RefProperties: []*proto.RefPropertiesRequest{
+									{
+										ReferenceProperty: "belongsToBand",
+										TargetCollection:  "MetalBands",
+										Properties: &proto.PropertiesRequest{
+											NonRefProperties: []string{"name"},
+											RefProperties: []*proto.RefPropertiesRequest{
+												{
+													ReferenceProperty: "foundedBy",
+													Properties: &proto.PropertiesRequest{
+														ReturnAllNonrefProperties: true,
+													},
+													Metadata: &proto.MetadataRequest{Uuid: true},
+												},
+											},
+										},
+										Metadata: &proto.MetadataRequest{Uuid: true},
+									},
+								},
+							},
+							Metadata: &proto.MetadataRequest{Uuid: true},
+						},
 					},
 				},
 			},
