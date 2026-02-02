@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/testify/v2/require"
+	"github.com/google/uuid"
 )
 
 // Now is constant across the entire test run.
@@ -17,6 +18,9 @@ import (
 //
 // [compare time]: https://github.com/stretchr/testify/issues/502
 var Now = time.Date(6, time.Month(5), 4, 3, 2, 1, 0, time.Local)
+
+// UUID is a stub UUID tests can use to verify the correct UUID is used.
+var UUID = uuid.New()
 
 // Ptr is a helper for passing pointers to constants.
 func Ptr[T any](v T) *T { return &v }

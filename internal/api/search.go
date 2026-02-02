@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
@@ -266,6 +267,243 @@ func marshalVector(v *Vector) (*proto.Vectors, error) {
 	return out, nil
 }
 
+type SearchResponse struct {
+	Took           time.Duration
+	Results        []Object
+	GroupByResults map[string]Group
+}
+
+var _ MessageUnmarshaler[proto.SearchReply] = (*SearchResponse)(nil)
+
+type (
+	Object struct {
+		Collection string
+		Metadata   ObjectMetadata
+		Properties map[string]any
+		References map[string][]Object
+	}
+	ObjectMetadata struct {
+		UUID          uuid.UUID
+		CreatedAt     *time.Time
+		LastUpdatedAt *time.Time
+		Distance      *float32
+		Certainty     *float32
+		Score         *float32
+		ExplainScore  *string
+		UnnamedVector *Vector
+		NamedVectors  Vectors
+	}
+	Group struct {
+		Name                     string
+		MinDistance, MaxDistance float32
+		Size                     int64
+		Objects                  []GroupObject
+	}
+	GroupObject struct {
+		Object
+		BelongsToGroup string
+	}
+)
+
+// UnmarshalMessage reads proto.SearchReply into this SearchResponse.
+func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
+	dev.Assert(reply != nil, "nil search reply")
+
+	objects := make([]Object, 0, len(reply.Results))
+	for _, r := range reply.Results {
+		if r == nil {
+			continue
+		}
+
+		// At this point proto.SearchResult should not be nil; otherwise,
+		// unmarshaling it is pointless. This also lets us access its fields
+		// (.Metadata, .Properties) safely.
+		dev.Assert(r != nil, "nil result object")
+		o, err := unmarshalObject(r.Properties, r.Metadata)
+		if err != nil {
+			return err
+		}
+		objects = append(objects, *o)
+	}
+
+	// groups := make(map[string]Group, len(reply.GroupByResults))
+	// grouped := make([]GroupObject, 0, len(r.GroupByResults))
+	// for _, group := range reply.GroupByResults {
+	// 	if group == nil {
+	// 		continue
+	// 	}
+	//
+	// 	// At this point proto.GroupByResult should not be nil; otherwise,
+	// 	// unmarshaling it is pointless. This also lets us access its fields
+	// 	// (.Metadata, .Properties) safely.
+	// 	dev.Assert(group != nil, "nil result group")
+	//
+	// 	for _, obj := range group.Objects {
+	// 		if obj == nil {
+	// 			continue
+	// 		}
+	// 		dev.Assert(obj != nil, "nil group object")
+	//
+	// 		o, err := unmarshalObject(obj.Properties, obj.Metadata)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		grouped = append(grouped, GroupObject{
+	// 			BelongsToGroup: group.Name,
+	// 			Object:         *o,
+	// 		})
+	// 	}
+	//
+	// 	// Create a view into the Objects slice rather than allocating a separate one.
+	// 	from, to := len(grouped)-len(group.Objects), len(grouped)-1
+	// 	groups[group.Name] = Group{
+	// 		Name:        group.Name,
+	// 		MinDistance: group.MinDistance,
+	// 		MaxDistance: group.MaxDistance,
+	// 		Size:        group.NumberOfObjects,
+	// 		Objects:     grouped[from:to],
+	// 	}
+	// }
+
+	*r = SearchResponse{
+		Took:    time.Duration(reply.Took) * time.Second,
+		Results: objects,
+		// GroupByResults: groups,
+	}
+	return nil
+}
+
+func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) (*Object, error) {
+	properties, err := unmarshalProperties(pr.GetNonRefProps())
+	if err != nil {
+		return nil, err
+	}
+
+	references := make(map[string][]Object, len(pr.GetRefProps()))
+	for _, ref := range pr.GetRefProps() {
+		if ref == nil {
+			continue
+		}
+		dev.Assert(ref != nil, "reference is nil")
+
+		if _, ok := references[ref.PropName]; !ok {
+			references[ref.PropName] = make([]Object, 0, len(ref.Properties))
+		}
+		for _, p := range ref.Properties {
+			o, err := unmarshalObject(p, p.Metadata)
+			if err != nil {
+				return nil, err
+			}
+			references[ref.PropName] = append(references[ref.PropName], *o)
+		}
+	}
+
+	var id uuid.UUID
+	if bytes := mr.GetIdAsBytes(); bytes != nil {
+		fromBytes, err := uuid.FromBytes(bytes)
+		if err != nil {
+			return nil, err
+		}
+		id = fromBytes
+	}
+
+	var unnamed *Vector
+	if v := mr.GetVectorBytes(); len(v) > 0 {
+		unnamed = &Vector{
+			Name:   DefaultVectorName,
+			Single: unmarshalSingle(v),
+		}
+	}
+
+	metadata := ObjectMetadata{
+		UUID:          id,
+		UnnamedVector: unnamed,
+	}
+
+	if mr != nil {
+		metadata.CreatedAt = nilPresent(time.UnixMilli(mr.CreationTimeUnix), mr.CreationTimeUnixPresent)
+		metadata.LastUpdatedAt = nilPresent(time.UnixMilli(mr.LastUpdateTimeUnix), mr.LastUpdateTimeUnixPresent)
+		metadata.Distance = nilPresent(mr.Distance, mr.DistancePresent)
+		metadata.Certainty = nilPresent(mr.Certainty, mr.CertaintyPresent)
+		metadata.Score = nilPresent(mr.Score, mr.ScorePresent)
+		metadata.ExplainScore = nilPresent(mr.ExplainScore, mr.ExplainScorePresent)
+
+		vs, err := unmarshalVectors(mr.Vectors)
+		if err != nil {
+			return nil, err
+		}
+		metadata.NamedVectors = vs
+	}
+
+	return &Object{
+		Collection: pr.GetTargetCollection(),
+		Metadata:   metadata,
+		Properties: properties,
+		References: references,
+	}, nil
+}
+
+func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
+	out := make(map[string]any, len(ps.GetFields()))
+	for name, f := range ps.GetFields() {
+		var v any
+		switch f.GetKind().(type) {
+		case *proto.Value_NullValue:
+			v = nil
+		case *proto.Value_TextValue:
+			v = f.GetTextValue()
+		case *proto.Value_IntValue:
+			v = f.GetIntValue()
+		case *proto.Value_NumberValue:
+			v = f.GetNumberValue()
+		case *proto.Value_BoolValue:
+			v = f.GetBoolValue()
+		case *proto.Value_BlobValue:
+			v = f.GetBlobValue()
+		case *proto.Value_DateValue:
+			t, err := time.Parse(TimeLayout, f.GetDateValue())
+			if err != nil {
+				return nil, err
+			}
+			v = t
+		case *proto.Value_UuidValue:
+			u, err := uuid.Parse(f.GetUuidValue())
+			if err != nil {
+				return nil, err
+			}
+			v = u
+		case *proto.Value_ObjectValue:
+			p, err := unmarshalProperties(f.GetObjectValue())
+			if err != nil {
+				return nil, err
+			}
+			v = p
+		default:
+			// TODO(dyma): support array types
+		}
+		out[name] = v
+	}
+	return out, nil
+}
+
+func unmarshalVectors(vectors []*proto.Vectors) (Vectors, error) {
+	out := make(Vectors, len(vectors))
+	for _, vector := range vectors {
+		v := Vector{Name: vector.Name}
+		bytes := vector.GetVectorBytes()
+		switch vector.Type {
+		case proto.Vectors_VECTOR_TYPE_SINGLE_FP32:
+			v.Single = unmarshalSingle(bytes)
+		case proto.Vectors_VECTOR_TYPE_MULTI_FP32:
+			v.Multi = unmarshalMulti(bytes)
+		default:
+			return nil, fmt.Errorf("unknown type for vector %q", vector.Name)
+		}
+		out[v.Name] = v
+	}
+	return out, nil
+}
+
 type CombinationMethod string
 
 const (
@@ -311,3 +549,11 @@ func (cl ConsistencyLevel) proto() *proto.ConsistencyLevel {
 
 // ptr is a helper for passing pointers to constants.
 func ptr[T any](v T) *T { return &v }
+
+// nilPresent returns a pointer to v if present == true and nil otherwise.
+func nilPresent[T any](v T, present bool) *T {
+	if !present {
+		return nil
+	}
+	return &v
+}

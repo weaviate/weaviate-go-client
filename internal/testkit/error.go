@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/go-openapi/testify/v2/assert"
-	"github.com/go-openapi/testify/v2/require"
 )
 
 // ErrWhaam is a stub error tests can use to verify some error is being propagated.
@@ -17,7 +16,7 @@ var ErrWhaam = errors.New("Whaam!") // nolint:staticcheck
 // Error adds an optional error check to a table-test case.
 // A nil Error expects no error, so leaving the field unset
 // works for all "happy" cases.
-// A non-nil error expects an error to be present.
+// A non-nil Error expects an error to be present. Use [ExpectError].
 //
 // Depending on the method used, Error will delegate the check
 // to either testify/require or testify/assert packages.
@@ -67,9 +66,7 @@ func (e Error) Assert(t *testing.T, err error, msgAndArgs ...any) bool {
 // and fails the test immediately if it returns false.
 func (e Error) Require(t *testing.T, err error, msgAndArgs ...any) {
 	t.Helper()
-	if e == nil {
-		require.NoError(t, err, msgAndArgs...)
-	} else if !e(t, err, msgAndArgs...) {
+	if !e.Assert(t, err, msgAndArgs...) {
 		t.FailNow()
 	}
 }

@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-openapi/testify/v2/assert"
 	"github.com/go-openapi/testify/v2/require"
-	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
@@ -46,7 +45,7 @@ func TestRESTRequests(t *testing.T) {
 					CollectionName: "Songs",
 					Tenant:         "john_doe",
 				},
-				UUID: &uuid.Nil,
+				UUID: &testkit.UUID,
 				Properties: map[string]any{
 					"title":  "High Speed Dirt",
 					"genres": []string{"thrash metal", "blues"},
@@ -55,11 +54,11 @@ func TestRESTRequests(t *testing.T) {
 				},
 				References: api.ObjectReferences{
 					"band": {
-						{UUID: uuid.Nil, Collection: "Drummers"},
-						{UUID: uuid.Nil, Collection: "Basists"},
+						{UUID: testkit.UUID, Collection: "Drummers"},
+						{UUID: testkit.UUID, Collection: "Basists"},
 					},
 					"label": {
-						{UUID: uuid.Nil},
+						{UUID: testkit.UUID},
 					},
 				},
 				Vectors: []api.Vector{
@@ -71,18 +70,18 @@ func TestRESTRequests(t *testing.T) {
 			wantBody: &rest.Object{
 				Class:  "Songs",
 				Tenant: "john_doe",
-				Id:     &uuid.Nil,
+				Id:     &testkit.UUID,
 				Properties: map[string]any{
 					"title":  "High Speed Dirt",
 					"genres": []string{"thrash metal", "blues"},
 					"single": false,
 					"year":   1992,
 					"band": []string{
-						"weaviate://localhost/Drummers/" + uuid.Nil.String(),
-						"weaviate://localhost/Basists/" + uuid.Nil.String(),
+						"weaviate://localhost/Drummers/" + testkit.UUID.String(),
+						"weaviate://localhost/Basists/" + testkit.UUID.String(),
 					},
 					"label": []string{
-						"weaviate://localhost/" + uuid.Nil.String(),
+						"weaviate://localhost/" + testkit.UUID.String(),
 					},
 				},
 				Vectors: map[string]any{
@@ -110,7 +109,7 @@ func TestRESTRequests(t *testing.T) {
 					CollectionName: "Songs",
 					Tenant:         "john_doe",
 				},
-				UUID: &uuid.Nil,
+				UUID: &testkit.UUID,
 				Properties: map[string]any{
 					"title":  "High Speed Dirt",
 					"genres": []string{"thrash metal", "blues"},
@@ -119,11 +118,11 @@ func TestRESTRequests(t *testing.T) {
 				},
 				References: api.ObjectReferences{
 					"band": {
-						{UUID: uuid.Nil, Collection: "Drummers"},
-						{UUID: uuid.Nil, Collection: "Basists"},
+						{UUID: testkit.UUID, Collection: "Drummers"},
+						{UUID: testkit.UUID, Collection: "Basists"},
 					},
 					"label": {
-						{UUID: uuid.Nil},
+						{UUID: testkit.UUID},
 					},
 				},
 				Vectors: []api.Vector{
@@ -131,7 +130,7 @@ func TestRESTRequests(t *testing.T) {
 				},
 			},
 			wantMethod: http.MethodPut,
-			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
+			wantPath:   "/objects/Songs/" + testkit.UUID.String(),
 			wantBody: &rest.Object{
 				Tenant: "john_doe",
 				Properties: map[string]any{
@@ -140,11 +139,11 @@ func TestRESTRequests(t *testing.T) {
 					"single": false,
 					"year":   1992,
 					"band": []string{
-						"weaviate://localhost/Drummers/" + uuid.Nil.String(),
-						"weaviate://localhost/Basists/" + uuid.Nil.String(),
+						"weaviate://localhost/Drummers/" + testkit.UUID.String(),
+						"weaviate://localhost/Basists/" + testkit.UUID.String(),
 					},
 					"label": []string{
-						"weaviate://localhost/" + uuid.Nil.String(),
+						"weaviate://localhost/" + testkit.UUID.String(),
 					},
 				},
 				Vectors: map[string]any{
@@ -159,10 +158,10 @@ func TestRESTRequests(t *testing.T) {
 					CollectionName:   "Songs",
 					ConsistencyLevel: api.ConsistencyLevelOne,
 				},
-				UUID: &uuid.Nil,
+				UUID: &testkit.UUID,
 			},
 			wantMethod: http.MethodPut,
-			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
+			wantPath:   "/objects/Songs/" + testkit.UUID.String(),
 			wantQuery:  url.Values{"consistency_level": {string(api.ConsistencyLevelOne)}},
 			wantBody:   &rest.Object{},
 		},
@@ -173,10 +172,10 @@ func TestRESTRequests(t *testing.T) {
 					CollectionName: "Songs",
 					Tenant:         "john_doe",
 				},
-				UUID: uuid.Nil,
+				UUID: testkit.UUID,
 			},
 			wantMethod: http.MethodDelete,
-			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
+			wantPath:   "/objects/Songs/" + testkit.UUID.String(),
 			wantQuery:  url.Values{"tenant": {"john_doe"}},
 		},
 		{
@@ -186,20 +185,20 @@ func TestRESTRequests(t *testing.T) {
 					CollectionName:   "Songs",
 					ConsistencyLevel: api.ConsistencyLevelOne,
 				},
-				UUID: uuid.Nil,
+				UUID: testkit.UUID,
 			},
 			wantMethod: http.MethodDelete,
-			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
+			wantPath:   "/objects/Songs/" + testkit.UUID.String(),
 			wantQuery:  url.Values{"consistency_level": {string(api.ConsistencyLevelOne)}},
 		},
 		{
 			name: "delete object (no tenant, no consistency_level)",
 			req: &api.DeleteObjectRequest{
 				RequestDefaults: api.RequestDefaults{CollectionName: "Songs"},
-				UUID:            uuid.Nil,
+				UUID:            testkit.UUID,
 			},
 			wantMethod: http.MethodDelete,
-			wantPath:   "/objects/Songs/" + uuid.Nil.String(),
+			wantPath:   "/objects/Songs/" + testkit.UUID.String(),
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -236,7 +235,7 @@ func TestRESTResponses(t *testing.T) {
 			body: &rest.Object{
 				Class:              "Songs",
 				Tenant:             "john_doe",
-				Id:                 &uuid.Nil,
+				Id:                 &testkit.UUID,
 				CreationTimeUnix:   testkit.Now.UnixMilli(),
 				LastUpdateTimeUnix: testkit.Now.UnixMilli(),
 				Properties: map[string]any{
@@ -245,11 +244,11 @@ func TestRESTResponses(t *testing.T) {
 					"single": false,
 					"year":   1992,
 					"band": []string{
-						"weaviate://localhost/Drummers/" + uuid.Nil.String(),
-						"weaviate://localhost/Basists/" + uuid.Nil.String(),
+						"weaviate://localhost/Drummers/" + testkit.UUID.String(),
+						"weaviate://localhost/Basists/" + testkit.UUID.String(),
 					},
 					"label": []string{
-						"weaviate://localhost/" + uuid.Nil.String(),
+						"weaviate://localhost/" + testkit.UUID.String(),
 					},
 				},
 				Vectors: map[string]any{
@@ -258,7 +257,7 @@ func TestRESTResponses(t *testing.T) {
 			},
 			dest: new(api.InsertObjectResponse),
 			want: &api.InsertObjectResponse{
-				UUID:          uuid.Nil,
+				UUID:          testkit.UUID,
 				CreatedAt:     testkit.Now,
 				LastUpdatedAt: testkit.Now,
 				Properties: map[string]any{
@@ -269,11 +268,11 @@ func TestRESTResponses(t *testing.T) {
 				},
 				References: api.ObjectReferences{
 					"band": {
-						{UUID: uuid.Nil, Collection: "Drummers"},
-						{UUID: uuid.Nil, Collection: "Basists"},
+						{UUID: testkit.UUID, Collection: "Drummers"},
+						{UUID: testkit.UUID, Collection: "Basists"},
 					},
 					"label": {
-						{UUID: uuid.Nil},
+						{UUID: testkit.UUID},
 					},
 				},
 				Vectors: map[string]api.Vector{
@@ -286,7 +285,7 @@ func TestRESTResponses(t *testing.T) {
 			body: &rest.Object{
 				Class:              "Songs",
 				Tenant:             "john_doe",
-				Id:                 &uuid.Nil,
+				Id:                 &testkit.UUID,
 				CreationTimeUnix:   testkit.Now.UnixMilli(),
 				LastUpdateTimeUnix: testkit.Now.UnixMilli(),
 				Properties: map[string]any{
@@ -295,11 +294,11 @@ func TestRESTResponses(t *testing.T) {
 					"single": false,
 					"year":   1992,
 					"band": []string{
-						"weaviate://localhost/Drummers/" + uuid.Nil.String(),
-						"weaviate://localhost/Basists/" + uuid.Nil.String(),
+						"weaviate://localhost/Drummers/" + testkit.UUID.String(),
+						"weaviate://localhost/Basists/" + testkit.UUID.String(),
 					},
 					"label": []string{
-						"weaviate://localhost/" + uuid.Nil.String(),
+						"weaviate://localhost/" + testkit.UUID.String(),
 					},
 				},
 				Vectors: map[string]any{
@@ -308,7 +307,7 @@ func TestRESTResponses(t *testing.T) {
 			},
 			dest: new(api.ReplaceObjectResponse),
 			want: &api.ReplaceObjectResponse{
-				UUID:          uuid.Nil,
+				UUID:          testkit.UUID,
 				CreatedAt:     testkit.Now,
 				LastUpdatedAt: testkit.Now,
 				Properties: map[string]any{
@@ -319,11 +318,11 @@ func TestRESTResponses(t *testing.T) {
 				},
 				References: api.ObjectReferences{
 					"band": {
-						{UUID: uuid.Nil, Collection: "Drummers"},
-						{UUID: uuid.Nil, Collection: "Basists"},
+						{UUID: testkit.UUID, Collection: "Drummers"},
+						{UUID: testkit.UUID, Collection: "Basists"},
 					},
 					"label": {
-						{UUID: uuid.Nil},
+						{UUID: testkit.UUID},
 					},
 				},
 				Vectors: map[string]api.Vector{

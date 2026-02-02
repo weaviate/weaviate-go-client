@@ -2,12 +2,14 @@ package api_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/go-openapi/testify/v2/require"
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // MessageMarshalerTest tests that [api.Message] produces a correct request message.
@@ -21,7 +23,7 @@ type MessageMarshalerTest[In api.RequestMessage, Out api.ReplyMessage] struct {
 	name string
 	req  api.Message[In, Out] // Request struct.
 	want *In                  // Expected protobuf request message.
-	err  testkit.Error        // Set to testkit.ExpectError to expect an error.
+	err  testkit.Error
 }
 
 // testMessageMarshaler runs [MessageMarshalerTest] test cases.
@@ -559,4 +561,341 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 	})
+}
+
+// ----------------------------------------------------------------------------
+
+type MessageUnmarshalerTest[Out api.ReplyMessage] struct {
+	testkit.Only
+
+	name  string
+	reply *Out                        // Protobuf message that needs to be unmarshaled.
+	dest  api.MessageUnmarshaler[Out] // Set dest to a pointer to response struct.
+	want  any                         // Expected response value (pointer).
+	err   testkit.Error
+}
+
+// testMessageMarshaler runs test cases for [api.MessageUnmarshaler] implementations.
+func testMessageUnmarshaler[Out api.ReplyMessage](t *testing.T, tests []MessageUnmarshalerTest[Out]) {
+	t.Helper()
+	for _, tt := range testkit.WithOnly(t, tests) {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.dest.UnmarshalMessage(tt.reply)
+			tt.err.Require(t, err, "unmarshal")
+			require.EqualExportedValues(t, tt.want, tt.dest)
+		})
+	}
+}
+
+func TestSearchResponse_UnmarshalMessage(t *testing.T) {
+	idAsBytes, err := testkit.UUID.MarshalBinary()
+	require.NoError(t, err, "marshal uuid bytes")
+
+	testMessageUnmarshaler[proto.SearchReply](t, []MessageUnmarshalerTest[proto.SearchReply]{
+		{
+			name: "metadata",
+			reply: &proto.SearchReply{
+				Took: 92,
+				Results: []*proto.SearchResult{
+					{
+						Metadata: &proto.MetadataResult{
+							IdAsBytes: idAsBytes,
+							Distance:  .123, DistancePresent: true,
+							Certainty: .123, CertaintyPresent: false,
+							Score: .456, ScorePresent: true,
+							ExplainScore: "very good", ExplainScorePresent: false,
+							CreationTimeUnix: testkit.Now.UnixMilli(), CreationTimeUnixPresent: true,
+							LastUpdateTimeUnix: testkit.Now.UnixMilli(), LastUpdateTimeUnixPresent: false,
+							Vectors: []*proto.Vectors{
+								{
+									Name:        "title_vec",
+									VectorBytes: singleVectorBytes,
+									Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+								},
+								{
+									Name:        "lyrics_vec",
+									VectorBytes: multiVectorBytes,
+									Type:        proto.Vectors_VECTOR_TYPE_MULTI_FP32,
+								},
+							},
+						},
+					},
+				},
+			},
+			dest: new(api.SearchResponse),
+			want: &api.SearchResponse{
+				Took: 92 * time.Second,
+				Results: []api.Object{
+					{
+						Metadata: api.ObjectMetadata{
+							UUID:          testkit.UUID,
+							Distance:      testkit.Ptr[float32](.123),
+							Score:         testkit.Ptr[float32](.456),
+							CreatedAt:     testkit.Ptr(testkit.Now),
+							Certainty:     nil, // present == false
+							ExplainScore:  nil, // present == false
+							LastUpdatedAt: nil, // present == false
+							NamedVectors: api.Vectors{
+								"title_vec": api.Vector{
+									Name:   "title_vec",
+									Single: singleVector,
+								},
+								"lyrics_vec": api.Vector{
+									Name:  "lyrics_vec",
+									Multi: multiVector,
+								},
+							},
+						},
+						Properties: make(map[string]any),
+						References: make(map[string][]api.Object),
+					},
+				},
+			},
+		},
+		{
+			name: "unnamed vector",
+			reply: &proto.SearchReply{
+				Results: []*proto.SearchResult{
+					{
+						Metadata: &proto.MetadataResult{
+							VectorBytes: singleVectorBytes,
+						},
+					},
+				},
+			},
+			dest: new(api.SearchResponse),
+			want: &api.SearchResponse{
+				Results: []api.Object{
+					{
+						Metadata: api.ObjectMetadata{
+							UnnamedVector: &api.Vector{
+								Name:   api.DefaultVectorName,
+								Single: singleVector,
+							},
+							NamedVectors: make(api.Vectors),
+						},
+						Properties: make(map[string]any),
+						References: make(map[string][]api.Object),
+					},
+				},
+			},
+		},
+		{
+			name: "missing vector type",
+			reply: &proto.SearchReply{
+				Results: []*proto.SearchResult{
+					{
+						Metadata: &proto.MetadataResult{
+							Vectors: []*proto.Vectors{
+								{Name: "no_type", VectorBytes: singleVectorBytes},
+							},
+						},
+					},
+				},
+			},
+			dest: new(api.SearchResponse),
+			want: new(api.SearchResponse),
+			err:  testkit.ExpectError,
+		},
+		{
+			name: "bad uuid",
+			reply: &proto.SearchReply{
+				Results: []*proto.SearchResult{
+					{
+						Metadata: &proto.MetadataResult{
+							IdAsBytes: []byte("00-00-00"),
+						},
+					},
+				},
+			},
+			dest: new(api.SearchResponse),
+			want: new(api.SearchResponse),
+			err:  testkit.ExpectError,
+		},
+		{
+			name: "properties",
+			reply: &proto.SearchReply{
+				Results: []*proto.SearchResult{
+					{
+						Properties: &proto.PropertiesResult{
+							TargetCollection: "Songs",
+							NonRefProps: &proto.Properties{
+								Fields: map[string]*proto.Value{
+									"title":        text("High Speed Dirt"),
+									"is_single":    boolean(false),
+									"release_date": date(testkit.Now),
+									"duration_sec": integer(252),
+									"album_cover":  blob("cover.png"),
+									"uuid":         UUID(testkit.UUID),
+									"extra": object(map[string]*proto.Value{
+										"key": text("D"),
+									}),
+									"kpop_version": null(),
+								},
+							},
+						},
+					},
+				},
+			},
+			dest: new(api.SearchResponse),
+			want: &api.SearchResponse{
+				Results: []api.Object{
+					{
+						Collection: "Songs",
+						Properties: map[string]any{
+							"title":        "High Speed Dirt",
+							"is_single":    false,
+							"release_date": testkit.Now,
+							"duration_sec": int64(252),
+							"album_cover":  "cover.png",
+							"uuid":         testkit.UUID,
+							"extra": map[string]any{
+								"key": "D",
+							},
+							"kpop_version": nil,
+						},
+						References: make(map[string][]api.Object),
+					},
+				},
+			},
+		},
+		{
+			name: "references",
+			reply: &proto.SearchReply{
+				Results: []*proto.SearchResult{
+					{
+						Properties: &proto.PropertiesResult{
+							RefProps: []*proto.RefPropertiesResult{
+								{
+									PropName: "hasAwards",
+									Properties: []*proto.PropertiesResult{
+										{
+											TargetCollection: "GrammyAward",
+											NonRefProps: &proto.Properties{
+												Fields: map[string]*proto.Value{
+													"category": text("metal"),
+												},
+											},
+										},
+										{
+											TargetCollection: "TonyAward",
+											Metadata: &proto.MetadataResult{
+												IdAsBytes: idAsBytes,
+											},
+										},
+									},
+								},
+								{
+									PropName: "writtenBy",
+									Properties: []*proto.PropertiesResult{
+										{
+											TargetCollection: "Artists",
+											RefProps: []*proto.RefPropertiesResult{
+												{
+													PropName: "belongsToBand",
+													Properties: []*proto.PropertiesResult{
+														{
+															TargetCollection: "MetalBands",
+															NonRefProps: &proto.Properties{
+																Fields: map[string]*proto.Value{
+																	"name": text("Megadeth"),
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			dest: new(api.SearchResponse),
+			want: &api.SearchResponse{
+				Results: []api.Object{
+					{
+						Properties: make(map[string]any),
+						References: map[string][]api.Object{
+							"hasAwards": {
+								{
+									Collection: "GrammyAward",
+									Properties: map[string]any{
+										"category": "metal",
+									},
+									References: make(map[string][]api.Object),
+								},
+								{
+									Collection: "TonyAward",
+									Metadata: api.ObjectMetadata{
+										UUID:         testkit.UUID,
+										NamedVectors: make(api.Vectors),
+									},
+									Properties: make(map[string]any),
+									References: make(map[string][]api.Object),
+								},
+							},
+							"writtenBy": {
+								{
+									Collection: "Artists",
+									Properties: make(map[string]any),
+									References: map[string][]api.Object{
+										"belongsToBand": {
+											{
+												Collection: "MetalBands",
+												Properties: map[string]any{
+													"name": "Megadeth",
+												},
+												References: make(map[string][]api.Object),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+}
+
+func text(s string) *proto.Value {
+	return &proto.Value{Kind: &proto.Value_TextValue{TextValue: s}}
+}
+
+func boolean(b bool) *proto.Value {
+	return &proto.Value{Kind: &proto.Value_BoolValue{BoolValue: b}}
+}
+
+func date(t time.Time) *proto.Value {
+	return &proto.Value{Kind: &proto.Value_DateValue{DateValue: t.Format(api.TimeLayout)}}
+}
+
+func integer(i int64) *proto.Value {
+	return &proto.Value{Kind: &proto.Value_IntValue{IntValue: i}}
+}
+
+func number(f float64) *proto.Value {
+	return &proto.Value{Kind: &proto.Value_NumberValue{NumberValue: f}}
+}
+
+func blob(s string) *proto.Value {
+	return &proto.Value{Kind: &proto.Value_BlobValue{BlobValue: s}}
+}
+
+func null() *proto.Value {
+	return &proto.Value{Kind: &proto.Value_NullValue{NullValue: structpb.NullValue_NULL_VALUE}}
+}
+
+func UUID(u uuid.UUID) *proto.Value {
+	return &proto.Value{Kind: &proto.Value_UuidValue{UuidValue: u.String()}}
+}
+
+func object(m map[string]*proto.Value) *proto.Value {
+	return &proto.Value{Kind: &proto.Value_ObjectValue{ObjectValue: &proto.Properties{
+		Fields: m,
+	}}}
 }
