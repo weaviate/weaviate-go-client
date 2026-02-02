@@ -18,9 +18,10 @@ import (
 type MessageMarshalerTest[In api.RequestMessage, Out api.ReplyMessage] struct {
 	testkit.Only
 
-	name string
-	req  api.Message[In, Out] // Request struct.
-	want *In                  // Expected protobuf request message.
+	name         string
+	req          api.Message[In, Out]       // Request struct.
+	want         *In                        // Expected protobuf request message.
+	requireError require.ErrorAssertionFunc // Set to require.Error to expect an error.
 }
 
 // testMessageMarshaler runs [MessageMarshalerTest] test cases.
@@ -30,11 +31,16 @@ func testMessageMarshaler[In api.RequestMessage, Out api.ReplyMessage](t *testin
 		t.Run(tt.name, func(t *testing.T) {
 			require.NotNil(t, tt.req, "invalid test: nil req")
 
+			requireError := require.NoError
+			if tt.requireError != nil {
+				requireError = tt.requireError
+			}
+
 			body := tt.req.Body()
 			require.NotNil(t, body, "request body")
 
 			got, err := body.MarshalMessage()
-			require.NoError(t, err)
+			requireError(t, err)
 			require.EqualExportedValues(t, tt.want, got)
 		})
 	}
@@ -344,6 +350,19 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 					ReturnAllNonrefProperties: true,
 				},
 			},
+		},
+		{
+			name: "near vector invalid target",
+			req: &api.SearchRequest{
+				NearVector: &api.NearVector{
+					Target: api.SearchTarget{
+						Vectors: []api.TargetVector{
+							{Vector: api.Vector{Name: "empty"}},
+						},
+					},
+				},
+			},
+			requireError: require.Error,
 		},
 		{
 			name: "near vector single target named",

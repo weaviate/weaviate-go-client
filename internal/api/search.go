@@ -1,6 +1,9 @@
 package api
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/google/uuid"
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
@@ -100,11 +103,14 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	marshalReturnProperties(req.Properties, r.ReturnProperties)
 	marshalReturnReferences(req.Properties, r.ReturnReferences)
 
+	var err error
 	switch {
 	case r.NearVector != nil:
-		req.NearVector = marshalNearVector(r.NearVector)
+		req.NearVector, err = marshalNearVector(r.NearVector)
 	}
-
+	if err != nil {
+		return nil, err
+	}
 	return req, nil
 }
 
@@ -186,7 +192,7 @@ func marshalReturnVectors(req *proto.MetadataRequest, vectors []string) {
 	}
 }
 
-func marshalNearVector(req *NearVector) *proto.NearVector {
+func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
 	nv := &proto.NearVector{
 		Distance:  req.Distance,
 		Certainty: req.Certainty,
@@ -194,20 +200,24 @@ func marshalNearVector(req *NearVector) *proto.NearVector {
 
 	switch len(req.Target.Vectors) {
 	case 0:
-		return nil
+		return nil, nil
 	case 1:
 		tv := req.Target.Vectors[0]
-		v := marshalVector(&tv.Vector)
-		if tv.Name == "" {
-			nv.Vectors = append(nv.Vectors, v)
-		} else {
-			vft := &proto.VectorForTarget{Name: tv.Name}
-			if v != nil {
-				vft.Vectors = append(vft.Vectors, v)
-			}
-			nv.VectorForTargets = append(nv.VectorForTargets, vft)
+		v, err := marshalVector(&tv.Vector)
+		if err != nil {
+			return nil, fmt.Errorf("near vector: %w", err)
 		}
-		return nv
+		vectors := []*proto.Vectors{v}
+
+		if tv.Name == "" {
+			nv.Vectors = vectors
+		} else {
+			nv.VectorForTargets = append(nv.VectorForTargets, &proto.VectorForTarget{
+				Name:    tv.Name,
+				Vectors: vectors,
+			})
+		}
+		return nv, nil
 	}
 
 	// Pre-allocate slices for vectors and targets.
@@ -219,12 +229,14 @@ func marshalNearVector(req *NearVector) *proto.NearVector {
 	}
 
 	for i, tv := range req.Target.Vectors {
+		v, err := marshalVector(&tv.Vector)
+		if err != nil {
+			return nil, fmt.Errorf("near vector: %w", err)
+		}
 		nv.Targets.TargetVectors[i] = tv.Name
 		nv.VectorForTargets[i] = &proto.VectorForTarget{
-			Name: tv.Name,
-			Vectors: []*proto.Vectors{
-				marshalVector(&tv.Vector),
-			},
+			Name:    tv.Name,
+			Vectors: []*proto.Vectors{v},
 		}
 		if tv.Weight != nil {
 			nv.Targets.WeightsForTargets = append(nv.Targets.WeightsForTargets,
@@ -234,10 +246,12 @@ func marshalNearVector(req *NearVector) *proto.NearVector {
 				})
 		}
 	}
-	return nv
+	return nv, nil
 }
 
-func marshalVector(v *Vector) *proto.Vectors {
+// marshalVector marshals [Vector.Single] or [Vector.Multi] to bytes,
+// depending on the presence. If neither is present it returns an error.
+func marshalVector(v *Vector) (*proto.Vectors, error) {
 	out := &proto.Vectors{Name: v.Name}
 	switch {
 	case v.Single != nil:
@@ -247,9 +261,9 @@ func marshalVector(v *Vector) *proto.Vectors {
 		out.Type = proto.Vectors_VECTOR_TYPE_MULTI_FP32
 		out.VectorBytes = marshalMulti(v.Multi)
 	default:
-		return nil
+		return nil, errors.New("empty vector")
 	}
-	return out
+	return out, nil
 }
 
 type CombinationMethod string
