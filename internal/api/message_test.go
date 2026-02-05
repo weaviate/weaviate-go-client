@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-openapi/testify/v2/require"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
@@ -633,11 +633,11 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 							UUID:          testkit.UUID,
 							Distance:      testkit.Ptr[float32](.123),
 							Score:         testkit.Ptr[float32](.456),
-							CreatedAt:     testkit.Ptr(testkit.Now),
+							CreatedAt:     &testkit.Now,
 							Certainty:     nil, // present == false
 							ExplainScore:  nil, // present == false
 							LastUpdatedAt: nil, // present == false
-							NamedVectors: api.Vectors{
+							Vectors: api.Vectors{
 								"title_vec": api.Vector{
 									Name:   "title_vec",
 									Single: singleVector,
@@ -671,11 +671,12 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 				Results: []api.Object{
 					{
 						Metadata: api.ObjectMetadata{
-							UnnamedVector: &api.Vector{
-								Name:   api.DefaultVectorName,
-								Single: singleVector,
+							Vectors: api.Vectors{
+								api.DefaultVectorName: api.Vector{
+									Name:   api.DefaultVectorName,
+									Single: singleVector,
+								},
 							},
-							NamedVectors: make(api.Vectors),
 						},
 						Properties: make(map[string]any),
 						References: make(map[string][]api.Object),
@@ -837,8 +838,8 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 								{
 									Collection: "TonyAward",
 									Metadata: api.ObjectMetadata{
-										UUID:         testkit.UUID,
-										NamedVectors: make(api.Vectors),
+										UUID:    testkit.UUID,
+										Vectors: make(api.Vectors),
 									},
 									Properties: make(map[string]any),
 									References: make(map[string][]api.Object),
@@ -974,11 +975,11 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 										UUID:          testkit.UUID,
 										Distance:      testkit.Ptr[float32](.123),
 										Score:         testkit.Ptr[float32](.456),
-										CreatedAt:     testkit.Ptr(testkit.Now),
+										CreatedAt:     &testkit.Now,
 										Certainty:     nil, // present == false
 										ExplainScore:  nil, // present == false
 										LastUpdatedAt: nil, // present == false
-										NamedVectors: api.Vectors{
+										Vectors: api.Vectors{
 											"title_vec": api.Vector{
 												Name:   "title_vec",
 												Single: singleVector,
@@ -1037,8 +1038,8 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 											{
 												Collection: "TonyAward",
 												Metadata: api.ObjectMetadata{
-													UUID:         testkit.UUID,
-													NamedVectors: make(api.Vectors),
+													UUID:    testkit.UUID,
+													Vectors: make(api.Vectors),
 												},
 												Properties: make(map[string]any),
 												References: make(map[string][]api.Object),

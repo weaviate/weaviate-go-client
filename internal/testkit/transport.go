@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/go-openapi/testify/v2/assert"
-	"github.com/go-openapi/testify/v2/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 )
 
@@ -32,7 +32,7 @@ var NopTransport internal.Transport = TransportFunc(func(context.Context, any, a
 func NewTransport[Req, Resp any](t *testing.T, stubs []Stub[Req, Resp]) *MockTransport[Req, Resp] {
 	mock := &MockTransport[Req, Resp]{t: t, stubs: stubs}
 	t.Cleanup(func() {
-		require.True(t, mock.Done(), "requests were not fully consumed")
+		require.Truef(t, mock.Done(), "requests were not fully consumed, %d remaining", len(mock.stubs))
 	})
 	return mock
 }
@@ -81,8 +81,9 @@ func (t *MockTransport[Req, Resp]) Do(ctx context.Context, req, dest any) error 
 	}
 
 	if dest != nil {
-		require.IsType(t.t, (*Resp)(nil), dest, "bad dest")
-		*dest.(*Resp) = stub.Response
+		if assert.IsType(t.t, (*Resp)(nil), dest, "bad dest") {
+			*dest.(*Resp) = stub.Response
+		}
 	}
 	return nil
 }

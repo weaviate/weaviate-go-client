@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/go-openapi/testify/v2/require"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 )

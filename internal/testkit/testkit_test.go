@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/go-openapi/testify/v2/assert"
-	"github.com/go-openapi/testify/v2/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 )
 

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/go-openapi/testify/v2/require"
+	"github.com/stretchr/testify/require"
 )
 
 func TestVectors_UnmarshalJSON(t *testing.T) {

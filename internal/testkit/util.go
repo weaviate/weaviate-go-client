@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-openapi/testify/v2/require"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // Now is constant across the entire test run.

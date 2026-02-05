@@ -3,8 +3,8 @@ package data_test
 import (
 	"testing"
 
-	"github.com/go-openapi/testify/v2/require"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/data"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
@@ -43,8 +43,8 @@ func TestClient_Insert(t *testing.T) {
 			}},
 			want: &types.Object[map[string]any]{
 				UUID:          uuid.Nil,
-				CreatedAt:     testkit.Now,
-				LastUpdatedAt: testkit.Now,
+				CreatedAt:     &testkit.Now,
+				LastUpdatedAt: &testkit.Now,
 				References:    (data.References)(nil), // References must be a typed null.
 			},
 		},
@@ -94,8 +94,8 @@ func TestClient_Insert(t *testing.T) {
 			}},
 			want: &types.Object[map[string]any]{
 				UUID:          uuid.Nil,
-				CreatedAt:     testkit.Now,
-				LastUpdatedAt: testkit.Now,
+				CreatedAt:     &testkit.Now,
+				LastUpdatedAt: &testkit.Now,
 				Vectors: map[string]types.Vector{
 					"single": {Name: "single", Single: []float32{1, 2, 3}},
 				},
@@ -187,8 +187,8 @@ func TestClient_Replace(t *testing.T) {
 			}},
 			want: &types.Object[map[string]any]{
 				UUID:          uuid.Nil,
-				CreatedAt:     testkit.Now,
-				LastUpdatedAt: testkit.Now,
+				CreatedAt:     &testkit.Now,
+				LastUpdatedAt: &testkit.Now,
 				Properties:    map[string]any{"foo": "bar"},
 				References: data.References{
 					"ref": []data.Reference{

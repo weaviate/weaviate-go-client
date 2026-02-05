@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/go-openapi/testify/v2/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 // ErrWhaam is a stub error tests can use to verify some error is being propagated.
