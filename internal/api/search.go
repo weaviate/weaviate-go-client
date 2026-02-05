@@ -76,6 +76,8 @@ type (
 )
 
 func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
+	dev.AssertNotNil(r, "r")
+
 	after := r.After.String()
 	if r.After == uuid.Nil {
 		after = ""
@@ -116,7 +118,7 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 }
 
 func marshalReturnProperties(req *proto.PropertiesRequest, rps []ReturnProperty) {
-	dev.AssertNotNil(req, "nil req")
+	dev.AssertNotNil(req, "req")
 
 	if len(rps) == 0 && rps != nil {
 		// ReturnProperties were explicitly set to an empty slice, do not return any.
@@ -160,7 +162,7 @@ func marshalReturnProperties(req *proto.PropertiesRequest, rps []ReturnProperty)
 // marshalReturnReferences traverses each ReturnReference tree in the slice
 // and collects requested references and properties.
 func marshalReturnReferences(req *proto.PropertiesRequest, rrs []ReturnReference) {
-	dev.AssertNotNil(req, "nil req")
+	dev.AssertNotNil(req, "req")
 
 	for _, rr := range rrs {
 		ref := &proto.RefPropertiesRequest{
@@ -184,6 +186,8 @@ func marshalReturnReferences(req *proto.PropertiesRequest, rrs []ReturnReference
 }
 
 func marshalReturnVectors(req *proto.MetadataRequest, vectors []string) {
+	dev.AssertNotNil(req, "req")
+
 	if len(vectors) == 0 && vectors != nil {
 		// ReturnVectors were explicitly set to an empty slice, include the "only" vector.
 		req.Vector = true
@@ -194,6 +198,8 @@ func marshalReturnVectors(req *proto.MetadataRequest, vectors []string) {
 }
 
 func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
+	dev.AssertNotNil(req, "req")
+
 	nv := &proto.NearVector{
 		Distance:  req.Distance,
 		Certainty: req.Certainty,
@@ -208,6 +214,7 @@ func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
 		if err != nil {
 			return nil, fmt.Errorf("near vector: %w", err)
 		}
+		dev.AssertNotNil(v, "v")
 		vectors := []*proto.Vectors{v}
 
 		if tv.Name == "" {
@@ -234,6 +241,8 @@ func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
 		if err != nil {
 			return nil, fmt.Errorf("near vector: %w", err)
 		}
+		dev.AssertNotNil(v, "v")
+
 		nv.Targets.TargetVectors[i] = tv.Name
 		nv.VectorForTargets[i] = &proto.VectorForTarget{
 			Name:    tv.Name,
@@ -253,6 +262,8 @@ func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
 // marshalVector marshals [Vector.Single] or [Vector.Multi] to bytes,
 // depending on the presence. If neither is present it returns an error.
 func marshalVector(v *Vector) (*proto.Vectors, error) {
+	dev.AssertNotNil(v, "v")
+
 	out := &proto.Vectors{Name: v.Name}
 	switch {
 	case v.Single != nil:
@@ -307,23 +318,13 @@ type (
 
 // UnmarshalMessage reads proto.SearchReply into this SearchResponse.
 func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
-	dev.Assert(reply != nil, "nil search reply")
+	dev.AssertNotNil(reply, "reply")
 
 	objects := make([]Object, len(reply.Results))
-	for i, r := range reply.Results {
-		if r == nil {
-			continue
-		}
-
-		// At this point proto.SearchResult should not be nil; otherwise,
-		// unmarshaling it is pointless. This also lets us access its fields
-		// (.Metadata, .Properties) safely.
-		dev.Assert(r != nil, "nil result object")
-		o, err := unmarshalObject(r.Properties, r.Metadata)
-		if err != nil {
-			return err
-		}
-		objects[i] = *o
+	if err := unmarshalObjects(reply.Results, func(i int, o Object) {
+		objects[i] = o
+	}); err != nil {
+		return err
 	}
 
 	groups := make([]Group, len(reply.GroupByResults))
@@ -331,27 +332,16 @@ func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
 		if group == nil {
 			continue
 		}
-
-		// At this point proto.GroupByResult should not be nil; otherwise,
-		// unmarshaling it is pointless. This also lets us access its fields
-		// (.Metadata, .Properties) safely.
-		dev.Assert(group != nil, "nil result group")
+		dev.AssertNotNil(group, "group")
 
 		objects := make([]GroupObject, len(group.Objects))
-		for oi, object := range group.Objects {
-			if object == nil {
-				continue
-			}
-			dev.Assert(object != nil, "nil group object")
-
-			o, err := unmarshalObject(object.Properties, object.Metadata)
-			if err != nil {
-				return err
-			}
-			objects[oi] = GroupObject{
+		if err := unmarshalObjects(group.Objects, func(i int, o Object) {
+			objects[i] = GroupObject{
 				BelongsToGroup: group.Name,
-				Object:         *o,
+				Object:         o,
 			}
+		}); err != nil {
+			return nil
 		}
 
 		groups[gi] = Group{
@@ -371,18 +361,42 @@ func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
 	return nil
 }
 
+// unmarshalObjects calls [unmarshalObject] for each search result
+// and passes the object and its index to the consumer f.
+// Any non-nil error stops the iteration and is returned immediately.
+func unmarshalObjects(objects []*proto.SearchResult, f func(int, Object)) error {
+	dev.AssertNotNil(f, "f")
+
+	for i, object := range objects {
+		if object == nil {
+			continue
+		}
+		dev.AssertNotNil(object, "object")
+
+		o, err := unmarshalObject(object.Properties, object.Metadata)
+		if err != nil {
+			return err
+		}
+		dev.AssertNotNil(o, "o")
+
+		f(i, *o)
+	}
+	return nil
+}
+
 func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) (*Object, error) {
 	properties, err := unmarshalProperties(pr.GetNonRefProps())
 	if err != nil {
 		return nil, err
 	}
+	dev.AssertNotNil(properties, "properties")
 
 	references := make(map[string][]Object, len(pr.GetRefProps()))
 	for _, ref := range pr.GetRefProps() {
 		if ref == nil {
 			continue
 		}
-		dev.Assert(ref != nil, "reference is nil")
+		dev.AssertNotNil(ref, "ref")
 
 		if _, ok := references[ref.PropName]; !ok {
 			references[ref.PropName] = make([]Object, 0, len(ref.Properties))
@@ -392,6 +406,7 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) (*Obj
 			if err != nil {
 				return nil, err
 			}
+			dev.AssertNotNil(o, "o")
 			references[ref.PropName] = append(references[ref.PropName], *o)
 		}
 	}
@@ -426,11 +441,12 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) (*Obj
 		metadata.Score = nilPresent(mr.Score, mr.ScorePresent)
 		metadata.ExplainScore = nilPresent(mr.ExplainScore, mr.ExplainScorePresent)
 
-		vs, err := unmarshalVectors(mr.Vectors)
+		vectors, err := unmarshalVectors(mr.Vectors)
 		if err != nil {
 			return nil, err
 		}
-		metadata.NamedVectors = vs
+		dev.AssertNotNil(vectors, "vectors")
+		metadata.NamedVectors = vectors
 	}
 
 	return &Object{
@@ -441,6 +457,8 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) (*Obj
 	}, nil
 }
 
+// unmarshalProperties unmarshals map[string]proto.Value into map[string]any.
+// ps can be nil, in which case an empty map is returned.
 func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
 	out := make(map[string]any, len(ps.GetFields()))
 	for name, f := range ps.GetFields() {
@@ -465,17 +483,18 @@ func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
 			}
 			v = t
 		case *proto.Value_UuidValue:
-			u, err := uuid.Parse(f.GetUuidValue())
+			id, err := uuid.Parse(f.GetUuidValue())
 			if err != nil {
 				return nil, err
 			}
-			v = u
+			v = id
 		case *proto.Value_ObjectValue:
-			p, err := unmarshalProperties(f.GetObjectValue())
+			properties, err := unmarshalProperties(f.GetObjectValue())
 			if err != nil {
 				return nil, err
 			}
-			v = p
+			dev.AssertNotNil(properties, "properties")
+			v = properties
 		default:
 			// TODO(dyma): support array types
 		}
