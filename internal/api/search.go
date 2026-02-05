@@ -270,7 +270,7 @@ func marshalVector(v *Vector) (*proto.Vectors, error) {
 type SearchResponse struct {
 	Took           time.Duration
 	Results        []Object
-	GroupByResults map[string]Group
+	GroupByResults []Group
 }
 
 var _ MessageUnmarshaler[proto.SearchReply] = (*SearchResponse)(nil)
@@ -309,8 +309,8 @@ type (
 func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
 	dev.Assert(reply != nil, "nil search reply")
 
-	objects := make([]Object, 0, len(reply.Results))
-	for _, r := range reply.Results {
+	objects := make([]Object, len(reply.Results))
+	for i, r := range reply.Results {
 		if r == nil {
 			continue
 		}
@@ -323,52 +323,50 @@ func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
 		if err != nil {
 			return err
 		}
-		objects = append(objects, *o)
+		objects[i] = *o
 	}
 
-	// groups := make(map[string]Group, len(reply.GroupByResults))
-	// grouped := make([]GroupObject, 0, len(r.GroupByResults))
-	// for _, group := range reply.GroupByResults {
-	// 	if group == nil {
-	// 		continue
-	// 	}
-	//
-	// 	// At this point proto.GroupByResult should not be nil; otherwise,
-	// 	// unmarshaling it is pointless. This also lets us access its fields
-	// 	// (.Metadata, .Properties) safely.
-	// 	dev.Assert(group != nil, "nil result group")
-	//
-	// 	for _, obj := range group.Objects {
-	// 		if obj == nil {
-	// 			continue
-	// 		}
-	// 		dev.Assert(obj != nil, "nil group object")
-	//
-	// 		o, err := unmarshalObject(obj.Properties, obj.Metadata)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		grouped = append(grouped, GroupObject{
-	// 			BelongsToGroup: group.Name,
-	// 			Object:         *o,
-	// 		})
-	// 	}
-	//
-	// 	// Create a view into the Objects slice rather than allocating a separate one.
-	// 	from, to := len(grouped)-len(group.Objects), len(grouped)-1
-	// 	groups[group.Name] = Group{
-	// 		Name:        group.Name,
-	// 		MinDistance: group.MinDistance,
-	// 		MaxDistance: group.MaxDistance,
-	// 		Size:        group.NumberOfObjects,
-	// 		Objects:     grouped[from:to],
-	// 	}
-	// }
+	groups := make([]Group, len(reply.GroupByResults))
+	for gi, group := range reply.GroupByResults {
+		if group == nil {
+			continue
+		}
+
+		// At this point proto.GroupByResult should not be nil; otherwise,
+		// unmarshaling it is pointless. This also lets us access its fields
+		// (.Metadata, .Properties) safely.
+		dev.Assert(group != nil, "nil result group")
+
+		objects := make([]GroupObject, len(group.Objects))
+		for oi, object := range group.Objects {
+			if object == nil {
+				continue
+			}
+			dev.Assert(object != nil, "nil group object")
+
+			o, err := unmarshalObject(object.Properties, object.Metadata)
+			if err != nil {
+				return err
+			}
+			objects[oi] = GroupObject{
+				BelongsToGroup: group.Name,
+				Object:         *o,
+			}
+		}
+
+		groups[gi] = Group{
+			Name:        group.Name,
+			MinDistance: group.MinDistance,
+			MaxDistance: group.MaxDistance,
+			Size:        group.NumberOfObjects,
+			Objects:     objects,
+		}
+	}
 
 	*r = SearchResponse{
-		Took:    time.Duration(reply.Took) * time.Second,
-		Results: objects,
-		// GroupByResults: groups,
+		Took:           time.Duration(reply.Took) * time.Second,
+		Results:        objects,
+		GroupByResults: groups,
 	}
 	return nil
 }
@@ -421,8 +419,8 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) (*Obj
 	}
 
 	if mr != nil {
-		metadata.CreatedAt = nilPresent(time.UnixMilli(mr.CreationTimeUnix), mr.CreationTimeUnixPresent)
-		metadata.LastUpdatedAt = nilPresent(time.UnixMilli(mr.LastUpdateTimeUnix), mr.LastUpdateTimeUnixPresent)
+		metadata.CreatedAt = nilPresent(timeFromUnix(mr.CreationTimeUnix), mr.CreationTimeUnixPresent)
+		metadata.LastUpdatedAt = nilPresent(timeFromUnix(mr.LastUpdateTimeUnix), mr.LastUpdateTimeUnixPresent)
 		metadata.Distance = nilPresent(mr.Distance, mr.DistancePresent)
 		metadata.Certainty = nilPresent(mr.Certainty, mr.CertaintyPresent)
 		metadata.Score = nilPresent(mr.Score, mr.ScorePresent)
@@ -461,7 +459,7 @@ func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
 		case *proto.Value_BlobValue:
 			v = f.GetBlobValue()
 		case *proto.Value_DateValue:
-			t, err := time.Parse(TimeLayout, f.GetDateValue())
+			t, err := timeFromString(f.GetDateValue())
 			if err != nil {
 				return nil, err
 			}

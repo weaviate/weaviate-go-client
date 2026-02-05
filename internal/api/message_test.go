@@ -580,6 +580,8 @@ func testMessageUnmarshaler[Out api.ReplyMessage](t *testing.T, tests []MessageU
 	t.Helper()
 	for _, tt := range testkit.WithOnly(t, tests) {
 		t.Run(tt.name, func(t *testing.T) {
+			testkit.IsPointer(t, tt.want, "want")
+
 			err := tt.dest.UnmarshalMessage(tt.reply)
 			tt.err.Require(t, err, "unmarshal")
 			require.EqualExportedValues(t, tt.want, tt.dest)
@@ -591,7 +593,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 	idAsBytes, err := testkit.UUID.MarshalBinary()
 	require.NoError(t, err, "marshal uuid bytes")
 
-	testMessageUnmarshaler[proto.SearchReply](t, []MessageUnmarshalerTest[proto.SearchReply]{
+	testMessageUnmarshaler(t, []MessageUnmarshalerTest[proto.SearchReply]{
 		{
 			name: "metadata",
 			reply: &proto.SearchReply{
@@ -650,6 +652,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 						References: make(map[string][]api.Object),
 					},
 				},
+				GroupByResults: make([]api.Group, 0),
 			},
 		},
 		{
@@ -678,6 +681,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 						References: make(map[string][]api.Object),
 					},
 				},
+				GroupByResults: make([]api.Group, 0),
 			},
 		},
 		{
@@ -725,6 +729,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 									"is_single":    boolean(false),
 									"release_date": date(testkit.Now),
 									"duration_sec": integer(252),
+									"retail_price": number(53.99),
 									"album_cover":  blob("cover.png"),
 									"uuid":         UUID(testkit.UUID),
 									"extra": object(map[string]*proto.Value{
@@ -747,6 +752,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 							"is_single":    false,
 							"release_date": testkit.Now,
 							"duration_sec": int64(252),
+							"retail_price": float64(53.99),
 							"album_cover":  "cover.png",
 							"uuid":         testkit.UUID,
 							"extra": map[string]any{
@@ -757,6 +763,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 						References: make(map[string][]api.Object),
 					},
 				},
+				GroupByResults: make([]api.Group, 0),
 			},
 		},
 		{
@@ -848,6 +855,192 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 												Properties: map[string]any{
 													"name": "Megadeth",
 												},
+												References: make(map[string][]api.Object),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				GroupByResults: make([]api.Group, 0),
+			},
+		},
+		{
+			name: "grouped result",
+			reply: &proto.SearchReply{
+				GroupByResults: []*proto.GroupByResult{
+					{
+						Name:            "metadata and properties",
+						MinDistance:     .05,
+						MaxDistance:     .1,
+						NumberOfObjects: 2,
+						Objects: []*proto.SearchResult{
+							{
+								Metadata: &proto.MetadataResult{
+									IdAsBytes: idAsBytes,
+									Distance:  .123, DistancePresent: true,
+									Certainty: .123, CertaintyPresent: false,
+									Score: .456, ScorePresent: true,
+									ExplainScore: "very good", ExplainScorePresent: false,
+									CreationTimeUnix: testkit.Now.UnixMilli(), CreationTimeUnixPresent: true,
+									LastUpdateTimeUnix: testkit.Now.UnixMilli(), LastUpdateTimeUnixPresent: false,
+									Vectors: []*proto.Vectors{
+										{
+											Name:        "title_vec",
+											VectorBytes: singleVectorBytes,
+											Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+										},
+										{
+											Name:        "lyrics_vec",
+											VectorBytes: multiVectorBytes,
+											Type:        proto.Vectors_VECTOR_TYPE_MULTI_FP32,
+										},
+									},
+								},
+							},
+							{
+								Properties: &proto.PropertiesResult{
+									TargetCollection: "Songs",
+									NonRefProps: &proto.Properties{
+										Fields: map[string]*proto.Value{
+											"title":        text("High Speed Dirt"),
+											"is_single":    boolean(false),
+											"release_date": date(testkit.Now),
+											"duration_sec": integer(252),
+											"retail_price": number(53.99),
+											"album_cover":  blob("cover.png"),
+											"uuid":         UUID(testkit.UUID),
+											"extra": object(map[string]*proto.Value{
+												"key": text("D"),
+											}),
+											"kpop_version": null(),
+										},
+									},
+								},
+							},
+						},
+					},
+					{
+						Name:            "references",
+						MinDistance:     .6,
+						MaxDistance:     .7,
+						NumberOfObjects: 1,
+						Objects: []*proto.SearchResult{
+							{
+								Properties: &proto.PropertiesResult{
+									RefProps: []*proto.RefPropertiesResult{
+										{
+											PropName: "hasAwards",
+											Properties: []*proto.PropertiesResult{
+												{
+													TargetCollection: "GrammyAward",
+													NonRefProps: &proto.Properties{
+														Fields: map[string]*proto.Value{
+															"category": text("metal"),
+														},
+													},
+												},
+												{
+													TargetCollection: "TonyAward",
+													Metadata: &proto.MetadataResult{
+														IdAsBytes: idAsBytes,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			dest: new(api.SearchResponse),
+			want: &api.SearchResponse{
+				Results: make([]api.Object, 0),
+				GroupByResults: []api.Group{
+					{
+						Name:        "metadata and properties",
+						MinDistance: .05,
+						MaxDistance: .1,
+						Size:        2,
+						Objects: []api.GroupObject{
+							{
+								BelongsToGroup: "metadata and properties",
+								Object: api.Object{
+									Metadata: api.ObjectMetadata{
+										UUID:          testkit.UUID,
+										Distance:      testkit.Ptr[float32](.123),
+										Score:         testkit.Ptr[float32](.456),
+										CreatedAt:     testkit.Ptr(testkit.Now),
+										Certainty:     nil, // present == false
+										ExplainScore:  nil, // present == false
+										LastUpdatedAt: nil, // present == false
+										NamedVectors: api.Vectors{
+											"title_vec": api.Vector{
+												Name:   "title_vec",
+												Single: singleVector,
+											},
+											"lyrics_vec": api.Vector{
+												Name:  "lyrics_vec",
+												Multi: multiVector,
+											},
+										},
+									},
+									Properties: make(map[string]any),
+									References: make(map[string][]api.Object),
+								},
+							},
+							{
+								BelongsToGroup: "metadata and properties",
+								Object: api.Object{
+									Collection: "Songs",
+									Properties: map[string]any{
+										"title":        "High Speed Dirt",
+										"is_single":    false,
+										"release_date": testkit.Now,
+										"duration_sec": int64(252),
+										"retail_price": float64(53.99),
+										"album_cover":  "cover.png",
+										"uuid":         testkit.UUID,
+										"extra": map[string]any{
+											"key": "D",
+										},
+										"kpop_version": nil,
+									},
+									References: make(map[string][]api.Object),
+								},
+							},
+						},
+					},
+					{
+						Name:        "references",
+						MinDistance: .6,
+						MaxDistance: .7,
+						Size:        1,
+						Objects: []api.GroupObject{
+							{
+								BelongsToGroup: "references",
+								Object: api.Object{
+									Properties: make(map[string]any),
+									References: map[string][]api.Object{
+										"hasAwards": {
+											{
+												Collection: "GrammyAward",
+												Properties: map[string]any{
+													"category": "metal",
+												},
+												References: make(map[string][]api.Object),
+											},
+											{
+												Collection: "TonyAward",
+												Metadata: api.ObjectMetadata{
+													UUID:         testkit.UUID,
+													NamedVectors: make(api.Vectors),
+												},
+												Properties: make(map[string]any),
 												References: make(map[string][]api.Object),
 											},
 										},
