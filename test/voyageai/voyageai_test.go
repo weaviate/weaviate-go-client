@@ -15,6 +15,7 @@ import (
 var voyage4Models = []struct {
 	name              string
 	model             string
+	className         string
 	defaultDimensions int
 	maxInputTokens    int
 	description       string
@@ -22,6 +23,7 @@ var voyage4Models = []struct {
 	{
 		name:              "voyage-4",
 		model:             "voyage-4",
+		className:         "VoyageTestVoyage4",
 		defaultDimensions: 1024,
 		maxInputTokens:    32000,
 		description:       "Balanced general-purpose and multilingual retrieval",
@@ -29,6 +31,7 @@ var voyage4Models = []struct {
 	{
 		name:              "voyage-4-lite",
 		model:             "voyage-4-lite",
+		className:         "VoyageTestVoyage4Lite",
 		defaultDimensions: 1024,
 		maxInputTokens:    32000,
 		description:       "Best performance-to-cost ratio, highest batch throughput",
@@ -36,6 +39,7 @@ var voyage4Models = []struct {
 	{
 		name:              "voyage-4-large",
 		model:             "voyage-4-large",
+		className:         "VoyageTestVoyage4Large",
 		defaultDimensions: 1024,
 		maxInputTokens:    32000,
 		description:       "Highest retrieval quality",
@@ -55,7 +59,7 @@ func TestVoyageAI_SchemaConfiguration(t *testing.T) {
 		t.Run("Create schema with "+modelSpec.name, func(t *testing.T) {
 			client := testsuit.CreateTestClient(false)
 			ctx := context.Background()
-			className := "VoyageTest" + modelSpec.name
+			className := modelSpec.className
 
 			// Clean up before test
 			_ = client.Schema().ClassDeleter().WithClassName(className).Do(ctx)
