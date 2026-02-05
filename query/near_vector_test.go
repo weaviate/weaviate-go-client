@@ -76,10 +76,11 @@ func TestNearVector(t *testing.T) {
 			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
 				{
 					Request: &api.SearchRequest{
-						Limit:     1,
-						Offset:    2,
-						AutoLimit: 3,
-						After:     testkit.UUID,
+						RequestDefaults: rd,
+						Limit:           1,
+						Offset:          2,
+						AutoLimit:       3,
+						After:           testkit.UUID,
 						ReturnMetadata: api.ReturnMetadata{
 							CreatedAt:    true,
 							LastUpdateAt: true,
@@ -90,6 +91,7 @@ func TestNearVector(t *testing.T) {
 						},
 						ReturnVectors: []string{"title_vec", "lyrics_vec"},
 						ReturnProperties: []api.ReturnProperty{
+							{Name: "title"},
 							{Name: "duration_sec"},
 							{Name: "release_date"},
 							{
@@ -212,13 +214,20 @@ func TestNearVector(t *testing.T) {
 										Properties: map[string]any{
 											"categories": []string{"thrash_metal", "heavy_metal"},
 										},
-										References: make(map[string][]api.Object),
+										Vectors:    make(types.Vectors),
+										References: make(map[string][]types.Object[map[string]any]),
 									},
 									{
 										Collection: "TonyAward",
 										UUID:       testkit.UUID,
+										Vectors: types.Vectors{
+											"recording_vec": {
+												Name:   "recording_vec",
+												Single: []float32{4, 5, 6},
+											},
+										},
 										Properties: make(map[string]any),
-										References: make(map[string][]api.Object),
+										References: make(map[string][]types.Object[map[string]any]),
 									},
 								},
 							},
@@ -239,9 +248,16 @@ func TestNearVector(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "request error",
+			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			transport := testkit.NewTransport[api.SearchRequest, api.SearchResponse](t, tt.stubs)
+			transport := testkit.NewTransport(t, tt.stubs)
 
 			c := query.NewClient(transport, rd)
 			require.NotNil(t, c, "client")

@@ -13,9 +13,9 @@ import (
 type SearchRequest struct {
 	RequestDefaults
 
-	Limit            int
-	Offset           int
-	AutoLimit        int
+	Limit            int32
+	Offset           int32
+	AutoLimit        int32
 	After            uuid.UUID
 	ReturnProperties []ReturnProperty
 	ReturnReferences []ReturnReference
@@ -37,7 +37,6 @@ func (r *SearchRequest) Body() MessageMarshaler[proto.SearchRequest] { return r 
 
 type (
 	ReturnMetadata struct {
-		UUID         bool
 		CreatedAt    bool
 		LastUpdateAt bool
 		Distance     bool
@@ -301,8 +300,7 @@ type (
 		Certainty     *float32
 		Score         *float32
 		ExplainScore  *string
-		UnnamedVector *Vector
-		NamedVectors  Vectors
+		Vectors       Vectors
 	}
 	Group struct {
 		Name                     string
@@ -411,42 +409,33 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) (*Obj
 		}
 	}
 
-	var id uuid.UUID
-	if bytes := mr.GetIdAsBytes(); bytes != nil {
-		fromBytes, err := uuid.FromBytes(bytes)
-		if err != nil {
-			return nil, err
-		}
-		id = fromBytes
-	}
-
-	var unnamed *Vector
-	if v := mr.GetVectorBytes(); len(v) > 0 {
-		unnamed = &Vector{
-			Name:   DefaultVectorName,
-			Single: unmarshalSingle(v),
-		}
-	}
-
-	metadata := ObjectMetadata{
-		UUID:          id,
-		UnnamedVector: unnamed,
-	}
-
+	var metadata ObjectMetadata
 	if mr != nil {
-		metadata.CreatedAt = nilPresent(timeFromUnix(mr.CreationTimeUnix), mr.CreationTimeUnixPresent)
-		metadata.LastUpdatedAt = nilPresent(timeFromUnix(mr.LastUpdateTimeUnix), mr.LastUpdateTimeUnixPresent)
-		metadata.Distance = nilPresent(mr.Distance, mr.DistancePresent)
-		metadata.Certainty = nilPresent(mr.Certainty, mr.CertaintyPresent)
-		metadata.Score = nilPresent(mr.Score, mr.ScorePresent)
-		metadata.ExplainScore = nilPresent(mr.ExplainScore, mr.ExplainScorePresent)
+		var id uuid.UUID
+		if bytes := mr.GetIdAsBytes(); bytes != nil {
+			fromBytes, err := uuid.FromBytes(bytes)
+			if err != nil {
+				return nil, err
+			}
+			id = fromBytes
+		}
 
-		vectors, err := unmarshalVectors(mr.Vectors)
+		vectors, err := unmarshalVectors(mr)
 		if err != nil {
 			return nil, err
 		}
 		dev.AssertNotNil(vectors, "vectors")
-		metadata.NamedVectors = vectors
+
+		metadata = ObjectMetadata{
+			UUID:          id,
+			CreatedAt:     nilPresent(timeFromUnix(mr.CreationTimeUnix), mr.CreationTimeUnixPresent),
+			LastUpdatedAt: nilPresent(timeFromUnix(mr.LastUpdateTimeUnix), mr.LastUpdateTimeUnixPresent),
+			Distance:      nilPresent(mr.Distance, mr.DistancePresent),
+			Certainty:     nilPresent(mr.Certainty, mr.CertaintyPresent),
+			Score:         nilPresent(mr.Score, mr.ScorePresent),
+			ExplainScore:  nilPresent(mr.ExplainScore, mr.ExplainScorePresent),
+			Vectors:       vectors,
+		}
 	}
 
 	return &Object{
@@ -503,9 +492,9 @@ func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
 	return out, nil
 }
 
-func unmarshalVectors(vectors []*proto.Vectors) (Vectors, error) {
-	out := make(Vectors, len(vectors))
-	for _, vector := range vectors {
+func unmarshalVectors(mr *proto.MetadataResult) (Vectors, error) {
+	out := make(Vectors, len(mr.GetVectors()))
+	for _, vector := range mr.GetVectors() {
 		v := Vector{Name: vector.Name}
 		bytes := vector.GetVectorBytes()
 		switch vector.Type {
@@ -517,6 +506,13 @@ func unmarshalVectors(vectors []*proto.Vectors) (Vectors, error) {
 			return nil, fmt.Errorf("unknown type for vector %q", vector.Name)
 		}
 		out[v.Name] = v
+	}
+
+	if v := mr.GetVectorBytes(); len(v) > 0 {
+		out[DefaultVectorName] = Vector{
+			Name:   DefaultVectorName,
+			Single: unmarshalSingle(v),
+		}
 	}
 	return out, nil
 }
