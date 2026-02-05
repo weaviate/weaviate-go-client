@@ -35,7 +35,7 @@ func Assert(check bool, msg string, args ...any) {
 // Do not use this function to validate user input; assertions
 // should only fail due to a error in a package's code.
 func AssertNotNil(v any, name string) {
-	// Reflection is expesive, but asserts are only enabled in test.
+	// Reflection is expensive, but asserts are only enabled in test.
 	Assert(!isNil(v), "%s %T is nil", name, v)
 }
 

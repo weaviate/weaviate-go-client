@@ -70,7 +70,7 @@ func TestWithOnly(t *testing.T) {
 	// To isolate it, we unset the variable and re-set it on cleanup.
 	noWithOnly := os.Getenv(testkit.EnvNoWithOnly)
 	require.NoErrorf(t, os.Unsetenv(testkit.EnvNoWithOnly), "unset %s", testkit.EnvNoWithOnly)
-	t.Cleanup(func() { os.Setenv(testkit.EnvNoWithOnly, noWithOnly) })
+	t.Cleanup(func() { os.Setenv(testkit.EnvNoWithOnly, noWithOnly) }) //nolint:errcheck
 
 	for _, tt := range []struct {
 		name  string // Test case name.
