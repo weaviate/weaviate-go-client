@@ -32,7 +32,9 @@ var NopTransport internal.Transport = TransportFunc(func(context.Context, any, a
 func NewTransport[Req, Resp any](t *testing.T, stubs []Stub[Req, Resp]) *MockTransport[Req, Resp] {
 	mock := &MockTransport[Req, Resp]{t: t, stubs: stubs}
 	t.Cleanup(func() {
-		require.Truef(t, mock.Done(), "requests were not fully consumed, %d remaining", len(mock.stubs))
+		if !t.Failed() {
+			assert.Emptyf(t, mock.stubs, "requests were not fully consumed, %d remaining", len(mock.stubs))
+		}
 	})
 	return mock
 }

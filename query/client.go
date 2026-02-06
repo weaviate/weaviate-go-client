@@ -51,6 +51,12 @@ type Reference struct {
 	ReturnProperties []string
 }
 
+// VectorTarget can be used as an input for a vector similarity search.
+type VectorTarget interface {
+	// Vectors returns vectors included in the search target.
+	Vectors() []api.TargetVector
+}
+
 type Result struct {
 	Objects []Object[map[string]any]
 }
@@ -103,12 +109,12 @@ func marshalReturnProperties(properties []string, nested []NestedProperty) []api
 	return out
 }
 
-func marshalReturnReferences(references []Reference) []api.ReturnReference {
-	if len(references) == 0 {
+func marshalReturnReferences(in []Reference) []api.ReturnReference {
+	if len(in) == 0 {
 		return nil
 	}
-	out := make([]api.ReturnReference, len(references))
-	for i, ref := range references {
+	out := make([]api.ReturnReference, len(in))
+	for i, ref := range in {
 		out[i] = api.ReturnReference{
 			PropertyName:     ref.PropertyName,
 			TargetCollection: ref.TargetCollection,
@@ -116,6 +122,16 @@ func marshalReturnReferences(references []Reference) []api.ReturnReference {
 			ReturnMetadata:   api.ReturnMetadata(ref.ReturnMetadata),
 			ReturnProperties: marshalReturnProperties(ref.ReturnProperties, ref.ReturnNestedProperties),
 		}
+	}
+	return out
+}
+
+func marshalSearchTarget(target VectorTarget) api.SearchTarget {
+	dev.AssertNotNil(target, "target")
+
+	out := api.SearchTarget{Vectors: target.Vectors()}
+	if cm, ok := target.(interface{ CombinationMethod() api.CombinationMethod }); ok {
+		out.CombinationMethod = cm.CombinationMethod()
 	}
 	return out
 }
