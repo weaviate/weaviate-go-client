@@ -560,6 +560,27 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "group by",
+			req: &api.SearchRequest{
+				GroupBy: &api.GroupBy{
+					Property:       "album",
+					ObjectLimit:    6,
+					NumberOfGroups: 7,
+				},
+			},
+			want: &proto.SearchRequest{
+				GroupBy: &proto.GroupBy{
+					Path:            []string{"album"},
+					ObjectsPerGroup: 6,
+					NumberOfGroups:  7,
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
 	})
 }
 

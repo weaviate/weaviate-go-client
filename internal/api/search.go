@@ -21,6 +21,7 @@ type SearchRequest struct {
 	ReturnReferences []ReturnReference
 	ReturnVectors    []string
 	ReturnMetadata   ReturnMetadata
+	GroupBy          *GroupBy
 
 	NearVector *NearVector
 }
@@ -51,10 +52,15 @@ type (
 	ReturnReference struct {
 		PropertyName     string
 		TargetCollection string
+		ReturnMetadata   ReturnMetadata
+		ReturnVectors    []string
 		ReturnProperties []ReturnProperty
 		ReturnReferences []ReturnReference
-		ReturnVectors    []string
-		ReturnMetadata   ReturnMetadata
+	}
+	GroupBy struct {
+		Property       string // Property to group by.
+		ObjectLimit    int32  // Maximum number of objects per group.
+		NumberOfGroups int32  // Maximum number of groups to return.
 	}
 )
 
@@ -104,6 +110,14 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	marshalReturnVectors(req.Metadata, r.ReturnVectors)
 	marshalReturnProperties(req.Properties, r.ReturnProperties)
 	marshalReturnReferences(req.Properties, r.ReturnReferences)
+
+	if r.GroupBy != nil {
+		req.GroupBy = &proto.GroupBy{
+			Path:            []string{r.GroupBy.Property},
+			ObjectsPerGroup: r.GroupBy.ObjectLimit,
+			NumberOfGroups:  r.GroupBy.NumberOfGroups,
+		}
+	}
 
 	var err error
 	switch {
