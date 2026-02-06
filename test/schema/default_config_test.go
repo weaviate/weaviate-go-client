@@ -14,6 +14,7 @@ var defaultInvertedIndexConfig = &models.InvertedIndexConfig{
 	Stopwords: &models.StopwordConfig{
 		Preset: "en",
 	},
+	UsingBlockMaxWAND: config.DefaultUsingBlockMaxWAND,
 }
 
 var defaultModuleConfig = map[string]interface{}{
@@ -96,7 +97,7 @@ var defaultMultivectorConfig = map[string]interface{}{
 
 var defaultReplicationConfig = &models.ReplicationConfig{
 	Factor:           1,
-	DeletionStrategy: models.ReplicationConfigDeletionStrategyDeleteOnConflict,
+	DeletionStrategy: models.ReplicationConfigDeletionStrategyNoAutomatedResolution,
 }
 
 var defaultMultiTenancyConfig = &models.MultiTenancyConfig{
