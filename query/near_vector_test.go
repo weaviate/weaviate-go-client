@@ -22,6 +22,11 @@ var (
 	noVectors    = make(types.Vectors)
 )
 
+var (
+	singleVector = []float32{1, 2, 3}
+	multiVector  = [][]float32{{1, 2, 3}, {4, 5, 6}}
+)
+
 func TestNearVector(t *testing.T) {
 	rd := api.RequestDefaults{
 		CollectionName:   "Songs",
@@ -29,7 +34,9 @@ func TestNearVector(t *testing.T) {
 		ConsistencyLevel: api.ConsistencyLevelQuorum,
 	}
 
-	for _, tt := range []struct {
+	for _, tt := range testkit.WithOnly(t, []struct {
+		testkit.Only
+
 		name  string
 		nv    query.NearVector // Object to be inserted.
 		stubs []testkit.Stub[api.SearchRequest, api.SearchResponse]
@@ -51,6 +58,9 @@ func TestNearVector(t *testing.T) {
 					Certainty:    true,
 					Score:        true,
 					ExplainScore: true,
+				},
+				Target: &types.Vector{
+					Single: singleVector,
 				},
 				ReturnVectors:    []string{"title_vec", "lyrics_vec"},
 				ReturnProperties: []string{"title", "duration_sec", "release_date"},
@@ -135,6 +145,11 @@ func TestNearVector(t *testing.T) {
 						},
 						NearVector: &api.NearVector{
 							Distance: testkit.Ptr(.456),
+							Target: api.SearchTarget{
+								Vectors: []api.TargetVector{{
+									Vector: api.Vector{Single: singleVector},
+								}},
+							},
 						},
 					},
 					Response: api.SearchResponse{
@@ -151,8 +166,8 @@ func TestNearVector(t *testing.T) {
 									Score:         testkit.Ptr[float32](10),
 									ExplainScore:  testkit.Ptr("10/10"),
 									Vectors: api.Vectors{
-										"title_vec":  {Name: "title_vec", Single: []float32{1, 2, 3}},
-										"lyrics_vec": {Name: "lyrics_vec", Multi: [][]float32{{1, 2, 3}, {1, 2, 3}}},
+										"title_vec":  {Name: "title_vec", Single: singleVector},
+										"lyrics_vec": {Name: "lyrics_vec", Multi: multiVector},
 									},
 								},
 								Properties: map[string]any{
@@ -242,8 +257,8 @@ func TestNearVector(t *testing.T) {
 								},
 							},
 							Vectors: types.Vectors{
-								"title_vec":  {Name: "title_vec", Single: []float32{1, 2, 3}},
-								"lyrics_vec": {Name: "lyrics_vec", Multi: [][]float32{{1, 2, 3}, {1, 2, 3}}},
+								"title_vec":  {Name: "title_vec", Single: singleVector},
+								"lyrics_vec": {Name: "lyrics_vec", Multi: multiVector},
 							},
 							CreatedAt:     &testkit.Now,
 							LastUpdatedAt: &testkit.Now,
@@ -265,7 +280,7 @@ func TestNearVector(t *testing.T) {
 			},
 			err: testkit.ExpectError,
 		},
-	} {
+	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			transport := testkit.NewTransport(t, tt.stubs)
 
@@ -298,6 +313,9 @@ func TestNearVector_GroupBy(t *testing.T) {
 			name: "request ok",
 			nv: query.NearVector{
 				Similarity: query.Certainty(.123),
+				Target: &types.Vector{
+					Single: singleVector,
+				},
 			},
 			groupBy: query.GroupBy{
 				Property:       "album",
@@ -310,6 +328,11 @@ func TestNearVector_GroupBy(t *testing.T) {
 						RequestDefaults: rd,
 						NearVector: &api.NearVector{
 							Certainty: testkit.Ptr(.123),
+							Target: api.SearchTarget{
+								Vectors: []api.TargetVector{{
+									Vector: api.Vector{Single: singleVector},
+								}},
+							},
 						},
 						GroupBy: &api.GroupBy{
 							Property:       "album",

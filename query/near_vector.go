@@ -24,6 +24,10 @@ type NearVector struct {
 	// To not return any properties, initialize this value to an empty slice explicitly.
 	ReturnProperties []string
 
+	// Target vector or a combination of multiple vector targets. Required parameter.
+	// See [MultiVectorTarget] for examples of providing multiple targets.
+	Target VectorTarget
+
 	// Similarity specifies a cutoff point for query results.
 	// Use Distance() to set it as maximum distance between vectors.
 	// Use Certainty() to set it to a normalized value between 0 and 1.
@@ -61,11 +65,14 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 		ReturnMetadata:   api.ReturnMetadata(nv.ReturnMetadata),
 		ReturnProperties: marshalReturnProperties(nv.ReturnProperties, nv.ReturnNestedProperties),
 		ReturnReferences: marshalReturnReferences(nv.ReturnReferences),
-		NearVector: &api.NearVector{
-			// Target:    marshalSearchTarget(nv.Target),
+	}
+
+	if nv.Target != nil {
+		req.NearVector = &api.NearVector{
+			Target:    marshalSearchTarget(nv.Target),
 			Distance:  nv.Similarity.Distance(),
 			Certainty: nv.Similarity.Certainty(),
-		},
+		}
 	}
 
 	if nv.groupBy != nil {
