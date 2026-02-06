@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v5/test/testsuit"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/fault"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/filters"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/testenv"
 	"github.com/weaviate/weaviate/entities/models"
 	"github.com/weaviate/weaviate/entities/schema"
@@ -613,6 +615,147 @@ func TestSchema_integration(t *testing.T) {
 		// Clean up classes
 		errRm := client.Schema().AllDeleter().Do(context.Background())
 		require.Nil(t, errRm)
+	})
+
+	t.Run("DELETE /schema/{className}/properties/{propertyName}/index/{indexName}", func(t *testing.T) {
+		ctx := context.Background()
+		client := testsuit.CreateTestClient(false)
+
+		className := "Book"
+		vTrue := true
+
+		// Create Book class with author and title properties, both with filterable and searchable indexes
+		bookClass := &models.Class{
+			Class:      className,
+			Vectorizer: "none",
+			Properties: []*models.Property{
+				{
+					Name:            "author",
+					DataType:        schema.DataTypeText.PropString(),
+					IndexFilterable: &vTrue,
+					IndexSearchable: &vTrue,
+				},
+				{
+					Name:            "title",
+					DataType:        schema.DataTypeText.PropString(),
+					IndexFilterable: &vTrue,
+					IndexSearchable: &vTrue,
+				},
+			},
+		}
+
+		client.Schema().ClassDeleter().WithClassName(className).Do(ctx)
+		err := client.Schema().ClassCreator().WithClass(bookClass).Do(ctx)
+		require.NoError(t, err)
+
+		// Insert 2 objects
+		_, err = client.Data().Creator().
+			WithClassName(className).
+			WithProperties(map[string]interface{}{
+				"author": "Frank Herbert",
+				"title":  "Dune",
+			}).Do(ctx)
+		require.NoError(t, err)
+
+		_, err = client.Data().Creator().
+			WithClassName(className).
+			WithProperties(map[string]interface{}{
+				"author": "Jaroslaw Grzedowicz",
+				"title":  "The Lord of the Ice Garden",
+			}).Do(ctx)
+		require.NoError(t, err)
+
+		authorField := graphql.Field{Name: "author"}
+		titleField := graphql.Field{Name: "title"}
+
+		// Verify filtering by author works
+		resp, err := client.GraphQL().Get().
+			WithClassName(className).
+			WithWhere(filters.Where().
+				WithPath([]string{"author"}).
+				WithOperator(filters.Equal).
+				WithValueText("Frank Herbert")).
+			WithFields(authorField, titleField).
+			Do(ctx)
+		require.NoError(t, err)
+		require.Empty(t, resp.Errors)
+		books := resp.Data["Get"].(map[string]interface{})[className].([]interface{})
+		require.Len(t, books, 1)
+		assert.Equal(t, "Frank Herbert", books[0].(map[string]interface{})["author"])
+		assert.Equal(t, "Dune", books[0].(map[string]interface{})["title"])
+
+		// Verify filtering by title works
+		resp, err = client.GraphQL().Get().
+			WithClassName(className).
+			WithWhere(filters.Where().
+				WithPath([]string{"title"}).
+				WithOperator(filters.Equal).
+				WithValueText("Dune")).
+			WithFields(authorField, titleField).
+			Do(ctx)
+		require.NoError(t, err)
+		require.Empty(t, resp.Errors)
+		books = resp.Data["Get"].(map[string]interface{})[className].([]interface{})
+		require.Len(t, books, 1)
+		assert.Equal(t, "Frank Herbert", books[0].(map[string]interface{})["author"])
+
+		// Drop filterable and searchable indexes from author
+		err = client.Schema().PropertyIndexDeleter().
+			WithClassName(className).
+			WithPropertyName("author").
+			WithIndexName("filterable").
+			Do(ctx)
+		require.NoError(t, err)
+
+		err = client.Schema().PropertyIndexDeleter().
+			WithClassName(className).
+			WithPropertyName("author").
+			WithIndexName("searchable").
+			Do(ctx)
+		require.NoError(t, err)
+
+		// Drop filterable and searchable indexes from title
+		err = client.Schema().PropertyIndexDeleter().
+			WithClassName(className).
+			WithPropertyName("title").
+			WithIndexName("filterable").
+			Do(ctx)
+		require.NoError(t, err)
+
+		err = client.Schema().PropertyIndexDeleter().
+			WithClassName(className).
+			WithPropertyName("title").
+			WithIndexName("searchable").
+			Do(ctx)
+		require.NoError(t, err)
+
+		// Verify filtering by author no longer works after index removal
+		resp, err = client.GraphQL().Get().
+			WithClassName(className).
+			WithWhere(filters.Where().
+				WithPath([]string{"author"}).
+				WithOperator(filters.Equal).
+				WithValueText("Frank Herbert")).
+			WithFields(authorField, titleField).
+			Do(ctx)
+		require.NoError(t, err)
+		require.NotEmpty(t, resp.Errors)
+
+		// Verify filtering by title no longer works after index removal
+		resp, err = client.GraphQL().Get().
+			WithClassName(className).
+			WithWhere(filters.Where().
+				WithPath([]string{"title"}).
+				WithOperator(filters.Equal).
+				WithValueText("Dune")).
+			WithFields(authorField, titleField).
+			Do(ctx)
+		require.NoError(t, err)
+		require.NotEmpty(t, resp.Errors)
+
+		// Clean up
+		errRm := client.Schema().AllDeleter().Do(ctx)
+		require.NoError(t, errRm)
 	})
 
 	t.Run("tear down weaviate", func(t *testing.T) {
