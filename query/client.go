@@ -1,6 +1,8 @@
 package query
 
 import (
+	"context"
+
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
@@ -24,7 +26,10 @@ type Client struct {
 	NearVector NearVectorFunc
 }
 
-type ReturnMetadata api.ReturnMetadata
+type (
+	ReturnMetadata api.ReturnMetadata
+	GroupBy        api.GroupBy
+)
 
 type NestedProperty struct {
 	Name                   string
@@ -62,6 +67,23 @@ type Metadata struct {
 	ExplainScore *string
 }
 
+type GroupByResult struct {
+	Objects []GroupObject[map[string]any]
+	Groups  map[string]Group[map[string]any]
+}
+
+type Group[T any] struct {
+	Name                     string
+	MinDistance, MaxDistance float32
+	Size                     int64
+	Objects                  []GroupObject[T]
+}
+
+type GroupObject[T any] struct {
+	Object[T]
+	BelongsToGroup string
+}
+
 func marshalReturnProperties(properties []string, nested []NestedProperty) []api.ReturnProperty {
 	if len(properties)+len(nested) == 0 {
 		return nil
@@ -82,6 +104,9 @@ func marshalReturnProperties(properties []string, nested []NestedProperty) []api
 }
 
 func marshalReturnReferences(references []Reference) []api.ReturnReference {
+	if len(references) == 0 {
+		return nil
+	}
 	out := make([]api.ReturnReference, len(references))
 	for i, ref := range references {
 		out[i] = api.ReturnReference{
@@ -127,4 +152,23 @@ func unmarshalObject(o *api.Object) Object[map[string]any] {
 			ExplainScore: o.Metadata.ExplainScore,
 		},
 	}
+}
+
+// groupByResultKey is used to pass grouped query results to the GroupBy caller.
+var groupByResultKey = internal.ContextKey{}
+
+// contextWithGorupByResult creates a placeholder for *GroupByResult in the ctx.Values store.
+func contextWithGroupByResult(ctx context.Context) context.Context {
+	return internal.ContextWithPlaceholder[GroupByResult](ctx, groupByResultKey)
+}
+
+// getGroupByResult extracts *GroupByResult from the context.
+func getGroupByResult(ctx context.Context) *GroupByResult {
+	return internal.ValueFromContext[GroupByResult](ctx, groupByResultKey)
+}
+
+// setGroupByResult replaces *GroupByResult placeholder
+// in the context with the value at r.
+func setGroupByResult(ctx context.Context, r *GroupByResult) {
+	internal.SetContextValue(ctx, groupByResultKey, r)
 }

@@ -12,6 +12,16 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
+// As a general rule, client never returns nil maps, as they can
+// cause a nil pointer dereference if not handled correctly.
+// Tests that don't expect a field to be present in the response
+// should use of the variables below to make the intent explicit.
+var (
+	noReferences = make(map[string][]types.Object[map[string]any])
+	noProperties = make(map[string]any)
+	noVectors    = make(types.Vectors)
+)
+
 func TestNearVector(t *testing.T) {
 	rd := api.RequestDefaults{
 		CollectionName:   "Songs",
@@ -27,7 +37,7 @@ func TestNearVector(t *testing.T) {
 		err   testkit.Error
 	}{
 		{
-			name: "flat",
+			name: "request ok",
 			nv: query.NearVector{
 				Limit:      1,
 				Offset:     2,
@@ -169,7 +179,7 @@ func TestNearVector(t *testing.T) {
 										},
 										{
 											Collection: "TonyAward",
-											Properties: make(map[string]any),
+											Properties: noProperties,
 											References: make(map[string][]api.Object),
 											Metadata: api.ObjectMetadata{
 												UUID: testkit.UUID,
@@ -214,8 +224,8 @@ func TestNearVector(t *testing.T) {
 										Properties: map[string]any{
 											"categories": []string{"thrash_metal", "heavy_metal"},
 										},
-										Vectors:    make(types.Vectors),
-										References: make(map[string][]types.Object[map[string]any]),
+										Vectors:    noVectors,
+										References: noReferences,
 									},
 									{
 										Collection: "TonyAward",
@@ -226,8 +236,8 @@ func TestNearVector(t *testing.T) {
 												Single: []float32{4, 5, 6},
 											},
 										},
-										Properties: make(map[string]any),
-										References: make(map[string][]types.Object[map[string]any]),
+										Properties: noProperties,
+										References: noReferences,
 									},
 								},
 							},
@@ -263,6 +273,207 @@ func TestNearVector(t *testing.T) {
 			require.NotNil(t, c, "client")
 
 			got, err := c.NearVector(t.Context(), tt.nv)
+			tt.err.Require(t, err, "near vector query")
+			require.Equal(t, tt.want, got, "query result")
+		})
+	}
+}
+
+func TestNearVector_GroupBy(t *testing.T) {
+	rd := api.RequestDefaults{
+		CollectionName:   "Songs",
+		Tenant:           "john_doe",
+		ConsistencyLevel: api.ConsistencyLevelQuorum,
+	}
+
+	for _, tt := range []struct {
+		name    string
+		nv      query.NearVector // Object to be inserted.
+		groupBy query.GroupBy    // GroupBy clause.
+		stubs   []testkit.Stub[api.SearchRequest, api.SearchResponse]
+		want    *query.GroupByResult // Expected return value.
+		err     testkit.Error
+	}{
+		{
+			name: "request ok",
+			nv: query.NearVector{
+				Similarity: query.Certainty(.123),
+			},
+			groupBy: query.GroupBy{
+				Property:       "album",
+				ObjectLimit:    2,
+				NumberOfGroups: 2,
+			},
+			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
+				{
+					Request: &api.SearchRequest{
+						RequestDefaults: rd,
+						NearVector: &api.NearVector{
+							Certainty: testkit.Ptr(.123),
+						},
+						GroupBy: &api.GroupBy{
+							Property:       "album",
+							ObjectLimit:    2,
+							NumberOfGroups: 2,
+						},
+					},
+					Response: api.SearchResponse{
+						Took: 92 * time.Second,
+						GroupByResults: []api.Group{
+							{
+								Name:        "Countdown To Extinction",
+								MinDistance: .123,
+								MaxDistance: .456,
+								Size:        2,
+								Objects: []api.GroupObject{
+									{
+										BelongsToGroup: "Countdown To Extinction",
+										Object: api.Object{
+											Properties: map[string]any{
+												"title": "High Speed Dirt",
+											},
+										},
+									},
+									{
+										BelongsToGroup: "Countdown To Extinction",
+										Object: api.Object{
+											Properties: map[string]any{
+												"title": "Architechture Of Aggression",
+											},
+										},
+									},
+								},
+							},
+							{
+								Name:        "Youthanasia",
+								MinDistance: .321,
+								MaxDistance: .654,
+								Size:        1,
+								Objects: []api.GroupObject{
+									{
+										BelongsToGroup: "Youthanasia",
+										Object: api.Object{
+											Properties: map[string]any{
+												"title": "New World Order",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: &query.GroupByResult{
+				Objects: []query.GroupObject[map[string]any]{
+					{
+						BelongsToGroup: "Countdown To Extinction",
+						Object: query.Object[map[string]any]{
+							Object: types.Object[map[string]any]{
+								Properties: map[string]any{
+									"title": "High Speed Dirt",
+								},
+								References: noReferences,
+								Vectors:    noVectors,
+							},
+						},
+					},
+					{
+						BelongsToGroup: "Countdown To Extinction",
+						Object: query.Object[map[string]any]{
+							Object: types.Object[map[string]any]{
+								Properties: map[string]any{
+									"title": "Architechture Of Aggression",
+								},
+								References: noReferences,
+								Vectors:    noVectors,
+							},
+						},
+					},
+					{
+						BelongsToGroup: "Youthanasia",
+						Object: query.Object[map[string]any]{
+							Object: types.Object[map[string]any]{
+								Properties: map[string]any{
+									"title": "New World Order",
+								},
+								References: noReferences,
+								Vectors:    noVectors,
+							},
+						},
+					},
+				},
+				Groups: map[string]query.Group[map[string]any]{
+					"Countdown To Extinction": {
+						Name:        "Countdown To Extinction",
+						MinDistance: .123,
+						MaxDistance: .456,
+						Size:        2,
+						Objects: []query.GroupObject[map[string]any]{
+							{
+								BelongsToGroup: "Countdown To Extinction",
+								Object: query.Object[map[string]any]{
+									Object: types.Object[map[string]any]{
+										Properties: map[string]any{
+											"title": "High Speed Dirt",
+										},
+										References: noReferences,
+										Vectors:    noVectors,
+									},
+								},
+							},
+							{
+								BelongsToGroup: "Countdown To Extinction",
+								Object: query.Object[map[string]any]{
+									Object: types.Object[map[string]any]{
+										Properties: map[string]any{
+											"title": "Architechture Of Aggression",
+										},
+										References: noReferences,
+										Vectors:    noVectors,
+									},
+								},
+							},
+						},
+					},
+					"Youthanasia": {
+						Name:        "Youthanasia",
+						MinDistance: .321,
+						MaxDistance: .654,
+						Size:        1,
+						Objects: []query.GroupObject[map[string]any]{
+							{
+								BelongsToGroup: "Youthanasia",
+								Object: query.Object[map[string]any]{
+									Object: types.Object[map[string]any]{
+										Properties: map[string]any{
+											"title": "New World Order",
+										},
+										References: noReferences,
+										Vectors:    noVectors,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "request error",
+			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+
+			c := query.NewClient(transport, rd)
+			require.NotNil(t, c, "client")
+
+			got, err := c.NearVector.GroupBy(t.Context(), tt.nv, tt.groupBy)
 			tt.err.Require(t, err, "near vector query")
 			require.Equal(t, tt.want, got, "query result")
 		})
