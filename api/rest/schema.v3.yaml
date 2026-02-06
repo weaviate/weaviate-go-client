@@ -1697,9 +1697,99 @@ components:
                     format: float
                     type: number
             type: object
+        ReplicationAsyncConfig:
+            description: Configuration for asynchronous replication.
+            properties:
+                aliveNodesCheckingFrequency:
+                    description: Interval in milliseconds at which liveness of target nodes is checked.
+                    format: int64
+                    nullable: true
+                    type: integer
+                    x-omitempty: true
+                diffBatchSize:
+                    description: Maximum number of object keys included in a single diff batch.
+                    format: int64
+                    nullable: true
+                    type: integer
+                    x-omitempty: true
+                diffPerNodeTimeout:
+                    description: Timeout in seconds for computing a diff against a single node.
+                    format: int64
+                    nullable: true
+                    type: integer
+                    x-omitempty: true
+                frequency:
+                    description: Base frequency in milliseconds at which async replication runs diff calculations.
+                    format: int64
+                    nullable: true
+                    type: integer
+                    x-omitempty: true
+                frequencyWhilePropagating:
+                    description: Frequency in milliseconds at which async replication runs while propagation is active.
+                    format: int64
+                    nullable: true
+                    type: integer
+                    x-omitempty: true
+                hashtreeHeight:
+                    description: Height of the hashtree used for diffing.
+                    format: int64
+                    nullable: true
+                    type: integer
+                    x-omitempty: true
+                loggingFrequency:
+                    description: Interval in seconds at which async replication logs its status.
+                    format: int64
+                    nullable: true
+                    type: integer
+                    x-omitempty: true
+                maxWorkers:
+                    description: Maximum number of async replication workers.
+                    format: int64
+                    nullable: true
+                    type: integer
+                    x-omitempty: true
+                prePropagationTimeout:
+                    description: Overall timeout in seconds for the pre-propagation phase.
+                    format: int64
+                    nullable: true
+                    type: integer
+                    x-omitempty: true
+                propagationBatchSize:
+                    description: Number of objects to include in a single propagation batch.
+                    format: int64
+                    nullable: true
+                    type: integer
+                    x-omitempty: true
+                propagationConcurrency:
+                    description: Maximum number of concurrent propagation workers.
+                    format: int64
+                    nullable: true
+                    type: integer
+                    x-omitempty: true
+                propagationDelay:
+                    description: Delay in milliseconds before newly added or updated objects are propagated.
+                    format: int64
+                    nullable: true
+                    type: integer
+                    x-omitempty: true
+                propagationLimit:
+                    description: Maximum number of objects to propagate in a single async replication run.
+                    format: int64
+                    nullable: true
+                    type: integer
+                    x-omitempty: true
+                propagationTimeout:
+                    description: Timeout in seconds for propagating batch of changes to a node.
+                    format: int64
+                    nullable: true
+                    type: integer
+                    x-omitempty: true
+            type: object
         ReplicationConfig:
             description: Configure how replication is executed in a cluster
             properties:
+                asyncConfig:
+                    $ref: '#/components/schemas/ReplicationAsyncConfig'
                 asyncEnabled:
                     description: 'Enable asynchronous replication (default: `false`).'
                     type: boolean
@@ -4089,6 +4179,62 @@ paths:
             x-serviceIds:
                 - weaviate.local.backup
     /backups/{backend}/{id}/restore:
+        delete:
+            description: Cancels an ongoing backup restoration process identified by its ID on the specified backend storage.
+            operationId: backups.restore.cancel
+            parameters:
+                - description: Specifies the backend storage system where the backup resides (e.g., `filesystem`, `gcs`, `s3`, `azure`).
+                  in: path
+                  name: backend
+                  required: true
+                  schema:
+                    type: string
+                - description: The unique identifier of the backup restoration to cancel. Must be URL-safe and compatible with filesystem paths (only lowercase, numbers, underscore, minus characters allowed).
+                  in: path
+                  name: id
+                  required: true
+                  schema:
+                    type: string
+                - description: 'Optional: Specifies the bucket, container, or volume name if required by the backend.'
+                  in: query
+                  name: bucket
+                  schema:
+                    type: string
+                - description: 'Optional: Specifies the path within the bucket/container/volume if the backup is not at the root.'
+                  in: query
+                  name: path
+                  schema:
+                    type: string
+            responses:
+                "204":
+                    content: {}
+                    description: Backup restoration cancelled successfully.
+                "401":
+                    content: {}
+                    description: Unauthorized or invalid credentials.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Forbidden
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Invalid backup restoration cancellation request.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: An internal server error occurred during backup restoration cancellation. Check the ErrorResponse for details.
+            summary: Cancel a backup restoration
+            tags:
+                - backups
+            x-serviceIds:
+                - weaviate.local.backup
         get:
             description: Checks the status of a specific backup restoration process identified by the backup ID on the specified backend.<br/><br/>Client libraries often provide a 'wait for completion' feature that polls this endpoint automatically. Use this endpoint for manual status checks or if 'wait for completion' is disabled.
             operationId: backups.restore.status
