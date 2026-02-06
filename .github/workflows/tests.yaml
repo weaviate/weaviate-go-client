@@ -12,6 +12,9 @@ jobs:
   unit:
     name: go test
     runs-on: ubuntu-latest
+    env:
+      # Prevent accidentally dropping test cases with testkit.WithOnly.
+      TESTKIT_NO_WITHONLY: 1
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
