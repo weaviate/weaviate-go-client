@@ -29,12 +29,21 @@ func (p *PropertyIndexDeleter) WithPropertyName(propertyName string) *PropertyIn
 	return p
 }
 
-// WithIndexName defines the property index to be deleted, possible values are:
-// - filterable
-// - searchable
-// - rangeFilters
-func (p *PropertyIndexDeleter) WithIndexName(indexName string) *PropertyIndexDeleter {
-	p.indexName = indexName
+// WithFilterable defines filterable property index to be deleted
+func (p *PropertyIndexDeleter) WithFilterable() *PropertyIndexDeleter {
+	p.indexName = "filterable"
+	return p
+}
+
+// WithSearchable defines searchable property index to be deleted
+func (p *PropertyIndexDeleter) WithSearchable() *PropertyIndexDeleter {
+	p.indexName = "searchable"
+	return p
+}
+
+// WithRangeFilters defines rangeFilters property index to be deleted
+func (p *PropertyIndexDeleter) WithRangeFilters() *PropertyIndexDeleter {
+	p.indexName = "rangeFilters"
 	return p
 }
 

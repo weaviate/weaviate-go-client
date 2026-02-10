@@ -703,14 +703,14 @@ func TestSchema_integration(t *testing.T) {
 		err = client.Schema().PropertyIndexDeleter().
 			WithClassName(className).
 			WithPropertyName("author").
-			WithIndexName("filterable").
+			WithFilterable().
 			Do(ctx)
 		require.NoError(t, err)
 
 		err = client.Schema().PropertyIndexDeleter().
 			WithClassName(className).
 			WithPropertyName("author").
-			WithIndexName("searchable").
+			WithSearchable().
 			Do(ctx)
 		require.NoError(t, err)
 
@@ -718,14 +718,14 @@ func TestSchema_integration(t *testing.T) {
 		err = client.Schema().PropertyIndexDeleter().
 			WithClassName(className).
 			WithPropertyName("title").
-			WithIndexName("filterable").
+			WithFilterable().
 			Do(ctx)
 		require.NoError(t, err)
 
 		err = client.Schema().PropertyIndexDeleter().
 			WithClassName(className).
 			WithPropertyName("title").
-			WithIndexName("searchable").
+			WithSearchable().
 			Do(ctx)
 		require.NoError(t, err)
 
