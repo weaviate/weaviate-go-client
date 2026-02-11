@@ -341,13 +341,18 @@ func roleFromWeaviate(r *models.Role) Role {
 				}
 			}, *perm.Action, *perm.Data.Collection)
 		case perm.Nodes != nil:
+			collection := ""
+			if perm.Nodes.Collection != nil {
+				collection = *perm.Nodes.Collection
+			}
+
 			nodes.Add(func(actions []string, resources ...string) Permission {
 				return NodesPermission{
 					Actions:    actions,
 					Collection: resources[0],
 					Verbosity:  resources[1],
 				}
-			}, *perm.Action, *perm.Nodes.Collection, *perm.Nodes.Verbosity)
+			}, *perm.Action, collection, *perm.Nodes.Verbosity)
 		case perm.Roles != nil:
 			roles.Add(func(actions []string, resources ...string) Permission {
 				return RolesPermission{
