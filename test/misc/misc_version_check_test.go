@@ -45,7 +45,7 @@ func TestMisc_version_check(t *testing.T) {
 	})
 
 	client := testsuit.CreateTestClient(false)
-	require.Nil(t, client.WaitForWeavaite(60*time.Second))
+	require.Nil(t, client.WaitForWeaviate(60*time.Second))
 
 	t.Run("Weaviate is live, perform ready check", func(t *testing.T) {
 		isReady, err := client.Misc().ReadyChecker().Do(context.Background())
@@ -118,7 +118,7 @@ func TestMisc_empty_version_check(t *testing.T) {
 	})
 
 	client := testsuit.CreateTestClient(false)
-	require.Nil(t, client.WaitForWeavaite(60*time.Second))
+	require.Nil(t, client.WaitForWeaviate(60*time.Second))
 
 	t.Run("Create sample schema food, try to perform queries using /v1/objects?class={className}", func(t *testing.T) {
 		testsuit.CreateWeaviateTestSchemaFood(t, client)
