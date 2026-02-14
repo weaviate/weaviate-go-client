@@ -200,6 +200,188 @@ func TestRESTRequests(t *testing.T) {
 			wantMethod: http.MethodDelete,
 			wantPath:   "/objects/Songs/" + testkit.UUID.String(),
 		},
+		{
+			name: "create collection (full config)",
+			req: &api.CreateCollectionRequest{
+				Collection: api.Collection{
+					Name:        "Songs",
+					Description: "My favorite songs",
+					Properties: []api.Property{
+						{Name: "title", DataType: api.DataTypeText},
+						{Name: "genres", DataType: api.DataTypeTextArray},
+						{Name: "single", DataType: api.DataTypeBool},
+						{Name: "year", DataType: api.DataTypeInt},
+						{
+							Name:              "lyrics",
+							DataType:          api.DataTypeInt,
+							Tokenization:      api.TokenizationTrigram,
+							IndexFilterable:   true,
+							IndexRangeFilters: true,
+							IndexSearchable:   true,
+						},
+						{
+							Name: "metadata", DataType: api.DataTypeObject,
+							NestedProperties: []api.Property{
+								{Name: "duration", DataType: api.DataTypeNumber},
+								{Name: "uploadedTime", DataType: api.DataTypeDate},
+							},
+							Tokenization:      api.TokenizationWhitespace,
+							IndexFilterable:   true,
+							IndexRangeFilters: true,
+							IndexSearchable:   true,
+						},
+					},
+					References: []api.ReferenceProperty{
+						{
+							Name:        "artist",
+							Collections: []string{"Singers", "Bands"},
+						},
+					},
+					Sharding: &api.ShardingConfig{
+						DesiredCount:        3,
+						DesiredVirtualCount: 150,
+						VirtualPerPhysical:  50,
+					},
+					Replication: &api.ReplicationConfig{
+						AsyncEnabled:     false,
+						Factor:           6,
+						DeletionStrategy: api.TimeBasedResolution,
+					},
+					InvertedIndex: &api.InvertedIndexConfig{
+						IndexNullState:         true,
+						IndexPropertyLength:    true,
+						IndexTimestamps:        true,
+						UsingBlockMaxWAND:      true,
+						CleanupIntervalSeconds: 92,
+						BM25: &api.BM25Config{
+							B:  25,
+							K1: 1,
+						},
+						Stopwords: &api.StopwordConfig{
+							Preset:    "standard-please-stop",
+							Additions: []string{"end"},
+							Removals:  []string{"terminate"},
+						},
+					},
+					MultiTenancy: &api.MultiTenancyConfig{
+						Enabled:              true,
+						AutoTenantActivation: true,
+						AutoTenantCreation:   false,
+					},
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/schema",
+			wantBody: &rest.Class{
+				Class:       "Songs",
+				Description: "My favorite songs",
+				Properties: []rest.Property{
+					{Name: "title", DataType: []string{string(api.DataTypeText)}},
+					{Name: "genres", DataType: []string{string(api.DataTypeTextArray)}},
+					{Name: "single", DataType: []string{string(api.DataTypeBool)}},
+					{Name: "year", DataType: []string{string(api.DataTypeInt)}},
+					{
+						Name:              "lyrics",
+						DataType:          []string{string(api.DataTypeInt)},
+						Tokenization:      rest.PropertyTokenizationTrigram,
+						IndexFilterable:   true,
+						IndexRangeFilters: true,
+						IndexSearchable:   true,
+					},
+					{
+						Name: "metadata", DataType: []string{string(api.DataTypeObject)},
+						NestedProperties: []rest.NestedProperty{
+							{Name: "duration", DataType: []string{string(api.DataTypeNumber)}},
+							{Name: "uploadedTime", DataType: []string{string(api.DataTypeDate)}},
+						},
+						Tokenization:      rest.PropertyTokenizationWhitespace,
+						IndexFilterable:   true,
+						IndexRangeFilters: true,
+						IndexSearchable:   true,
+					},
+					{
+						Name:     "artist",
+						DataType: []string{"Singers", "Bands"},
+					},
+				},
+				ShardingConfig: map[string]any{
+					"desiredCount":        3,
+					"desiredVirtualCount": 150,
+					"virtualPerPhysical":  50,
+				},
+				ReplicationConfig: rest.ReplicationConfig{
+					AsyncEnabled:     false,
+					Factor:           6,
+					DeletionStrategy: rest.TimeBasedResolution,
+				},
+				InvertedIndexConfig: rest.InvertedIndexConfig{
+					IndexNullState:         true,
+					IndexPropertyLength:    true,
+					IndexTimestamps:        true,
+					UsingBlockMaxWAND:      true,
+					CleanupIntervalSeconds: 92,
+					Bm25: rest.BM25Config{
+						B:  25,
+						K1: 1,
+					},
+					Stopwords: rest.StopwordConfig{
+						Preset:    "standard-please-stop",
+						Additions: []string{"end"},
+						Removals:  []string{"terminate"},
+					},
+				},
+				MultiTenancyConfig: rest.MultiTenancyConfig{
+					Enabled:              true,
+					AutoTenantActivation: true,
+					AutoTenantCreation:   false,
+				},
+			},
+		},
+		{
+			name: "create collection (partial config)",
+			req: &api.CreateCollectionRequest{
+				Collection: api.Collection{
+					Name:        "Songs",
+					Description: "My favorite songs",
+					Properties: []api.Property{
+						{Name: "title", DataType: api.DataTypeText},
+						{Name: "genres", DataType: api.DataTypeTextArray},
+						{Name: "single", DataType: api.DataTypeBool},
+						{Name: "year", DataType: api.DataTypeInt},
+					},
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/schema",
+			wantBody: &rest.Class{
+				Class:       "Songs",
+				Description: "My favorite songs",
+				Properties: []rest.Property{
+					{Name: "title", DataType: []string{string(api.DataTypeText)}},
+					{Name: "genres", DataType: []string{string(api.DataTypeTextArray)}},
+					{Name: "single", DataType: []string{string(api.DataTypeBool)}},
+					{Name: "year", DataType: []string{string(api.DataTypeInt)}},
+				},
+			},
+		},
+		{
+			name:       "get collection config",
+			req:        api.GetCollectionRequest("Songs"),
+			wantMethod: http.MethodGet,
+			wantPath:   "/schema/Songs",
+		},
+		{
+			name:       "list collections",
+			req:        api.ListCollectionsRequest,
+			wantMethod: http.MethodGet,
+			wantPath:   "/schema",
+		},
+		{
+			name:       "delete collection",
+			req:        api.DeleteCollectionRequest("Songs"),
+			wantMethod: http.MethodDelete,
+			wantPath:   "/schema/Songs",
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)
