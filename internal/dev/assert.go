@@ -3,20 +3,30 @@ package dev
 import (
 	"flag"
 	"fmt"
+	"os"
 	"reflect"
+	"slices"
+	"strings"
 	"sync"
 )
 
 // ea is a flag that enables asserts.
+//
 // We only ever want to enable asserts in test builds.
 // go test will register a number of command-line flags,
 // test.v is one of them. See: https://stackoverflow.com/a/36666114/14726116
+// In case some code uses asserts before the flags are registerred,
+// we double-check the [os.Args] for any values that resemble test flags,
+// i.e start with "-test.".
 //
 // While this is not part of the go test public contract,
 // the worst thing that can happen in case that flag is not set anymore
 // is that assertions will be _permanently disabled_.
 var ea = sync.OnceValue(func() bool {
-	return flag.Lookup("test.v") != nil
+	return flag.Lookup("test.v") != nil ||
+		slices.ContainsFunc(os.Args, func(arg string) bool {
+			return strings.HasPrefix(arg, "-test.")
+		})
 })
 
 // Assert panics with a formated message if the check is false.
@@ -52,6 +62,7 @@ func isNil(v any) bool {
 		reflect.Func,
 		reflect.Chan:
 		return reflect.ValueOf(v).IsNil()
+	default:
 	}
 	return false
 }
