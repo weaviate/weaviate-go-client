@@ -137,7 +137,10 @@ var ListCollectionsRequest transports.Endpoint = transports.StaticEndpoint(http.
 // DeleteCollectionRequest by collection name.
 var DeleteCollectionRequest = transports.IdentityEndpoint[string](http.MethodDelete, "/schema/%s")
 
-var _ json.Marshaler = (*Collection)(nil)
+var (
+	_ json.Marshaler   = (*Collection)(nil)
+	_ json.Unmarshaler = (*Collection)(nil)
+)
 
 // MarshaJSON marshals Collection via [rest.Class].
 func (c *Collection) MarshalJSON() ([]byte, error) {
@@ -231,6 +234,103 @@ func nestedPropertiesToREST(nps []Property) []rest.NestedProperty {
 	}
 
 	return properties
+}
+
+func (c *Collection) UnmarshalJSON(data []byte) error {
+	var class rest.Class
+	if err := json.Unmarshal(data, &class); err != nil {
+		return err
+	}
+
+	properties := make([]Property, 0, len(class.Properties))
+	references := make([]ReferenceProperty, 0, len(class.Properties))
+	for _, p := range class.Properties {
+		notReference := len(p.DataType) == 1 && knownDataTypes.Contains(DataType(p.DataType[0]))
+		if notReference {
+			properties = append(properties, Property{
+				Name:              p.Name,
+				Description:       p.Description,
+				DataType:          DataType(p.DataType[0]),
+				NestedProperties:  nestedPropertiesFromREST(p.NestedProperties),
+				Tokenization:      Tokenization(p.Tokenization),
+				IndexFilterable:   p.IndexFilterable,
+				IndexRangeFilters: p.IndexRangeFilters,
+				IndexSearchable:   p.IndexSearchable,
+			})
+		} else {
+			references = append(references, ReferenceProperty{
+				Name:        p.Name,
+				Collections: p.DataType,
+			})
+		}
+	}
+
+	var sharding ShardingConfig
+	if len(class.ShardingConfig) > 0 {
+		// In case any of the fields are not ints, the cast will return a zero value.
+		// We explicitly ignore the checks _ to avoid runtime panics in such cases.
+		sharding.DesiredCount = int(class.ShardingConfig["desiredCount"].(float64))
+		sharding.DesiredVirtualCount = int(class.ShardingConfig["desiredVirtualCount"].(float64))
+		sharding.VirtualPerPhysical = int(class.ShardingConfig["virtualPerPhysical"].(float64))
+	}
+
+	*c = Collection{
+		Name:        class.Class,
+		Description: class.Description,
+		Properties:  properties,
+		References:  references,
+		Replication: &ReplicationConfig{
+			AsyncEnabled:     class.ReplicationConfig.AsyncEnabled,
+			Factor:           class.ReplicationConfig.Factor,
+			DeletionStrategy: DeletionStrategy(class.ReplicationConfig.DeletionStrategy),
+		},
+		InvertedIndex: &InvertedIndexConfig{
+			IndexNullState:         class.InvertedIndexConfig.IndexNullState,
+			IndexPropertyLength:    class.InvertedIndexConfig.IndexPropertyLength,
+			IndexTimestamps:        class.InvertedIndexConfig.IndexTimestamps,
+			UsingBlockMaxWAND:      class.InvertedIndexConfig.UsingBlockMaxWAND,
+			CleanupIntervalSeconds: class.InvertedIndexConfig.CleanupIntervalSeconds,
+			Stopwords:              (*StopwordConfig)(&class.InvertedIndexConfig.Stopwords),
+			BM25: &BM25Config{
+				B:  class.InvertedIndexConfig.Bm25.B,
+				K1: class.InvertedIndexConfig.Bm25.K1,
+			},
+		},
+		Sharding: &sharding,
+		MultiTenancy: &MultiTenancyConfig{
+			Enabled:              class.MultiTenancyConfig.Enabled,
+			AutoTenantCreation:   class.MultiTenancyConfig.AutoTenantCreation,
+			AutoTenantActivation: class.MultiTenancyConfig.AutoTenantActivation,
+		},
+	}
+
+	return nil
+}
+
+func nestedPropertiesFromREST(nested []rest.NestedProperty) []Property {
+	if len(nested) == 0 {
+		return nil
+	}
+
+	nps := make([]Property, 0, len(nested))
+	for _, np := range nested {
+		if len(np.DataType) != 1 {
+			// Invalid response -- nested property must have exactly 1 data type.
+			continue
+		}
+
+		nps = append(nps, Property{
+			Name:              np.Name,
+			Description:       np.Description,
+			DataType:          DataType(np.DataType[0]),
+			NestedProperties:  nestedPropertiesFromREST(np.NestedProperties),
+			Tokenization:      Tokenization(np.Tokenization),
+			IndexFilterable:   np.IndexFilterable,
+			IndexRangeFilters: np.IndexRangeFilters,
+			IndexSearchable:   np.IndexSearchable,
+		})
+	}
+	return nps
 }
 
 func newSet[Slice ~[]E, E comparable](values Slice) set[E] {
