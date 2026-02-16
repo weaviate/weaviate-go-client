@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      # Check for updates to GitHub Actions every week
+      interval: "weekly"    
+  - package-ecosystem: "gomod" 
+  # Enable Dependabot to monitor and automatically update Go module dependencies for 
+  # security vulnerabilities and version updates
+    directories:
+      - "/"
+    labels: ["security-update", "dependencies"]
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "dependencies(update)"
