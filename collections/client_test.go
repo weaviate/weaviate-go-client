@@ -261,3 +261,259 @@ func TestClient_Create(t *testing.T) {
 		})
 	}
 }
+
+func TestClient_GetConfig(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		collection string
+		stubs      []testkit.Stub[any, api.Collection]
+		want       *collections.Collection
+		err        testkit.Error
+	}{
+		{
+			name:       "ok",
+			collection: "Songs",
+			stubs: []testkit.Stub[any, api.Collection]{
+				{
+					Request: testkit.Ptr(api.GetCollectionRequest("Songs")),
+					Response: api.Collection{
+						Name:        "Songs",
+						Description: "My favorite songs",
+						Properties: []api.Property{
+							{Name: "title", DataType: api.DataTypeText},
+							{Name: "genres", DataType: api.DataTypeTextArray},
+							{Name: "single", DataType: api.DataTypeBool},
+							{Name: "year", DataType: api.DataTypeInt},
+							{
+								Name:              "lyrics",
+								DataType:          api.DataTypeInt,
+								Tokenization:      api.TokenizationTrigram,
+								IndexFilterable:   true,
+								IndexRangeFilters: true,
+								IndexSearchable:   true,
+							},
+							{
+								Name: "metadata", DataType: api.DataTypeObject,
+								NestedProperties: []api.Property{
+									{Name: "duration", DataType: api.DataTypeNumber},
+									{Name: "uploadedTime", DataType: api.DataTypeDate},
+								},
+								Tokenization:      api.TokenizationWhitespace,
+								IndexFilterable:   true,
+								IndexRangeFilters: true,
+								IndexSearchable:   true,
+							},
+						},
+						References: []api.ReferenceProperty{
+							{
+								Name:        "artist",
+								Collections: []string{"Singers", "Bands"},
+							},
+						},
+						Sharding: &api.ShardingConfig{
+							DesiredCount:        3,
+							DesiredVirtualCount: 150,
+							VirtualPerPhysical:  50,
+						},
+						Replication: &api.ReplicationConfig{
+							AsyncEnabled:     false,
+							Factor:           6,
+							DeletionStrategy: api.TimeBasedResolution,
+						},
+						InvertedIndex: &api.InvertedIndexConfig{
+							IndexNullState:         true,
+							IndexPropertyLength:    true,
+							IndexTimestamps:        true,
+							UsingBlockMaxWAND:      true,
+							CleanupIntervalSeconds: 92,
+							BM25: &api.BM25Config{
+								B:  25,
+								K1: 1,
+							},
+							Stopwords: &api.StopwordConfig{
+								Preset:    "standard-please-stop",
+								Additions: []string{"end"},
+								Removals:  []string{"terminate"},
+							},
+						},
+						MultiTenancy: &api.MultiTenancyConfig{
+							Enabled:              true,
+							AutoTenantActivation: true,
+							AutoTenantCreation:   false,
+						},
+					},
+				},
+			},
+			want: &collections.Collection{
+				Name:        "Songs",
+				Description: "My favorite songs",
+				Properties: []collections.Property{
+					{Name: "title", DataType: collections.DataTypeText},
+					{Name: "genres", DataType: collections.DataTypeTextArray},
+					{Name: "single", DataType: collections.DataTypeBool},
+					{Name: "year", DataType: collections.DataTypeInt},
+					{
+						Name:              "lyrics",
+						DataType:          collections.DataTypeInt,
+						Tokenization:      collections.TokenizationTrigram,
+						IndexFilterable:   true,
+						IndexRangeFilters: true,
+						IndexSearchable:   true,
+					},
+					{
+						Name: "metadata", DataType: collections.DataTypeObject,
+						NestedProperties: []collections.Property{
+							{Name: "duration", DataType: collections.DataTypeNumber},
+							{Name: "uploadedTime", DataType: collections.DataTypeDate},
+						},
+						Tokenization:      collections.TokenizationWhitespace,
+						IndexFilterable:   true,
+						IndexRangeFilters: true,
+						IndexSearchable:   true,
+					},
+				},
+				References: []collections.Reference{
+					{
+						Name:        "artist",
+						Collections: []string{"Singers", "Bands"},
+					},
+				},
+				Sharding: &collections.ShardingConfig{
+					DesiredCount:        3,
+					DesiredVirtualCount: 150,
+					VirtualPerPhysical:  50,
+				},
+				Replication: &collections.ReplicationConfig{
+					AsyncEnabled:     false,
+					Factor:           6,
+					DeletionStrategy: collections.TimeBasedResolution,
+				},
+				InvertedIndex: &collections.InvertedIndexConfig{
+					IndexNullState:         true,
+					IndexPropertyLength:    true,
+					IndexTimestamps:        true,
+					UsingBlockMaxWAND:      true,
+					CleanupIntervalSeconds: 92,
+					BM25: &collections.BM25Config{
+						B:  25,
+						K1: 1,
+					},
+					Stopwords: &collections.StopwordConfig{
+						Preset:    "standard-please-stop",
+						Additions: []string{"end"},
+						Removals:  []string{"terminate"},
+					},
+				},
+				MultiTenancy: &collections.MultiTenancyConfig{
+					Enabled:              true,
+					AutoTenantActivation: true,
+					AutoTenantCreation:   false,
+				},
+			},
+		},
+		{
+			name: "with error",
+			stubs: []testkit.Stub[any, api.Collection]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+			c := collections.NewClient(transport)
+			require.NotNil(t, c, "nil client")
+
+			got, err := c.GetConfig(t.Context(), tt.collection)
+			tt.err.Require(t, err, "list error")
+
+			require.Equal(t, tt.want, got, "collection config")
+		})
+	}
+}
+
+func TestClient_List(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		stubs []testkit.Stub[any, api.ListCollectionsResponse]
+		want  []collections.Collection
+		err   testkit.Error
+	}{
+		{
+			name: "empty response",
+			stubs: []testkit.Stub[any, api.ListCollectionsResponse]{
+				{
+					Request: testkit.Ptr[any](api.ListCollectionsRequest),
+				},
+			},
+		},
+		{
+			name: "several collections",
+			stubs: []testkit.Stub[any, api.ListCollectionsResponse]{
+				{
+					Request: testkit.Ptr[any](api.ListCollectionsRequest),
+					Response: api.ListCollectionsResponse{
+						{Name: "Songs"},
+						{Name: "Artists"},
+						{Name: "Albums"},
+					},
+				},
+			},
+			want: []collections.Collection{
+				{Name: "Songs"},
+				{Name: "Artists"},
+				{Name: "Albums"},
+			},
+		},
+		{
+			name: "with error",
+			stubs: []testkit.Stub[any, api.ListCollectionsResponse]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+			c := collections.NewClient(transport)
+			require.NotNil(t, c, "nil client")
+
+			got, err := c.List(t.Context())
+			tt.err.Require(t, err, "list error")
+
+			require.Equal(t, tt.want, got, "collection config")
+		})
+	}
+}
+
+func TestClient_Delete(t *testing.T) {
+	transport := testkit.NewTransport(t, []testkit.Stub[any, any]{
+		{Request: testkit.Ptr(api.DeleteCollectionRequest("Songs"))},
+	})
+	c := collections.NewClient(transport)
+	require.NotNil(t, c, "nil client")
+
+	err := c.Delete(t.Context(), "Songs")
+	require.NoError(t, err, "delete error")
+}
+
+func TestClient_DeleteAll(t *testing.T) {
+	transport := testkit.NewTransport(t, []testkit.Stub[any, any]{
+		{
+			Request: testkit.Ptr[any](api.ListCollectionsRequest),
+			Response: api.ListCollectionsResponse{
+				{Name: "Songs"},
+				{Name: "Artists"},
+				{Name: "Albums"},
+			},
+		},
+		{Request: testkit.Ptr(api.DeleteCollectionRequest("Songs"))},
+		{Request: testkit.Ptr(api.DeleteCollectionRequest("Artists"))},
+		{Request: testkit.Ptr(api.DeleteCollectionRequest("Albums"))},
+	})
+	c := collections.NewClient(transport)
+	require.NotNil(t, c, "nil client")
+
+	err := c.DeleteAll(t.Context())
+	require.NoError(t, err, "delete all error")
+}

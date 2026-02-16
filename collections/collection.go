@@ -173,54 +173,81 @@ func collectionToAPI(c *Collection) api.Collection {
 func collectionFromAPI(c *api.Collection) Collection {
 	dev.AssertNotNil(c, "c")
 
-	properties := make([]Property, len(c.Properties))
-	for i, p := range c.Properties {
-		properties[i] = Property{
-			Name:              p.Name,
-			Description:       p.Description,
-			DataType:          DataType(p.DataType),
-			NestedProperties:  nestedPropertiesFromAPI(p.NestedProperties),
-			Tokenization:      Tokenization(p.Tokenization),
-			IndexFilterable:   p.IndexFilterable,
-			IndexRangeFilters: p.IndexRangeFilters,
-			IndexSearchable:   p.IndexSearchable,
-		}
-	}
-	references := make([]Reference, len(c.Properties))
-	for i, ref := range c.References {
-		references[i] = Reference{
-			Name:        ref.Name,
-			Collections: ref.Collections,
+	var properties []Property
+	if len(c.Properties) > 0 {
+		properties = make([]Property, len(c.Properties))
+		for i, p := range c.Properties {
+			properties[i] = Property{
+				Name:              p.Name,
+				Description:       p.Description,
+				DataType:          DataType(p.DataType),
+				NestedProperties:  nestedPropertiesFromAPI(p.NestedProperties),
+				Tokenization:      Tokenization(p.Tokenization),
+				IndexFilterable:   p.IndexFilterable,
+				IndexRangeFilters: p.IndexRangeFilters,
+				IndexSearchable:   p.IndexSearchable,
+			}
 		}
 	}
 
-	return Collection{
-		Name:        c.Name,
-		Description: c.Description,
-		Properties:  properties,
-		References:  references,
-		Sharding: &ShardingConfig{
+	var references []Reference
+	if len(c.References) > 0 {
+		references = make([]Reference, len(c.References))
+		for i, ref := range c.References {
+			references[i] = Reference{
+				Name:        ref.Name,
+				Collections: ref.Collections,
+			}
+		}
+	}
+
+	var sharding *ShardingConfig
+	if c.Sharding != nil {
+		sharding = &ShardingConfig{
 			DesiredCount:        c.Sharding.DesiredCount,
 			DesiredVirtualCount: c.Sharding.DesiredVirtualCount,
 			VirtualPerPhysical:  c.Sharding.VirtualPerPhysical,
-		},
-		Replication: &ReplicationConfig{
+		}
+	}
+
+	var replication *ReplicationConfig
+	if c.Replication != nil {
+		replication = &ReplicationConfig{
 			AsyncEnabled:     c.Replication.AsyncEnabled,
 			Factor:           c.Replication.Factor,
 			DeletionStrategy: DeletionStrategy(c.Replication.DeletionStrategy),
-		},
-		InvertedIndex: &InvertedIndexConfig{
+		}
+	}
+
+	var invertedIndex *InvertedIndexConfig
+	if c.InvertedIndex != nil {
+		var bm25 *BM25Config
+		if c.InvertedIndex.BM25 != nil {
+			bm25 = &BM25Config{
+				B:  c.InvertedIndex.BM25.B,
+				K1: c.InvertedIndex.BM25.K1,
+			}
+		}
+		invertedIndex = &InvertedIndexConfig{
 			IndexNullState:         c.InvertedIndex.IndexNullState,
 			IndexPropertyLength:    c.InvertedIndex.IndexPropertyLength,
 			IndexTimestamps:        c.InvertedIndex.IndexTimestamps,
 			UsingBlockMaxWAND:      c.InvertedIndex.UsingBlockMaxWAND,
 			CleanupIntervalSeconds: c.InvertedIndex.CleanupIntervalSeconds,
 			Stopwords:              (*StopwordConfig)(c.InvertedIndex.Stopwords),
-			BM25: &BM25Config{
-				B:  c.InvertedIndex.BM25.B,
-				K1: c.InvertedIndex.BM25.K1,
-			},
-		},
+			BM25:                   bm25,
+		}
+	}
+
+	return Collection{
+		Name:          c.Name,
+		Description:   c.Description,
+		Properties:    properties,
+		References:    references,
+		Sharding:      sharding,
+		Replication:   replication,
+		InvertedIndex: invertedIndex,
+		MultiTenancy:  (*MultiTenancyConfig)(c.MultiTenancy),
 	}
 }
 
