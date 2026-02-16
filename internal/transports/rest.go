@@ -25,6 +25,16 @@ type Endpoint interface {
 	Body() any
 }
 
+// StatusAccepter is an interface that response types can implement to
+// control which HTTP status codes > 299 should not result in an error.
+//
+// The [REST] transport always treats codes < 299 as successful
+// and only calls AcceptStatus for codes > 299.
+type StatusAccepter interface {
+	// AcceptStatus returns true if a status code is acceptable.
+	AcceptStatus(code int) bool
+}
+
 // BaseEndpoint implements [Endpoint] methods which may return nil.
 // These values are usually optional in the request.
 // BaseEndpoint can be embedded in a another request struct to reduce boilerplate.
