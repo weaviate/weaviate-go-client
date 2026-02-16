@@ -649,8 +649,8 @@ func TestRESTResponses(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.NotNil(t, tt.body, "incomplete test case: body is nil")
-			testkit.IsPointer(t, tt.body, "body")
-			testkit.IsPointer(t, tt.dest, "dest")
+			testkit.RequirePointer(t, tt.body, "body")
+			testkit.RequirePointer(t, tt.dest, "dest")
 
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err, "marshal expected body")

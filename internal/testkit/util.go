@@ -25,10 +25,10 @@ var UUID = uuid.New()
 // Ptr is a helper for passing pointers to constants.
 func Ptr[T any](v T) *T { return &v }
 
-// IsPointer asserts that v is a pointer. If the assertion fails,
-// the test t will fail immediately. Use IsPointer as a pre-condition
+// RequirePointer asserts that v is a pointer. If the assertion fails,
+// the test t will fail immediately. Use RequirePointer as a pre-condition
 // in unit tests to ensure the test cases are valid.
-func IsPointer(t *testing.T, v any, name string) {
+func RequirePointer(t *testing.T, v any, name string) {
 	t.Helper()
 	require.Equalf(t, reflect.Pointer, reflect.TypeOf(v).Kind(), "%q must be a pointer", name)
 }

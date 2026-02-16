@@ -601,7 +601,7 @@ func testMessageUnmarshaler[Out api.ReplyMessage](t *testing.T, tests []MessageU
 	t.Helper()
 	for _, tt := range testkit.WithOnly(t, tests) {
 		t.Run(tt.name, func(t *testing.T) {
-			testkit.IsPointer(t, tt.want, "want")
+			testkit.RequirePointer(t, tt.want, "want")
 
 			err := tt.dest.UnmarshalMessage(tt.reply)
 			tt.err.Require(t, err, "unmarshal")
