@@ -77,13 +77,15 @@ func TestMockTransport(t *testing.T) {
 		{
 			req := 5
 			var dest int
-			transport.Do(t.Context(), &req, &dest)
+			err := transport.Do(t.Context(), &req, &dest)
+			require.NoError(t, err, "mock transport error")
 			require.Equal(t, 92, dest, "int dest")
 		}
 		{
 			req := "hello, transport"
 			var dest bool
-			transport.Do(t.Context(), &req, &dest)
+			err := transport.Do(t.Context(), &req, &dest)
+			require.NoError(t, err, "mock transport error")
 			require.Equal(t, true, dest, "bool dest")
 		}
 	})
