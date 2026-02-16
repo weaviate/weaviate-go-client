@@ -102,3 +102,54 @@ func (c *Client) Create(ctx context.Context, collection Collection) (*Handle, er
 	}
 	return c.Use(collection.Name), nil
 }
+
+// GetConfig returns configuration for the collection.
+// Returns nil with nil error if collections does not exist.
+func (c *Client) GetConfig(ctx context.Context, collectionName string) (*Collection, error) {
+	var resp api.Collection
+	if err := c.t.Do(ctx, api.GetCollectionRequest(collectionName), &resp); err != nil {
+		return nil, fmt.Errorf("get collection config: %w", err)
+	}
+	collection := collectionFromAPI(&resp)
+	return &collection, nil
+}
+
+// List returns configurations for all collections defined in the schema.
+func (c *Client) List(ctx context.Context) ([]Collection, error) {
+	var resp api.ListCollectionsResponse
+	if err := c.t.Do(ctx, api.ListCollectionsRequest, &resp); err != nil {
+		return nil, fmt.Errorf("list collections: %w", err)
+	}
+
+	if len(resp) == 0 {
+		return nil, nil
+	}
+
+	out := make([]Collection, len(resp))
+	for i, c := range resp {
+		out[i] = collectionFromAPI(&c)
+	}
+	return out, nil
+}
+
+// Delete collection by name. Returns an error if no collection with this name exist.
+func (c *Client) Delete(ctx context.Context, collectionName string) error {
+	if err := c.t.Do(ctx, api.DeleteCollectionRequest(collectionName), nil); err != nil {
+		return fmt.Errorf("delete collection: %w", err)
+	}
+	return nil
+}
+
+// DeleteAll collections in the schema.
+func (c *Client) DeleteAll(ctx context.Context) error {
+	all, err := c.List(ctx)
+	if err != nil {
+		return fmt.Errorf("delete all collections: %w", err)
+	}
+	for _, collection := range all {
+		if err := c.Delete(ctx, collection.Name); err != nil {
+			return err
+		}
+	}
+	return nil
+}

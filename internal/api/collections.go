@@ -134,6 +134,21 @@ var GetCollectionRequest = transports.IdentityEndpoint[string](http.MethodGet, "
 // ListCollectionsRequest fetches definitions for all collections in the schema.
 var ListCollectionsRequest transports.Endpoint = transports.StaticEndpoint(http.MethodGet, "/schema")
 
+type ListCollectionsResponse []Collection
+
+var _ json.Unmarshaler = (*ListCollectionsResponse)(nil)
+
+func (r *ListCollectionsResponse) UnmarshalJSON(data []byte) error {
+	var schema struct {
+		Collections []Collection `json:"classes"`
+	}
+	if err := json.Unmarshal(data, &schema); err != nil {
+		return err
+	}
+	*r = schema.Collections
+	return nil
+}
+
 // DeleteCollectionRequest by collection name.
 var DeleteCollectionRequest = transports.IdentityEndpoint[string](http.MethodDelete, "/schema/%s")
 
