@@ -517,3 +517,51 @@ func TestClient_DeleteAll(t *testing.T) {
 	err := c.DeleteAll(t.Context())
 	require.NoError(t, err, "delete all error")
 }
+
+func TestClient_Exists(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		stubs []testkit.Stub[any, api.ResourceExistsResponse]
+		want  bool
+		err   testkit.Error
+	}{
+		{
+			name: "exists",
+			stubs: []testkit.Stub[any, api.ResourceExistsResponse]{
+				{
+					Request:  testkit.Ptr(api.GetCollectionRequest("Songs")),
+					Response: true,
+				},
+			},
+			want: true,
+		},
+		{
+			name: "not exists",
+			stubs: []testkit.Stub[any, api.ResourceExistsResponse]{
+				{
+					Request:  testkit.Ptr(api.GetCollectionRequest("Songs")),
+					Response: false,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "with error",
+			stubs: []testkit.Stub[any, api.ResourceExistsResponse]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+			c := collections.NewClient(transport)
+			require.NotNil(t, c, "nil client")
+
+			got, err := c.Exists(t.Context(), "Songs")
+			tt.err.Require(t, err, "exists error")
+
+			require.Equal(t, tt.want, got, "exists")
+		})
+	}
+}

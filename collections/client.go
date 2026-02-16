@@ -132,6 +132,17 @@ func (c *Client) List(ctx context.Context) ([]Collection, error) {
 	return out, nil
 }
 
+// Exists check if collection with this name exists. Always check the returned error,
+// as Exists may return false with both nil (collection does not exist) and non-nil
+// errors (request failed en route).
+func (c *Client) Exists(ctx context.Context, collectionName string) (bool, error) {
+	var exists api.ResourceExistsResponse
+	if err := c.t.Do(ctx, api.GetCollectionRequest(collectionName), &exists); err != nil {
+		return false, fmt.Errorf("check collection exists: %w", err)
+	}
+	return exists.Bool(), nil
+}
+
 // Delete collection by name. Returns an error if no collection with this name exist.
 func (c *Client) Delete(ctx context.Context, collectionName string) error {
 	if err := c.t.Do(ctx, api.DeleteCollectionRequest(collectionName), nil); err != nil {
