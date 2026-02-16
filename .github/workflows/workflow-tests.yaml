@@ -14,7 +14,7 @@ jobs:
       WCS_DUMMY_CI_PW: ${{ secrets.WCS_DUMMY_CI_PW }}
       OKTA_DUMMY_CI_PW: ${{ secrets.OKTA_DUMMY_CI_PW }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         if: ${{ !github.event.pull_request.head.repo.fork }}
@@ -42,7 +42,7 @@ jobs:
       OPENAI_APIKEY: ${{ secrets.OPENAI_APIKEY }}
       VOYAGEAI_APIKEY: ${{ secrets.VOYAGEAI_APIKEY }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         if: ${{ !github.event.pull_request.head.repo.fork }}
@@ -60,7 +60,7 @@ jobs:
     name: Unit tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
@@ -73,7 +73,7 @@ jobs:
     env:
       EXTERNAL_WEAVIATE_RUNNING: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
