@@ -13,7 +13,7 @@ require (
 	github.com/weaviate/weaviate v1.33.6
 	go.nhat.io/grpcmock v0.33.0
 	golang.org/x/oauth2 v0.33.0
-	golang.org/x/sync v0.18.0
+	golang.org/x/sync v0.19.0
 	google.golang.org/grpc v1.77.0
 	google.golang.org/protobuf v1.36.10
 )
