@@ -12,7 +12,7 @@ import (
 )
 
 func TestResourceExistsResponse(t *testing.T) {
-	t.Run("UnmarshalJSON", func(t *testing.T) {
+	t.Run("http response", func(t *testing.T) {
 		var exists api.ResourceExistsResponse
 		assert.False(t, exists.Bool(), "Bool() of zero value")
 
@@ -49,7 +49,7 @@ func TestResourceExistsResponse(t *testing.T) {
 	t.Run("nil receiver", func(t *testing.T) {
 		var exists *api.ResourceExistsResponse
 		require.Panics(t, func() {
-			exists.UnmarshalJSON(nil)
+			exists.UnmarshalJSON(nil) //nolint:errcheck
 		})
 	})
 }
