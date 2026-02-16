@@ -61,6 +61,32 @@ func TestMockTransport(t *testing.T) {
 		require.Equal(t, n, 0, "mistake in test code")
 		require.True(t, transport.Done(), "done: all requests consumed")
 	})
+
+	t.Run("heterogenous requests", func(t *testing.T) {
+		transport := testkit.NewTransport(t, []testkit.Stub[any, any]{
+			{
+				Request:  testkit.Ptr[any](testkit.Ptr(5)),
+				Response: 92,
+			},
+			{
+				Request:  testkit.Ptr[any](testkit.Ptr("hello, transport")),
+				Response: true,
+			},
+		})
+
+		{
+			req := 5
+			var dest int
+			transport.Do(t.Context(), &req, &dest)
+			require.Equal(t, 92, dest, "int dest")
+		}
+		{
+			req := "hello, transport"
+			var dest bool
+			transport.Do(t.Context(), &req, &dest)
+			require.Equal(t, true, dest, "bool dest")
+		}
+	})
 }
 
 func TestWithOnly(t *testing.T) {
