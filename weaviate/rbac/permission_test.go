@@ -25,9 +25,8 @@ func TestRole_UnmarshalJSON(t *testing.T) {
 		{"action": "read_data", "data": {"collection": "Pizza"}},
 		{"action": "update_data", "data": {"collection": "Songs"}},
 		{"action": "delete_data", "data": {"collection": "Songs"}},
-		{"action": "read_nodes", "nodes": {"collection": "Pizza", "verbosity": "minimal"}},
 		{"action": "read_nodes", "nodes": {"collection": "Pizza", "verbosity": "verbose"}},
-		{"action": "read_nodes", "nodes": {"collection": "Songs", "verbosity": "minimal"}},
+		{"action": "read_nodes", "nodes": {"verbosity": "minimal"}},
 		{"action": "create_roles", "roles": {"role": "CreatorReader", "scope": "all"}},
 		{"action": "read_roles", "roles": {"role": "CreatorReader", "scope": "all"}},
 		{"action": "update_roles", "roles": {"role": "UpdaterDeleter", "scope": "matching"}},
@@ -71,16 +70,11 @@ func TestRole_UnmarshalJSON(t *testing.T) {
 		rbac.NodesPermission{
 			Actions:    []string{"read_nodes"},
 			Collection: "Pizza",
-			Verbosity:  "minimal",
-		},
-		rbac.NodesPermission{
-			Actions:    []string{"read_nodes"},
-			Collection: "Pizza",
 			Verbosity:  "verbose",
 		},
 		rbac.NodesPermission{
 			Actions:    []string{"read_nodes"},
-			Collection: "Songs",
+			Collection: "",
 			Verbosity:  "minimal",
 		},
 		rbac.RolesPermission{
