@@ -329,6 +329,13 @@ const (
 	BatchObjectsCreateJSONBodyFieldsSchema           BatchObjectsCreateJSONBodyFields = "schema"
 )
 
+// Defines values for SchemaObjectsPropertiesDeleteParamsIndexName.
+const (
+	Filterable   SchemaObjectsPropertiesDeleteParamsIndexName = "filterable"
+	RangeFilters SchemaObjectsPropertiesDeleteParamsIndexName = "rangeFilters"
+	Searchable   SchemaObjectsPropertiesDeleteParamsIndexName = "searchable"
+)
+
 // AdditionalProperties (Response only) Additional meta information about a single object.
 type AdditionalProperties map[string]map[string]interface{}
 
@@ -1290,6 +1297,9 @@ type Property struct {
 	// Description Description of the property.
 	Description string `json:"description,omitempty"`
 
+	// DisableDuplicatedReferences If set to false, allows multiple references to the same target object within this property. Setting it to true will enforce uniqueness of references within this property. By default, this is set to true.
+	DisableDuplicatedReferences bool `json:"disableDuplicatedReferences"`
+
 	// IndexFilterable Whether to include this property in the filterable, Roaring Bitmap index. If `false`, this property cannot be used in `where` filters. <br/><br/>Note: Unrelated to vectorization behavior.
 	IndexFilterable bool `json:"indexFilterable"`
 
@@ -1378,8 +1388,56 @@ type ReferenceMetaClassification struct {
 	WinningDistance float32 `json:"winningDistance,omitempty"`
 }
 
+// ReplicationAsyncConfig Configuration for asynchronous replication.
+type ReplicationAsyncConfig struct {
+	// AliveNodesCheckingFrequency Interval in milliseconds at which liveness of target nodes is checked.
+	AliveNodesCheckingFrequency int64 `json:"aliveNodesCheckingFrequency,omitempty"`
+
+	// DiffBatchSize Maximum number of object keys included in a single diff batch.
+	DiffBatchSize int64 `json:"diffBatchSize,omitempty"`
+
+	// DiffPerNodeTimeout Timeout in seconds for computing a diff against a single node.
+	DiffPerNodeTimeout int64 `json:"diffPerNodeTimeout,omitempty"`
+
+	// Frequency Base frequency in milliseconds at which async replication runs diff calculations.
+	Frequency int64 `json:"frequency,omitempty"`
+
+	// FrequencyWhilePropagating Frequency in milliseconds at which async replication runs while propagation is active.
+	FrequencyWhilePropagating int64 `json:"frequencyWhilePropagating,omitempty"`
+
+	// HashtreeHeight Height of the hashtree used for diffing.
+	HashtreeHeight int64 `json:"hashtreeHeight,omitempty"`
+
+	// LoggingFrequency Interval in seconds at which async replication logs its status.
+	LoggingFrequency int64 `json:"loggingFrequency,omitempty"`
+
+	// MaxWorkers Maximum number of async replication workers.
+	MaxWorkers int64 `json:"maxWorkers,omitempty"`
+
+	// PrePropagationTimeout Overall timeout in seconds for the pre-propagation phase.
+	PrePropagationTimeout int64 `json:"prePropagationTimeout,omitempty"`
+
+	// PropagationBatchSize Number of objects to include in a single propagation batch.
+	PropagationBatchSize int64 `json:"propagationBatchSize,omitempty"`
+
+	// PropagationConcurrency Maximum number of concurrent propagation workers.
+	PropagationConcurrency int64 `json:"propagationConcurrency,omitempty"`
+
+	// PropagationDelay Delay in milliseconds before newly added or updated objects are propagated.
+	PropagationDelay int64 `json:"propagationDelay,omitempty"`
+
+	// PropagationLimit Maximum number of objects to propagate in a single async replication run.
+	PropagationLimit int64 `json:"propagationLimit,omitempty"`
+
+	// PropagationTimeout Timeout in seconds for propagating batch of changes to a node.
+	PropagationTimeout int64 `json:"propagationTimeout,omitempty"`
+}
+
 // ReplicationConfig Configure how replication is executed in a cluster
 type ReplicationConfig struct {
+	// AsyncConfig Configuration for asynchronous replication.
+	AsyncConfig ReplicationAsyncConfig `json:"asyncConfig,omitempty"`
+
 	// AsyncEnabled Enable asynchronous replication (default: `false`).
 	AsyncEnabled bool `json:"asyncEnabled"`
 
@@ -1929,6 +1987,15 @@ type BackupsCreateStatusParams struct {
 	Path string `form:"path,omitempty" json:"path,omitempty"`
 }
 
+// BackupsRestoreCancelParams defines parameters for BackupsRestoreCancel.
+type BackupsRestoreCancelParams struct {
+	// Bucket Optional: Specifies the bucket, container, or volume name if required by the backend.
+	Bucket string `form:"bucket,omitempty" json:"bucket,omitempty"`
+
+	// Path Optional: Specifies the path within the bucket/container/volume if the backup is not at the root.
+	Path string `form:"path,omitempty" json:"path,omitempty"`
+}
+
 // BackupsRestoreStatusParams defines parameters for BackupsRestoreStatus.
 type BackupsRestoreStatusParams struct {
 	// Bucket Optional: Specifies the bucket, container, or volume name if required by the backend.
@@ -2188,6 +2255,9 @@ type SchemaObjectsGetParams struct {
 	// Consistency If true, the request is proxied to the cluster leader to ensure strong schema consistency. Default is true.
 	Consistency bool `json:"consistency,omitempty"`
 }
+
+// SchemaObjectsPropertiesDeleteParamsIndexName defines parameters for SchemaObjectsPropertiesDelete.
+type SchemaObjectsPropertiesDeleteParamsIndexName string
 
 // SchemaObjectsShardsGetParams defines parameters for SchemaObjectsShardsGet.
 type SchemaObjectsShardsGetParams struct {
