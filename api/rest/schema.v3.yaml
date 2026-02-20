@@ -1102,6 +1102,14 @@ components:
                 indexTimestamps:
                     description: 'Index each object by its internal timestamps (default: `false`).'
                     type: boolean
+                stopwordPresets:
+                    additionalProperties:
+                        items:
+                            type: string
+                        type: array
+                    description: User-defined named stopword lists. Each key is a preset name that can be referenced by a property's textAnalyzer.stopwordPreset field. The value is an array of stopword strings.
+                    type: object
+                    x-omitempty: true
                 stopwords:
                     $ref: '#/components/schemas/StopwordConfig'
                 tokenizerUserDict:
@@ -2368,6 +2376,10 @@ components:
                         type: string
                     type: array
                     x-omitempty: true
+                stopwordPreset:
+                    description: Stopword preset name. Overrides the collection-level invertedIndexConfig.stopwords for this property. Only applies to properties using 'word' tokenization. Can be a built-in preset ('en', 'none') or a user-defined preset from invertedIndexConfig.stopwordPresets.
+                    type: string
+                    x-omitempty: true
             type: object
             x-omitempty: true
         TokenizeRequest:
@@ -2375,8 +2387,12 @@ components:
             properties:
                 analyzerConfig:
                     $ref: '#/components/schemas/TextAnalyzerConfig'
-                stopwordConfig:
-                    $ref: '#/components/schemas/StopwordConfig'
+                stopwordPresets:
+                    additionalProperties:
+                        $ref: '#/components/schemas/StopwordConfig'
+                    description: Optional named stopword configurations. Each key is a preset name that can be referenced by analyzerConfig.stopwordPreset. Each value is a StopwordConfig (with optional preset, additions, and removals).
+                    type: object
+                    x-omitempty: true
                 text:
                     description: The text to tokenize.
                     type: string
