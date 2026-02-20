@@ -41,25 +41,25 @@ type (
 	}
 	ReplicationConfig struct {
 		AsyncEnabled     bool                    // Enable asynchronous replication.
-		AsyncConfig      *AsyncReplicationConfig // Fine-tuning parameters for async replication.
+		AsyncReplication *AsyncReplicationConfig // Fine-tuning parameters for async replication.
 		Factor           int                     // Number of times a collection is replicated.
 		DeletionStrategy DeletionStrategy        // Conflict resolution strategy for deleted objects.
 	}
 	AsyncReplicationConfig struct {
-		DiffBatchSize                   int64
-		DiffPerNodeTimeout              time.Duration
-		ReplicationConcurrency          int64
-		ReplicationFrequency            time.Duration
-		ReplicationFrequencyPropagating time.Duration
-		PrePropagationTimeout           time.Duration
-		PropagationConcurrency          int64
-		PropagationBatchSize            int64
-		PropagationLimit                int64
-		PropagationTimeout              time.Duration
-		PropagationDelay                time.Duration
-		HashTreeHeight                  int64
-		NodePingFrequency               time.Duration
-		LoggingFrequency                time.Duration
+		DiffBatchSize                   int64         // Maximum number of keys in a diff batch.
+		DiffPerNodeTimeout              time.Duration // Timeout for computing a diff against a single node. Recommended unit: seconds.
+		ReplicationConcurrency          int64         // Maximum number of concurrent replication workers.
+		ReplicationFrequency            time.Duration // Frequency at which diff calculations are run. Recommended unit: milliseconds.
+		ReplicationFrequencyPropagating time.Duration // Replication frequency during the propagating phase. Recommended unit: milliseconds.
+		PrePropagationTimeout           time.Duration // Total timeout for the pre-propagation phase. Recommended unit: seconds.
+		PropagationConcurrency          int64         // Maximum number of concurrent propagation workers.
+		PropagationBatchSize            int64         // Maximum number of objects in a single propagation batch.
+		PropagationLimit                int64         // Maximum number of objects propagated in a single replication round.
+		PropagationTimeout              time.Duration // Timeout for a single propagation batch request. Recommended unit: seconds.
+		PropagationDelay                time.Duration // Delay before newly added / updated objects are propagated. Recommended unit: milliseconds.
+		HashTreeHeight                  int64         // Height of the hash tree used to compute the diff.
+		NodePingFrequency               time.Duration // Frequency at which liveness of the target nodes is checked. Recommended unit: milliseconds.
+		LoggingFrequency                time.Duration // Frequency at which replication status is logged. Recommended unit: seconds.
 	}
 	InvertedIndexConfig struct {
 		IndexNullState         bool            // Index each object with the null state.
@@ -218,7 +218,7 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 			DeletionStrategy: rest.ReplicationConfigDeletionStrategy(c.Replication.DeletionStrategy),
 		}
 
-		if async := c.Replication.AsyncConfig; async != nil {
+		if async := c.Replication.AsyncReplication; async != nil {
 			out.ReplicationConfig.AsyncConfig = rest.ReplicationAsyncConfig{
 				DiffBatchSize:               async.DiffBatchSize,
 				DiffPerNodeTimeout:          int64(async.DiffPerNodeTimeout.Seconds()),
@@ -335,7 +335,7 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 			AsyncEnabled:     class.ReplicationConfig.AsyncEnabled,
 			Factor:           class.ReplicationConfig.Factor,
 			DeletionStrategy: DeletionStrategy(class.ReplicationConfig.DeletionStrategy),
-			AsyncConfig: &AsyncReplicationConfig{
+			AsyncReplication: &AsyncReplicationConfig{
 				DiffBatchSize:                   class.ReplicationConfig.AsyncConfig.DiffBatchSize,
 				DiffPerNodeTimeout:              time.Duration(class.ReplicationConfig.AsyncConfig.DiffPerNodeTimeout) * time.Second,
 				ReplicationConcurrency:          class.ReplicationConfig.AsyncConfig.MaxWorkers,

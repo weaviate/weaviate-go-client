@@ -36,11 +36,13 @@ type (
 		DesiredVirtualCount int
 	}
 	ReplicationConfig struct {
-		AsyncEnabled     bool             // Enable asynchronous replication.
-		DeletionStrategy DeletionStrategy // Conflict resolution strategy for deleted objects.
-		Factor           int              // Number of times a collection is replicated.
+		AsyncEnabled     bool                    // Enable asynchronous replication.
+		AsyncReplication *AsyncReplicationConfig // Fine-tune asynchronous replication.
+		DeletionStrategy DeletionStrategy        // Conflict resolution strategy for deleted objects.
+		Factor           int                     // Number of times a collection is replicated.
 	}
-	InvertedIndexConfig struct {
+	AsyncReplicationConfig api.AsyncReplicationConfig
+	InvertedIndexConfig    struct {
 		IndexNullState         bool            // Index each object with the null state.
 		IndexPropertyLength    bool            // Index length of properties.
 		IndexTimestamps        bool            // Index each object by its internal timestamps.
@@ -145,6 +147,7 @@ func collectionToAPI(c *Collection) api.Collection {
 			AsyncEnabled:     c.Replication.AsyncEnabled,
 			Factor:           c.Replication.Factor,
 			DeletionStrategy: api.DeletionStrategy(c.Replication.DeletionStrategy),
+			AsyncReplication: (*api.AsyncReplicationConfig)(c.Replication.AsyncReplication),
 		}
 	}
 
@@ -156,13 +159,7 @@ func collectionToAPI(c *Collection) api.Collection {
 			UsingBlockMaxWAND:      c.InvertedIndex.UsingBlockMaxWAND,
 			CleanupIntervalSeconds: c.InvertedIndex.CleanupIntervalSeconds,
 			Stopwords:              (*api.StopwordConfig)(c.InvertedIndex.Stopwords),
-		}
-
-		if c.InvertedIndex.BM25 != nil {
-			out.InvertedIndex.BM25 = &api.BM25Config{
-				B:  c.InvertedIndex.BM25.B,
-				K1: c.InvertedIndex.BM25.K1,
-			}
+			BM25:                   (*api.BM25Config)(c.InvertedIndex.BM25),
 		}
 	}
 
@@ -216,18 +213,12 @@ func collectionFromAPI(c *api.Collection) Collection {
 			AsyncEnabled:     c.Replication.AsyncEnabled,
 			Factor:           c.Replication.Factor,
 			DeletionStrategy: DeletionStrategy(c.Replication.DeletionStrategy),
+			AsyncReplication: (*AsyncReplicationConfig)(c.Replication.AsyncReplication),
 		}
 	}
 
 	var invertedIndex *InvertedIndexConfig
 	if c.InvertedIndex != nil {
-		var bm25 *BM25Config
-		if c.InvertedIndex.BM25 != nil {
-			bm25 = &BM25Config{
-				B:  c.InvertedIndex.BM25.B,
-				K1: c.InvertedIndex.BM25.K1,
-			}
-		}
 		invertedIndex = &InvertedIndexConfig{
 			IndexNullState:         c.InvertedIndex.IndexNullState,
 			IndexPropertyLength:    c.InvertedIndex.IndexPropertyLength,
@@ -235,7 +226,7 @@ func collectionFromAPI(c *api.Collection) Collection {
 			UsingBlockMaxWAND:      c.InvertedIndex.UsingBlockMaxWAND,
 			CleanupIntervalSeconds: c.InvertedIndex.CleanupIntervalSeconds,
 			Stopwords:              (*StopwordConfig)(c.InvertedIndex.Stopwords),
-			BM25:                   bm25,
+			BM25:                   (*BM25Config)(c.InvertedIndex.BM25),
 		}
 	}
 
