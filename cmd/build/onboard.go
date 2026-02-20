@@ -36,7 +36,7 @@ Do not commit any of its contents to version control.
 
 exec go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen "$@"
 `
-	GolangCILintVersion = "2.8.0"
+	GolangCILintVersion = "2.9.0"
 
 	ProtocVersion = "33.2"
 
