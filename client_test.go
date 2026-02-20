@@ -86,7 +86,7 @@ func TestNewWeaviateCloud(t *testing.T) {
 			return testkit.NopTransport, nil
 		}
 
-		c, err := weaviate.NewWeaviateCloud(t.Context(), "example.com")
+		c, err := weaviate.NewWeaviateCloud(t.Context(), "example.com", "api-key")
 		assert.NotNil(t, c, "nil client")
 		assert.NoError(t, err)
 
@@ -115,7 +115,7 @@ func TestNewWeaviateCloud(t *testing.T) {
 					return testkit.NopTransport, nil
 				}
 
-				c, err := weaviate.NewWeaviateCloud(t.Context(), "my."+domain)
+				c, err := weaviate.NewWeaviateCloud(t.Context(), "my."+domain, "api-key")
 				assert.NotNil(t, c, "nil client")
 				assert.NoError(t, err)
 
@@ -134,7 +134,7 @@ func TestNewWeaviateCloud(t *testing.T) {
 			return testkit.NopTransport, nil
 		}
 
-		c, err := weaviate.NewWeaviateCloud(t.Context(), "example.com",
+		c, err := weaviate.NewWeaviateCloud(t.Context(), "example.com", "api-key",
 			weaviate.WithHTTPPort(7070),
 			weaviate.WithGRPCPort(54321),
 			weaviate.WithHeader(http.Header{
