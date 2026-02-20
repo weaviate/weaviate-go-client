@@ -247,7 +247,7 @@ func TestRESTRequests(t *testing.T) {
 						AsyncEnabled:     false,
 						Factor:           6,
 						DeletionStrategy: api.TimeBasedResolution,
-						AsyncConfig: &api.AsyncReplicationConfig{
+						AsyncReplication: &api.AsyncReplicationConfig{
 							DiffBatchSize:                   1,
 							DiffPerNodeTimeout:              2 * time.Second,
 							ReplicationConcurrency:          3,
@@ -671,7 +671,7 @@ func TestRESTResponses(t *testing.T) {
 					AsyncEnabled:     false,
 					Factor:           6,
 					DeletionStrategy: api.TimeBasedResolution,
-					AsyncConfig: &api.AsyncReplicationConfig{
+					AsyncReplication: &api.AsyncReplicationConfig{
 						DiffBatchSize:                   1,
 						DiffPerNodeTimeout:              2 * time.Second,
 						ReplicationConcurrency:          3,

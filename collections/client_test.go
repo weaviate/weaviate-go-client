@@ -2,6 +2,7 @@ package collections_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -116,6 +117,22 @@ func TestClient_Create(t *testing.T) {
 					AsyncEnabled:     false,
 					Factor:           6,
 					DeletionStrategy: collections.TimeBasedResolution,
+					AsyncReplication: &collections.AsyncReplicationConfig{
+						DiffBatchSize:                   1,
+						DiffPerNodeTimeout:              2 * time.Second,
+						ReplicationConcurrency:          3,
+						ReplicationFrequency:            4 * time.Millisecond,
+						ReplicationFrequencyPropagating: 5 * time.Millisecond,
+						PrePropagationTimeout:           6 * time.Second,
+						PropagationConcurrency:          7,
+						PropagationBatchSize:            8,
+						PropagationLimit:                9,
+						PropagationTimeout:              10 * time.Second,
+						PropagationDelay:                11 * time.Millisecond,
+						HashTreeHeight:                  12,
+						NodePingFrequency:               13 * time.Millisecond,
+						LoggingFrequency:                14 * time.Second,
+					},
 				},
 				InvertedIndex: &collections.InvertedIndexConfig{
 					IndexNullState:         true,
@@ -185,6 +202,22 @@ func TestClient_Create(t *testing.T) {
 								AsyncEnabled:     false,
 								Factor:           6,
 								DeletionStrategy: api.TimeBasedResolution,
+								AsyncReplication: &api.AsyncReplicationConfig{
+									DiffBatchSize:                   1,
+									DiffPerNodeTimeout:              2 * time.Second,
+									ReplicationConcurrency:          3,
+									ReplicationFrequency:            4 * time.Millisecond,
+									ReplicationFrequencyPropagating: 5 * time.Millisecond,
+									PrePropagationTimeout:           6 * time.Second,
+									PropagationConcurrency:          7,
+									PropagationBatchSize:            8,
+									PropagationLimit:                9,
+									PropagationTimeout:              10 * time.Second,
+									PropagationDelay:                11 * time.Millisecond,
+									HashTreeHeight:                  12,
+									NodePingFrequency:               13 * time.Millisecond,
+									LoggingFrequency:                14 * time.Second,
+								},
 							},
 							InvertedIndex: &api.InvertedIndexConfig{
 								IndexNullState:         true,
@@ -319,6 +352,22 @@ func TestClient_GetConfig(t *testing.T) {
 							AsyncEnabled:     false,
 							Factor:           6,
 							DeletionStrategy: api.TimeBasedResolution,
+							AsyncReplication: &api.AsyncReplicationConfig{
+								DiffBatchSize:                   1,
+								DiffPerNodeTimeout:              2 * time.Second,
+								ReplicationConcurrency:          3,
+								ReplicationFrequency:            4 * time.Millisecond,
+								ReplicationFrequencyPropagating: 5 * time.Millisecond,
+								PrePropagationTimeout:           6 * time.Second,
+								PropagationConcurrency:          7,
+								PropagationBatchSize:            8,
+								PropagationLimit:                9,
+								PropagationTimeout:              10 * time.Second,
+								PropagationDelay:                11 * time.Millisecond,
+								HashTreeHeight:                  12,
+								NodePingFrequency:               13 * time.Millisecond,
+								LoggingFrequency:                14 * time.Second,
+							},
 						},
 						InvertedIndex: &api.InvertedIndexConfig{
 							IndexNullState:         true,
@@ -387,6 +436,22 @@ func TestClient_GetConfig(t *testing.T) {
 					AsyncEnabled:     false,
 					Factor:           6,
 					DeletionStrategy: collections.TimeBasedResolution,
+					AsyncReplication: &collections.AsyncReplicationConfig{
+						DiffBatchSize:                   1,
+						DiffPerNodeTimeout:              2 * time.Second,
+						ReplicationConcurrency:          3,
+						ReplicationFrequency:            4 * time.Millisecond,
+						ReplicationFrequencyPropagating: 5 * time.Millisecond,
+						PrePropagationTimeout:           6 * time.Second,
+						PropagationConcurrency:          7,
+						PropagationBatchSize:            8,
+						PropagationLimit:                9,
+						PropagationTimeout:              10 * time.Second,
+						PropagationDelay:                11 * time.Millisecond,
+						HashTreeHeight:                  12,
+						NodePingFrequency:               13 * time.Millisecond,
+						LoggingFrequency:                14 * time.Second,
+					},
 				},
 				InvertedIndex: &collections.InvertedIndexConfig{
 					IndexNullState:         true,
