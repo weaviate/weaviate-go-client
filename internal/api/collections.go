@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
@@ -39,9 +40,26 @@ type (
 		VirtualPerPhysical  int
 	}
 	ReplicationConfig struct {
-		AsyncEnabled     bool             // Enable asynchronous replication.
-		Factor           int              // Number of times a collection is replicated.
-		DeletionStrategy DeletionStrategy // Conflict resolution strategy for deleted objects.
+		AsyncEnabled     bool                    // Enable asynchronous replication.
+		AsyncConfig      *AsyncReplicationConfig // Fine-tuning parameters for async replication.
+		Factor           int                     // Number of times a collection is replicated.
+		DeletionStrategy DeletionStrategy        // Conflict resolution strategy for deleted objects.
+	}
+	AsyncReplicationConfig struct {
+		DiffBatchSize                   int64
+		DiffPerNodeTimeout              time.Duration
+		ReplicationConcurrency          int64
+		ReplicationFrequency            time.Duration
+		ReplicationFrequencyPropagating time.Duration
+		PrePropagationTimeout           time.Duration
+		PropagationConcurrency          int64
+		PropagationBatchSize            int64
+		PropagationLimit                int64
+		PropagationTimeout              time.Duration
+		PropagationDelay                time.Duration
+		HashTreeHeight                  int64
+		NodePingFrequency               time.Duration
+		LoggingFrequency                time.Duration
 	}
 	InvertedIndexConfig struct {
 		IndexNullState         bool            // Index each object with the null state.
@@ -199,6 +217,25 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 			Factor:           c.Replication.Factor,
 			DeletionStrategy: rest.ReplicationConfigDeletionStrategy(c.Replication.DeletionStrategy),
 		}
+
+		if async := c.Replication.AsyncConfig; async != nil {
+			out.ReplicationConfig.AsyncConfig = rest.ReplicationAsyncConfig{
+				DiffBatchSize:               async.DiffBatchSize,
+				DiffPerNodeTimeout:          int64(async.DiffPerNodeTimeout.Seconds()),
+				MaxWorkers:                  async.ReplicationConcurrency,
+				Frequency:                   async.ReplicationFrequency.Milliseconds(),
+				FrequencyWhilePropagating:   async.ReplicationFrequencyPropagating.Milliseconds(),
+				PrePropagationTimeout:       int64(async.PrePropagationTimeout.Seconds()),
+				PropagationConcurrency:      async.PropagationConcurrency,
+				PropagationBatchSize:        async.PropagationBatchSize,
+				PropagationLimit:            async.PropagationLimit,
+				PropagationTimeout:          int64(async.PropagationTimeout.Seconds()),
+				PropagationDelay:            async.PropagationDelay.Milliseconds(),
+				HashtreeHeight:              async.HashTreeHeight,
+				AliveNodesCheckingFrequency: async.NodePingFrequency.Milliseconds(),
+				LoggingFrequency:            int64(async.LoggingFrequency.Seconds()),
+			}
+		}
 	}
 
 	if c.InvertedIndex != nil {
@@ -298,6 +335,22 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 			AsyncEnabled:     class.ReplicationConfig.AsyncEnabled,
 			Factor:           class.ReplicationConfig.Factor,
 			DeletionStrategy: DeletionStrategy(class.ReplicationConfig.DeletionStrategy),
+			AsyncConfig: &AsyncReplicationConfig{
+				DiffBatchSize:                   class.ReplicationConfig.AsyncConfig.DiffBatchSize,
+				DiffPerNodeTimeout:              time.Duration(class.ReplicationConfig.AsyncConfig.DiffPerNodeTimeout) * time.Second,
+				ReplicationConcurrency:          class.ReplicationConfig.AsyncConfig.MaxWorkers,
+				ReplicationFrequency:            time.Duration(class.ReplicationConfig.AsyncConfig.Frequency) * time.Millisecond,
+				ReplicationFrequencyPropagating: time.Duration(class.ReplicationConfig.AsyncConfig.FrequencyWhilePropagating) * time.Millisecond,
+				PrePropagationTimeout:           time.Duration(class.ReplicationConfig.AsyncConfig.PrePropagationTimeout) * time.Second,
+				PropagationConcurrency:          class.ReplicationConfig.AsyncConfig.PropagationConcurrency,
+				PropagationBatchSize:            class.ReplicationConfig.AsyncConfig.PropagationBatchSize,
+				PropagationLimit:                class.ReplicationConfig.AsyncConfig.PropagationLimit,
+				PropagationTimeout:              time.Duration(class.ReplicationConfig.AsyncConfig.PropagationTimeout) * time.Second,
+				PropagationDelay:                time.Duration(class.ReplicationConfig.AsyncConfig.PropagationDelay) * time.Millisecond,
+				HashTreeHeight:                  class.ReplicationConfig.AsyncConfig.HashtreeHeight,
+				NodePingFrequency:               time.Duration(class.ReplicationConfig.AsyncConfig.AliveNodesCheckingFrequency) * time.Millisecond,
+				LoggingFrequency:                time.Duration(class.ReplicationConfig.AsyncConfig.LoggingFrequency) * time.Second,
+			},
 		},
 		InvertedIndex: &InvertedIndexConfig{
 			IndexNullState:         class.InvertedIndexConfig.IndexNullState,
