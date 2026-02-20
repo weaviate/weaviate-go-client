@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -246,6 +247,22 @@ func TestRESTRequests(t *testing.T) {
 						AsyncEnabled:     false,
 						Factor:           6,
 						DeletionStrategy: api.TimeBasedResolution,
+						AsyncConfig: &api.AsyncReplicationConfig{
+							DiffBatchSize:                   1,
+							DiffPerNodeTimeout:              2 * time.Second,
+							ReplicationConcurrency:          3,
+							ReplicationFrequency:            4 * time.Millisecond,
+							ReplicationFrequencyPropagating: 5 * time.Millisecond,
+							PrePropagationTimeout:           6 * time.Second,
+							PropagationConcurrency:          7,
+							PropagationBatchSize:            8,
+							PropagationLimit:                9,
+							PropagationTimeout:              10 * time.Second,
+							PropagationDelay:                11 * time.Millisecond,
+							HashTreeHeight:                  12,
+							NodePingFrequency:               13 * time.Millisecond,
+							LoggingFrequency:                14 * time.Second,
+						},
 					},
 					InvertedIndex: &api.InvertedIndexConfig{
 						IndexNullState:         true,
@@ -313,6 +330,22 @@ func TestRESTRequests(t *testing.T) {
 					AsyncEnabled:     false,
 					Factor:           6,
 					DeletionStrategy: rest.TimeBasedResolution,
+					AsyncConfig: rest.ReplicationAsyncConfig{
+						DiffBatchSize:               1,
+						DiffPerNodeTimeout:          2,
+						MaxWorkers:                  3,
+						Frequency:                   4,
+						FrequencyWhilePropagating:   5,
+						PrePropagationTimeout:       6,
+						PropagationConcurrency:      7,
+						PropagationBatchSize:        8,
+						PropagationLimit:            9,
+						PropagationTimeout:          10,
+						PropagationDelay:            11,
+						HashtreeHeight:              12,
+						AliveNodesCheckingFrequency: 13,
+						LoggingFrequency:            14,
+					},
 				},
 				InvertedIndexConfig: rest.InvertedIndexConfig{
 					IndexNullState:         true,
@@ -555,6 +588,22 @@ func TestRESTResponses(t *testing.T) {
 					AsyncEnabled:     false,
 					Factor:           6,
 					DeletionStrategy: rest.TimeBasedResolution,
+					AsyncConfig: rest.ReplicationAsyncConfig{
+						DiffBatchSize:               1,
+						DiffPerNodeTimeout:          2,
+						MaxWorkers:                  3,
+						Frequency:                   4,
+						FrequencyWhilePropagating:   5,
+						PrePropagationTimeout:       6,
+						PropagationConcurrency:      7,
+						PropagationBatchSize:        8,
+						PropagationLimit:            9,
+						PropagationTimeout:          10,
+						PropagationDelay:            11,
+						HashtreeHeight:              12,
+						AliveNodesCheckingFrequency: 13,
+						LoggingFrequency:            14,
+					},
 				},
 				InvertedIndexConfig: rest.InvertedIndexConfig{
 					IndexNullState:         true,
@@ -622,6 +671,22 @@ func TestRESTResponses(t *testing.T) {
 					AsyncEnabled:     false,
 					Factor:           6,
 					DeletionStrategy: api.TimeBasedResolution,
+					AsyncConfig: &api.AsyncReplicationConfig{
+						DiffBatchSize:                   1,
+						DiffPerNodeTimeout:              2 * time.Second,
+						ReplicationConcurrency:          3,
+						ReplicationFrequency:            4 * time.Millisecond,
+						ReplicationFrequencyPropagating: 5 * time.Millisecond,
+						PrePropagationTimeout:           6 * time.Second,
+						PropagationConcurrency:          7,
+						PropagationBatchSize:            8,
+						PropagationLimit:                9,
+						PropagationTimeout:              10 * time.Second,
+						PropagationDelay:                11 * time.Millisecond,
+						HashTreeHeight:                  12,
+						NodePingFrequency:               13 * time.Millisecond,
+						LoggingFrequency:                14 * time.Second,
+					},
 				},
 				InvertedIndex: &api.InvertedIndexConfig{
 					IndexNullState:         true,
