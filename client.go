@@ -64,7 +64,7 @@ func NewLocal(ctx context.Context, options ...Option) (*Client, error) {
 //			"Custom-X-Value": {"my-header"}
 //		 }),
 //	)
-func NewWeaviateCloud(ctx context.Context, host string, options ...Option) (*Client, error) {
+func NewWeaviateCloud(ctx context.Context, host string, apiKey string, options ...Option) (*Client, error) {
 	c := config{
 		Scheme:   "https",
 		RESTHost: host,
