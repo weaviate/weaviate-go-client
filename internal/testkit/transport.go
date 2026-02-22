@@ -2,10 +2,11 @@ package testkit
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
-	"github.com/go-openapi/testify/v2/assert"
-	"github.com/go-openapi/testify/v2/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 )
 
@@ -32,7 +33,9 @@ var NopTransport internal.Transport = TransportFunc(func(context.Context, any, a
 func NewTransport[Req, Resp any](t *testing.T, stubs []Stub[Req, Resp]) *MockTransport[Req, Resp] {
 	mock := &MockTransport[Req, Resp]{t: t, stubs: stubs}
 	t.Cleanup(func() {
-		require.True(t, mock.Done(), "requests were not fully consumed")
+		if !t.Failed() {
+			assert.Emptyf(t, mock.stubs, "requests were not fully consumed, %d remaining", len(mock.stubs))
+		}
 	})
 	return mock
 }
@@ -72,8 +75,17 @@ func (t *MockTransport[Req, Resp]) Do(ctx context.Context, req, dest any) error 
 		return ctx.Err()
 	}
 
-	if stub.Request != nil && assert.IsType(t.t, (*Req)(nil), req, "bad request") {
-		assert.Equal(t.t, stub.Request, req, "bad request")
+	if stub.Request != nil {
+		if reflect.TypeFor[Req]().Kind() == reflect.Interface {
+			assert.Implements(t.t, (*Req)(nil), req, "bad request")
+
+			// If Req is an interface, [Stub.Request] must be a pointer to satisfy *Req.
+			// We expect the _actual_ request to be the de-referenced value, so we compare
+			// *stub.Request instead of stub.Request.
+			assert.Equal(t.t, *stub.Request, req, "bad request")
+		} else if assert.IsType(t.t, (*Req)(nil), req, "bad request") {
+			assert.Equal(t.t, stub.Request, req, "bad request")
+		}
 	}
 
 	if stub.Err != nil {
@@ -81,8 +93,19 @@ func (t *MockTransport[Req, Resp]) Do(ctx context.Context, req, dest any) error 
 	}
 
 	if dest != nil {
-		require.IsType(t.t, (*Resp)(nil), dest, "bad dest")
-		*dest.(*Resp) = stub.Response
+		if reflect.TypeFor[Resp]().Kind() == reflect.Interface {
+			assert.Implements(t.t, (*Resp)(nil), dest, "bad dest")
+
+			// To support heterogenous requests in the same transport,
+			// we need to handle Resp == interface{} correctly. Since
+			// a non-nil dest will have some concrete type, we cannot
+			// cast to to (*any) and dereference it safely, as we do
+			// with homogenous requests in the else-branch).
+			// We can leverage reflection to assign the response to dest.
+			reflect.ValueOf(dest).Elem().Set(reflect.ValueOf(stub.Response))
+		} else if assert.IsType(t.t, (*Resp)(nil), dest, "bad dest") {
+			*dest.(*Resp) = stub.Response
+		}
 	}
 	return nil
 }

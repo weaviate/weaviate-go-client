@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/go-openapi/testify/v2/require"
-	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 )
 
 func TestObjectReference(t *testing.T) {
@@ -17,12 +17,12 @@ func TestObjectReference(t *testing.T) {
 			want string
 		}{
 			{
-				ref:  &api.ObjectReference{UUID: uuid.Nil},
-				want: "weaviate://localhost/" + uuid.Nil.String(),
+				ref:  &api.ObjectReference{UUID: testkit.UUID},
+				want: "weaviate://localhost/" + testkit.UUID.String(),
 			},
 			{
-				ref:  &api.ObjectReference{Collection: "Songs", UUID: uuid.Nil},
-				want: "weaviate://localhost/Songs/" + uuid.Nil.String(),
+				ref:  &api.ObjectReference{Collection: "Songs", UUID: testkit.UUID},
+				want: "weaviate://localhost/Songs/" + testkit.UUID.String(),
 			},
 		} {
 			t.Run(tt.want, func(t *testing.T) {
@@ -48,7 +48,7 @@ func TestObjectReference(t *testing.T) {
 		}{
 			{
 				name:   "not a beacon",
-				beacon: "http://Songs/" + uuid.Nil.String(),
+				beacon: "http://Songs/" + testkit.UUID.String(),
 			},
 			{
 				name:   "too many parts",
@@ -56,7 +56,7 @@ func TestObjectReference(t *testing.T) {
 			},
 			{
 				name:   "wrong order",
-				beacon: "weaviate://" + uuid.Nil.String() + "/" + "Songs",
+				beacon: "weaviate://" + testkit.UUID.String() + "/" + "Songs",
 			},
 		} {
 			t.Run(tt.name, func(t *testing.T) {
