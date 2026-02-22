@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
@@ -80,6 +81,10 @@ func newDefaultConfig(options ...Option) config {
 		Header: http.Header{
 			headerWeaviateClient: {clientName + "/" + Version()},
 		},
+		Timeout: transport.Timeout{
+			Read:  30 * time.Second,
+			Write: 90 * time.Second,
+		},
 	}
 	for _, opt := range options {
 		opt(&c)
@@ -104,6 +109,7 @@ func newClient(_ context.Context, options []Option) (*Client, error) {
 		GRPCHost: c.GRPCHost,
 		GRPCPort: c.GRPCPort,
 		Header:   c.Header,
+		Timeout:  c.Timeout,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("weaviate: new client: %w", err)
@@ -173,5 +179,35 @@ func WithHeader(h http.Header) Option {
 				c.Header.Add(k, v[i])
 			}
 		}
+	}
+}
+
+// Set read, write, and batch timeouts.
+func WithTimeout(d time.Duration) Option {
+	return func(c *config) {
+		c.Timeout.Read = d
+		c.Timeout.Write = d
+		c.Timeout.Batch = d
+	}
+}
+
+// Client-side timeout for read operations. Default: 30s.
+func WithReadTimeout(d time.Duration) Option {
+	return func(c *config) {
+		c.Timeout.Read = d
+	}
+}
+
+// Client-side timeout for write operations. Default: 90s.
+func WithWriteTimeout(d time.Duration) Option {
+	return func(c *config) {
+		c.Timeout.Write = d
+	}
+}
+
+// Client-side timeout for SSB (Server-Side Batching) insert requests. Not set by default.
+func WithBatchTimeout(d time.Duration) Option {
+	return func(c *config) {
+		c.Timeout.Batch = d
 	}
 }
