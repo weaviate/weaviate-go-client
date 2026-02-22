@@ -3,6 +3,7 @@ package weaviate_test
 import (
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v6"
@@ -36,6 +37,10 @@ func TestNewLocal(t *testing.T) {
 			Header: http.Header{
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
 			},
+			Timeout: transport.Timeout{
+				Read:  30 * time.Second,
+				Write: 90 * time.Second,
+			},
 		}, got)
 	})
 
@@ -53,6 +58,8 @@ func TestNewLocal(t *testing.T) {
 			weaviate.WithHeader(http.Header{
 				"X-Test": {"heads", "up"},
 			}),
+			weaviate.WithReadTimeout(20*time.Second),
+			weaviate.WithBatchTimeout(100*time.Millisecond),
 		)
 		assert.NotNil(t, c, "nil client")
 		assert.NoError(t, err)
@@ -69,6 +76,11 @@ func TestNewLocal(t *testing.T) {
 			Header: http.Header{
 				"X-Test":            {"heads", "up"},
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
+			},
+			Timeout: transport.Timeout{
+				Read:  20 * time.Second,
+				Write: 90 * time.Second,
+				Batch: 100 * time.Millisecond,
 			},
 		}, got)
 	})
@@ -98,6 +110,10 @@ func TestNewWeaviateCloud(t *testing.T) {
 			GRPCPort: 443,
 			Header: http.Header{
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
+			},
+			Timeout: transport.Timeout{
+				Read:  30 * time.Second,
+				Write: 90 * time.Second,
 			},
 		}, got)
 	})
@@ -140,6 +156,8 @@ func TestNewWeaviateCloud(t *testing.T) {
 			weaviate.WithHeader(http.Header{
 				"X-Test": {"heads", "up"},
 			}),
+			weaviate.WithReadTimeout(20*time.Second),
+			weaviate.WithBatchTimeout(100*time.Millisecond),
 		)
 		assert.NotNil(t, c, "nil client")
 		assert.NoError(t, err)
@@ -153,6 +171,11 @@ func TestNewWeaviateCloud(t *testing.T) {
 			Header: http.Header{
 				"X-Test":            {"heads", "up"},
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
+			},
+			Timeout: transport.Timeout{
+				Read:  20 * time.Second,
+				Write: 90 * time.Second,
+				Batch: 100 * time.Millisecond,
 			},
 		}, got)
 	})
