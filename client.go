@@ -21,11 +21,7 @@ type Client struct {
 //   - HTTP host and port
 //   - gRPC host and port
 func NewClient(ctx context.Context, options ...Option) (*Client, error) {
-	var c config
-	for _, opt := range options {
-		opt(&c)
-	}
-	return newClient(ctx, c)
+	return newClient(ctx, options)
 }
 
 // NewLocal sets default options for connecting to an locally running instance.
@@ -38,17 +34,12 @@ func NewClient(ctx context.Context, options ...Option) (*Client, error) {
 //	// Change HTTP port
 //	c, err := weaviate.NewLocal(ctx, weaviate.WithHTTPPort(8081))
 func NewLocal(ctx context.Context, options ...Option) (*Client, error) {
-	c := config{
-		Scheme:   "http",
-		RESTHost: "localhost",
-		GRPCHost: "localhost",
-		RESTPort: 8080,
-		GRPCPort: 50051,
-	}
-	for _, opt := range options {
-		opt(&c)
-	}
-	return newClient(ctx, c)
+	return newClient(ctx, append([]Option{
+		WithScheme("http"),
+		WithHost("localhost"),
+		WithHTTPPort(8080),
+		WithGRPCPort(50051),
+	}, options...))
 }
 
 // NewWeaviateCloud sets default options for connecting to a Weaviate Cloud instance.
@@ -65,18 +56,13 @@ func NewLocal(ctx context.Context, options ...Option) (*Client, error) {
 //		 }),
 //	)
 func NewWeaviateCloud(ctx context.Context, host string, apiKey string, options ...Option) (*Client, error) {
-	c := config{
-		Scheme:   "https",
-		RESTHost: host,
-		GRPCHost: "grpc-" + host,
-		RESTPort: 443,
-		GRPCPort: 443,
-		Header:   make(http.Header),
-	}
-	for _, opt := range options {
-		opt(&c)
-	}
-	return newClient(ctx, c)
+	return newClient(ctx, append([]Option{
+		WithScheme("https"),
+		WithHTTPHost(host),
+		WithGRPCHost("grpc-" + host),
+		WithHTTPPort(443),
+		WithGRPCPort(443),
+	}, options...))
 }
 
 const (
@@ -89,11 +75,20 @@ const (
 	domainSemiTechnology     = "semi.technology"
 )
 
-func newClient(_ context.Context, c config) (*Client, error) {
-	if c.Header == nil {
-		c.Header = make(http.Header)
+func newDefaultConfig(options ...Option) config {
+	c := config{
+		Header: http.Header{
+			headerWeaviateClient: {clientName + "/" + Version()},
+		},
 	}
-	c.Header.Add(headerWeaviateClient, clientName+"/"+Version())
+	for _, opt := range options {
+		opt(&c)
+	}
+	return c
+}
+
+func newClient(_ context.Context, options []Option) (*Client, error) {
+	c := newDefaultConfig(options...)
 
 	if strings.Contains(c.RESTHost, domainWeaviateIO) ||
 		strings.Contains(c.RESTHost, domainWeaviateCloud) ||
