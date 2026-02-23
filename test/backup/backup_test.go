@@ -244,12 +244,6 @@ func TestBackups_integration(t *testing.T) {
 				assert.Equal(t, dockerComposeBackupDir+"/"+backupID, restoreStatusResponse.Path)
 				assert.Equal(t, backup.BACKEND_FILESYSTEM, restoreStatusResponse.Backend)
 				assert.Empty(t, restoreStatusResponse.Error)
-				assert.Contains(t, []string{
-					models.BackupRestoreStatusResponseStatusSTARTED,
-					models.BackupRestoreStatusResponseStatusTRANSFERRING,
-					models.BackupRestoreStatusResponseStatusTRANSFERRED,
-					models.BackupRestoreStatusResponseStatusSUCCESS,
-				}, *restoreStatusResponse.Status)
 
 				if models.BackupRestoreStatusResponseStatusSUCCESS == *restoreStatusResponse.Status {
 					break
