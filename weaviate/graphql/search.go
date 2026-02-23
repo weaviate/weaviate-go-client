@@ -39,6 +39,8 @@ type Search struct {
 	withProperties []string
 	withReferences []*Reference
 	withMetadata   *Metadata
+
+	shardCursors map[string]string
 }
 
 func NewSearch(grpcClient *connection.GrpcClient) *Search {
@@ -67,6 +69,11 @@ func (s *Search) WithOffset(offset int) *Search {
 
 func (s *Search) WithAfter(after string) *Search {
 	s.after = after
+	return s
+}
+
+func (s *Search) WithShardCursors(cursors map[string]string) *Search {
+	s.shardCursors = cursors
 	return s
 }
 
@@ -174,6 +181,7 @@ func (s *Search) togrpc() *pb.SearchRequest {
 		Offset:           s.offset,
 		Autocut:          s.autocut,
 		After:            after,
+		ShardCursors:     s.shardCursors,
 		ConsistencyLevel: common.GetConsistencyLevel(s.consistencyLevel),
 	}
 	if s.withNearText != nil {
@@ -244,4 +252,15 @@ func (s *Search) Do(ctx context.Context) ([]SearchResult, error) {
 		return toResults(reply.Results), nil
 	}
 	return nil, fmt.Errorf("please provide gRPC config to the client in order to use search functionality")
+}
+
+func (s *Search) DoWithCursors(ctx context.Context) ([]SearchResult, map[string]string, error) {
+	if s.grpcClient == nil {
+		return nil, nil, fmt.Errorf("please provide gRPC config to the client in order to use search functionality")
+	}
+	reply, err := s.grpcClient.Search(ctx, s.togrpc())
+	if err != nil {
+		return nil, nil, err
+	}
+	return toResults(reply.Results), reply.ShardCursors, nil
 }
