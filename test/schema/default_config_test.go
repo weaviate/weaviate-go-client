@@ -14,6 +14,7 @@ var defaultInvertedIndexConfig = &models.InvertedIndexConfig{
 	Stopwords: &models.StopwordConfig{
 		Preset: "en",
 	},
+	UsingBlockMaxWAND: true,
 }
 
 var defaultModuleConfig = map[string]interface{}{
