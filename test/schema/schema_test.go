@@ -615,6 +615,73 @@ func TestSchema_integration(t *testing.T) {
 		require.Nil(t, errRm)
 	})
 
+	t.Run("HFresh index type", func(t *testing.T) {
+
+		client := testsuit.CreateTestClient(false)
+		targetVector := "hf"
+
+		schemaClass := &models.Class{
+			Class:               "HFresh1",
+			Description:         "Things about the universe",
+			ShardingConfig:      defaultShardingConfig,
+			InvertedIndexConfig: defaultInvertedIndexConfig,
+			VectorConfig: map[string]models.VectorConfig{
+				targetVector: {
+					VectorIndexType: "hfresh",
+					VectorIndexConfig: map[string]interface{}{
+						"searchProbe": float64(30.0),
+						"distance":    "cosine",
+						"replicas":    4,
+					},
+					Vectorizer: map[string]interface{}{
+						"none": map[string]interface{}{},
+					},
+				},
+			},
+		}
+
+		err := client.
+			Schema().
+			ClassCreator().
+			WithClass(schemaClass).
+			Do(context.Background())
+		require.Nil(t, err)
+
+		loadedSchema, getErr := client.Schema().Getter().Do(context.Background())
+		require.Nil(t, getErr)
+		require.Equal(t, 1, len(loadedSchema.Classes))
+
+		// update mutable field searchProbe
+		vectorConfig := loadedSchema.Classes[0].VectorConfig
+		vectorConfig[targetVector].VectorIndexConfig.(map[string]interface{})["searchProbe"] = float64(32.0)
+
+		err = client.Schema().ClassUpdater().WithClass(&models.Class{
+			Class:        schemaClass.Class,
+			VectorConfig: vectorConfig,
+		}).Do(context.Background())
+		require.Nil(t, err)
+
+		loadedSchema, getErr = client.Schema().Getter().Do(context.Background())
+		require.Nil(t, getErr)
+		require.Equal(t, 1, len(loadedSchema.Classes))
+		updatedVectorConfig := loadedSchema.Classes[0].VectorConfig[targetVector].VectorIndexConfig.(map[string]interface{})
+		assert.Equal(t, float64(32.0), updatedVectorConfig["searchProbe"].(float64))
+
+		// try to update immutable field replicas
+		vectorConfig = loadedSchema.Classes[0].VectorConfig
+		vectorConfig[targetVector].VectorIndexConfig.(map[string]interface{})["replicas"] = 5
+
+		err = client.Schema().ClassUpdater().WithClass(&models.Class{
+			Class:        schemaClass.Class,
+			VectorConfig: vectorConfig,
+		}).Do(context.Background())
+		require.NotNil(t, err)
+
+		// Clean up classes
+		errRm := client.Schema().AllDeleter().Do(context.Background())
+		require.Nil(t, errRm)
+	})
+
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
