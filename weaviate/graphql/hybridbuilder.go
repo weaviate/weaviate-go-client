@@ -168,7 +168,7 @@ func (h *HybridArgumentBuilder) togrpc() *pb.Hybrid {
 		hybrid.Properties = h.properties
 	}
 	if h.withAlpha {
-		hybrid.Alpha = h.alpha
+		hybrid.AlphaParam = &h.alpha
 	}
 	if !h.isVectorEmpty(h.vector) {
 		hybrid.Vectors = []*pb.Vectors{common.GetVector("", h.vector)}
