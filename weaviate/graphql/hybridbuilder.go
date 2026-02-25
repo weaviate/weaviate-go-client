@@ -168,6 +168,9 @@ func (h *HybridArgumentBuilder) togrpc() *pb.Hybrid {
 		hybrid.Properties = h.properties
 	}
 	if h.withAlpha {
+		// AlphaParam was introduced in v1.36 to disambiguate zero-value Alpha.
+		// We need to set both for backwards compatibility.
+		hybrid.Alpha = h.alpha //nolint: staticcheck
 		hybrid.AlphaParam = &h.alpha
 	}
 	if !h.isVectorEmpty(h.vector) {
