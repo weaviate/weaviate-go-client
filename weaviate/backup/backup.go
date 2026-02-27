@@ -56,6 +56,13 @@ func (s *API) Canceler() *BackupCanceler {
 	}
 }
 
+// RestoreCanceler creates a builder for "cancel backup restore" request.
+func (s *API) RestoreCanceler() *BackupRestoreCanceler {
+	return &BackupRestoreCanceler{
+		connection: s.connection,
+	}
+}
+
 // Lister creates a builder for "list backups" request.
 func (s *API) Lister() *BackupLister {
 	return &BackupLister{
