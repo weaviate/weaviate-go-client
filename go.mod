@@ -10,7 +10,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.40.0
 	github.com/testcontainers/testcontainers-go/modules/weaviate v0.40.0
-	github.com/weaviate/weaviate v1.36.0
+	github.com/weaviate/weaviate v1.36.2
 	go.nhat.io/grpcmock v0.33.0
 	golang.org/x/oauth2 v0.34.0
 	golang.org/x/sync v0.18.0
