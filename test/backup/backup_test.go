@@ -893,6 +893,50 @@ func TestBackups_integration(t *testing.T) {
 		waitForCreateStatus(t, ctx, client, backend, id, ent_backup.Cancelled)
 	})
 
+	t.Run("cancel restore", func(t *testing.T) {
+		testsuit.CreateTestSchemaAndData(t, client)
+		defer testsuit.CleanUpWeaviate(t, client)
+
+		class := "Pizza"
+		backend := backup.BACKEND_FILESYSTEM
+		id := fmt.Sprint(random.Int63())
+		ctx := context.Background()
+
+		assertAllPizzasExist(t, client)
+
+		// Create backup first
+		_, err := client.Backup().Creator().
+			WithIncludeClassNames(class).
+			WithBackend(backend).
+			WithBackupID(id).
+			WithWaitForCompletion(true).
+			Do(ctx)
+		require.NoError(t, err, "couldn't create backup")
+
+		// Remove existing class to allow restore
+		err = client.Schema().ClassDeleter().
+			WithClassName(class).
+			Do(ctx)
+		require.NoError(t, err, "couldn't delete class")
+
+		// Start restore without waiting
+		_, err = client.Backup().Restorer().
+			WithIncludeClassNames(class).
+			WithBackend(backend).
+			WithBackupID(id).
+			Do(ctx)
+		require.NoError(t, err, "couldn't start restore process")
+
+		// Cancel the restore
+		err = client.Backup().RestoreCanceler().
+			WithBackend(backend).
+			WithBackupID(id).
+			Do(ctx)
+		require.NoError(t, err, "cancel restore request failed")
+
+		waitForRestoreStatus(t, ctx, client, backend, id, ent_backup.Cancelled)
+	})
+
 	t.Run("list backups", func(t *testing.T) {
 		testsuit.CreateTestSchemaAndData(t, client)
 		defer testsuit.CleanUpWeaviate(t, client)
@@ -1081,4 +1125,18 @@ func waitForCreateStatus(t *testing.T, ctx context.Context, client *weaviate.Cli
 		require.NotNil(t, res.Status)
 		return *res.Status == string(want)
 	}, 5*time.Second, 100*time.Millisecond, "backup status %q not reached", want)
+}
+
+// waitForRestoreStatus periodically polls backup restore status until it reaches the desired (want) state or the context times out.
+// Status is requested every 100ms, timeout after 5s.
+func waitForRestoreStatus(t *testing.T, ctx context.Context, client *weaviate.Client, backend, id string, want ent_backup.Status) {
+	t.Helper()
+
+	statusCheck := client.Backup().RestoreStatusGetter().WithBackend(backend).WithBackupID(id)
+	require.Eventuallyf(t, func() bool {
+		res, err := statusCheck.Do(ctx)
+		require.NoError(t, err, "couldn't fetch restore status")
+		require.NotNil(t, res.Status)
+		return *res.Status == string(want)
+	}, 5*time.Second, 100*time.Millisecond, "restore status %q not reached", want)
 }
