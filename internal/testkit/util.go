@@ -30,5 +30,10 @@ func Ptr[T any](v T) *T { return &v }
 // in unit tests to ensure the test cases are valid.
 func RequirePointer(t *testing.T, v any, name string) {
 	t.Helper()
-	require.Equalf(t, reflect.Pointer, reflect.TypeOf(v).Kind(), "%q must be a pointer", name)
+	switch reflect.TypeOf(v).Kind() {
+	case reflect.Map, reflect.Slice, reflect.Chan, reflect.Pointer:
+		return
+	default:
+		require.FailNow(t, "%q must be a pointer", name)
+	}
 }
