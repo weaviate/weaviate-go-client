@@ -8,11 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/weaviate/weaviate-go-client/v6/backup"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 )
 
 type Client struct {
+	Backup      *backup.Client
 	Collections *collections.Client
 }
 
@@ -117,6 +119,7 @@ func newClient(_ context.Context, options []Option) (*Client, error) {
 
 	return &Client{
 		Collections: collections.NewClient(t),
+		Backup:      backup.NewClient(t),
 	}, nil
 }
 

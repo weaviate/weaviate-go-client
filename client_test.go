@@ -25,8 +25,8 @@ func TestNewLocal(t *testing.T) {
 		}
 
 		c, err := weaviate.NewLocal(t.Context())
-		assert.NotNil(t, c, "nil client")
 		assert.NoError(t, err)
+		assert.NotNil(t, c, "nil client")
 
 		assert.Equal(t, transport.Config{
 			Scheme:   "http",
@@ -61,8 +61,8 @@ func TestNewLocal(t *testing.T) {
 			weaviate.WithReadTimeout(20*time.Second),
 			weaviate.WithBatchTimeout(100*time.Millisecond),
 		)
-		assert.NotNil(t, c, "nil client")
 		assert.NoError(t, err)
+		assert.NotNil(t, c, "nil client")
 
 		assert.Equal(t, transport.Config{
 			// Defaults
@@ -99,8 +99,8 @@ func TestNewWeaviateCloud(t *testing.T) {
 		}
 
 		c, err := weaviate.NewWeaviateCloud(t.Context(), "example.com", "api-key")
-		assert.NotNil(t, c, "nil client")
 		assert.NoError(t, err)
+		assert.NotNil(t, c, "nil client")
 
 		assert.Equal(t, transport.Config{
 			Scheme:   "https",
@@ -132,8 +132,8 @@ func TestNewWeaviateCloud(t *testing.T) {
 				}
 
 				c, err := weaviate.NewWeaviateCloud(t.Context(), "my."+domain, "api-key")
-				assert.NotNil(t, c, "nil client")
 				assert.NoError(t, err)
+				assert.NotNil(t, c, "nil client")
 
 				assert.Equal(t, got.Header, http.Header{
 					"X-Weaviate-Client":      {"weaviate-client-go" + "/" + weaviate.Version()},
@@ -159,8 +159,8 @@ func TestNewWeaviateCloud(t *testing.T) {
 			weaviate.WithReadTimeout(20*time.Second),
 			weaviate.WithBatchTimeout(100*time.Millisecond),
 		)
-		assert.NotNil(t, c, "nil client")
 		assert.NoError(t, err)
+		assert.NotNil(t, c, "nil client")
 
 		assert.Equal(t, transport.Config{
 			Scheme:   "https",
@@ -178,5 +178,18 @@ func TestNewWeaviateCloud(t *testing.T) {
 				Batch: 100 * time.Millisecond,
 			},
 		}, got)
+	})
+
+	t.Run("namespaces", func(t *testing.T) {
+		transport.New = func(cfg transport.Config) (internal.Transport, error) {
+			return testkit.NopTransport, nil
+		}
+
+		c, err := weaviate.NewClient(t.Context())
+		assert.NoError(t, err)
+		assert.NotNil(t, c, "nil client")
+
+		assert.NotNil(t, c.Collections, "nil collections")
+		assert.NotNil(t, c.Backup, "nil backup")
 	})
 }
