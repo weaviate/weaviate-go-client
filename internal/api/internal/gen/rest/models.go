@@ -27,7 +27,9 @@ const (
 // Defines values for BackupCreateResponseStatus.
 const (
 	BackupCreateResponseStatusCANCELED     BackupCreateResponseStatus = "CANCELED"
+	BackupCreateResponseStatusCANCELLING   BackupCreateResponseStatus = "CANCELLING"
 	BackupCreateResponseStatusFAILED       BackupCreateResponseStatus = "FAILED"
+	BackupCreateResponseStatusFINALIZING   BackupCreateResponseStatus = "FINALIZING"
 	BackupCreateResponseStatusSTARTED      BackupCreateResponseStatus = "STARTED"
 	BackupCreateResponseStatusSUCCESS      BackupCreateResponseStatus = "SUCCESS"
 	BackupCreateResponseStatusTRANSFERRED  BackupCreateResponseStatus = "TRANSFERRED"
@@ -37,7 +39,9 @@ const (
 // Defines values for BackupCreateStatusResponseStatus.
 const (
 	BackupCreateStatusResponseStatusCANCELED     BackupCreateStatusResponseStatus = "CANCELED"
+	BackupCreateStatusResponseStatusCANCELLING   BackupCreateStatusResponseStatus = "CANCELLING"
 	BackupCreateStatusResponseStatusFAILED       BackupCreateStatusResponseStatus = "FAILED"
+	BackupCreateStatusResponseStatusFINALIZING   BackupCreateStatusResponseStatus = "FINALIZING"
 	BackupCreateStatusResponseStatusSTARTED      BackupCreateStatusResponseStatus = "STARTED"
 	BackupCreateStatusResponseStatusSUCCESS      BackupCreateStatusResponseStatus = "SUCCESS"
 	BackupCreateStatusResponseStatusTRANSFERRED  BackupCreateStatusResponseStatus = "TRANSFERRED"
@@ -47,7 +51,9 @@ const (
 // Defines values for BackupListResponseStatus.
 const (
 	BackupListResponseStatusCANCELED     BackupListResponseStatus = "CANCELED"
+	BackupListResponseStatusCANCELLING   BackupListResponseStatus = "CANCELLING"
 	BackupListResponseStatusFAILED       BackupListResponseStatus = "FAILED"
+	BackupListResponseStatusFINALIZING   BackupListResponseStatus = "FINALIZING"
 	BackupListResponseStatusSTARTED      BackupListResponseStatus = "STARTED"
 	BackupListResponseStatusSUCCESS      BackupListResponseStatus = "SUCCESS"
 	BackupListResponseStatusTRANSFERRED  BackupListResponseStatus = "TRANSFERRED"
@@ -57,7 +63,9 @@ const (
 // Defines values for BackupRestoreResponseStatus.
 const (
 	BackupRestoreResponseStatusCANCELED     BackupRestoreResponseStatus = "CANCELED"
+	BackupRestoreResponseStatusCANCELLING   BackupRestoreResponseStatus = "CANCELLING"
 	BackupRestoreResponseStatusFAILED       BackupRestoreResponseStatus = "FAILED"
+	BackupRestoreResponseStatusFINALIZING   BackupRestoreResponseStatus = "FINALIZING"
 	BackupRestoreResponseStatusSTARTED      BackupRestoreResponseStatus = "STARTED"
 	BackupRestoreResponseStatusSUCCESS      BackupRestoreResponseStatus = "SUCCESS"
 	BackupRestoreResponseStatusTRANSFERRED  BackupRestoreResponseStatus = "TRANSFERRED"
@@ -67,7 +75,9 @@ const (
 // Defines values for BackupRestoreStatusResponseStatus.
 const (
 	BackupRestoreStatusResponseStatusCANCELED     BackupRestoreStatusResponseStatus = "CANCELED"
+	BackupRestoreStatusResponseStatusCANCELLING   BackupRestoreStatusResponseStatus = "CANCELLING"
 	BackupRestoreStatusResponseStatusFAILED       BackupRestoreStatusResponseStatus = "FAILED"
+	BackupRestoreStatusResponseStatusFINALIZING   BackupRestoreStatusResponseStatus = "FINALIZING"
 	BackupRestoreStatusResponseStatusSTARTED      BackupRestoreStatusResponseStatus = "STARTED"
 	BackupRestoreStatusResponseStatusSUCCESS      BackupRestoreStatusResponseStatus = "SUCCESS"
 	BackupRestoreStatusResponseStatusTRANSFERRED  BackupRestoreStatusResponseStatus = "TRANSFERRED"
@@ -98,6 +108,19 @@ const (
 const (
 	DBUserInfoDbUserTypeDbEnvUser DBUserInfoDbUserType = "db_env_user"
 	DBUserInfoDbUserTypeDbUser    DBUserInfoDbUserType = "db_user"
+)
+
+// Defines values for ExportCreateResponseStatus.
+const (
+	ExportCreateResponseStatusSTARTED ExportCreateResponseStatus = "STARTED"
+)
+
+// Defines values for ExportStatusResponseStatus.
+const (
+	ExportStatusResponseStatusFAILED       ExportStatusResponseStatus = "FAILED"
+	ExportStatusResponseStatusSTARTED      ExportStatusResponseStatus = "STARTED"
+	ExportStatusResponseStatusSUCCESS      ExportStatusResponseStatus = "SUCCESS"
+	ExportStatusResponseStatusTRANSFERRING ExportStatusResponseStatus = "TRANSFERRING"
 )
 
 // Defines values for GroupType.
@@ -136,8 +159,8 @@ const (
 
 // Defines values for ObjectsGetResponseResultStatus.
 const (
-	ObjectsGetResponseResultStatusFAILED  ObjectsGetResponseResultStatus = "FAILED"
-	ObjectsGetResponseResultStatusSUCCESS ObjectsGetResponseResultStatus = "SUCCESS"
+	FAILED  ObjectsGetResponseResultStatus = "FAILED"
+	SUCCESS ObjectsGetResponseResultStatus = "SUCCESS"
 )
 
 // Defines values for PermissionAction.
@@ -242,6 +265,14 @@ const (
 const (
 	All       RestoreConfigUsersOptions = "all"
 	NoRestore RestoreConfigUsersOptions = "noRestore"
+)
+
+// Defines values for ShardProgressStatus.
+const (
+	ShardProgressStatusFAILED       ShardProgressStatus = "FAILED"
+	ShardProgressStatusSTARTED      ShardProgressStatus = "STARTED"
+	ShardProgressStatusSUCCESS      ShardProgressStatus = "SUCCESS"
+	ShardProgressStatusTRANSFERRING ShardProgressStatus = "TRANSFERRING"
 )
 
 // Defines values for StatisticsStatus.
@@ -412,6 +443,9 @@ type BackupCreateRequest struct {
 
 	// Include List of collections to include in the backup creation process. If not set, all collections are included. Cannot be used together with `exclude`.
 	Include []string `json:"include,omitempty"`
+
+	// IncrementalBaseBackupId The ID of an existing backup to use as the base for a file-based incremental backup. If set, only files that have changed since the base backup will be included in the new backup.
+	IncrementalBaseBackupId string `json:"incremental_base_backup_id"`
 }
 
 // BackupCreateResponse The definition of a backup create response body
@@ -871,6 +905,84 @@ type ErrorResponse struct {
 		Message string `json:"message,omitempty"`
 	} `json:"error,omitempty"`
 }
+
+// ExportCreateRequest Request to create a new export operation
+type ExportCreateRequest struct {
+	// Config Backend-specific configuration
+	Config struct {
+		// Bucket Bucket, container, or volume name for cloud storage backends
+		Bucket string `json:"bucket,omitempty"`
+
+		// Path Path prefix within the bucket or filesystem
+		Path string `json:"path,omitempty"`
+	} `json:"config,omitempty"`
+
+	// Exclude List of collection names to exclude from the export. Cannot be used with 'include'.
+	Exclude []string `json:"exclude,omitempty"`
+
+	// Id Unique identifier for this export. Must be URL-safe.
+	Id string `json:"id"`
+
+	// Include List of collection names to include in the export. Cannot be used with 'exclude'.
+	Include []string `json:"include,omitempty"`
+}
+
+// ExportCreateResponse Response from creating an export operation
+type ExportCreateResponse struct {
+	// Backend The backend storage system used
+	Backend string `json:"backend,omitempty"`
+
+	// Classes List of collections being exported
+	Classes []string `json:"classes,omitempty"`
+
+	// Id Unique identifier for this export
+	Id string `json:"id,omitempty"`
+
+	// Path Full path where the export is being written
+	Path string `json:"path,omitempty"`
+
+	// StartedAt When the export started
+	StartedAt time.Time `json:"startedAt,omitempty"`
+
+	// Status Current status of the export
+	Status ExportCreateResponseStatus `json:"status,omitempty"`
+}
+
+// ExportCreateResponseStatus Current status of the export
+type ExportCreateResponseStatus string
+
+// ExportStatusResponse Current status of an export operation
+type ExportStatusResponse struct {
+	// Backend The backend storage system used
+	Backend string `json:"backend,omitempty"`
+
+	// Classes List of collections in this export
+	Classes []string `json:"classes,omitempty"`
+
+	// Error Error message if export failed
+	Error string `json:"error,omitempty"`
+
+	// Id Unique identifier for this export
+	Id string `json:"id,omitempty"`
+
+	// Path Full path where the export is stored
+	Path string `json:"path,omitempty"`
+
+	// ShardStatus Per-shard progress: className -> shardName -> status
+	ShardStatus map[string]map[string]ShardProgress `json:"shardStatus,omitempty"`
+
+	// StartedAt When the export started
+	StartedAt time.Time `json:"startedAt,omitempty"`
+
+	// Status Current status of the export
+	Status ExportStatusResponseStatus `json:"status,omitempty"`
+
+	// TookInMs Duration of the export in milliseconds
+	TookInMs int64 `json:"tookInMs,omitempty"`
+}
+
+// ExportStatusResponseStatus Current status of the export
+type ExportStatusResponseStatus string
 
 // GeoCoordinates defines model for GeoCoordinates.
 type GeoCoordinates struct {
@@ -1671,6 +1783,21 @@ type Schema struct {
 	Name string `json:"name,omitempty"`
 }
 
+// ShardProgress Progress information for exporting a single shard
+type ShardProgress struct {
+	// Error Error message if this shard's export failed
+	Error string `json:"error,omitempty"`
+
+	// ObjectsExported Number of objects exported from this shard
+	ObjectsExported int64 `json:"objectsExported,omitempty"`
+
+	// Status Status of this shard's export
+	Status ShardProgressStatus `json:"status,omitempty"`
+}
+
+// ShardProgressStatus Status of this shard's export
+type ShardProgressStatus string
+
 // ShardStatus The status of a single shard
 type ShardStatus struct {
 	// Status Status of the shard
@@ -2041,6 +2168,15 @@ type BatchReferencesCreateParams struct {
 	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
 }
 
+// ExportStatusParams defines parameters for ExportStatus.
+type ExportStatusParams struct {
+	// Bucket Optional bucket name where the export is stored. If not specified, uses the backend's default bucket.
+	Bucket string `form:"bucket,omitempty" json:"bucket,omitempty"`
+
+	// Path Optional path prefix within the bucket. If not specified, uses the backend's default path.
+	Path string `form:"path,omitempty" json:"path,omitempty"`
+}
+
 // NodesGetParams defines parameters for NodesGet.
 type NodesGetParams struct {
 	// Output Controls the verbosity of the output, possible values are: `minimal`, `verbose`. Defaults to `minimal`.
@@ -2366,6 +2502,9 @@ type BatchReferencesCreateJSONRequestBody = BatchReferencesCreateJSONBody
 
 // ClassificationsPostJSONRequestBody defines body for ClassificationsPost for application/json ContentType.
 type ClassificationsPostJSONRequestBody = Classification
+
+// ExportCreateJSONRequestBody defines body for ExportCreate for application/json ContentType.
+type ExportCreateJSONRequestBody = ExportCreateRequest
 
 // GraphqlPostJSONRequestBody defines body for GraphqlPost for application/json ContentType.
 type GraphqlPostJSONRequestBody = GraphQLQuery
