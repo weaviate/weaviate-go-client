@@ -10,7 +10,7 @@ import (
 )
 
 func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
-	dev.AssertNotNil(t, "t")
+	dev.AssertNotNil(t, "transport")
 
 	return &Client{
 		transport:  t,
