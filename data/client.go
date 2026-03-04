@@ -14,7 +14,7 @@ import (
 )
 
 func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
-	dev.AssertNotNil(t, "nil transport")
+	dev.AssertNotNil(t, "transport")
 
 	return &Client{
 		transport: t,
