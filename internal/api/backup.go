@@ -11,14 +11,15 @@ import (
 )
 
 type BackupInfo struct {
-	Backend     string
-	ID          string
-	Path        string
-	Error       string
-	Status      BackupStatus
-	StartedAt   time.Time
-	CompletedAt time.Time
+	Backend string
+	ID      string
+	Bucket  string
+	Path    string
+	Error   string
+	Status  BackupStatus
 
+	StartedAt           *time.Time
+	CompletedAt         *time.Time
 	IncludesCollections []string
 	SizeGiB             *float32
 }
@@ -43,9 +44,11 @@ const (
 	BackupStatusStarted      BackupStatus = BackupStatus(rest.BackupListResponseStatusSTARTED)
 	BackupStatusTransferring BackupStatus = BackupStatus(rest.BackupListResponseStatusTRANSFERRING)
 	BackupStatusTransferred  BackupStatus = BackupStatus(rest.BackupListResponseStatusTRANSFERRED)
+	BackupStatusFinalizing   BackupStatus = BackupStatus(rest.BackupListResponseStatusFINALIZING)
+	BackupStatusCanceling    BackupStatus = BackupStatus(rest.BackupListResponseStatusCANCELLING)
+	BackupStatusCanceled     BackupStatus = BackupStatus(rest.BackupListResponseStatusCANCELED)
 	BackupStatusSuccess      BackupStatus = BackupStatus(rest.BackupListResponseStatusSUCCESS)
 	BackupStatusFailed       BackupStatus = BackupStatus(rest.BackupListResponseStatusFAILED)
-	BackupStatusCanceled     BackupStatus = BackupStatus(rest.BackupListResponseStatusCANCELED)
 )
 
 type RBACRestoreOption string
@@ -65,17 +68,17 @@ const (
 type CreateBackupRequest struct {
 	transports.BaseEndpoint
 
-	Backend                 string // Required: backend storage.
-	ID                      string // Required: backup ID.
-	BackupPath              string
-	Endpoint                string
-	Bucket                  string
-	IncludeCollections      []string
-	ExcludeCollections      []string
-	MaxCPUPercentage        int
-	ChunkSizeMiB            int
-	CompressionLevel        BackupCompressionLevel
-	IncrementalBackupBaseID string
+	Backend            string // Required: backend storage.
+	ID                 string // Required: backup ID.
+	BackupPath         string
+	Endpoint           string
+	Bucket             string
+	IncludeCollections []string
+	ExcludeCollections []string
+	PrefixIncremental  string
+	MaxCPUPercentage   int
+	ChunkSizeMiB       int
+	CompressionLevel   BackupCompressionLevel
 }
 
 // Compile-time assertion that CreateBackupRequest implements [transports.Endpoint].
@@ -183,7 +186,7 @@ func (r *CreateBackupRequest) MarshalJSON() ([]byte, error) {
 		Id:                      r.ID,
 		Include:                 r.IncludeCollections,
 		Exclude:                 r.ExcludeCollections,
-		IncrementalBaseBackupId: r.IncrementalBackupBaseID,
+		IncrementalBaseBackupId: r.PrefixIncremental,
 		Config: rest.BackupConfig{
 			Path:             r.BackupPath,
 			Bucket:           r.Bucket,
@@ -218,16 +221,17 @@ func (r *RestoreBackupRequest) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 func (b *BackupInfo) UnmarshalJSON(data []byte) error {
 	var bak struct {
-		ID          string       `json:"id,omitempty"`
-		Path        string       `json:"path,omitempty"`
-		Backend     string       `json:"backend,omitempty"`
-		Error       string       `json:"error,omitempty"`
-		Status      BackupStatus `json:"status,omitempty"`
-		StartedAt   time.Time    `json:"startedAt"`
-		CompletedAt time.Time    `json:"completedAt"`
+		Backend string       `json:"backend,omitempty"`
+		ID      string       `json:"id,omitempty"`
+		Bucket  string       `json:"bucket,omitempty"`
+		Path    string       `json:"path,omitempty"`
+		Error   string       `json:"error,omitempty"`
+		Status  BackupStatus `json:"status,omitempty"`
 
-		IncludesCollections []string `json:"classes,omitempty"`
-		SizeGiB             *float32 `json:"size,omitempty"`
+		IncludesCollections []string   `json:"classes,omitempty"`
+		StartedAt           *time.Time `json:"startedAt,omitempty"`
+		CompletedAt         *time.Time `json:"completedAt,omitempty"`
+		SizeGiB             *float32   `json:"size,omitempty"`
 	}
 
 	if err := json.Unmarshal(data, &bak); err != nil {
@@ -237,6 +241,7 @@ func (b *BackupInfo) UnmarshalJSON(data []byte) error {
 	*b = BackupInfo{
 		Backend:             bak.Backend,
 		ID:                  bak.ID,
+		Bucket:              bak.Bucket,
 		Path:                bak.Path,
 		Error:               bak.Error,
 		Status:              bak.Status,
