@@ -110,11 +110,6 @@ const (
 	DBUserInfoDbUserTypeDbUser    DBUserInfoDbUserType = "db_user"
 )
 
-// Defines values for ExportCreateRequestFileFormat.
-const (
-	Parquet ExportCreateRequestFileFormat = "parquet"
-)
-
 // Defines values for ExportCreateResponseStatus.
 const (
 	ExportCreateResponseStatusSTARTED ExportCreateResponseStatus = "STARTED"
@@ -122,9 +117,7 @@ const (
 
 // Defines values for ExportStatusResponseStatus.
 const (
-	ExportStatusResponseStatusCANCELED     ExportStatusResponseStatus = "CANCELED"
 	ExportStatusResponseStatusFAILED       ExportStatusResponseStatus = "FAILED"
-	ExportStatusResponseStatusSKIPPED      ExportStatusResponseStatus = "SKIPPED"
 	ExportStatusResponseStatusSTARTED      ExportStatusResponseStatus = "STARTED"
 	ExportStatusResponseStatusSUCCESS      ExportStatusResponseStatus = "SUCCESS"
 	ExportStatusResponseStatusTRANSFERRING ExportStatusResponseStatus = "TRANSFERRING"
@@ -276,9 +269,7 @@ const (
 
 // Defines values for ShardProgressStatus.
 const (
-	ShardProgressStatusCANCELED     ShardProgressStatus = "CANCELED"
 	ShardProgressStatusFAILED       ShardProgressStatus = "FAILED"
-	ShardProgressStatusSKIPPED      ShardProgressStatus = "SKIPPED"
 	ShardProgressStatusSTARTED      ShardProgressStatus = "STARTED"
 	ShardProgressStatusSUCCESS      ShardProgressStatus = "SUCCESS"
 	ShardProgressStatusTRANSFERRING ShardProgressStatus = "TRANSFERRING"
@@ -929,18 +920,12 @@ type ExportCreateRequest struct {
 	// Exclude List of collection names to exclude from the export. Cannot be used with 'include'.
 	Exclude []string `json:"exclude,omitempty"`
 
-	// FileFormat Output file format for the export.
-	FileFormat ExportCreateRequestFileFormat `json:"file_format"`
-
 	// Id Unique identifier for this export. Must be URL-safe.
 	Id string `json:"id"`
 
 	// Include List of collection names to include in the export. Cannot be used with 'exclude'.
 	Include []string `json:"include,omitempty"`
 }
-
-// ExportCreateRequestFileFormat Output file format for the export.
-type ExportCreateRequestFileFormat string
 
 // ExportCreateResponse Response from creating an export operation
 type ExportCreateResponse struct {
@@ -973,9 +958,6 @@ type ExportStatusResponse struct {
 
 	// Classes List of collections in this export
 	Classes []string `json:"classes,omitempty"`
-
-	// CompletedAt When the export completed (successfully, with failure, or was canceled)
-	CompletedAt time.Time `json:"completedAt,omitempty"`
 
 	// Error Error message if export failed
 	Error string `json:"error,omitempty"`
@@ -1809,9 +1791,6 @@ type ShardProgress struct {
 	// ObjectsExported Number of objects exported from this shard
 	ObjectsExported int64 `json:"objectsExported,omitempty"`
 
-	// SkipReason Reason why this shard was skipped (e.g. tenant status)
-	SkipReason string `json:"skipReason,omitempty"`
-
 	// Status Status of this shard's export
 	Status ShardProgressStatus `json:"status,omitempty"`
 }
@@ -2187,15 +2166,6 @@ type BatchReferencesCreateJSONBody = []BatchReference
 type BatchReferencesCreateParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
 	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
-}
-
-// ExportCancelParams defines parameters for ExportCancel.
-type ExportCancelParams struct {
-	// Bucket Optional bucket name where the export is stored.
-	Bucket string `form:"bucket,omitempty" json:"bucket,omitempty"`
-
-	// Path Optional path prefix within the bucket.
-	Path string `form:"path,omitempty" json:"path,omitempty"`
 }
 
 // ExportStatusParams defines parameters for ExportStatus.
