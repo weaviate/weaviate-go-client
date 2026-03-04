@@ -1,12 +1,12 @@
 package testkit
 
 import (
-	"errors"
 	"reflect"
 	"testing"
 	"time"
 
-	"github.com/go-openapi/testify/v2/require"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // Now is constant across the entire test run.
@@ -19,16 +19,16 @@ import (
 // [compare time]: https://github.com/stretchr/testify/issues/502
 var Now = time.Date(6, time.Month(5), 4, 3, 2, 1, 0, time.Local)
 
-// ErrWhaam is a stub error tests can use to verify some error is being propagated.
-// The error message is an allusion to [Roy Lichtenstein's dyptich].
-//
-// [Roy Lichtenstein's dyptich]: https://en.wikipedia.org/wiki/Whaam!
-var ErrWhaam = errors.New("Whaam!") // nolint:staticcheck
+// UUID is a stub UUID tests can use to verify the correct UUID is used.
+var UUID = uuid.New()
 
-// IsPointer asserts that v is a pointer. If the assertion fails,
-// the test t will fail immediately. Use IsPointer as a pre-condition
+// Ptr is a helper for passing pointers to constants.
+func Ptr[T any](v T) *T { return &v }
+
+// RequirePointer asserts that v is a pointer. If the assertion fails,
+// the test t will fail immediately. Use RequirePointer as a pre-condition
 // in unit tests to ensure the test cases are valid.
-func IsPointer(t *testing.T, v any, name string) {
+func RequirePointer(t *testing.T, v any, name string) {
 	t.Helper()
 	require.Equalf(t, reflect.Pointer, reflect.TypeOf(v).Kind(), "%q must be a pointer", name)
 }
