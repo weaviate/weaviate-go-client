@@ -30,7 +30,9 @@ import (
 // from internal/api/gen/rest package, as it is guaranteed to produce a valid
 // JSON, giving you a more useful comparison in the tests.
 func TestRESTRequests(t *testing.T) {
-	for _, tt := range []struct {
+	for _, tt := range testkit.WithOnly(t, []struct {
+		testkit.Only
+
 		name string
 		req  any // Request object.
 
@@ -415,7 +417,130 @@ func TestRESTRequests(t *testing.T) {
 			wantMethod: http.MethodDelete,
 			wantPath:   "/schema/Songs",
 		},
-	} {
+		{
+			name: "create backup request",
+			req: &api.CreateBackupRequest{
+				Backend:                 "filesystem",
+				ID:                      "bak-1",
+				BackupPath:              "/path/to/backup",
+				Endpoint:                "s3.amazonaws.com",
+				Bucket:                  "my-backups",
+				IncludeCollections:      []string{"Songs"},
+				ExcludeCollections:      []string{"Pizza"},
+				MaxCPUPercentage:        92,
+				ChunkSizeMiB:            20,
+				CompressionLevel:        api.BackupCompressionLevelDefault,
+				IncrementalBackupBaseID: "incr-bak-",
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/backups/filesystem",
+			wantBody: &rest.BackupCreateRequest{
+				Id:                      "bak-1",
+				Include:                 []string{"Songs"},
+				Exclude:                 []string{"Pizza"},
+				IncrementalBaseBackupId: "incr-bak-",
+				Config: rest.BackupConfig{
+					Path:             "/path/to/backup",
+					Bucket:           "my-backups",
+					Endpoint:         "s3.amazonaws.com",
+					CPUPercentage:    92,
+					ChunkSize:        20,
+					CompressionLevel: rest.DefaultCompression,
+				},
+			},
+		},
+		{
+			name: "restore backup request",
+			req: &api.RestoreBackupRequest{
+				Backend:            "filesystem",
+				ID:                 "bak-1",
+				BackupPath:         "/path/to/backup",
+				Endpoint:           "s3.amazonaws.com",
+				Bucket:             "my-backups",
+				IncludeCollections: []string{"Songs"},
+				ExcludeCollections: []string{"Pizza"},
+				MaxCPUPercentage:   92,
+				OverwriteAlias:     true,
+				RestoreUsers:       api.RBACRestoreAll,
+				RestoreRoles:       api.RBACRestoreNone,
+				NodeMapping:        map[string]string{"node-1": "node-a"},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/backups/filesystem/bak-1/restore",
+			wantBody: &rest.BackupRestoreRequest{
+				Include:        []string{"Songs"},
+				Exclude:        []string{"Pizza"},
+				OverwriteAlias: true,
+				NodeMapping:    map[string]string{"node-1": "node-a"},
+				Config: rest.RestoreConfig{
+					Path:          "/path/to/backup",
+					Bucket:        "my-backups",
+					Endpoint:      "s3.amazonaws.com",
+					CPUPercentage: 92,
+					UsersOptions:  rest.All,
+					RolesOptions:  rest.RestoreConfigRolesOptionsNoRestore,
+				},
+			},
+		},
+		{
+			name: "get backup create status",
+			req: &api.BackupStatusRequest{
+				Backend:   "filesystem",
+				ID:        "bak-1",
+				Operation: api.BackupOperationCreate,
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/backups/filesystem/bak-1",
+		},
+		{
+			name: "get backup restore status",
+			req: &api.BackupStatusRequest{
+				Backend:   "filesystem",
+				ID:        "bak-1",
+				Operation: api.BackupOperationRestore,
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/backups/filesystem/bak-1/restore",
+		},
+		{
+			name: "list backups",
+			req: &api.ListBackupsRequest{
+				Backend: "filesystem",
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/backups/filesystem",
+		},
+		{
+			name: "list backups order by starting time",
+			req: &api.ListBackupsRequest{
+				Backend:         "filesystem",
+				StartingTimeAsc: true,
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/backups/filesystem",
+			wantQuery:  url.Values{"order": {"asc"}},
+		},
+		{
+			name: "cancel backup create",
+			req: &api.CancelBackupRequest{
+				Backend:   "filesystem",
+				ID:        "bak-1",
+				Operation: api.BackupOperationCreate,
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/backups/filesystem/bak-1",
+		},
+		{
+			name: "cancel backup restore",
+			req: &api.CancelBackupRequest{
+				Backend:   "filesystem",
+				ID:        "bak-1",
+				Operation: api.BackupOperationRestore,
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/backups/filesystem/bak-1/restore",
+		},
+	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)
 			endpoint := (tt.req).(transports.Endpoint)
