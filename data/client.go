@@ -14,7 +14,7 @@ import (
 )
 
 func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
-	dev.AssertNotNil(t, "nil transport")
+	dev.AssertNotNil(t, "transport")
 
 	return &Client{
 		transport: t,
@@ -63,8 +63,8 @@ func (c *Client) Insert(ctx context.Context, o *Object) (*types.Object[map[strin
 
 	return &types.Object[map[string]any]{
 		UUID:          resp.UUID,
-		CreatedAt:     resp.CreatedAt,
-		LastUpdatedAt: resp.LastUpdatedAt,
+		CreatedAt:     &resp.CreatedAt,
+		LastUpdatedAt: &resp.LastUpdatedAt,
 		Properties:    resp.Properties,
 		Vectors:       newVectors(resp.Vectors),
 		References:    newReferences(resp.References),
@@ -91,8 +91,8 @@ func (c *Client) Replace(ctx context.Context, o Object) (*types.Object[map[strin
 
 	return &types.Object[map[string]any]{
 		UUID:          resp.UUID,
-		CreatedAt:     resp.CreatedAt,
-		LastUpdatedAt: resp.LastUpdatedAt,
+		CreatedAt:     &resp.CreatedAt,
+		LastUpdatedAt: &resp.LastUpdatedAt,
 		Properties:    resp.Properties,
 		Vectors:       newVectors(resp.Vectors),
 		References:    newReferences(resp.References),

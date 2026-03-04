@@ -27,7 +27,9 @@ const (
 // Defines values for BackupCreateResponseStatus.
 const (
 	BackupCreateResponseStatusCANCELED     BackupCreateResponseStatus = "CANCELED"
+	BackupCreateResponseStatusCANCELLING   BackupCreateResponseStatus = "CANCELLING"
 	BackupCreateResponseStatusFAILED       BackupCreateResponseStatus = "FAILED"
+	BackupCreateResponseStatusFINALIZING   BackupCreateResponseStatus = "FINALIZING"
 	BackupCreateResponseStatusSTARTED      BackupCreateResponseStatus = "STARTED"
 	BackupCreateResponseStatusSUCCESS      BackupCreateResponseStatus = "SUCCESS"
 	BackupCreateResponseStatusTRANSFERRED  BackupCreateResponseStatus = "TRANSFERRED"
@@ -37,7 +39,9 @@ const (
 // Defines values for BackupCreateStatusResponseStatus.
 const (
 	BackupCreateStatusResponseStatusCANCELED     BackupCreateStatusResponseStatus = "CANCELED"
+	BackupCreateStatusResponseStatusCANCELLING   BackupCreateStatusResponseStatus = "CANCELLING"
 	BackupCreateStatusResponseStatusFAILED       BackupCreateStatusResponseStatus = "FAILED"
+	BackupCreateStatusResponseStatusFINALIZING   BackupCreateStatusResponseStatus = "FINALIZING"
 	BackupCreateStatusResponseStatusSTARTED      BackupCreateStatusResponseStatus = "STARTED"
 	BackupCreateStatusResponseStatusSUCCESS      BackupCreateStatusResponseStatus = "SUCCESS"
 	BackupCreateStatusResponseStatusTRANSFERRED  BackupCreateStatusResponseStatus = "TRANSFERRED"
@@ -47,7 +51,9 @@ const (
 // Defines values for BackupListResponseStatus.
 const (
 	BackupListResponseStatusCANCELED     BackupListResponseStatus = "CANCELED"
+	BackupListResponseStatusCANCELLING   BackupListResponseStatus = "CANCELLING"
 	BackupListResponseStatusFAILED       BackupListResponseStatus = "FAILED"
+	BackupListResponseStatusFINALIZING   BackupListResponseStatus = "FINALIZING"
 	BackupListResponseStatusSTARTED      BackupListResponseStatus = "STARTED"
 	BackupListResponseStatusSUCCESS      BackupListResponseStatus = "SUCCESS"
 	BackupListResponseStatusTRANSFERRED  BackupListResponseStatus = "TRANSFERRED"
@@ -57,7 +63,9 @@ const (
 // Defines values for BackupRestoreResponseStatus.
 const (
 	BackupRestoreResponseStatusCANCELED     BackupRestoreResponseStatus = "CANCELED"
+	BackupRestoreResponseStatusCANCELLING   BackupRestoreResponseStatus = "CANCELLING"
 	BackupRestoreResponseStatusFAILED       BackupRestoreResponseStatus = "FAILED"
+	BackupRestoreResponseStatusFINALIZING   BackupRestoreResponseStatus = "FINALIZING"
 	BackupRestoreResponseStatusSTARTED      BackupRestoreResponseStatus = "STARTED"
 	BackupRestoreResponseStatusSUCCESS      BackupRestoreResponseStatus = "SUCCESS"
 	BackupRestoreResponseStatusTRANSFERRED  BackupRestoreResponseStatus = "TRANSFERRED"
@@ -67,7 +75,9 @@ const (
 // Defines values for BackupRestoreStatusResponseStatus.
 const (
 	BackupRestoreStatusResponseStatusCANCELED     BackupRestoreStatusResponseStatus = "CANCELED"
+	BackupRestoreStatusResponseStatusCANCELLING   BackupRestoreStatusResponseStatus = "CANCELLING"
 	BackupRestoreStatusResponseStatusFAILED       BackupRestoreStatusResponseStatus = "FAILED"
+	BackupRestoreStatusResponseStatusFINALIZING   BackupRestoreStatusResponseStatus = "FINALIZING"
 	BackupRestoreStatusResponseStatusSTARTED      BackupRestoreStatusResponseStatus = "STARTED"
 	BackupRestoreStatusResponseStatusSUCCESS      BackupRestoreStatusResponseStatus = "SUCCESS"
 	BackupRestoreStatusResponseStatusTRANSFERRED  BackupRestoreStatusResponseStatus = "TRANSFERRED"
@@ -98,6 +108,19 @@ const (
 const (
 	DBUserInfoDbUserTypeDbEnvUser DBUserInfoDbUserType = "db_env_user"
 	DBUserInfoDbUserTypeDbUser    DBUserInfoDbUserType = "db_user"
+)
+
+// Defines values for ExportCreateResponseStatus.
+const (
+	ExportCreateResponseStatusSTARTED ExportCreateResponseStatus = "STARTED"
+)
+
+// Defines values for ExportStatusResponseStatus.
+const (
+	ExportStatusResponseStatusFAILED       ExportStatusResponseStatus = "FAILED"
+	ExportStatusResponseStatusSTARTED      ExportStatusResponseStatus = "STARTED"
+	ExportStatusResponseStatusSUCCESS      ExportStatusResponseStatus = "SUCCESS"
+	ExportStatusResponseStatusTRANSFERRING ExportStatusResponseStatus = "TRANSFERRING"
 )
 
 // Defines values for GroupType.
@@ -136,8 +159,8 @@ const (
 
 // Defines values for ObjectsGetResponseResultStatus.
 const (
-	ObjectsGetResponseResultStatusFAILED  ObjectsGetResponseResultStatus = "FAILED"
-	ObjectsGetResponseResultStatusSUCCESS ObjectsGetResponseResultStatus = "SUCCESS"
+	FAILED  ObjectsGetResponseResultStatus = "FAILED"
+	SUCCESS ObjectsGetResponseResultStatus = "SUCCESS"
 )
 
 // Defines values for PermissionAction.
@@ -244,6 +267,14 @@ const (
 	NoRestore RestoreConfigUsersOptions = "noRestore"
 )
 
+// Defines values for ShardProgressStatus.
+const (
+	ShardProgressStatusFAILED       ShardProgressStatus = "FAILED"
+	ShardProgressStatusSTARTED      ShardProgressStatus = "STARTED"
+	ShardProgressStatusSUCCESS      ShardProgressStatus = "SUCCESS"
+	ShardProgressStatusTRANSFERRING ShardProgressStatus = "TRANSFERRING"
+)
+
 // Defines values for StatisticsStatus.
 const (
 	StatisticsStatusHEALTHY     StatisticsStatus = "HEALTHY"
@@ -329,6 +360,13 @@ const (
 	BatchObjectsCreateJSONBodyFieldsSchema           BatchObjectsCreateJSONBodyFields = "schema"
 )
 
+// Defines values for SchemaObjectsPropertiesDeleteParamsIndexName.
+const (
+	Filterable   SchemaObjectsPropertiesDeleteParamsIndexName = "filterable"
+	RangeFilters SchemaObjectsPropertiesDeleteParamsIndexName = "rangeFilters"
+	Searchable   SchemaObjectsPropertiesDeleteParamsIndexName = "searchable"
+)
+
 // AdditionalProperties (Response only) Additional meta information about a single object.
 type AdditionalProperties map[string]map[string]interface{}
 
@@ -405,6 +443,9 @@ type BackupCreateRequest struct {
 
 	// Include List of collections to include in the backup creation process. If not set, all collections are included. Cannot be used together with `exclude`.
 	Include []string `json:"include,omitempty"`
+
+	// IncrementalBaseBackupId The ID of an existing backup to use as the base for a file-based incremental backup. If set, only files that have changed since the base backup will be included in the new backup.
+	IncrementalBaseBackupId string `json:"incremental_base_backup_id"`
 }
 
 // BackupCreateResponse The definition of a backup create response body
@@ -865,6 +906,84 @@ type ErrorResponse struct {
 	} `json:"error,omitempty"`
 }
 
+// ExportCreateRequest Request to create a new export operation
+type ExportCreateRequest struct {
+	// Config Backend-specific configuration
+	Config struct {
+		// Bucket Bucket, container, or volume name for cloud storage backends
+		Bucket string `json:"bucket,omitempty"`
+
+		// Path Path prefix within the bucket or filesystem
+		Path string `json:"path,omitempty"`
+	} `json:"config,omitempty"`
+
+	// Exclude List of collection names to exclude from the export. Cannot be used with 'include'.
+	Exclude []string `json:"exclude,omitempty"`
+
+	// Id Unique identifier for this export. Must be URL-safe.
+	Id string `json:"id"`
+
+	// Include List of collection names to include in the export. Cannot be used with 'exclude'.
+	Include []string `json:"include,omitempty"`
+}
+
+// ExportCreateResponse Response from creating an export operation
+type ExportCreateResponse struct {
+	// Backend The backend storage system used
+	Backend string `json:"backend,omitempty"`
+
+	// Classes List of collections being exported
+	Classes []string `json:"classes,omitempty"`
+
+	// Id Unique identifier for this export
+	Id string `json:"id,omitempty"`
+
+	// Path Full path where the export is being written
+	Path string `json:"path,omitempty"`
+
+	// StartedAt When the export started
+	StartedAt time.Time `json:"startedAt,omitempty"`
+
+	// Status Current status of the export
+	Status ExportCreateResponseStatus `json:"status,omitempty"`
+}
+
+// ExportCreateResponseStatus Current status of the export
+type ExportCreateResponseStatus string
+
+// ExportStatusResponse Current status of an export operation
+type ExportStatusResponse struct {
+	// Backend The backend storage system used
+	Backend string `json:"backend,omitempty"`
+
+	// Classes List of collections in this export
+	Classes []string `json:"classes,omitempty"`
+
+	// Error Error message if export failed
+	Error string `json:"error,omitempty"`
+
+	// Id Unique identifier for this export
+	Id string `json:"id,omitempty"`
+
+	// Path Full path where the export is stored
+	Path string `json:"path,omitempty"`
+
+	// ShardStatus Per-shard progress: className -> shardName -> status
+	ShardStatus map[string]map[string]ShardProgress `json:"shardStatus,omitempty"`
+
+	// StartedAt When the export started
+	StartedAt time.Time `json:"startedAt,omitempty"`
+
+	// Status Current status of the export
+	Status ExportStatusResponseStatus `json:"status,omitempty"`
+
+	// TookInMs Duration of the export in milliseconds
+	TookInMs int64 `json:"tookInMs,omitempty"`
+}
+
+// ExportStatusResponseStatus Current status of the export
+type ExportStatusResponseStatus string
+
 // GeoCoordinates defines model for GeoCoordinates.
 type GeoCoordinates struct {
 	// Latitude The latitude of the point on earth in decimal form.
@@ -1290,6 +1409,9 @@ type Property struct {
 	// Description Description of the property.
 	Description string `json:"description,omitempty"`
 
+	// DisableDuplicatedReferences If set to false, allows multiple references to the same target object within this property. Setting it to true will enforce uniqueness of references within this property. By default, this is set to true.
+	DisableDuplicatedReferences bool `json:"disableDuplicatedReferences"`
+
 	// IndexFilterable Whether to include this property in the filterable, Roaring Bitmap index. If `false`, this property cannot be used in `where` filters. <br/><br/>Note: Unrelated to vectorization behavior.
 	IndexFilterable bool `json:"indexFilterable"`
 
@@ -1378,8 +1500,56 @@ type ReferenceMetaClassification struct {
 	WinningDistance float32 `json:"winningDistance,omitempty"`
 }
 
+// ReplicationAsyncConfig Configuration for asynchronous replication.
+type ReplicationAsyncConfig struct {
+	// AliveNodesCheckingFrequency Interval in milliseconds at which liveness of target nodes is checked.
+	AliveNodesCheckingFrequency int64 `json:"aliveNodesCheckingFrequency,omitempty"`
+
+	// DiffBatchSize Maximum number of object keys included in a single diff batch.
+	DiffBatchSize int64 `json:"diffBatchSize,omitempty"`
+
+	// DiffPerNodeTimeout Timeout in seconds for computing a diff against a single node.
+	DiffPerNodeTimeout int64 `json:"diffPerNodeTimeout,omitempty"`
+
+	// Frequency Base frequency in milliseconds at which async replication runs diff calculations.
+	Frequency int64 `json:"frequency,omitempty"`
+
+	// FrequencyWhilePropagating Frequency in milliseconds at which async replication runs while propagation is active.
+	FrequencyWhilePropagating int64 `json:"frequencyWhilePropagating,omitempty"`
+
+	// HashtreeHeight Height of the hashtree used for diffing.
+	HashtreeHeight int64 `json:"hashtreeHeight,omitempty"`
+
+	// LoggingFrequency Interval in seconds at which async replication logs its status.
+	LoggingFrequency int64 `json:"loggingFrequency,omitempty"`
+
+	// MaxWorkers Maximum number of async replication workers.
+	MaxWorkers int64 `json:"maxWorkers,omitempty"`
+
+	// PrePropagationTimeout Overall timeout in seconds for the pre-propagation phase.
+	PrePropagationTimeout int64 `json:"prePropagationTimeout,omitempty"`
+
+	// PropagationBatchSize Number of objects to include in a single propagation batch.
+	PropagationBatchSize int64 `json:"propagationBatchSize,omitempty"`
+
+	// PropagationConcurrency Maximum number of concurrent propagation workers.
+	PropagationConcurrency int64 `json:"propagationConcurrency,omitempty"`
+
+	// PropagationDelay Delay in milliseconds before newly added or updated objects are propagated.
+	PropagationDelay int64 `json:"propagationDelay,omitempty"`
+
+	// PropagationLimit Maximum number of objects to propagate in a single async replication run.
+	PropagationLimit int64 `json:"propagationLimit,omitempty"`
+
+	// PropagationTimeout Timeout in seconds for propagating batch of changes to a node.
+	PropagationTimeout int64 `json:"propagationTimeout,omitempty"`
+}
+
 // ReplicationConfig Configure how replication is executed in a cluster
 type ReplicationConfig struct {
+	// AsyncConfig Configuration for asynchronous replication.
+	AsyncConfig ReplicationAsyncConfig `json:"asyncConfig,omitempty"`
+
 	// AsyncEnabled Enable asynchronous replication (default: `false`).
 	AsyncEnabled bool `json:"asyncEnabled"`
 
@@ -1612,6 +1782,21 @@ type Schema struct {
 	// Name Name of the schema.
 	Name string `json:"name,omitempty"`
 }
+
+// ShardProgress Progress information for exporting a single shard
+type ShardProgress struct {
+	// Error Error message if this shard's export failed
+	Error string `json:"error,omitempty"`
+
+	// ObjectsExported Number of objects exported from this shard
+	ObjectsExported int64 `json:"objectsExported,omitempty"`
+
+	// Status Status of this shard's export
+	Status ShardProgressStatus `json:"status,omitempty"`
+}
+
+// ShardProgressStatus Status of this shard's export
+type ShardProgressStatus string
 
 // ShardStatus The status of a single shard
 type ShardStatus struct {
@@ -1929,6 +2114,15 @@ type BackupsCreateStatusParams struct {
 	Path string `form:"path,omitempty" json:"path,omitempty"`
 }
 
+// BackupsRestoreCancelParams defines parameters for BackupsRestoreCancel.
+type BackupsRestoreCancelParams struct {
+	// Bucket Optional: Specifies the bucket, container, or volume name if required by the backend.
+	Bucket string `form:"bucket,omitempty" json:"bucket,omitempty"`
+
+	// Path Optional: Specifies the path within the bucket/container/volume if the backup is not at the root.
+	Path string `form:"path,omitempty" json:"path,omitempty"`
+}
+
 // BackupsRestoreStatusParams defines parameters for BackupsRestoreStatus.
 type BackupsRestoreStatusParams struct {
 	// Bucket Optional: Specifies the bucket, container, or volume name if required by the backend.
@@ -1972,6 +2166,15 @@ type BatchReferencesCreateJSONBody = []BatchReference
 type BatchReferencesCreateParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
 	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
+}
+
+// ExportStatusParams defines parameters for ExportStatus.
+type ExportStatusParams struct {
+	// Bucket Optional bucket name where the export is stored. If not specified, uses the backend's default bucket.
+	Bucket string `form:"bucket,omitempty" json:"bucket,omitempty"`
+
+	// Path Optional path prefix within the bucket. If not specified, uses the backend's default path.
+	Path string `form:"path,omitempty" json:"path,omitempty"`
 }
 
 // NodesGetParams defines parameters for NodesGet.
@@ -2189,6 +2392,9 @@ type SchemaObjectsGetParams struct {
 	Consistency bool `json:"consistency,omitempty"`
 }
 
+// SchemaObjectsPropertiesDeleteParamsIndexName defines parameters for SchemaObjectsPropertiesDelete.
+type SchemaObjectsPropertiesDeleteParamsIndexName string
+
 // SchemaObjectsShardsGetParams defines parameters for SchemaObjectsShardsGet.
 type SchemaObjectsShardsGetParams struct {
 	// Tenant The name of the tenant for which to retrieve shard statuses (only applicable for multi-tenant collections).
@@ -2296,6 +2502,9 @@ type BatchReferencesCreateJSONRequestBody = BatchReferencesCreateJSONBody
 
 // ClassificationsPostJSONRequestBody defines body for ClassificationsPost for application/json ContentType.
 type ClassificationsPostJSONRequestBody = Classification
+
+// ExportCreateJSONRequestBody defines body for ExportCreate for application/json ContentType.
+type ExportCreateJSONRequestBody = ExportCreateRequest
 
 // GraphqlPostJSONRequestBody defines body for GraphqlPost for application/json ContentType.
 type GraphqlPostJSONRequestBody = GraphQLQuery
