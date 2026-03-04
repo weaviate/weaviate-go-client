@@ -110,19 +110,13 @@ const (
 	DBUserInfoDbUserTypeDbUser    DBUserInfoDbUserType = "db_user"
 )
 
-// Defines values for ExportCreateRequestFileFormat.
-const (
-	Parquet ExportCreateRequestFileFormat = "parquet"
-)
-
 // Defines values for ExportCreateResponseStatus.
 const (
-	STARTED ExportCreateResponseStatus = "STARTED"
+	ExportCreateResponseStatusSTARTED ExportCreateResponseStatus = "STARTED"
 )
 
 // Defines values for ExportStatusResponseStatus.
 const (
-	ExportStatusResponseStatusCANCELED     ExportStatusResponseStatus = "CANCELED"
 	ExportStatusResponseStatusFAILED       ExportStatusResponseStatus = "FAILED"
 	ExportStatusResponseStatusSTARTED      ExportStatusResponseStatus = "STARTED"
 	ExportStatusResponseStatusSUCCESS      ExportStatusResponseStatus = "SUCCESS"
@@ -165,8 +159,8 @@ const (
 
 // Defines values for ObjectsGetResponseResultStatus.
 const (
-	ObjectsGetResponseResultStatusFAILED  ObjectsGetResponseResultStatus = "FAILED"
-	ObjectsGetResponseResultStatusSUCCESS ObjectsGetResponseResultStatus = "SUCCESS"
+	FAILED  ObjectsGetResponseResultStatus = "FAILED"
+	SUCCESS ObjectsGetResponseResultStatus = "SUCCESS"
 )
 
 // Defines values for PermissionAction.
@@ -276,7 +270,7 @@ const (
 // Defines values for ShardProgressStatus.
 const (
 	ShardProgressStatusFAILED       ShardProgressStatus = "FAILED"
-	ShardProgressStatusSKIPPED      ShardProgressStatus = "SKIPPED"
+	ShardProgressStatusSTARTED      ShardProgressStatus = "STARTED"
 	ShardProgressStatusSUCCESS      ShardProgressStatus = "SUCCESS"
 	ShardProgressStatusTRANSFERRING ShardProgressStatus = "TRANSFERRING"
 )
@@ -898,35 +892,8 @@ type DistributedTask struct {
 	// Status The status of the task.
 	Status string `json:"status,omitempty"`
 
-	// Units Units of the task. Only present for tasks that use unit tracking.
-	Units []DistributedTaskUnit `json:"units,omitempty"`
-
 	// Version The version of the task.
 	Version int `json:"version,omitempty"`
-}
-
-// DistributedTaskUnit A unit of a distributed task.
-type DistributedTaskUnit struct {
-	// Error The error message if the unit failed.
-	Error string `json:"error,omitempty"`
-
-	// FinishedAt The time when the unit finished.
-	FinishedAt time.Time `json:"finishedAt,omitempty"`
-
-	// Id The ID of the unit.
-	Id string `json:"id,omitempty"`
-
-	// NodeId The node that owns this unit.
-	NodeId string `json:"nodeId,omitempty"`
-
-	// Progress The progress of the unit (0.0 to 1.0).
-	Progress float32 `json:"progress,omitempty"`
-
-	// Status The status of the unit.
-	Status string `json:"status,omitempty"`
-
-	// UpdatedAt The time when the unit was last updated.
-	UpdatedAt time.Time `json:"updatedAt,omitempty"`
 }
 
 // DistributedTasks Active distributed tasks by namespace.
@@ -953,18 +920,12 @@ type ExportCreateRequest struct {
 	// Exclude List of collection names to exclude from the export. Cannot be used with 'include'.
 	Exclude []string `json:"exclude,omitempty"`
 
-	// FileFormat Output file format for the export.
-	FileFormat ExportCreateRequestFileFormat `json:"file_format"`
-
 	// Id Unique identifier for this export. Must be URL-safe.
 	Id string `json:"id"`
 
 	// Include List of collection names to include in the export. Cannot be used with 'exclude'.
 	Include []string `json:"include,omitempty"`
 }
-
-// ExportCreateRequestFileFormat Output file format for the export.
-type ExportCreateRequestFileFormat string
 
 // ExportCreateResponse Response from creating an export operation
 type ExportCreateResponse struct {
@@ -997,9 +958,6 @@ type ExportStatusResponse struct {
 
 	// Classes List of collections in this export
 	Classes []string `json:"classes,omitempty"`
-
-	// CompletedAt When the export completed (successfully, with failure, or was canceled)
-	CompletedAt time.Time `json:"completedAt,omitempty"`
 
 	// Error Error message if export failed
 	Error string `json:"error,omitempty"`
@@ -1833,9 +1791,6 @@ type ShardProgress struct {
 	// ObjectsExported Number of objects exported from this shard
 	ObjectsExported int64 `json:"objectsExported,omitempty"`
 
-	// SkipReason Reason why this shard was skipped (e.g. tenant status)
-	SkipReason string `json:"skipReason,omitempty"`
-
 	// Status Status of this shard's export
 	Status ShardProgressStatus `json:"status,omitempty"`
 }
@@ -2211,15 +2166,6 @@ type BatchReferencesCreateJSONBody = []BatchReference
 type BatchReferencesCreateParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
 	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
-}
-
-// ExportCancelParams defines parameters for ExportCancel.
-type ExportCancelParams struct {
-	// Bucket Optional bucket name where the export is stored.
-	Bucket string `form:"bucket,omitempty" json:"bucket,omitempty"`
-
-	// Path Optional path prefix within the bucket.
-	Path string `form:"path,omitempty" json:"path,omitempty"`
 }
 
 // ExportStatusParams defines parameters for ExportStatus.
