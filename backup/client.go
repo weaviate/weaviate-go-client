@@ -20,12 +20,13 @@ type Client struct {
 }
 
 type Info struct {
-	Backend     string     // Backup storage backend
-	ID          string     // Backup ID
-	Path        string     // Path to backup in the backend storage
-	Error       string     // Backup creation / restoration error.
-	Status      Status     // Backup creation / restoration status.
-	StartedAt   time.Time  // Time at which the backup creation started.
+	Backend string // Backup storage backend
+	ID      string // Backup ID
+	Path    string // Path to backup in the backend storage
+	Error   string // Backup creation / restoration error.
+	Status  Status // Backup creation / restoration status.
+
+	StartedAt   *time.Time // Time at which the backup creation started.
 	CompletedAt *time.Time // Time at which the backup was completed, successfully or otherwise.
 
 	// IncludesCollections is always empty for backups that are still being created.
