@@ -258,7 +258,7 @@ func New(config Config) *Client {
 }
 
 // Waits for Weaviate to start.
-func (c *Client) WaitForWeavaite(startupTimeout time.Duration) error {
+func (c *Client) WaitForWeaviate(startupTimeout time.Duration) error {
 	return c.connection.WaitForWeaviate(startupTimeout)
 }
 

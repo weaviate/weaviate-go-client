@@ -16,7 +16,7 @@ func CreateTestClient() *weaviate.Client {
 		Scheme: "http",
 	}
 	client := weaviate.New(cfg)
-	client.WaitForWeavaite(60 * time.Second)
+	client.WaitForWeaviate(60 * time.Second)
 	return client
 }
 
