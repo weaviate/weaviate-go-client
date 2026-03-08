@@ -3,7 +3,7 @@ package transports_test
 import (
 	"testing"
 
-	"github.com/go-openapi/testify/v2/assert"
+	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
