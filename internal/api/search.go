@@ -485,7 +485,8 @@ func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
 			if err != nil {
 				return nil, err
 			}
-			v = t
+			dev.AssertNotNil(t, "time from string")
+			v = *t
 		case *proto.Value_UuidValue:
 			id, err := uuid.Parse(f.GetUuidValue())
 			if err != nil {

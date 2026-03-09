@@ -1,0 +1,236 @@
+package api
+
+import (
+	"cmp"
+	"fmt"
+	"iter"
+	"maps"
+	"slices"
+	"time"
+
+	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
+)
+
+type AggregateRequest struct {
+	RequestDefaults
+
+	Text    map[string]*AggregateTextRequest
+	Integer map[string]*AggregateIntegerRequest
+	Number  map[string]*AggregateNumberRequest
+	Boolean map[string]*AggregateBooleanRequest
+	Date    map[string]*AggregateDateRequest
+
+	TotalCount  bool
+	Limit       int32
+	ObjectLimit int32
+
+	*NearVector
+}
+type (
+	AggregateTextRequest struct {
+		Count               bool
+		TopOccurrences      bool
+		TopOccurencesCutoff int32
+	}
+	AggregateIntegerRequest proto.AggregateRequest_Aggregation_Integer
+	AggregateNumberRequest  proto.AggregateRequest_Aggregation_Number
+	AggregateBooleanRequest proto.AggregateRequest_Aggregation_Boolean
+	AggregateDateRequest    proto.AggregateRequest_Aggregation_Date
+)
+
+func (r *AggregateRequest) Method() transport.MethodFunc[proto.AggregateRequest, proto.AggregateReply] {
+	return proto.WeaviateClient.Aggregate
+}
+func (r *AggregateRequest) Body() transport.MessageMarshaler[proto.AggregateRequest] { return r }
+
+// MarshalMessage implements [Message].
+func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
+	var aggs []*proto.AggregateRequest_Aggregation
+	for property, txt := range sortedMap(r.Text) {
+		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
+			Property: property,
+			Aggregation: &proto.AggregateRequest_Aggregation_Text_{
+				Text: &proto.AggregateRequest_Aggregation_Text{
+					Count:              txt.Count,
+					TopOccurences:      txt.TopOccurrences,
+					TopOccurencesLimit: nilZero(uint32(txt.TopOccurencesCutoff)),
+				},
+			},
+		})
+	}
+	for property, int := range sortedMap(r.Integer) {
+		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
+			Property: property,
+			Aggregation: &proto.AggregateRequest_Aggregation_Int{
+				Int: (*proto.AggregateRequest_Aggregation_Integer)(int),
+			},
+		})
+	}
+	for property, num := range sortedMap(r.Number) {
+		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
+			Property: property,
+			Aggregation: &proto.AggregateRequest_Aggregation_Number_{
+				Number: (*proto.AggregateRequest_Aggregation_Number)(num),
+			},
+		})
+	}
+	for property, bool := range sortedMap(r.Boolean) {
+		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
+			Property: property,
+			Aggregation: &proto.AggregateRequest_Aggregation_Boolean_{
+				Boolean: (*proto.AggregateRequest_Aggregation_Boolean)(bool),
+			},
+		})
+	}
+	for property, date := range sortedMap(r.Date) {
+		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
+			Property: property,
+			Aggregation: &proto.AggregateRequest_Aggregation_Date_{
+				Date: (*proto.AggregateRequest_Aggregation_Date)(date),
+			},
+		})
+	}
+
+	req := &proto.AggregateRequest{
+		Collection: r.CollectionName,
+		Tenant:     r.Tenant,
+
+		ObjectsCount: r.TotalCount,
+		Limit:        nilZero(uint32(r.Limit)),
+		ObjectLimit:  nilZero(uint32(r.ObjectLimit)),
+		Aggregations: aggs,
+	}
+
+	switch {
+	case r.NearVector != nil:
+		nv, err := marshalNearVector(r.NearVector)
+		if err != nil {
+			return nil, err
+		}
+		req.Search = &proto.AggregateRequest_NearVector{NearVector: nv}
+	default:
+		// It is not a mistake to leave search method unset.
+		// This would be the case when fetch objects with a conventional filter.
+	}
+
+	return req, nil
+}
+
+type AggregateResponse struct {
+	Results     Aggregations
+	TookSeconds float32
+}
+
+type (
+	Aggregations struct {
+		Text    map[string]*AggregateTextResult
+		Integer map[string]*AggregateIntegerResult
+		Number  map[string]*AggregateNumberResult
+		Boolean map[string]*AggregateBooleanResult
+		Date    map[string]*AggregateDateResult
+
+		TotalCount *int64
+	}
+	AggregateTextResult struct {
+		Count         *int64
+		TopOccurences []*TopOccurence
+	}
+	TopOccurence           proto.AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurrence
+	AggregateIntegerResult proto.AggregateReply_Aggregations_Aggregation_Integer
+	AggregateNumberResult  proto.AggregateReply_Aggregations_Aggregation_Number
+	AggregateBooleanResult proto.AggregateReply_Aggregations_Aggregation_Boolean
+	AggregateDateResult    struct {
+		Count   *int64
+		Minimum *time.Time
+		Maximum *time.Time
+		Mode    *time.Time
+		Median  *time.Time
+	}
+)
+
+func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error {
+	result := Aggregations{
+		Text:    make(map[string]*AggregateTextResult),
+		Integer: make(map[string]*AggregateIntegerResult),
+		Number:  make(map[string]*AggregateNumberResult),
+		Boolean: make(map[string]*AggregateBooleanResult),
+		Date:    make(map[string]*AggregateDateResult),
+	}
+	single := reply.GetSingleResult()
+	if single != nil {
+		result.TotalCount = single.ObjectsCount
+		for _, agg := range single.GetAggregations().GetAggregations() {
+			property := agg.GetProperty()
+			switch {
+			case agg.GetText() != nil:
+				txt := agg.GetText()
+				top := make([]*TopOccurence, len(txt.GetTopOccurences().GetItems()))
+				for i, item := range txt.GetTopOccurences().GetItems() {
+					top[i] = (*TopOccurence)(item)
+				}
+				result.Text[property] = &AggregateTextResult{
+					Count:         txt.Count,
+					TopOccurences: top,
+				}
+			case agg.GetDate() != nil:
+				date := agg.GetDate()
+				minimum, err := timeFromString(date.GetMinimum())
+				if err != nil {
+					return fmt.Errorf("%q minimum: %w", property, err)
+				}
+				maximum, err := timeFromString(date.GetMaximum())
+				if err != nil {
+					return fmt.Errorf("%q maximum: %w", property, err)
+				}
+				mode, err := timeFromString(date.GetMode())
+				if err != nil {
+					return fmt.Errorf("%q mode: %w", property, err)
+				}
+				median, err := timeFromString(date.GetMedian())
+				if err != nil {
+					return fmt.Errorf("%q median: %w", property, err)
+				}
+				result.Date[property] = &AggregateDateResult{
+					Count:   date.Count,
+					Minimum: minimum,
+					Maximum: maximum,
+					Mode:    mode,
+					Median:  median,
+				}
+			case agg.GetInt() != nil:
+				result.Integer[property] = (*AggregateIntegerResult)(agg.GetInt())
+			case agg.GetNumber() != nil:
+				result.Number[property] = (*AggregateNumberResult)(agg.GetNumber())
+			case agg.GetBoolean() != nil:
+				result.Boolean[property] = (*AggregateBooleanResult)(agg.GetBoolean())
+			}
+		}
+	}
+
+	*r = AggregateResponse{
+		TookSeconds: reply.GetTook(),
+		Results:     result,
+	}
+	return nil
+}
+
+// nilZero returns a pointer to v if it is not the zero value for T and nil otherwise.
+func nilZero[T comparable](v T) *T {
+	if v == *new(T) {
+		return nil
+	}
+	return &v
+}
+
+// sortedMap returns an iterator over key-value pairs from m;
+// similar to [maps.All], but with pairs sorted by key.
+func sortedMap[Map ~map[K]V, K cmp.Ordered, V any](m Map) iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		for _, k := range slices.Sorted(maps.Keys(m)) {
+			if !yield(k, m[k]) {
+				return
+			}
+		}
+	}
+}
