@@ -1,8 +1,6 @@
 package api_test
 
 import (
-	"slices"
-	"strings"
 	"testing"
 	"time"
 
@@ -592,14 +590,6 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 // Most of the test cases are split by property type to simplify error logs;
 // there's nothing stopping a test case from having mixed property types though.
 func TestAggregateRequest_MarshalMessage(t *testing.T) {
-	// Sort orders expected aggregations by their property name to match
-	// the ordering we expect MarshalMessage to apply.
-	sort := func(in []*proto.AggregateRequest_Aggregation) []*proto.AggregateRequest_Aggregation {
-		slices.SortFunc(in, func(a, b *proto.AggregateRequest_Aggregation) int {
-			return strings.Compare(a.Property, b.Property)
-		})
-		return in
-	}
 	testMessageMarshaler(t, []MessageMarshalerTest[proto.AggregateRequest, proto.AggregateReply]{
 		{
 			name: "with limit",
@@ -614,13 +604,13 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 		{
 			name: "text properties",
 			req: &api.AggregateRequest{
-				Text: map[string]*api.AggregateTextRequest{
-					"colour": {Count: true, TopOccurrences: true},
-					"tag":    {TopOccurrences: true, TopOccurencesCutoff: 10},
+				Text: []api.AggregateTextRequest{
+					{Property: "colour", Count: true, TopOccurrences: true},
+					{Property: "tag", TopOccurrences: true, TopOccurencesCutoff: 10},
 				},
 			},
 			want: &proto.AggregateRequest{
-				Aggregations: sort([]*proto.AggregateRequest_Aggregation{
+				Aggregations: []*proto.AggregateRequest_Aggregation{
 					{Property: "colour", Aggregation: &proto.AggregateRequest_Aggregation_Text_{
 						Text: &proto.AggregateRequest_Aggregation_Text{
 							Count: true, TopOccurences: true,
@@ -631,19 +621,19 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 							TopOccurences: true, TopOccurencesLimit: testkit.Ptr[uint32](10),
 						},
 					}},
-				}),
+				},
 			},
 		},
 		{
 			name: "integer properties",
 			req: &api.AggregateRequest{
-				Integer: map[string]*api.AggregateIntegerRequest{
-					"price": {Sum: true, Minimum: true, Maximum: true},
-					"size":  {Count: true, Mode: true, Median: true},
+				Integer: []api.AggregateIntegerRequest{
+					{Property: "price", Sum: true, Min: true, Max: true},
+					{Property: "size", Count: true, Mode: true, Median: true},
 				},
 			},
 			want: &proto.AggregateRequest{
-				Aggregations: sort([]*proto.AggregateRequest_Aggregation{
+				Aggregations: []*proto.AggregateRequest_Aggregation{
 					{Property: "price", Aggregation: &proto.AggregateRequest_Aggregation_Int{
 						Int: &proto.AggregateRequest_Aggregation_Integer{
 							Sum: true, Minimum: true, Maximum: true,
@@ -654,19 +644,19 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 							Count: true, Mode: true, Median: true,
 						},
 					}},
-				}),
+				},
 			},
 		},
 		{
 			name: "number properties",
 			req: &api.AggregateRequest{
-				Number: map[string]*api.AggregateNumberRequest{
-					"price": {Sum: true, Minimum: true, Maximum: true},
-					"size":  {Count: true, Mode: true, Median: true},
+				Number: []api.AggregateNumberRequest{
+					{Property: "price", Sum: true, Min: true, Max: true},
+					{Property: "size", Count: true, Mode: true, Median: true},
 				},
 			},
 			want: &proto.AggregateRequest{
-				Aggregations: sort([]*proto.AggregateRequest_Aggregation{
+				Aggregations: []*proto.AggregateRequest_Aggregation{
 					{Property: "price", Aggregation: &proto.AggregateRequest_Aggregation_Number_{
 						Number: &proto.AggregateRequest_Aggregation_Number{
 							Sum: true, Minimum: true, Maximum: true,
@@ -677,22 +667,22 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 							Count: true, Mode: true, Median: true,
 						},
 					}},
-				}),
+				},
 			},
 		},
 		{
 			name: "boolean properties",
 			req: &api.AggregateRequest{
-				Boolean: map[string]*api.AggregateBooleanRequest{
-					"onSale":     {PercentageTrue: true, PercentageFalse: true},
-					"newArrival": {Count: true, TotalTrue: true, TotalFalse: true},
+				Boolean: []api.AggregateBooleanRequest{
+					{Property: "onSale", Type: true, PercentageTrue: true, PercentageFalse: true},
+					{Property: "newArrival", Count: true, TotalTrue: true, TotalFalse: true},
 				},
 			},
 			want: &proto.AggregateRequest{
-				Aggregations: sort([]*proto.AggregateRequest_Aggregation{
+				Aggregations: []*proto.AggregateRequest_Aggregation{
 					{Property: "onSale", Aggregation: &proto.AggregateRequest_Aggregation_Boolean_{
 						Boolean: &proto.AggregateRequest_Aggregation_Boolean{
-							PercentageTrue: true, PercentageFalse: true,
+							Type: true, PercentageTrue: true, PercentageFalse: true,
 						},
 					}},
 					{Property: "newArrival", Aggregation: &proto.AggregateRequest_Aggregation_Boolean_{
@@ -700,19 +690,19 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 							Count: true, TotalTrue: true, TotalFalse: true,
 						},
 					}},
-				}),
+				},
 			},
 		},
 		{
 			name: "date properties",
 			req: &api.AggregateRequest{
-				Date: map[string]*api.AggregateDateRequest{
-					"lastPurchase": {Count: true, Minimum: true, Maximum: true},
-					"lastReturn":   {Mode: true, Median: true},
+				Date: []api.AggregateDateRequest{
+					{Property: "lastPurchase", Count: true, Min: true, Max: true},
+					{Property: "lastReturn", Mode: true, Median: true},
 				},
 			},
 			want: &proto.AggregateRequest{
-				Aggregations: sort([]*proto.AggregateRequest_Aggregation{
+				Aggregations: []*proto.AggregateRequest_Aggregation{
 					{Property: "lastPurchase", Aggregation: &proto.AggregateRequest_Aggregation_Date_{
 						Date: &proto.AggregateRequest_Aggregation_Date{
 							Count: true, Minimum: true, Maximum: true,
@@ -723,7 +713,7 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 							Mode: true, Median: true,
 						},
 					}},
-				}),
+				},
 			},
 		},
 	})
@@ -1324,11 +1314,11 @@ func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
 	// To reduce boilerplate in tests, it also populates TotalCount accordingly.
 	response := func(aggs api.Aggregations) api.Aggregations {
 		out := api.Aggregations{
-			Text:    make(map[string]*api.AggregateTextResult),
-			Integer: make(map[string]*api.AggregateIntegerResult),
-			Number:  make(map[string]*api.AggregateNumberResult),
-			Boolean: make(map[string]*api.AggregateBooleanResult),
-			Date:    make(map[string]*api.AggregateDateResult),
+			Text:    make(map[string]api.AggregateTextResult),
+			Integer: make(map[string]api.AggregateIntegerResult),
+			Number:  make(map[string]api.AggregateNumberResult),
+			Boolean: make(map[string]api.AggregateBooleanResult),
+			Date:    make(map[string]api.AggregateDateResult),
 		}
 		switch {
 		case aggs.Text != nil:
@@ -1383,18 +1373,18 @@ func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
 			want: &api.AggregateResponse{
 				TookSeconds: 92,
 				Results: response(api.Aggregations{
-					Text: map[string]*api.AggregateTextResult{
+					Text: map[string]api.AggregateTextResult{
 						"colour": {
 							Count: testkit.Ptr[int64](1),
-							TopOccurences: []*api.TopOccurence{
-								{Value: "red", Occurs: 2},
-								{Value: "blue", Occurs: 3},
+							TopOccurrences: []api.TopOccurrence{
+								{Value: "red", OccursTimes: 2},
+								{Value: "blue", OccursTimes: 3},
 							},
 						},
 						"tag": {
-							TopOccurences: []*api.TopOccurence{
-								{Value: "casual", Occurs: 1},
-								{Value: "comfy", Occurs: 2},
+							TopOccurrences: []api.TopOccurrence{
+								{Value: "casual", OccursTimes: 1},
+								{Value: "comfy", OccursTimes: 2},
 							},
 						},
 					},
@@ -1426,11 +1416,11 @@ func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
 			want: &api.AggregateResponse{
 				TookSeconds: 92,
 				Results: response(api.Aggregations{
-					Integer: map[string]*api.AggregateIntegerResult{
+					Integer: map[string]api.AggregateIntegerResult{
 						"price": {
-							Sum:     testkit.Ptr[int64](1),
-							Minimum: testkit.Ptr[int64](2),
-							Maximum: testkit.Ptr[int64](3),
+							Sum: testkit.Ptr[int64](1),
+							Min: testkit.Ptr[int64](2),
+							Max: testkit.Ptr[int64](3),
 						},
 						"size": {
 							Count:  testkit.Ptr[int64](1),
@@ -1466,11 +1456,11 @@ func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
 			want: &api.AggregateResponse{
 				TookSeconds: 92,
 				Results: response(api.Aggregations{
-					Number: map[string]*api.AggregateNumberResult{
+					Number: map[string]api.AggregateNumberResult{
 						"price": {
-							Sum:     testkit.Ptr[float64](1),
-							Minimum: testkit.Ptr[float64](2),
-							Maximum: testkit.Ptr[float64](3),
+							Sum: testkit.Ptr[float64](1),
+							Min: testkit.Ptr[float64](2),
+							Max: testkit.Ptr[float64](3),
 						},
 						"size": {
 							Count:  testkit.Ptr[int64](1),
@@ -1488,6 +1478,7 @@ func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
 				Result: result(Aggregations{
 					{Property: "onSale", Aggregation: &proto.AggregateReply_Aggregations_Aggregation_Boolean_{
 						Boolean: &proto.AggregateReply_Aggregations_Aggregation_Boolean{
+							Type:            testkit.Ptr("black_friday"),
 							PercentageTrue:  testkit.Ptr[float64](1),
 							PercentageFalse: testkit.Ptr[float64](2),
 						},
@@ -1505,8 +1496,9 @@ func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
 			want: &api.AggregateResponse{
 				TookSeconds: 92,
 				Results: response(api.Aggregations{
-					Boolean: map[string]*api.AggregateBooleanResult{
+					Boolean: map[string]api.AggregateBooleanResult{
 						"onSale": {
+							Type:            testkit.Ptr("black_friday"),
 							PercentageTrue:  testkit.Ptr[float64](1),
 							PercentageFalse: testkit.Ptr[float64](2),
 						},
@@ -1543,11 +1535,11 @@ func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
 			want: &api.AggregateResponse{
 				TookSeconds: 92,
 				Results: response(api.Aggregations{
-					Date: map[string]*api.AggregateDateResult{
+					Date: map[string]api.AggregateDateResult{
 						"lastPurchase": {
-							Count:   testkit.Ptr[int64](1),
-							Minimum: &testkit.Now,
-							Maximum: &testkit.Now,
+							Count: testkit.Ptr[int64](1),
+							Min:   &testkit.Now,
+							Max:   &testkit.Now,
 						},
 						"lastReturn": {
 							Mode:   &testkit.Now,

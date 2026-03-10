@@ -1,11 +1,7 @@
 package api
 
 import (
-	"cmp"
 	"fmt"
-	"iter"
-	"maps"
-	"slices"
 	"time"
 
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
@@ -15,28 +11,67 @@ import (
 type AggregateRequest struct {
 	RequestDefaults
 
-	Text    map[string]*AggregateTextRequest
-	Integer map[string]*AggregateIntegerRequest
-	Number  map[string]*AggregateNumberRequest
-	Boolean map[string]*AggregateBooleanRequest
-	Date    map[string]*AggregateDateRequest
+	Text    []AggregateTextRequest
+	Integer []AggregateIntegerRequest
+	Number  []AggregateNumberRequest
+	Boolean []AggregateBooleanRequest
+	Date    []AggregateDateRequest
 
 	TotalCount  bool
 	Limit       int32
 	ObjectLimit int32
 
-	*NearVector
+	NearVector *NearVector
 }
 type (
 	AggregateTextRequest struct {
+		Property string
+
 		Count               bool
 		TopOccurrences      bool
 		TopOccurencesCutoff int32
 	}
-	AggregateIntegerRequest proto.AggregateRequest_Aggregation_Integer
-	AggregateNumberRequest  proto.AggregateRequest_Aggregation_Number
-	AggregateBooleanRequest proto.AggregateRequest_Aggregation_Boolean
-	AggregateDateRequest    proto.AggregateRequest_Aggregation_Date
+	AggregateIntegerRequest struct {
+		Property string
+
+		Count  bool
+		Sum    bool
+		Min    bool
+		Max    bool
+		Mode   bool
+		Mean   bool
+		Median bool
+	}
+	AggregateNumberRequest struct {
+		Property string
+
+		Count  bool
+		Sum    bool
+		Min    bool
+		Max    bool
+		Mode   bool
+		Mean   bool
+		Median bool
+	}
+	AggregateBooleanRequest struct {
+		Property string
+
+		Count           bool
+		Type            bool
+		PercentageTrue  bool
+		PercentageFalse bool
+		TotalTrue       bool
+		TotalFalse      bool
+	}
+	AggregateDateRequest struct {
+		Property string
+
+		Count  bool
+		Min    bool
+		Max    bool
+		Mode   bool
+		Median bool
+	}
 )
 
 func (r *AggregateRequest) Method() transport.MethodFunc[proto.AggregateRequest, proto.AggregateReply] {
@@ -47,9 +82,9 @@ func (r *AggregateRequest) Body() transport.MessageMarshaler[proto.AggregateRequ
 // MarshalMessage implements [Message].
 func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 	var aggs []*proto.AggregateRequest_Aggregation
-	for property, txt := range sortedMap(r.Text) {
+	for _, txt := range r.Text {
 		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
-			Property: property,
+			Property: txt.Property,
 			Aggregation: &proto.AggregateRequest_Aggregation_Text_{
 				Text: &proto.AggregateRequest_Aggregation_Text{
 					Count:              txt.Count,
@@ -59,35 +94,64 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 			},
 		})
 	}
-	for property, int := range sortedMap(r.Integer) {
+	for _, int := range r.Integer {
 		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
-			Property: property,
+			Property: int.Property,
 			Aggregation: &proto.AggregateRequest_Aggregation_Int{
-				Int: (*proto.AggregateRequest_Aggregation_Integer)(int),
+				Int: &proto.AggregateRequest_Aggregation_Integer{
+					Count:   int.Count,
+					Sum:     int.Sum,
+					Minimum: int.Min,
+					Maximum: int.Max,
+					Mode:    int.Mode,
+					Mean:    int.Mean,
+					Median:  int.Median,
+				},
 			},
 		})
 	}
-	for property, num := range sortedMap(r.Number) {
+	for _, num := range r.Number {
 		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
-			Property: property,
+			Property: num.Property,
 			Aggregation: &proto.AggregateRequest_Aggregation_Number_{
-				Number: (*proto.AggregateRequest_Aggregation_Number)(num),
+				Number: &proto.AggregateRequest_Aggregation_Number{
+					Count:   num.Count,
+					Sum:     num.Sum,
+					Minimum: num.Min,
+					Maximum: num.Max,
+					Mode:    num.Mode,
+					Mean:    num.Mean,
+					Median:  num.Median,
+				},
 			},
 		})
 	}
-	for property, bool := range sortedMap(r.Boolean) {
+	for _, bool := range r.Boolean {
 		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
-			Property: property,
+			Property: bool.Property,
 			Aggregation: &proto.AggregateRequest_Aggregation_Boolean_{
-				Boolean: (*proto.AggregateRequest_Aggregation_Boolean)(bool),
+				Boolean: &proto.AggregateRequest_Aggregation_Boolean{
+					Count:           bool.Count,
+					Type:            bool.Type,
+					PercentageTrue:  bool.PercentageTrue,
+					PercentageFalse: bool.PercentageFalse,
+					TotalTrue:       bool.TotalTrue,
+					TotalFalse:      bool.TotalFalse,
+				},
 			},
 		})
 	}
-	for property, date := range sortedMap(r.Date) {
+	for _, date := range r.Date {
 		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
-			Property: property,
+			Property: date.Property,
 			Aggregation: &proto.AggregateRequest_Aggregation_Date_{
-				Date: (*proto.AggregateRequest_Aggregation_Date)(date),
+				Date: &proto.AggregateRequest_Aggregation_Date{
+					Count:   date.Count,
+					Minimum: date.Min,
+					Maximum: date.Max,
+					Mode:    date.Mode,
+					Median:  date.Median,
+				},
 			},
 		})
 	}
@@ -124,38 +188,68 @@ type AggregateResponse struct {
 
 type (
 	Aggregations struct {
-		Text    map[string]*AggregateTextResult
-		Integer map[string]*AggregateIntegerResult
-		Number  map[string]*AggregateNumberResult
-		Boolean map[string]*AggregateBooleanResult
-		Date    map[string]*AggregateDateResult
+		Text    map[string]AggregateTextResult
+		Integer map[string]AggregateIntegerResult
+		Number  map[string]AggregateNumberResult
+		Boolean map[string]AggregateBooleanResult
+		Date    map[string]AggregateDateResult
 
 		TotalCount *int64
 	}
 	AggregateTextResult struct {
-		Count         *int64
-		TopOccurences []*TopOccurence
+		Count          *int64
+		TopOccurrences []TopOccurrence
 	}
-	TopOccurence           proto.AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurrence
-	AggregateIntegerResult proto.AggregateReply_Aggregations_Aggregation_Integer
-	AggregateNumberResult  proto.AggregateReply_Aggregations_Aggregation_Number
-	AggregateBooleanResult proto.AggregateReply_Aggregations_Aggregation_Boolean
-	AggregateDateResult    struct {
-		Count   *int64
-		Minimum *time.Time
-		Maximum *time.Time
-		Mode    *time.Time
-		Median  *time.Time
+	AggregateTopOccurrence struct {
+		Value       string
+		OccursTimes int64
+	}
+	AggregateIntegerResult struct {
+		Count  *int64
+		Sum    *int64
+		Min    *int64
+		Max    *int64
+		Mode   *int64
+		Mean   *float64
+		Median *float64
+	}
+	AggregateNumberResult struct {
+		Count  *int64
+		Sum    *float64
+		Min    *float64
+		Max    *float64
+		Mode   *float64
+		Mean   *float64
+		Median *float64
+	}
+	AggregateBooleanResult struct {
+		Count           *int64
+		Type            *string
+		PercentageTrue  *float64
+		PercentageFalse *float64
+		TotalTrue       *int64
+		TotalFalse      *int64
+	}
+	AggregateDateResult struct {
+		Count  *int64
+		Min    *time.Time
+		Max    *time.Time
+		Mode   *time.Time
+		Median *time.Time
+	}
+	TopOccurrence struct {
+		Value       string
+		OccursTimes int64
 	}
 )
 
 func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error {
 	result := Aggregations{
-		Text:    make(map[string]*AggregateTextResult),
-		Integer: make(map[string]*AggregateIntegerResult),
-		Number:  make(map[string]*AggregateNumberResult),
-		Boolean: make(map[string]*AggregateBooleanResult),
-		Date:    make(map[string]*AggregateDateResult),
+		Text:    make(map[string]AggregateTextResult),
+		Integer: make(map[string]AggregateIntegerResult),
+		Number:  make(map[string]AggregateNumberResult),
+		Boolean: make(map[string]AggregateBooleanResult),
+		Date:    make(map[string]AggregateDateResult),
 	}
 	single := reply.GetSingleResult()
 	if single != nil {
@@ -165,13 +259,16 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 			switch {
 			case agg.GetText() != nil:
 				txt := agg.GetText()
-				top := make([]*TopOccurence, len(txt.GetTopOccurences().GetItems()))
+				top := make([]TopOccurrence, len(txt.GetTopOccurences().GetItems()))
 				for i, item := range txt.GetTopOccurences().GetItems() {
-					top[i] = (*TopOccurence)(item)
+					top[i] = TopOccurrence{
+						Value:       item.Value,
+						OccursTimes: item.Occurs,
+					}
 				}
-				result.Text[property] = &AggregateTextResult{
-					Count:         txt.Count,
-					TopOccurences: top,
+				result.Text[property] = AggregateTextResult{
+					Count:          txt.Count,
+					TopOccurrences: top,
 				}
 			case agg.GetDate() != nil:
 				date := agg.GetDate()
@@ -191,19 +288,45 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 				if err != nil {
 					return fmt.Errorf("%q median: %w", property, err)
 				}
-				result.Date[property] = &AggregateDateResult{
-					Count:   date.Count,
-					Minimum: minimum,
-					Maximum: maximum,
-					Mode:    mode,
-					Median:  median,
+				result.Date[property] = AggregateDateResult{
+					Count:  date.Count,
+					Min:    minimum,
+					Max:    maximum,
+					Mode:   mode,
+					Median: median,
 				}
 			case agg.GetInt() != nil:
-				result.Integer[property] = (*AggregateIntegerResult)(agg.GetInt())
+				int := agg.GetInt()
+				result.Integer[property] = AggregateIntegerResult{
+					Count:  int.Count,
+					Sum:    int.Sum,
+					Min:    int.Minimum,
+					Max:    int.Maximum,
+					Mode:   int.Mode,
+					Median: int.Median,
+					Mean:   int.Mean,
+				}
 			case agg.GetNumber() != nil:
-				result.Number[property] = (*AggregateNumberResult)(agg.GetNumber())
+				num := agg.GetNumber()
+				result.Number[property] = AggregateNumberResult{
+					Count:  num.Count,
+					Sum:    num.Sum,
+					Min:    num.Minimum,
+					Max:    num.Maximum,
+					Mode:   num.Mode,
+					Median: num.Median,
+					Mean:   num.Mean,
+				}
 			case agg.GetBoolean() != nil:
-				result.Boolean[property] = (*AggregateBooleanResult)(agg.GetBoolean())
+				bool := agg.GetBoolean()
+				result.Boolean[property] = AggregateBooleanResult{
+					Count:           bool.Count,
+					Type:            bool.Type,
+					PercentageTrue:  bool.PercentageTrue,
+					PercentageFalse: bool.PercentageFalse,
+					TotalTrue:       bool.TotalTrue,
+					TotalFalse:      bool.TotalFalse,
+				}
 			}
 		}
 	}
@@ -221,16 +344,4 @@ func nilZero[T comparable](v T) *T {
 		return nil
 	}
 	return &v
-}
-
-// sortedMap returns an iterator over key-value pairs from m;
-// similar to [maps.All], but with pairs sorted by key.
-func sortedMap[Map ~map[K]V, K cmp.Ordered, V any](m Map) iter.Seq2[K, V] {
-	return func(yield func(K, V) bool) {
-		for _, k := range slices.Sorted(maps.Keys(m)) {
-			if !yield(k, m[k]) {
-				return
-			}
-		}
-	}
 }
