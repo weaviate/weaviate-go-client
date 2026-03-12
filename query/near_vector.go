@@ -70,7 +70,11 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 	}
 
 	if nv.groupBy != nil {
-		req.GroupBy = (*api.GroupBy)(nv.groupBy)
+		req.GroupBy = &api.GroupBy{
+			Property:       nv.groupBy.Property,
+			Limit:          nv.groupBy.ObjectLimit,
+			NumberOfGroups: nv.groupBy.NumberOfGroups,
+		}
 	}
 
 	var resp api.SearchResponse

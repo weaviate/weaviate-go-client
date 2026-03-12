@@ -38,8 +38,15 @@ type Request[Query any] struct {
 	Date    []Date    // Aggregations for date properties.
 
 	TotalCount  bool // Return total object count.
-	Limit       int32
 	ObjectLimit int32
+
+	// groupBy can only be set by a GroupBy method, as it changes the shape of the response.
+	groupBy *GroupBy
+}
+
+type GroupBy struct {
+	Property string
+	Limit    int
 }
 
 type (
@@ -50,23 +57,30 @@ type (
 	Date    api.AggregateDateRequest
 )
 
-type GroupBy struct {
-	Collection string
-	Property   string
+type Result struct {
+	TookSeconds float32
+	Aggregations
 }
 
-type Result struct {
-	Text    map[string]TextResult
-	Integer map[string]IntegerResult
-	Number  map[string]NumberResult
-	Boolean map[string]BooleanResult
-	Date    map[string]DateResult
+type GroupByResult struct {
+	Groups []Group
+}
 
-	TotalCount  *int64
-	TookSeconds float32
+type Group struct {
+	Property string
+	Value    any
+	Aggregations
 }
 
 type (
+	Aggregations struct {
+		TotalCount *int64
+		Text       map[string]TextResult
+		Integer    map[string]IntegerResult
+		Number     map[string]NumberResult
+		Boolean    map[string]BooleanResult
+		Date       map[string]DateResult
+	}
 	TextResult struct {
 		Count          *int64
 		TopOccurrences []TopOccurrence
@@ -82,7 +96,6 @@ func aggregate[Query any](ctx context.Context, t internal.Transport, rd api.Requ
 	req := &api.AggregateRequest{
 		RequestDefaults: rd,
 		TotalCount:      r.TotalCount,
-		Limit:           r.Limit,
 		ObjectLimit:     r.ObjectLimit,
 	}
 	for _, txt := range r.Text {
@@ -102,13 +115,16 @@ func aggregate[Query any](ctx context.Context, t internal.Transport, rd api.Requ
 	}
 
 	if search != nil {
-		// Conversion to any, while a bit awkward, enables us to do
-		// value-type dispatch here; it smartly bridges the gap between
-		// two disparate type sets: what `req` may be (query, aggregate, generate),
-		// and what Query.Request() may return (near vector, hybrid, bm25).
 		switch q := search.(type) {
 		case *api.NearVector:
 			req.NearVector = q
+		}
+	}
+
+	if r.groupBy != nil {
+		req.GroupBy = &api.GroupBy{
+			Property: r.groupBy.Property,
+			Limit:    int32(r.groupBy.Limit),
 		}
 	}
 
@@ -117,37 +133,78 @@ func aggregate[Query any](ctx context.Context, t internal.Transport, rd api.Requ
 		return nil, fmt.Errorf("%s: %w", label, err)
 	}
 
-	result := &Result{
-		TotalCount:  resp.TotalCount,
-		TookSeconds: resp.TookSeconds,
-
-		Text:    make(map[string]TextResult, len(resp.Text)),
-		Integer: make(map[string]IntegerResult, len(resp.Integer)),
-		Number:  make(map[string]NumberResult, len(resp.Number)),
-		Boolean: make(map[string]BooleanResult, len(resp.Boolean)),
-		Date:    make(map[string]DateResult, len(resp.Date)),
+	// aggregate was called from a GroupBy() method.
+	// This means we should put GroupByResult in the context,
+	// as the first return value will be discarded.
+	if r.groupBy != nil {
+		groups := make([]Group, len(resp.GroupByResults))
+		for gi, group := range resp.GroupByResults {
+			groups[gi] = Group{
+				Property:     group.Property,
+				Value:        group.Value,
+				Aggregations: aggregationsFromAPI(group.Results),
+			}
+		}
+		setGroupByResult(ctx, &GroupByResult{Groups: groups})
+		return nil, nil
 	}
-	for property, txt := range resp.Text {
+
+	result := &Result{
+		TookSeconds:  resp.TookSeconds,
+		Aggregations: aggregationsFromAPI(resp.Results),
+	}
+	return result, nil
+}
+
+func aggregationsFromAPI(aggregations api.Aggregations) Aggregations {
+	out := Aggregations{
+		TotalCount: aggregations.TotalCount,
+		Text:       make(map[string]TextResult, len(aggregations.Text)),
+		Integer:    make(map[string]IntegerResult, len(aggregations.Integer)),
+		Number:     make(map[string]NumberResult, len(aggregations.Number)),
+		Boolean:    make(map[string]BooleanResult, len(aggregations.Boolean)),
+		Date:       make(map[string]DateResult, len(aggregations.Date)),
+	}
+	for property, txt := range aggregations.Text {
 		top := make([]TopOccurrence, len(txt.TopOccurrences))
 		for i, item := range txt.TopOccurrences {
 			top[i] = TopOccurrence(item)
 		}
-		result.Text[property] = TextResult{
+		out.Text[property] = TextResult{
 			Count:          txt.Count,
 			TopOccurrences: top,
 		}
 	}
-	for property, int := range resp.Integer {
-		result.Integer[property] = IntegerResult(int)
+	for property, int := range aggregations.Integer {
+		out.Integer[property] = IntegerResult(int)
 	}
-	for property, num := range resp.Number {
-		result.Number[property] = NumberResult(num)
+	for property, num := range aggregations.Number {
+		out.Number[property] = NumberResult(num)
 	}
-	for property, bool := range resp.Boolean {
-		result.Boolean[property] = BooleanResult(bool)
+	for property, bool := range aggregations.Boolean {
+		out.Boolean[property] = BooleanResult(bool)
 	}
-	for property, date := range resp.Date {
-		result.Date[property] = DateResult(date)
+	for property, date := range aggregations.Date {
+		out.Date[property] = DateResult(date)
 	}
-	return result, nil
+	return out
+}
+
+// groupByResultKey is used to pass grouped query results to the GroupBy caller.
+var groupByResultKey = internal.ContextKey{}
+
+// contextWithGorupByResult creates a placeholder for *GroupByResult in the ctx.Values store.
+func contextWithGroupByResult(ctx context.Context) context.Context {
+	return internal.ContextWithPlaceholder[GroupByResult](ctx, groupByResultKey)
+}
+
+// getGroupByResult extracts *GroupByResult from the context.
+func getGroupByResult(ctx context.Context) *GroupByResult {
+	return internal.ValueFromContext[GroupByResult](ctx, groupByResultKey)
+}
+
+// setGroupByResult replaces *GroupByResult placeholder
+// in the context with the value at r.
+func setGroupByResult(ctx context.Context, r *GroupByResult) {
+	internal.SetContextValue(ctx, groupByResultKey, r)
 }

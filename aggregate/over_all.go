@@ -17,8 +17,8 @@ type (
 		Date    []Date    // Aggregations for date properties.
 
 		TotalCount  bool // Return total object count.
-		Limit       int32
 		ObjectLimit int32
+		groupBy     *GroupBy
 	}
 	OverAllFunc func(context.Context, OverAll) (*Result, error)
 )
@@ -33,8 +33,18 @@ func overAllFunc(t internal.Transport, rd api.RequestDefaults) OverAllFunc {
 			Boolean:     oa.Boolean,
 			Date:        oa.Date,
 			TotalCount:  oa.TotalCount,
-			Limit:       oa.Limit,
 			ObjectLimit: oa.ObjectLimit,
+			groupBy:     oa.groupBy,
 		}, nil, "over all")
 	}
+}
+
+// GroupBy runs over all aggregation with a GroupBy clause.
+func (oaf OverAllFunc) GroupBy(ctx context.Context, oa OverAll, groupBy GroupBy) (*GroupByResult, error) {
+	oa.groupBy = &groupBy
+	ctx = contextWithGroupByResult(ctx) // safe to reassign since we hold the copy of the original context.
+	if _, err := oaf(ctx, oa); err != nil {
+		return nil, err
+	}
+	return getGroupByResult(ctx), nil
 }

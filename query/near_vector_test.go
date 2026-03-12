@@ -38,7 +38,7 @@ func TestNearVector(t *testing.T) {
 		testkit.Only
 
 		name  string
-		nv    query.NearVector // Object to be inserted.
+		nv    query.NearVector
 		stubs []testkit.Stub[api.SearchRequest, api.SearchResponse]
 		want  *query.Result // Expected return value.
 		err   testkit.Error
@@ -292,93 +292,181 @@ func TestNearVector(t *testing.T) {
 			require.Equal(t, tt.want, got, "query result")
 		})
 	}
-}
 
-func TestNearVector_GroupBy(t *testing.T) {
-	rd := api.RequestDefaults{
-		CollectionName:   "Songs",
-		Tenant:           "john_doe",
-		ConsistencyLevel: api.ConsistencyLevelQuorum,
-	}
-
-	for _, tt := range []struct {
-		name    string
-		nv      query.NearVector // Object to be inserted.
-		groupBy query.GroupBy    // GroupBy clause.
-		stubs   []testkit.Stub[api.SearchRequest, api.SearchResponse]
-		want    *query.GroupByResult // Expected return value.
-		err     testkit.Error
-	}{
-		{
-			name: "request ok",
-			nv: query.NearVector{
-				Similarity: query.Certainty(.123),
-				Target: &types.Vector{
-					Single: singleVector,
+	t.Run("group by", func(t *testing.T) {
+		for _, tt := range []struct {
+			name    string
+			nv      query.NearVector // Object to be inserted.
+			groupBy query.GroupBy    // GroupBy clause.
+			stubs   []testkit.Stub[api.SearchRequest, api.SearchResponse]
+			want    *query.GroupByResult // Expected return value.
+			err     testkit.Error
+		}{
+			{
+				name: "request ok",
+				nv: query.NearVector{
+					Similarity: query.Certainty(.123),
+					Target: &types.Vector{
+						Single: singleVector,
+					},
 				},
-			},
-			groupBy: query.GroupBy{
-				Property:       "album",
-				ObjectLimit:    2,
-				NumberOfGroups: 2,
-			},
-			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
-				{
-					Request: &api.SearchRequest{
-						RequestDefaults: rd,
-						NearVector: &api.NearVector{
-							Certainty: testkit.Ptr(.123),
-							Target: api.SearchTarget{
-								Vectors: []api.TargetVector{{
-									Vector: api.Vector{Single: singleVector},
-								}},
+				groupBy: query.GroupBy{
+					Property:       "album",
+					ObjectLimit:    2,
+					NumberOfGroups: 2,
+				},
+				stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
+					{
+						Request: &api.SearchRequest{
+							RequestDefaults: rd,
+							NearVector: &api.NearVector{
+								Certainty: testkit.Ptr(.123),
+								Target: api.SearchTarget{
+									Vectors: []api.TargetVector{{
+										Vector: api.Vector{Single: singleVector},
+									}},
+								},
+							},
+							GroupBy: &api.GroupBy{
+								Property:       "album",
+								Limit:          2,
+								NumberOfGroups: 2,
 							},
 						},
-						GroupBy: &api.GroupBy{
-							Property:       "album",
-							ObjectLimit:    2,
-							NumberOfGroups: 2,
+						Response: api.SearchResponse{
+							Took: 92 * time.Second,
+							GroupByResults: []api.Group{
+								{
+									Name:        "Countdown To Extinction",
+									MinDistance: .123,
+									MaxDistance: .456,
+									Size:        2,
+									Objects: []api.GroupObject{
+										{
+											BelongsToGroup: "Countdown To Extinction",
+											Object: api.Object{
+												Properties: map[string]any{
+													"title": "High Speed Dirt",
+												},
+											},
+										},
+										{
+											BelongsToGroup: "Countdown To Extinction",
+											Object: api.Object{
+												Properties: map[string]any{
+													"title": "Architechture Of Aggression",
+												},
+											},
+										},
+									},
+								},
+								{
+									Name:        "Youthanasia",
+									MinDistance: .321,
+									MaxDistance: .654,
+									Size:        1,
+									Objects: []api.GroupObject{
+										{
+											BelongsToGroup: "Youthanasia",
+											Object: api.Object{
+												Properties: map[string]any{
+													"title": "New World Order",
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
-					Response: api.SearchResponse{
-						Took: 92 * time.Second,
-						GroupByResults: []api.Group{
-							{
-								Name:        "Countdown To Extinction",
-								MinDistance: .123,
-								MaxDistance: .456,
-								Size:        2,
-								Objects: []api.GroupObject{
-									{
-										BelongsToGroup: "Countdown To Extinction",
-										Object: api.Object{
+				},
+				want: &query.GroupByResult{
+					Objects: []query.GroupObject[map[string]any]{
+						{
+							BelongsToGroup: "Countdown To Extinction",
+							Object: query.Object[map[string]any]{
+								Object: types.Object[map[string]any]{
+									Properties: map[string]any{
+										"title": "High Speed Dirt",
+									},
+									References: noReferences,
+									Vectors:    noVectors,
+								},
+							},
+						},
+						{
+							BelongsToGroup: "Countdown To Extinction",
+							Object: query.Object[map[string]any]{
+								Object: types.Object[map[string]any]{
+									Properties: map[string]any{
+										"title": "Architechture Of Aggression",
+									},
+									References: noReferences,
+									Vectors:    noVectors,
+								},
+							},
+						},
+						{
+							BelongsToGroup: "Youthanasia",
+							Object: query.Object[map[string]any]{
+								Object: types.Object[map[string]any]{
+									Properties: map[string]any{
+										"title": "New World Order",
+									},
+									References: noReferences,
+									Vectors:    noVectors,
+								},
+							},
+						},
+					},
+					Groups: map[string]query.Group[map[string]any]{
+						"Countdown To Extinction": {
+							Name:        "Countdown To Extinction",
+							MinDistance: .123,
+							MaxDistance: .456,
+							Size:        2,
+							Objects: []query.GroupObject[map[string]any]{
+								{
+									BelongsToGroup: "Countdown To Extinction",
+									Object: query.Object[map[string]any]{
+										Object: types.Object[map[string]any]{
 											Properties: map[string]any{
 												"title": "High Speed Dirt",
 											},
+											References: noReferences,
+											Vectors:    noVectors,
 										},
 									},
-									{
-										BelongsToGroup: "Countdown To Extinction",
-										Object: api.Object{
+								},
+								{
+									BelongsToGroup: "Countdown To Extinction",
+									Object: query.Object[map[string]any]{
+										Object: types.Object[map[string]any]{
 											Properties: map[string]any{
 												"title": "Architechture Of Aggression",
 											},
+											References: noReferences,
+											Vectors:    noVectors,
 										},
 									},
 								},
 							},
-							{
-								Name:        "Youthanasia",
-								MinDistance: .321,
-								MaxDistance: .654,
-								Size:        1,
-								Objects: []api.GroupObject{
-									{
-										BelongsToGroup: "Youthanasia",
-										Object: api.Object{
+						},
+						"Youthanasia": {
+							Name:        "Youthanasia",
+							MinDistance: .321,
+							MaxDistance: .654,
+							Size:        1,
+							Objects: []query.GroupObject[map[string]any]{
+								{
+									BelongsToGroup: "Youthanasia",
+									Object: query.Object[map[string]any]{
+										Object: types.Object[map[string]any]{
 											Properties: map[string]any{
 												"title": "New World Order",
 											},
+											References: noReferences,
+											Vectors:    noVectors,
 										},
 									},
 								},
@@ -387,120 +475,26 @@ func TestNearVector_GroupBy(t *testing.T) {
 					},
 				},
 			},
-			want: &query.GroupByResult{
-				Objects: []query.GroupObject[map[string]any]{
-					{
-						BelongsToGroup: "Countdown To Extinction",
-						Object: query.Object[map[string]any]{
-							Object: types.Object[map[string]any]{
-								Properties: map[string]any{
-									"title": "High Speed Dirt",
-								},
-								References: noReferences,
-								Vectors:    noVectors,
-							},
-						},
-					},
-					{
-						BelongsToGroup: "Countdown To Extinction",
-						Object: query.Object[map[string]any]{
-							Object: types.Object[map[string]any]{
-								Properties: map[string]any{
-									"title": "Architechture Of Aggression",
-								},
-								References: noReferences,
-								Vectors:    noVectors,
-							},
-						},
-					},
-					{
-						BelongsToGroup: "Youthanasia",
-						Object: query.Object[map[string]any]{
-							Object: types.Object[map[string]any]{
-								Properties: map[string]any{
-									"title": "New World Order",
-								},
-								References: noReferences,
-								Vectors:    noVectors,
-							},
-						},
-					},
+			{
+				name: "request error",
+				stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
+					{Err: testkit.ErrWhaam},
 				},
-				Groups: map[string]query.Group[map[string]any]{
-					"Countdown To Extinction": {
-						Name:        "Countdown To Extinction",
-						MinDistance: .123,
-						MaxDistance: .456,
-						Size:        2,
-						Objects: []query.GroupObject[map[string]any]{
-							{
-								BelongsToGroup: "Countdown To Extinction",
-								Object: query.Object[map[string]any]{
-									Object: types.Object[map[string]any]{
-										Properties: map[string]any{
-											"title": "High Speed Dirt",
-										},
-										References: noReferences,
-										Vectors:    noVectors,
-									},
-								},
-							},
-							{
-								BelongsToGroup: "Countdown To Extinction",
-								Object: query.Object[map[string]any]{
-									Object: types.Object[map[string]any]{
-										Properties: map[string]any{
-											"title": "Architechture Of Aggression",
-										},
-										References: noReferences,
-										Vectors:    noVectors,
-									},
-								},
-							},
-						},
-					},
-					"Youthanasia": {
-						Name:        "Youthanasia",
-						MinDistance: .321,
-						MaxDistance: .654,
-						Size:        1,
-						Objects: []query.GroupObject[map[string]any]{
-							{
-								BelongsToGroup: "Youthanasia",
-								Object: query.Object[map[string]any]{
-									Object: types.Object[map[string]any]{
-										Properties: map[string]any{
-											"title": "New World Order",
-										},
-										References: noReferences,
-										Vectors:    noVectors,
-									},
-								},
-							},
-						},
-					},
-				},
+				err: testkit.ExpectError,
 			},
-		},
-		{
-			name: "request error",
-			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
-				{Err: testkit.ErrWhaam},
-			},
-			err: testkit.ExpectError,
-		},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			transport := testkit.NewTransport(t, tt.stubs)
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				transport := testkit.NewTransport(t, tt.stubs)
 
-			c := query.NewClient(transport, rd)
-			require.NotNil(t, c, "client")
+				c := query.NewClient(transport, rd)
+				require.NotNil(t, c, "client")
 
-			got, err := c.NearVector.GroupBy(t.Context(), tt.nv, tt.groupBy)
-			tt.err.Require(t, err, "near vector query")
-			require.Equal(t, tt.want, got, "query result")
-		})
-	}
+				got, err := c.NearVector.GroupBy(t.Context(), tt.nv, tt.groupBy)
+				tt.err.Require(t, err, "near vector query")
+				require.Equal(t, tt.want, got, "query result")
+			})
+		}
+	})
 }
 
 func TestSimilarity(t *testing.T) {

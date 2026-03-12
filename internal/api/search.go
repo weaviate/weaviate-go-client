@@ -59,9 +59,9 @@ type (
 		ReturnReferences []ReturnReference
 	}
 	GroupBy struct {
-		Property       string // Property to group by.
-		ObjectLimit    int32  // Maximum number of objects per group.
-		NumberOfGroups int32  // Maximum number of groups to return.
+		Property       string
+		Limit          int32
+		NumberOfGroups int32
 	}
 )
 
@@ -115,7 +115,7 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	if r.GroupBy != nil {
 		req.GroupBy = &proto.GroupBy{
 			Path:            []string{r.GroupBy.Property},
-			ObjectsPerGroup: r.GroupBy.ObjectLimit,
+			ObjectsPerGroup: r.GroupBy.Limit,
 			NumberOfGroups:  r.GroupBy.NumberOfGroups,
 		}
 	}

@@ -6,6 +6,7 @@ import (
 
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
 
 type AggregateRequest struct {
@@ -18,8 +19,8 @@ type AggregateRequest struct {
 	Date    []AggregateDateRequest
 
 	TotalCount  bool
-	Limit       int32
 	ObjectLimit int32
+	GroupBy     *GroupBy
 
 	NearVector *NearVector
 }
@@ -81,9 +82,9 @@ func (r *AggregateRequest) Body() transport.MessageMarshaler[proto.AggregateRequ
 
 // MarshalMessage implements [Message].
 func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
-	var aggs []*proto.AggregateRequest_Aggregation
+	var aggregations []*proto.AggregateRequest_Aggregation
 	for _, txt := range r.Text {
-		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
+		aggregations = append(aggregations, &proto.AggregateRequest_Aggregation{
 			Property: txt.Property,
 			Aggregation: &proto.AggregateRequest_Aggregation_Text_{
 				Text: &proto.AggregateRequest_Aggregation_Text{
@@ -95,7 +96,7 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 		})
 	}
 	for _, int := range r.Integer {
-		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
+		aggregations = append(aggregations, &proto.AggregateRequest_Aggregation{
 			Property: int.Property,
 			Aggregation: &proto.AggregateRequest_Aggregation_Int{
 				Int: &proto.AggregateRequest_Aggregation_Integer{
@@ -111,7 +112,7 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 		})
 	}
 	for _, num := range r.Number {
-		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
+		aggregations = append(aggregations, &proto.AggregateRequest_Aggregation{
 			Property: num.Property,
 			Aggregation: &proto.AggregateRequest_Aggregation_Number_{
 				Number: &proto.AggregateRequest_Aggregation_Number{
@@ -127,7 +128,7 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 		})
 	}
 	for _, bool := range r.Boolean {
-		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
+		aggregations = append(aggregations, &proto.AggregateRequest_Aggregation{
 			Property: bool.Property,
 			Aggregation: &proto.AggregateRequest_Aggregation_Boolean_{
 				Boolean: &proto.AggregateRequest_Aggregation_Boolean{
@@ -142,7 +143,7 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 		})
 	}
 	for _, date := range r.Date {
-		aggs = append(aggs, &proto.AggregateRequest_Aggregation{
+		aggregations = append(aggregations, &proto.AggregateRequest_Aggregation{
 			Property: date.Property,
 			Aggregation: &proto.AggregateRequest_Aggregation_Date_{
 				Date: &proto.AggregateRequest_Aggregation_Date{
@@ -161,9 +162,16 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 		Tenant:     r.Tenant,
 
 		ObjectsCount: r.TotalCount,
-		Limit:        nilZero(uint32(r.Limit)),
 		ObjectLimit:  nilZero(uint32(r.ObjectLimit)),
-		Aggregations: aggs,
+		Aggregations: aggregations,
+	}
+
+	if r.GroupBy != nil {
+		req.Limit = ptr(uint32(r.GroupBy.Limit))
+		req.GroupBy = &proto.AggregateRequest_GroupBy{
+			Collection: r.CollectionName,
+			Property:   r.GroupBy.Property,
+		}
 	}
 
 	switch {
@@ -182,17 +190,20 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 }
 
 type AggregateResponse struct {
-	Text    map[string]AggregateTextResult
-	Integer map[string]AggregateIntegerResult
-	Number  map[string]AggregateNumberResult
-	Boolean map[string]AggregateBooleanResult
-	Date    map[string]AggregateDateResult
-
-	TotalCount  *int64
-	TookSeconds float32
+	TookSeconds    float32
+	Results        Aggregations
+	GroupByResults []AggregateGroup
 }
 
 type (
+	Aggregations struct {
+		TotalCount *int64
+		Text       map[string]AggregateTextResult
+		Integer    map[string]AggregateIntegerResult
+		Number     map[string]AggregateNumberResult
+		Boolean    map[string]AggregateBooleanResult
+		Date       map[string]AggregateDateResult
+	}
 	AggregateTextResult struct {
 		Count          *int64
 		TopOccurrences []TopOccurrence
@@ -238,99 +249,171 @@ type (
 		Value       string
 		OccursTimes int64
 	}
+	AggregateGroup struct {
+		Property string
+		Value    any
+		Results  Aggregations
+	}
 )
 
 func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error {
-	response := AggregateResponse{
-		TookSeconds: reply.GetTook(),
-		Text:        make(map[string]AggregateTextResult),
-		Integer:     make(map[string]AggregateIntegerResult),
-		Number:      make(map[string]AggregateNumberResult),
-		Boolean:     make(map[string]AggregateBooleanResult),
-		Date:        make(map[string]AggregateDateResult),
-	}
+	var results Aggregations
+	var groups []AggregateGroup
+
 	single := reply.GetSingleResult()
 	if single != nil {
-		response.TotalCount = single.ObjectsCount
-		for _, agg := range single.GetAggregations().GetAggregations() {
-			property := agg.GetProperty()
-			switch {
-			case agg.GetText() != nil:
-				txt := agg.GetText()
-				top := make([]TopOccurrence, len(txt.GetTopOccurences().GetItems()))
-				for i, item := range txt.GetTopOccurences().GetItems() {
-					top[i] = TopOccurrence{
-						Value:       item.Value,
-						OccursTimes: item.Occurs,
-					}
-				}
-				response.Text[property] = AggregateTextResult{
-					Count:          txt.Count,
-					TopOccurrences: top,
-				}
-			case agg.GetDate() != nil:
-				date := agg.GetDate()
-				minimum, err := timeFromString(date.GetMinimum())
-				if err != nil {
-					return fmt.Errorf("%q minimum: %w", property, err)
-				}
-				maximum, err := timeFromString(date.GetMaximum())
-				if err != nil {
-					return fmt.Errorf("%q maximum: %w", property, err)
-				}
-				mode, err := timeFromString(date.GetMode())
-				if err != nil {
-					return fmt.Errorf("%q mode: %w", property, err)
-				}
-				median, err := timeFromString(date.GetMedian())
-				if err != nil {
-					return fmt.Errorf("%q median: %w", property, err)
-				}
-				response.Date[property] = AggregateDateResult{
-					Count:  date.Count,
-					Min:    minimum,
-					Max:    maximum,
-					Mode:   mode,
-					Median: median,
-				}
-			case agg.GetInt() != nil:
-				int := agg.GetInt()
-				response.Integer[property] = AggregateIntegerResult{
-					Count:  int.Count,
-					Sum:    int.Sum,
-					Min:    int.Minimum,
-					Max:    int.Maximum,
-					Mode:   int.Mode,
-					Median: int.Median,
-					Mean:   int.Mean,
-				}
-			case agg.GetNumber() != nil:
-				num := agg.GetNumber()
-				response.Number[property] = AggregateNumberResult{
-					Count:  num.Count,
-					Sum:    num.Sum,
-					Min:    num.Minimum,
-					Max:    num.Maximum,
-					Mode:   num.Mode,
-					Median: num.Median,
-					Mean:   num.Mean,
-				}
-			case agg.GetBoolean() != nil:
-				bool := agg.GetBoolean()
-				response.Boolean[property] = AggregateBooleanResult{
-					Count:           bool.Count,
-					Type:            bool.Type,
-					PercentageTrue:  bool.PercentageTrue,
-					PercentageFalse: bool.PercentageFalse,
-					TotalTrue:       bool.TotalTrue,
-					TotalFalse:      bool.TotalFalse,
-				}
-			}
+		aggregations, err := unmarshalAggregations(single.GetAggregations().Aggregations)
+		if err != nil {
+			return err
+		}
+		if aggregations != nil {
+			results = *aggregations
+			results.TotalCount = single.ObjectsCount
 		}
 	}
 
-	*r = response
+	grouped := reply.GetGroupedResults()
+	if grouped != nil {
+		for _, group := range grouped.Groups {
+			by := group.GetGroupedBy()
+			property := by.GetPath()[0]
+
+			var results Aggregations
+			aggregations, err := unmarshalAggregations(group.GetAggregations().Aggregations)
+			if err != nil {
+				return err
+			}
+			if aggregations != nil {
+				results = *aggregations
+				results.TotalCount = group.ObjectsCount
+			}
+
+			var value any
+			switch by.GetValue().(type) {
+			case *proto.AggregateReply_Group_GroupedBy_Text:
+				value = by.GetText()
+			case *proto.AggregateReply_Group_GroupedBy_Texts:
+				value = by.GetTexts().GetValues()
+			case *proto.AggregateReply_Group_GroupedBy_Int:
+				value = by.GetInt()
+			case *proto.AggregateReply_Group_GroupedBy_Ints:
+				value = by.GetInts().GetValues()
+			case *proto.AggregateReply_Group_GroupedBy_Number:
+				value = by.GetNumber()
+			case *proto.AggregateReply_Group_GroupedBy_Numbers:
+				value = by.GetNumbers().GetValues()
+			case *proto.AggregateReply_Group_GroupedBy_Boolean:
+				value = by.GetBoolean()
+			case *proto.AggregateReply_Group_GroupedBy_Booleans:
+				value = by.GetBooleans().GetValues()
+			default:
+				// TODO(dyma): support geo
+			}
+
+			dev.AssertNotNil(aggregations, "result")
+			groups = append(groups, AggregateGroup{
+				Property: property,
+				Value:    value,
+				Results:  results,
+			})
+		}
+	}
+
+	dev.AssertNotNil(results, "results")
+
+	// TODO(dyma): replace took seconds with took time.Duration
+	*r = AggregateResponse{
+		TookSeconds:    reply.GetTook(),
+		Results:        results,
+		GroupByResults: groups,
+	}
 	return nil
+}
+
+func unmarshalAggregations(aggregations []*proto.AggregateReply_Aggregations_Aggregation) (*Aggregations, error) {
+	out := Aggregations{
+		Text:    make(map[string]AggregateTextResult),
+		Integer: make(map[string]AggregateIntegerResult),
+		Number:  make(map[string]AggregateNumberResult),
+		Boolean: make(map[string]AggregateBooleanResult),
+		Date:    make(map[string]AggregateDateResult),
+	}
+	for _, agg := range aggregations {
+		property := agg.GetProperty()
+		switch {
+		case agg.GetText() != nil:
+			txt := agg.GetText()
+			top := make([]TopOccurrence, len(txt.GetTopOccurences().GetItems()))
+			for i, item := range txt.GetTopOccurences().GetItems() {
+				top[i] = TopOccurrence{
+					Value:       item.Value,
+					OccursTimes: item.Occurs,
+				}
+			}
+			out.Text[property] = AggregateTextResult{
+				Count:          txt.Count,
+				TopOccurrences: top,
+			}
+		case agg.GetDate() != nil:
+			date := agg.GetDate()
+			minimum, err := timeFromString(date.GetMinimum())
+			if err != nil {
+				return nil, fmt.Errorf("%q minimum: %w", property, err)
+			}
+			maximum, err := timeFromString(date.GetMaximum())
+			if err != nil {
+				return nil, fmt.Errorf("%q maximum: %w", property, err)
+			}
+			mode, err := timeFromString(date.GetMode())
+			if err != nil {
+				return nil, fmt.Errorf("%q mode: %w", property, err)
+			}
+			median, err := timeFromString(date.GetMedian())
+			if err != nil {
+				return nil, fmt.Errorf("%q median: %w", property, err)
+			}
+			out.Date[property] = AggregateDateResult{
+				Count:  date.Count,
+				Min:    minimum,
+				Max:    maximum,
+				Mode:   mode,
+				Median: median,
+			}
+		case agg.GetInt() != nil:
+			int := agg.GetInt()
+			out.Integer[property] = AggregateIntegerResult{
+				Count:  int.Count,
+				Sum:    int.Sum,
+				Min:    int.Minimum,
+				Max:    int.Maximum,
+				Mode:   int.Mode,
+				Median: int.Median,
+				Mean:   int.Mean,
+			}
+		case agg.GetNumber() != nil:
+			num := agg.GetNumber()
+			out.Number[property] = AggregateNumberResult{
+				Count:  num.Count,
+				Sum:    num.Sum,
+				Min:    num.Minimum,
+				Max:    num.Maximum,
+				Mode:   num.Mode,
+				Median: num.Median,
+				Mean:   num.Mean,
+			}
+		case agg.GetBoolean() != nil:
+			bool := agg.GetBoolean()
+			out.Boolean[property] = AggregateBooleanResult{
+				Count:           bool.Count,
+				Type:            bool.Type,
+				PercentageTrue:  bool.PercentageTrue,
+				PercentageFalse: bool.PercentageFalse,
+				TotalTrue:       bool.TotalTrue,
+				TotalFalse:      bool.TotalFalse,
+			}
+		}
+	}
+	return &out, nil
 }
 
 // nilZero returns a pointer to v if it is not the zero value for T and nil otherwise.
