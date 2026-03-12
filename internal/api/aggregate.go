@@ -182,20 +182,17 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 }
 
 type AggregateResponse struct {
-	Results     Aggregations
+	Text    map[string]AggregateTextResult
+	Integer map[string]AggregateIntegerResult
+	Number  map[string]AggregateNumberResult
+	Boolean map[string]AggregateBooleanResult
+	Date    map[string]AggregateDateResult
+
+	TotalCount  *int64
 	TookSeconds float32
 }
 
 type (
-	Aggregations struct {
-		Text    map[string]AggregateTextResult
-		Integer map[string]AggregateIntegerResult
-		Number  map[string]AggregateNumberResult
-		Boolean map[string]AggregateBooleanResult
-		Date    map[string]AggregateDateResult
-
-		TotalCount *int64
-	}
 	AggregateTextResult struct {
 		Count          *int64
 		TopOccurrences []TopOccurrence
@@ -244,16 +241,17 @@ type (
 )
 
 func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error {
-	result := Aggregations{
-		Text:    make(map[string]AggregateTextResult),
-		Integer: make(map[string]AggregateIntegerResult),
-		Number:  make(map[string]AggregateNumberResult),
-		Boolean: make(map[string]AggregateBooleanResult),
-		Date:    make(map[string]AggregateDateResult),
+	response := AggregateResponse{
+		TookSeconds: reply.GetTook(),
+		Text:        make(map[string]AggregateTextResult),
+		Integer:     make(map[string]AggregateIntegerResult),
+		Number:      make(map[string]AggregateNumberResult),
+		Boolean:     make(map[string]AggregateBooleanResult),
+		Date:        make(map[string]AggregateDateResult),
 	}
 	single := reply.GetSingleResult()
 	if single != nil {
-		result.TotalCount = single.ObjectsCount
+		response.TotalCount = single.ObjectsCount
 		for _, agg := range single.GetAggregations().GetAggregations() {
 			property := agg.GetProperty()
 			switch {
@@ -266,7 +264,7 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 						OccursTimes: item.Occurs,
 					}
 				}
-				result.Text[property] = AggregateTextResult{
+				response.Text[property] = AggregateTextResult{
 					Count:          txt.Count,
 					TopOccurrences: top,
 				}
@@ -288,7 +286,7 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 				if err != nil {
 					return fmt.Errorf("%q median: %w", property, err)
 				}
-				result.Date[property] = AggregateDateResult{
+				response.Date[property] = AggregateDateResult{
 					Count:  date.Count,
 					Min:    minimum,
 					Max:    maximum,
@@ -297,7 +295,7 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 				}
 			case agg.GetInt() != nil:
 				int := agg.GetInt()
-				result.Integer[property] = AggregateIntegerResult{
+				response.Integer[property] = AggregateIntegerResult{
 					Count:  int.Count,
 					Sum:    int.Sum,
 					Min:    int.Minimum,
@@ -308,7 +306,7 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 				}
 			case agg.GetNumber() != nil:
 				num := agg.GetNumber()
-				result.Number[property] = AggregateNumberResult{
+				response.Number[property] = AggregateNumberResult{
 					Count:  num.Count,
 					Sum:    num.Sum,
 					Min:    num.Minimum,
@@ -319,7 +317,7 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 				}
 			case agg.GetBoolean() != nil:
 				bool := agg.GetBoolean()
-				result.Boolean[property] = AggregateBooleanResult{
+				response.Boolean[property] = AggregateBooleanResult{
 					Count:           bool.Count,
 					Type:            bool.Type,
 					PercentageTrue:  bool.PercentageTrue,
@@ -331,10 +329,7 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 		}
 	}
 
-	*r = AggregateResponse{
-		TookSeconds: reply.GetTook(),
-		Results:     result,
-	}
+	*r = response
 	return nil
 }
 
