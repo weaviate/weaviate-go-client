@@ -1,12 +1,15 @@
 package aggregate_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/aggregate"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
+	"github.com/weaviate/weaviate-go-client/v6/query"
+	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
 func TestNewClient(t *testing.T) {
@@ -15,13 +18,13 @@ func TestNewClient(t *testing.T) {
 	}, "nil transport")
 }
 
-func TestClient_OverAll(t *testing.T) {
-	rd := api.RequestDefaults{
-		CollectionName:   "Songs",
-		Tenant:           "john_doe",
-		ConsistencyLevel: api.ConsistencyLevelQuorum,
-	}
+var rd = api.RequestDefaults{
+	CollectionName:   "Songs",
+	Tenant:           "john_doe",
+	ConsistencyLevel: api.ConsistencyLevelQuorum,
+}
 
+func TestClient_OverAll(t *testing.T) {
 	// result is a helper to initialize all map fields in aggregation.Results.
 	// internal/api should never return nil maps to the caller.
 	// To reduce boilerplate in tests, it also populates TotalCount accordingly.
@@ -550,4 +553,46 @@ func TestClient_OverAll(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestClient_Query(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		query func(context.Context, *aggregate.Client)
+		stubs []testkit.Stub[api.AggregateRequest, any]
+		want  any
+	}{
+		{
+			name: "near vector",
+			query: func(ctx context.Context, c *aggregate.Client) {
+				c.NearVector(ctx, aggregate.NearVector{
+					Query: query.NearVector{
+						Target:     types.Vector{Single: []float32{1, 2, 3}},
+						Similarity: query.Distance(.45),
+					},
+				})
+			},
+			stubs: []testkit.Stub[api.AggregateRequest, any]{
+				{Request: &api.AggregateRequest{
+					RequestDefaults: rd,
+					NearVector: &api.NearVector{
+						Distance: testkit.Ptr(.45),
+						Target: api.SearchTarget{
+							Vectors: []api.TargetVector{
+								{Vector: api.Vector{Single: []float32{1, 2, 3}}},
+							},
+						},
+					},
+				}},
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+			c := aggregate.NewClient(transport, rd)
+			require.NotNil(t, c, "nil client")
+
+			tt.query(t.Context(), c)
+		})
+	}
 }
