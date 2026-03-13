@@ -24,6 +24,7 @@ func TestClient_Use(t *testing.T) {
 
 	checkNamespaces := func(t *testing.T, h *collections.Handle) {
 		t.Helper()
+		assert.NotNil(t, h.Aggregate, "nil aggregate namespace")
 		assert.NotNil(t, h.Data, "nil data namespace")
 		assert.NotNil(t, h.Query, "nil query namespace")
 	}
