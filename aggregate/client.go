@@ -82,6 +82,7 @@ type (
 		Date       map[string]DateResult
 	}
 	TextResult struct {
+		Property       string
 		Count          *int64
 		TopOccurrences []TopOccurrence
 	}
@@ -165,27 +166,28 @@ func aggregationsFromAPI(aggregations api.Aggregations) Aggregations {
 		Boolean:    make(map[string]BooleanResult, len(aggregations.Boolean)),
 		Date:       make(map[string]DateResult, len(aggregations.Date)),
 	}
-	for property, txt := range aggregations.Text {
+	for _, txt := range aggregations.Text {
 		top := make([]TopOccurrence, len(txt.TopOccurrences))
 		for i, item := range txt.TopOccurrences {
 			top[i] = TopOccurrence(item)
 		}
-		out.Text[property] = TextResult{
+		out.Text[txt.Property] = TextResult{
+			Property:       txt.Property,
 			Count:          txt.Count,
 			TopOccurrences: top,
 		}
 	}
-	for property, int := range aggregations.Integer {
-		out.Integer[property] = IntegerResult(int)
+	for _, int := range aggregations.Integer {
+		out.Integer[int.Property] = IntegerResult(int)
 	}
-	for property, num := range aggregations.Number {
-		out.Number[property] = NumberResult(num)
+	for _, num := range aggregations.Number {
+		out.Number[num.Property] = NumberResult(num)
 	}
-	for property, bool := range aggregations.Boolean {
-		out.Boolean[property] = BooleanResult(bool)
+	for _, bool := range aggregations.Boolean {
+		out.Boolean[bool.Property] = BooleanResult(bool)
 	}
-	for property, date := range aggregations.Date {
-		out.Date[property] = DateResult(date)
+	for _, date := range aggregations.Date {
+		out.Date[date.Property] = DateResult(date)
 	}
 	return out
 }

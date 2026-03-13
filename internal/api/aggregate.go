@@ -198,13 +198,14 @@ type AggregateResponse struct {
 type (
 	Aggregations struct {
 		TotalCount *int64
-		Text       map[string]AggregateTextResult
-		Integer    map[string]AggregateIntegerResult
-		Number     map[string]AggregateNumberResult
-		Boolean    map[string]AggregateBooleanResult
-		Date       map[string]AggregateDateResult
+		Text       []AggregateTextResult
+		Integer    []AggregateIntegerResult
+		Number     []AggregateNumberResult
+		Boolean    []AggregateBooleanResult
+		Date       []AggregateDateResult
 	}
 	AggregateTextResult struct {
+		Property       string
 		Count          *int64
 		TopOccurrences []TopOccurrence
 	}
@@ -213,24 +214,27 @@ type (
 		OccursTimes int64
 	}
 	AggregateIntegerResult struct {
-		Count  *int64
-		Sum    *int64
-		Min    *int64
-		Max    *int64
-		Mode   *int64
-		Mean   *float64
-		Median *float64
+		Property string
+		Count    *int64
+		Sum      *int64
+		Min      *int64
+		Max      *int64
+		Mode     *int64
+		Mean     *float64
+		Median   *float64
 	}
 	AggregateNumberResult struct {
-		Count  *int64
-		Sum    *float64
-		Min    *float64
-		Max    *float64
-		Mode   *float64
-		Mean   *float64
-		Median *float64
+		Property string
+		Count    *int64
+		Sum      *float64
+		Min      *float64
+		Max      *float64
+		Mode     *float64
+		Mean     *float64
+		Median   *float64
 	}
 	AggregateBooleanResult struct {
+		Property        string
 		Count           *int64
 		Type            *string
 		PercentageTrue  *float64
@@ -239,11 +243,12 @@ type (
 		TotalFalse      *int64
 	}
 	AggregateDateResult struct {
-		Count  *int64
-		Min    *time.Time
-		Max    *time.Time
-		Mode   *time.Time
-		Median *time.Time
+		Property string
+		Count    *int64
+		Min      *time.Time
+		Max      *time.Time
+		Mode     *time.Time
+		Median   *time.Time
 	}
 	TopOccurrence struct {
 		Value       string
@@ -331,13 +336,7 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 }
 
 func unmarshalAggregations(aggregations []*proto.AggregateReply_Aggregations_Aggregation) (*Aggregations, error) {
-	out := Aggregations{
-		Text:    make(map[string]AggregateTextResult),
-		Integer: make(map[string]AggregateIntegerResult),
-		Number:  make(map[string]AggregateNumberResult),
-		Boolean: make(map[string]AggregateBooleanResult),
-		Date:    make(map[string]AggregateDateResult),
-	}
+	var out Aggregations
 	for _, agg := range aggregations {
 		property := agg.GetProperty()
 		switch {
@@ -350,10 +349,11 @@ func unmarshalAggregations(aggregations []*proto.AggregateReply_Aggregations_Agg
 					OccursTimes: item.Occurs,
 				}
 			}
-			out.Text[property] = AggregateTextResult{
+			out.Text = append(out.Text, AggregateTextResult{
+				Property:       property,
 				Count:          txt.Count,
 				TopOccurrences: top,
-			}
+			})
 		case agg.GetDate() != nil:
 			date := agg.GetDate()
 			minimum, err := timeFromString(date.GetMinimum())
@@ -372,45 +372,49 @@ func unmarshalAggregations(aggregations []*proto.AggregateReply_Aggregations_Agg
 			if err != nil {
 				return nil, fmt.Errorf("%q median: %w", property, err)
 			}
-			out.Date[property] = AggregateDateResult{
-				Count:  date.Count,
-				Min:    minimum,
-				Max:    maximum,
-				Mode:   mode,
-				Median: median,
-			}
+			out.Date = append(out.Date, AggregateDateResult{
+				Property: property,
+				Count:    date.Count,
+				Min:      minimum,
+				Max:      maximum,
+				Mode:     mode,
+				Median:   median,
+			})
 		case agg.GetInt() != nil:
 			int := agg.GetInt()
-			out.Integer[property] = AggregateIntegerResult{
-				Count:  int.Count,
-				Sum:    int.Sum,
-				Min:    int.Minimum,
-				Max:    int.Maximum,
-				Mode:   int.Mode,
-				Median: int.Median,
-				Mean:   int.Mean,
-			}
+			out.Integer = append(out.Integer, AggregateIntegerResult{
+				Property: property,
+				Count:    int.Count,
+				Sum:      int.Sum,
+				Min:      int.Minimum,
+				Max:      int.Maximum,
+				Mode:     int.Mode,
+				Median:   int.Median,
+				Mean:     int.Mean,
+			})
 		case agg.GetNumber() != nil:
 			num := agg.GetNumber()
-			out.Number[property] = AggregateNumberResult{
-				Count:  num.Count,
-				Sum:    num.Sum,
-				Min:    num.Minimum,
-				Max:    num.Maximum,
-				Mode:   num.Mode,
-				Median: num.Median,
-				Mean:   num.Mean,
-			}
+			out.Number = append(out.Number, AggregateNumberResult{
+				Property: property,
+				Count:    num.Count,
+				Sum:      num.Sum,
+				Min:      num.Minimum,
+				Max:      num.Maximum,
+				Mode:     num.Mode,
+				Median:   num.Median,
+				Mean:     num.Mean,
+			})
 		case agg.GetBoolean() != nil:
 			bool := agg.GetBoolean()
-			out.Boolean[property] = AggregateBooleanResult{
+			out.Boolean = append(out.Boolean, AggregateBooleanResult{
+				Property:        property,
 				Count:           bool.Count,
 				Type:            bool.Type,
 				PercentageTrue:  bool.PercentageTrue,
 				PercentageFalse: bool.PercentageFalse,
 				TotalTrue:       bool.TotalTrue,
 				TotalFalse:      bool.TotalFalse,
-			}
+			})
 		}
 	}
 	return &out, nil

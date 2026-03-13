@@ -22,33 +22,6 @@ func TestClient_OverAll(t *testing.T) {
 		ConsistencyLevel: api.ConsistencyLevelQuorum,
 	}
 
-	// response is a helper to initialize all map fields in api.Aggregations.
-	// internal/api should never return nil maps to the caller.
-	// To reduce boilerplate in tests, it also populates TotalCount accordingly.
-	response := func(aggs api.Aggregations) api.Aggregations {
-		results := api.Aggregations{
-			TotalCount: aggs.TotalCount,
-			Text:       make(map[string]api.AggregateTextResult),
-			Integer:    make(map[string]api.AggregateIntegerResult),
-			Number:     make(map[string]api.AggregateNumberResult),
-			Boolean:    make(map[string]api.AggregateBooleanResult),
-			Date:       make(map[string]api.AggregateDateResult),
-		}
-		switch {
-		case aggs.Text != nil:
-			results.Text = aggs.Text
-		case aggs.Integer != nil:
-			results.Integer = aggs.Integer
-		case aggs.Number != nil:
-			results.Number = aggs.Number
-		case aggs.Boolean != nil:
-			results.Boolean = aggs.Boolean
-		case aggs.Date != nil:
-			results.Date = aggs.Date
-		}
-		return results
-	}
-
 	// result is a helper to initialize all map fields in aggregation.Results.
 	// internal/api should never return nil maps to the caller.
 	// To reduce boilerplate in tests, it also populates TotalCount accordingly.
@@ -61,16 +34,19 @@ func TestClient_OverAll(t *testing.T) {
 			Boolean:    make(map[string]aggregate.BooleanResult),
 			Date:       make(map[string]aggregate.DateResult),
 		}
-		switch {
-		case aggs.Text != nil:
+		if aggs.Text != nil {
 			results.Text = aggs.Text
-		case aggs.Integer != nil:
+		}
+		if aggs.Integer != nil {
 			results.Integer = aggs.Integer
-		case aggs.Number != nil:
+		}
+		if aggs.Number != nil {
 			results.Number = aggs.Number
-		case aggs.Boolean != nil:
+		}
+		if aggs.Boolean != nil {
 			results.Boolean = aggs.Boolean
-		case aggs.Date != nil:
+		}
+		if aggs.Date != nil {
 			results.Date = aggs.Date
 		}
 		return results
@@ -106,24 +82,26 @@ func TestClient_OverAll(t *testing.T) {
 					},
 					Response: api.AggregateResponse{
 						TookSeconds: 92,
-						Results: response(api.Aggregations{
+						Results: api.Aggregations{
 							TotalCount: testkit.Ptr[int64](2),
-							Text: map[string]api.AggregateTextResult{
-								"colour": {
-									Count: testkit.Ptr[int64](1),
+							Text: []api.AggregateTextResult{
+								{
+									Property: "colour",
+									Count:    testkit.Ptr[int64](1),
 									TopOccurrences: []api.TopOccurrence{
 										{Value: "red", OccursTimes: 2},
 										{Value: "blue", OccursTimes: 3},
 									},
 								},
-								"tag": {
+								{
+									Property: "tag",
 									TopOccurrences: []api.TopOccurrence{
 										{Value: "casual", OccursTimes: 1},
 										{Value: "comfy", OccursTimes: 2},
 									},
 								},
 							},
-						}),
+						},
 					},
 				},
 			},
@@ -133,13 +111,15 @@ func TestClient_OverAll(t *testing.T) {
 					TotalCount: testkit.Ptr[int64](2),
 					Text: map[string]aggregate.TextResult{
 						"colour": {
-							Count: testkit.Ptr[int64](1),
+							Property: "colour",
+							Count:    testkit.Ptr[int64](1),
 							TopOccurrences: []aggregate.TopOccurrence{
 								{Value: "red", OccursTimes: 2},
 								{Value: "blue", OccursTimes: 3},
 							},
 						},
 						"tag": {
+							Property: "tag",
 							TopOccurrences: []aggregate.TopOccurrence{
 								{Value: "casual", OccursTimes: 1},
 								{Value: "comfy", OccursTimes: 2},
@@ -148,7 +128,6 @@ func TestClient_OverAll(t *testing.T) {
 					},
 				}),
 			},
-			Only: true,
 		},
 		{
 			name: "integer properties",
@@ -161,6 +140,7 @@ func TestClient_OverAll(t *testing.T) {
 			stubs: []testkit.Stub[api.AggregateRequest, api.AggregateResponse]{
 				{
 					Request: &api.AggregateRequest{
+						RequestDefaults: rd,
 						Integer: []api.AggregateIntegerRequest{
 							{Property: "price", Sum: true, Min: true, Max: true},
 							{Property: "size", Count: true, Mode: true, Median: true},
@@ -168,21 +148,23 @@ func TestClient_OverAll(t *testing.T) {
 					},
 					Response: api.AggregateResponse{
 						TookSeconds: 92,
-						Results: response(api.Aggregations{
+						Results: api.Aggregations{
 							TotalCount: testkit.Ptr[int64](2),
-							Integer: map[string]api.AggregateIntegerResult{
-								"price": {
-									Sum: testkit.Ptr[int64](1),
-									Min: testkit.Ptr[int64](2),
-									Max: testkit.Ptr[int64](3),
+							Integer: []api.AggregateIntegerResult{
+								{
+									Property: "price",
+									Sum:      testkit.Ptr[int64](1),
+									Min:      testkit.Ptr[int64](2),
+									Max:      testkit.Ptr[int64](3),
 								},
-								"size": {
-									Count:  testkit.Ptr[int64](1),
-									Mode:   testkit.Ptr[int64](2),
-									Median: testkit.Ptr[float64](3),
+								{
+									Property: "size",
+									Count:    testkit.Ptr[int64](1),
+									Mode:     testkit.Ptr[int64](2),
+									Median:   testkit.Ptr[float64](3),
 								},
 							},
-						}),
+						},
 					},
 				},
 			},
@@ -192,14 +174,16 @@ func TestClient_OverAll(t *testing.T) {
 					TotalCount: testkit.Ptr[int64](2),
 					Integer: map[string]aggregate.IntegerResult{
 						"price": {
-							Sum: testkit.Ptr[int64](1),
-							Min: testkit.Ptr[int64](2),
-							Max: testkit.Ptr[int64](3),
+							Property: "price",
+							Sum:      testkit.Ptr[int64](1),
+							Min:      testkit.Ptr[int64](2),
+							Max:      testkit.Ptr[int64](3),
 						},
 						"size": {
-							Count:  testkit.Ptr[int64](1),
-							Mode:   testkit.Ptr[int64](2),
-							Median: testkit.Ptr[float64](3),
+							Property: "size",
+							Count:    testkit.Ptr[int64](1),
+							Mode:     testkit.Ptr[int64](2),
+							Median:   testkit.Ptr[float64](3),
 						},
 					},
 				}),
@@ -216,6 +200,7 @@ func TestClient_OverAll(t *testing.T) {
 			stubs: []testkit.Stub[api.AggregateRequest, api.AggregateResponse]{
 				{
 					Request: &api.AggregateRequest{
+						RequestDefaults: rd,
 						Number: []api.AggregateNumberRequest{
 							{Property: "price", Sum: true, Min: true, Max: true},
 							{Property: "size", Count: true, Mode: true, Median: true},
@@ -223,21 +208,23 @@ func TestClient_OverAll(t *testing.T) {
 					},
 					Response: api.AggregateResponse{
 						TookSeconds: 92,
-						Results: response(api.Aggregations{
+						Results: api.Aggregations{
 							TotalCount: testkit.Ptr[int64](2),
-							Number: map[string]api.AggregateNumberResult{
-								"price": {
-									Sum: testkit.Ptr[float64](1),
-									Min: testkit.Ptr[float64](2),
-									Max: testkit.Ptr[float64](3),
+							Number: []api.AggregateNumberResult{
+								{
+									Property: "price",
+									Sum:      testkit.Ptr[float64](1),
+									Min:      testkit.Ptr[float64](2),
+									Max:      testkit.Ptr[float64](3),
 								},
-								"size": {
-									Count:  testkit.Ptr[int64](1),
-									Mode:   testkit.Ptr[float64](2),
-									Median: testkit.Ptr[float64](3),
+								{
+									Property: "size",
+									Count:    testkit.Ptr[int64](1),
+									Mode:     testkit.Ptr[float64](2),
+									Median:   testkit.Ptr[float64](3),
 								},
 							},
-						}),
+						},
 					},
 				},
 			},
@@ -247,14 +234,16 @@ func TestClient_OverAll(t *testing.T) {
 					TotalCount: testkit.Ptr[int64](2),
 					Number: map[string]aggregate.NumberResult{
 						"price": {
-							Sum: testkit.Ptr[float64](1),
-							Min: testkit.Ptr[float64](2),
-							Max: testkit.Ptr[float64](3),
+							Property: "price",
+							Sum:      testkit.Ptr[float64](1),
+							Min:      testkit.Ptr[float64](2),
+							Max:      testkit.Ptr[float64](3),
 						},
 						"size": {
-							Count:  testkit.Ptr[int64](1),
-							Mode:   testkit.Ptr[float64](2),
-							Median: testkit.Ptr[float64](3),
+							Property: "size",
+							Count:    testkit.Ptr[int64](1),
+							Mode:     testkit.Ptr[float64](2),
+							Median:   testkit.Ptr[float64](3),
 						},
 					},
 				}),
@@ -271,6 +260,7 @@ func TestClient_OverAll(t *testing.T) {
 			stubs: []testkit.Stub[api.AggregateRequest, api.AggregateResponse]{
 				{
 					Request: &api.AggregateRequest{
+						RequestDefaults: rd,
 						Boolean: []api.AggregateBooleanRequest{
 							{Property: "onSale", Type: true, PercentageTrue: true, PercentageFalse: true},
 							{Property: "newArrival", Count: true, TotalTrue: true, TotalFalse: true},
@@ -278,21 +268,23 @@ func TestClient_OverAll(t *testing.T) {
 					},
 					Response: api.AggregateResponse{
 						TookSeconds: 92,
-						Results: response(api.Aggregations{
+						Results: api.Aggregations{
 							TotalCount: testkit.Ptr[int64](2),
-							Boolean: map[string]api.AggregateBooleanResult{
-								"onSale": {
+							Boolean: []api.AggregateBooleanResult{
+								{
+									Property:        "onSale",
 									Type:            testkit.Ptr("black_friday"),
 									PercentageTrue:  testkit.Ptr[float64](1),
 									PercentageFalse: testkit.Ptr[float64](2),
 								},
-								"newArrival": {
+								{
+									Property:   "newArrival",
 									Count:      testkit.Ptr[int64](1),
 									TotalTrue:  testkit.Ptr[int64](2),
 									TotalFalse: testkit.Ptr[int64](3),
 								},
 							},
-						}),
+						},
 					},
 				},
 			},
@@ -302,11 +294,13 @@ func TestClient_OverAll(t *testing.T) {
 					TotalCount: testkit.Ptr[int64](2),
 					Boolean: map[string]aggregate.BooleanResult{
 						"onSale": {
+							Property:        "onSale",
 							Type:            testkit.Ptr("black_friday"),
 							PercentageTrue:  testkit.Ptr[float64](1),
 							PercentageFalse: testkit.Ptr[float64](2),
 						},
 						"newArrival": {
+							Property:   "newArrival",
 							Count:      testkit.Ptr[int64](1),
 							TotalTrue:  testkit.Ptr[int64](2),
 							TotalFalse: testkit.Ptr[int64](3),
@@ -326,6 +320,7 @@ func TestClient_OverAll(t *testing.T) {
 			stubs: []testkit.Stub[api.AggregateRequest, api.AggregateResponse]{
 				{
 					Request: &api.AggregateRequest{
+						RequestDefaults: rd,
 						Date: []api.AggregateDateRequest{
 							{Property: "lastPurchase", Count: true, Min: true, Max: true},
 							{Property: "lastReturn", Mode: true, Median: true},
@@ -333,20 +328,22 @@ func TestClient_OverAll(t *testing.T) {
 					},
 					Response: api.AggregateResponse{
 						TookSeconds: 92,
-						Results: response(api.Aggregations{
+						Results: api.Aggregations{
 							TotalCount: testkit.Ptr[int64](2),
-							Date: map[string]api.AggregateDateResult{
-								"lastPurchase": {
-									Count: testkit.Ptr[int64](1),
-									Min:   &testkit.Now,
-									Max:   &testkit.Now,
+							Date: []api.AggregateDateResult{
+								{
+									Property: "lastPurchase",
+									Count:    testkit.Ptr[int64](1),
+									Min:      &testkit.Now,
+									Max:      &testkit.Now,
 								},
-								"lastReturn": {
-									Mode:   &testkit.Now,
-									Median: &testkit.Now,
+								{
+									Property: "lastReturn",
+									Mode:     &testkit.Now,
+									Median:   &testkit.Now,
 								},
 							},
-						}),
+						},
 					},
 				},
 			},
@@ -356,13 +353,15 @@ func TestClient_OverAll(t *testing.T) {
 					TotalCount: testkit.Ptr[int64](2),
 					Date: map[string]aggregate.DateResult{
 						"lastPurchase": {
-							Count: testkit.Ptr[int64](1),
-							Min:   &testkit.Now,
-							Max:   &testkit.Now,
+							Property: "lastPurchase",
+							Count:    testkit.Ptr[int64](1),
+							Min:      &testkit.Now,
+							Max:      &testkit.Now,
 						},
 						"lastReturn": {
-							Mode:   &testkit.Now,
-							Median: &testkit.Now,
+							Property: "lastReturn",
+							Mode:     &testkit.Now,
+							Median:   &testkit.Now,
 						},
 					},
 				}),
@@ -407,7 +406,7 @@ func TestClient_OverAll(t *testing.T) {
 						{Property: "onSale", PercentageTrue: true, PercentageFalse: true},
 					},
 					Number: []aggregate.Number{
-						{Property: "onSale", Sum: true, Min: true, Max: true},
+						{Property: "price", Sum: true, Min: true, Max: true},
 					},
 				},
 				groupBy: aggregate.GroupBy{Property: "album", Limit: 1},
@@ -420,7 +419,7 @@ func TestClient_OverAll(t *testing.T) {
 								{Property: "onSale", PercentageTrue: true, PercentageFalse: true},
 							},
 							Number: []api.AggregateNumberRequest{
-								{Property: "onSale", Sum: true, Min: true, Max: true},
+								{Property: "price", Sum: true, Min: true, Max: true},
 							},
 							GroupBy: &api.GroupBy{
 								Property: "album",
@@ -431,32 +430,50 @@ func TestClient_OverAll(t *testing.T) {
 							TookSeconds: 92,
 							GroupByResults: []api.AggregateGroup{
 								{
-									Property: "onSale",
-									Value:    true,
+									Property: "album",
+									Value:    "Youthanasia",
 									Results: api.Aggregations{
-										TotalCount: testkit.Ptr(int64(1)),
-										Boolean: map[string]api.AggregateBooleanResult{
-											"onSale": {
+										TotalCount: testkit.Ptr(int64(2)),
+										Boolean: []api.AggregateBooleanResult{
+											{
+												Property:        "onSale",
 												Type:            testkit.Ptr("black_friday"),
 												PercentageTrue:  testkit.Ptr[float64](1),
 												PercentageFalse: testkit.Ptr[float64](2),
 											},
 										},
+										Number: []api.AggregateNumberResult{
+											{
+												Property: "price",
+												Sum:      testkit.Ptr[float64](1),
+												Min:      testkit.Ptr[float64](2),
+												Max:      testkit.Ptr[float64](3),
+											},
+										},
 									},
 								},
 								{
-									Property: "price",
-									Value:    float64(4),
-									Results: response(api.Aggregations{
-										TotalCount: testkit.Ptr[int64](1),
-										Number: map[string]api.AggregateNumberResult{
-											"price": {
-												Sum: testkit.Ptr[float64](1),
-												Min: testkit.Ptr[float64](2),
-												Max: testkit.Ptr[float64](3),
+									Property: "album",
+									Value:    "Countdown To Extinction",
+									Results: api.Aggregations{
+										TotalCount: testkit.Ptr(int64(2)),
+										Boolean: []api.AggregateBooleanResult{
+											{
+												Property:        "onSale",
+												Type:            testkit.Ptr("closeout"),
+												PercentageTrue:  testkit.Ptr[float64](4),
+												PercentageFalse: testkit.Ptr[float64](5),
 											},
 										},
-									}),
+										Number: []api.AggregateNumberResult{
+											{
+												Property: "price",
+												Sum:      testkit.Ptr[float64](11),
+												Min:      testkit.Ptr[float64](22),
+												Max:      testkit.Ptr[float64](33),
+											},
+										},
+									},
 								},
 							},
 						},
@@ -465,29 +482,47 @@ func TestClient_OverAll(t *testing.T) {
 				want: &aggregate.GroupByResult{
 					Groups: []aggregate.Group{
 						{
-							Property: "onSale",
-							Value:    true,
+							Property: "album",
+							Value:    "Youthanasia",
 							Aggregations: result(aggregate.Aggregations{
-								TotalCount: testkit.Ptr(int64(1)),
+								TotalCount: testkit.Ptr(int64(2)),
 								Boolean: map[string]aggregate.BooleanResult{
 									"onSale": {
+										Property:        "onSale",
 										Type:            testkit.Ptr("black_friday"),
 										PercentageTrue:  testkit.Ptr[float64](1),
 										PercentageFalse: testkit.Ptr[float64](2),
 									},
 								},
+								Number: map[string]aggregate.NumberResult{
+									"price": {
+										Property: "price",
+										Sum:      testkit.Ptr[float64](1),
+										Min:      testkit.Ptr[float64](2),
+										Max:      testkit.Ptr[float64](3),
+									},
+								},
 							}),
 						},
 						{
-							Property: "price",
-							Value:    float64(4),
+							Property: "album",
+							Value:    "Countdown To Extinction",
 							Aggregations: result(aggregate.Aggregations{
-								TotalCount: testkit.Ptr[int64](1),
+								TotalCount: testkit.Ptr[int64](2),
+								Boolean: map[string]aggregate.BooleanResult{
+									"onSale": {
+										Property:        "onSale",
+										Type:            testkit.Ptr("closeout"),
+										PercentageTrue:  testkit.Ptr[float64](4),
+										PercentageFalse: testkit.Ptr[float64](5),
+									},
+								},
 								Number: map[string]aggregate.NumberResult{
 									"price": {
-										Sum: testkit.Ptr[float64](1),
-										Min: testkit.Ptr[float64](2),
-										Max: testkit.Ptr[float64](3),
+										Property: "price",
+										Sum:      testkit.Ptr[float64](11),
+										Min:      testkit.Ptr[float64](22),
+										Max:      testkit.Ptr[float64](33),
 									},
 								},
 							}),
