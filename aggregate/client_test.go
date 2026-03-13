@@ -555,6 +555,7 @@ func TestClient_OverAll(t *testing.T) {
 	})
 }
 
+//nolint:errcheck
 func TestClient_Query(t *testing.T) {
 	for _, tt := range []struct {
 		name  string
