@@ -71,7 +71,8 @@ func (con *Connection) WaitForWeaviate(timeout time.Duration) error {
 
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("Weaviate did not start up in %s. Verify the server is running and the connection string %q is correct or consider increasing config.StartupTimeout: %w", timeout, con.basePath, err)
+			//nolint:staticcheck
+			return fmt.Errorf("Weaviate did not start up in %s. Verify the server is running and the connection string %q is correct or consider increasing config.StartupTimeout: %w", timeout, con.basePath, ctx.Err())
 		case <-c:
 		}
 	}
