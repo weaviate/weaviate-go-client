@@ -27,7 +27,7 @@ func TestStartupTimeout_REST(t *testing.T) {
 	}
 	_, err := weaviate.NewClient(cfg)
 	require.NotNil(t, err)
-	require.Contains(t, err.Error(), "weaviate did not start up in")
+	require.ErrorContains(t, err, "Weaviate did not start up in")
 }
 
 func TestStartupTimeout_GRPC(t *testing.T) {
