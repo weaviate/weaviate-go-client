@@ -61,11 +61,8 @@ func (con *Connection) WaitForWeaviate(timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	var err error
-Poll:
 	for c := time.Tick(time.Second); ; { // Ticks immediately, then every 1s.
-		var response *ResponseData
-		response, err = con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
+		response, err := con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
 		if err == nil && response.StatusCode == 200 {
 			return nil
 		}
@@ -74,17 +71,10 @@ Poll:
 
 		select {
 		case <-ctx.Done():
-			err = ctx.Err()
-			break Poll
+			return fmt.Errorf("Weaviate did not start up in %s. Verify the server is running and the connection string %q is correct or consider increasing config.StartupTimeout: %w", timeout, con.basePath, err)
 		case <-c:
 		}
 	}
-
-	if err != nil {
-		//nolint: staticcheck
-		return fmt.Errorf("Weaviate did not start up in %s. Verify the server is running and the connection string %q is correct or consider increasing config.StartupTimeout: %w", timeout, con.basePath, err)
-	}
-	return nil
 }
 
 // startRefreshGoroutine starts a background goroutine that periodically refreshes the auth token.
