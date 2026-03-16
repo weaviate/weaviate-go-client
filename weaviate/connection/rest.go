@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"runtime"
-	"sync/atomic"
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/fault"
@@ -55,60 +53,38 @@ func NewConnection(scheme string, host string, httpClient *http.Client, timeout 
 	return connection
 }
 
-// WaitForWeaviate waits until weaviate is started up and ready
-func (con *Connection) WaitForWeaviate(startupTimeout time.Duration) error {
-	if startupTimeout < 0 {
-		return errors.New("'startupTimeout' can not be smaller than zero")
-	} else if startupTimeout == 0 {
-		return nil
+func (con *Connection) WaitForWeaviate(timeout time.Duration) error {
+	if timeout == 0 {
+		return nil // Treat 0 as "do not wait".
 	}
 
-	// query every second, even is the startupTimeout is longer. The query-loop is ended immediately after receiving a
-	// response
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-	startTime := time.Now()
-	returnChannel := make(chan bool)
-	defer close(returnChannel)
-	endLoop := atomic.Bool{}
-	go func() {
-		for {
-			go func() {
-				ctx, cancelFunc := context.WithTimeout(context.Background(), startupTimeout)
-				defer cancelFunc()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
-				response, err := con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
-				var isReadyLocal bool
-				switch {
-				case err != nil:
-					isReadyLocal = false
-				case response.StatusCode == 200:
-					isReadyLocal = true
-				default:
-					isReadyLocal = false
-
-				}
-
-				if isReadyLocal && endLoop.CompareAndSwap(false, true) {
-					returnChannel <- true // return wait function immediately
-				}
-			}()
-			t := <-ticker.C
-			if t.After(startTime.Add(startupTimeout)) {
-				returnChannel <- false
+	var err error
+Poll:
+	for c := time.Tick(time.Second); ; { // Ticks immediately, then every 1s.
+		var response *ResponseData
+		response, err = con.RunREST(ctx, "/.well-known/ready", http.MethodGet, nil)
+		if err == nil {
+			if response.StatusCode == 200 {
+				return nil
 			}
-
-			if endLoop.Load() {
-				break
-			}
-
-			log.Printf("Weaviate not yet up. Waiting for another second.")
+			err = fmt.Errorf("GET /.well-known/ready returned HTTP %d: %s", response.StatusCode, string(response.Body))
 		}
-	}()
 
-	success := <-returnChannel
-	if !success {
-		return fmt.Errorf("weaviate did not start up in %s. Either the Weaviate URL %q is wrong or Weaviate did not start up in the interval given in 'startupTimeout'", startupTimeout.String(), con.basePath)
+		log.Printf("Weaviate not yet up. Waiting for another %s.", time.Second)
+
+		select {
+		case <-ctx.Done():
+			err = ctx.Err()
+			break Poll
+		case <-c:
+		}
+	}
+
+	if err != nil {
+		return fmt.Errorf("Weaviate did not start up in %s. Verify the server is running and the connection string %q is correct or consider increasing config.StartupTimeout: %w", timeout, con.basePath, err)
 	}
 	return nil
 }
