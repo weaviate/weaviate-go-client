@@ -259,7 +259,7 @@ func New(config Config) *Client {
 
 // Waits for Weaviate to start.
 //
-// Deprecated: "Weaviate" is a typo, prefer [WaitForWeaviate] instead.
+// Deprecated: "Weavaite" is a typo, prefer [WaitForWeaviate] instead.
 func (c *Client) WaitForWeavaite(startupTimeout time.Duration) error {
 	return c.WaitForWeaviate(startupTimeout)
 }
