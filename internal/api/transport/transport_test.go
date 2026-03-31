@@ -2,10 +2,14 @@ package transport
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
@@ -13,11 +17,53 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Test that transport fetches instance's /meta information when created.
+func TestNew(t *testing.T) {
+	defaultHeader := http.Header{
+		"X-Custom-Header": {"92"},
+	}
+
+	var fetchedMeta bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if assert.Equal(t, "/v0/meta", r.URL.Path, "request path") {
+			fetchedMeta = true
+			meta, err := json.Marshal(GetInstanceMetadataResponse{
+				GRPCMaxMessageSize: 2048,
+			})
+			require.NoError(t, err, "marshal mock response")
+
+			assert.Subset(t, r.Header, defaultHeader, "default headers missing")
+
+			_, err = w.Write(meta)
+			require.NoError(t, err, "write mock response")
+		}
+	}))
+	t.Cleanup(srv.Close)
+
+	url, err := url.Parse(srv.URL)
+	require.NoError(t, err, "parse url")
+
+	port, err := strconv.Atoi(url.Port())
+	require.NoError(t, err, "parse port")
+
+	tport, err := New(Config{
+		Scheme:   url.Scheme,
+		RESTHost: url.Hostname(),
+		RESTPort: port,
+		Header:   defaultHeader,
+		Version:  "v0",
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, tport, "nil transport")
+	require.True(t, fetchedMeta, "transport must fetch instance metadata on startup")
+}
+
 func TestTransport_Do(t *testing.T) {
 	t.Run("rest endpoint", func(t *testing.T) {
 		t.Run("ok", func(t *testing.T) {
 			var got *endpoint
-			tr := transport{
+			tport := transport{
 				rest: restFunc(func(_ context.Context, req transports.Endpoint, dest any) error {
 					got = req.(*endpoint) // capture actual request
 					*(dest.(*int)) = 5    // write expected response
@@ -32,7 +78,7 @@ func TestTransport_Do(t *testing.T) {
 				body:   92,
 			}
 			var resp int
-			err := tr.Do(t.Context(), req, &resp)
+			err := tport.Do(t.Context(), req, &resp)
 			require.NoError(t, err, "transport error")
 
 			require.Equal(t, req, got, "bad request")
@@ -40,13 +86,13 @@ func TestTransport_Do(t *testing.T) {
 		})
 
 		t.Run("error", func(t *testing.T) {
-			tr := transport{
+			tport := transport{
 				rest: restFunc(func(_ context.Context, req transports.Endpoint, dest any) error {
 					return testkit.ErrWhaam
 				}),
 			}
 
-			err := tr.Do(t.Context(), &endpoint{}, nil)
+			err := tport.Do(t.Context(), &endpoint{}, nil)
 
 			require.ErrorIs(t, err, testkit.ErrWhaam, "REST transport error not propagated")
 		})
@@ -54,7 +100,7 @@ func TestTransport_Do(t *testing.T) {
 
 	t.Run("grpc message", func(t *testing.T) {
 		t.Run("ok", func(t *testing.T) {
-			tr := transport{gRPC: new(fakeGRPC)}
+			tport := transport{gRPC: new(fakeGRPC)}
 
 			// Actual request is captured by message itself,
 			// because unlike transports.Endpoint, each transports.RPC
@@ -69,7 +115,7 @@ func TestTransport_Do(t *testing.T) {
 			}
 
 			var resp reply
-			err := tr.Do(t.Context(), req, &resp)
+			err := tport.Do(t.Context(), req, &resp)
 			require.NoError(t, err, "transport error")
 
 			require.EqualExportedValues(t, req.req, req.capture.req, "bad request")
@@ -77,14 +123,14 @@ func TestTransport_Do(t *testing.T) {
 		})
 
 		t.Run("error", func(t *testing.T) {
-			tr := transport{gRPC: new(fakeGRPC)}
+			tport := transport{gRPC: new(fakeGRPC)}
 
 			var resp reply
 			req := &message[proto.SearchRequest, proto.SearchReply]{
 				req: &proto.SearchRequest{},
 				err: testkit.ErrWhaam,
 			}
-			err := tr.Do(t.Context(), req, &resp)
+			err := tport.Do(t.Context(), req, &resp)
 
 			require.ErrorIs(t, err, testkit.ErrWhaam, "gRPC transport error not propagated")
 		})

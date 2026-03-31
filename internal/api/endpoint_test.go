@@ -42,6 +42,18 @@ func TestRESTRequests(t *testing.T) {
 		wantBody   any        // Expected request body. JSON strings are compared.
 	}{
 		{
+			name:       "check is live",
+			req:        api.IsLiveRequest,
+			wantMethod: http.MethodGet,
+			wantPath:   "/.well-known/live",
+		},
+		{
+			name:       "get instance metadata",
+			req:        api.GetInstanceMetadataRequest,
+			wantMethod: http.MethodGet,
+			wantPath:   "/meta",
+		},
+		{
 			name: "insert object (no consistency_level)",
 			req: &api.InsertObjectRequest{
 				RequestDefaults: api.RequestDefaults{

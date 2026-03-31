@@ -43,6 +43,7 @@ type Timeout struct {
 // NewFunc returns an [internal.Transport] instance for [transport.Config].
 type NewFunc func(Config) (internal.Transport, error)
 
+// New creates a new [transport] instance with [transports.REST] and [transports.GRPC] handles.
 var New NewFunc = newTransport
 
 func newTransport(cfg Config) (internal.Transport, error) {
@@ -54,12 +55,21 @@ func newTransport(cfg Config) (internal.Transport, error) {
 		Version: cfg.Version,
 	})
 
+	// Other client libraries ping the server at /live before requesting /meta.
+	// Since retry-on-error is meant to be implemented by the user, we can rely
+	// on a successful /meta request to decide if the server is ready.
+	var meta GetInstanceMetadataResponse
+	if err := rest.Do(context.TODO(), GetInstanceMetadataRequest, &meta); err != nil {
+		return nil, fmt.Errorf("get instance metadata: %w", err)
+	}
+
 	gRPC, err := transports.NewGRPC(transports.GRPCConfig[proto.WeaviateClient]{
 		Host:   cfg.GRPCHost,
 		Port:   cfg.GRPCPort,
 		Header: (*metadata.MD)(&cfg.Header),
 
-		NewGRPCClient: proto.NewWeaviateClient,
+		MaxMessageSize: meta.GRPCMaxMessageSize,
+		NewGRPCClient:  proto.NewWeaviateClient,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("new transport: %w", err)
