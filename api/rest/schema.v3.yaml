@@ -567,36 +567,6 @@ components:
                 format: float
                 type: number
             type: array
-        C11yVectorBasedQuestion:
-            description: Receive question based on array of collection names (classes), properties and values.
-            items:
-                properties:
-                    classProps:
-                        description: Vectorized properties.
-                        items:
-                            properties:
-                                propsVectors:
-                                    items:
-                                        format: float
-                                        type: number
-                                    type: array
-                                value:
-                                    description: String with valuename.
-                                    type: string
-                            type: object
-                        maxItems: 300
-                        minItems: 300
-                        type: array
-                    classVectors:
-                        description: Vectorized collection (class) name.
-                        items:
-                            format: float
-                            type: number
-                        maxItems: 300
-                        minItems: 300
-                        type: array
-                type: object
-            type: array
         C11yWordsResponse:
             description: An array of available words and contexts.
             properties:
@@ -871,9 +841,44 @@ components:
                 status:
                     description: The status of the task.
                     type: string
+                units:
+                    description: Units of the task. Only present for tasks that use unit tracking.
+                    items:
+                        $ref: '#/components/schemas/DistributedTaskUnit'
+                    type: array
+                    x-omitempty: true
                 version:
                     description: The version of the task.
                     type: integer
+            type: object
+        DistributedTaskUnit:
+            description: A unit of a distributed task.
+            properties:
+                error:
+                    description: The error message if the unit failed.
+                    type: string
+                    x-omitempty: true
+                finishedAt:
+                    description: The time when the unit finished.
+                    format: date-time
+                    type: string
+                id:
+                    description: The ID of the unit.
+                    type: string
+                nodeId:
+                    description: The node that owns this unit.
+                    type: string
+                progress:
+                    description: The progress of the unit (0.0 to 1.0).
+                    format: float
+                    type: number
+                status:
+                    description: The status of the unit.
+                    type: string
+                updatedAt:
+                    description: The time when the unit was last updated.
+                    format: date-time
+                    type: string
             type: object
         DistributedTasks:
             additionalProperties:
@@ -998,7 +1003,6 @@ components:
                         - SUCCESS
                         - FAILED
                         - CANCELED
-                        - SKIPPED
                     type: string
                 tookInMs:
                     description: Duration of the export in milliseconds
@@ -1400,64 +1404,6 @@ components:
                     format: int64
                     type: integer
             type: object
-        PatchDocumentAction:
-            description: Either a JSONPatch document as defined by RFC 6902 (from, op, path, value), or a merge document (RFC 7396).
-            properties:
-                from:
-                    description: A string containing a JSON Pointer value.
-                    type: string
-                merge:
-                    $ref: '#/components/schemas/Object'
-                op:
-                    description: The operation to be performed.
-                    enum:
-                        - add
-                        - remove
-                        - replace
-                        - move
-                        - copy
-                        - test
-                    type: string
-                path:
-                    description: A JSON-Pointer.
-                    type: string
-                value:
-                    description: The value to be used within the operations.
-                    properties: {}
-                    type: object
-            required:
-                - op
-                - path
-            type: object
-        PatchDocumentObject:
-            description: Either a JSONPatch document as defined by RFC 6902 (from, op, path, value), or a merge document (RFC 7396).
-            properties:
-                from:
-                    description: A string containing a JSON Pointer value.
-                    type: string
-                merge:
-                    $ref: '#/components/schemas/Object'
-                op:
-                    description: The operation to be performed.
-                    enum:
-                        - add
-                        - remove
-                        - replace
-                        - move
-                        - copy
-                        - test
-                    type: string
-                path:
-                    description: A JSON-Pointer.
-                    type: string
-                value:
-                    description: The value to be used within the operations.
-                    properties: {}
-                    type: object
-            required:
-                - op
-                - path
-            type: object
         PeerUpdate:
             description: A single peer in the network.
             properties:
@@ -1477,11 +1423,6 @@ components:
                     format: uri
                     type: string
             type: object
-        PeerUpdateList:
-            description: List of known peers.
-            items:
-                $ref: '#/components/schemas/PeerUpdate'
-            type: array
         Permission:
             description: Permissions attached to a role.
             properties:
@@ -1938,40 +1879,6 @@ components:
                     description: 'Number of times a collection (class) is replicated (default: 1).'
                     type: integer
             type: object
-        ReplicationDeleteReplicaRequest:
-            description: Specifies the parameters required to permanently delete a specific shard replica from a particular node. This action will remove the replica's data from the node.
-            properties:
-                collection:
-                    description: The name of the collection to which the shard replica belongs.
-                    type: string
-                node:
-                    description: The name of the Weaviate node from which the shard replica will be deleted.
-                    type: string
-                shard:
-                    description: The ID of the shard whose replica is to be deleted.
-                    type: string
-            required:
-                - collection
-                - node
-                - shard
-            type: object
-        ReplicationDisableReplicaRequest:
-            description: Specifies the parameters required to mark a specific shard replica as inactive (soft-delete) on a particular node. This action typically prevents the replica from serving requests but does not immediately remove its data.
-            properties:
-                collection:
-                    description: The name of the collection to which the shard replica belongs.
-                    type: string
-                node:
-                    description: The name of the Weaviate node hosting the shard replica that is to be disabled.
-                    type: string
-                shard:
-                    description: The ID of the shard whose replica is to be disabled.
-                    type: string
-            required:
-                - collection
-                - node
-                - shard
-            type: object
         ReplicationReplicateDetailsReplicaResponse:
             description: Provides a comprehensive overview of a specific replication operation, detailing its unique ID, the involved collection, shard, source and target nodes, transfer type, current status, and optionally, its status history.
             properties:
@@ -2285,32 +2192,6 @@ components:
                     description: Name of the schema.
                     type: string
             type: object
-        SchemaClusterStatus:
-            description: Indicates the health of the schema in a cluster.
-            properties:
-                error:
-                    description: Contains the sync check error if one occurred
-                    type: string
-                    x-omitempty: true
-                healthy:
-                    description: True if the cluster is in sync, false if there is an issue (see error).
-                    type: boolean
-                    x-omitempty: false
-                hostname:
-                    description: Hostname of the coordinating node, i.e. the one that received the cluster. This can be useful information if the error message contains phrases such as 'other nodes agree, but local does not', etc.
-                    type: string
-                ignoreSchemaSync:
-                    description: The cluster check at startup can be ignored (to recover from an out-of-sync situation).
-                    type: boolean
-                    x-omitempty: false
-                nodeCount:
-                    description: Number of nodes that participated in the sync check
-                    format: int32
-                    type: integer
-            type: object
-        SchemaHistory:
-            description: This is an open object, with OpenAPI Specification 3.0 this will be more detailed. See Weaviate docs for more info. In the future this will become a key/value OR a SingleRef definition.
-            type: object
         ShardProgress:
             description: Progress information for exporting a single shard
             properties:
@@ -2327,11 +2208,9 @@ components:
                 status:
                     description: Status of this shard's export
                     enum:
-                        - STARTED
                         - TRANSFERRING
                         - SUCCESS
                         - FAILED
-                        - CANCELED
                         - SKIPPED
                     type: string
             type: object

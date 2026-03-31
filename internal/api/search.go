@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
 
@@ -27,14 +28,14 @@ type SearchRequest struct {
 }
 
 var (
-	_ Message[proto.SearchRequest, proto.SearchReply] = (*SearchRequest)(nil)
-	_ MessageMarshaler[proto.SearchRequest]           = (*SearchRequest)(nil)
+	_ transport.Message[proto.SearchRequest, proto.SearchReply] = (*SearchRequest)(nil)
+	_ transport.MessageMarshaler[proto.SearchRequest]           = (*SearchRequest)(nil)
 )
 
-func (r *SearchRequest) Method() MethodFunc[proto.SearchRequest, proto.SearchReply] {
+func (r *SearchRequest) Method() transport.MethodFunc[proto.SearchRequest, proto.SearchReply] {
 	return proto.WeaviateClient.Search
 }
-func (r *SearchRequest) Body() MessageMarshaler[proto.SearchRequest] { return r }
+func (r *SearchRequest) Body() transport.MessageMarshaler[proto.SearchRequest] { return r }
 
 type (
 	ReturnMetadata struct {
@@ -297,7 +298,7 @@ type SearchResponse struct {
 	GroupByResults []Group
 }
 
-var _ MessageUnmarshaler[proto.SearchReply] = (*SearchResponse)(nil)
+var _ transport.MessageUnmarshaler[proto.SearchReply] = (*SearchResponse)(nil)
 
 type (
 	Object struct {

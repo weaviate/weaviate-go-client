@@ -117,14 +117,13 @@ const (
 
 // Defines values for ExportCreateResponseStatus.
 const (
-	ExportCreateResponseStatusSTARTED ExportCreateResponseStatus = "STARTED"
+	STARTED ExportCreateResponseStatus = "STARTED"
 )
 
 // Defines values for ExportStatusResponseStatus.
 const (
 	ExportStatusResponseStatusCANCELED     ExportStatusResponseStatus = "CANCELED"
 	ExportStatusResponseStatusFAILED       ExportStatusResponseStatus = "FAILED"
-	ExportStatusResponseStatusSKIPPED      ExportStatusResponseStatus = "SKIPPED"
 	ExportStatusResponseStatusSTARTED      ExportStatusResponseStatus = "STARTED"
 	ExportStatusResponseStatusSUCCESS      ExportStatusResponseStatus = "SUCCESS"
 	ExportStatusResponseStatusTRANSFERRING ExportStatusResponseStatus = "TRANSFERRING"
@@ -166,8 +165,8 @@ const (
 
 // Defines values for ObjectsGetResponseResultStatus.
 const (
-	FAILED  ObjectsGetResponseResultStatus = "FAILED"
-	SUCCESS ObjectsGetResponseResultStatus = "SUCCESS"
+	ObjectsGetResponseResultStatusFAILED  ObjectsGetResponseResultStatus = "FAILED"
+	ObjectsGetResponseResultStatusSUCCESS ObjectsGetResponseResultStatus = "SUCCESS"
 )
 
 // Defines values for PermissionAction.
@@ -276,10 +275,8 @@ const (
 
 // Defines values for ShardProgressStatus.
 const (
-	ShardProgressStatusCANCELED     ShardProgressStatus = "CANCELED"
 	ShardProgressStatusFAILED       ShardProgressStatus = "FAILED"
 	ShardProgressStatusSKIPPED      ShardProgressStatus = "SKIPPED"
-	ShardProgressStatusSTARTED      ShardProgressStatus = "STARTED"
 	ShardProgressStatusSUCCESS      ShardProgressStatus = "SUCCESS"
 	ShardProgressStatusTRANSFERRING ShardProgressStatus = "TRANSFERRING"
 )
@@ -901,8 +898,35 @@ type DistributedTask struct {
 	// Status The status of the task.
 	Status string `json:"status,omitempty"`
 
+	// Units Units of the task. Only present for tasks that use unit tracking.
+	Units []DistributedTaskUnit `json:"units,omitempty"`
+
 	// Version The version of the task.
 	Version int `json:"version,omitempty"`
+}
+
+// DistributedTaskUnit A unit of a distributed task.
+type DistributedTaskUnit struct {
+	// Error The error message if the unit failed.
+	Error string `json:"error,omitempty"`
+
+	// FinishedAt The time when the unit finished.
+	FinishedAt time.Time `json:"finishedAt,omitempty"`
+
+	// Id The ID of the unit.
+	Id string `json:"id,omitempty"`
+
+	// NodeId The node that owns this unit.
+	NodeId string `json:"nodeId,omitempty"`
+
+	// Progress The progress of the unit (0.0 to 1.0).
+	Progress float32 `json:"progress,omitempty"`
+
+	// Status The status of the unit.
+	Status string `json:"status,omitempty"`
+
+	// UpdatedAt The time when the unit was last updated.
+	UpdatedAt time.Time `json:"updatedAt,omitempty"`
 }
 
 // DistributedTasks Active distributed tasks by namespace.

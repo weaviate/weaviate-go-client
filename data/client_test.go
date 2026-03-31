@@ -26,10 +26,10 @@ func TestClient_Insert(t *testing.T) {
 
 	for _, tt := range []struct {
 		name   string
-		object *data.Object                  // Object to be inserted.
-		want   *types.Object[map[string]any] // Expected return value.
+		object *data.Object // Object to be inserted.
 		stubs  []testkit.Stub[api.InsertObjectRequest, api.InsertObjectResponse]
-		err    testkit.Error
+		want   *types.Object[map[string]any] // Expected return value.
+		err    testkit.Error                 // Expected error.
 	}{
 		{
 			name: "nil object",
