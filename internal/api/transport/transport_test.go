@@ -46,7 +46,7 @@ func TestNew(t *testing.T) {
 	port, err := strconv.Atoi(url.Port())
 	require.NoError(t, err, "parse port")
 
-	tport, err := New(Config{
+	tport, err := New(t.Context(), Config{
 		Scheme:   url.Scheme,
 		RESTHost: url.Hostname(),
 		RESTPort: port,

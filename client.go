@@ -94,7 +94,7 @@ func newDefaultConfig(options ...Option) config {
 	return c
 }
 
-func newClient(_ context.Context, options []Option) (*Client, error) {
+func newClient(ctx context.Context, options []Option) (*Client, error) {
 	c := newDefaultConfig(options...)
 
 	if strings.Contains(c.RESTHost, domainWeaviateIO) ||
@@ -104,7 +104,7 @@ func newClient(_ context.Context, options []Option) (*Client, error) {
 		c.Header.Add(headerWeaviateClusterURL, clusterURL)
 	}
 
-	t, err := transport.New(transport.Config{
+	t, err := transport.New(ctx, transport.Config{
 		Scheme:   c.Scheme,
 		RESTHost: c.RESTHost,
 		RESTPort: c.RESTPort,
