@@ -76,25 +76,46 @@ func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 	}
 
 	return &transport{
-		rest: rest,
-		gRPC: gRPC,
+		rest:    rest,
+		gRPC:    gRPC,
+		timeout: cfg.Timeout,
 	}, nil
 }
 
 func (t *transport) Do(ctx context.Context, req any, dest any) error {
 	switch req := req.(type) {
 	case transports.Endpoint:
+
+		var timeout time.Duration
+		switch req.Method() {
+		case http.MethodGet, http.MethodHead:
+			timeout = t.timeout.Read
+		case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
+			timeout = t.timeout.Write
+		}
+
+		ctx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+
 		return t.rest.Do(ctx, req, dest)
 	default:
 		var rpc transports.RPC[proto.WeaviateClient]
+		var timeout time.Duration
+
 		switch msg := req.(type) {
 		case Message[proto.SearchRequest, proto.SearchReply]:
 			rpc = newRPC(msg, dest)
+			timeout = t.timeout.Read
 		case Message[proto.AggregateRequest, proto.AggregateReply]:
 			rpc = newRPC(msg, dest)
+			timeout = t.timeout.Read
 		default:
 			dev.Assert(false, "%T does not implement MessageMarshaler for any of the supported request types", msg)
 		}
+
+		ctx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+
 		return t.gRPC.Do(ctx, rpc)
 	}
 }
@@ -170,6 +191,9 @@ type transport struct {
 	gRPC interface {
 		Do(context.Context, transports.RPC[proto.WeaviateClient]) error
 	}
+
+	// An appropriate timeout is applied to each request based on the operation type.
+	timeout Timeout
 }
 
 var (

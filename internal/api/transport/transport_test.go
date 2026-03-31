@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -96,6 +97,63 @@ func TestTransport_Do(t *testing.T) {
 
 			require.ErrorIs(t, err, testkit.ErrWhaam, "REST transport error not propagated")
 		})
+
+		t.Run("timeout", func(t *testing.T) {
+			read, write := 10*time.Second, 30*time.Second
+
+			for _, tt := range []struct {
+				method  string
+				timeout time.Duration
+			}{
+				{
+					method:  http.MethodGet,
+					timeout: read,
+				},
+				{
+					method:  http.MethodHead,
+					timeout: read,
+				},
+				{
+					method:  http.MethodPost,
+					timeout: write,
+				},
+				{
+					method:  http.MethodPut,
+					timeout: write,
+				},
+				{
+					method:  http.MethodPatch,
+					timeout: write,
+				},
+				{
+					method:  http.MethodDelete,
+					timeout: write,
+				},
+			} {
+				t.Run(tt.method, func(t *testing.T) {
+					var start time.Time
+
+					tport := transport{
+						timeout: Timeout{
+							Read:  read,
+							Write: write,
+						},
+						rest: restFunc(func(ctx context.Context, _ transports.Endpoint, _ any) error {
+							d, ok := ctx.Deadline()
+							require.True(t, ok, "context must have a deadline")
+
+							timeout := d.Sub(start)
+							require.InDelta(t, tt.timeout, timeout, float64(time.Millisecond))
+							return nil
+						}),
+					}
+
+					start = time.Now()
+					err := tport.Do(t.Context(), &endpoint{method: tt.method}, nil)
+					require.NoError(t, err, "request error")
+				})
+			}
+		})
 	})
 
 	t.Run("grpc message", func(t *testing.T) {
@@ -134,6 +192,52 @@ func TestTransport_Do(t *testing.T) {
 
 			require.ErrorIs(t, err, testkit.ErrWhaam, "gRPC transport error not propagated")
 		})
+
+		t.Run("timeout", func(t *testing.T) {
+			read, write := 10*time.Second, 30*time.Second
+
+			for _, tt := range []struct {
+				name    string
+				message any
+				timeout time.Duration
+			}{
+				{
+					name:    "search",
+					message: &message[proto.SearchRequest, proto.SearchReply]{},
+					timeout: read,
+				},
+				{
+					name:    "aggregate",
+					message: &message[proto.AggregateRequest, proto.AggregateReply]{},
+					timeout: read,
+				},
+			} {
+				t.Run(tt.name, func(t *testing.T) {
+					var got context.Context
+
+					tport := transport{
+						timeout: Timeout{
+							Read:  read,
+							Write: write,
+						},
+						gRPC: gRPCFunc(func(ctx context.Context, rpc transports.RPC[proto.WeaviateClient]) error {
+							got = ctx // Capture context for this request.
+							return nil
+						}),
+					}
+
+					start := time.Now()
+					err := tport.Do(t.Context(), tt.message, new(reply))
+					require.NoError(t, err, "request error")
+
+					d, ok := got.Deadline()
+					require.True(t, ok, "context must have a deadline")
+
+					timeout := d.Sub(start)
+					require.InDelta(t, tt.timeout, timeout, float64(time.Millisecond))
+				})
+			}
+		})
 	})
 }
 
@@ -159,6 +263,12 @@ func (e *endpoint) Path() string      { return e.path }
 func (e *endpoint) Query() url.Values { return e.query }
 func (e *endpoint) Body() any         { return e.body }
 
+type gRPCFunc func(ctx context.Context, rpc transports.RPC[proto.WeaviateClient]) error
+
+func (f gRPCFunc) Do(ctx context.Context, rpc transports.RPC[proto.WeaviateClient]) error {
+	return f(ctx, rpc)
+}
+
 // fakeGRPC calls rpc.Do with nil [proto.WeaviateClient].
 // It's a dummy that should be used together with [message].
 type fakeGRPC struct{}
@@ -175,6 +285,7 @@ type message[In RequestMessage, Out ReplyMessage] struct {
 
 	// Use values passed to methodFunc in assertions.
 	capture struct {
+		ctx     context.Context
 		wc      proto.WeaviateClient
 		req     *In
 		options []grpc.CallOption
@@ -188,7 +299,8 @@ func (m *message[In, Out]) Body() MessageMarshaler[In]   { return m }
 func (m *message[In, Out]) MarshalMessage() (*In, error) { return m.req, nil }
 
 // capture is a fake messageFunc[In, Out] that captures the functions arguments.
-func (m *message[In, Out]) captureReq(wc proto.WeaviateClient, _ context.Context, req *In, opts ...grpc.CallOption) (*Out, error) {
+func (m *message[In, Out]) captureReq(wc proto.WeaviateClient, ctx context.Context, req *In, opts ...grpc.CallOption) (*Out, error) {
+	m.capture.ctx = ctx
 	m.capture.wc = wc
 	m.capture.req = req
 	m.capture.options = opts
