@@ -8,26 +8,27 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-// MessageMarshalerTest tests that [api.Message] produces a correct request message.
+// MessageMarshalerTest tests that [transport.Message] produces a correct request message.
 //
 // We do not verify the [Message.Method] part of the request, because the specific
 // [api.MethodFunc] returned is an implementation detail and there's probably not
 // a lot of room for error.
-type MessageMarshalerTest[In api.RequestMessage, Out api.ReplyMessage] struct {
+type MessageMarshalerTest[In transport.RequestMessage, Out transport.ReplyMessage] struct {
 	testkit.Only
 
 	name string
-	req  api.Message[In, Out] // Request struct.
-	want *In                  // Expected protobuf request message.
+	req  transport.Message[In, Out] // Request struct.
+	want *In                        // Expected protobuf request message.
 	err  testkit.Error
 }
 
 // testMessageMarshaler runs [MessageMarshalerTest] test cases.
-func testMessageMarshaler[In api.RequestMessage, Out api.ReplyMessage](t *testing.T, tests []MessageMarshalerTest[In, Out]) {
+func testMessageMarshaler[In transport.RequestMessage, Out transport.ReplyMessage](t *testing.T, tests []MessageMarshalerTest[In, Out]) {
 	t.Helper()
 	for _, tt := range testkit.WithOnly(t, tests) {
 		t.Run(tt.name, func(t *testing.T) {
@@ -586,18 +587,18 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 
 // ----------------------------------------------------------------------------
 
-type MessageUnmarshalerTest[Out api.ReplyMessage] struct {
+type MessageUnmarshalerTest[Out transport.ReplyMessage] struct {
 	testkit.Only
 
 	name  string
-	reply *Out                        // Protobuf message that needs to be unmarshaled.
-	dest  api.MessageUnmarshaler[Out] // Set dest to a pointer to response struct.
-	want  any                         // Expected response value (pointer).
+	reply *Out                              // Protobuf message that needs to be unmarshaled.
+	dest  transport.MessageUnmarshaler[Out] // Set dest to a pointer to response struct.
+	want  any                               // Expected response value (pointer).
 	err   testkit.Error
 }
 
-// testMessageMarshaler runs test cases for [api.MessageUnmarshaler] implementations.
-func testMessageUnmarshaler[Out api.ReplyMessage](t *testing.T, tests []MessageUnmarshalerTest[Out]) {
+// testMessageMarshaler runs test cases for [transport.MessageUnmarshaler] implementations.
+func testMessageUnmarshaler[Out transport.ReplyMessage](t *testing.T, tests []MessageUnmarshalerTest[Out]) {
 	t.Helper()
 	for _, tt := range testkit.WithOnly(t, tests) {
 		t.Run(tt.name, func(t *testing.T) {

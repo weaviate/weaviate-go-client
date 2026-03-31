@@ -70,3 +70,10 @@ func (e Error) Require(t *testing.T, err error, msgAndArgs ...any) {
 		t.FailNow()
 	}
 }
+
+// ErrorIs expects a concrete non-nil error.
+func ErrorIs(want error) Error {
+	return func(tt assert.TestingT, got error, msgAndArgs ...any) bool {
+		return assert.ErrorIs(tt, got, want, msgAndArgs...)
+	}
+}

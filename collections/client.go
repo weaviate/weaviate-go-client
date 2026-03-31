@@ -13,7 +13,7 @@ import (
 )
 
 func NewClient(t internal.Transport) *Client {
-	dev.AssertNotNil(t, "t")
+	dev.AssertNotNil(t, "transport")
 	return &Client{t: t}
 }
 
