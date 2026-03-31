@@ -567,36 +567,6 @@ components:
                 format: float
                 type: number
             type: array
-        C11yVectorBasedQuestion:
-            description: Receive question based on array of collection names (classes), properties and values.
-            items:
-                properties:
-                    classProps:
-                        description: Vectorized properties.
-                        items:
-                            properties:
-                                propsVectors:
-                                    items:
-                                        format: float
-                                        type: number
-                                    type: array
-                                value:
-                                    description: String with valuename.
-                                    type: string
-                            type: object
-                        maxItems: 300
-                        minItems: 300
-                        type: array
-                    classVectors:
-                        description: Vectorized collection (class) name.
-                        items:
-                            format: float
-                            type: number
-                        maxItems: 300
-                        minItems: 300
-                        type: array
-                type: object
-            type: array
         C11yWordsResponse:
             description: An array of available words and contexts.
             properties:
@@ -871,9 +841,44 @@ components:
                 status:
                     description: The status of the task.
                     type: string
+                units:
+                    description: Units of the task. Only present for tasks that use unit tracking.
+                    items:
+                        $ref: '#/components/schemas/DistributedTaskUnit'
+                    type: array
+                    x-omitempty: true
                 version:
                     description: The version of the task.
                     type: integer
+            type: object
+        DistributedTaskUnit:
+            description: A unit of a distributed task.
+            properties:
+                error:
+                    description: The error message if the unit failed.
+                    type: string
+                    x-omitempty: true
+                finishedAt:
+                    description: The time when the unit finished.
+                    format: date-time
+                    type: string
+                id:
+                    description: The ID of the unit.
+                    type: string
+                nodeId:
+                    description: The node that owns this unit.
+                    type: string
+                progress:
+                    description: The progress of the unit (0.0 to 1.0).
+                    format: float
+                    type: number
+                status:
+                    description: The status of the unit.
+                    type: string
+                updatedAt:
+                    description: The time when the unit was last updated.
+                    format: date-time
+                    type: string
             type: object
         DistributedTasks:
             additionalProperties:
@@ -911,6 +916,11 @@ components:
                     items:
                         type: string
                     type: array
+                file_format:
+                    description: Output file format for the export.
+                    enum:
+                        - parquet
+                    type: string
                 id:
                     description: Unique identifier for this export. Must be URL-safe.
                     type: string
@@ -920,6 +930,7 @@ components:
                         type: string
                     type: array
             required:
+                - file_format
                 - id
             type: object
         ExportCreateResponse:
@@ -960,6 +971,10 @@ components:
                     items:
                         type: string
                     type: array
+                completedAt:
+                    description: When the export completed (successfully, with failure, or was canceled)
+                    format: date-time
+                    type: string
                 error:
                     description: Error message if export failed
                     type: string
@@ -987,6 +1002,7 @@ components:
                         - TRANSFERRING
                         - SUCCESS
                         - FAILED
+                        - CANCELED
                     type: string
                 tookInMs:
                     description: Duration of the export in milliseconds
@@ -1388,64 +1404,6 @@ components:
                     format: int64
                     type: integer
             type: object
-        PatchDocumentAction:
-            description: Either a JSONPatch document as defined by RFC 6902 (from, op, path, value), or a merge document (RFC 7396).
-            properties:
-                from:
-                    description: A string containing a JSON Pointer value.
-                    type: string
-                merge:
-                    $ref: '#/components/schemas/Object'
-                op:
-                    description: The operation to be performed.
-                    enum:
-                        - add
-                        - remove
-                        - replace
-                        - move
-                        - copy
-                        - test
-                    type: string
-                path:
-                    description: A JSON-Pointer.
-                    type: string
-                value:
-                    description: The value to be used within the operations.
-                    properties: {}
-                    type: object
-            required:
-                - op
-                - path
-            type: object
-        PatchDocumentObject:
-            description: Either a JSONPatch document as defined by RFC 6902 (from, op, path, value), or a merge document (RFC 7396).
-            properties:
-                from:
-                    description: A string containing a JSON Pointer value.
-                    type: string
-                merge:
-                    $ref: '#/components/schemas/Object'
-                op:
-                    description: The operation to be performed.
-                    enum:
-                        - add
-                        - remove
-                        - replace
-                        - move
-                        - copy
-                        - test
-                    type: string
-                path:
-                    description: A JSON-Pointer.
-                    type: string
-                value:
-                    description: The value to be used within the operations.
-                    properties: {}
-                    type: object
-            required:
-                - op
-                - path
-            type: object
         PeerUpdate:
             description: A single peer in the network.
             properties:
@@ -1465,11 +1423,6 @@ components:
                     format: uri
                     type: string
             type: object
-        PeerUpdateList:
-            description: List of known peers.
-            items:
-                $ref: '#/components/schemas/PeerUpdate'
-            type: array
         Permission:
             description: Permissions attached to a role.
             properties:
@@ -1926,40 +1879,6 @@ components:
                     description: 'Number of times a collection (class) is replicated (default: 1).'
                     type: integer
             type: object
-        ReplicationDeleteReplicaRequest:
-            description: Specifies the parameters required to permanently delete a specific shard replica from a particular node. This action will remove the replica's data from the node.
-            properties:
-                collection:
-                    description: The name of the collection to which the shard replica belongs.
-                    type: string
-                node:
-                    description: The name of the Weaviate node from which the shard replica will be deleted.
-                    type: string
-                shard:
-                    description: The ID of the shard whose replica is to be deleted.
-                    type: string
-            required:
-                - collection
-                - node
-                - shard
-            type: object
-        ReplicationDisableReplicaRequest:
-            description: Specifies the parameters required to mark a specific shard replica as inactive (soft-delete) on a particular node. This action typically prevents the replica from serving requests but does not immediately remove its data.
-            properties:
-                collection:
-                    description: The name of the collection to which the shard replica belongs.
-                    type: string
-                node:
-                    description: The name of the Weaviate node hosting the shard replica that is to be disabled.
-                    type: string
-                shard:
-                    description: The ID of the shard whose replica is to be disabled.
-                    type: string
-            required:
-                - collection
-                - node
-                - shard
-            type: object
         ReplicationReplicateDetailsReplicaResponse:
             description: Provides a comprehensive overview of a specific replication operation, detailing its unique ID, the involved collection, shard, source and target nodes, transfer type, current status, and optionally, its status history.
             properties:
@@ -2273,32 +2192,6 @@ components:
                     description: Name of the schema.
                     type: string
             type: object
-        SchemaClusterStatus:
-            description: Indicates the health of the schema in a cluster.
-            properties:
-                error:
-                    description: Contains the sync check error if one occurred
-                    type: string
-                    x-omitempty: true
-                healthy:
-                    description: True if the cluster is in sync, false if there is an issue (see error).
-                    type: boolean
-                    x-omitempty: false
-                hostname:
-                    description: Hostname of the coordinating node, i.e. the one that received the cluster. This can be useful information if the error message contains phrases such as 'other nodes agree, but local does not', etc.
-                    type: string
-                ignoreSchemaSync:
-                    description: The cluster check at startup can be ignored (to recover from an out-of-sync situation).
-                    type: boolean
-                    x-omitempty: false
-                nodeCount:
-                    description: Number of nodes that participated in the sync check
-                    format: int32
-                    type: integer
-            type: object
-        SchemaHistory:
-            description: This is an open object, with OpenAPI Specification 3.0 this will be more detailed. See Weaviate docs for more info. In the future this will become a key/value OR a SingleRef definition.
-            type: object
         ShardProgress:
             description: Progress information for exporting a single shard
             properties:
@@ -2309,13 +2202,16 @@ components:
                     description: Number of objects exported from this shard
                     format: int64
                     type: integer
+                skipReason:
+                    description: Reason why this shard was skipped (e.g. tenant status)
+                    type: string
                 status:
                     description: Status of this shard's export
                     enum:
-                        - STARTED
                         - TRANSFERRING
                         - SUCCESS
                         - FAILED
+                        - SKIPPED
                     type: string
             type: object
         ShardStatus:
@@ -4864,7 +4760,7 @@ paths:
                 - weaviate.cluster.statistics.get
     /export/{backend}:
         post:
-            description: Initiates an export operation that writes collections to Parquet files on the specified backend storage (S3, GCS, Azure, or filesystem). Each collection is exported to a separate Parquet file.
+            description: Initiates an export operation on the specified backend storage (S3, GCS, Azure, or filesystem). The output format is controlled by the required 'file_format' field in the request body (currently only 'parquet' is supported). Each collection is exported to a separate file.
             operationId: export.create
             parameters:
                 - description: The backend storage system to use for the export (e.g., `filesystem`, `gcs`, `s3`, `azure`).
@@ -4898,6 +4794,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
                     description: Forbidden - insufficient permissions
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Export already exists or another export is already in progress
                 "422":
                     content:
                         application/json:
@@ -4917,6 +4819,74 @@ paths:
             x-serviceIds:
                 - weaviate.local.export.create
     /export/{backend}/{id}:
+        delete:
+            description: Cancels an ongoing export operation identified by its ID.
+            operationId: export.cancel
+            parameters:
+                - description: The backend storage system where the export is stored.
+                  in: path
+                  name: backend
+                  required: true
+                  schema:
+                    type: string
+                - description: The unique identifier of the export to cancel.
+                  in: path
+                  name: id
+                  required: true
+                  schema:
+                    type: string
+                - description: Optional bucket name where the export is stored.
+                  in: query
+                  name: bucket
+                  schema:
+                    type: string
+                - description: Optional path prefix within the bucket.
+                  in: query
+                  name: path
+                  schema:
+                    type: string
+            responses:
+                "204":
+                    content: {}
+                    description: Export cancelled successfully.
+                "401":
+                    content: {}
+                    description: Unauthorized or invalid credentials.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Forbidden - insufficient permissions
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Export not found
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Export has already finished and cannot be cancelled
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Invalid request (e.g., unsupported backend)
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Internal server error occurred while cancelling export
+            summary: Cancel an export
+            tags:
+                - export
+            x-serviceIds:
+                - weaviate.local.export.cancel
         get:
             description: Retrieves the current status of an export operation, including progress for each collection being exported.
             operationId: export.status
@@ -4965,6 +4935,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
                     description: Export not found
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Invalid request (e.g., unsupported backend)
                 "500":
                     content:
                         application/json:
@@ -8369,7 +8345,7 @@ tags:
       name: schema
     - description: Operations related to creating and managing backups of Weaviate data. This feature allows you to create snapshots of your collections and store them on external storage backends such as cloud object storage (S3, GCS, Azure) or a shared filesystem. These endpoints enable you to initiate backup and restore processes, monitor their status, list available backups on a backend, and delete unwanted backups. Backups are essential for disaster recovery, data migration, and maintaining point-in-time copies of your vector database.
       name: backups
-    - description: Operations for exporting Weaviate data to Parquet format on external storage backends (S3, GCS, Azure, or filesystem). Exports provide a way to extract your vector data and object properties into a standardized columnar format for data analysis, archival, or migration. Each collection is exported to a separate Parquet file containing object IDs, vectors, properties, and metadata.
+    - description: Operations for exporting Weaviate data to external storage backends (S3, GCS, Azure, or filesystem). The output file format is specified via the 'file_format' field (currently only 'parquet' is supported). Exports provide a way to extract your vector data and object properties into a standardized columnar format for data analysis, archival, or migration. Each collection is exported to a separate file containing object IDs, vectors, properties, and metadata.
       name: exports
     - description: Endpoints for user account management in Weaviate. This includes operations specific to Weaviate-managed database users (`db` users), such as creation (which generates an API key), listing, deletion, activation/deactivation, and API key rotation. It also provides operations applicable to any authenticated user (`db` or `oidc`), like retrieving their own information (username and assigned roles).<br/><br/>**User Types:**<br/>* **`db` users:** Managed entirely within Weaviate (creation, deletion, API keys). Use these endpoints for full lifecycle management.<br/>* **`oidc` users:** Authenticated via an external OpenID Connect provider. Their lifecycle (creation, credentials) is managed externally, but their role assignments *within Weaviate* are managed via the `authz` endpoints.
       name: users
