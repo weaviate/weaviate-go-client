@@ -303,6 +303,19 @@ const (
 	UNFREEZING TenantActivityStatus = "UNFREEZING"
 )
 
+// Defines values for TokenizeRequestTokenization.
+const (
+	Field      TokenizeRequestTokenization = "field"
+	Gse        TokenizeRequestTokenization = "gse"
+	GseCh      TokenizeRequestTokenization = "gse_ch"
+	KagomeJa   TokenizeRequestTokenization = "kagome_ja"
+	KagomeKr   TokenizeRequestTokenization = "kagome_kr"
+	Lowercase  TokenizeRequestTokenization = "lowercase"
+	Trigram    TokenizeRequestTokenization = "trigram"
+	Whitespace TokenizeRequestTokenization = "whitespace"
+	Word       TokenizeRequestTokenization = "word"
+)
+
 // Defines values for UserTypeInput.
 const (
 	UserTypeInputDb   UserTypeInput = "db"
@@ -943,9 +956,6 @@ type ErrorResponse struct {
 type ExportCreateRequest struct {
 	// Config Backend-specific configuration
 	Config struct {
-		// Bucket Bucket, container, or volume name for cloud storage backends
-		Bucket string `json:"bucket,omitempty"`
-
 		// Path Path prefix within the bucket or filesystem
 		Path string `json:"path,omitempty"`
 	} `json:"config,omitempty"`
@@ -1485,6 +1495,12 @@ type PropertyTokenization string
 // PropertySchema Names and values of an individual property. A returned response may also contain additional metadata, such as from classification or feature projection.
 type PropertySchema = map[string]interface{}
 
+// PropertyTokenizeRequest Request body for the property-specific tokenize endpoint.
+type PropertyTokenizeRequest struct {
+	// Text The text to tokenize using the property's configured tokenization.
+	Text string `json:"text"`
+}
+
 // RaftStatistics The definition of Raft statistics.
 type RaftStatistics struct {
 	AppliedIndex      string `json:"appliedIndex,omitempty"`
@@ -1932,6 +1948,42 @@ type Tenant struct {
 // TenantActivityStatus The activity status of the tenant, which determines if it is queryable and where its data is stored.<br/><br/><b>Available Statuses:</b><br/>- `ACTIVE`: The tenant is fully operational and ready for queries. Data is stored on local, hot storage.<br/>- `INACTIVE`: The tenant is not queryable. Data is stored locally.<br/>- `OFFLOADED`: The tenant is inactive and its data is stored in a remote cloud backend.<br/><br/><b>Usage Rules:</b><br/>- <b>On Create:</b> This field is optional and defaults to `ACTIVE`. Allowed values are `ACTIVE` and `INACTIVE`.<br/>- <b>On Update:</b> This field is required. Allowed values are `ACTIVE`, `INACTIVE`, and `OFFLOADED`.<br/><br/><b>Read-Only Statuses:</b><br/>The following statuses are set by the server and indicate a tenant is transitioning between states:<br/>- `OFFLOADING`<br/>- `ONLOADING`<br/><br/><b>Note on Deprecated Names:</b><br/>For backward compatibility, deprecated names are still accepted and are mapped to their modern equivalents: `HOT` (now `ACTIVE`), `COLD` (now `INACTIVE`), `FROZEN` (now `OFFLOADED`), `FREEZING` (now `OFFLOADING`), `UNFREEZING` (now `ONLOADING`).
 type TenantActivityStatus string
 
+// TokenizeAnalyzerConfig Analyzer configuration for the tokenize endpoint.
+type TokenizeAnalyzerConfig struct {
+	// Stopwords Fine-grained control over stopword list usage.
+	Stopwords StopwordConfig `json:"stopwords,omitempty"`
+}
+
+// TokenizeRequest Request body for the generic tokenize endpoint.
+type TokenizeRequest struct {
+	// AnalyzerConfig Analyzer configuration for the tokenize endpoint.
+	AnalyzerConfig TokenizeAnalyzerConfig `json:"analyzerConfig,omitempty"`
+
+	// Text The text to tokenize.
+	Text string `json:"text"`
+
+	// Tokenization The tokenization method to apply.
+	Tokenization TokenizeRequestTokenization `json:"tokenization"`
+}
+
+// TokenizeRequestTokenization The tokenization method to apply.
+type TokenizeRequestTokenization string
+
+// TokenizeResponse Response from the tokenize endpoint.
+type TokenizeResponse struct {
+	// AnalyzerConfig Analyzer configuration for the tokenize endpoint.
+	AnalyzerConfig TokenizeAnalyzerConfig `json:"analyzerConfig,omitempty"`
+
+	// Indexed The tokens as they would be stored in the inverted index.
+	Indexed []string `json:"indexed,omitempty"`
+
+	// Query The tokens as they would be used for query matching (e.g., after stopword removal).
+	Query []string `json:"query,omitempty"`
+
+	// Tokenization The tokenization method that was applied.
+	Tokenization string `json:"tokenization,omitempty"`
+}
+
 // TokenizerUserDictConfig A list of pairs of strings that should be replaced with another string during tokenization.
 type TokenizerUserDictConfig struct {
 	Replacements []struct {
@@ -2215,18 +2267,12 @@ type BatchReferencesCreateParams struct {
 
 // ExportCancelParams defines parameters for ExportCancel.
 type ExportCancelParams struct {
-	// Bucket Optional bucket name where the export is stored.
-	Bucket string `form:"bucket,omitempty" json:"bucket,omitempty"`
-
 	// Path Optional path prefix within the bucket.
 	Path string `form:"path,omitempty" json:"path,omitempty"`
 }
 
 // ExportStatusParams defines parameters for ExportStatus.
 type ExportStatusParams struct {
-	// Bucket Optional bucket name where the export is stored. If not specified, uses the backend's default bucket.
-	Bucket string `form:"bucket,omitempty" json:"bucket,omitempty"`
-
 	// Path Optional path prefix within the bucket. If not specified, uses the backend's default path.
 	Path string `form:"path,omitempty" json:"path,omitempty"`
 }
@@ -2620,6 +2666,9 @@ type SchemaObjectsUpdateJSONRequestBody = Class
 // SchemaObjectsPropertiesAddJSONRequestBody defines body for SchemaObjectsPropertiesAdd for application/json ContentType.
 type SchemaObjectsPropertiesAddJSONRequestBody = Property
 
+// SchemaObjectsPropertiesTokenizeJSONRequestBody defines body for SchemaObjectsPropertiesTokenize for application/json ContentType.
+type SchemaObjectsPropertiesTokenizeJSONRequestBody = PropertyTokenizeRequest
+
 // SchemaObjectsShardsUpdateJSONRequestBody defines body for SchemaObjectsShardsUpdate for application/json ContentType.
 type SchemaObjectsShardsUpdateJSONRequestBody = ShardStatus
 
@@ -2631,6 +2680,9 @@ type TenantsCreateJSONRequestBody = TenantsCreateJSONBody
 
 // TenantsUpdateJSONRequestBody defines body for TenantsUpdate for application/json ContentType.
 type TenantsUpdateJSONRequestBody = TenantsUpdateJSONBody
+
+// TokenizeJSONRequestBody defines body for Tokenize for application/json ContentType.
+type TokenizeJSONRequestBody = TokenizeRequest
 
 // CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
 type CreateUserJSONRequestBody CreateUserJSONBody
