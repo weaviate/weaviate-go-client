@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -31,7 +32,7 @@ func TestOIDC(t *testing.T) {
 		ExpiresIn    int    `json:"expires_in"`
 	}
 
-	defaultScopes := []string{"offline_access"}
+	defaultScopes := []string{"profile"}
 
 	for _, tt := range []struct {
 		grant       string
@@ -86,7 +87,7 @@ func TestOIDC(t *testing.T) {
 				assert.Equal(t, "my-client", v.Get("client_id"), "bad client_id")
 				assert.Equal(t, "my-secret", v.Get("client_secret"), "bad client_secret")
 			},
-			wantScopes: append(defaultScopes, "email"),
+			wantScopes: append(defaultScopes, "offline_access", "email"),
 			resp: tokenJSON{
 				AccessToken: "fresh-access-token",
 				ExpiresIn:   900,
@@ -105,7 +106,7 @@ func TestOIDC(t *testing.T) {
 				assert.Equal(t, "my-username", v.Get("username"), "bad username")
 				assert.Equal(t, "my-password", v.Get("password"), "bad password")
 			},
-			wantScopes: append(defaultScopes, "email"),
+			wantScopes: append(defaultScopes, "offline_access", "email"),
 			resp: tokenJSON{
 				AccessToken:  "fresh-access-token",
 				RefreshToken: "fresh-refresh-token",
@@ -136,6 +137,8 @@ func TestOIDC(t *testing.T) {
 				if v.Has("scope") {
 					scopes = strings.Split(v.Get("scope"), " ")
 				}
+				slices.Sort(scopes)
+				slices.Sort(tt.wantScopes)
 				assert.Equal(t, tt.wantScopes, scopes, "bad scopes")
 
 				resp, err := json.Marshal(tt.resp)

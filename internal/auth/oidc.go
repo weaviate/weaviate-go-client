@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -29,7 +30,7 @@ func (cc ClientCredentials) Exchange(ctx context.Context, cfg oauth2.Config) (oa
 		TokenURL:     cfg.Endpoint.TokenURL,
 		ClientID:     cfg.ClientID,
 		ClientSecret: cc.ClientSecret,
-		Scopes:       append(cfg.Scopes, cc.Scopes...),
+		Scopes:       withDefaultScopes(cfg, cc.Scopes),
 		AuthStyle:    oauth2.AuthStyleInParams,
 	}
 
@@ -48,10 +49,26 @@ type ResourceOwnerPasswordCredentials struct {
 
 func (ropc ResourceOwnerPasswordCredentials) Exchange(ctx context.Context, cfg oauth2.Config) (oauth2.TokenSource, error) {
 	cfg.ClientSecret = ropc.ClientSecret
-	cfg.Scopes = append(cfg.Scopes, ropc.Scopes...)
+	cfg.Scopes = withDefaultScopes(cfg, ropc.Scopes)
 	t, err := cfg.PasswordCredentialsToken(ctx, ropc.Username, ropc.Password)
 	if err != nil {
 		return nil, err
 	}
 	return cfg.TokenSource(context.Background(), t), nil
+}
+
+const (
+	defaultScope = "offline_access"
+	microsoftURL = "https://login.microsoftonline.com"
+)
+
+func withDefaultScopes(conf oauth2.Config, scopes []string) (s []string) {
+	s = append(s, defaultScope)
+	s = append(s, scopes...)
+	s = append(s, conf.Scopes...)
+
+	if strings.HasPrefix(conf.Endpoint.TokenURL, microsoftURL) {
+		s = append(s, conf.ClientID+"/.default")
+	}
+	return
 }
