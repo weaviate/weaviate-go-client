@@ -2,6 +2,7 @@ package testkit_test
 
 import (
 	"context"
+	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
@@ -214,4 +215,15 @@ func TestTickingContext(t *testing.T) {
 		// tick logic fails.
 		require.FailNow(t, "context not done after 2 ticks")
 	}
+}
+
+func TestSchemaHostPort(t *testing.T) {
+	srv := httptest.NewServer(nil)
+	t.Cleanup(srv.Close)
+
+	scheme, host, port := testkit.SchemeHostPort(t, srv)
+
+	assert.Equal(t, "http", scheme, "bad scheme")
+	assert.NotZero(t, host, "no host")
+	assert.NotZero(t, port, "no port")
 }

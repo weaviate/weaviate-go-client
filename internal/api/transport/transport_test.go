@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strconv"
 	"testing"
 	"time"
 
@@ -27,6 +26,8 @@ func TestNew(t *testing.T) {
 
 	var fetchedMeta bool
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
 		if assert.Equal(t, "/v0/meta", r.URL.Path, "request path") {
 			fetchedMeta = true
 			meta, err := json.Marshal(GetInstanceMetadataResponse{
@@ -42,15 +43,10 @@ func TestNew(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 
-	url, err := url.Parse(srv.URL)
-	require.NoError(t, err, "parse url")
-
-	port, err := strconv.Atoi(url.Port())
-	require.NoError(t, err, "parse port")
-
+	scheme, host, port := testkit.SchemeHostPort(t, srv)
 	tport, err := New(t.Context(), Config{
-		Scheme:   url.Scheme,
-		RESTHost: url.Hostname(),
+		Scheme:   scheme,
+		RESTHost: host,
 		RESTPort: port,
 		Header:   defaultHeader,
 		Version:  "v0",
@@ -343,20 +339,17 @@ func Test_unwrapTokenSource(t *testing.T) {
 	require.NoError(t, err, "prepare openid-configuration response")
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
 		assert.Equal(t, http.MethodGet, r.Method, "bad method")
 		assert.Equal(t, "/v0/.well-known/openid-configuration", r.URL.Path, "bad path")
 		w.Write(openid)
 	}))
 	t.Cleanup(srv.Close)
 
-	url, err := url.Parse(srv.URL)
-	require.NoError(t, err, "parse test server url")
-	port, err := strconv.Atoi(url.Port())
-	require.NoError(t, err, "convert server port")
-
+	scheme, host, port := testkit.SchemeHostPort(t, srv)
 	rest := transports.NewREST(transports.RESTConfig{
-		Scheme:  url.Scheme,
-		Host:    url.Hostname(),
+		Scheme:  scheme,
+		Host:    host,
 		Port:    port,
 		Version: "v0",
 	})
