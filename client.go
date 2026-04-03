@@ -66,6 +66,7 @@ func NewWeaviateCloud(ctx context.Context, host string, apiKey string, options .
 		WithGRPCHost("grpc-" + host),
 		WithHTTPPort(443),
 		WithGRPCPort(443),
+		WithAPIKey(apiKey),
 	}, options...))
 }
 
