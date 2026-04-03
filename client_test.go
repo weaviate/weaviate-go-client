@@ -11,6 +11,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/auth"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"golang.org/x/oauth2"
 )
@@ -231,5 +232,51 @@ func TestWithAPIKey(t *testing.T) {
 		assert.Zero(t, tok.ExpiresIn, "expires in")
 		assert.Zero(t, tok.Expiry, "expires in")
 		assert.Equal(t, "Bearer", tok.Type(), "token type")
+	}
+}
+
+func TestOIDCAuthentication(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		opt  weaviate.Option
+		auth any
+	}{
+		{
+			name: "bearer token",
+			opt:  weaviate.WithBearerToken(oauth2.Token{}),
+			auth: auth.RefreshToken(oauth2.Token{}),
+		},
+		{
+			name: "client credentials",
+			opt:  weaviate.WithClientCredentials("secret", []string{"email"}),
+			auth: auth.ClientCredentials{
+				ClientSecret: "secret",
+				Scopes:       []string{"email"},
+			},
+		},
+		{
+			name: "ropc",
+			opt:  weaviate.WithResourceOwnerPasswordCredentials("secret", "john_doe", "xxx", []string{"email"}),
+			auth: auth.ResourceOwnerPasswordCredentials{
+				ClientSecret: "secret",
+				Username:     "john_doe",
+				Password:     "xxx",
+				Scopes:       []string{"email"},
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var got transport.Config
+			transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
+				got = cfg
+				return testkit.NopTransport, nil
+			}
+
+			c, err := weaviate.NewClient(t.Context(), tt.opt)
+			assert.NoError(t, err, "new client")
+			assert.NotNil(t, c, "nil client")
+
+			assert.Equal(t, tt.auth, got.Auth, "bad auth provider")
+		})
 	}
 }

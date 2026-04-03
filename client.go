@@ -11,6 +11,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/backup"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/auth"
 	"golang.org/x/oauth2"
 )
 
@@ -221,6 +222,35 @@ func WithBatchTimeout(d time.Duration) Option {
 // Authenticate requests via a Weaviate API key.
 func WithAPIKey(apiKey string) Option {
 	return WithTokenSource(oauth2.StaticTokenSource(&oauth2.Token{AccessToken: apiKey}))
+}
+
+// Authenticate requests via a pre-existing bearer token.
+func WithBearerToken(t oauth2.Token) Option {
+	return func(c *config) {
+		c.Auth = auth.RefreshToken(t)
+	}
+}
+
+// Authenticate requests via client credentials.
+func WithClientCredentials(clientSecret string, scopes []string) Option {
+	return func(c *config) {
+		c.Auth = auth.ClientCredentials{
+			ClientSecret: clientSecret,
+			Scopes:       scopes,
+		}
+	}
+}
+
+// Authenticate requests via the ROPC grant.
+func WithResourceOwnerPasswordCredentials(clientSecret, username, password string, scopes []string) Option {
+	return func(c *config) {
+		c.Auth = auth.ResourceOwnerPasswordCredentials{
+			ClientSecret: clientSecret,
+			Username:     username,
+			Password:     password,
+			Scopes:       scopes,
+		}
+	}
 }
 
 // Custom [oauth2.TokenSource] for making authenticated requests.
