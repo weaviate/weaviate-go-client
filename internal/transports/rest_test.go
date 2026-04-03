@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
+	"golang.org/x/oauth2"
 )
 
 func TestREST_Do(t *testing.T) {
@@ -30,6 +31,7 @@ func TestREST_Do(t *testing.T) {
 
 		name string
 		req  transports.Endpoint
+		ts   oauth2.TokenSource
 
 		respBody string // Set response body to return.
 		respCode int    // Override returned status code (default: HTTP 200).
@@ -95,6 +97,27 @@ func TestREST_Do(t *testing.T) {
 				Body: "Payment Required",
 			}),
 		},
+		{
+			name: "bearer token authorization",
+			req: &endpoint{
+				method: http.MethodGet,
+				path:   "/test",
+			},
+			ts: oauth2.StaticTokenSource(&oauth2.Token{
+				AccessToken: "my-token",
+			}),
+		},
+		{
+			name: "basic token authorization",
+			req: &endpoint{
+				method: http.MethodGet,
+				path:   "/test",
+			},
+			ts: oauth2.StaticTokenSource(&oauth2.Token{
+				AccessToken: "my-token",
+				TokenType:   "basic",
+			}),
+		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.NotNil(t, tt.req, "bad test case: req is nil")
@@ -105,6 +128,17 @@ func TestREST_Do(t *testing.T) {
 				assert.Equal(t, "/"+version+tt.req.Path(), r.URL.Path, "request path")
 				assert.Equal(t, tt.req.Query().Encode(), r.URL.Query().Encode(), "query parameters")
 				assert.Subset(t, r.Header, defaultHeader, "default headers missing")
+
+				if tt.ts != nil {
+					tok, err := tt.ts.Token()
+					require.NoError(t, err, "get token")
+					require.NotNil(t, tok, "nil token")
+
+					if assert.Contains(t, r.Header, "Authorization", "TokenSource provided but no Authorization header") {
+						h := r.Header["Authorization"]
+						assert.Contains(t, h, tok.Type()+" "+tok.AccessToken, "bad Authorization")
+					}
+				}
 
 				// If request has no body, the r.Body is expected to be &http.noBody{}, never nil.
 				require.NotNil(t, assert.NotNil(t, r.Body, "http.Request.Body is nil"))
@@ -141,11 +175,12 @@ func TestREST_Do(t *testing.T) {
 			url, _ := url.Parse(srv.URL)
 			port, _ := strconv.Atoi(url.Port())
 			rest := transports.NewREST(transports.RESTConfig{
-				Scheme:  "http",
-				Host:    url.Hostname(),
-				Port:    port,
-				Version: version,
-				Header:  defaultHeader,
+				Scheme:      "http",
+				Host:        url.Hostname(),
+				Port:        port,
+				Version:     version,
+				Header:      defaultHeader,
+				TokenSource: tt.ts,
 			})
 
 			// Act

@@ -12,18 +12,20 @@ import (
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc/metadata"
 )
 
 type Config struct {
-	Scheme   string      // Scheme for request URLs, "http" or "https".
-	RESTHost string      // Hostname of the REST host.
-	RESTPort int         // Port number of the REST host
-	GRPCHost string      // Hostname of the gRPC host.
-	GRPCPort int         // Port number of the gRPC host.
-	Header   http.Header // Request headers.
-	Timeout  Timeout     // Request timeout options.
-	Version  string      // API version, e.g. "v1"
+	Scheme      string             // Scheme for request URLs, "http" or "https".
+	RESTHost    string             // Hostname of the REST host.
+	RESTPort    int                // Port number of the REST host
+	GRPCHost    string             // Hostname of the gRPC host.
+	GRPCPort    int                // Port number of the gRPC host.
+	Header      http.Header        // Request headers.
+	TokenSource oauth2.TokenSource // Authentication provider.
+	Timeout     Timeout            // Request timeout options.
+	Version     string             // API version, e.g. "v1"
 }
 
 // Timeout sets client-side timeouts.
@@ -48,11 +50,12 @@ var New NewFunc = newTransport
 
 func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 	rest := transports.NewREST(transports.RESTConfig{
-		Scheme:  cfg.Scheme,
-		Host:    cfg.RESTHost,
-		Port:    cfg.RESTPort,
-		Header:  cfg.Header,
-		Version: cfg.Version,
+		Scheme:      cfg.Scheme,
+		Host:        cfg.RESTHost,
+		Port:        cfg.RESTPort,
+		Header:      cfg.Header,
+		TokenSource: cfg.TokenSource,
+		Version:     cfg.Version,
 	})
 
 	// Other client libraries ping the server at /live before requesting /meta.
@@ -64,12 +67,14 @@ func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 	}
 
 	gRPC, err := transports.NewGRPC(transports.GRPCConfig[proto.WeaviateClient]{
-		Host:   cfg.GRPCHost,
-		Port:   cfg.GRPCPort,
-		Header: (*metadata.MD)(&cfg.Header),
-
+		Host:           cfg.GRPCHost,
+		Port:           cfg.GRPCPort,
+		TLS:            cfg.Scheme == "https",
+		Header:         (*metadata.MD)(&cfg.Header),
+		TokenSource:    cfg.TokenSource,
 		MaxMessageSize: meta.GRPCMaxMessageSize,
-		NewGRPCClient:  proto.NewWeaviateClient,
+
+		NewGRPCClient: proto.NewWeaviateClient,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("new transport: %w", err)

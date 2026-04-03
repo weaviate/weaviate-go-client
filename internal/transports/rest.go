@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"golang.org/x/oauth2"
 )
 
 // Endpoint describes a REST request.
@@ -42,11 +43,12 @@ type StatusAccepter interface {
 
 // Config options for [REST].
 type RESTConfig struct {
-	Scheme  string      // Scheme for request URLs, "http" or "https".
-	Host    string      // Hostname of the REST host.
-	Port    int         // Port number of the REST host
-	Header  http.Header // Headers added with each request.
-	Version string      // Version of the REST API.
+	Scheme      string             // Scheme for request URLs, "http" or "https".
+	Host        string             // Hostname of the REST host.
+	Port        int                // Port number of the REST host
+	Header      http.Header        // Headers added with each request.
+	TokenSource oauth2.TokenSource // OAuth2 token source.
+	Version     string             // Version of the REST API.
 }
 
 func (c *REST) Do(ctx context.Context, req Endpoint, dest any) error {
@@ -143,11 +145,25 @@ func NewREST(cfg RESTConfig) *REST {
 		"%s://%s:%d/%s/",
 		cfg.Scheme, cfg.Host, cfg.Port, cfg.Version,
 	)
-	return &REST{
+
+	r := &REST{
+		// TODO(dyma): allow passing custom http.Client
 		hc:      &http.Client{},
 		baseURL: baseURL,
 		header:  cfg.Header,
 	}
+
+	if cfg.TokenSource != nil {
+		// Here [oauth2.NewClient] uses context exclusively as a value store,
+		// where it looks for the HTTPClient key before falling back to
+		// [http.DefaultClient]. We could get away with passing a nil context,
+		// which we won't do in case our http.Client has some configurations
+		// we want to propagate to the oauth2 client.
+		ctx := context.WithValue(context.Background(), oauth2.HTTPClient, r.hc)
+		r.hc = oauth2.NewClient(ctx, cfg.TokenSource)
+	}
+
+	return r
 }
 
 // HTTPError is returned if the response has an error HTTP status code.

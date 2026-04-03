@@ -6,17 +6,22 @@ import (
 	"io"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials/oauth"
 	"google.golang.org/grpc/metadata"
 )
 
 // Config for [GRPC] transport.
 type GRPCConfig[Client any] struct {
-	Host           string       // Hostname of the gRPC host.
-	Port           int          // Port number of the gRPC host.
-	Header         *metadata.MD // Headers added with each request.
-	MaxMessageSize int          // Maximum gRPC message size in bytes.
+	Host           string             // Hostname of the gRPC host.
+	Port           int                // Port number of the gRPC host.
+	Header         *metadata.MD       // Headers added with each request.
+	MaxMessageSize int                // Maximum gRPC message size in bytes.
+	TokenSource    oauth2.TokenSource // OAuth2 token provider.
+	TLS            bool               // If true, channel will use TLS protocol.
 
 	NewGRPCClient NewGRPCClientFunc[Client]
 }
@@ -63,12 +68,24 @@ func NewGRPC[Client any](cfg GRPCConfig[Client]) (*GRPC[Client], error) {
 		)
 	}
 
-	channel, err := grpc.NewClient(
-		fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-		// TODO(dyma): pass correct credentials if authentication is enabled or scheme == "https"
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	dialOpts := []grpc.DialOption{
 		grpc.WithDefaultCallOptions(callOpts...),
-	)
+	}
+
+	transportCreds := insecure.NewCredentials()
+	if cfg.TLS {
+		transportCreds = credentials.NewTLS(nil)
+	}
+	dialOpts = append(dialOpts, grpc.WithTransportCredentials(transportCreds))
+
+	if cfg.TokenSource != nil {
+		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(
+			&oauth.TokenSource{TokenSource: cfg.TokenSource},
+		))
+	}
+
+	target := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
+	channel, err := grpc.NewClient(target, dialOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("create gRPC channel: %w", err)
 	}

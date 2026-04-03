@@ -11,6 +11,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/backup"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
+	"golang.org/x/oauth2"
 )
 
 type Client struct {
@@ -105,13 +106,14 @@ func newClient(ctx context.Context, options []Option) (*Client, error) {
 	}
 
 	t, err := transport.New(ctx, transport.Config{
-		Scheme:   c.Scheme,
-		RESTHost: c.RESTHost,
-		RESTPort: c.RESTPort,
-		GRPCHost: c.GRPCHost,
-		GRPCPort: c.GRPCPort,
-		Header:   c.Header,
-		Timeout:  c.Timeout,
+		Scheme:      c.Scheme,
+		RESTHost:    c.RESTHost,
+		RESTPort:    c.RESTPort,
+		GRPCHost:    c.GRPCHost,
+		GRPCPort:    c.GRPCPort,
+		Header:      c.Header,
+		TokenSource: c.TokenSource,
+		Timeout:     c.Timeout,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("weaviate: new client: %w", err)
@@ -212,5 +214,17 @@ func WithWriteTimeout(d time.Duration) Option {
 func WithBatchTimeout(d time.Duration) Option {
 	return func(c *config) {
 		c.Timeout.Batch = d
+	}
+}
+
+// Authenticate requests via a Weaviate API key.
+func WithAPIKey(apiKey string) Option {
+	return WithTokenSource(oauth2.StaticTokenSource(&oauth2.Token{AccessToken: apiKey}))
+}
+
+// Custom [oauth2.TokenSource] for making authenticated requests.
+func WithTokenSource(ts oauth2.TokenSource) Option {
+	return func(c *config) {
+		c.TokenSource = ts
 	}
 }

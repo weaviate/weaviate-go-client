@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
@@ -193,4 +194,25 @@ func TestNewWeaviateCloud(t *testing.T) {
 		assert.NotNil(t, c.Collections, "nil collections")
 		assert.NotNil(t, c.Backup, "nil backup")
 	})
+}
+
+func TestWithAPIKey(t *testing.T) {
+	var got transport.Config
+	transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
+		got = cfg
+		return testkit.NopTransport, nil
+	}
+
+	c, err := weaviate.NewClient(t.Context(), weaviate.WithAPIKey("api-key"))
+	assert.NoError(t, err, "new client")
+	assert.NotNil(t, c, "nil client")
+
+	require.NotNil(t, got.TokenSource, "token source")
+	tok, err := got.TokenSource.Token()
+	assert.NoError(t, err, "token error")
+
+	assert.Zero(t, tok.RefreshToken, "refresh token")
+	assert.Zero(t, tok.ExpiresIn, "expires in")
+	assert.Zero(t, tok.Expiry, "expires in")
+	assert.Equal(t, "Bearer", tok.Type(), "token type")
 }
