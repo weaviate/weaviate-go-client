@@ -172,7 +172,7 @@ func TestTransport_Do(t *testing.T) {
 				out: &proto.SearchReply{},
 			}
 
-			var resp reply
+			var resp reply[proto.SearchReply]
 			err := tport.Do(t.Context(), req, &resp)
 			require.NoError(t, err, "transport error")
 
@@ -183,7 +183,7 @@ func TestTransport_Do(t *testing.T) {
 		t.Run("error", func(t *testing.T) {
 			tport := transport{gRPC: new(fakeGRPC)}
 
-			var resp reply
+			var resp reply[proto.SearchReply]
 			req := &message[proto.SearchRequest, proto.SearchReply]{
 				req: &proto.SearchRequest{},
 				err: testkit.ErrWhaam,
@@ -196,22 +196,27 @@ func TestTransport_Do(t *testing.T) {
 		t.Run("timeout", func(t *testing.T) {
 			read, write := 10*time.Second, 30*time.Second
 
-			for _, tt := range []struct {
+			for _, tt := range testkit.WithOnly(t, []struct {
+				testkit.Only
+
 				name    string
 				message any
+				reply   any
 				timeout time.Duration
 			}{
 				{
 					name:    "search",
 					message: &message[proto.SearchRequest, proto.SearchReply]{},
+					reply:   new(reply[proto.SearchReply]),
 					timeout: read,
 				},
 				{
 					name:    "aggregate",
 					message: &message[proto.AggregateRequest, proto.AggregateReply]{},
+					reply:   new(reply[proto.AggregateReply]),
 					timeout: read,
 				},
-			} {
+			}) {
 				t.Run(tt.name, func(t *testing.T) {
 					var got context.Context
 
@@ -227,7 +232,7 @@ func TestTransport_Do(t *testing.T) {
 					}
 
 					start := time.Now()
-					err := tport.Do(t.Context(), tt.message, new(reply))
+					err := tport.Do(t.Context(), tt.message, tt.reply)
 					require.NoError(t, err, "request error")
 
 					d, ok := got.Deadline()
@@ -292,7 +297,10 @@ type message[In RequestMessage, Out ReplyMessage] struct {
 	}
 }
 
-var _ Message[proto.SearchRequest, proto.SearchReply] = (*message[proto.SearchRequest, proto.SearchReply])(nil)
+var (
+	_ Message[proto.SearchRequest, proto.SearchReply]       = (*message[proto.SearchRequest, proto.SearchReply])(nil)
+	_ Message[proto.AggregateRequest, proto.AggregateReply] = (*message[proto.AggregateRequest, proto.AggregateReply])(nil)
+)
 
 func (m *message[In, Out]) Method() MethodFunc[In, Out]  { return m.captureReq }
 func (m *message[In, Out]) Body() MessageMarshaler[In]   { return m }
@@ -308,16 +316,19 @@ func (m *message[In, Out]) captureReq(wc proto.WeaviateClient, ctx context.Conte
 	return m.out, m.err
 }
 
-// reply implments [MessageUnmarshaler] for testing.
+// reply implements [MessageUnmarshaler] for testing.
 // Its used value is true once it's UnmarshalMessage() has been called.
-type reply struct {
+type reply[Out ReplyMessage] struct {
 	used bool
 	err  error
 }
 
-var _ MessageUnmarshaler[proto.SearchReply] = (*reply)(nil)
+var (
+	_ MessageUnmarshaler[proto.SearchReply]    = (*reply[proto.SearchReply])(nil)
+	_ MessageUnmarshaler[proto.AggregateReply] = (*reply[proto.AggregateReply])(nil)
+)
 
-func (r *reply) UnmarshalMessage(*proto.SearchReply) error {
+func (r *reply[Out]) UnmarshalMessage(*Out) error {
 	r.used = true
 	return r.err
 }
