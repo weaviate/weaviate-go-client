@@ -758,6 +758,63 @@ func TestSchema_integration(t *testing.T) {
 		require.NoError(t, errRm)
 	})
 
+	t.Run("DELETE /schema/{className}/vectors/{vectorIndexName}/index", func(t *testing.T) {
+		ctx := context.Background()
+		client := testsuit.CreateTestClient(false)
+
+		className := "VectorDropTest"
+
+		// Create class with two named vectors
+		err := client.Schema().ClassCreator().WithClass(&models.Class{
+			Class: className,
+			VectorConfig: map[string]models.VectorConfig{
+				"vector-a": {
+					VectorIndexType: "hnsw",
+					Vectorizer: map[string]interface{}{
+						"none": map[string]interface{}{},
+					},
+				},
+				"vector-b": {
+					VectorIndexType: "hnsw",
+					Vectorizer: map[string]interface{}{
+						"none": map[string]interface{}{},
+					},
+				},
+			},
+			Properties: []*models.Property{
+				{
+					Name:     "name",
+					DataType: schema.DataTypeText.PropString(),
+				},
+			},
+		}).Do(ctx)
+		require.NoError(t, err)
+
+		// Verify both vectors exist
+		cls, err := client.Schema().ClassGetter().WithClassName(className).Do(ctx)
+		require.NoError(t, err)
+		require.Contains(t, cls.VectorConfig, "vector-a")
+		require.Contains(t, cls.VectorConfig, "vector-b")
+
+		// Drop vector-a index
+		err = client.Schema().VectorIndexDeleter().
+			WithClassName(className).
+			WithVectorIndexName("vector-a").
+			Do(ctx)
+		require.NoError(t, err)
+
+		// Drop vector-b index
+		err = client.Schema().VectorIndexDeleter().
+			WithClassName(className).
+			WithVectorIndexName("vector-b").
+			Do(ctx)
+		require.NoError(t, err)
+
+		// Clean up
+		errRm := client.Schema().AllDeleter().Do(ctx)
+		require.NoError(t, errRm)
+	})
+
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {

@@ -76,7 +76,14 @@ func (schema *API) PropertyIndexDeleter() *PropertyIndexDeleter {
 	}
 }
 
-// PropertyCreator builder to add a property to an existing schema class
+// VectorIndexDeleter builder to delete a vector's existing index
+func (schema *API) VectorIndexDeleter() *VectorIndexDeleter {
+	return &VectorIndexDeleter{
+		connection: schema.connection,
+	}
+}
+
+// VectorAdder builder to add a vector to an existing schema class
 func (schema *API) VectorAdder() *VectorAdder {
 	return &VectorAdder{
 		connection:   schema.connection,
