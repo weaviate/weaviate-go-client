@@ -768,13 +768,13 @@ func TestSchema_integration(t *testing.T) {
 		err := client.Schema().ClassCreator().WithClass(&models.Class{
 			Class: className,
 			VectorConfig: map[string]models.VectorConfig{
-				"vector-a": {
+				"vectorA": {
 					VectorIndexType: "hnsw",
 					Vectorizer: map[string]interface{}{
 						"none": map[string]interface{}{},
 					},
 				},
-				"vector-b": {
+				"vectorB": {
 					VectorIndexType: "hnsw",
 					Vectorizer: map[string]interface{}{
 						"none": map[string]interface{}{},
@@ -793,20 +793,20 @@ func TestSchema_integration(t *testing.T) {
 		// Verify both vectors exist
 		cls, err := client.Schema().ClassGetter().WithClassName(className).Do(ctx)
 		require.NoError(t, err)
-		require.Contains(t, cls.VectorConfig, "vector-a")
-		require.Contains(t, cls.VectorConfig, "vector-b")
+		require.Contains(t, cls.VectorConfig, "vectorA")
+		require.Contains(t, cls.VectorConfig, "vectorB")
 
-		// Drop vector-a index
+		// Drop vectorA index
 		err = client.Schema().VectorIndexDeleter().
 			WithClassName(className).
-			WithVectorIndexName("vector-a").
+			WithVectorIndexName("vectorA").
 			Do(ctx)
 		require.NoError(t, err)
 
-		// Drop vector-b index
+		// Drop vectorB index
 		err = client.Schema().VectorIndexDeleter().
 			WithClassName(className).
-			WithVectorIndexName("vector-b").
+			WithVectorIndexName("vectorB").
 			Do(ctx)
 		require.NoError(t, err)
 
