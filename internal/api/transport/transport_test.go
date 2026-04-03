@@ -19,6 +19,8 @@ import (
 )
 
 // Test that transport fetches instance's /meta information when created.
+//
+//nolint:errcheck
 func TestNew(t *testing.T) {
 	defaultHeader := http.Header{
 		"X-Custom-Header": {"92"},
@@ -330,6 +332,7 @@ func (r *reply[Out]) UnmarshalMessage(*Out) error {
 	return r.err
 }
 
+//nolint:errcheck
 func Test_unwrapTokenSource(t *testing.T) {
 	openid, err := json.Marshal(map[string]any{
 		"href":     "http://example.com",
