@@ -71,6 +71,9 @@ func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 	if err != nil {
 		return nil, fmt.Errorf("new transport: %w", err)
 	}
+	if ts, err = expireEarly(ts); err != nil {
+		return nil, fmt.Errorf("new transport: %w", err)
+	}
 	restConfig.TokenSource = ts
 	gRPCConfig.TokenSource = ts
 
@@ -243,6 +246,9 @@ func unwrapTokenSource(ctx context.Context, provider any, rest *transports.REST)
 			ClientID string   `json:"clientId"`
 			Scopes   []string `json:"scopes"`
 		}
+
+		dev.AssertNotNil(rest, "rest")
+
 		if err := rest.Do(ctx, getOpenIDConfigRequest, &resp); err != nil {
 			return nil, fmt.Errorf("get openid configuration: %w", err)
 		}
@@ -255,4 +261,16 @@ func unwrapTokenSource(ctx context.Context, provider any, rest *transports.REST)
 		})
 	}
 	return nil, nil
+}
+
+// expireEarly returns [oauth2.TokenSource] with a 30s expiry buffer.
+func expireEarly(src oauth2.TokenSource) (oauth2.TokenSource, error) {
+	if src == nil {
+		return nil, nil
+	}
+	t, err := src.Token()
+	if err != nil {
+		return nil, fmt.Errorf("get token: %w", err)
+	}
+	return oauth2.ReuseTokenSourceWithExpiry(t, src, 30*time.Second), nil
 }
