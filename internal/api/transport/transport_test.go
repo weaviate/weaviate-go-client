@@ -15,6 +15,7 @@ import (
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 )
 
@@ -331,4 +332,112 @@ var (
 func (r *reply[Out]) UnmarshalMessage(*Out) error {
 	r.used = true
 	return r.err
+}
+
+func Test_unwrapTokenSource(t *testing.T) {
+	openid, err := json.Marshal(map[string]any{
+		"href":     "http://example.com",
+		"clientId": "test-client-id",
+		"scopes":   []string{"offline_access", "email"},
+	})
+	require.NoError(t, err, "prepare openid-configuration response")
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodGet, r.Method, "bad method")
+		assert.Equal(t, "/v0/.well-known/openid-configuration", r.URL.Path, "bad path")
+		w.Write(openid)
+	}))
+	t.Cleanup(srv.Close)
+
+	url, err := url.Parse(srv.URL)
+	require.NoError(t, err, "parse test server url")
+	port, err := strconv.Atoi(url.Port())
+	require.NoError(t, err, "convert server port")
+
+	rest := transports.NewREST(transports.RESTConfig{
+		Scheme:  url.Scheme,
+		Host:    url.Hostname(),
+		Port:    port,
+		Version: "v0",
+	})
+
+	for _, tt := range []struct {
+		name string
+		prov func(t *testing.T) any
+		want *oauth2.Token
+	}{
+		{
+			name: "nil provider",
+			prov: func(*testing.T) any { return nil },
+		},
+		{
+			name: "token source",
+			prov: func(*testing.T) any {
+				return oauth2.StaticTokenSource(&oauth2.Token{
+					AccessToken: "static-token",
+				})
+			},
+			want: &oauth2.Token{
+				AccessToken: "static-token",
+			},
+		},
+		{
+			name: "exchanger",
+			prov: func(t *testing.T) any {
+				return &exchanger{
+					t: t,
+					tok: oauth2.Token{
+						AccessToken:  "access-token",
+						RefreshToken: "refresh-token",
+						ExpiresIn:    900,
+					},
+					wantURL:      "http://example.com",
+					wantClientID: "test-client-id",
+					wantScopes:   []string{"offline_access", "email"},
+				}
+			},
+			want: &oauth2.Token{
+				AccessToken:  "access-token",
+				RefreshToken: "refresh-token",
+				ExpiresIn:    900,
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			require.NotNil(t, tt.prov, "invalid test case: nil provider func")
+
+			ts, err := unwrapTokenSource(t.Context(), tt.prov(t), rest)
+			assert.NoError(t, err)
+
+			if tt.want == nil {
+				assert.Nil(t, ts, "token source")
+			} else {
+				require.NotNil(t, ts, "nil token source")
+				tok, err := ts.Token()
+				assert.NoError(t, err, "get token")
+				assert.Equal(t, tt.want, tok)
+			}
+		})
+	}
+}
+
+// exchanger is a fake [Exchanger] which checks [oauth2.Config] it received,
+// and returns the token it was created with and a nil error.
+type exchanger struct {
+	t   *testing.T
+	tok oauth2.Token
+
+	wantURL      string   // Expected TokenURL
+	wantClientID string   // Expected ClientID
+	wantScopes   []string // Expected Scopes
+}
+
+var _ Exchanger = (*exchanger)(nil)
+
+func (e *exchanger) Exchange(ctx context.Context, got oauth2.Config) (oauth2.TokenSource, error) {
+	e.t.Helper()
+	assert.Equal(e.t, e.wantURL, got.Endpoint.TokenURL, "bad token url")
+	assert.Equal(e.t, e.wantClientID, got.ClientID, "bad client id")
+	assert.Equal(e.t, e.wantScopes, got.Scopes, "bad scopes")
+	return oauth2.StaticTokenSource(&e.tok), nil
 }

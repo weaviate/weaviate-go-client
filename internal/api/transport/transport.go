@@ -17,15 +17,15 @@ import (
 )
 
 type Config struct {
-	Scheme      string             // Scheme for request URLs, "http" or "https".
-	RESTHost    string             // Hostname of the REST host.
-	RESTPort    int                // Port number of the REST host
-	GRPCHost    string             // Hostname of the gRPC host.
-	GRPCPort    int                // Port number of the gRPC host.
-	Header      http.Header        // Request headers.
-	TokenSource oauth2.TokenSource // Authentication provider.
-	Timeout     Timeout            // Request timeout options.
-	Version     string             // API version, e.g. "v1"
+	Scheme   string      // Scheme for request URLs, "http" or "https".
+	RESTHost string      // Hostname of the REST host.
+	RESTPort int         // Port number of the REST host
+	GRPCHost string      // Hostname of the gRPC host.
+	GRPCPort int         // Port number of the gRPC host.
+	Header   http.Header // Request headers.
+	Auth     any         // Authentication provider.
+	Timeout  Timeout     // Request timeout options.
+	Version  string      // API version, e.g. "v1"
 }
 
 // Timeout sets client-side timeouts.
@@ -49,14 +49,32 @@ type NewFunc func(context.Context, Config) (internal.Transport, error)
 var New NewFunc = newTransport
 
 func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
-	rest := transports.NewREST(transports.RESTConfig{
-		Scheme:      cfg.Scheme,
-		Host:        cfg.RESTHost,
-		Port:        cfg.RESTPort,
-		Header:      cfg.Header,
-		TokenSource: cfg.TokenSource,
-		Version:     cfg.Version,
-	})
+	restConfig := transports.RESTConfig{
+		Scheme:  cfg.Scheme,
+		Host:    cfg.RESTHost,
+		Port:    cfg.RESTPort,
+		Header:  cfg.Header,
+		Version: cfg.Version,
+	}
+
+	gRPCConfig := transports.GRPCConfig[proto.WeaviateClient]{
+		Host:   cfg.GRPCHost,
+		Port:   cfg.GRPCPort,
+		TLS:    cfg.Scheme == "https",
+		Header: (*metadata.MD)(&cfg.Header),
+
+		NewGRPCClient: proto.NewWeaviateClient,
+	}
+
+	// unwrapTokenSource handles nil cfg.Auth correctly and returns a nil TokenSource.
+	ts, err := unwrapTokenSource(ctx, cfg.Auth, transports.NewREST(restConfig))
+	if err != nil {
+		return nil, fmt.Errorf("new transport: %w", err)
+	}
+	restConfig.TokenSource = ts
+	gRPCConfig.TokenSource = ts
+
+	rest := transports.NewREST(restConfig)
 
 	// Other client libraries ping the server at /live before requesting /meta.
 	// Since retry-on-error is meant to be implemented by the user, we can rely
@@ -66,16 +84,8 @@ func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 		return nil, fmt.Errorf("get instance metadata: %w", err)
 	}
 
-	gRPC, err := transports.NewGRPC(transports.GRPCConfig[proto.WeaviateClient]{
-		Host:           cfg.GRPCHost,
-		Port:           cfg.GRPCPort,
-		TLS:            cfg.Scheme == "https",
-		Header:         (*metadata.MD)(&cfg.Header),
-		TokenSource:    cfg.TokenSource,
-		MaxMessageSize: meta.GRPCMaxMessageSize,
-
-		NewGRPCClient: proto.NewWeaviateClient,
-	})
+	gRPCConfig.MaxMessageSize = meta.GRPCMaxMessageSize
+	gRPC, err := transports.NewGRPC(gRPCConfig)
 	if err != nil {
 		return nil, fmt.Errorf("new transport: %w", err)
 	}
@@ -211,4 +221,38 @@ func (t *transport) Close() error {
 		return c.Close()
 	}
 	return nil
+}
+
+// getOpenIDConfigRequest fetches the server's OIDC configuration.
+var getOpenIDConfigRequest = transports.StaticEndpoint(http.MethodGet, "/.well-known/openid-configuration")
+
+// Exchanger obtains an [oauth2.TokenSource]. Pretty much every other provider
+// besides a "static token source" like API-Key should implement Exchanger to
+// use server-defined OpenID configuration in its [oauth2.TokenSource].
+type Exchanger interface {
+	Exchange(context.Context, oauth2.Config) (oauth2.TokenSource, error)
+}
+
+func unwrapTokenSource(ctx context.Context, provider any, rest *transports.REST) (oauth2.TokenSource, error) {
+	switch ts := provider.(type) {
+	case oauth2.TokenSource:
+		return ts, nil
+	case Exchanger:
+		var resp struct {
+			TokenURL string   `json:"href"`
+			ClientID string   `json:"clientId"`
+			Scopes   []string `json:"scopes"`
+		}
+		if err := rest.Do(ctx, getOpenIDConfigRequest, &resp); err != nil {
+			return nil, fmt.Errorf("get openid configuration: %w", err)
+		}
+		return ts.Exchange(ctx, oauth2.Config{
+			ClientID: resp.ClientID,
+			Scopes:   resp.Scopes,
+			Endpoint: oauth2.Endpoint{
+				TokenURL: resp.TokenURL,
+			},
+		})
+	}
+	return nil, nil
 }

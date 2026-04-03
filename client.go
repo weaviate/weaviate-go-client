@@ -107,14 +107,14 @@ func newClient(ctx context.Context, options []Option) (*Client, error) {
 	}
 
 	t, err := transport.New(ctx, transport.Config{
-		Scheme:      c.Scheme,
-		RESTHost:    c.RESTHost,
-		RESTPort:    c.RESTPort,
-		GRPCHost:    c.GRPCHost,
-		GRPCPort:    c.GRPCPort,
-		Header:      c.Header,
-		TokenSource: c.TokenSource,
-		Timeout:     c.Timeout,
+		Scheme:   c.Scheme,
+		RESTHost: c.RESTHost,
+		RESTPort: c.RESTPort,
+		GRPCHost: c.GRPCHost,
+		GRPCPort: c.GRPCPort,
+		Header:   c.Header,
+		Auth:     c.Auth,
+		Timeout:  c.Timeout,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("weaviate: new client: %w", err)
@@ -226,6 +226,6 @@ func WithAPIKey(apiKey string) Option {
 // Custom [oauth2.TokenSource] for making authenticated requests.
 func WithTokenSource(ts oauth2.TokenSource) Option {
 	return func(c *config) {
-		c.TokenSource = ts
+		c.Auth = ts
 	}
 }

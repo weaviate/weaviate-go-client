@@ -86,7 +86,7 @@ func TestNewLocal(t *testing.T) {
 				"X-Test":            {"heads", "up"},
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
 			},
-			TokenSource: tokenSource,
+			Auth: tokenSource,
 			Timeout: transport.Timeout{
 				Read:  20 * time.Second,
 				Write: 90 * time.Second,
@@ -121,7 +121,7 @@ func TestNewWeaviateCloud(t *testing.T) {
 			Header: http.Header{
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
 			},
-			TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
+			Auth: oauth2.StaticTokenSource(&oauth2.Token{
 				AccessToken: "api-key",
 			}),
 			Timeout: transport.Timeout{
@@ -185,7 +185,7 @@ func TestNewWeaviateCloud(t *testing.T) {
 				"X-Test":            {"heads", "up"},
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
 			},
-			TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
+			Auth: oauth2.StaticTokenSource(&oauth2.Token{
 				AccessToken: "api-key",
 			}),
 			Timeout: transport.Timeout{
@@ -221,12 +221,15 @@ func TestWithAPIKey(t *testing.T) {
 	assert.NoError(t, err, "new client")
 	assert.NotNil(t, c, "nil client")
 
-	require.NotNil(t, got.TokenSource, "token source")
-	tok, err := got.TokenSource.Token()
-	assert.NoError(t, err, "token error")
+	require.NotNil(t, got.Auth, "token source")
+	if assert.Implements(t, (*oauth2.TokenSource)(nil), got.Auth, "auth provider") {
+		ts := got.Auth.(oauth2.TokenSource)
+		tok, err := ts.Token()
+		assert.NoError(t, err, "token error")
 
-	assert.Zero(t, tok.RefreshToken, "refresh token")
-	assert.Zero(t, tok.ExpiresIn, "expires in")
-	assert.Zero(t, tok.Expiry, "expires in")
-	assert.Equal(t, "Bearer", tok.Type(), "token type")
+		assert.Zero(t, tok.RefreshToken, "refresh token")
+		assert.Zero(t, tok.ExpiresIn, "expires in")
+		assert.Zero(t, tok.Expiry, "expires in")
+		assert.Equal(t, "Bearer", tok.Type(), "token type")
+	}
 }
