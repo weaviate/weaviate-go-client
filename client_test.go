@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/auth"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
@@ -45,6 +46,7 @@ func TestNewLocal(t *testing.T) {
 				Read:  30 * time.Second,
 				Write: 90 * time.Second,
 			},
+			Version: api.Version,
 		}, got)
 	})
 
@@ -93,6 +95,7 @@ func TestNewLocal(t *testing.T) {
 				Write: 90 * time.Second,
 				Batch: 100 * time.Millisecond,
 			},
+			Version: api.Version,
 		}, got)
 	})
 }
@@ -129,6 +132,7 @@ func TestNewWeaviateCloud(t *testing.T) {
 				Read:  30 * time.Second,
 				Write: 90 * time.Second,
 			},
+			Version: api.Version,
 		}, got)
 	})
 
@@ -194,6 +198,7 @@ func TestNewWeaviateCloud(t *testing.T) {
 				Write: 90 * time.Second,
 				Batch: 100 * time.Millisecond,
 			},
+			Version: api.Version,
 		}, got)
 	})
 

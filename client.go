@@ -10,6 +10,7 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v6/backup"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/auth"
 	"golang.org/x/oauth2"
@@ -116,6 +117,7 @@ func newClient(ctx context.Context, options []Option) (*Client, error) {
 		Header:   c.Header,
 		Auth:     c.Auth,
 		Timeout:  c.Timeout,
+		Version:  api.Version,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("weaviate: new client: %w", err)
