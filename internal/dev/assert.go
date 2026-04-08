@@ -29,7 +29,7 @@ var ea = sync.OnceValue(func() bool {
 		})
 })
 
-// Assert panics with a formated message if the check is false.
+// Assert panics with a formatted message if the check is false.
 // Do not use this function to validate user input; assertions
 // should only fail due to a error in a package's code.
 func Assert(check bool, msg string, args ...any) {
@@ -39,6 +39,15 @@ func Assert(check bool, msg string, args ...any) {
 	if !check {
 		panic(fmt.Sprintf(msg, args...))
 	}
+}
+
+// AssertType panics with a formatted message if v is not of type T.
+func AssertType[T any](v any, name string) {
+	if v == nil {
+		return
+	}
+	_, ok := v.(T)
+	Assert(ok, "%q is %T not %T", name, v, *new(T))
 }
 
 // AssertNotNil panics with a formatted message if v is nil.

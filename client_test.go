@@ -1,6 +1,7 @@
 package weaviate_test
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -19,7 +20,7 @@ func TestNewLocal(t *testing.T) {
 
 	t.Run("default", func(t *testing.T) {
 		var got transport.Config
-		transport.New = func(cfg transport.Config) (internal.Transport, error) {
+		transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
 			got = cfg
 			return testkit.NopTransport, nil
 		}
@@ -46,7 +47,7 @@ func TestNewLocal(t *testing.T) {
 
 	t.Run("with options", func(t *testing.T) {
 		var got transport.Config
-		transport.New = func(cfg transport.Config) (internal.Transport, error) {
+		transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
 			got = cfg
 			return testkit.NopTransport, nil
 		}
@@ -93,7 +94,7 @@ func TestNewWeaviateCloud(t *testing.T) {
 
 	t.Run("default", func(t *testing.T) {
 		var got transport.Config
-		transport.New = func(cfg transport.Config) (internal.Transport, error) {
+		transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
 			got = cfg
 			return testkit.NopTransport, nil
 		}
@@ -126,7 +127,7 @@ func TestNewWeaviateCloud(t *testing.T) {
 		} {
 			t.Run(domain, func(t *testing.T) {
 				var got transport.Config
-				transport.New = func(cfg transport.Config) (internal.Transport, error) {
+				transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
 					got = cfg
 					return testkit.NopTransport, nil
 				}
@@ -145,7 +146,7 @@ func TestNewWeaviateCloud(t *testing.T) {
 
 	t.Run("with options", func(t *testing.T) {
 		var got transport.Config
-		transport.New = func(cfg transport.Config) (internal.Transport, error) {
+		transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
 			got = cfg
 			return testkit.NopTransport, nil
 		}
@@ -181,7 +182,7 @@ func TestNewWeaviateCloud(t *testing.T) {
 	})
 
 	t.Run("namespaces", func(t *testing.T) {
-		transport.New = func(cfg transport.Config) (internal.Transport, error) {
+		transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
 			return testkit.NopTransport, nil
 		}
 

@@ -188,6 +188,7 @@ const (
 	DeleteTenants         PermissionAction = "delete_tenants"
 	DeleteUsers           PermissionAction = "delete_users"
 	ManageBackups         PermissionAction = "manage_backups"
+	ManageMcp             PermissionAction = "manage_mcp"
 	ReadAliases           PermissionAction = "read_aliases"
 	ReadCluster           PermissionAction = "read_cluster"
 	ReadCollections       PermissionAction = "read_collections"
@@ -1170,8 +1171,11 @@ type NestedProperty struct {
 	Name              string   `json:"name,omitempty"`
 
 	// NestedProperties The properties of the nested object(s). Applies to object and object[] data types.
-	NestedProperties []NestedProperty           `json:"nestedProperties,omitempty"`
-	Tokenization     NestedPropertyTokenization `json:"tokenization,omitempty"`
+	NestedProperties []NestedProperty `json:"nestedProperties,omitempty"`
+
+	// TextAnalyzer Text analysis options for a property. The asciiFold setting is immutable after creation, while the asciiFoldIgnore list can be updated later; changes to asciiFoldIgnore only affect newly indexed data and do not retroactively re-index existing data. Applies only to text and text[] data types that use an inverted index (searchable or filterable).
+	TextAnalyzer TextAnalyzerConfig         `json:"textAnalyzer,omitempty"`
+	Tokenization NestedPropertyTokenization `json:"tokenization,omitempty"`
 }
 
 // NestedPropertyTokenization defines model for NestedProperty.Tokenization.
@@ -1401,6 +1405,9 @@ type Permission struct {
 		GroupType GroupType `json:"groupType,omitempty"`
 	} `json:"groups,omitempty"`
 
+	// Mcp resources applicable for MCP actions
+	Mcp map[string]interface{} `json:"mcp,omitempty"`
+
 	// Nodes Resources applicable for cluster actions.
 	Nodes struct {
 		// Collection A string that specifies which collections this permission applies to. Can be an exact collection name or a regex pattern. The default value `*` applies the permission to all collections.
@@ -1484,6 +1491,9 @@ type Property struct {
 
 	// NestedProperties The properties of the nested object(s). Applies to object and object[] data types.
 	NestedProperties []NestedProperty `json:"nestedProperties,omitempty"`
+
+	// TextAnalyzer Text analysis options for a property. The asciiFold setting is immutable after creation, while the asciiFoldIgnore list can be updated later; changes to asciiFoldIgnore only affect newly indexed data and do not retroactively re-index existing data. Applies only to text and text[] data types that use an inverted index (searchable or filterable).
+	TextAnalyzer TextAnalyzerConfig `json:"textAnalyzer,omitempty"`
 
 	// Tokenization Determines how a property is indexed. This setting applies to `text` and `text[]` data types. The following tokenization methods are available:<br/><br/>- `word` (default): Splits the text on any non-alphanumeric characters and lowercases the tokens.<br/>- `lowercase`: Splits the text on whitespace and lowercases the tokens.<br/>- `whitespace`: Splits the text on whitespace. This tokenization is case-sensitive.<br/>- `field`: Indexes the entire property value as a single token after trimming whitespace.<br/>- `trigram`: Splits the property into rolling trigrams (three-character sequences).<br/>- `gse`: Uses the `gse` tokenizer, suitable for Chinese language text. [See `gse` docs](https://pkg.go.dev/github.com/go-ego/gse#section-readme).<br/>- `kagome_ja`: Uses the `Kagome` tokenizer with a Japanese (IPA) dictionary. [See `kagome` docs](https://github.com/ikawaha/kagome).<br/>- `kagome_kr`: Uses the `Kagome` tokenizer with a Korean dictionary. [See `kagome` docs](https://github.com/ikawaha/kagome).<br/><br/>See [Reference: Tokenization](https://docs.weaviate.io/weaviate/config-refs/collections#tokenization) for details.
 	Tokenization PropertyTokenization `json:"tokenization,omitempty"`
@@ -1948,16 +1958,22 @@ type Tenant struct {
 // TenantActivityStatus The activity status of the tenant, which determines if it is queryable and where its data is stored.<br/><br/><b>Available Statuses:</b><br/>- `ACTIVE`: The tenant is fully operational and ready for queries. Data is stored on local, hot storage.<br/>- `INACTIVE`: The tenant is not queryable. Data is stored locally.<br/>- `OFFLOADED`: The tenant is inactive and its data is stored in a remote cloud backend.<br/><br/><b>Usage Rules:</b><br/>- <b>On Create:</b> This field is optional and defaults to `ACTIVE`. Allowed values are `ACTIVE` and `INACTIVE`.<br/>- <b>On Update:</b> This field is required. Allowed values are `ACTIVE`, `INACTIVE`, and `OFFLOADED`.<br/><br/><b>Read-Only Statuses:</b><br/>The following statuses are set by the server and indicate a tenant is transitioning between states:<br/>- `OFFLOADING`<br/>- `ONLOADING`<br/><br/><b>Note on Deprecated Names:</b><br/>For backward compatibility, deprecated names are still accepted and are mapped to their modern equivalents: `HOT` (now `ACTIVE`), `COLD` (now `INACTIVE`), `FROZEN` (now `OFFLOADED`), `FREEZING` (now `OFFLOADING`), `UNFREEZING` (now `ONLOADING`).
 type TenantActivityStatus string
 
-// TokenizeAnalyzerConfig Analyzer configuration for the tokenize endpoint.
-type TokenizeAnalyzerConfig struct {
-	// Stopwords Fine-grained control over stopword list usage.
-	Stopwords StopwordConfig `json:"stopwords,omitempty"`
+// TextAnalyzerConfig Text analysis options for a property. The asciiFold setting is immutable after creation, while the asciiFoldIgnore list can be updated later; changes to asciiFoldIgnore only affect newly indexed data and do not retroactively re-index existing data. Applies only to text and text[] data types that use an inverted index (searchable or filterable).
+type TextAnalyzerConfig struct {
+	// AsciiFold If true, accent/diacritic marks are folded to their base characters during indexing and search. For example, 'école' matches 'ecole'. Defaults to false.
+	AsciiFold bool `json:"asciiFold,omitempty"`
+
+	// AsciiFoldIgnore If provided, specifies a list of characters that should be excluded from ascii folding. For example, if ['é'] is provided, then 'é' will not be folded to 'e' during indexing and search. This list can be updated after the property is created, but updates only affect documents indexed after the change.
+	AsciiFoldIgnore []string `json:"asciiFoldIgnore,omitempty"`
 }
 
 // TokenizeRequest Request body for the generic tokenize endpoint.
 type TokenizeRequest struct {
-	// AnalyzerConfig Analyzer configuration for the tokenize endpoint.
-	AnalyzerConfig TokenizeAnalyzerConfig `json:"analyzerConfig,omitempty"`
+	// AnalyzerConfig Text analysis options for a property. The asciiFold setting is immutable after creation, while the asciiFoldIgnore list can be updated later; changes to asciiFoldIgnore only affect newly indexed data and do not retroactively re-index existing data. Applies only to text and text[] data types that use an inverted index (searchable or filterable).
+	AnalyzerConfig TextAnalyzerConfig `json:"analyzerConfig,omitempty"`
+
+	// StopwordConfig Fine-grained control over stopword list usage.
+	StopwordConfig StopwordConfig `json:"stopwordConfig,omitempty"`
 
 	// Text The text to tokenize.
 	Text string `json:"text"`
@@ -1971,14 +1987,17 @@ type TokenizeRequestTokenization string
 
 // TokenizeResponse Response from the tokenize endpoint.
 type TokenizeResponse struct {
-	// AnalyzerConfig Analyzer configuration for the tokenize endpoint.
-	AnalyzerConfig TokenizeAnalyzerConfig `json:"analyzerConfig,omitempty"`
+	// AnalyzerConfig Text analysis options for a property. The asciiFold setting is immutable after creation, while the asciiFoldIgnore list can be updated later; changes to asciiFoldIgnore only affect newly indexed data and do not retroactively re-index existing data. Applies only to text and text[] data types that use an inverted index (searchable or filterable).
+	AnalyzerConfig TextAnalyzerConfig `json:"analyzerConfig,omitempty"`
 
 	// Indexed The tokens as they would be stored in the inverted index.
 	Indexed []string `json:"indexed,omitempty"`
 
 	// Query The tokens as they would be used for query matching (e.g., after stopword removal).
 	Query []string `json:"query,omitempty"`
+
+	// StopwordConfig Fine-grained control over stopword list usage.
+	StopwordConfig StopwordConfig `json:"stopwordConfig,omitempty"`
 
 	// Tokenization The tokenization method that was applied.
 	Tokenization string `json:"tokenization,omitempty"`

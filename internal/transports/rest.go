@@ -1,7 +1,12 @@
 package transports
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -33,6 +38,126 @@ type Endpoint interface {
 type StatusAccepter interface {
 	// AcceptStatus returns true if a status code is acceptable.
 	AcceptStatus(code int) bool
+}
+
+// Config options for [REST].
+type RESTConfig struct {
+	Scheme  string      // Scheme for request URLs, "http" or "https".
+	Host    string      // Hostname of the REST host.
+	Port    int         // Port number of the REST host
+	Header  http.Header // Headers added with each request.
+	Version string      // Version of the REST API.
+}
+
+func (c *REST) Do(ctx context.Context, req Endpoint, dest any) error {
+	var body io.Reader
+	if b := req.Body(); b != nil {
+		marshaled, err := json.Marshal(b)
+		if err != nil {
+			return fmt.Errorf("marshal request body: %w", err)
+		}
+		body = bytes.NewReader(marshaled)
+	}
+
+	url := c.url(req)
+	httpreq, err := http.NewRequestWithContext(ctx, req.Method(), url, body)
+	if err != nil {
+		return fmt.Errorf("create request: %w", err)
+	}
+
+	// Clone default request headers.
+	httpreq.Header = c.header.Clone()
+	if httpreq.Header == nil {
+		httpreq.Header = make(http.Header)
+	}
+
+	// Accept JSON even if dest is nil, as we don't want to spoof the request.
+	httpreq.Header.Set("Accept", "application/json")
+	if body != nil {
+		httpreq.Header.Set("Content-Type", "application/json")
+	}
+
+	res, err := c.hc.Do(httpreq)
+	if err != nil {
+		return fmt.Errorf("execute request: %q", err)
+	}
+
+	// Response body SHOULD always be read completely and closed
+	// to allow the underlying [http.Transport] to re-use the TCP connection.
+	// See: https://pkg.go.dev/net/http#Client.Do
+	resBody, err := io.ReadAll(res.Body)
+	defer res.Body.Close() //nolint:errcheck
+
+	// Now, if we didn't need the body, then a failure to read it
+	// must not foil the request, as it may cause the caller to retry
+	// the request incorrectly.
+	if err != nil && dest != nil {
+		return fmt.Errorf("read response body: %w", err)
+	}
+
+	if res.StatusCode > 299 {
+		// Some request types may want to "swallow" a bad status code,
+		// and not return an error in that case. We will not try to unmarshal
+		// the body  as it may not contain valid JSON, in which case we'll
+		// have to return an error anyways.
+		if acc, ok := dest.(StatusAccepter); ok {
+			if acc.AcceptStatus(res.StatusCode) {
+				return nil
+			}
+		}
+		return &HTTPError{Code: res.StatusCode, Body: string(resBody)}
+	}
+
+	if dest != nil && len(resBody) > 0 {
+		if err := json.Unmarshal(resBody, dest); err != nil {
+			return fmt.Errorf("unmarshal response body: %w", err)
+		}
+	}
+	return nil
+}
+
+func (c *REST) url(req Endpoint) string {
+	var url strings.Builder
+
+	url.WriteString(c.baseURL)
+	url.WriteString(strings.TrimLeft(req.Path(), "/"))
+
+	if query := req.Query(); len(query) > 0 {
+		url.WriteString("?")
+		url.WriteString(query.Encode())
+	}
+
+	return url.String()
+}
+
+type REST struct {
+	hc      *http.Client // Internal HTTP transport.
+	baseURL string       // Base server URL.
+	header  http.Header  // Default headers.
+}
+
+func NewREST(cfg RESTConfig) *REST {
+	baseURL := fmt.Sprintf(
+		"%s://%s:%d/%s/",
+		cfg.Scheme, cfg.Host, cfg.Port, cfg.Version,
+	)
+	return &REST{
+		hc:      &http.Client{},
+		baseURL: baseURL,
+		header:  cfg.Header,
+	}
+}
+
+// HTTPError is returned if the response has an error HTTP status code.
+type HTTPError struct {
+	Code int    // HTTP status code.
+	Body string // Raw response body.
+}
+
+var _ error = (*HTTPError)(nil)
+
+func (e *HTTPError) Error() string {
+	return fmt.Sprintf("HTTP %d: %s", e.Code, e.Body)
 }
 
 // BaseEndpoint implements [Endpoint] methods which may return nil.
