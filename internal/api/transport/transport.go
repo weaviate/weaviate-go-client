@@ -229,10 +229,10 @@ var (
 )
 
 func (t *transport) Close() error {
+	defer t.cancelTokenSource()
 	if c, ok := t.gRPC.(io.Closer); ok {
 		return c.Close()
 	}
-	t.cancelTokenSource()
 	return nil
 }
 
