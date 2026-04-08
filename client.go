@@ -11,6 +11,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/backup"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/auth"
 	"golang.org/x/oauth2"
 )
 
@@ -107,14 +108,14 @@ func newClient(ctx context.Context, options []Option) (*Client, error) {
 	}
 
 	t, err := transport.New(ctx, transport.Config{
-		Scheme:      c.Scheme,
-		RESTHost:    c.RESTHost,
-		RESTPort:    c.RESTPort,
-		GRPCHost:    c.GRPCHost,
-		GRPCPort:    c.GRPCPort,
-		Header:      c.Header,
-		TokenSource: c.TokenSource,
-		Timeout:     c.Timeout,
+		Scheme:   c.Scheme,
+		RESTHost: c.RESTHost,
+		RESTPort: c.RESTPort,
+		GRPCHost: c.GRPCHost,
+		GRPCPort: c.GRPCPort,
+		Header:   c.Header,
+		Auth:     c.Auth,
+		Timeout:  c.Timeout,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("weaviate: new client: %w", err)
@@ -223,9 +224,38 @@ func WithAPIKey(apiKey string) Option {
 	return WithTokenSource(oauth2.StaticTokenSource(&oauth2.Token{AccessToken: apiKey}))
 }
 
+// Authenticate requests via a pre-existing bearer token.
+func WithBearerToken(t oauth2.Token) Option {
+	return func(c *config) {
+		c.Auth = auth.RefreshToken(t)
+	}
+}
+
+// Authenticate requests via client credentials.
+func WithClientCredentials(clientSecret string, scopes []string) Option {
+	return func(c *config) {
+		c.Auth = auth.ClientCredentials{
+			ClientSecret: clientSecret,
+			Scopes:       scopes,
+		}
+	}
+}
+
+// Authenticate requests via the ROPC grant.
+func WithResourceOwnerPasswordCredentials(clientSecret, username, password string, scopes []string) Option {
+	return func(c *config) {
+		c.Auth = auth.ResourceOwnerPasswordCredentials{
+			ClientSecret: clientSecret,
+			Username:     username,
+			Password:     password,
+			Scopes:       scopes,
+		}
+	}
+}
+
 // Custom [oauth2.TokenSource] for making authenticated requests.
 func WithTokenSource(ts oauth2.TokenSource) Option {
 	return func(c *config) {
-		c.TokenSource = ts
+		c.Auth = ts
 	}
 }

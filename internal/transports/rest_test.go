@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"slices"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -124,6 +123,8 @@ func TestREST_Do(t *testing.T) {
 
 			// Arrange
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				defer r.Body.Close()
+
 				assert.Equal(t, tt.req.Method(), r.Method, "request method")
 				assert.Equal(t, "/"+version+tt.req.Path(), r.URL.Path, "request path")
 				assert.Equal(t, tt.req.Query().Encode(), r.URL.Query().Encode(), "query parameters")
@@ -170,13 +171,12 @@ func TestREST_Do(t *testing.T) {
 			})
 
 			srv := httptest.NewServer(handler)
-			defer srv.Close()
+			t.Cleanup(srv.Close)
 
-			url, _ := url.Parse(srv.URL)
-			port, _ := strconv.Atoi(url.Port())
+			scheme, host, port := testkit.SchemeHostPort(t, srv)
 			rest := transports.NewREST(transports.RESTConfig{
-				Scheme:      "http",
-				Host:        url.Hostname(),
+				Scheme:      scheme,
+				Host:        host,
 				Port:        port,
 				Version:     version,
 				Header:      defaultHeader,
@@ -202,13 +202,12 @@ func TestREST_Do(t *testing.T) {
 		})
 
 		srv := httptest.NewServer(handler)
-		defer srv.Close()
+		t.Cleanup(srv.Close)
 
-		url, _ := url.Parse(srv.URL)
-		port, _ := strconv.Atoi(url.Port())
+		scheme, host, port := testkit.SchemeHostPort(t, srv)
 		rest := transports.NewREST(transports.RESTConfig{
-			Scheme:  "http",
-			Host:    url.Hostname(),
+			Scheme:  scheme,
+			Host:    host,
 			Port:    port,
 			Version: version,
 		})
