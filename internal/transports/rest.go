@@ -86,14 +86,12 @@ func (c *REST) Do(ctx context.Context, req Endpoint, dest any) error {
 	// to allow the underlying [http.Transport] to re-use the TCP connection.
 	// See: https://pkg.go.dev/net/http#Client.Do
 	resBody, err := io.ReadAll(res.Body)
-	if err := res.Body.Close(); err != nil {
-		// TODO(dyma): log instead?
-		return err
-	}
+	defer res.Body.Close() //nolint:errcheck
 
-	// TODO(dyma): not sure if we should always report this error.
-	// What if we don't need the body because dest=nil and status is OK?
-	if err != nil {
+	// Now, if we didn't need the body, then a failure to read it
+	// must not foil the request, as it may cause the caller to retry
+	// the request incorrectly.
+	if err != nil && dest != nil {
 		return fmt.Errorf("read response body: %w", err)
 	}
 
