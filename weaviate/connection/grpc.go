@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -27,8 +28,9 @@ type GrpcClient struct {
 
 func NewGrpcClient(host string, secured bool, headers map[string]string,
 	gRPCVersionSupport *db.GRPCVersionSupport, timeout, startupTimeout time.Duration,
+	keepaliveParams *keepalive.ClientParameters,
 ) (*GrpcClient, error) {
-	client, err := createClient(host, secured, startupTimeout)
+	client, err := createClient(host, secured, startupTimeout, keepaliveParams)
 	if err != nil {
 		return nil, fmt.Errorf("create grpc client: %w", err)
 	}
@@ -86,7 +88,9 @@ func (c *GrpcClient) getOptions() []grpc.CallOption {
 	return []grpc.CallOption{}
 }
 
-func createClient(host string, secured bool, startupTimeout time.Duration) (pb.WeaviateClient, error) {
+func createClient(host string, secured bool, startupTimeout time.Duration,
+	keepaliveParams *keepalive.ClientParameters,
+) (pb.WeaviateClient, error) {
 	var opts []grpc.DialOption
 	if secured || strings.HasSuffix(host, ":443") {
 		tlsConfig := &tls.Config{
@@ -96,6 +100,17 @@ func createClient(host string, secured bool, startupTimeout time.Duration) (pb.W
 	} else {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
+
+	if keepaliveParams != nil {
+		opts = append(opts, grpc.WithKeepaliveParams(*keepaliveParams))
+	} else {
+		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                30 * time.Second,
+			Timeout:             10 * time.Second,
+			PermitWithoutStream: true,
+		}))
+	}
+
 	conn, err := grpc.NewClient(getAddress(host, secured), opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gRPC client: %w", err)
