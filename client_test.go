@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
+	"golang.org/x/oauth2"
 )
 
 // DO NOT enable t.Parallel() for this test as it messes with the global state.
@@ -52,6 +54,11 @@ func TestNewLocal(t *testing.T) {
 			return testkit.NopTransport, nil
 		}
 
+		tokenSource := oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken:  "access_token",
+			RefreshToken: "refresh_token",
+		})
+
 		c, err := weaviate.NewLocal(t.Context(),
 			weaviate.WithScheme("https"),
 			weaviate.WithHTTPPort(7070),
@@ -61,6 +68,7 @@ func TestNewLocal(t *testing.T) {
 			}),
 			weaviate.WithReadTimeout(20*time.Second),
 			weaviate.WithBatchTimeout(100*time.Millisecond),
+			weaviate.WithTokenSource(tokenSource),
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, c, "nil client")
@@ -78,6 +86,7 @@ func TestNewLocal(t *testing.T) {
 				"X-Test":            {"heads", "up"},
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
 			},
+			TokenSource: tokenSource,
 			Timeout: transport.Timeout{
 				Read:  20 * time.Second,
 				Write: 90 * time.Second,
@@ -112,6 +121,9 @@ func TestNewWeaviateCloud(t *testing.T) {
 			Header: http.Header{
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
 			},
+			TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
+				AccessToken: "api-key",
+			}),
 			Timeout: transport.Timeout{
 				Read:  30 * time.Second,
 				Write: 90 * time.Second,
@@ -173,6 +185,9 @@ func TestNewWeaviateCloud(t *testing.T) {
 				"X-Test":            {"heads", "up"},
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
 			},
+			TokenSource: oauth2.StaticTokenSource(&oauth2.Token{
+				AccessToken: "api-key",
+			}),
 			Timeout: transport.Timeout{
 				Read:  20 * time.Second,
 				Write: 90 * time.Second,
@@ -193,4 +208,25 @@ func TestNewWeaviateCloud(t *testing.T) {
 		assert.NotNil(t, c.Collections, "nil collections")
 		assert.NotNil(t, c.Backup, "nil backup")
 	})
+}
+
+func TestWithAPIKey(t *testing.T) {
+	var got transport.Config
+	transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
+		got = cfg
+		return testkit.NopTransport, nil
+	}
+
+	c, err := weaviate.NewClient(t.Context(), weaviate.WithAPIKey("api-key"))
+	assert.NoError(t, err, "new client")
+	assert.NotNil(t, c, "nil client")
+
+	require.NotNil(t, got.TokenSource, "token source")
+	tok, err := got.TokenSource.Token()
+	assert.NoError(t, err, "token error")
+
+	assert.Zero(t, tok.RefreshToken, "refresh token")
+	assert.Zero(t, tok.ExpiresIn, "expires in")
+	assert.Zero(t, tok.Expiry, "expires in")
+	assert.Equal(t, "Bearer", tok.Type(), "token type")
 }
