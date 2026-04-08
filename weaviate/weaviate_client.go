@@ -338,7 +338,8 @@ func (c *Client) Experimental() *experimental {
 
 func createGrpcClient(config Config, gRPCVersionSupport *db.GRPCVersionSupport) (*connection.GrpcClient, error) {
 	if config.GrpcConfig != nil {
-		return connection.NewGrpcClient(config.GrpcConfig.Host, config.GrpcConfig.Secured, config.Headers, gRPCVersionSupport, config.getTimeout(), config.StartupTimeout)
+		return connection.NewGrpcClient(config.GrpcConfig.Host, config.GrpcConfig.Secured, config.Headers, gRPCVersionSupport, config.getTimeout(), config.StartupTimeout,
+			config.GrpcConfig.Keepalive)
 	}
 	return nil, nil
 }
