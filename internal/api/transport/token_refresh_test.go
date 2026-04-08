@@ -14,6 +14,7 @@ import (
 func TestTokenKeepalive(t *testing.T) {
 	t.Run("nil token source", func(t *testing.T) {
 		require.NotPanics(t, func() {
+			// We expect this to exit immediately, no need for a goroutine.
 			tokenKeepalive(t.Context(), nil, time.After)
 		})
 	})
@@ -29,7 +30,7 @@ func TestTokenKeepalive(t *testing.T) {
 		}}
 
 		// Act
-		tokenKeepalive(ctx, &src, func(d time.Duration) <-chan time.Time {
+		go tokenKeepalive(ctx, &src, func(d time.Duration) <-chan time.Time {
 			assert.Equal(t, time.Duration(92)*time.Second, d, "must try to sleep for %ds", 92)
 			return time.After(5 * time.Millisecond)
 		})

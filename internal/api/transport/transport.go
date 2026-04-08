@@ -96,7 +96,7 @@ func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 	// Start the refresh goroutine when all error handing is done,
 	// so that we don't accidentally leak context on early return.
 	ctx, cancelTokenSource := context.WithCancel(context.Background())
-	tokenKeepalive(ctx, src, time.After)
+	go tokenKeepalive(ctx, src, time.After)
 
 	return &transport{
 		rest:              rest,
@@ -286,27 +286,25 @@ func expireEarly(src oauth2.TokenSource) (oauth2.TokenSource, error) {
 }
 
 // tokenKeepalive prevents the TokenSource from becoming stale during
-// prolonged periods of unuse. It starts a background goroutine that will
-// try to fetch a new token just about when the old one expires.
-//
-// A failed attempt to fetch the token is not retried and the goroutine
-// exits early.
+// prolonged periods of unuse. It repeatedly fetches a new token just
+// about when the old one expires. A failed attempt to fetch the token
+// is not retried and the function exits early. It is safe to call with
+// a nil src.
 func tokenKeepalive(ctx context.Context, src oauth2.TokenSource, tickFunc func(time.Duration) <-chan time.Time) {
 	if src == nil {
 		return
 	}
-	go func() {
-		var t *oauth2.Token
-		var err error
 
-		// When Expiry is zero, oauth2 will never refresh the token,
-		// so pre-empting it like this is not useful.
-		for t, err = src.Token(); err == nil && t != nil && !t.Expiry.IsZero(); t, err = src.Token() {
-			select {
-			case <-ctx.Done():
-				return
-			case <-tickFunc(time.Duration(t.ExpiresIn) * time.Second):
-			}
+	var t *oauth2.Token
+	var err error
+
+	// When Expiry is zero, oauth2 will never refresh the token,
+	// so pre-empting it like this is not useful.
+	for t, err = src.Token(); err == nil && t != nil && !t.Expiry.IsZero(); t, err = src.Token() {
+		select {
+		case <-ctx.Done():
+			return
+		case <-tickFunc(time.Duration(t.ExpiresIn) * time.Second):
 		}
-	}()
+	}
 }
