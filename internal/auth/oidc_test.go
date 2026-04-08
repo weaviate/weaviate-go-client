@@ -152,15 +152,15 @@ func TestOIDC(t *testing.T) {
 			t.Cleanup(srv.Close)
 
 			// Act
-			ts, err := tt.ex.Exchange(t.Context(), oauth2.Config{
+			src, err := tt.ex.Exchange(t.Context(), oauth2.Config{
 				ClientID: "my-client",
 				Scopes:   defaultScopes,
 				Endpoint: oauth2.Endpoint{TokenURL: srv.URL},
 			})
 			require.NoError(t, err, "exchange")
-			require.NotNil(t, ts, "got nil token source")
+			require.NotNil(t, src, "got nil token source")
 
-			got, err := ts.Token()
+			got, err := src.Token()
 			require.NoError(t, err, "get token")
 			require.NotNil(t, got, "got nil token")
 

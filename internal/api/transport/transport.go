@@ -67,12 +67,15 @@ func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 	}
 
 	// unwrapTokenSource handles nil cfg.Auth correctly and returns a nil TokenSource.
-	ts, err := unwrapTokenSource(ctx, cfg.Auth, transports.NewREST(restConfig))
+	src, err := unwrapTokenSource(ctx, cfg.Auth, transports.NewREST(restConfig))
 	if err != nil {
 		return nil, fmt.Errorf("new transport: %w", err)
 	}
-	restConfig.TokenSource = ts
-	gRPCConfig.TokenSource = ts
+	if src, err = expireEarly(src); err != nil {
+		return nil, fmt.Errorf("new transport: %w", err)
+	}
+	restConfig.TokenSource = src
+	gRPCConfig.TokenSource = src
 
 	rest := transports.NewREST(restConfig)
 
@@ -90,10 +93,16 @@ func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 		return nil, fmt.Errorf("new transport: %w", err)
 	}
 
+	// Start the refresh goroutine when all error handing is done,
+	// so that we don't accidentally leak context on early return.
+	ctx, cancelTokenSource := context.WithCancel(context.Background())
+	go tokenKeepalive(ctx, src, time.After)
+
 	return &transport{
-		rest:    rest,
-		gRPC:    gRPC,
-		timeout: cfg.Timeout,
+		rest:              rest,
+		gRPC:              gRPC,
+		timeout:           cfg.Timeout,
+		cancelTokenSource: cancelTokenSource,
 	}, nil
 }
 
@@ -209,6 +218,9 @@ type transport struct {
 
 	// An appropriate timeout is applied to each request based on the operation type.
 	timeout Timeout
+
+	// cancelTokenSource stops the goroutine refreshing the token.
+	cancelTokenSource context.CancelFunc
 }
 
 var (
@@ -217,6 +229,7 @@ var (
 )
 
 func (t *transport) Close() error {
+	defer t.cancelTokenSource()
 	if c, ok := t.gRPC.(io.Closer); ok {
 		return c.Close()
 	}
@@ -234,19 +247,22 @@ type Exchanger interface {
 }
 
 func unwrapTokenSource(ctx context.Context, provider any, rest *transports.REST) (oauth2.TokenSource, error) {
-	switch ts := provider.(type) {
+	switch src := provider.(type) {
 	case oauth2.TokenSource:
-		return ts, nil
+		return src, nil
 	case Exchanger:
 		var resp struct {
 			TokenURL string   `json:"href"`
 			ClientID string   `json:"clientId"`
 			Scopes   []string `json:"scopes"`
 		}
+
+		dev.AssertNotNil(rest, "rest")
+
 		if err := rest.Do(ctx, getOpenIDConfigRequest, &resp); err != nil {
 			return nil, fmt.Errorf("get openid configuration: %w", err)
 		}
-		return ts.Exchange(ctx, oauth2.Config{
+		return src.Exchange(ctx, oauth2.Config{
 			ClientID: resp.ClientID,
 			Scopes:   resp.Scopes,
 			Endpoint: oauth2.Endpoint{
@@ -255,4 +271,37 @@ func unwrapTokenSource(ctx context.Context, provider any, rest *transports.REST)
 		})
 	}
 	return nil, nil
+}
+
+// expireEarly returns [oauth2.TokenSource] with a 30s expiry buffer.
+func expireEarly(src oauth2.TokenSource) (oauth2.TokenSource, error) {
+	if src == nil {
+		return nil, nil
+	}
+	t, err := src.Token()
+	if err != nil {
+		return nil, fmt.Errorf("get token: %w", err)
+	}
+	return oauth2.ReuseTokenSourceWithExpiry(t, src, 30*time.Second), nil
+}
+
+// tokenKeepalive prevents the TokenSource from becoming stale during
+// prolonged periods of unuse. It repeatedly fetches a new token just
+// about when the old one expires. A failed attempt to fetch the token
+// is not retried and the function exits early. It is safe to call with
+// a nil src.
+func tokenKeepalive(ctx context.Context, src oauth2.TokenSource, tickFunc func(time.Duration) <-chan time.Time) {
+	if src == nil {
+		return
+	}
+
+	// When Expiry is zero, oauth2 will never refresh the token,
+	// so pre-empting it like this is not useful.
+	for t, err := src.Token(); err == nil && t != nil && !t.Expiry.IsZero(); t, err = src.Token() {
+		select {
+		case <-ctx.Done():
+			return
+		case <-tickFunc(time.Duration(t.ExpiresIn) * time.Second):
+		}
+	}
 }

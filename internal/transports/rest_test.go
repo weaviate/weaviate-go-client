@@ -30,7 +30,7 @@ func TestREST_Do(t *testing.T) {
 
 		name string
 		req  transports.Endpoint
-		ts   oauth2.TokenSource
+		src  oauth2.TokenSource
 
 		respBody string // Set response body to return.
 		respCode int    // Override returned status code (default: HTTP 200).
@@ -102,7 +102,7 @@ func TestREST_Do(t *testing.T) {
 				method: http.MethodGet,
 				path:   "/test",
 			},
-			ts: oauth2.StaticTokenSource(&oauth2.Token{
+			src: oauth2.StaticTokenSource(&oauth2.Token{
 				AccessToken: "my-token",
 			}),
 		},
@@ -112,7 +112,7 @@ func TestREST_Do(t *testing.T) {
 				method: http.MethodGet,
 				path:   "/test",
 			},
-			ts: oauth2.StaticTokenSource(&oauth2.Token{
+			src: oauth2.StaticTokenSource(&oauth2.Token{
 				AccessToken: "my-token",
 				TokenType:   "basic",
 			}),
@@ -130,8 +130,8 @@ func TestREST_Do(t *testing.T) {
 				assert.Equal(t, tt.req.Query().Encode(), r.URL.Query().Encode(), "query parameters")
 				assert.Subset(t, r.Header, defaultHeader, "default headers missing")
 
-				if tt.ts != nil {
-					tok, err := tt.ts.Token()
+				if tt.src != nil {
+					tok, err := tt.src.Token()
 					require.NoError(t, err, "get token")
 					require.NotNil(t, tok, "nil token")
 
@@ -180,7 +180,7 @@ func TestREST_Do(t *testing.T) {
 				Port:        port,
 				Version:     version,
 				Header:      defaultHeader,
-				TokenSource: tt.ts,
+				TokenSource: tt.src,
 			})
 
 			// Act

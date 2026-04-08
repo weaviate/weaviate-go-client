@@ -402,14 +402,14 @@ func Test_unwrapTokenSource(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.NotNil(t, tt.prov, "invalid test case: nil provider func")
 
-			ts, err := unwrapTokenSource(t.Context(), tt.prov(t), rest)
+			src, err := unwrapTokenSource(t.Context(), tt.prov(t), rest)
 			assert.NoError(t, err)
 
 			if tt.want == nil {
-				assert.Nil(t, ts, "token source")
+				assert.Nil(t, src, "token source")
 			} else {
-				require.NotNil(t, ts, "nil token source")
-				tok, err := ts.Token()
+				require.NotNil(t, src, "nil token source")
+				tok, err := src.Token()
 				assert.NoError(t, err, "get token")
 				assert.Equal(t, tt.want, tok)
 			}
