@@ -256,8 +256,8 @@ func WithResourceOwnerPasswordCredentials(clientSecret, username, password strin
 }
 
 // Custom [oauth2.TokenSource] for making authenticated requests.
-func WithTokenSource(ts oauth2.TokenSource) Option {
+func WithTokenSource(src oauth2.TokenSource) Option {
 	return func(c *config) {
-		c.Auth = ts
+		c.Auth = src
 	}
 }

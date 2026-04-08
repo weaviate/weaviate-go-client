@@ -229,8 +229,8 @@ func TestWithAPIKey(t *testing.T) {
 
 	require.NotNil(t, got.Auth, "token source")
 	if assert.Implements(t, (*oauth2.TokenSource)(nil), got.Auth, "auth provider") {
-		ts := got.Auth.(oauth2.TokenSource)
-		tok, err := ts.Token()
+		src := got.Auth.(oauth2.TokenSource)
+		tok, err := src.Token()
 		assert.NoError(t, err, "token error")
 
 		assert.Zero(t, tok.RefreshToken, "refresh token")

@@ -74,10 +74,6 @@ func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 	if src, err = expireEarly(src); err != nil {
 		return nil, fmt.Errorf("new transport: %w", err)
 	}
-
-	ctx, cancelTokenSource := context.WithCancel(context.Background())
-	tokenKeepalive(ctx, src, time.After)
-
 	restConfig.TokenSource = src
 	gRPCConfig.TokenSource = src
 
@@ -96,6 +92,11 @@ func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 	if err != nil {
 		return nil, fmt.Errorf("new transport: %w", err)
 	}
+
+	// Start the refresh goroutine when all error handing is done,
+	// so that we don't accidentally leak context on early return.
+	ctx, cancelTokenSource := context.WithCancel(context.Background())
+	tokenKeepalive(ctx, src, time.After)
 
 	return &transport{
 		rest:              rest,
@@ -246,9 +247,9 @@ type Exchanger interface {
 }
 
 func unwrapTokenSource(ctx context.Context, provider any, rest *transports.REST) (oauth2.TokenSource, error) {
-	switch ts := provider.(type) {
+	switch src := provider.(type) {
 	case oauth2.TokenSource:
-		return ts, nil
+		return src, nil
 	case Exchanger:
 		var resp struct {
 			TokenURL string   `json:"href"`
@@ -261,7 +262,7 @@ func unwrapTokenSource(ctx context.Context, provider any, rest *transports.REST)
 		if err := rest.Do(ctx, getOpenIDConfigRequest, &resp); err != nil {
 			return nil, fmt.Errorf("get openid configuration: %w", err)
 		}
-		return ts.Exchange(ctx, oauth2.Config{
+		return src.Exchange(ctx, oauth2.Config{
 			ClientID: resp.ClientID,
 			Scopes:   resp.Scopes,
 			Endpoint: oauth2.Endpoint{
