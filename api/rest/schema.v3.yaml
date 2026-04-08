@@ -1196,6 +1196,8 @@ components:
                         $ref: '#/components/schemas/NestedProperty'
                     type: array
                     x-omitempty: true
+                textAnalyzer:
+                    $ref: '#/components/schemas/TextAnalyzerConfig'
                 tokenization:
                     enum:
                         - word
@@ -1460,6 +1462,7 @@ components:
                         - delete_aliases
                         - assign_and_revoke_groups
                         - read_groups
+                        - manage_mcp
                     type: string
                 aliases:
                     description: Resource definition for alias-related actions and permissions. Used to specify which aliases and collections can be accessed or modified.
@@ -1514,6 +1517,10 @@ components:
                             type: string
                         groupType:
                             $ref: '#/components/schemas/GroupType'
+                    type: object
+                mcp:
+                    description: resources applicable for MCP actions
+                    properties: {}
                     type: object
                 nodes:
                     description: Resources applicable for cluster actions.
@@ -1661,6 +1668,8 @@ components:
                         $ref: '#/components/schemas/NestedProperty'
                     type: array
                     x-omitempty: true
+                textAnalyzer:
+                    $ref: '#/components/schemas/TextAnalyzerConfig'
                 tokenization:
                     description: 'Determines how a property is indexed. This setting applies to `text` and `text[]` data types. The following tokenization methods are available:<br/><br/>- `word` (default): Splits the text on any non-alphanumeric characters and lowercases the tokens.<br/>- `lowercase`: Splits the text on whitespace and lowercases the tokens.<br/>- `whitespace`: Splits the text on whitespace. This tokenization is case-sensitive.<br/>- `field`: Indexes the entire property value as a single token after trimming whitespace.<br/>- `trigram`: Splits the property into rolling trigrams (three-character sequences).<br/>- `gse`: Uses the `gse` tokenizer, suitable for Chinese language text. [See `gse` docs](https://pkg.go.dev/github.com/go-ego/gse#section-readme).<br/>- `kagome_ja`: Uses the `Kagome` tokenizer with a Japanese (IPA) dictionary. [See `kagome` docs](https://github.com/ikawaha/kagome).<br/>- `kagome_kr`: Uses the `Kagome` tokenizer with a Korean dictionary. [See `kagome` docs](https://github.com/ikawaha/kagome).<br/><br/>See [Reference: Tokenization](https://docs.weaviate.io/weaviate/config-refs/collections#tokenization) for details.'
                     enum:
@@ -2347,17 +2356,27 @@ components:
                     description: The name of the tenant (required).
                     type: string
             type: object
-        TokenizeAnalyzerConfig:
-            description: Analyzer configuration for the tokenize endpoint.
+        TextAnalyzerConfig:
+            description: Text analysis options for a property. The asciiFold setting is immutable after creation, while the asciiFoldIgnore list can be updated later; changes to asciiFoldIgnore only affect newly indexed data and do not retroactively re-index existing data. Applies only to text and text[] data types that use an inverted index (searchable or filterable).
             properties:
-                stopwords:
-                    $ref: '#/components/schemas/StopwordConfig'
+                asciiFold:
+                    description: If true, accent/diacritic marks are folded to their base characters during indexing and search. For example, 'école' matches 'ecole'. Defaults to false.
+                    type: boolean
+                asciiFoldIgnore:
+                    description: If provided, specifies a list of characters that should be excluded from ascii folding. For example, if ['é'] is provided, then 'é' will not be folded to 'e' during indexing and search. This list can be updated after the property is created, but updates only affect documents indexed after the change.
+                    items:
+                        type: string
+                    type: array
+                    x-omitempty: true
             type: object
+            x-omitempty: true
         TokenizeRequest:
             description: Request body for the generic tokenize endpoint.
             properties:
                 analyzerConfig:
-                    $ref: '#/components/schemas/TokenizeAnalyzerConfig'
+                    $ref: '#/components/schemas/TextAnalyzerConfig'
+                stopwordConfig:
+                    $ref: '#/components/schemas/StopwordConfig'
                 text:
                     description: The text to tokenize.
                     type: string
@@ -2382,7 +2401,7 @@ components:
             description: Response from the tokenize endpoint.
             properties:
                 analyzerConfig:
-                    $ref: '#/components/schemas/TokenizeAnalyzerConfig'
+                    $ref: '#/components/schemas/TextAnalyzerConfig'
                 indexed:
                     description: The tokens as they would be stored in the inverted index.
                     items:
@@ -2393,6 +2412,8 @@ components:
                     items:
                         type: string
                     type: array
+                stopwordConfig:
+                    $ref: '#/components/schemas/StopwordConfig'
                 tokenization:
                     description: The tokenization method that was applied.
                     type: string
@@ -2638,7 +2659,7 @@ info:
         url: https://github.com/weaviate
     description: '# Introduction<br/> Weaviate is an open source, AI-native vector database that helps developers create intuitive and reliable AI-powered applications. <br/> ### Base Path <br/>The base path for the Weaviate server is structured as `[YOUR-WEAVIATE-HOST]:[PORT]/v1`. As an example, if you wish to access the `schema` endpoint on a local instance, you would navigate to `http://localhost:8080/v1/schema`. Ensure you replace `[YOUR-WEAVIATE-HOST]` and `[PORT]` with your actual server host and port number respectively. <br/> ### Questions? <br/>If you have any comments or questions, please feel free to reach out to us at the community forum [https://forum.weaviate.io/](https://forum.weaviate.io/). <br/>### Issues? <br/>If you find a bug or want to file a feature request, please open an issue on our GitHub repository for [Weaviate](https://github.com/weaviate/weaviate). <br/>### Need more documentation? <br/>For a quickstart, code examples, concepts and more, please visit our [documentation page](https://docs.weaviate.io/weaviate).'
     title: Weaviate REST API
-    version: 1.37.0-dev
+    version: 1.37.0-rc.0
 openapi: 3.0.1
 paths:
     /:
@@ -5104,6 +5125,34 @@ paths:
                 - weaviate.local.query.meta
                 - weaviate.network.query
                 - weaviate.network.query.meta
+    /mcp:
+        delete:
+            description: Terminates an MCP session.
+            operationId: mcp.delete
+            responses:
+                "200":
+                    content: {}
+                    description: Session terminated
+            tags:
+                - mcp
+        get:
+            description: Opens an SSE stream for receiving MCP server-sent events.
+            operationId: mcp.get
+            responses:
+                "200":
+                    content: {}
+                    description: SSE event stream
+            tags:
+                - mcp
+        post:
+            description: MCP Streamable HTTP endpoint. Handles JSON-RPC requests for tool discovery and invocation.
+            operationId: mcp.post
+            responses:
+                "200":
+                    content: {}
+                    description: JSON-RPC response or SSE stream
+            tags:
+                - mcp
     /meta:
         get:
             description: Provides meta-information about the running Weaviate instance, including its version, loaded modules, and network hostname. This information can be useful for monitoring, compatibility checks, or inter-instance communication.
@@ -7973,6 +8022,53 @@ paths:
             summary: Check if a tenant exists
             tags:
                 - schema
+    /schema/{className}/vectors/{vectorIndexName}/index:
+        delete:
+            description: Deletes a specific vector index within a collection (`className`). The vector index to delete is identified by `vectorIndexName`.
+            operationId: schema.objects.vectors.delete
+            parameters:
+                - description: The name of the collection (class) containing the property.
+                  in: path
+                  name: className
+                  required: true
+                  schema:
+                    type: string
+                - description: The name of the vector index.
+                  in: path
+                  name: vectorIndexName
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content: {}
+                    description: Vector index deleted successfully.
+                "401":
+                    content: {}
+                    description: Unauthorized or invalid credentials.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Forbidden
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Invalid vector index or collection provided.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: An error occurred while deleting the vector index. Check the ErrorResponse for details.
+            summary: Delete a collection's vector index.
+            tags:
+                - schema
+            x-serviceIds:
+                - weaviate.local.manipulate.meta
     /tasks:
         get:
             operationId: distributedTasks.get
@@ -8513,4 +8609,6 @@ tags:
       name: authz
     - description: Operations related to managing data replication, including initiating and monitoring shard replica movements between nodes, querying current sharding states, and managing the lifecycle of replication tasks.
       name: replication
+    - description: Model Context Protocol (MCP) endpoint. Provides tool discovery and invocation for LLM agents via the MCP Streamable HTTP transport.
+      name: mcp
 x-original-swagger-version: "2.0"
