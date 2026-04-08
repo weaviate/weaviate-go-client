@@ -103,12 +103,6 @@ func createClient(host string, secured bool, startupTimeout time.Duration,
 
 	if keepaliveParams != nil {
 		opts = append(opts, grpc.WithKeepaliveParams(*keepaliveParams))
-	} else {
-		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                30 * time.Second,
-			Timeout:             10 * time.Second,
-			PermitWithoutStream: true,
-		}))
 	}
 
 	conn, err := grpc.NewClient(getAddress(host, secured), opts...)

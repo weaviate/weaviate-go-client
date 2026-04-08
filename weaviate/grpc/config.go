@@ -10,6 +10,5 @@ type Config struct {
 	// for insecured and 443 port for secured connections will be used.
 	Host string
 	// Keepalive parameters for the gRPC connection.
-	// If nil, defaults are used (Time: 30s, Timeout: 10s, PermitWithoutStream: true).
 	Keepalive *keepalive.ClientParameters
 }
