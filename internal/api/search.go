@@ -318,6 +318,9 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 		Certainty: req.Certainty,
 	}
 
+	// We keep MoveTo and MoveAway marshaling inline to
+	// 1) avoid breeding functions; these params are only needed here
+	// 2) re-use the uuids slice if possible (minor benefit, but still).
 	var uuids []string
 	if m := req.MoveTo; m != nil {
 		uuids = slices.Grow(uuids, len(m.Objects))
@@ -344,6 +347,8 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 	}
 
 	if len(req.Target.Vectors) > 0 {
+		// Pre-allocate slices for targets. Do not allocate WeightsForTarget,
+		// as targets may have no weights.
 		nt.Targets = &proto.Targets{
 			TargetVectors: make([]string, len(req.Target.Vectors)),
 			Combination:   req.Target.CombinationMethod.proto(),

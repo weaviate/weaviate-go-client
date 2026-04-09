@@ -8,10 +8,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
-	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
 
-type NearVector struct {
+type NearText struct {
 	Limit                  int32            // Limit the number of results returned for the query.
 	Offset                 int32            // Skip the first N objects in the collection.
 	AutoLimit              int32            // Return objects in the first N similarity clusters.
@@ -25,7 +24,16 @@ type NearVector struct {
 	// To not return any properties, initialize this value to an empty slice explicitly.
 	ReturnProperties []string
 
-	// Target vector or a combination of multiple vector targets. Required parameter.
+	// Concepts are vectorized and used and the actual target for the similarity search.
+	// Required parameter.
+	Concepts []string
+
+	// Bias the results towards or away from concepts and/or vectors.
+	MoveTo, MoveAway *Move
+
+	// Target vector or a combination of multiple vector targets.
+	// By default, the resulting vectors are compared against the "default"
+	// vector, or the _only_ vector, if the collection only has a single vector index.
 	// See [MultiVectorTarget] for examples of providing multiple targets.
 	Target VectorTarget
 
@@ -35,45 +43,51 @@ type NearVector struct {
 	// Prefer expressing Similarity in terms of vector distance, as that is a more conventional metric.
 	Similarity *Similarity
 
-	// groupBy can only be set by [NearVectorFunc.GroupBy], as it changes the shape of the response.
+	// groupBy can only be set by [NearTextFunc.GroupBy], as it changes the shape of the response.
 	groupBy *GroupBy
 }
 
-// Distance sets a similarity cutoff in terms of maximum vector distance.
-func Distance(d float64) *Similarity { return &Similarity{distance: &d} }
+type Move api.Move
 
-// Certainty sets a similarity cutoff in terms of certainty.
-func Certainty(c float64) *Similarity { return &Similarity{certainty: &c} }
+// NearTextFunc runs plain near text search.
+type NearTextFunc func(context.Context, NearText) (*Result, error)
 
-// NearVectorFunc runs plain near vector search.
-type NearVectorFunc func(context.Context, NearVector) (*Result, error)
-
-// nearVectorFunc makes internal.Transport available to nearVector via a closure.
-func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc {
-	return func(ctx context.Context, nv NearVector) (*Result, error) {
-		return nearVector(ctx, t, rd, nv)
+// nearTextFunc makes internal.Transport available to nearText via a closure.
+func nearTextFunc(t internal.Transport, rd api.RequestDefaults) NearTextFunc {
+	return func(ctx context.Context, nv NearText) (*Result, error) {
+		return nearText(ctx, t, rd, nv)
 	}
 }
 
-func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefaults, nv NearVector) (*Result, error) {
+func nearText(ctx context.Context, t internal.Transport, rd api.RequestDefaults, nt NearText) (*Result, error) {
 	req := &api.SearchRequest{
 		RequestDefaults:  rd,
-		Limit:            nv.Limit,
-		AutoLimit:        nv.AutoLimit,
-		Offset:           nv.Offset,
-		After:            nv.After,
-		ReturnVectors:    nv.ReturnVectors,
-		ReturnMetadata:   api.ReturnMetadata(nv.ReturnMetadata),
-		ReturnProperties: marshalReturnProperties(nv.ReturnProperties, nv.ReturnNestedProperties),
-		ReturnReferences: marshalReturnReferences(nv.ReturnReferences),
-		NearVector:       nv.Search(),
+		Limit:            nt.Limit,
+		AutoLimit:        nt.AutoLimit,
+		Offset:           nt.Offset,
+		After:            nt.After,
+		ReturnVectors:    nt.ReturnVectors,
+		ReturnMetadata:   api.ReturnMetadata(nt.ReturnMetadata),
+		ReturnProperties: marshalReturnProperties(nt.ReturnProperties, nt.ReturnNestedProperties),
+		ReturnReferences: marshalReturnReferences(nt.ReturnReferences),
 	}
 
-	if nv.groupBy != nil {
+	if nt.Target != nil {
+		req.NearText = &api.NearText{
+			Concepts:  nt.Concepts,
+			Target:    marshalSearchTarget(nt.Target),
+			Distance:  nt.Similarity.Distance(),
+			Certainty: nt.Similarity.Certainty(),
+			MoveTo:    (*api.Move)(nt.MoveTo),
+			MoveAway:  (*api.Move)(nt.MoveAway),
+		}
+	}
+
+	if nt.groupBy != nil {
 		req.GroupBy = &api.GroupBy{
-			Property:       nv.groupBy.Property,
-			Limit:          nv.groupBy.ObjectLimit,
-			NumberOfGroups: nv.groupBy.NumberOfGroups,
+			Property:       nt.groupBy.Property,
+			Limit:          nt.groupBy.ObjectLimit,
+			NumberOfGroups: nt.groupBy.NumberOfGroups,
 		}
 	}
 
@@ -82,10 +96,10 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 		return nil, fmt.Errorf("near vector: %w", err)
 	}
 
-	// nearVector was called from the NearVectorFunc.GroupBy() method.
+	// nearText was called from the NearTextFunc.GroupBy() method.
 	// This means we should put GroupByResult in the context, as the first
 	// return value will be discarded.
-	if nv.groupBy != nil {
+	if nt.groupBy != nil {
 		groups := make(map[string]Group[map[string]any], len(resp.GroupByResults))
 		objects := make([]GroupObject[map[string]any], 0)
 		for _, group := range resp.GroupByResults {
@@ -124,41 +138,11 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 }
 
 // GroupBy runs near vector search with a GroupBy clause.
-func (nvf NearVectorFunc) GroupBy(ctx context.Context, nv NearVector, groupBy GroupBy) (*GroupByResult, error) {
+func (nvf NearTextFunc) GroupBy(ctx context.Context, nv NearText, groupBy GroupBy) (*GroupByResult, error) {
 	nv.groupBy = &groupBy
 	ctx = contextWithGroupByResult(ctx) // safe to reassign since we hold the copy of the original context.
 	if _, err := nvf(ctx, nv); err != nil {
 		return nil, err
 	}
 	return getGroupByResult(ctx), nil
-}
-
-// Similarity is a cutoff point for query results.
-type Similarity struct{ distance, certainty *float64 }
-
-func (s *Similarity) Distance() *float64 {
-	if s == nil {
-		return nil
-	}
-	return s.distance
-}
-
-func (s *Similarity) Certainty() *float64 {
-	if s == nil {
-		return nil
-	}
-	return s.certainty
-}
-
-func (nv NearVector) Search() *api.NearVector {
-	dev.AssertNotNil(nv, "nv")
-
-	if nv.Target == nil {
-		return nil
-	}
-	return &api.NearVector{
-		Target:    marshalSearchTarget(nv.Target),
-		Distance:  nv.Similarity.Distance(),
-		Certainty: nv.Similarity.Certainty(),
-	}
 }

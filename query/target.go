@@ -46,6 +46,9 @@ func (name VectorName) Vectors() []api.TargetVector {
 // - Min
 // - ManualWeights
 // - RelativeScore
+//
+// Use [types.Vector] to pass in a vector target.
+// Use [VectorName] to specify a target vector index.
 type MultiVectorTarget struct {
 	combinationMethod api.CombinationMethod
 	targets           []api.TargetVector

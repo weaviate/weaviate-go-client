@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
@@ -16,6 +17,7 @@ func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
 		transport:  t,
 		defaults:   rd,
 		NearVector: nearVectorFunc(t, rd),
+		NearText:   nearTextFunc(t, rd),
 	}
 }
 
@@ -24,6 +26,7 @@ type Client struct {
 	defaults  api.RequestDefaults
 
 	NearVector NearVectorFunc
+	NearText   NearTextFunc
 }
 
 type (
@@ -62,6 +65,7 @@ type VectorTarget interface {
 }
 
 type Result struct {
+	Took    time.Duration
 	Objects []Object[map[string]any]
 }
 
@@ -78,6 +82,7 @@ type Metadata struct {
 }
 
 type GroupByResult struct {
+	Took    time.Duration
 	Objects []GroupObject[map[string]any]
 	Groups  map[string]Group[map[string]any]
 }
