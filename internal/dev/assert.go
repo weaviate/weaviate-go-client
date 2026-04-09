@@ -58,6 +58,14 @@ func AssertNotNil(v any, name string) {
 	Assert(!isNil(v), "%s %T is nil", name, v)
 }
 
+// Unreachable panics with message "unreachable" if reached.
+// This is a good way to document the area of the code that
+// is never meant to be executed, e.g. the "default" branch
+// of a switch statement.
+func Unreachable() {
+	panic("unreachable")
+}
+
 // isNil checks if v is nil using [reflect] for typed nil values.
 func isNil(v any) bool {
 	if v == nil {

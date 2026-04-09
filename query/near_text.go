@@ -31,6 +31,8 @@ type NearText struct {
 	// Bias the results towards or away from concepts and/or vectors.
 	MoveTo, MoveAway *Move
 
+	MMR *MMR
+
 	// Target vector or a combination of multiple vector targets.
 	// By default, the resulting vectors are compared against the "default"
 	// vector, or the _only_ vector, if the collection only has a single vector index.
@@ -47,7 +49,11 @@ type NearText struct {
 	groupBy *GroupBy
 }
 
-type Move api.Move
+type (
+	// Move adjusts the bias of the query results.
+	Move api.Move
+	MMR  api.SelectionMMR
+)
 
 // NearTextFunc runs plain near text search.
 type NearTextFunc func(context.Context, NearText) (*Result, error)
@@ -72,15 +78,21 @@ func nearText(ctx context.Context, t internal.Transport, rd api.RequestDefaults,
 		ReturnReferences: marshalReturnReferences(nt.ReturnReferences),
 	}
 
+	req.NearText = &api.NearText{
+		Concepts:  nt.Concepts,
+		Distance:  nt.Similarity.Distance(),
+		Certainty: nt.Similarity.Certainty(),
+		MoveTo:    (*api.Move)(nt.MoveTo),
+		MoveAway:  (*api.Move)(nt.MoveAway),
+	}
+
 	if nt.Target != nil {
-		req.NearText = &api.NearText{
-			Concepts:  nt.Concepts,
-			Target:    marshalSearchTarget(nt.Target),
-			Distance:  nt.Similarity.Distance(),
-			Certainty: nt.Similarity.Certainty(),
-			MoveTo:    (*api.Move)(nt.MoveTo),
-			MoveAway:  (*api.Move)(nt.MoveAway),
-		}
+		req.NearText.Target = marshalSearchTarget(nt.Target)
+	}
+
+	switch {
+	case nt.MMR != nil:
+		req.NearText.Selection = (*api.SelectionMMR)(nt.MMR)
 	}
 
 	if nt.groupBy != nil {

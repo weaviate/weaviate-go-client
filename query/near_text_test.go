@@ -41,6 +41,10 @@ func TestNearText(t *testing.T) {
 					Force:    .46,
 					Concepts: []string{"train"},
 				},
+				MMR: &query.MMR{
+					Limit:   1,
+					Balance: .2,
+				},
 			},
 			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
 				{
@@ -60,6 +64,10 @@ func TestNearText(t *testing.T) {
 							MoveAway: &api.Move{
 								Force:    .46,
 								Concepts: []string{"train"},
+							},
+							Selection: &api.SelectionMMR{
+								Limit:   1,
+								Balance: .2,
 							},
 						},
 					},

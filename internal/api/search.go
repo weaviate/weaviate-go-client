@@ -87,12 +87,20 @@ type (
 		Certainty        *float64
 		Distance         *float64
 		MoveTo, MoveAway *Move
-		// TODO(dyma): add MMR selection
+
+		Selection any
 	}
 	Move struct {
 		Force    float32
 		Objects  []uuid.UUID
 		Concepts []string
+	}
+	Selection struct {
+		MMR *SelectionMMR
+	}
+	SelectionMMR struct {
+		Limit   int32
+		Balance float32
 	}
 )
 
@@ -364,6 +372,24 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 					})
 			}
 		}
+	}
+
+	if req.Selection != nil {
+		var sel proto.Selection
+		switch s := req.Selection.(type) {
+		case *SelectionMMR:
+			sel.Selection = &proto.Selection_Mmr{
+				Mmr: &proto.Selection_MMR{
+					Limit:   nilPresent(uint32(s.Limit), s.Limit > 0),
+					Balance: nilPresent(s.Balance, s.Balance > 0),
+				},
+			}
+		default:
+			dev.Unreachable()
+		}
+
+		dev.AssertNotNil(sel.Selection, "sel.Selection")
+		nt.Selection = &sel
 	}
 
 	return nt, nil

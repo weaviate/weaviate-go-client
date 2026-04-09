@@ -575,6 +575,9 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 						Force:   0.22,
 						Objects: []uuid.UUID{uuid.Nil, uuid.Max},
 					},
+					Selection: &api.SelectionMMR{
+						Limit: int32(3),
+					},
 				},
 			},
 			want: &proto.SearchRequest{
@@ -588,6 +591,13 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 					MoveAway: &proto.NearTextSearch_Move{
 						Force: 0.22,
 						Uuids: []string{uuid.Nil.String(), uuid.Max.String()},
+					},
+					Selection: &proto.Selection{
+						Selection: &proto.Selection_Mmr{
+							Mmr: &proto.Selection_MMR{
+								Limit: testkit.Ptr[uint32](3),
+							},
+						},
 					},
 				},
 				Metadata: &proto.MetadataRequest{Uuid: true},
