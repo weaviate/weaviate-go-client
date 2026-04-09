@@ -146,12 +146,12 @@ func marshalSearchTarget(target VectorTarget) api.SearchTarget {
 }
 
 func unmarshalObject(o *api.Object) Object[map[string]any] {
-	vectors := make(types.Vectors, len(o.Metadata.Vectors))
+	vectors := internal.MakeMap[string, types.Vector](len(o.Metadata.Vectors))
 	for k, v := range o.Metadata.Vectors {
 		vectors[k] = types.Vector(v)
 	}
 
-	references := make(map[string][]types.Object[map[string]any], len(o.References))
+	references := internal.MakeMap[string, []types.Object[map[string]any]](len(o.References))
 	for k, refs := range o.References {
 		objects := make([]types.Object[map[string]any], len(refs))
 		for i, ref := range refs {

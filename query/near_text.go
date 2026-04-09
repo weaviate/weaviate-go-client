@@ -119,7 +119,7 @@ func nearText(ctx context.Context, t internal.Transport, rd api.RequestDefaults,
 	// This means we should put GroupByResult in the context, as the first
 	// return value will be discarded.
 	if nt.groupBy != nil {
-		groups := make(map[string]Group[map[string]any], len(resp.GroupByResults))
+		groups := internal.MakeMap[string, Group[map[string]any]](len(resp.GroupByResults))
 		objects := make([]GroupObject[map[string]any], 0)
 		for _, group := range resp.GroupByResults {
 

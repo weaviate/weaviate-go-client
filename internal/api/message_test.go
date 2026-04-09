@@ -945,7 +945,7 @@ func testMessageUnmarshaler[Out transport.ReplyMessage](t *testing.T, tests []Me
 
 			err := tt.dest.UnmarshalMessage(tt.reply)
 			tt.err.Require(t, err, "unmarshal")
-			require.EqualExportedValues(t, tt.want, tt.dest)
+			require.EqualExportedValues(t, tt.want, tt.dest, "bad response")
 		})
 	}
 }
@@ -1009,8 +1009,6 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 								},
 							},
 						},
-						Properties: make(map[string]any),
-						References: make(map[string][]api.Object),
 					},
 				},
 				GroupByResults: make([]api.Group, 0),
@@ -1039,8 +1037,6 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 								},
 							},
 						},
-						Properties: make(map[string]any),
-						References: make(map[string][]api.Object),
 					},
 				},
 				GroupByResults: make([]api.Group, 0),
@@ -1122,7 +1118,6 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 							},
 							"kpop_version": nil,
 						},
-						References: make(map[string][]api.Object),
 					},
 				},
 				GroupByResults: make([]api.Group, 0),
@@ -1186,7 +1181,6 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 			want: &api.SearchResponse{
 				Results: []api.Object{
 					{
-						Properties: make(map[string]any),
 						References: map[string][]api.Object{
 							"hasAwards": {
 								{
@@ -1194,22 +1188,17 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 									Properties: map[string]any{
 										"category": "metal",
 									},
-									References: make(map[string][]api.Object),
 								},
 								{
 									Collection: "TonyAward",
 									Metadata: api.ObjectMetadata{
-										UUID:    testkit.UUID,
-										Vectors: make(api.Vectors),
+										UUID: testkit.UUID,
 									},
-									Properties: make(map[string]any),
-									References: make(map[string][]api.Object),
 								},
 							},
 							"writtenBy": {
 								{
 									Collection: "Artists",
-									Properties: make(map[string]any),
 									References: map[string][]api.Object{
 										"belongsToBand": {
 											{
@@ -1217,7 +1206,6 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 												Properties: map[string]any{
 													"name": "Megadeth",
 												},
-												References: make(map[string][]api.Object),
 											},
 										},
 									},
@@ -1351,8 +1339,6 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 											},
 										},
 									},
-									Properties: make(map[string]any),
-									References: make(map[string][]api.Object),
 								},
 							},
 							{
@@ -1372,7 +1358,6 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 										},
 										"kpop_version": nil,
 									},
-									References: make(map[string][]api.Object),
 								},
 							},
 						},
@@ -1386,7 +1371,6 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 							{
 								BelongsToGroup: "references",
 								Object: api.Object{
-									Properties: make(map[string]any),
 									References: map[string][]api.Object{
 										"hasAwards": {
 											{
@@ -1394,16 +1378,12 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 												Properties: map[string]any{
 													"category": "metal",
 												},
-												References: make(map[string][]api.Object),
 											},
 											{
 												Collection: "TonyAward",
 												Metadata: api.ObjectMetadata{
-													UUID:    testkit.UUID,
-													Vectors: make(api.Vectors),
+													UUID: testkit.UUID,
 												},
-												Properties: make(map[string]any),
-												References: make(map[string][]api.Object),
 											},
 										},
 									},

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/weaviate/weaviate-go-client/v6/internal"
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
@@ -500,9 +501,8 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) (*Obj
 	if err != nil {
 		return nil, err
 	}
-	dev.AssertNotNil(properties, "properties")
 
-	references := make(map[string][]Object, len(pr.GetRefProps()))
+	references := internal.MakeMap[string, []Object](len(pr.GetRefProps()))
 	for _, ref := range pr.GetRefProps() {
 		if ref == nil {
 			continue
@@ -537,7 +537,6 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) (*Obj
 		if err != nil {
 			return nil, err
 		}
-		dev.AssertNotNil(vectors, "vectors")
 
 		metadata = ObjectMetadata{
 			UUID:          id,
@@ -562,6 +561,9 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) (*Obj
 // unmarshalProperties unmarshals map[string]proto.Value into map[string]any.
 // ps can be nil, in which case an empty map is returned.
 func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
+	if len(ps.GetFields()) == 0 {
+		return nil, nil
+	}
 	out := make(map[string]any, len(ps.GetFields()))
 	for name, f := range ps.GetFields() {
 		var v any
@@ -607,6 +609,9 @@ func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
 }
 
 func unmarshalVectors(mr *proto.MetadataResult) (Vectors, error) {
+	if len(mr.GetVectors()) == 0 && mr.GetVectorBytes() == nil {
+		return nil, nil
+	}
 	out := make(Vectors, len(mr.GetVectors()))
 	for _, vector := range mr.GetVectors() {
 		v := Vector{Name: vector.Name}

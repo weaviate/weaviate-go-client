@@ -12,16 +12,6 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
-// As a general rule, client never returns nil maps, as they can
-// cause a nil pointer dereference if not handled correctly.
-// Tests that don't expect a field to be present in the response
-// should use of the variables below to make the intent explicit.
-var (
-	noReferences = make(map[string][]types.Object[map[string]any])
-	noProperties = make(map[string]any)
-	noVectors    = make(types.Vectors)
-)
-
 var (
 	singleVector = []float32{1, 2, 3}
 	multiVector  = [][]float32{{1, 2, 3}, {4, 5, 6}}
@@ -190,12 +180,9 @@ func TestNearVector(t *testing.T) {
 											Properties: map[string]any{
 												"categories": []string{"thrash_metal", "heavy_metal"},
 											},
-											References: make(map[string][]api.Object),
 										},
 										{
 											Collection: "TonyAward",
-											Properties: noProperties,
-											References: make(map[string][]api.Object),
 											Metadata: api.ObjectMetadata{
 												UUID: testkit.UUID,
 												Vectors: api.Vectors{
@@ -240,8 +227,6 @@ func TestNearVector(t *testing.T) {
 										Properties: map[string]any{
 											"categories": []string{"thrash_metal", "heavy_metal"},
 										},
-										Vectors:    noVectors,
-										References: noReferences,
 									},
 									{
 										Collection: "TonyAward",
@@ -252,8 +237,6 @@ func TestNearVector(t *testing.T) {
 												Single: []float32{4, 5, 6},
 											},
 										},
-										Properties: noProperties,
-										References: noReferences,
 									},
 								},
 							},
@@ -290,7 +273,7 @@ func TestNearVector(t *testing.T) {
 
 			got, err := c.NearVector(t.Context(), tt.nv)
 			tt.err.Require(t, err, "near vector query")
-			require.Equal(t, tt.want, got, "query result")
+			require.EqualExportedValues(t, tt.want, got, "query result")
 		})
 	}
 
@@ -391,8 +374,6 @@ func TestNearVector(t *testing.T) {
 									Properties: map[string]any{
 										"title": "High Speed Dirt",
 									},
-									References: noReferences,
-									Vectors:    noVectors,
 								},
 							},
 						},
@@ -403,8 +384,6 @@ func TestNearVector(t *testing.T) {
 									Properties: map[string]any{
 										"title": "Architechture Of Aggression",
 									},
-									References: noReferences,
-									Vectors:    noVectors,
 								},
 							},
 						},
@@ -415,8 +394,6 @@ func TestNearVector(t *testing.T) {
 									Properties: map[string]any{
 										"title": "New World Order",
 									},
-									References: noReferences,
-									Vectors:    noVectors,
 								},
 							},
 						},
@@ -435,8 +412,6 @@ func TestNearVector(t *testing.T) {
 											Properties: map[string]any{
 												"title": "High Speed Dirt",
 											},
-											References: noReferences,
-											Vectors:    noVectors,
 										},
 									},
 								},
@@ -447,8 +422,6 @@ func TestNearVector(t *testing.T) {
 											Properties: map[string]any{
 												"title": "Architechture Of Aggression",
 											},
-											References: noReferences,
-											Vectors:    noVectors,
 										},
 									},
 								},
@@ -467,8 +440,6 @@ func TestNearVector(t *testing.T) {
 											Properties: map[string]any{
 												"title": "New World Order",
 											},
-											References: noReferences,
-											Vectors:    noVectors,
 										},
 									},
 								},
@@ -493,7 +464,7 @@ func TestNearVector(t *testing.T) {
 
 				got, err := c.NearVector.GroupBy(t.Context(), tt.nv, tt.groupBy)
 				tt.err.Require(t, err, "near vector query")
-				require.Equal(t, tt.want, got, "query result")
+				require.EqualExportedValues(t, tt.want, got, "query result")
 			})
 		}
 	})
