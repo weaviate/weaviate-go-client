@@ -562,6 +562,132 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "near text implicit target",
+			req: &api.SearchRequest{
+				NearText: &api.NearText{
+					Concepts: []string{"apples", "oranges"},
+					Distance: testkit.Ptr(.92),
+					MoveTo: &api.Move{
+						Force:    0.58,
+						Concepts: []string{"computers"},
+					},
+					MoveAway: &api.Move{
+						Force:   0.22,
+						Objects: []uuid.UUID{uuid.Nil, uuid.Max},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				NearText: &proto.NearTextSearch{
+					Query:    []string{"apples", "oranges"},
+					Distance: testkit.Ptr(.92),
+					MoveTo: &proto.NearTextSearch_Move{
+						Force:    0.58,
+						Concepts: []string{"computers"},
+					},
+					MoveAway: &proto.NearTextSearch_Move{
+						Force: 0.22,
+						Uuids: []string{uuid.Nil.String(), uuid.Max.String()},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "near text explicit target",
+			req: &api.SearchRequest{
+				NearText: &api.NearText{
+					Concepts: []string{"apples", "oranges"},
+					Target: api.SearchTarget{
+						Vectors: []api.TargetVector{
+							{Vector: api.Vector{Name: "title_vec"}},
+						},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				NearText: &proto.NearTextSearch{
+					Query: []string{"apples", "oranges"},
+					Targets: &proto.Targets{
+						TargetVectors: []string{"title_vec"},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "near text multi target sum",
+			req: &api.SearchRequest{
+				NearText: &api.NearText{
+					Concepts: []string{"apples", "oranges"},
+					Target: api.SearchTarget{
+						Vectors: []api.TargetVector{
+							{Vector: api.Vector{Name: "title_vec"}},
+							{Vector: api.Vector{Name: "lyrics_vec"}},
+						},
+						CombinationMethod: api.CombinationMethodSum,
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				NearText: &proto.NearTextSearch{
+					Query: []string{"apples", "oranges"},
+					Targets: &proto.Targets{
+						TargetVectors: []string{"title_vec", "lyrics_vec"},
+						Combination:   proto.CombinationMethod_COMBINATION_METHOD_TYPE_SUM,
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "near text multi target relative score",
+			req: &api.SearchRequest{
+				NearText: &api.NearText{
+					Concepts: []string{"apples", "oranges"},
+					Target: api.SearchTarget{
+						Vectors: []api.TargetVector{
+							{
+								Vector: api.Vector{Name: "title_vec"},
+								Weight: testkit.Ptr[float32](.11),
+							},
+							{
+								Vector: api.Vector{Name: "lyrics_vec"},
+								Weight: testkit.Ptr[float32](.22),
+							},
+						},
+						CombinationMethod: api.CombinationMethodRelativeScore,
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				NearText: &proto.NearTextSearch{
+					Query: []string{"apples", "oranges"},
+					Targets: &proto.Targets{
+						TargetVectors: []string{"title_vec", "lyrics_vec"},
+						Combination:   proto.CombinationMethod_COMBINATION_METHOD_TYPE_RELATIVE_SCORE,
+						WeightsForTargets: []*proto.WeightsForTarget{
+							{Target: "title_vec", Weight: .11},
+							{Target: "lyrics_vec", Weight: .22},
+						},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
 			name: "group by",
 			req: &api.SearchRequest{
 				GroupBy: &api.GroupBy{
