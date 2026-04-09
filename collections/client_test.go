@@ -66,6 +66,23 @@ func TestClient_Use(t *testing.T) {
 	})
 }
 
+func TestHandle_Count(t *testing.T) {
+	transport := testkit.NewTransport(t, []testkit.Stub[api.CountObjectsRequest, api.CountObjectsResponse]{{
+		Request:  &api.CountObjectsRequest{CollectionName: "Songs", Tenant: "john_doe"},
+		Response: api.CountObjectsResponse(92),
+	}})
+
+	c := collections.NewClient(transport)
+	require.NotNil(t, c, "nil client")
+
+	h := c.Use("Songs", collections.WithTenant("john_doe"))
+	require.NotNil(t, h, "nil handle")
+
+	count, err := h.Count(t.Context())
+	require.NoError(t, err)
+	require.EqualValues(t, 92, count, "wrong count")
+}
+
 func TestClient_Create(t *testing.T) {
 	for _, tt := range []struct {
 		name       string
