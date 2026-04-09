@@ -93,14 +93,13 @@ func nearText(ctx context.Context, t internal.Transport, rd api.RequestDefaults,
 		Certainty: nt.Similarity.Certainty(),
 		MoveTo:    (*api.Move)(nt.MoveTo),
 		MoveAway:  (*api.Move)(nt.MoveAway),
+		Selection: api.Selection{
+			MMR: (*api.SelectionMMR)(nt.Selection.MMR()),
+		},
 	}
 
 	if nt.Target != nil {
 		req.NearText.Target = marshalSearchTarget(nt.Target)
-	}
-
-	req.NearText.Selection = api.Selection{
-		MMR: (*api.SelectionMMR)(nt.Selection.MMR()),
 	}
 
 	if nt.groupBy != nil {
