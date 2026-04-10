@@ -169,7 +169,7 @@ func query(ctx context.Context, t internal.Transport, r request, f func(*api.Sea
 				Objects:     objects[from:to],
 			}
 		}
-		setGroupByResult(ctx, &GroupByResult{
+		internal.SetContextValue(ctx, groupByResultKey, &GroupByResult{
 			Took:    resp.Took,
 			Groups:  groups,
 			Objects: objects,
@@ -267,18 +267,10 @@ func unmarshalObject(o *api.Object) Object[map[string]any] {
 // groupByResultKey is used to pass grouped query results to the GroupBy caller.
 var groupByResultKey = internal.ContextKey{}
 
-// contextWithGorupByResult creates a placeholder for *GroupByResult in the ctx.Values store.
-func contextWithGroupByResult(ctx context.Context) context.Context {
-	return internal.ContextWithPlaceholder[GroupByResult](ctx, groupByResultKey)
-}
-
-// getGroupByResult extracts *GroupByResult from the context.
-func getGroupByResult(ctx context.Context) *GroupByResult {
-	return internal.ValueFromContext[GroupByResult](ctx, groupByResultKey)
-}
-
-// setGroupByResult replaces *GroupByResult placeholder
-// in the context with the value at r.
-func setGroupByResult(ctx context.Context, r *GroupByResult) {
-	internal.SetContextValue(ctx, groupByResultKey, r)
+func queryGroupBy[In any](ctx context.Context, f func(context.Context, In) (*Result, error), in In) (*GroupByResult, error) {
+	ctx = internal.ContextWithPlaceholder[GroupByResult](ctx, groupByResultKey)
+	if _, err := f(ctx, in); err != nil {
+		return nil, err
+	}
+	return internal.ValueFromContext[GroupByResult](ctx, groupByResultKey), nil
 }

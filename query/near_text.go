@@ -98,12 +98,8 @@ func nearTextFunc(t internal.Transport, rd api.RequestDefaults) NearTextFunc {
 	}
 }
 
-// GroupBy runs near vector search with a GroupBy clause.
-func (ntf NearTextFunc) GroupBy(ctx context.Context, nv NearText, groupBy GroupBy) (*GroupByResult, error) {
-	nv.groupBy = &groupBy
-	ctx = contextWithGroupByResult(ctx) // safe to reassign since we hold the copy of the original context.
-	if _, err := ntf(ctx, nv); err != nil {
-		return nil, err
-	}
-	return getGroupByResult(ctx), nil
+// GroupBy runs near text search with a GroupBy clause.
+func (ntf NearTextFunc) GroupBy(ctx context.Context, nt NearText, groupBy GroupBy) (*GroupByResult, error) {
+	nt.groupBy = &groupBy
+	return queryGroupBy(ctx, ntf, nt)
 }
