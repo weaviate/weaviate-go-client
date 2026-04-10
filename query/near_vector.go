@@ -61,15 +61,23 @@ func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc
 			ReturnNestedProperties: nv.ReturnNestedProperties,
 			ReturnReferences:       nv.ReturnReferences,
 			GroupBy:                nv.groupBy,
-		}, func(req *api.SearchRequest) {
-			if nv.Target != nil {
-				req.NearVector = &api.NearVector{
-					Target:    marshalSearchTarget(nv.Target),
-					Distance:  nv.Similarity.Distance(),
-					Certainty: nv.Similarity.Certainty(),
-				}
-			}
-		})
+		}, func(req *api.SearchRequest) { req.NearVector = nearVector(&nv) })
+	}
+}
+
+// nearVector convers [NearVector] to [api.NearVector].
+func nearVector(nv *NearVector) *api.NearVector {
+	if nv == nil {
+		return nil
+	}
+
+	if nv.Target == nil {
+		return nil
+	}
+	return &api.NearVector{
+		Target:    marshalSearchTarget(nv.Target),
+		Distance:  nv.Similarity.Distance(),
+		Certainty: nv.Similarity.Certainty(),
 	}
 }
 

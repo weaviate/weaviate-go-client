@@ -80,22 +80,31 @@ func nearTextFunc(t internal.Transport, rd api.RequestDefaults) NearTextFunc {
 			ReturnNestedProperties: nt.ReturnNestedProperties,
 			ReturnReferences:       nt.ReturnReferences,
 			GroupBy:                nt.groupBy,
-		}, func(req *api.SearchRequest) {
-			req.NearText = &api.NearText{
-				Concepts:  nt.Concepts,
-				Distance:  nt.Similarity.Distance(),
-				Certainty: nt.Similarity.Certainty(),
-				MoveTo:    (*api.Move)(nt.MoveTo),
-				MoveAway:  (*api.Move)(nt.MoveAway),
-				Selection: api.Selection{
-					MMR: (*api.SelectionMMR)(nt.Selection.MMR()),
-				},
-			}
-			if nt.Target != nil {
-				req.NearText.Target = marshalSearchTarget(nt.Target)
-			}
-		})
+		}, func(req *api.SearchRequest) { req.NearText = nearText(&nt) })
 	}
+}
+
+// nearText converts [NearText] to [api.NearText]
+func nearText(nt *NearText) *api.NearText {
+	if nt == nil {
+		return nil
+	}
+	out := &api.NearText{
+		Concepts:  nt.Concepts,
+		Distance:  nt.Similarity.Distance(),
+		Certainty: nt.Similarity.Certainty(),
+		MoveTo:    (*api.Move)(nt.MoveTo),
+		MoveAway:  (*api.Move)(nt.MoveAway),
+	}
+
+	if nt.Target != nil {
+		out.Target = marshalSearchTarget(nt.Target)
+	}
+
+	out.Selection = api.Selection{
+		MMR: (*api.SelectionMMR)(nt.Selection.MMR()),
+	}
+	return out
 }
 
 // GroupBy runs near text search with a GroupBy clause.

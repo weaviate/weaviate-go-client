@@ -20,8 +20,9 @@ func TestVectorTarget(t *testing.T) {
 	}
 
 	var (
-		singleVector = []float32{1, 2, 3}
-		multiVector  = [][]float32{{1, 2, 3}, {1, 2, 3}}
+		singleVector     = []float32{1, 2, 3}
+		multiVector      = [][]float32{{1, 2, 3}, {1, 2, 3}}
+		combinationUnset = *new(api.CombinationMethod)
 	)
 
 	for _, tt := range []struct {
@@ -196,7 +197,7 @@ func TestVectorTarget(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.want.CombinationMethod != "" && assert.Implements(t, (*combinationMethoder)(nil), tt.target) {
+			if tt.want.CombinationMethod != combinationUnset && assert.Implements(t, (*combinationMethoder)(nil), tt.target) {
 				cm := tt.target.(combinationMethoder)
 				assert.Equal(t, tt.want.CombinationMethod, cm.CombinationMethod())
 			}

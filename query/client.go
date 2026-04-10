@@ -21,6 +21,7 @@ func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
 		defaults:   rd,
 		NearVector: nearVectorFunc(t, rd),
 		NearText:   nearTextFunc(t, rd),
+		Hybrid:     hybridFunc(t, rd),
 	}
 }
 
@@ -30,6 +31,7 @@ type Client struct {
 
 	NearVector NearVectorFunc
 	NearText   NearTextFunc
+	Hybrid     HybridFunc
 }
 
 type (

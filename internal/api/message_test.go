@@ -842,9 +842,11 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 						MinimumTokensMatch: testkit.Ptr[int32](1),
 					},
 					NearText: &api.NearText{
-						Concepts:  []string{"apples", "oranges"},
-						Distance:  testkit.Ptr(1.23),
-						Selection: &api.SelectionMMR{Limit: int32(3)},
+						Concepts: []string{"apples", "oranges"},
+						Distance: testkit.Ptr(1.23),
+						Selection: api.Selection{
+							MMR: &api.SelectionMMR{Limit: int32(3)},
+						},
 						Target: api.SearchTarget{
 							Vectors: []api.TargetVector{
 								{Vector: api.Vector{Name: "title_vec"}},
