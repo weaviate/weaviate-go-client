@@ -3,6 +3,7 @@ package aggregate_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/aggregate"
@@ -84,7 +85,7 @@ func TestClient_OverAll(t *testing.T) {
 						},
 					},
 					Response: api.AggregateResponse{
-						TookSeconds: 92,
+						Took: 92,
 						Results: api.Aggregations{
 							TotalCount: testkit.Ptr[int64](2),
 							Text: []api.AggregateTextResult{
@@ -109,7 +110,7 @@ func TestClient_OverAll(t *testing.T) {
 				},
 			},
 			want: &aggregate.Result{
-				TookSeconds: 92,
+				Took: 92,
 				Aggregations: result(aggregate.Aggregations{
 					TotalCount: testkit.Ptr[int64](2),
 					Text: map[string]aggregate.TextResult{
@@ -150,7 +151,7 @@ func TestClient_OverAll(t *testing.T) {
 						},
 					},
 					Response: api.AggregateResponse{
-						TookSeconds: 92,
+						Took: 92,
 						Results: api.Aggregations{
 							TotalCount: testkit.Ptr[int64](2),
 							Integer: []api.AggregateIntegerResult{
@@ -172,7 +173,7 @@ func TestClient_OverAll(t *testing.T) {
 				},
 			},
 			want: &aggregate.Result{
-				TookSeconds: 92,
+				Took: 92,
 				Aggregations: result(aggregate.Aggregations{
 					TotalCount: testkit.Ptr[int64](2),
 					Integer: map[string]aggregate.IntegerResult{
@@ -210,7 +211,7 @@ func TestClient_OverAll(t *testing.T) {
 						},
 					},
 					Response: api.AggregateResponse{
-						TookSeconds: 92,
+						Took: 92,
 						Results: api.Aggregations{
 							TotalCount: testkit.Ptr[int64](2),
 							Number: []api.AggregateNumberResult{
@@ -232,7 +233,7 @@ func TestClient_OverAll(t *testing.T) {
 				},
 			},
 			want: &aggregate.Result{
-				TookSeconds: 92,
+				Took: 92,
 				Aggregations: result(aggregate.Aggregations{
 					TotalCount: testkit.Ptr[int64](2),
 					Number: map[string]aggregate.NumberResult{
@@ -270,7 +271,7 @@ func TestClient_OverAll(t *testing.T) {
 						},
 					},
 					Response: api.AggregateResponse{
-						TookSeconds: 92,
+						Took: 92,
 						Results: api.Aggregations{
 							TotalCount: testkit.Ptr[int64](2),
 							Boolean: []api.AggregateBooleanResult{
@@ -292,7 +293,7 @@ func TestClient_OverAll(t *testing.T) {
 				},
 			},
 			want: &aggregate.Result{
-				TookSeconds: 92,
+				Took: 92,
 				Aggregations: result(aggregate.Aggregations{
 					TotalCount: testkit.Ptr[int64](2),
 					Boolean: map[string]aggregate.BooleanResult{
@@ -330,7 +331,7 @@ func TestClient_OverAll(t *testing.T) {
 						},
 					},
 					Response: api.AggregateResponse{
-						TookSeconds: 92,
+						Took: 92,
 						Results: api.Aggregations{
 							TotalCount: testkit.Ptr[int64](2),
 							Date: []api.AggregateDateResult{
@@ -351,7 +352,7 @@ func TestClient_OverAll(t *testing.T) {
 				},
 			},
 			want: &aggregate.Result{
-				TookSeconds: 92,
+				Took: 92,
 				Aggregations: result(aggregate.Aggregations{
 					TotalCount: testkit.Ptr[int64](2),
 					Date: map[string]aggregate.DateResult{
@@ -430,7 +431,7 @@ func TestClient_OverAll(t *testing.T) {
 							},
 						},
 						Response: api.AggregateResponse{
-							TookSeconds: 92,
+							Took: 92 * time.Second,
 							GroupByResults: []api.AggregateGroup{
 								{
 									Property: "album",
@@ -483,6 +484,7 @@ func TestClient_OverAll(t *testing.T) {
 					},
 				},
 				want: &aggregate.GroupByResult{
+					Took: 92 * time.Second,
 					Groups: []aggregate.Group{
 						{
 							Property: "album",

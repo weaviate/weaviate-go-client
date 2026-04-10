@@ -190,7 +190,7 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 }
 
 type AggregateResponse struct {
-	TookSeconds    float32
+	Took           time.Duration
 	Results        Aggregations
 	GroupByResults []AggregateGroup
 }
@@ -326,9 +326,8 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 
 	dev.AssertNotNil(results, "results")
 
-	// TODO(dyma): replace took seconds with took time.Duration
 	*r = AggregateResponse{
-		TookSeconds:    reply.GetTook(),
+		Took:           time.Duration(reply.GetTook()) * time.Second,
 		Results:        results,
 		GroupByResults: groups,
 	}

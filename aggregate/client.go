@@ -3,6 +3,7 @@ package aggregate
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
@@ -58,11 +59,12 @@ type (
 )
 
 type Result struct {
-	TookSeconds float32
+	Took time.Duration
 	Aggregations
 }
 
 type GroupByResult struct {
+	Took   time.Duration
 	Groups []Group
 }
 
@@ -146,12 +148,15 @@ func aggregate[Query any](ctx context.Context, t internal.Transport, rd api.Requ
 				Aggregations: aggregationsFromAPI(group.Results),
 			}
 		}
-		internal.SetContextValue(ctx, groupByResultKey, &GroupByResult{Groups: groups})
+		internal.SetContextValue(ctx, groupByResultKey, &GroupByResult{
+			Took:   resp.Took,
+			Groups: groups,
+		})
 		return nil, nil
 	}
 
 	result := &Result{
-		TookSeconds:  resp.TookSeconds, // FIXME(dyma): change to Took time.Duration
+		Took:         resp.Took,
 		Aggregations: aggregationsFromAPI(resp.Results),
 	}
 	return result, nil

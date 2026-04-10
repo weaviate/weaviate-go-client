@@ -1355,7 +1355,7 @@ func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
 			},
 			dest: new(api.AggregateResponse),
 			want: &api.AggregateResponse{
-				TookSeconds: 92,
+				Took: 92 * time.Second,
 				Results: api.Aggregations{
 					TotalCount: testkit.Ptr[int64](2),
 					Text: []api.AggregateTextResult{
@@ -1401,7 +1401,7 @@ func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
 			},
 			dest: new(api.AggregateResponse),
 			want: &api.AggregateResponse{
-				TookSeconds: 92,
+				Took: 92 * time.Second,
 				Results: api.Aggregations{
 					TotalCount: testkit.Ptr[int64](2),
 					Integer: []api.AggregateIntegerResult{
@@ -1444,7 +1444,7 @@ func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
 			},
 			dest: new(api.AggregateResponse),
 			want: &api.AggregateResponse{
-				TookSeconds: 92,
+				Took: 92 * time.Second,
 				Results: api.Aggregations{
 					TotalCount: testkit.Ptr[int64](2),
 					Number: []api.AggregateNumberResult{
@@ -1487,7 +1487,7 @@ func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
 			},
 			dest: new(api.AggregateResponse),
 			want: &api.AggregateResponse{
-				TookSeconds: 92,
+				Took: 92 * time.Second,
 				Results: api.Aggregations{
 					TotalCount: testkit.Ptr[int64](2),
 					Boolean: []api.AggregateBooleanResult{
@@ -1529,7 +1529,7 @@ func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
 			},
 			dest: new(api.AggregateResponse),
 			want: &api.AggregateResponse{
-				TookSeconds: 92,
+				Took: 92 * time.Second,
 				Results: api.Aggregations{
 					TotalCount: testkit.Ptr[int64](2),
 					Date: []api.AggregateDateResult{
@@ -1597,7 +1597,7 @@ func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
 			},
 			dest: new(api.AggregateResponse),
 			want: &api.AggregateResponse{
-				TookSeconds: 92,
+				Took: 92 * time.Second,
 				GroupByResults: []api.AggregateGroup{
 					{
 						Property: "onSale",
