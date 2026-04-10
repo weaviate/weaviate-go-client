@@ -382,6 +382,9 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			want: &proto.SearchRequest{
 				NearVector: &proto.NearVector{
 					Distance: testkit.Ptr(.123),
+					Targets: &proto.Targets{
+						TargetVectors: []string{"title_vec"},
+					},
 					VectorForTargets: []*proto.VectorForTarget{
 						{
 							Name: "title_vec",
@@ -420,10 +423,17 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			want: &proto.SearchRequest{
 				NearVector: &proto.NearVector{
 					Distance: testkit.Ptr(.123),
-					Vectors: []*proto.Vectors{
+					Targets: &proto.Targets{
+						TargetVectors: []string{""},
+					},
+					VectorForTargets: []*proto.VectorForTarget{
 						{
-							VectorBytes: singleVectorBytes,
-							Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+							Vectors: []*proto.Vectors{
+								{
+									VectorBytes: singleVectorBytes,
+									Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+								},
+							},
 						},
 					},
 				},
@@ -562,6 +572,71 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "near vector multiple vectors per target",
+			req: &api.SearchRequest{
+				NearVector: &api.NearVector{
+					Target: api.SearchTarget{
+						CombinationMethod: api.CombinationMethodRelativeScore,
+						Vectors: []api.TargetVector{
+							{
+								Vector: api.Vector{
+									Name:   "title_vec",
+									Single: singleVector,
+								},
+								Weight: testkit.Ptr[float32](.4),
+							},
+							{
+								Vector: api.Vector{
+									Name:   "title_vec",
+									Single: singleVector,
+								},
+								Weight: testkit.Ptr[float32](.6),
+							},
+						},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				NearVector: &proto.NearVector{
+					Targets: &proto.Targets{
+						TargetVectors: []string{"title_vec"},
+						Combination:   proto.CombinationMethod_COMBINATION_METHOD_TYPE_RELATIVE_SCORE,
+						WeightsForTargets: []*proto.WeightsForTarget{
+							{
+								Target: "title_vec",
+								Weight: .4,
+							},
+							{
+								Target: "title_vec",
+								Weight: .6,
+							},
+						},
+					},
+					VectorForTargets: []*proto.VectorForTarget{
+						{
+							Name: "title_vec",
+							Vectors: []*proto.Vectors{
+								{
+									Name:        "title_vec",
+									VectorBytes: singleVectorBytes,
+									Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+								},
+								{
+									Name:        "title_vec",
+									VectorBytes: singleVectorBytes,
+									Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+								},
+							},
+						},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
 			name: "near text implicit target",
 			req: &api.SearchRequest{
 				NearText: &api.NearText{
@@ -688,6 +763,118 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 						WeightsForTargets: []*proto.WeightsForTarget{
 							{Target: "title_vec", Weight: .11},
 							{Target: "lyrics_vec", Weight: .22},
+						},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "hybrid with near vector",
+			req: &api.SearchRequest{
+				Hybrid: &api.Hybrid{
+					Query:           "yellow submarine",
+					QueryProperties: []string{"title", "lyrics"},
+					Alpha:           testkit.Ptr[float32](.44),
+					Fusion:          api.HybridFusionRanked,
+					KeywordSimilarity: &api.KeywordSimilarity{
+						AllTokensMatch: true,
+					},
+					NearVector: &api.NearVector{
+						Distance: testkit.Ptr(1.23),
+						Target: api.SearchTarget{
+							Vectors: []api.TargetVector{
+								{Vector: api.Vector{
+									Name:   "lyrics_vec",
+									Single: singleVector,
+								}},
+							},
+						},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				HybridSearch: &proto.Hybrid{
+					Query:      "yellow submarine",
+					Properties: []string{"title", "lyrics"},
+					AlphaParam: testkit.Ptr[float32](.44),
+					FusionType: proto.Hybrid_FUSION_TYPE_RANKED,
+					Bm25SearchOperator: &proto.SearchOperatorOptions{
+						Operator: proto.SearchOperatorOptions_OPERATOR_AND,
+					},
+					NearVector: &proto.NearVector{
+						Distance: testkit.Ptr(1.23),
+						Targets: &proto.Targets{
+							TargetVectors: []string{"lyrics_vec"},
+						},
+						VectorForTargets: []*proto.VectorForTarget{
+							{
+								Name: "lyrics_vec",
+								Vectors: []*proto.Vectors{
+									{
+										Name:        "lyrics_vec",
+										VectorBytes: singleVectorBytes,
+										Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+									},
+								},
+							},
+						},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "hybrid with near text",
+			req: &api.SearchRequest{
+				Hybrid: &api.Hybrid{
+					Query:           "yellow submarine",
+					QueryProperties: []string{"title", "lyrics"},
+					Alpha:           testkit.Ptr[float32](.44),
+					Fusion:          api.HybridFusionRanked,
+					KeywordSimilarity: &api.KeywordSimilarity{
+						MinimumTokensMatch: testkit.Ptr[int32](1),
+					},
+					NearText: &api.NearText{
+						Concepts:  []string{"apples", "oranges"},
+						Distance:  testkit.Ptr(1.23),
+						Selection: &api.SelectionMMR{Limit: int32(3)},
+						Target: api.SearchTarget{
+							Vectors: []api.TargetVector{
+								{Vector: api.Vector{Name: "title_vec"}},
+							},
+						},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				HybridSearch: &proto.Hybrid{
+					Query:      "yellow submarine",
+					Properties: []string{"title", "lyrics"},
+					AlphaParam: testkit.Ptr[float32](.44),
+					FusionType: proto.Hybrid_FUSION_TYPE_RANKED,
+					Bm25SearchOperator: &proto.SearchOperatorOptions{
+						Operator:             proto.SearchOperatorOptions_OPERATOR_OR,
+						MinimumOrTokensMatch: testkit.Ptr[int32](1),
+					},
+					NearText: &proto.NearTextSearch{
+						Query:    []string{"apples", "oranges"},
+						Distance: testkit.Ptr(1.23),
+						Targets: &proto.Targets{
+							TargetVectors: []string{"title_vec"},
+						},
+						Selection: &proto.Selection{
+							Selection: &proto.Selection_Mmr{
+								Mmr: &proto.Selection_MMR{
+									Limit: testkit.Ptr[uint32](3),
+								},
+							},
 						},
 					},
 				},
