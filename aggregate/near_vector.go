@@ -23,9 +23,5 @@ func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc
 // GroupBy runs near vector aggregation with a GroupBy clause.
 func (nvf NearVectorFunc) GroupBy(ctx context.Context, nv NearVector, groupBy GroupBy) (*GroupByResult, error) {
 	nv.groupBy = &groupBy
-	ctx = contextWithGroupByResult(ctx) // safe to reassign since we hold the copy of the original context.
-	if _, err := nvf(ctx, nv); err != nil {
-		return nil, err
-	}
-	return getGroupByResult(ctx), nil
+	return aggregateGroupBy(ctx, nvf, nv)
 }

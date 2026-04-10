@@ -146,12 +146,12 @@ func aggregate[Query any](ctx context.Context, t internal.Transport, rd api.Requ
 				Aggregations: aggregationsFromAPI(group.Results),
 			}
 		}
-		setGroupByResult(ctx, &GroupByResult{Groups: groups})
+		internal.SetContextValue(ctx, groupByResultKey, &GroupByResult{Groups: groups})
 		return nil, nil
 	}
 
 	result := &Result{
-		TookSeconds:  resp.TookSeconds,
+		TookSeconds:  resp.TookSeconds, // FIXME(dyma): change to Took time.Duration
 		Aggregations: aggregationsFromAPI(resp.Results),
 	}
 	return result, nil
@@ -195,18 +195,10 @@ func aggregationsFromAPI(aggregations api.Aggregations) Aggregations {
 // groupByResultKey is used to pass grouped query results to the GroupBy caller.
 var groupByResultKey = internal.ContextKey{}
 
-// contextWithGorupByResult creates a placeholder for *GroupByResult in the ctx.Values store.
-func contextWithGroupByResult(ctx context.Context) context.Context {
-	return internal.ContextWithPlaceholder[GroupByResult](ctx, groupByResultKey)
-}
-
-// getGroupByResult extracts *GroupByResult from the context.
-func getGroupByResult(ctx context.Context) *GroupByResult {
-	return internal.ValueFromContext[GroupByResult](ctx, groupByResultKey)
-}
-
-// setGroupByResult replaces *GroupByResult placeholder
-// in the context with the value at r.
-func setGroupByResult(ctx context.Context, r *GroupByResult) {
-	internal.SetContextValue(ctx, groupByResultKey, r)
+func aggregateGroupBy[In any](ctx context.Context, f func(context.Context, In) (*Result, error), in In) (*GroupByResult, error) {
+	ctx = internal.ContextWithPlaceholder[GroupByResult](ctx, groupByResultKey)
+	if _, err := f(ctx, in); err != nil {
+		return nil, err
+	}
+	return internal.ValueFromContext[GroupByResult](ctx, groupByResultKey), nil
 }

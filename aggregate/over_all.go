@@ -42,9 +42,5 @@ func overAllFunc(t internal.Transport, rd api.RequestDefaults) OverAllFunc {
 // GroupBy runs over all aggregation with a GroupBy clause.
 func (oaf OverAllFunc) GroupBy(ctx context.Context, oa OverAll, groupBy GroupBy) (*GroupByResult, error) {
 	oa.groupBy = &groupBy
-	ctx = contextWithGroupByResult(ctx) // safe to reassign since we hold the copy of the original context.
-	if _, err := oaf(ctx, oa); err != nil {
-		return nil, err
-	}
-	return getGroupByResult(ctx), nil
+	return aggregateGroupBy(ctx, oaf, oa)
 }
