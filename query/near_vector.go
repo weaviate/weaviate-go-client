@@ -2,8 +2,6 @@ package query
 
 import (
 	"context"
-	"fmt"
-	"slices"
 
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
@@ -51,76 +49,28 @@ type NearVectorFunc func(context.Context, NearVector) (*Result, error)
 // nearVectorFunc makes internal.Transport available to nearVector via a closure.
 func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc {
 	return func(ctx context.Context, nv NearVector) (*Result, error) {
-		return nearVector(ctx, t, rd, nv)
-	}
-}
-
-func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefaults, nv NearVector) (*Result, error) {
-	req := &api.SearchRequest{
-		RequestDefaults:  rd,
-		Limit:            nv.Limit,
-		AutoLimit:        nv.AutoLimit,
-		Offset:           nv.Offset,
-		After:            nv.After,
-		ReturnVectors:    nv.ReturnVectors,
-		ReturnMetadata:   api.ReturnMetadata(nv.ReturnMetadata),
-		ReturnProperties: marshalReturnProperties(nv.ReturnProperties, nv.ReturnNestedProperties),
-		ReturnReferences: marshalReturnReferences(nv.ReturnReferences),
-		NearVector:       nv.Search(),
-	}
-
-	if nv.groupBy != nil {
-		req.GroupBy = &api.GroupBy{
-			Property:       nv.groupBy.Property,
-			Limit:          nv.groupBy.ObjectLimit,
-			NumberOfGroups: nv.groupBy.NumberOfGroups,
-		}
-	}
-
-	var resp api.SearchResponse
-	if err := t.Do(ctx, req, &resp); err != nil {
-		return nil, fmt.Errorf("near vector: %w", err)
-	}
-
-	// nearVector was called from the NearVectorFunc.GroupBy() method.
-	// This means we should put GroupByResult in the context, as the first
-	// return value will be discarded.
-	if nv.groupBy != nil {
-		groups := internal.MakeMap[string, Group[map[string]any]](len(resp.GroupByResults))
-		objects := make([]GroupObject[map[string]any], 0)
-		for _, group := range resp.GroupByResults {
-
-			objects = slices.Grow(objects, len(group.Objects))
-			for _, obj := range group.Objects {
-				objects = append(objects, GroupObject[map[string]any]{
-					BelongsToGroup: group.Name,
-					Object:         unmarshalObject(&obj.Object),
-				})
+		return query(ctx, t, request{
+			RequestDefaults:        rd,
+			Limit:                  nv.Limit,
+			AutoLimit:              nv.AutoLimit,
+			Offset:                 nv.Offset,
+			After:                  nv.After,
+			ReturnVectors:          nv.ReturnVectors,
+			ReturnMetadata:         nv.ReturnMetadata,
+			ReturnProperties:       nv.ReturnProperties,
+			ReturnNestedProperties: nv.ReturnNestedProperties,
+			ReturnReferences:       nv.ReturnReferences,
+			GroupBy:                nv.groupBy,
+		}, func(req *api.SearchRequest) {
+			if nv.Target != nil {
+				req.NearVector = &api.NearVector{
+					Target:    marshalSearchTarget(nv.Target),
+					Distance:  nv.Similarity.Distance(),
+					Certainty: nv.Similarity.Certainty(),
+				}
 			}
-
-			// Create a view into the objects slice rather than allocating a separate one.
-			from, to := len(objects)-len(group.Objects), len(objects)
-			groups[group.Name] = Group[map[string]any]{
-				Name:        group.Name,
-				MinDistance: group.MinDistance,
-				MaxDistance: group.MaxDistance,
-				Size:        group.Size,
-				Objects:     objects[from:to],
-			}
-		}
-		setGroupByResult(ctx, &GroupByResult{
-			Took:    resp.Took,
-			Groups:  groups,
-			Objects: objects,
 		})
-		return nil, nil
 	}
-
-	objects := make([]Object[map[string]any], len(resp.Results))
-	for i, obj := range resp.Results {
-		objects[i] = unmarshalObject(&obj)
-	}
-	return &Result{Took: resp.Took, Objects: objects}, nil
 }
 
 // GroupBy runs near vector search with a GroupBy clause.
