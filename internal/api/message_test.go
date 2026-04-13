@@ -575,8 +575,8 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 						Force:   0.22,
 						Objects: []uuid.UUID{uuid.Nil, uuid.Max},
 					},
-					Selection: &api.SelectionMMR{
-						Limit: int32(3),
+					Selection: api.Selection{
+						MMR: &api.SelectionMMR{Limit: int32(3)},
 					},
 				},
 			},

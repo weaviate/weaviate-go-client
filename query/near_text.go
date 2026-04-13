@@ -31,7 +31,7 @@ type NearText struct {
 	// Bias the results towards or away from concepts and/or vectors.
 	MoveTo, MoveAway *Move
 
-	MMR *MMR
+	Selection Selection
 
 	// Target vector or a combination of multiple vector targets.
 	// By default, the resulting vectors are compared against the "default"
@@ -54,6 +54,15 @@ type (
 	Move api.Move
 	MMR  api.SelectionMMR
 )
+
+// SelectionMMR creates [Selection] using [MMR] algorithm.
+func SelectionMMR(mmr MMR) Selection { return Selection{mmr: &mmr} }
+
+type Selection struct {
+	mmr *MMR
+}
+
+func (s *Selection) MMR() *MMR { return s.mmr }
 
 // NearTextFunc runs plain near text search.
 type NearTextFunc func(context.Context, NearText) (*Result, error)
@@ -90,9 +99,8 @@ func nearText(ctx context.Context, t internal.Transport, rd api.RequestDefaults,
 		req.NearText.Target = marshalSearchTarget(nt.Target)
 	}
 
-	switch {
-	case nt.MMR != nil:
-		req.NearText.Selection = (*api.SelectionMMR)(nt.MMR)
+	req.NearText.Selection = api.Selection{
+		MMR: (*api.SelectionMMR)(nt.Selection.MMR()),
 	}
 
 	if nt.groupBy != nil {
