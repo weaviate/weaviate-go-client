@@ -1103,6 +1103,9 @@ type InvertedIndexConfig struct {
 	// IndexTimestamps Index each object by its internal timestamps (default: `false`).
 	IndexTimestamps bool `json:"indexTimestamps,omitempty"`
 
+	// StopwordPresets User-defined named stopword lists. Each key is a preset name that can be referenced by a property's textAnalyzer.stopwordPreset field. The value is an array of stopword strings.
+	StopwordPresets map[string][]string `json:"stopwordPresets,omitempty"`
+
 	// Stopwords Fine-grained control over stopword list usage.
 	Stopwords StopwordConfig `json:"stopwords,omitempty"`
 
@@ -1965,6 +1968,9 @@ type TextAnalyzerConfig struct {
 
 	// AsciiFoldIgnore If provided, specifies a list of characters that should be excluded from ascii folding. For example, if ['é'] is provided, then 'é' will not be folded to 'e' during indexing and search. This list can be updated after the property is created, but updates only affect documents indexed after the change.
 	AsciiFoldIgnore []string `json:"asciiFoldIgnore,omitempty"`
+
+	// StopwordPreset Stopword preset name. Overrides the collection-level invertedIndexConfig.stopwords for this property. Only applies to properties using 'word' tokenization. Can be a built-in preset ('en', 'none') or a user-defined preset from invertedIndexConfig.stopwordPresets.
+	StopwordPreset string `json:"stopwordPreset,omitempty"`
 }
 
 // TokenizeRequest Request body for the generic tokenize endpoint.
@@ -1972,8 +1978,8 @@ type TokenizeRequest struct {
 	// AnalyzerConfig Text analysis options for a property. The asciiFold setting is immutable after creation, while the asciiFoldIgnore list can be updated later; changes to asciiFoldIgnore only affect newly indexed data and do not retroactively re-index existing data. Applies only to text and text[] data types that use an inverted index (searchable or filterable).
 	AnalyzerConfig TextAnalyzerConfig `json:"analyzerConfig,omitempty"`
 
-	// StopwordConfig Fine-grained control over stopword list usage.
-	StopwordConfig StopwordConfig `json:"stopwordConfig,omitempty"`
+	// StopwordPresets Optional named stopword configurations. Each key is a preset name that can be referenced by analyzerConfig.stopwordPreset. Each value is a StopwordConfig (with optional preset, additions, and removals).
+	StopwordPresets map[string]StopwordConfig `json:"stopwordPresets,omitempty"`
 
 	// Text The text to tokenize.
 	Text string `json:"text"`
