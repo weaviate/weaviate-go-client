@@ -3,6 +3,7 @@ module github.com/weaviate/weaviate-go-client/v6
 go 1.24.10
 
 require (
+	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/google/uuid v1.6.0
 	github.com/oapi-codegen/oapi-codegen/v2 v2.5.1
 	github.com/oapi-codegen/runtime v1.1.2
