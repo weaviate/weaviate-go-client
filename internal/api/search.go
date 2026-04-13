@@ -283,9 +283,9 @@ func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
 		Certainty: req.Certainty,
 	}
 
-	check := make(map[string]int)
-	var weights []*proto.WeightsForTarget
+	seen := make(map[string]*proto.VectorForTarget)
 	var vectors []*proto.VectorForTarget
+	var weights []*proto.WeightsForTarget
 	var targets []string
 	for _, tv := range req.Target.Vectors {
 		v, err := marshalVector(&tv.Vector)
@@ -294,17 +294,15 @@ func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
 		}
 		dev.AssertNotNil(v, "v")
 
-		pos, ok := check[tv.Name]
+		vft, ok := seen[tv.Name]
 		if !ok {
-			vectors = append(vectors, &proto.VectorForTarget{Name: tv.Name})
+			vft = &proto.VectorForTarget{Name: tv.Name}
+			vectors = append(vectors, vft)
 			targets = append(targets, tv.Name)
-			pos = len(vectors) - 1
-			check[tv.Name] = pos
+			seen[tv.Name] = vft
 		}
 
-		vectors := vectors[pos]
-
-		vectors.Vectors = append(vectors.Vectors, v)
+		vft.Vectors = append(vft.Vectors, v)
 		if tv.Weight != nil {
 			weights = append(weights, &proto.WeightsForTarget{
 				Target: tv.Name,
