@@ -131,6 +131,7 @@ func Contracts(ctx context.Context, args []string) error {
 			printError(err)
 			ok = false
 		}
+		updated = true
 	}
 
 	// Regenerate schema.v3.json if files were updated successfully.
@@ -160,6 +161,7 @@ Update them to the latest version by running this command:
 	go run ./cmd/build contracts
 			`) // nolint:staticcheck
 	}
+
 	if updated {
 		log.Print(`
 Contracts were successfully updated, run:
