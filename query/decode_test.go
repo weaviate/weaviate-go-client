@@ -45,7 +45,7 @@ func TestDecode(t *testing.T) {
 		},
 	}
 
-	t.Run("nil dest", func(t *testing.T) {
+	t.Run("empty dest", func(t *testing.T) {
 		var dest []query.Object[Song]
 
 		err := query.Decode(&r, &dest)
@@ -84,6 +84,10 @@ func TestDecode(t *testing.T) {
 
 			assert.Equal(t, mapSurfer.UUID, structSurfer.UUID, "uuid")
 		}
+	})
+
+	t.Run("nil dest", func(t *testing.T) {
+		require.NotPanics(t, func() { query.Decode[Song](&r, nil) })
 	})
 }
 
@@ -139,7 +143,7 @@ func TestDecodeGrouped(t *testing.T) {
 		Objects: make([]query.GroupObject[map[string]any], 2),
 	}
 
-	t.Run("nil dest", func(t *testing.T) {
+	t.Run("empty dest", func(t *testing.T) {
 		var dest []query.GroupObject[Song]
 
 		groups, err := query.DecodeGrouped(&r, &dest)
@@ -162,5 +166,9 @@ func TestDecodeGrouped(t *testing.T) {
 
 			assert.Equal(t, mapSurfer.UUID, structSurfer.UUID, "uuid")
 		}
+	})
+
+	t.Run("nil dest", func(t *testing.T) {
+		require.NotPanics(t, func() { query.DecodeGrouped[Song](&r, nil) })
 	})
 }

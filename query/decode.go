@@ -9,7 +9,7 @@ import (
 
 // Decode decodes map[string]any properties of [query.Result] objects into arbitrary Go structs.
 func Decode[P any](r *Result, dest *[]Object[P]) error {
-	*dest = slices.Grow(*dest, len(r.Objects))
+	grow(&dest, len(r.Objects))
 
 	for i, obj := range r.Objects {
 		if i > len(*dest)-1 {
@@ -28,7 +28,7 @@ func Decode[P any](r *Result, dest *[]Object[P]) error {
 // DecodeGrouped decodes map[string]any properties of [query.GroupByResult] objects into arbitrary Go structs.
 func DecodeGrouped[P any](r *GroupByResult, dest *[]GroupObject[P]) (map[string]Group[P], error) {
 	groups := make(map[string]Group[P], len(r.Groups)) // TODO(dyma): use internal.MakeMap
-	*dest = slices.Grow(*dest, len(r.Objects))
+	grow(&dest, len(r.Objects))
 
 	var tail int
 	for _, group := range r.Groups {
@@ -61,6 +61,8 @@ func DecodeGrouped[P any](r *GroupByResult, dest *[]GroupObject[P]) (map[string]
 	return groups, nil
 }
 
+// decode map[string]any properties into [query.Object.Properties] of arbitrary type P.
+// The dest object will have the same UUID, CreatedAt, LastUpdatedAt, and Metadata as src.
 func decode[P any](src *Object[map[string]any], dest *Object[P]) error {
 	err := internal.Decode(src.Properties, &dest.Properties)
 	if err != nil {
@@ -71,4 +73,14 @@ func decode[P any](src *Object[map[string]any], dest *Object[P]) error {
 	dest.LastUpdatedAt = src.LastUpdatedAt
 	dest.Metadata = src.Metadata
 	return nil
+}
+
+// grow ensures the slice has enough capacity to fit n items.
+// If the pointer to the slice is nil, a new slice of size n is allocated.
+func grow[E any, S ~[]E](s **S, n int) {
+	if *s == nil {
+		empty := make(S, n)
+		*s = &empty
+	}
+	**s = slices.Grow(**s, n)
 }
