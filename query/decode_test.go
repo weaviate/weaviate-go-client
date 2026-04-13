@@ -87,6 +87,7 @@ func TestDecode(t *testing.T) {
 	})
 
 	t.Run("nil dest", func(t *testing.T) {
+		//nolint:errcheck
 		require.NotPanics(t, func() { query.Decode[Song](&r, nil) })
 	})
 }
@@ -169,6 +170,7 @@ func TestDecodeGrouped(t *testing.T) {
 	})
 
 	t.Run("nil dest", func(t *testing.T) {
+		//nolint:errcheck
 		require.NotPanics(t, func() { query.DecodeGrouped[Song](&r, nil) })
 	})
 }
