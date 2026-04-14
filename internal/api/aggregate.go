@@ -24,6 +24,12 @@ type AggregateRequest struct {
 
 	NearVector *NearVector
 }
+
+var (
+	_ transport.Message[proto.AggregateRequest, proto.AggregateReply] = (*AggregateRequest)(nil)
+	_ transport.MessageMarshaler[proto.AggregateRequest]              = (*AggregateRequest)(nil)
+)
+
 type (
 	AggregateTextRequest struct {
 		Property string
@@ -75,13 +81,14 @@ type (
 	}
 )
 
-func (r *AggregateRequest) Method() transport.MethodFunc[proto.AggregateRequest, proto.AggregateReply] {
+func (*AggregateRequest) Method() transport.MethodFunc[proto.AggregateRequest, proto.AggregateReply] {
 	return proto.WeaviateClient.Aggregate
 }
 func (r *AggregateRequest) Body() transport.MessageMarshaler[proto.AggregateRequest] { return r }
 
-// MarshalMessage implements [Message].
 func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
+	dev.AssertNotNil(r, "r")
+
 	var aggregations []*proto.AggregateRequest_Aggregation
 	for _, txt := range r.Text {
 		aggregations = append(aggregations, &proto.AggregateRequest_Aggregation{
@@ -195,6 +202,8 @@ type AggregateResponse struct {
 	GroupByResults []AggregateGroup
 }
 
+var _ transport.MessageUnmarshaler[proto.AggregateReply] = (*AggregateResponse)(nil)
+
 type (
 	Aggregations struct {
 		TotalCount *int64
@@ -267,7 +276,7 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 
 	single := reply.GetSingleResult()
 	if single != nil {
-		aggregations, err := unmarshalAggregations(single.GetAggregations().Aggregations)
+		aggregations, err := unmarshalAggregations(single.GetAggregations().GetAggregations())
 		if err != nil {
 			return err
 		}
@@ -284,7 +293,7 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 			property := by.GetPath()[0]
 
 			var results Aggregations
-			aggregations, err := unmarshalAggregations(group.GetAggregations().Aggregations)
+			aggregations, err := unmarshalAggregations(group.GetAggregations().GetAggregations())
 			if err != nil {
 				return err
 			}
@@ -425,4 +434,43 @@ func nilZero[T comparable](v T) *T {
 		return nil
 	}
 	return &v
+}
+
+type (
+	CountObjectsRequest  RequestDefaults
+	CountObjectsResponse int64
+)
+
+var (
+	_ transport.Message[proto.AggregateRequest, proto.AggregateReply] = (*CountObjectsRequest)(nil)
+	_ transport.MessageUnmarshaler[proto.AggregateReply]              = (*CountObjectsResponse)(nil)
+)
+
+func (*CountObjectsRequest) Method() transport.MethodFunc[proto.AggregateRequest, proto.AggregateReply] {
+	return (*AggregateRequest)(nil).Method() // Safe to call on a nil value.
+}
+
+func (r *CountObjectsRequest) Body() transport.MessageMarshaler[proto.AggregateRequest] {
+	dev.AssertNotNil(r, "r")
+	req := &AggregateRequest{
+		RequestDefaults: RequestDefaults(*r),
+		TotalCount:      true,
+	}
+	return req.Body()
+}
+
+func (r *CountObjectsResponse) UnmarshalMessage(reply *proto.AggregateReply) error {
+	var resp AggregateResponse
+	if err := resp.UnmarshalMessage(reply); err != nil {
+		return err
+	}
+	if resp.Results.TotalCount == nil {
+		return fmt.Errorf("nil total count")
+	}
+	*r = CountObjectsResponse(*resp.Results.TotalCount)
+	return nil
+}
+
+func (r CountObjectsResponse) Int64() int64 {
+	return int64(r)
 }

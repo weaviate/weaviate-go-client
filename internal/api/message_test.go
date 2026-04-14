@@ -731,6 +731,18 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "count objects",
+			req: &api.CountObjectsRequest{
+				CollectionName: "Songs",
+				Tenant:         "john_doe",
+			},
+			want: &proto.AggregateRequest{
+				Collection:   "Songs",
+				Tenant:       "john_doe",
+				ObjectsCount: true,
+			},
+		},
 	})
 
 	t.Run("with query filter", func(t *testing.T) {
@@ -1307,9 +1319,9 @@ func object(m map[string]*proto.Value) *proto.Value {
 	}}}
 }
 
-// TestAggregateRequest_UnmarshalMessage tests that api.AggregateResponse reads
+// TestAggregateResponse_UnmarshalMessage tests that api.AggregateResponse reads
 // proto.AggregateRequest correctly when its UnmarshalMessage is called.
-func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
+func TestAggregateResponse_UnmarshalMessage(t *testing.T) {
 	type Aggregations []*proto.AggregateReply_Aggregations_Aggregation
 
 	// reply is a helper function to wrap returned aggregations in the layers or protobuf bureaucracy.
@@ -1631,6 +1643,18 @@ func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			name: "object count",
+			reply: &proto.AggregateReply{
+				Result: &proto.AggregateReply_SingleResult{
+					SingleResult: &proto.AggregateReply_Single{
+						ObjectsCount: testkit.Ptr[int64](92),
+					},
+				},
+			},
+			dest: new(api.CountObjectsResponse),
+			want: testkit.Ptr[api.CountObjectsResponse](92),
 		},
 	})
 }

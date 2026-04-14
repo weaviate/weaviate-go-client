@@ -955,12 +955,6 @@ type ErrorResponse struct {
 
 // ExportCreateRequest Request to create a new export operation
 type ExportCreateRequest struct {
-	// Config Backend-specific configuration
-	Config struct {
-		// Path Path prefix within the bucket or filesystem
-		Path string `json:"path,omitempty"`
-	} `json:"config,omitempty"`
-
 	// Exclude List of collection names to exclude from the export. Cannot be used with 'include'.
 	Exclude []string `json:"exclude,omitempty"`
 
@@ -2288,18 +2282,6 @@ type BatchReferencesCreateJSONBody = []BatchReference
 type BatchReferencesCreateParams struct {
 	// ConsistencyLevel Determines how many replicas must acknowledge a request before it is considered successful.
 	ConsistencyLevel string `form:"consistency_level,omitempty" json:"consistency_level,omitempty"`
-}
-
-// ExportCancelParams defines parameters for ExportCancel.
-type ExportCancelParams struct {
-	// Path Optional path prefix within the bucket.
-	Path string `form:"path,omitempty" json:"path,omitempty"`
-}
-
-// ExportStatusParams defines parameters for ExportStatus.
-type ExportStatusParams struct {
-	// Path Optional path prefix within the bucket. If not specified, uses the backend's default path.
-	Path string `form:"path,omitempty" json:"path,omitempty"`
 }
 
 // NodesGetParams defines parameters for NodesGet.

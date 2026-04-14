@@ -901,13 +901,6 @@ components:
         ExportCreateRequest:
             description: Request to create a new export operation
             properties:
-                config:
-                    description: Backend-specific configuration
-                    properties:
-                        path:
-                            description: Path prefix within the bucket or filesystem
-                            type: string
-                    type: object
                 exclude:
                     description: List of collection names to exclude from the export. Cannot be used with 'include'.
                     items:
@@ -4928,11 +4921,6 @@ paths:
                   required: true
                   schema:
                     type: string
-                - description: Optional path prefix within the bucket.
-                  in: query
-                  name: path
-                  schema:
-                    type: string
             responses:
                 "204":
                     content: {}
@@ -4989,11 +4977,6 @@ paths:
                   in: path
                   name: id
                   required: true
-                  schema:
-                    type: string
-                - description: Optional path prefix within the bucket. If not specified, uses the backend's default path.
-                  in: query
-                  name: path
                   schema:
                     type: string
             responses:
