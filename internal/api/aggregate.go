@@ -1,11 +1,7 @@
 package api
 
 import (
-	"cmp"
 	"fmt"
-	"iter"
-	"maps"
-	"slices"
 	"time"
 
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
@@ -438,18 +434,6 @@ func nilZero[T comparable](v T) *T {
 		return nil
 	}
 	return &v
-}
-
-// sortedMap returns an iterator over key-value pairs from m;
-// similar to [maps.All], but with pairs sorted by key.
-func sortedMap[Map ~map[K]V, K cmp.Ordered, V any](m Map) iter.Seq2[K, V] {
-	return func(yield func(K, V) bool) {
-		for _, k := range slices.Sorted(maps.Keys(m)) {
-			if !yield(k, m[k]) {
-				return
-			}
-		}
-	}
 }
 
 type (
