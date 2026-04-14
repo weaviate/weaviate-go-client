@@ -38,10 +38,8 @@ type NearText struct {
 	Target VectorTarget
 
 	// Similarity specifies a cutoff point for query results.
-	// Use Distance() to set it as maximum distance between vectors.
-	// Use Certainty() to set it to a normalized value between 0 and 1.
 	// Prefer expressing Similarity in terms of vector distance, as that is a more conventional metric.
-	Similarity *Similarity
+	Similarity VectorSimilarity
 
 	// groupBy can only be set by [NearTextFunc.GroupBy], as it changes the shape of the response.
 	groupBy *GroupBy

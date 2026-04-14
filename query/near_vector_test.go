@@ -472,7 +472,7 @@ func TestNearVector(t *testing.T) {
 
 func TestSimilarity(t *testing.T) {
 	t.Run("not set", func(t *testing.T) {
-		var s query.Similarity
+		var s query.VectorSimilarity
 		assert.Nil(t, s.Distance(), "distance")
 		assert.Nil(t, s.Certainty(), "certainty")
 	})

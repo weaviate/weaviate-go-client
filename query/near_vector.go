@@ -28,20 +28,18 @@ type NearVector struct {
 	Target VectorTarget
 
 	// Similarity specifies a cutoff point for query results.
-	// Use Distance() to set it as maximum distance between vectors.
-	// Use Certainty() to set it to a normalized value between 0 and 1.
-	// Prefer expressing Similarity in terms of vector distance, as that is a more conventional metric.
-	Similarity *Similarity
+	// Prefer expressing similarity in terms of vector distance, as that is a more conventional metric.
+	Similarity VectorSimilarity
 
 	// groupBy can only be set by [NearVectorFunc.GroupBy], as it changes the shape of the response.
 	groupBy *GroupBy
 }
 
 // Distance sets a similarity cutoff in terms of maximum vector distance.
-func Distance(d float64) *Similarity { return &Similarity{distance: &d} }
+func Distance(d float64) VectorSimilarity { return VectorSimilarity{distance: &d} }
 
 // Certainty sets a similarity cutoff in terms of certainty.
-func Certainty(c float64) *Similarity { return &Similarity{certainty: &c} }
+func Certainty(c float64) VectorSimilarity { return VectorSimilarity{certainty: &c} }
 
 // NearVectorFunc runs plain near vector search.
 type NearVectorFunc func(context.Context, NearVector) (*Result, error)
@@ -87,23 +85,6 @@ func (nvf NearVectorFunc) GroupBy(ctx context.Context, nv NearVector, groupBy Gr
 	return queryGroupBy(ctx, nvf, nv)
 }
 
-// Similarity is a cutoff point for query results.
-type Similarity struct{ distance, certainty *float64 }
-
-func (s *Similarity) Distance() *float64 {
-	if s == nil {
-		return nil
-	}
-	return s.distance
-}
-
-func (s *Similarity) Certainty() *float64 {
-	if s == nil {
-		return nil
-	}
-	return s.certainty
-}
-
 func (nv NearVector) Search() *api.NearVector {
 	dev.AssertNotNil(nv, "nv")
 
@@ -116,3 +97,11 @@ func (nv NearVector) Search() *api.NearVector {
 		Certainty: nv.Similarity.Certainty(),
 	}
 }
+
+// VectorSimilarity is a cutoff point for query results.
+// [Distance] sets absolute vector distance, while
+// [Certainty] uses a normalized value between 0 and 1.
+type VectorSimilarity struct{ distance, certainty *float64 }
+
+func (s *VectorSimilarity) Distance() *float64  { return s.distance }
+func (s *VectorSimilarity) Certainty() *float64 { return s.certainty }
