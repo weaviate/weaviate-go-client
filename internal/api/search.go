@@ -80,15 +80,13 @@ type (
 		Weight *float32
 	}
 	NearVector struct {
-		Target    SearchTarget
-		Certainty *float64
-		Distance  *float64
+		Target     SearchTarget
+		Similarity VectorSimilarity
 	}
 	NearText struct {
 		Concepts         []string
 		Target           SearchTarget
-		Certainty        *float64
-		Distance         *float64
+		Similarity       VectorSimilarity
 		MoveTo, MoveAway *Move
 
 		Selection Selection
@@ -98,7 +96,7 @@ type (
 		QueryProperties   []string
 		Alpha             *float32
 		Fusion            HybridFusion
-		KeywordSimilarity *KeywordSimilarity
+		KeywordSimilarity KeywordSimilarity
 
 		NearVector *NearVector
 		NearText   *NearText
@@ -115,6 +113,10 @@ type (
 		Limit   int32
 		Balance float32
 	}
+	VectorSimilarity struct {
+		Distance  *float64
+		Certainty *float64
+	}
 	KeywordSimilarity struct {
 		AllTokensMatch     bool
 		MinimumTokensMatch *int32
@@ -126,13 +128,6 @@ type HybridFusion proto.Hybrid_FusionType
 const (
 	HybridFusionRanked        = HybridFusion(proto.Hybrid_FUSION_TYPE_RANKED)
 	HybridFusionRelativeScore = HybridFusion(proto.Hybrid_FUSION_TYPE_UNSPECIFIED)
-)
-
-type BM25LogicalOperator proto.SearchOperatorOptions_Operator
-
-const (
-	BM25LogicalOr  = BM25LogicalOperator(proto.SearchOperatorOptions_OPERATOR_OR)
-	BM25LogicalAnd = BM25LogicalOperator(proto.SearchOperatorOptions_OPERATOR_AND)
 )
 
 func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
@@ -279,8 +274,8 @@ func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
 	// Pre-allocate slices for vectors and targets.
 	// Do not allocate WeightsForTarget, as targets may have no weights.
 	nv := &proto.NearVector{
-		Distance:  req.Distance,
-		Certainty: req.Certainty,
+		Distance:  req.Similarity.Distance,
+		Certainty: req.Similarity.Certainty,
 	}
 
 	seen := make(map[string]*proto.VectorForTarget)
@@ -347,8 +342,8 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 
 	nt := &proto.NearTextSearch{
 		Query:     req.Concepts,
-		Distance:  req.Distance,
-		Certainty: req.Certainty,
+		Distance:  req.Similarity.Distance,
+		Certainty: req.Similarity.Certainty,
 	}
 
 	// We keep MoveTo and MoveAway marshaling inline to
@@ -425,17 +420,15 @@ func marshalHybrid(req *Hybrid) (*proto.Hybrid, error) {
 		FusionType: proto.Hybrid_FusionType(req.Fusion),
 	}
 
-	if kv := req.KeywordSimilarity; kv != nil {
-		switch {
-		case kv.AllTokensMatch:
-			h.Bm25SearchOperator = &proto.SearchOperatorOptions{
-				Operator: proto.SearchOperatorOptions_OPERATOR_AND,
-			}
-		case kv.MinimumTokensMatch != nil:
-			h.Bm25SearchOperator = &proto.SearchOperatorOptions{
-				Operator:             proto.SearchOperatorOptions_OPERATOR_OR,
-				MinimumOrTokensMatch: kv.MinimumTokensMatch,
-			}
+	switch {
+	case req.KeywordSimilarity.AllTokensMatch:
+		h.Bm25SearchOperator = &proto.SearchOperatorOptions{
+			Operator: proto.SearchOperatorOptions_OPERATOR_AND,
+		}
+	case req.KeywordSimilarity.MinimumTokensMatch != nil:
+		h.Bm25SearchOperator = &proto.SearchOperatorOptions{
+			Operator:             proto.SearchOperatorOptions_OPERATOR_OR,
+			MinimumOrTokensMatch: req.KeywordSimilarity.MinimumTokensMatch,
 		}
 	}
 

@@ -47,7 +47,7 @@ func TestHybrid(t *testing.T) {
 						Hybrid: &api.Hybrid{
 							Query:           "yellow submarine",
 							QueryProperties: []string{"title", "lyrics"},
-							KeywordSimilarity: &api.KeywordSimilarity{
+							KeywordSimilarity: api.KeywordSimilarity{
 								AllTokensMatch: true,
 							},
 							Alpha:  testkit.Ptr[float32](0.44),
@@ -113,7 +113,7 @@ func TestHybrid(t *testing.T) {
 						Hybrid: &api.Hybrid{
 							Query:           "yellow submarine",
 							QueryProperties: []string{"title", "lyrics"},
-							KeywordSimilarity: &api.KeywordSimilarity{
+							KeywordSimilarity: api.KeywordSimilarity{
 								MinimumTokensMatch: testkit.Ptr[int32](2),
 							},
 							Fusion: api.HybridFusionRanked,

@@ -366,7 +366,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			name: "near vector single target named",
 			req: &api.SearchRequest{
 				NearVector: &api.NearVector{
-					Distance: testkit.Ptr(.123),
+					Similarity: api.VectorSimilarity{Distance: testkit.Ptr(.123)},
 					Target: api.SearchTarget{
 						Vectors: []api.TargetVector{
 							{
@@ -408,7 +408,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			name: "near vector single target anonymous",
 			req: &api.SearchRequest{
 				NearVector: &api.NearVector{
-					Distance: testkit.Ptr(.123),
+					Similarity: api.VectorSimilarity{Distance: testkit.Ptr(.123)},
 					Target: api.SearchTarget{
 						Vectors: []api.TargetVector{
 							{
@@ -640,8 +640,8 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			name: "near text implicit target",
 			req: &api.SearchRequest{
 				NearText: &api.NearText{
-					Concepts: []string{"apples", "oranges"},
-					Distance: testkit.Ptr(.92),
+					Concepts:   []string{"apples", "oranges"},
+					Similarity: api.VectorSimilarity{Distance: testkit.Ptr(.92)},
 					MoveTo: &api.Move{
 						Force:    0.58,
 						Concepts: []string{"computers"},
@@ -780,11 +780,11 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 					QueryProperties: []string{"title", "lyrics"},
 					Alpha:           testkit.Ptr[float32](.44),
 					Fusion:          api.HybridFusionRanked,
-					KeywordSimilarity: &api.KeywordSimilarity{
+					KeywordSimilarity: api.KeywordSimilarity{
 						AllTokensMatch: true,
 					},
 					NearVector: &api.NearVector{
-						Distance: testkit.Ptr(1.23),
+						Similarity: api.VectorSimilarity{Distance: testkit.Ptr(1.23)},
 						Target: api.SearchTarget{
 							Vectors: []api.TargetVector{
 								{Vector: api.Vector{
@@ -838,12 +838,12 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 					QueryProperties: []string{"title", "lyrics"},
 					Alpha:           testkit.Ptr[float32](.44),
 					Fusion:          api.HybridFusionRanked,
-					KeywordSimilarity: &api.KeywordSimilarity{
+					KeywordSimilarity: api.KeywordSimilarity{
 						MinimumTokensMatch: testkit.Ptr[int32](1),
 					},
 					NearText: &api.NearText{
-						Concepts: []string{"apples", "oranges"},
-						Distance: testkit.Ptr(1.23),
+						Concepts:   []string{"apples", "oranges"},
+						Similarity: api.VectorSimilarity{Distance: testkit.Ptr(1.23)},
 						Selection: api.Selection{
 							MMR: &api.SelectionMMR{Limit: int32(3)},
 						},
@@ -1081,7 +1081,9 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 				name: "near vector",
 				req: &api.AggregateRequest{
 					NearVector: &api.NearVector{
-						Distance: testkit.Ptr(0.5),
+						Similarity: api.VectorSimilarity{
+							Distance: testkit.Ptr(0.5),
+						},
 						Target: api.SearchTarget{Vectors: []api.TargetVector{
 							{Vector: api.Vector{Name: "1d", Single: singleVector}},
 						}},

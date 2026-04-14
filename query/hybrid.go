@@ -84,7 +84,7 @@ func hybridFunc(t internal.Transport, rd api.RequestDefaults) HybridFunc {
 				QueryProperties: h.QueryProperties,
 				Alpha:           h.Alpha,
 				Fusion:          h.Fusion,
-				KeywordSimilarity: &api.KeywordSimilarity{
+				KeywordSimilarity: api.KeywordSimilarity{
 					AllTokensMatch:     h.KeywordSimilarity.AllTokensMatch(),
 					MinimumTokensMatch: h.KeywordSimilarity.MinimumTokensMatch(),
 				},

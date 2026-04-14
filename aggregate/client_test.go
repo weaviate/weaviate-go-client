@@ -579,7 +579,9 @@ func TestClient_Query(t *testing.T) {
 				{Request: &api.AggregateRequest{
 					RequestDefaults: rd,
 					NearVector: &api.NearVector{
-						Distance: testkit.Ptr(.45),
+						Similarity: api.VectorSimilarity{
+							Distance: testkit.Ptr(.45),
+						},
 						Target: api.SearchTarget{
 							Vectors: []api.TargetVector{
 								{Vector: api.Vector{Single: []float32{1, 2, 3}}},

@@ -88,11 +88,13 @@ func nearText(nt *NearText) *api.NearText {
 		return nil
 	}
 	out := &api.NearText{
-		Concepts:  nt.Concepts,
-		Distance:  nt.Similarity.Distance(),
-		Certainty: nt.Similarity.Certainty(),
-		MoveTo:    (*api.Move)(nt.MoveTo),
-		MoveAway:  (*api.Move)(nt.MoveAway),
+		Concepts: nt.Concepts,
+		Similarity: api.VectorSimilarity{
+			Distance:  nt.Similarity.Distance(),
+			Certainty: nt.Similarity.Certainty(),
+		},
+		MoveTo:   (*api.Move)(nt.MoveTo),
+		MoveAway: (*api.Move)(nt.MoveAway),
 	}
 
 	if nt.Target != nil {

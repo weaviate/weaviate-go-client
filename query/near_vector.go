@@ -73,9 +73,11 @@ func nearVector(nv *NearVector) *api.NearVector {
 		return nil
 	}
 	return &api.NearVector{
-		Target:    marshalSearchTarget(nv.Target),
-		Distance:  nv.Similarity.Distance(),
-		Certainty: nv.Similarity.Certainty(),
+		Target: marshalSearchTarget(nv.Target),
+		Similarity: api.VectorSimilarity{
+			Distance:  nv.Similarity.Distance(),
+			Certainty: nv.Similarity.Certainty(),
+		},
 	}
 }
 
@@ -92,9 +94,11 @@ func (nv NearVector) Search() *api.NearVector {
 		return nil
 	}
 	return &api.NearVector{
-		Target:    marshalSearchTarget(nv.Target),
-		Distance:  nv.Similarity.Distance(),
-		Certainty: nv.Similarity.Certainty(),
+		Target: marshalSearchTarget(nv.Target),
+		Similarity: api.VectorSimilarity{
+			Distance:  nv.Similarity.Distance(),
+			Certainty: nv.Similarity.Certainty(),
+		},
 	}
 }
 
