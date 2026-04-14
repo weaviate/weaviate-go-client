@@ -25,6 +25,7 @@ func TestRole_UnmarshalJSON(t *testing.T) {
 		{"action": "read_data", "data": {"collection": "Pizza"}},
 		{"action": "update_data", "data": {"collection": "Songs"}},
 		{"action": "delete_data", "data": {"collection": "Songs"}},
+		{"action": "manage_mcp", "mcp": {}},
 		{"action": "read_nodes", "nodes": {"collection": "Pizza", "verbosity": "verbose"}},
 		{"action": "read_nodes", "nodes": {"verbosity": "minimal"}},
 		{"action": "create_roles", "roles": {"role": "CreatorReader", "scope": "all"}},
@@ -51,6 +52,7 @@ func TestRole_UnmarshalJSON(t *testing.T) {
 			Collection: "Songs",
 		},
 		rbac.ClusterPermission{Actions: []string{"read_cluster"}},
+		rbac.MCPPermission{Actions: []string{"manage_mcp"}},
 		rbac.CollectionsPermission{
 			Actions:    []string{"create_collections", "read_collections"},
 			Collection: "Pizza",
@@ -110,6 +112,7 @@ func TestRole_UnmarshalJSON(t *testing.T) {
 	require.ElementsMatch(t, want.Cluster, got.Cluster)
 	require.ElementsMatch(t, want.Collections, got.Collections)
 	require.ElementsMatch(t, want.Data, got.Data)
+	require.ElementsMatch(t, want.MCP, got.MCP)
 	require.ElementsMatch(t, want.Nodes, got.Nodes)
 	require.ElementsMatch(t, want.Roles, got.Roles)
 	require.ElementsMatch(t, want.Tenants, got.Tenants)
