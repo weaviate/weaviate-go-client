@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
 
 type NearVector struct {
@@ -65,18 +66,15 @@ func nearVector(ctx context.Context, t internal.Transport, rd api.RequestDefault
 		ReturnMetadata:   api.ReturnMetadata(nv.ReturnMetadata),
 		ReturnProperties: marshalReturnProperties(nv.ReturnProperties, nv.ReturnNestedProperties),
 		ReturnReferences: marshalReturnReferences(nv.ReturnReferences),
-	}
-
-	if nv.Target != nil {
-		req.NearVector = &api.NearVector{
-			Target:    marshalSearchTarget(nv.Target),
-			Distance:  nv.Similarity.Distance(),
-			Certainty: nv.Similarity.Certainty(),
-		}
+		NearVector:       nv.Search(),
 	}
 
 	if nv.groupBy != nil {
-		req.GroupBy = (*api.GroupBy)(nv.groupBy)
+		req.GroupBy = &api.GroupBy{
+			Property:       nv.groupBy.Property,
+			Limit:          nv.groupBy.ObjectLimit,
+			NumberOfGroups: nv.groupBy.NumberOfGroups,
+		}
 	}
 
 	var resp api.SearchResponse
@@ -149,4 +147,17 @@ func (s *Similarity) Certainty() *float64 {
 		return nil
 	}
 	return s.certainty
+}
+
+func (nv NearVector) Search() *api.NearVector {
+	dev.AssertNotNil(nv, "nv")
+
+	if nv.Target == nil {
+		return nil
+	}
+	return &api.NearVector{
+		Target:    marshalSearchTarget(nv.Target),
+		Distance:  nv.Similarity.Distance(),
+		Certainty: nv.Similarity.Certainty(),
+	}
 }

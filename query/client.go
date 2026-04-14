@@ -28,7 +28,11 @@ type Client struct {
 
 type (
 	ReturnMetadata api.ReturnMetadata
-	GroupBy        api.GroupBy
+	GroupBy        struct {
+		Property       string // Property to group by.
+		ObjectLimit    int32  // Maximum number of objects per group.
+		NumberOfGroups int32  // Maximum number of groups to return.
+	}
 )
 
 type NestedProperty struct {

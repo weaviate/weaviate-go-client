@@ -566,7 +566,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			req: &api.SearchRequest{
 				GroupBy: &api.GroupBy{
 					Property:       "album",
-					ObjectLimit:    6,
+					Limit:          6,
 					NumberOfGroups: 7,
 				},
 			},
@@ -583,6 +583,196 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 	})
+}
+
+// TestAggregateRequest_MarshalMessage tests that api.AggregateRequest creates
+// the expected proto.AggregateRequest when its MarshalMessage is called.
+// Most of the test cases are split by property type to simplify error logs;
+// there's nothing stopping a test case from having mixed property types though.
+func TestAggregateRequest_MarshalMessage(t *testing.T) {
+	testMessageMarshaler(t, []MessageMarshalerTest[proto.AggregateRequest, proto.AggregateReply]{
+		{
+			name: "with object limit",
+			req:  &api.AggregateRequest{ObjectLimit: 10},
+			want: &proto.AggregateRequest{ObjectLimit: testkit.Ptr[uint32](10)},
+		},
+		{
+			name: "text properties",
+			req: &api.AggregateRequest{
+				Text: []api.AggregateTextRequest{
+					{Property: "colour", Count: true, TopOccurrences: true},
+					{Property: "tag", TopOccurrences: true, TopOccurencesCutoff: 10},
+				},
+			},
+			want: &proto.AggregateRequest{
+				Aggregations: []*proto.AggregateRequest_Aggregation{
+					{Property: "colour", Aggregation: &proto.AggregateRequest_Aggregation_Text_{
+						Text: &proto.AggregateRequest_Aggregation_Text{
+							Count: true, TopOccurences: true,
+						},
+					}},
+					{Property: "tag", Aggregation: &proto.AggregateRequest_Aggregation_Text_{
+						Text: &proto.AggregateRequest_Aggregation_Text{
+							TopOccurences: true, TopOccurencesLimit: testkit.Ptr[uint32](10),
+						},
+					}},
+				},
+			},
+		},
+		{
+			name: "integer properties",
+			req: &api.AggregateRequest{
+				Integer: []api.AggregateIntegerRequest{
+					{Property: "price", Sum: true, Min: true, Max: true},
+					{Property: "size", Count: true, Mode: true, Median: true},
+				},
+			},
+			want: &proto.AggregateRequest{
+				Aggregations: []*proto.AggregateRequest_Aggregation{
+					{Property: "price", Aggregation: &proto.AggregateRequest_Aggregation_Int{
+						Int: &proto.AggregateRequest_Aggregation_Integer{
+							Sum: true, Minimum: true, Maximum: true,
+						},
+					}},
+					{Property: "size", Aggregation: &proto.AggregateRequest_Aggregation_Int{
+						Int: &proto.AggregateRequest_Aggregation_Integer{
+							Count: true, Mode: true, Median: true,
+						},
+					}},
+				},
+			},
+		},
+		{
+			name: "number properties",
+			req: &api.AggregateRequest{
+				Number: []api.AggregateNumberRequest{
+					{Property: "price", Sum: true, Min: true, Max: true},
+					{Property: "size", Count: true, Mode: true, Median: true},
+				},
+			},
+			want: &proto.AggregateRequest{
+				Aggregations: []*proto.AggregateRequest_Aggregation{
+					{Property: "price", Aggregation: &proto.AggregateRequest_Aggregation_Number_{
+						Number: &proto.AggregateRequest_Aggregation_Number{
+							Sum: true, Minimum: true, Maximum: true,
+						},
+					}},
+					{Property: "size", Aggregation: &proto.AggregateRequest_Aggregation_Number_{
+						Number: &proto.AggregateRequest_Aggregation_Number{
+							Count: true, Mode: true, Median: true,
+						},
+					}},
+				},
+			},
+		},
+		{
+			name: "boolean properties",
+			req: &api.AggregateRequest{
+				Boolean: []api.AggregateBooleanRequest{
+					{Property: "onSale", Type: true, PercentageTrue: true, PercentageFalse: true},
+					{Property: "newArrival", Count: true, TotalTrue: true, TotalFalse: true},
+				},
+			},
+			want: &proto.AggregateRequest{
+				Aggregations: []*proto.AggregateRequest_Aggregation{
+					{Property: "onSale", Aggregation: &proto.AggregateRequest_Aggregation_Boolean_{
+						Boolean: &proto.AggregateRequest_Aggregation_Boolean{
+							Type: true, PercentageTrue: true, PercentageFalse: true,
+						},
+					}},
+					{Property: "newArrival", Aggregation: &proto.AggregateRequest_Aggregation_Boolean_{
+						Boolean: &proto.AggregateRequest_Aggregation_Boolean{
+							Count: true, TotalTrue: true, TotalFalse: true,
+						},
+					}},
+				},
+			},
+		},
+		{
+			name: "date properties",
+			req: &api.AggregateRequest{
+				Date: []api.AggregateDateRequest{
+					{Property: "lastPurchase", Count: true, Min: true, Max: true},
+					{Property: "lastReturn", Mode: true, Median: true},
+				},
+			},
+			want: &proto.AggregateRequest{
+				Aggregations: []*proto.AggregateRequest_Aggregation{
+					{Property: "lastPurchase", Aggregation: &proto.AggregateRequest_Aggregation_Date_{
+						Date: &proto.AggregateRequest_Aggregation_Date{
+							Count: true, Minimum: true, Maximum: true,
+						},
+					}},
+					{Property: "lastReturn", Aggregation: &proto.AggregateRequest_Aggregation_Date_{
+						Date: &proto.AggregateRequest_Aggregation_Date{
+							Mode: true, Median: true,
+						},
+					}},
+				},
+			},
+		},
+		{
+			name: "group by",
+			req: &api.AggregateRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+				GroupBy: &api.GroupBy{
+					Property: "album",
+					Limit:    92,
+				},
+			},
+			want: &proto.AggregateRequest{
+				Collection: "Songs",
+				Limit:      testkit.Ptr[uint32](92),
+				GroupBy: &proto.AggregateRequest_GroupBy{
+					Collection: "Songs",
+					Property:   "album",
+				},
+			},
+		},
+	})
+
+	t.Run("with query filter", func(t *testing.T) {
+		for _, tt := range []struct {
+			name string
+			req  transport.Message[proto.AggregateRequest, proto.AggregateReply]
+			get  func(*proto.AggregateRequest) any
+			want any
+		}{
+			{
+				name: "near vector",
+				req: &api.AggregateRequest{
+					NearVector: &api.NearVector{
+						Distance: testkit.Ptr(0.5),
+						Target: api.SearchTarget{Vectors: []api.TargetVector{
+							{Vector: api.Vector{Name: "1d", Single: singleVector}},
+						}},
+					},
+				},
+				get: returnAny((*proto.AggregateRequest).GetNearVector),
+			},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				require.NotNil(t, tt.req, "invalid test: nil req")
+
+				body := tt.req.Body()
+				require.NotNil(t, body, "request body")
+
+				message, err := body.MarshalMessage()
+				require.Nil(t, err, "marshal error")
+
+				require.NotNil(t, tt.get(message))
+			})
+		}
+	})
+}
+
+// Wrap func(T) *U into a func(T) any.
+func returnAny[T, U any](f func(*T) *U) func(*T) any {
+	return func(req *T) any {
+		return f(req)
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -603,6 +793,7 @@ func testMessageUnmarshaler[Out transport.ReplyMessage](t *testing.T, tests []Me
 	for _, tt := range testkit.WithOnly(t, tests) {
 		t.Run(tt.name, func(t *testing.T) {
 			testkit.RequirePointer(t, tt.want, "want")
+			require.NotNil(t, tt.dest, "bad dest")
 
 			err := tt.dest.UnmarshalMessage(tt.reply)
 			tt.err.Require(t, err, "unmarshal")
@@ -1114,4 +1305,332 @@ func object(m map[string]*proto.Value) *proto.Value {
 	return &proto.Value{Kind: &proto.Value_ObjectValue{ObjectValue: &proto.Properties{
 		Fields: m,
 	}}}
+}
+
+// TestAggregateRequest_UnmarshalMessage tests that api.AggregateResponse reads
+// proto.AggregateRequest correctly when its UnmarshalMessage is called.
+func TestAggregateRequest_UnmarshalMessage(t *testing.T) {
+	type Aggregations []*proto.AggregateReply_Aggregations_Aggregation
+
+	// reply is a helper function to wrap returned aggregations in the layers or protobuf bureaucracy.
+	reply := func(aggs Aggregations) *proto.AggregateReply_SingleResult {
+		return &proto.AggregateReply_SingleResult{
+			SingleResult: &proto.AggregateReply_Single{
+				ObjectsCount: testkit.Ptr(int64(len(aggs))),
+				Aggregations: &proto.AggregateReply_Aggregations{
+					Aggregations: aggs,
+				},
+			},
+		}
+	}
+
+	testMessageUnmarshaler(t, []MessageUnmarshalerTest[proto.AggregateReply]{
+		{
+			name: "text properties",
+			reply: &proto.AggregateReply{
+				Took: 92,
+				Result: reply(Aggregations{
+					{Property: "colour", Aggregation: &proto.AggregateReply_Aggregations_Aggregation_Text_{
+						Text: &proto.AggregateReply_Aggregations_Aggregation_Text{
+							Count: testkit.Ptr[int64](1),
+							TopOccurences: &proto.AggregateReply_Aggregations_Aggregation_Text_TopOccurrences{
+								Items: []*proto.AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurrence{
+									{Value: "red", Occurs: 2},
+									{Value: "blue", Occurs: 3},
+								},
+							},
+						},
+					}},
+					{Property: "tag", Aggregation: &proto.AggregateReply_Aggregations_Aggregation_Text_{
+						Text: &proto.AggregateReply_Aggregations_Aggregation_Text{
+							TopOccurences: &proto.AggregateReply_Aggregations_Aggregation_Text_TopOccurrences{
+								Items: []*proto.AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurrence{
+									{Value: "casual", Occurs: 1},
+									{Value: "comfy", Occurs: 2},
+								},
+							},
+						},
+					}},
+				}),
+			},
+			dest: new(api.AggregateResponse),
+			want: &api.AggregateResponse{
+				Took: 92 * time.Second,
+				Results: api.Aggregations{
+					TotalCount: testkit.Ptr[int64](2),
+					Text: []api.AggregateTextResult{
+						{
+							Property: "colour",
+							Count:    testkit.Ptr[int64](1),
+							TopOccurrences: []api.TopOccurrence{
+								{Value: "red", OccursTimes: 2},
+								{Value: "blue", OccursTimes: 3},
+							},
+						},
+						{
+							Property: "tag",
+							TopOccurrences: []api.TopOccurrence{
+								{Value: "casual", OccursTimes: 1},
+								{Value: "comfy", OccursTimes: 2},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "integer properties",
+			reply: &proto.AggregateReply{
+				Took: 92,
+				Result: reply(Aggregations{
+					{Property: "price", Aggregation: &proto.AggregateReply_Aggregations_Aggregation_Int{
+						Int: &proto.AggregateReply_Aggregations_Aggregation_Integer{
+							Sum:     testkit.Ptr[int64](1),
+							Minimum: testkit.Ptr[int64](2),
+							Maximum: testkit.Ptr[int64](3),
+						},
+					}},
+					{Property: "size", Aggregation: &proto.AggregateReply_Aggregations_Aggregation_Int{
+						Int: &proto.AggregateReply_Aggregations_Aggregation_Integer{
+							Count:  testkit.Ptr[int64](1),
+							Mode:   testkit.Ptr[int64](2),
+							Median: testkit.Ptr[float64](3),
+						},
+					}},
+				}),
+			},
+			dest: new(api.AggregateResponse),
+			want: &api.AggregateResponse{
+				Took: 92 * time.Second,
+				Results: api.Aggregations{
+					TotalCount: testkit.Ptr[int64](2),
+					Integer: []api.AggregateIntegerResult{
+						{
+							Property: "price",
+							Sum:      testkit.Ptr[int64](1),
+							Min:      testkit.Ptr[int64](2),
+							Max:      testkit.Ptr[int64](3),
+						},
+						{
+							Property: "size",
+							Count:    testkit.Ptr[int64](1),
+							Mode:     testkit.Ptr[int64](2),
+							Median:   testkit.Ptr[float64](3),
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "number properties",
+			reply: &proto.AggregateReply{
+				Took: 92,
+				Result: reply(Aggregations{
+					{Property: "price", Aggregation: &proto.AggregateReply_Aggregations_Aggregation_Number_{
+						Number: &proto.AggregateReply_Aggregations_Aggregation_Number{
+							Sum:     testkit.Ptr[float64](1),
+							Minimum: testkit.Ptr[float64](2),
+							Maximum: testkit.Ptr[float64](3),
+						},
+					}},
+					{Property: "size", Aggregation: &proto.AggregateReply_Aggregations_Aggregation_Number_{
+						Number: &proto.AggregateReply_Aggregations_Aggregation_Number{
+							Count:  testkit.Ptr[int64](1),
+							Mode:   testkit.Ptr[float64](2),
+							Median: testkit.Ptr[float64](3),
+						},
+					}},
+				}),
+			},
+			dest: new(api.AggregateResponse),
+			want: &api.AggregateResponse{
+				Took: 92 * time.Second,
+				Results: api.Aggregations{
+					TotalCount: testkit.Ptr[int64](2),
+					Number: []api.AggregateNumberResult{
+						{
+							Property: "price",
+							Sum:      testkit.Ptr[float64](1),
+							Min:      testkit.Ptr[float64](2),
+							Max:      testkit.Ptr[float64](3),
+						},
+						{
+							Property: "size",
+							Count:    testkit.Ptr[int64](1),
+							Mode:     testkit.Ptr[float64](2),
+							Median:   testkit.Ptr[float64](3),
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "boolean properties",
+			reply: &proto.AggregateReply{
+				Took: 92,
+				Result: reply(Aggregations{
+					{Property: "onSale", Aggregation: &proto.AggregateReply_Aggregations_Aggregation_Boolean_{
+						Boolean: &proto.AggregateReply_Aggregations_Aggregation_Boolean{
+							Type:            testkit.Ptr("black_friday"),
+							PercentageTrue:  testkit.Ptr[float64](1),
+							PercentageFalse: testkit.Ptr[float64](2),
+						},
+					}},
+					{Property: "newArrival", Aggregation: &proto.AggregateReply_Aggregations_Aggregation_Boolean_{
+						Boolean: &proto.AggregateReply_Aggregations_Aggregation_Boolean{
+							Count:      testkit.Ptr[int64](1),
+							TotalTrue:  testkit.Ptr[int64](2),
+							TotalFalse: testkit.Ptr[int64](3),
+						},
+					}},
+				}),
+			},
+			dest: new(api.AggregateResponse),
+			want: &api.AggregateResponse{
+				Took: 92 * time.Second,
+				Results: api.Aggregations{
+					TotalCount: testkit.Ptr[int64](2),
+					Boolean: []api.AggregateBooleanResult{
+						{
+							Property:        "onSale",
+							Type:            testkit.Ptr("black_friday"),
+							PercentageTrue:  testkit.Ptr[float64](1),
+							PercentageFalse: testkit.Ptr[float64](2),
+						},
+						{
+							Property:   "newArrival",
+							Count:      testkit.Ptr[int64](1),
+							TotalTrue:  testkit.Ptr[int64](2),
+							TotalFalse: testkit.Ptr[int64](3),
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "date properties",
+			reply: &proto.AggregateReply{
+				Took: 92,
+				Result: reply(Aggregations{
+					{Property: "lastPurchase", Aggregation: &proto.AggregateReply_Aggregations_Aggregation_Date_{
+						Date: &proto.AggregateReply_Aggregations_Aggregation_Date{
+							Count:   testkit.Ptr[int64](1),
+							Minimum: testkit.Ptr(testkit.Now.Format(time.RFC3339Nano)),
+							Maximum: testkit.Ptr(testkit.Now.Format(time.RFC3339Nano)),
+						},
+					}},
+					{Property: "lastReturn", Aggregation: &proto.AggregateReply_Aggregations_Aggregation_Date_{
+						Date: &proto.AggregateReply_Aggregations_Aggregation_Date{
+							Mode:   testkit.Ptr(testkit.Now.Format(time.RFC3339Nano)),
+							Median: testkit.Ptr(testkit.Now.Format(time.RFC3339Nano)),
+						},
+					}},
+				}),
+			},
+			dest: new(api.AggregateResponse),
+			want: &api.AggregateResponse{
+				Took: 92 * time.Second,
+				Results: api.Aggregations{
+					TotalCount: testkit.Ptr[int64](2),
+					Date: []api.AggregateDateResult{
+						{
+							Property: "lastPurchase",
+							Count:    testkit.Ptr[int64](1),
+							Min:      &testkit.Now,
+							Max:      &testkit.Now,
+						},
+						{
+							Property: "lastReturn",
+							Mode:     &testkit.Now,
+							Median:   &testkit.Now,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "grouped result",
+			reply: &proto.AggregateReply{
+				Took: 92,
+				Result: &proto.AggregateReply_GroupedResults{
+					GroupedResults: &proto.AggregateReply_Grouped{
+						Groups: []*proto.AggregateReply_Group{
+							{
+								ObjectsCount: testkit.Ptr(int64(1)),
+								GroupedBy: &proto.AggregateReply_Group_GroupedBy{
+									Path:  []string{"onSale"},
+									Value: &proto.AggregateReply_Group_GroupedBy_Boolean{Boolean: true},
+								},
+								Aggregations: &proto.AggregateReply_Aggregations{
+									Aggregations: []*proto.AggregateReply_Aggregations_Aggregation{
+										{Property: "onSale", Aggregation: &proto.AggregateReply_Aggregations_Aggregation_Boolean_{
+											Boolean: &proto.AggregateReply_Aggregations_Aggregation_Boolean{
+												Type:            testkit.Ptr("black_friday"),
+												PercentageTrue:  testkit.Ptr[float64](1),
+												PercentageFalse: testkit.Ptr[float64](2),
+											},
+										}},
+									},
+								},
+							},
+							{
+								ObjectsCount: testkit.Ptr(int64(1)),
+								GroupedBy: &proto.AggregateReply_Group_GroupedBy{
+									Path:  []string{"price"},
+									Value: &proto.AggregateReply_Group_GroupedBy_Number{Number: 4},
+								},
+								Aggregations: &proto.AggregateReply_Aggregations{
+									Aggregations: []*proto.AggregateReply_Aggregations_Aggregation{
+										{Property: "price", Aggregation: &proto.AggregateReply_Aggregations_Aggregation_Number_{
+											Number: &proto.AggregateReply_Aggregations_Aggregation_Number{
+												Sum:     testkit.Ptr[float64](1),
+												Minimum: testkit.Ptr[float64](2),
+												Maximum: testkit.Ptr[float64](3),
+											},
+										}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			dest: new(api.AggregateResponse),
+			want: &api.AggregateResponse{
+				Took: 92 * time.Second,
+				GroupByResults: []api.AggregateGroup{
+					{
+						Property: "onSale",
+						Value:    true,
+						Results: api.Aggregations{
+							TotalCount: testkit.Ptr[int64](1),
+							Boolean: []api.AggregateBooleanResult{
+								{
+									Property:        "onSale",
+									Type:            testkit.Ptr("black_friday"),
+									PercentageTrue:  testkit.Ptr[float64](1),
+									PercentageFalse: testkit.Ptr[float64](2),
+								},
+							},
+						},
+					},
+					{
+						Property: "price",
+						Value:    float64(4),
+						Results: api.Aggregations{
+							TotalCount: testkit.Ptr[int64](1),
+							Number: []api.AggregateNumberResult{
+								{
+									Property: "price",
+									Sum:      testkit.Ptr[float64](1),
+									Min:      testkit.Ptr[float64](2),
+									Max:      testkit.Ptr[float64](3),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
 }

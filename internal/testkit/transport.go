@@ -102,7 +102,11 @@ func (t *MockTransport[Req, Resp]) Do(ctx context.Context, req, dest any) error 
 			// cast to to (*any) and dereference it safely, as we do
 			// with homogenous requests in the else-branch).
 			// We can leverage reflection to assign the response to dest.
-			reflect.ValueOf(dest).Elem().Set(reflect.ValueOf(stub.Response))
+			resp := reflect.ValueOf(stub.Response)
+			var literalNil reflect.Value
+			if resp != literalNil {
+				reflect.ValueOf(dest).Elem().Set(resp)
+			}
 		} else if assert.IsType(t.t, (*Resp)(nil), dest, "bad dest") {
 			*dest.(*Resp) = stub.Response
 		}

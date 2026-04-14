@@ -59,9 +59,9 @@ type (
 		ReturnReferences []ReturnReference
 	}
 	GroupBy struct {
-		Property       string // Property to group by.
-		ObjectLimit    int32  // Maximum number of objects per group.
-		NumberOfGroups int32  // Maximum number of groups to return.
+		Property       string
+		Limit          int32
+		NumberOfGroups int32
 	}
 )
 
@@ -115,7 +115,7 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	if r.GroupBy != nil {
 		req.GroupBy = &proto.GroupBy{
 			Path:            []string{r.GroupBy.Property},
-			ObjectsPerGroup: r.GroupBy.ObjectLimit,
+			ObjectsPerGroup: r.GroupBy.Limit,
 			NumberOfGroups:  r.GroupBy.NumberOfGroups,
 		}
 	}
@@ -485,7 +485,8 @@ func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
 			if err != nil {
 				return nil, err
 			}
-			v = t
+			dev.AssertNotNil(t, "time from string")
+			v = *t
 		case *proto.Value_UuidValue:
 			id, err := uuid.Parse(f.GetUuidValue())
 			if err != nil {
