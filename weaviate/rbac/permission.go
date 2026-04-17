@@ -405,10 +405,6 @@ func roleFromWeaviate(r *models.Role) Role {
 					GroupType: resources[1],
 				}
 			}, *perm.Action, *perm.Groups.Group, string(perm.Groups.GroupType))
-		case perm.Mcp != nil:
-			mcp.Add(func(actions []string, _ ...string) Permission {
-				return MCPPermission{Actions: actions}
-			}, *perm.Action)
 
 		// Weaviate v1.30 may define additional actions for these permission groups
 		// and we want to ensure they can be handled elegantly.
@@ -417,6 +413,10 @@ func roleFromWeaviate(r *models.Role) Role {
 		case strings.HasSuffix(*perm.Action, "cluster"):
 			clusters.Add(func(actions []string, _ ...string) Permission {
 				return ClusterPermission{Actions: actions}
+			}, *perm.Action)
+		case strings.HasSuffix(*perm.Action, "mcp"):
+			mcp.Add(func(actions []string, _ ...string) Permission {
+				return MCPPermission{Actions: actions}
 			}, *perm.Action)
 		case strings.HasSuffix(*perm.Action, "tenants"):
 			tenants.Add(func(actions []string, _ ...string) Permission {

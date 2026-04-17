@@ -151,11 +151,15 @@ func TestRBAC_integration(t *testing.T) {
 			"%q role should not have %q permission", roleName, models.PermissionActionDeleteTenants)
 	})
 
-	t.Run("manage_mcp permission", func(t *testing.T) {
-		testsuit.AtLeastWeaviateVersion(t, client, "1.37.0-rc.1", "manage_mcp permission is only supported from v1.37")
+	t.Run("mcp permissions", func(t *testing.T) {
+		testsuit.AtLeastWeaviateVersion(t, client, "1.37.1", "MCP permissions are only supported from v1.37.1")
 
 		roleName := "MCPManager"
-		mcpPerm := rbac.MCPPermission{Actions: []string{models.PermissionActionManageMcp}}
+		mcpPerm := rbac.MCPPermission{Actions: []string{
+			models.PermissionActionCreateMcp,
+			models.PermissionActionReadMcp,
+			models.PermissionActionUpdateMcp,
+		}}
 
 		mustCreateRole(t, rbac.NewRole(roleName, mcpPerm))
 
@@ -164,9 +168,13 @@ func TestRBAC_integration(t *testing.T) {
 
 		require.Equal(t, roleName, testRole.Name)
 		require.Len(t, testRole.MCP, 1)
-		require.ElementsMatch(t, []string{models.PermissionActionManageMcp}, testRole.MCP[0].Actions)
+		require.ElementsMatch(t, []string{
+			models.PermissionActionCreateMcp,
+			models.PermissionActionReadMcp,
+			models.PermissionActionUpdateMcp,
+		}, testRole.MCP[0].Actions)
 
 		require.True(t, hasPermissions(t, roleName, mcpPerm),
-			"%q role should have %q permission", roleName, models.PermissionActionManageMcp)
+			"%q role should have MCP permissions", roleName)
 	})
 }
