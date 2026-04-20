@@ -41,6 +41,12 @@ func (c *Checker) WithTenant(tenant string) *Checker {
 // Do check the specified data object if it exists in weaviate
 func (checker *Checker) Do(ctx context.Context) (bool, error) {
 	responseData, err := checker.connection.RunREST(ctx, checker.buildPath(), http.MethodHead, nil)
+	// Checking... if responseData is nil before accessing it
+	// This can happen if the request fails..... e.g. timeout, 504, etc.
+	if responseData == nil {
+		return false, except.CheckResponseDataErrorAndStatusCode(responseData, err, 204, 404)
+	}
+
 	exists := responseData.StatusCode == 204
 	return exists, except.CheckResponseDataErrorAndStatusCode(responseData, err, 204, 404)
 }
