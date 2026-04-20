@@ -214,6 +214,7 @@ func TestNearVector(t *testing.T) {
 				},
 			},
 			want: &query.Result{
+				Took: 92 * time.Second,
 				Objects: []query.Object[map[string]any]{
 					{
 						Object: types.Object[map[string]any]{
@@ -381,6 +382,7 @@ func TestNearVector(t *testing.T) {
 					},
 				},
 				want: &query.GroupByResult{
+					Took: 92 * time.Second,
 					Objects: []query.GroupObject[map[string]any]{
 						{
 							BelongsToGroup: "Countdown To Extinction",

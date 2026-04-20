@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,6 +26,7 @@ type SearchRequest struct {
 	GroupBy          *GroupBy
 
 	NearVector *NearVector
+	NearText   *NearText
 }
 
 var (
@@ -79,6 +81,27 @@ type (
 		Certainty *float64
 		Distance  *float64
 	}
+	NearText struct {
+		Concepts         []string
+		Target           SearchTarget
+		Certainty        *float64
+		Distance         *float64
+		MoveTo, MoveAway *Move
+
+		Selection Selection
+	}
+	Move struct {
+		Force    float32
+		Objects  []uuid.UUID
+		Concepts []string
+	}
+	Selection struct {
+		MMR *SelectionMMR
+	}
+	SelectionMMR struct {
+		Limit   int32
+		Balance float32
+	}
 )
 
 func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
@@ -124,6 +147,8 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	switch {
 	case r.NearVector != nil:
 		req.NearVector, err = marshalNearVector(r.NearVector)
+	case r.NearText != nil:
+		req.NearText, err = marshalNearText(r.NearText)
 	}
 	if err != nil {
 		return nil, err
@@ -290,6 +315,79 @@ func marshalVector(v *Vector) (*proto.Vectors, error) {
 		return nil, errors.New("empty vector")
 	}
 	return out, nil
+}
+
+func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
+	dev.AssertNotNil(req, "req")
+
+	nt := &proto.NearTextSearch{
+		Query:     req.Concepts,
+		Distance:  req.Distance,
+		Certainty: req.Certainty,
+	}
+
+	// We keep MoveTo and MoveAway marshaling inline to
+	// 1) avoid breeding functions; these params are only needed here
+	// 2) re-use the uuids slice if possible (minor benefit, but still).
+	var uuids []string
+	if m := req.MoveTo; m != nil {
+		uuids = slices.Grow(uuids, len(m.Objects))
+		for _, u := range m.Objects {
+			uuids = append(uuids, u.String())
+		}
+		nt.MoveTo = &proto.NearTextSearch_Move{
+			Force:    m.Force,
+			Concepts: m.Concepts,
+			Uuids:    uuids,
+		}
+	}
+
+	if m := req.MoveAway; m != nil {
+		uuids = slices.Grow(uuids[:0], len(m.Objects))
+		for _, u := range m.Objects {
+			uuids = append(uuids, u.String())
+		}
+		nt.MoveAway = &proto.NearTextSearch_Move{
+			Force:    m.Force,
+			Concepts: m.Concepts,
+			Uuids:    uuids,
+		}
+	}
+
+	if len(req.Target.Vectors) > 0 {
+		// Pre-allocate slices for targets. Do not allocate WeightsForTarget,
+		// as targets may have no weights.
+		nt.Targets = &proto.Targets{
+			TargetVectors: make([]string, len(req.Target.Vectors)),
+			Combination:   req.Target.CombinationMethod.proto(),
+		}
+
+		for i, tv := range req.Target.Vectors {
+			nt.Targets.TargetVectors[i] = tv.Name
+			if tv.Weight != nil {
+				nt.Targets.WeightsForTargets = append(nt.Targets.WeightsForTargets,
+					&proto.WeightsForTarget{
+						Target: tv.Name,
+						Weight: *tv.Weight,
+					})
+			}
+		}
+	}
+
+	switch {
+	case req.Selection.MMR != nil:
+		mmr := req.Selection.MMR
+		nt.Selection = &proto.Selection{
+			Selection: &proto.Selection_Mmr{
+				Mmr: &proto.Selection_MMR{
+					Limit:   nilPresent(uint32(mmr.Limit), mmr.Limit > 0),
+					Balance: nilPresent(mmr.Balance, mmr.Balance > 0),
+				},
+			},
+		}
+	}
+
+	return nt, nil
 }
 
 type SearchResponse struct {
