@@ -1463,7 +1463,9 @@ components:
                         - delete_aliases
                         - assign_and_revoke_groups
                         - read_groups
-                        - manage_mcp
+                        - create_mcp
+                        - read_mcp
+                        - update_mcp
                     type: string
                 aliases:
                     description: Resource definition for alias-related actions and permissions. Used to specify which aliases and collections can be accessed or modified.
@@ -1518,10 +1520,6 @@ components:
                             type: string
                         groupType:
                             $ref: '#/components/schemas/GroupType'
-                    type: object
-                mcp:
-                    description: resources applicable for MCP actions
-                    properties: {}
                     type: object
                 nodes:
                     description: Resources applicable for cluster actions.
@@ -2668,7 +2666,7 @@ info:
         url: https://github.com/weaviate
     description: '# Introduction<br/> Weaviate is an open source, AI-native vector database that helps developers create intuitive and reliable AI-powered applications. <br/> ### Base Path <br/>The base path for the Weaviate server is structured as `[YOUR-WEAVIATE-HOST]:[PORT]/v1`. As an example, if you wish to access the `schema` endpoint on a local instance, you would navigate to `http://localhost:8080/v1/schema`. Ensure you replace `[YOUR-WEAVIATE-HOST]` and `[PORT]` with your actual server host and port number respectively. <br/> ### Questions? <br/>If you have any comments or questions, please feel free to reach out to us at the community forum [https://forum.weaviate.io/](https://forum.weaviate.io/). <br/>### Issues? <br/>If you find a bug or want to file a feature request, please open an issue on our GitHub repository for [Weaviate](https://github.com/weaviate/weaviate). <br/>### Need more documentation? <br/>For a quickstart, code examples, concepts and more, please visit our [documentation page](https://docs.weaviate.io/weaviate).'
     title: Weaviate REST API
-    version: 1.37.0-rc.1
+    version: 1.38.0-dev
 openapi: 3.0.1
 paths:
     /:

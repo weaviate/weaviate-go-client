@@ -176,6 +176,7 @@ const (
 	CreateAliases         PermissionAction = "create_aliases"
 	CreateCollections     PermissionAction = "create_collections"
 	CreateData            PermissionAction = "create_data"
+	CreateMcp             PermissionAction = "create_mcp"
 	CreateReplicate       PermissionAction = "create_replicate"
 	CreateRoles           PermissionAction = "create_roles"
 	CreateTenants         PermissionAction = "create_tenants"
@@ -188,12 +189,12 @@ const (
 	DeleteTenants         PermissionAction = "delete_tenants"
 	DeleteUsers           PermissionAction = "delete_users"
 	ManageBackups         PermissionAction = "manage_backups"
-	ManageMcp             PermissionAction = "manage_mcp"
 	ReadAliases           PermissionAction = "read_aliases"
 	ReadCluster           PermissionAction = "read_cluster"
 	ReadCollections       PermissionAction = "read_collections"
 	ReadData              PermissionAction = "read_data"
 	ReadGroups            PermissionAction = "read_groups"
+	ReadMcp               PermissionAction = "read_mcp"
 	ReadNodes             PermissionAction = "read_nodes"
 	ReadReplicate         PermissionAction = "read_replicate"
 	ReadRoles             PermissionAction = "read_roles"
@@ -202,6 +203,7 @@ const (
 	UpdateAliases         PermissionAction = "update_aliases"
 	UpdateCollections     PermissionAction = "update_collections"
 	UpdateData            PermissionAction = "update_data"
+	UpdateMcp             PermissionAction = "update_mcp"
 	UpdateReplicate       PermissionAction = "update_replicate"
 	UpdateRoles           PermissionAction = "update_roles"
 	UpdateTenants         PermissionAction = "update_tenants"
@@ -1401,9 +1403,6 @@ type Permission struct {
 		// GroupType If the group contains OIDC or database users.
 		GroupType GroupType `json:"groupType,omitempty"`
 	} `json:"groups,omitempty"`
-
-	// Mcp resources applicable for MCP actions
-	Mcp map[string]interface{} `json:"mcp,omitempty"`
 
 	// Nodes Resources applicable for cluster actions.
 	Nodes struct {
