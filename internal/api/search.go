@@ -28,6 +28,7 @@ type SearchRequest struct {
 
 	NearVector *NearVector
 	NearText   *NearText
+	Hybrid     *Hybrid
 }
 
 var (
@@ -78,18 +79,26 @@ type (
 		Weight *float32
 	}
 	NearVector struct {
-		Target    SearchTarget
-		Certainty *float64
-		Distance  *float64
+		Target     SearchTarget
+		Similarity VectorSimilarity
 	}
 	NearText struct {
 		Concepts         []string
 		Target           SearchTarget
-		Certainty        *float64
-		Distance         *float64
+		Similarity       VectorSimilarity
 		MoveTo, MoveAway *Move
 
 		Selection Selection
+	}
+	Hybrid struct {
+		Query             string
+		QueryProperties   []string
+		Alpha             *float32
+		Fusion            HybridFusion
+		KeywordSimilarity KeywordSimilarity
+
+		NearVector *NearVector
+		NearText   *NearText
 	}
 	Move struct {
 		Force    float32
@@ -103,6 +112,21 @@ type (
 		Limit   int32
 		Balance float32
 	}
+	VectorSimilarity struct {
+		Distance  *float64
+		Certainty *float64
+	}
+	KeywordSimilarity struct {
+		AllTokensMatch     bool
+		MinimumTokensMatch *int32
+	}
+)
+
+type HybridFusion proto.Hybrid_FusionType
+
+const (
+	HybridFusionRanked        = HybridFusion(proto.Hybrid_FUSION_TYPE_RANKED)
+	HybridFusionRelativeScore = HybridFusion(proto.Hybrid_FUSION_TYPE_UNSPECIFIED)
 )
 
 func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
@@ -150,6 +174,8 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 		req.NearVector, err = marshalNearVector(r.NearVector)
 	case r.NearText != nil:
 		req.NearText, err = marshalNearText(r.NearText)
+	case r.Hybrid != nil:
+		req.HybridSearch, err = marshalHybrid(r.Hybrid)
 	}
 	if err != nil {
 		return nil, err
@@ -240,62 +266,52 @@ func marshalReturnVectors(req *proto.MetadataRequest, vectors []string) {
 func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
 	dev.AssertNotNil(req, "req")
 
-	nv := &proto.NearVector{
-		Distance:  req.Distance,
-		Certainty: req.Certainty,
-	}
-
-	switch len(req.Target.Vectors) {
-	case 0:
+	if len(req.Target.Vectors) == 0 {
 		return nil, nil
-	case 1:
-		tv := req.Target.Vectors[0]
-		v, err := marshalVector(&tv.Vector)
-		if err != nil {
-			return nil, fmt.Errorf("near vector: %w", err)
-		}
-		dev.AssertNotNil(v, "v")
-		vectors := []*proto.Vectors{v}
-
-		if tv.Name == "" {
-			nv.Vectors = vectors
-		} else {
-			nv.VectorForTargets = append(nv.VectorForTargets, &proto.VectorForTarget{
-				Name:    tv.Name,
-				Vectors: vectors,
-			})
-		}
-		return nv, nil
 	}
 
 	// Pre-allocate slices for vectors and targets.
 	// Do not allocate WeightsForTarget, as targets may have no weights.
-	nv.VectorForTargets = make([]*proto.VectorForTarget, len(req.Target.Vectors))
-	nv.Targets = &proto.Targets{
-		TargetVectors: make([]string, len(req.Target.Vectors)),
-		Combination:   req.Target.CombinationMethod.proto(),
+	nv := &proto.NearVector{
+		Distance:  req.Similarity.Distance,
+		Certainty: req.Similarity.Certainty,
 	}
 
-	for i, tv := range req.Target.Vectors {
+	seen := make(map[string]*proto.VectorForTarget)
+	var vectors []*proto.VectorForTarget
+	var weights []*proto.WeightsForTarget
+	var targets []string
+	for _, tv := range req.Target.Vectors {
 		v, err := marshalVector(&tv.Vector)
 		if err != nil {
 			return nil, fmt.Errorf("near vector: %w", err)
 		}
 		dev.AssertNotNil(v, "v")
 
-		nv.Targets.TargetVectors[i] = tv.Name
-		nv.VectorForTargets[i] = &proto.VectorForTarget{
-			Name:    tv.Name,
-			Vectors: []*proto.Vectors{v},
+		vft, ok := seen[tv.Name]
+		if !ok {
+			vft = &proto.VectorForTarget{Name: tv.Name}
+			vectors = append(vectors, vft)
+			targets = append(targets, tv.Name)
+			seen[tv.Name] = vft
 		}
+
+		vft.Vectors = append(vft.Vectors, v)
 		if tv.Weight != nil {
-			nv.Targets.WeightsForTargets = append(nv.Targets.WeightsForTargets,
-				&proto.WeightsForTarget{
-					Target: tv.Name,
-					Weight: *tv.Weight,
-				})
+			weights = append(weights, &proto.WeightsForTarget{
+				Target: tv.Name,
+				Weight: *tv.Weight,
+			})
 		}
 	}
+
+	nv.VectorForTargets = vectors
+	nv.Targets = &proto.Targets{
+		TargetVectors:     targets,
+		WeightsForTargets: weights,
+		Combination:       proto.CombinationMethod(req.Target.CombinationMethod),
+	}
+
 	return nv, nil
 }
 
@@ -323,8 +339,8 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 
 	nt := &proto.NearTextSearch{
 		Query:     req.Concepts,
-		Distance:  req.Distance,
-		Certainty: req.Certainty,
+		Distance:  req.Similarity.Distance,
+		Certainty: req.Similarity.Certainty,
 	}
 
 	// We keep MoveTo and MoveAway marshaling inline to
@@ -360,7 +376,7 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 		// as targets may have no weights.
 		nt.Targets = &proto.Targets{
 			TargetVectors: make([]string, len(req.Target.Vectors)),
-			Combination:   req.Target.CombinationMethod.proto(),
+			Combination:   proto.CombinationMethod(req.Target.CombinationMethod),
 		}
 
 		for i, tv := range req.Target.Vectors {
@@ -389,6 +405,43 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 	}
 
 	return nt, nil
+}
+
+func marshalHybrid(req *Hybrid) (*proto.Hybrid, error) {
+	dev.AssertNotNil(req, "req")
+
+	h := &proto.Hybrid{
+		Query:      req.Query,
+		Properties: req.QueryProperties,
+		AlphaParam: req.Alpha,
+		FusionType: proto.Hybrid_FusionType(req.Fusion),
+	}
+
+	switch {
+	case req.KeywordSimilarity.AllTokensMatch:
+		h.Bm25SearchOperator = &proto.SearchOperatorOptions{
+			Operator: proto.SearchOperatorOptions_OPERATOR_AND,
+		}
+	case req.KeywordSimilarity.MinimumTokensMatch != nil:
+		h.Bm25SearchOperator = &proto.SearchOperatorOptions{
+			Operator:             proto.SearchOperatorOptions_OPERATOR_OR,
+			MinimumOrTokensMatch: req.KeywordSimilarity.MinimumTokensMatch,
+		}
+	}
+
+	var err error
+	if req.NearVector != nil {
+		if h.NearVector, err = marshalNearVector(req.NearVector); err != nil {
+			return nil, err
+		}
+	}
+	if req.NearText != nil {
+		if h.NearText, err = marshalNearText(req.NearText); err != nil {
+			return nil, err
+		}
+	}
+
+	return h, nil
 }
 
 type SearchResponse struct {
@@ -636,34 +689,15 @@ func unmarshalVectors(mr *proto.MetadataResult) (Vectors, error) {
 	return out, nil
 }
 
-type CombinationMethod string
+type CombinationMethod proto.CombinationMethod
 
 const (
-	_                              CombinationMethod = ""
-	CombinationMethodSum           CombinationMethod = "SUM"
-	CombinationMethodMin           CombinationMethod = "MIN"
-	CombinationMethodAverage       CombinationMethod = "AVERAGE"
-	CombinationMethodManualWeights CombinationMethod = "MANUAL_WEIGHTS"
-	CombinationMethodRelativeScore CombinationMethod = "RELATIVE_SCORE"
+	CombinationMethodSum           = CombinationMethod(proto.CombinationMethod_COMBINATION_METHOD_TYPE_SUM)
+	CombinationMethodMin           = CombinationMethod(proto.CombinationMethod_COMBINATION_METHOD_TYPE_MIN)
+	CombinationMethodAverage       = CombinationMethod(proto.CombinationMethod_COMBINATION_METHOD_TYPE_AVERAGE)
+	CombinationMethodManualWeights = CombinationMethod(proto.CombinationMethod_COMBINATION_METHOD_TYPE_MANUAL)
+	CombinationMethodRelativeScore = CombinationMethod(proto.CombinationMethod_COMBINATION_METHOD_TYPE_RELATIVE_SCORE)
 )
-
-// proto converts CombinationMethod into a protobuf value.
-func (cm CombinationMethod) proto() proto.CombinationMethod {
-	switch cm {
-	case CombinationMethodSum:
-		return proto.CombinationMethod_COMBINATION_METHOD_TYPE_SUM
-	case CombinationMethodMin:
-		return proto.CombinationMethod_COMBINATION_METHOD_TYPE_MIN
-	case CombinationMethodAverage:
-		return proto.CombinationMethod_COMBINATION_METHOD_TYPE_AVERAGE
-	case CombinationMethodManualWeights:
-		return proto.CombinationMethod_COMBINATION_METHOD_TYPE_MANUAL
-	case CombinationMethodRelativeScore:
-		return proto.CombinationMethod_COMBINATION_METHOD_TYPE_RELATIVE_SCORE
-	default:
-		return proto.CombinationMethod_COMBINATION_METHOD_UNSPECIFIED
-	}
-}
 
 // proto converts ConsistencyLevel into a protobuf value.
 func (cl ConsistencyLevel) proto() *proto.ConsistencyLevel {
@@ -677,15 +711,4 @@ func (cl ConsistencyLevel) proto() *proto.ConsistencyLevel {
 	default:
 		return nil
 	}
-}
-
-// ptr is a helper for passing pointers to constants.
-func ptr[T any](v T) *T { return &v }
-
-// nilPresent returns a pointer to v if present == true and nil otherwise.
-func nilPresent[T any](v T, present bool) *T {
-	if !present {
-		return nil
-	}
-	return &v
 }

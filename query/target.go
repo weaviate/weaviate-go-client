@@ -102,7 +102,7 @@ func RelativeScore[V VectorKind](vectors []WeightedVector[V]) *MultiVectorTarget
 }
 
 // Combine target vectors into a MultiVectorTarget keeping the weight unset.
-// The server will determine combination method will determine the weights
+// The server use the default combination method and determine the weights.
 func zeroWeightTargets[V VectorKind](cm api.CombinationMethod, vectors []V) *MultiVectorTarget {
 	targets := make([]api.TargetVector, len(vectors))
 	for i, v := range vectors {
@@ -115,10 +115,5 @@ func zeroWeightTargets[V VectorKind](cm api.CombinationMethod, vectors []V) *Mul
 	}
 }
 
-func (m *MultiVectorTarget) CombinationMethod() api.CombinationMethod {
-	return m.combinationMethod
-}
-
-func (m *MultiVectorTarget) Vectors() []api.TargetVector {
-	return m.targets
-}
+func (m *MultiVectorTarget) CombinationMethod() api.CombinationMethod { return m.combinationMethod }
+func (m *MultiVectorTarget) Vectors() []api.TargetVector              { return m.targets }

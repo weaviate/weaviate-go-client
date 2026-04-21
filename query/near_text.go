@@ -38,10 +38,8 @@ type NearText struct {
 	Target VectorTarget
 
 	// Similarity specifies a cutoff point for query results.
-	// Use Distance() to set it as maximum distance between vectors.
-	// Use Certainty() to set it to a normalized value between 0 and 1.
 	// Prefer expressing Similarity in terms of vector distance, as that is a more conventional metric.
-	Similarity *Similarity
+	Similarity VectorSimilarity
 
 	// groupBy can only be set by [NearTextFunc.GroupBy], as it changes the shape of the response.
 	groupBy *GroupBy
@@ -80,22 +78,33 @@ func nearTextFunc(t internal.Transport, rd api.RequestDefaults) NearTextFunc {
 			ReturnNestedProperties: nt.ReturnNestedProperties,
 			ReturnReferences:       nt.ReturnReferences,
 			GroupBy:                nt.groupBy,
-		}, func(req *api.SearchRequest) {
-			req.NearText = &api.NearText{
-				Concepts:  nt.Concepts,
-				Distance:  nt.Similarity.Distance(),
-				Certainty: nt.Similarity.Certainty(),
-				MoveTo:    (*api.Move)(nt.MoveTo),
-				MoveAway:  (*api.Move)(nt.MoveAway),
-				Selection: api.Selection{
-					MMR: (*api.SelectionMMR)(nt.Selection.MMR()),
-				},
-			}
-			if nt.Target != nil {
-				req.NearText.Target = marshalSearchTarget(nt.Target)
-			}
-		})
+		}, func(req *api.SearchRequest) { req.NearText = nearText(&nt) })
 	}
+}
+
+// nearText converts [NearText] to [api.NearText]
+func nearText(nt *NearText) *api.NearText {
+	if nt == nil {
+		return nil
+	}
+	out := &api.NearText{
+		Concepts: nt.Concepts,
+		Similarity: api.VectorSimilarity{
+			Distance:  nt.Similarity.Distance(),
+			Certainty: nt.Similarity.Certainty(),
+		},
+		MoveTo:   (*api.Move)(nt.MoveTo),
+		MoveAway: (*api.Move)(nt.MoveAway),
+		Selection: api.Selection{
+			MMR: (*api.SelectionMMR)(nt.Selection.MMR()),
+		},
+	}
+
+	if nt.Target != nil {
+		out.Target = marshalSearchTarget(nt.Target)
+	}
+
+	return out
 }
 
 // GroupBy runs near text search with a GroupBy clause.

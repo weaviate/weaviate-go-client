@@ -134,7 +134,9 @@ func TestNearVector(t *testing.T) {
 							},
 						},
 						NearVector: &api.NearVector{
-							Distance: testkit.Ptr(.456),
+							Similarity: api.VectorSimilarity{
+								Distance: testkit.Ptr(.456),
+							},
 							Target: api.SearchTarget{
 								Vectors: []api.TargetVector{{
 									Vector: api.Vector{Single: singleVector},
@@ -304,7 +306,9 @@ func TestNearVector(t *testing.T) {
 						Request: &api.SearchRequest{
 							RequestDefaults: rd,
 							NearVector: &api.NearVector{
-								Certainty: testkit.Ptr(.123),
+								Similarity: api.VectorSimilarity{
+									Certainty: testkit.Ptr(.123),
+								},
 								Target: api.SearchTarget{
 									Vectors: []api.TargetVector{{
 										Vector: api.Vector{Single: singleVector},
@@ -470,9 +474,9 @@ func TestNearVector(t *testing.T) {
 	})
 }
 
-func TestSimilarity(t *testing.T) {
+func TestVectorSimilarity(t *testing.T) {
 	t.Run("not set", func(t *testing.T) {
-		var s query.Similarity
+		var s query.VectorSimilarity
 		assert.Nil(t, s.Distance(), "distance")
 		assert.Nil(t, s.Certainty(), "certainty")
 	})
