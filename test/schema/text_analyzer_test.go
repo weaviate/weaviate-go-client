@@ -36,7 +36,8 @@ func TestTextAnalyzer_integration(t *testing.T) {
 		_ = client.Schema().ClassDeleter().WithClassName(className).Do(ctx)
 
 		class := &models.Class{
-			Class: className,
+			Class:      className,
+			Vectorizer: "none",
 			InvertedIndexConfig: &models.InvertedIndexConfig{
 				StopwordPresets: map[string][]string{
 					"fr": {"le", "la", "les"},
@@ -65,7 +66,8 @@ func TestTextAnalyzer_integration(t *testing.T) {
 		_ = client.Schema().ClassDeleter().WithClassName(className).Do(ctx)
 
 		class := &models.Class{
-			Class: className,
+			Class:      className,
+			Vectorizer: "none",
 			InvertedIndexConfig: &models.InvertedIndexConfig{
 				StopwordPresets: map[string][]string{"fr": {"le"}},
 			},
@@ -97,7 +99,8 @@ func TestTextAnalyzer_integration(t *testing.T) {
 		_ = client.Schema().ClassDeleter().WithClassName(className).Do(ctx)
 
 		class := &models.Class{
-			Class: className,
+			Class:      className,
+			Vectorizer: "none",
 			InvertedIndexConfig: &models.InvertedIndexConfig{
 				StopwordPresets: map[string][]string{"fr": {"le"}},
 			},
@@ -126,7 +129,8 @@ func TestTextAnalyzer_integration(t *testing.T) {
 
 		asciiFold := true
 		class := &models.Class{
-			Class: className,
+			Class:      className,
+			Vectorizer: "none",
 			Properties: []*models.Property{
 				{
 					Name:     "title",
@@ -154,7 +158,8 @@ func TestTextAnalyzer_integration(t *testing.T) {
 		_ = client.Schema().ClassDeleter().WithClassName(className).Do(ctx)
 
 		class := &models.Class{
-			Class: className,
+			Class:      className,
+			Vectorizer: "none",
 			Properties: []*models.Property{
 				{
 					Name:     "title",
@@ -182,7 +187,8 @@ func TestTextAnalyzer_integration(t *testing.T) {
 		_ = client.Schema().ClassDeleter().WithClassName(className).Do(ctx)
 
 		class := &models.Class{
-			Class: className,
+			Class:      className,
+			Vectorizer: "none",
 			Properties: []*models.Property{
 				{
 					Name:     "meta",
