@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"fmt"
-	"log"
 	"slices"
 	"time"
 
@@ -312,8 +311,6 @@ func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
 		WeightsForTargets: weights,
 		Combination:       proto.CombinationMethod(req.Target.CombinationMethod),
 	}
-
-	log.Printf("%+#v", vectors)
 
 	return nv, nil
 }
