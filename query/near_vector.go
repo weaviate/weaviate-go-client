@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
-	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
 
 type NearVector struct {
@@ -65,13 +64,10 @@ func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc
 
 // nearVector convers [NearVector] to [api.NearVector].
 func nearVector(nv *NearVector) *api.NearVector {
-	if nv == nil {
+	if nv == nil || nv.Target == nil {
 		return nil
 	}
 
-	if nv.Target == nil {
-		return nil
-	}
 	return &api.NearVector{
 		Target: marshalSearchTarget(nv.Target),
 		Similarity: api.VectorSimilarity{
@@ -87,20 +83,7 @@ func (nvf NearVectorFunc) GroupBy(ctx context.Context, nv NearVector, groupBy Gr
 	return queryGroupBy(ctx, nvf, nv)
 }
 
-func (nv NearVector) Search() *api.NearVector {
-	dev.AssertNotNil(nv, "nv")
-
-	if nv.Target == nil {
-		return nil
-	}
-	return &api.NearVector{
-		Target: marshalSearchTarget(nv.Target),
-		Similarity: api.VectorSimilarity{
-			Distance:  nv.Similarity.Distance(),
-			Certainty: nv.Similarity.Certainty(),
-		},
-	}
-}
+func (nv NearVector) Search() *api.NearVector { return nearVector(&nv) }
 
 // VectorSimilarity is a cutoff point for query results.
 // [Distance] sets absolute vector distance, while

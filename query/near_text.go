@@ -95,15 +95,15 @@ func nearText(nt *NearText) *api.NearText {
 		},
 		MoveTo:   (*api.Move)(nt.MoveTo),
 		MoveAway: (*api.Move)(nt.MoveAway),
+		Selection: api.Selection{
+			MMR: (*api.SelectionMMR)(nt.Selection.MMR()),
+		},
 	}
 
 	if nt.Target != nil {
 		out.Target = marshalSearchTarget(nt.Target)
 	}
 
-	out.Selection = api.Selection{
-		MMR: (*api.SelectionMMR)(nt.Selection.MMR()),
-	}
 	return out
 }
 
