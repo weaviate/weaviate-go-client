@@ -2,8 +2,6 @@ package query
 
 import (
 	"context"
-	"fmt"
-	"slices"
 
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
@@ -69,99 +67,39 @@ type NearTextFunc func(context.Context, NearText) (*Result, error)
 
 // nearTextFunc makes internal.Transport available to nearText via a closure.
 func nearTextFunc(t internal.Transport, rd api.RequestDefaults) NearTextFunc {
-	return func(ctx context.Context, nv NearText) (*Result, error) {
-		return nearText(ctx, t, rd, nv)
-	}
-}
-
-func nearText(ctx context.Context, t internal.Transport, rd api.RequestDefaults, nt NearText) (*Result, error) {
-	req := &api.SearchRequest{
-		RequestDefaults:  rd,
-		Limit:            nt.Limit,
-		AutoLimit:        nt.AutoLimit,
-		Offset:           nt.Offset,
-		After:            nt.After,
-		ReturnVectors:    nt.ReturnVectors,
-		ReturnMetadata:   api.ReturnMetadata(nt.ReturnMetadata),
-		ReturnProperties: marshalReturnProperties(nt.ReturnProperties, nt.ReturnNestedProperties),
-		ReturnReferences: marshalReturnReferences(nt.ReturnReferences),
-	}
-
-	req.NearText = &api.NearText{
-		Concepts:  nt.Concepts,
-		Distance:  nt.Similarity.Distance(),
-		Certainty: nt.Similarity.Certainty(),
-		MoveTo:    (*api.Move)(nt.MoveTo),
-		MoveAway:  (*api.Move)(nt.MoveAway),
-		Selection: api.Selection{
-			MMR: (*api.SelectionMMR)(nt.Selection.MMR()),
-		},
-	}
-
-	if nt.Target != nil {
-		req.NearText.Target = marshalSearchTarget(nt.Target)
-	}
-
-	if nt.groupBy != nil {
-		req.GroupBy = &api.GroupBy{
-			Property:       nt.groupBy.Property,
-			Limit:          nt.groupBy.ObjectLimit,
-			NumberOfGroups: nt.groupBy.NumberOfGroups,
-		}
-	}
-
-	var resp api.SearchResponse
-	if err := t.Do(ctx, req, &resp); err != nil {
-		return nil, fmt.Errorf("near vector: %w", err)
-	}
-
-	// nearText was called from the NearTextFunc.GroupBy() method.
-	// This means we should put GroupByResult in the context, as the first
-	// return value will be discarded.
-	if nt.groupBy != nil {
-		groups := internal.MakeMap[string, Group[map[string]any]](len(resp.GroupByResults))
-		objects := make([]GroupObject[map[string]any], 0)
-		for _, group := range resp.GroupByResults {
-
-			objects = slices.Grow(objects, len(group.Objects))
-			for _, obj := range group.Objects {
-				objects = append(objects, GroupObject[map[string]any]{
-					BelongsToGroup: group.Name,
-					Object:         unmarshalObject(&obj.Object),
-				})
+	return func(ctx context.Context, nt NearText) (*Result, error) {
+		return query(ctx, t, request{
+			RequestDefaults:        rd,
+			Limit:                  nt.Limit,
+			AutoLimit:              nt.AutoLimit,
+			Offset:                 nt.Offset,
+			After:                  nt.After,
+			ReturnVectors:          nt.ReturnVectors,
+			ReturnMetadata:         nt.ReturnMetadata,
+			ReturnProperties:       nt.ReturnProperties,
+			ReturnNestedProperties: nt.ReturnNestedProperties,
+			ReturnReferences:       nt.ReturnReferences,
+			GroupBy:                nt.groupBy,
+		}, func(req *api.SearchRequest) {
+			req.NearText = &api.NearText{
+				Concepts:  nt.Concepts,
+				Distance:  nt.Similarity.Distance(),
+				Certainty: nt.Similarity.Certainty(),
+				MoveTo:    (*api.Move)(nt.MoveTo),
+				MoveAway:  (*api.Move)(nt.MoveAway),
+				Selection: api.Selection{
+					MMR: (*api.SelectionMMR)(nt.Selection.MMR()),
+				},
 			}
-
-			// Create a view into the objects slice rather than allocating a separate one.
-			from, to := len(objects)-len(group.Objects), len(objects)
-			groups[group.Name] = Group[map[string]any]{
-				Name:        group.Name,
-				MinDistance: group.MinDistance,
-				MaxDistance: group.MaxDistance,
-				Size:        group.Size,
-				Objects:     objects[from:to],
+			if nt.Target != nil {
+				req.NearText.Target = marshalSearchTarget(nt.Target)
 			}
-		}
-		setGroupByResult(ctx, &GroupByResult{
-			Took:    resp.Took,
-			Groups:  groups,
-			Objects: objects,
 		})
-		return nil, nil
 	}
-
-	objects := make([]Object[map[string]any], len(resp.Results))
-	for i, obj := range resp.Results {
-		objects[i] = unmarshalObject(&obj)
-	}
-	return &Result{Took: resp.Took, Objects: objects}, nil
 }
 
-// GroupBy runs near vector search with a GroupBy clause.
-func (nvf NearTextFunc) GroupBy(ctx context.Context, nv NearText, groupBy GroupBy) (*GroupByResult, error) {
-	nv.groupBy = &groupBy
-	ctx = contextWithGroupByResult(ctx) // safe to reassign since we hold the copy of the original context.
-	if _, err := nvf(ctx, nv); err != nil {
-		return nil, err
-	}
-	return getGroupByResult(ctx), nil
+// GroupBy runs near text search with a GroupBy clause.
+func (ntf NearTextFunc) GroupBy(ctx context.Context, nt NearText, groupBy GroupBy) (*GroupByResult, error) {
+	nt.groupBy = &groupBy
+	return queryGroupBy(ctx, ntf, nt)
 }

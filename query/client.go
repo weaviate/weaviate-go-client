@@ -2,8 +2,11 @@ package query
 
 import (
 	"context"
+	"fmt"
+	"slices"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
@@ -99,6 +102,88 @@ type GroupObject[T any] struct {
 	BelongsToGroup string
 }
 
+type request struct {
+	api.RequestDefaults
+	Limit                  int32
+	Offset                 int32
+	AutoLimit              int32
+	After                  uuid.UUID
+	ReturnMetadata         ReturnMetadata
+	ReturnVectors          []string
+	ReturnReferences       []Reference
+	ReturnNestedProperties []NestedProperty
+	ReturnProperties       []string
+	GroupBy                *GroupBy
+}
+
+func query(ctx context.Context, t internal.Transport, r request, f func(*api.SearchRequest)) (*Result, error) {
+	req := &api.SearchRequest{
+		RequestDefaults:  r.RequestDefaults,
+		Limit:            r.Limit,
+		AutoLimit:        r.AutoLimit,
+		Offset:           r.Offset,
+		After:            r.After,
+		ReturnVectors:    r.ReturnVectors,
+		ReturnMetadata:   api.ReturnMetadata(r.ReturnMetadata),
+		ReturnProperties: marshalReturnProperties(r.ReturnProperties, r.ReturnNestedProperties),
+		ReturnReferences: marshalReturnReferences(r.ReturnReferences),
+	}
+
+	f(req)
+
+	if r.GroupBy != nil {
+		req.GroupBy = &api.GroupBy{
+			Property:       r.GroupBy.Property,
+			Limit:          r.GroupBy.ObjectLimit,
+			NumberOfGroups: r.GroupBy.NumberOfGroups,
+		}
+	}
+
+	var resp api.SearchResponse
+	if err := t.Do(ctx, req, &resp); err != nil {
+		return nil, fmt.Errorf("near vector: %w", err)
+	}
+
+	// query was called from the GroupBy() method. This means we should put
+	// GroupByResult in the context, as the first return value will be discarded.
+	if r.GroupBy != nil {
+		groups := internal.MakeMap[string, Group[map[string]any]](len(resp.GroupByResults))
+		objects := make([]GroupObject[map[string]any], 0)
+		for _, group := range resp.GroupByResults {
+
+			objects = slices.Grow(objects, len(group.Objects))
+			for _, obj := range group.Objects {
+				objects = append(objects, GroupObject[map[string]any]{
+					BelongsToGroup: group.Name,
+					Object:         unmarshalObject(&obj.Object),
+				})
+			}
+
+			// Create a view into the objects slice rather than allocating a separate one.
+			from, to := len(objects)-len(group.Objects), len(objects)
+			groups[group.Name] = Group[map[string]any]{
+				Name:        group.Name,
+				MinDistance: group.MinDistance,
+				MaxDistance: group.MaxDistance,
+				Size:        group.Size,
+				Objects:     objects[from:to],
+			}
+		}
+		internal.SetContextValue(ctx, groupByResultKey, &GroupByResult{
+			Took:    resp.Took,
+			Groups:  groups,
+			Objects: objects,
+		})
+		return nil, nil
+	}
+
+	objects := make([]Object[map[string]any], len(resp.Results))
+	for i, obj := range resp.Results {
+		objects[i] = unmarshalObject(&obj)
+	}
+	return &Result{Took: resp.Took, Objects: objects}, nil
+}
+
 func marshalReturnProperties(properties []string, nested []NestedProperty) []api.ReturnProperty {
 	if len(properties)+len(nested) == 0 {
 		return nil
@@ -182,18 +267,10 @@ func unmarshalObject(o *api.Object) Object[map[string]any] {
 // groupByResultKey is used to pass grouped query results to the GroupBy caller.
 var groupByResultKey = internal.ContextKey{}
 
-// contextWithGorupByResult creates a placeholder for *GroupByResult in the ctx.Values store.
-func contextWithGroupByResult(ctx context.Context) context.Context {
-	return internal.ContextWithPlaceholder[GroupByResult](ctx, groupByResultKey)
-}
-
-// getGroupByResult extracts *GroupByResult from the context.
-func getGroupByResult(ctx context.Context) *GroupByResult {
-	return internal.ValueFromContext[GroupByResult](ctx, groupByResultKey)
-}
-
-// setGroupByResult replaces *GroupByResult placeholder
-// in the context with the value at r.
-func setGroupByResult(ctx context.Context, r *GroupByResult) {
-	internal.SetContextValue(ctx, groupByResultKey, r)
+func queryGroupBy[In any](ctx context.Context, f func(context.Context, In) (*Result, error), in In) (*GroupByResult, error) {
+	ctx = internal.ContextWithPlaceholder[GroupByResult](ctx, groupByResultKey)
+	if _, err := f(ctx, in); err != nil {
+		return nil, err
+	}
+	return internal.ValueFromContext[GroupByResult](ctx, groupByResultKey), nil
 }
