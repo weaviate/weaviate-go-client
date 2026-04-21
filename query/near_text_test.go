@@ -101,8 +101,6 @@ func TestNearText(t *testing.T) {
 								"title":        "I Like Birds",
 								"duration_sec": 151,
 							},
-							Vectors:    make(types.Vectors, 0),
-							References: make(map[string][]types.Object[map[string]any], 0),
 						},
 					},
 				},
@@ -124,7 +122,7 @@ func TestNearText(t *testing.T) {
 
 			got, err := c.NearText(t.Context(), tt.nt)
 			tt.err.Require(t, err, "near vector query")
-			require.Equal(t, tt.want, got, "query result")
+			require.EqualExportedValues(t, tt.want, got, "query result")
 		})
 	}
 }
