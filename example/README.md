@@ -12,6 +12,6 @@ To run locally, [create a new sandbox cluster](https://docs.weaviate.io/cloud/ma
 ```sh
 export WEAVIATE_HOST=<wcd_cluster_url>
 export WEAVIATE_API_KEY=<api_key>
-go run ./example/basic
+pushd ./example/basic && go run . && popd
 ```
 
