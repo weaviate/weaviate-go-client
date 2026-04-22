@@ -24,4 +24,7 @@ jobs:
           go-version: "1.24"
           cache: true
       - name: example/${{ matrix.EXAMPLE }}
-        run: go run ./example/${{ matrix.EXAMPLE }}
+        run: -|
+          pushd ./example/${{ matrix.EXAMPLE }} \
+          && go run . \
+          && popd
