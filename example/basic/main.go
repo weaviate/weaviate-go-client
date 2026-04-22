@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/weaviate/weaviate-go-client/v6"
+	"github.com/weaviate/weaviate-go-client/v6/aggregate"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/query"
 )
@@ -129,5 +130,23 @@ func main() {
 	log.Print("NearVector[max_distance=.56] returned these 3 entries:")
 	for _, obj := range decoded {
 		fmt.Printf("\t- [%s](%s) distance=%f\n", obj.Properties.Name, obj.Properties.URL, *obj.Metadata.Distance)
+	}
+
+	grouped, err := products.Aggregate.OverAll.GroupBy(ctx, aggregate.OverAll{
+		Text: []aggregate.Text{
+			{Property: "name", TopOccurrences: true, TopOccurencesCutoff: 10},
+		},
+	}, aggregate.GroupBy{Property: "name", Limit: 5})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, group := range grouped.Groups {
+		log.Printf("Group %q has %d objects (value=%q)", group.Property, len(group.Aggregations.Text), group.Value)
+		for _, txt := range group.Aggregations.Text {
+			for _, top := range txt.TopOccurrences {
+				fmt.Printf("\t- %q occurs %d times\n", top.Value, top.OccursTimes)
+			}
+		}
 	}
 }
