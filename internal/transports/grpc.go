@@ -30,14 +30,12 @@ type GRPCConfig[Client any] struct {
 type NewGRPCClientFunc[Client any] func(grpc.ClientConnInterface) Client
 
 // RPC describes a gRPC request in the given Client.
-type RPC[Client any] interface {
-	Do(context.Context, Client) error
-}
+type RPC[Client any] func(context.Context, Client) error
 
 func (c *GRPC[Client]) Do(ctx context.Context, rpc RPC[Client]) error {
 	dev.AssertNotNil(rpc, "rpc")
 
-	if err := rpc.Do(ctx, c.client); err != nil {
+	if err := rpc(ctx, c.client); err != nil {
 		return fmt.Errorf("grpc: %w", err)
 	}
 	return nil
@@ -58,9 +56,7 @@ type GRPC[Client any] struct {
 func NewGRPC[Client any](cfg GRPCConfig[Client]) (*GRPC[Client], error) {
 	dev.AssertNotNil(cfg.NewGRPCClient, "cfg.NewGRPCClient")
 
-	callOpts := []grpc.CallOption{
-		grpc.Header(cfg.Header),
-	}
+	var callOpts []grpc.CallOption
 	if cfg.MaxMessageSize > 0 {
 		callOpts = append(callOpts,
 			grpc.MaxCallSendMsgSize(cfg.MaxMessageSize),
@@ -70,6 +66,10 @@ func NewGRPC[Client any](cfg GRPCConfig[Client]) (*GRPC[Client], error) {
 
 	dialOpts := []grpc.DialOption{
 		grpc.WithDefaultCallOptions(callOpts...),
+	}
+
+	if cfg.Header != nil {
+		dialOpts = append(dialOpts, withDefaultHeader(*cfg.Header))
 	}
 
 	transportCreds := insecure.NewCredentials()
@@ -104,4 +104,18 @@ var _ io.Closer = (*GRPC[any])(nil)
 
 func (c *GRPC[Client]) Close() error {
 	return c.channel.Close()
+}
+
+// withDefaultHeader creates an interceptor that adds md headers to the request context.
+func withDefaultHeader(md metadata.MD) grpc.DialOption {
+	return grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		var pairs []string
+		for k, v := range md {
+			if len(v) == 0 {
+				continue
+			}
+			pairs = append(pairs, k, v[0])
+		}
+		return invoker(metadata.AppendToOutgoingContext(ctx, pairs...), method, req, reply, cc, opts...)
+	})
 }

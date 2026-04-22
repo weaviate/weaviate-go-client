@@ -156,8 +156,11 @@ func TestTransport_Do(t *testing.T) {
 	})
 
 	t.Run("grpc message", func(t *testing.T) {
+		fakeGRPC := gRPCFunc(func(ctx context.Context, rpc transports.RPC[proto.WeaviateClient]) error {
+			return rpc(ctx, nil)
+		})
 		t.Run("ok", func(t *testing.T) {
-			tport := transport{gRPC: new(fakeGRPC)}
+			tport := transport{gRPC: fakeGRPC}
 
 			// Actual request is captured by message itself,
 			// because unlike transports.Endpoint, each transports.RPC
@@ -180,7 +183,7 @@ func TestTransport_Do(t *testing.T) {
 		})
 
 		t.Run("error", func(t *testing.T) {
-			tport := transport{gRPC: new(fakeGRPC)}
+			tport := transport{gRPC: fakeGRPC}
 
 			var resp reply[proto.SearchReply]
 			req := &message[proto.SearchRequest, proto.SearchReply]{
@@ -271,14 +274,6 @@ type gRPCFunc func(ctx context.Context, rpc transports.RPC[proto.WeaviateClient]
 
 func (f gRPCFunc) Do(ctx context.Context, rpc transports.RPC[proto.WeaviateClient]) error {
 	return f(ctx, rpc)
-}
-
-// fakeGRPC calls rpc.Do with nil [proto.WeaviateClient].
-// It's a dummy that should be used together with [message].
-type fakeGRPC struct{}
-
-func (*fakeGRPC) Do(ctx context.Context, rpc transports.RPC[proto.WeaviateClient]) error {
-	return rpc.Do(ctx, nil)
 }
 
 // message implements [Message] for testing.
