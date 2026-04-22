@@ -126,7 +126,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	log.Print("NearVector[max_distance=.56] returned these 3 entries:")
 	for _, obj := range decoded {
-		log.Printf("[%s](%s) distance=%d", obj.Properties.Name, obj.Properties.URL, obj.Metadata.Distance)
+		fmt.Printf("\t- [%s](%s) distance=%f\n", obj.Properties.Name, obj.Properties.URL, *obj.Metadata.Distance)
 	}
 }
