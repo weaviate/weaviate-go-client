@@ -144,14 +144,14 @@ func (t *transport) Do(ctx context.Context, req any, dest any) error {
 	}
 }
 
-func newRPC[In RequestMessage, Out ReplyMessage](req Message[In, Out], dest any) rpcFunc {
+func newRPC[In RequestMessage, Out ReplyMessage](req Message[In, Out], dest any) transports.RPC[proto.WeaviateClient] {
 	dev.AssertType[MessageUnmarshaler[Out]](dest, "dest")
 	out := dest.(MessageUnmarshaler[Out])
 
 	body := req.Body()
 	dev.AssertNotNil(body, "body")
 
-	return rpcFunc(func(ctx context.Context, wc proto.WeaviateClient) error {
+	return func(ctx context.Context, wc proto.WeaviateClient) error {
 		in, err := body.MarshalMessage()
 		if err != nil {
 			return fmt.Errorf("%s: marshal message: %w", req, err)
@@ -168,16 +168,7 @@ func newRPC[In RequestMessage, Out ReplyMessage](req Message[In, Out], dest any)
 			return err
 		}
 		return nil
-	})
-}
-
-// rpcFunc implements [transports.RPC] as a function.
-type rpcFunc func(context.Context, proto.WeaviateClient) error
-
-var _ transports.RPC[proto.WeaviateClient] = (*rpcFunc)(nil)
-
-func (f rpcFunc) Do(ctx context.Context, wc proto.WeaviateClient) error {
-	return f(ctx, wc)
+	}
 }
 
 // unmarshal unmarshals reply Out into dest. A nil dest means the reply can be ignored,
