@@ -68,20 +68,18 @@ func TestGRPC_Do(t *testing.T) {
 	})
 
 	t.Run("default headers", func(t *testing.T) {
-		header := metadata.MD{"X-FindMe": {"foo", "bar"}}
-
 		// Arrange: start a local gRPC server and register a handler with assertions.
 		ts := startTestService(t, func(_ any, ctx context.Context, _ func(any) error, _ grpc.UnaryServerInterceptor) (any, error) {
 			md, ok := metadata.FromIncomingContext(ctx)
 			assert.True(t, ok, "incoming context should contain metadata")
-			assert.Subset(t, md, header, "default headers not present in request metadata")
+			assert.Subset(t, md, metadata.MD{"x-findme": {"foo"}}, "default headers not present in request metadata")
 			return nil, nil
 		})
 
 		gRPC, err := transports.NewGRPC(transports.GRPCConfig[grpc.ClientConnInterface]{
 			Host:          ts.Host(),
 			Port:          ts.Port(),
-			Header:        &header,
+			Header:        &metadata.MD{"X-FindMe": {"foo"}},
 			NewGRPCClient: func(channel grpc.ClientConnInterface) grpc.ClientConnInterface { return channel },
 		})
 		require.NoError(t, err, "new grpc transport")

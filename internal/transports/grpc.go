@@ -109,6 +109,13 @@ func (c *GRPC[Client]) Close() error {
 // withDefaultHeader creates an interceptor that adds md headers to the request context.
 func withDefaultHeader(md metadata.MD) grpc.DialOption {
 	return grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		return invoker(metadata.NewOutgoingContext(ctx, md), method, req, reply, cc, opts...)
+		var pairs []string
+		for k, v := range md {
+			if len(v) == 0 {
+				continue
+			}
+			pairs = append(pairs, k, v[0])
+		}
+		return invoker(metadata.AppendToOutgoingContext(ctx, pairs...), method, req, reply, cc, opts...)
 	})
 }
