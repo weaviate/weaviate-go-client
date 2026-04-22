@@ -1,3 +1,4 @@
+//nolint:errcheck
 package transports_test
 
 import (
