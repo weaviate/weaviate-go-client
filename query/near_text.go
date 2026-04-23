@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 )
 
 type NearText struct {
@@ -13,6 +14,7 @@ type NearText struct {
 	Offset                 int32            // Skip the first N objects in the collection.
 	AutoLimit              int32            // Return objects in the first N similarity clusters.
 	After                  uuid.UUID        // Skip all objects before the one with this ID.
+	Filter                 filter.Expr      // Filter results based on their properties.
 	ReturnMetadata         ReturnMetadata   // Select query and object metadata to return for each object.
 	ReturnVectors          []string         // List vectors to return for each object in the result set.
 	ReturnReferences       []Reference      // Select reference properties to return.
