@@ -712,3 +712,21 @@ func (cl ConsistencyLevel) proto() *proto.ConsistencyLevel {
 		return nil
 	}
 }
+
+type FilterOperator proto.Filters_Operator
+
+const (
+	FilterOperatorNot              FilterOperator = FilterOperator(proto.Filters_OPERATOR_NOT)
+	FilterOperatorAnd              FilterOperator = FilterOperator(proto.Filters_OPERATOR_AND)
+	FilterOperatorOr               FilterOperator = FilterOperator(proto.Filters_OPERATOR_OR)
+	FilterOperatorEqual            FilterOperator = FilterOperator(proto.Filters_OPERATOR_EQUAL)
+	FilterOperatorLessThan         FilterOperator = FilterOperator(proto.Filters_OPERATOR_LESS_THAN)
+	FilterOperatorLessThanEqual    FilterOperator = FilterOperator(proto.Filters_OPERATOR_LESS_THAN_EQUAL)
+	FilterOperatorGreaterThan      FilterOperator = FilterOperator(proto.Filters_OPERATOR_GREATER_THAN)
+	FilterOperatorGreaterThanEqual FilterOperator = FilterOperator(proto.Filters_OPERATOR_GREATER_THAN_EQUAL)
+	FilterOperatorLike             FilterOperator = FilterOperator(proto.Filters_OPERATOR_LIKE)
+	FilterOperatorIsNull           FilterOperator = FilterOperator(proto.Filters_OPERATOR_IS_NULL)
+	FilterOperatorContainsAll      FilterOperator = FilterOperator(proto.Filters_OPERATOR_CONTAINS_ALL)
+	FilterOperatorContainsAny      FilterOperator = FilterOperator(proto.Filters_OPERATOR_CONTAINS_ANY)
+	FilterOperatorContainsNone     FilterOperator = FilterOperator(proto.Filters_OPERATOR_CONTAINS_NONE)
+)
