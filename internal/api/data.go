@@ -1,15 +1,11 @@
 package api
 
 import (
-	"bytes"
 	"encoding"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"maps"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
@@ -42,16 +38,11 @@ func (r *InsertObjectRequest) Query() url.Values {
 func (r *InsertObjectRequest) Body() any { return r }
 
 // InsertObjectResponses reads the data for the newly inserted object.
-type InsertObjectResponse struct {
-	UUID          uuid.UUID
-	Properties    map[string]any
-	References    ObjectReferences
-	Vectors       Vectors
-	CreatedAt     time.Time
-	LastUpdatedAt time.Time
-}
+type InsertObjectResponse uuid.UUID
 
 var _ json.Unmarshaler = (*InsertObjectResponse)(nil)
+
+func (r *InsertObjectResponse) UUID() *uuid.UUID { return (*uuid.UUID)(r) }
 
 type (
 	ObjectReferences map[string][]ObjectReference
@@ -61,10 +52,7 @@ type (
 	}
 )
 
-var (
-	_ encoding.TextMarshaler   = (*ObjectReference)(nil)
-	_ encoding.TextUnmarshaler = (*ObjectReference)(nil)
-)
+var _ encoding.TextMarshaler = (*ObjectReference)(nil)
 
 var (
 	beaconPrefix = []byte("weaviate://localhost/")
@@ -84,29 +72,6 @@ func (o *ObjectReference) MarshalText() ([]byte, error) {
 		b = append(b, beaconSep...)
 	}
 	return append(b, id...), nil
-}
-
-func (o *ObjectReference) UnmarshalText(text []byte) error {
-	text, ok := bytes.CutPrefix(text, beaconPrefix)
-	if !ok {
-		return errors.New("not a beacon")
-	}
-	parts := bytes.Split(text, beaconSep)
-
-	if len(parts) == 2 {
-		o.Collection, parts = string(parts[0]), parts[1:]
-	}
-
-	if len(parts) != 1 {
-		return fmt.Errorf("beacon %s is malformed", string(text))
-	}
-
-	id, err := uuid.ParseBytes(parts[0])
-	if err != nil {
-		return err
-	}
-	o.UUID = id
-	return nil
 }
 
 // MarshalJSON implements json.Marshaler via [rest.Object].
@@ -140,40 +105,11 @@ func (r *InsertObjectRequest) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler via [rest.Object].
 func (i *InsertObjectResponse) UnmarshalJSON(data []byte) error {
-	var o struct {
-		rest.Object
-		Properties map[string]json.RawMessage `json:"properties,omitempty"`
-		Vectors    Vectors                    `json:"vectors,omitempty"`
-	}
+	var o rest.Object
 	if err := json.Unmarshal(data, &o); err != nil {
 		return err
 	}
-
-	// Expect most of the properties will be data, not references.
-	properties := make(map[string]any, len(o.Properties))
-	references := make(ObjectReferences)
-	for k, data := range o.Properties {
-		var refs []ObjectReference
-		if err := json.Unmarshal(data, &refs); err == nil {
-			references[k] = refs
-			continue
-		}
-
-		var v any
-		if err := json.Unmarshal(data, &v); err != nil {
-			return err
-		}
-		properties[k] = v
-	}
-
-	*i = InsertObjectResponse{
-		UUID:          *o.Id,
-		CreatedAt:     time.UnixMilli(o.CreationTimeUnix),
-		LastUpdatedAt: time.UnixMilli(o.LastUpdateTimeUnix),
-		Vectors:       o.Vectors,
-		Properties:    properties,
-		References:    references,
-	}
+	*i = InsertObjectResponse(*o.Id)
 	return nil
 }
 
@@ -209,21 +145,6 @@ func (r *ReplaceObjectRequest) Body() any {
 		References: r.References,
 		Vectors:    r.Vectors,
 	}
-}
-
-type ReplaceObjectResponse InsertObjectResponse
-
-var _ json.Unmarshaler = (*ReplaceObjectResponse)(nil)
-
-func (r *ReplaceObjectResponse) UnmarshalJSON(data []byte) error {
-	// InsertObjectResponse implements json.Unmarshaler,
-	// and response structs are identical.
-	var ior InsertObjectResponse
-	if err := json.Unmarshal(data, &ior); err != nil {
-		return err
-	}
-	*r = ReplaceObjectResponse(ior)
-	return nil
 }
 
 // DeleteObjectRequest deletes an object by its UUID.
