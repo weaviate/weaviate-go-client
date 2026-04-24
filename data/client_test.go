@@ -28,25 +28,16 @@ func TestClient_Insert(t *testing.T) {
 		name   string
 		object *data.Object // Object to be inserted.
 		stubs  []testkit.Stub[api.InsertObjectRequest, api.InsertObjectResponse]
-		want   *types.Object[map[string]any] // Expected return value.
-		err    testkit.Error                 // Expected error.
+		want   *uuid.UUID    // Expected return value.
+		err    testkit.Error // Expected error.
 	}{
 		{
 			name: "nil object",
 			stubs: []testkit.Stub[api.InsertObjectRequest, api.InsertObjectResponse]{{
-				Request: &api.InsertObjectRequest{RequestDefaults: rd},
-				Response: api.InsertObjectResponse{
-					UUID:          uuid.Nil,
-					CreatedAt:     testkit.Now,
-					LastUpdatedAt: testkit.Now,
-				},
+				Request:  &api.InsertObjectRequest{RequestDefaults: rd},
+				Response: api.InsertObjectResponse(testkit.UUID),
 			}},
-			want: &types.Object[map[string]any]{
-				UUID:          uuid.Nil,
-				CreatedAt:     &testkit.Now,
-				LastUpdatedAt: &testkit.Now,
-				References:    (data.References)(nil), // References must be a typed null.
-			},
+			want: &testkit.UUID,
 		},
 		{
 			name: "with data",
@@ -57,8 +48,8 @@ func TestClient_Insert(t *testing.T) {
 				Properties: map[string]any{"foo": "bar"},
 				References: data.References{
 					"ref": []data.Reference{
-						{Collection: "Foo", UUID: uuid.Nil},
-						{Collection: "Bar", UUID: uuid.Nil},
+						{Collection: "Foo", UUID: testkit.UUID},
+						{Collection: "Bar", UUID: testkit.UUID},
 					},
 				},
 			},
@@ -71,42 +62,14 @@ func TestClient_Insert(t *testing.T) {
 					Properties: map[string]any{"foo": "bar"},
 					References: api.ObjectReferences{
 						"ref": []api.ObjectReference{
-							{Collection: "Foo", UUID: uuid.Nil},
-							{Collection: "Bar", UUID: uuid.Nil},
+							{Collection: "Foo", UUID: testkit.UUID},
+							{Collection: "Bar", UUID: testkit.UUID},
 						},
 					},
 				},
-				Response: api.InsertObjectResponse{
-					UUID:          uuid.Nil,
-					CreatedAt:     testkit.Now,
-					LastUpdatedAt: testkit.Now,
-					Vectors: map[string]api.Vector{
-						"single": {Name: "single", Single: []float32{1, 2, 3}},
-					},
-					Properties: map[string]any{"foo": "bar"},
-					References: api.ObjectReferences{
-						"ref": []api.ObjectReference{
-							{Collection: "Foo", UUID: uuid.Nil},
-							{Collection: "Bar", UUID: uuid.Nil},
-						},
-					},
-				},
+				Response: api.InsertObjectResponse(testkit.UUID),
 			}},
-			want: &types.Object[map[string]any]{
-				UUID:          uuid.Nil,
-				CreatedAt:     &testkit.Now,
-				LastUpdatedAt: &testkit.Now,
-				Vectors: map[string]types.Vector{
-					"single": {Name: "single", Single: []float32{1, 2, 3}},
-				},
-				Properties: map[string]any{"foo": "bar"},
-				References: data.References{
-					"ref": []data.Reference{
-						{Collection: "Foo", UUID: uuid.Nil},
-						{Collection: "Bar", UUID: uuid.Nil},
-					},
-				},
-			},
+			want: &testkit.UUID,
 		},
 		{
 			name: "with error",
@@ -137,66 +100,41 @@ func TestClient_Replace(t *testing.T) {
 
 	for _, tt := range []struct {
 		name   string
-		object data.Object                   // Object to be replaced.
-		want   *types.Object[map[string]any] // Expected return value.
-		stub   []testkit.Stub[api.ReplaceObjectRequest, api.ReplaceObjectResponse]
+		object data.Object // Object to be replaced.
+		stub   []testkit.Stub[api.ReplaceObjectRequest, any]
 		err    testkit.Error
 	}{
 		{
 			name: "with data",
 			object: data.Object{
-				UUID: &uuid.Nil,
+				UUID: &testkit.UUID,
 				Vectors: []types.Vector{
 					{Name: "single", Single: []float32{1, 2, 3}},
 				},
 				Properties: map[string]any{"foo": "bar"},
 				References: data.References{
 					"ref": []data.Reference{
-						{Collection: "Foo", UUID: uuid.Nil},
-						{Collection: "Bar", UUID: uuid.Nil},
+						{Collection: "Foo", UUID: testkit.UUID},
+						{Collection: "Bar", UUID: testkit.UUID},
 					},
 				},
 			},
-			stub: []testkit.Stub[api.ReplaceObjectRequest, api.ReplaceObjectResponse]{{
+			stub: []testkit.Stub[api.ReplaceObjectRequest, any]{{
 				Request: &api.ReplaceObjectRequest{
 					RequestDefaults: rd,
-					UUID:            &uuid.Nil,
+					UUID:            &testkit.UUID,
 					Vectors: []api.Vector{
 						{Name: "single", Single: []float32{1, 2, 3}},
 					},
 					Properties: map[string]any{"foo": "bar"},
 					References: api.ObjectReferences{
 						"ref": []api.ObjectReference{
-							{Collection: "Foo", UUID: uuid.Nil},
-							{Collection: "Bar", UUID: uuid.Nil},
-						},
-					},
-				},
-				Response: api.ReplaceObjectResponse{
-					UUID:          uuid.Nil,
-					CreatedAt:     testkit.Now,
-					LastUpdatedAt: testkit.Now,
-					Properties:    map[string]any{"foo": "bar"},
-					References: api.ObjectReferences{
-						"ref": []api.ObjectReference{
-							{Collection: "Foo", UUID: uuid.Nil},
-							{Collection: "Bar", UUID: uuid.Nil},
+							{Collection: "Foo", UUID: testkit.UUID},
+							{Collection: "Bar", UUID: testkit.UUID},
 						},
 					},
 				},
 			}},
-			want: &types.Object[map[string]any]{
-				UUID:          uuid.Nil,
-				CreatedAt:     &testkit.Now,
-				LastUpdatedAt: &testkit.Now,
-				Properties:    map[string]any{"foo": "bar"},
-				References: data.References{
-					"ref": []data.Reference{
-						{Collection: "Foo", UUID: uuid.Nil},
-						{Collection: "Bar", UUID: uuid.Nil},
-					},
-				},
-			},
 		},
 		{
 			name: "error on nil uuid",
@@ -204,8 +142,8 @@ func TestClient_Replace(t *testing.T) {
 		},
 		{
 			name:   "with error",
-			object: data.Object{UUID: &uuid.Nil},
-			stub: []testkit.Stub[api.ReplaceObjectRequest, api.ReplaceObjectResponse]{
+			object: data.Object{UUID: &testkit.UUID},
+			stub: []testkit.Stub[api.ReplaceObjectRequest, any]{
 				{Err: testkit.ErrWhaam},
 			},
 			err: testkit.ExpectError,
@@ -216,9 +154,8 @@ func TestClient_Replace(t *testing.T) {
 			c := data.NewClient(transport, rd)
 			require.NotNil(t, c, "nil client")
 
-			got, err := c.Replace(t.Context(), tt.object)
+			err := c.Replace(t.Context(), tt.object)
 			tt.err.Require(t, err, "replace error")
-			require.Equal(t, tt.want, got, "returned object")
 		})
 	}
 }
@@ -238,17 +175,17 @@ func TestClient_Delete(t *testing.T) {
 	}{
 		{
 			name: "ok",
-			uuid: uuid.Nil,
+			uuid: testkit.UUID,
 			stub: []testkit.Stub[api.DeleteObjectRequest, any]{{
 				Request: &api.DeleteObjectRequest{
 					RequestDefaults: rd,
-					UUID:            uuid.Nil,
+					UUID:            testkit.UUID,
 				},
 			}},
 		},
 		{
 			name: "with error",
-			uuid: uuid.Nil,
+			uuid: testkit.UUID,
 			stub: []testkit.Stub[api.DeleteObjectRequest, any]{
 				{Err: testkit.ErrWhaam},
 			},
