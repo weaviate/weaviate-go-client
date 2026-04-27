@@ -18,37 +18,6 @@ import (
 	structpb "google.golang.org/protobuf/types/known/structpb"
 )
 
-// InsertObjectRequest inserts a new object into a collection.
-type InsertObjectRequest struct {
-	RequestDefaults
-	UUID       *uuid.UUID
-	Properties map[string]any
-	References ObjectReferences
-	Vectors    []Vector
-}
-
-var (
-	_ transports.Endpoint = (*InsertObjectRequest)(nil)
-	_ json.Marshaler      = (*InsertObjectRequest)(nil)
-)
-
-func (*InsertObjectRequest) Method() string { return http.MethodPost }
-func (*InsertObjectRequest) Path() string   { return "/objects" }
-func (r *InsertObjectRequest) Query() url.Values {
-	if r.ConsistencyLevel != consistencyLevelUndefined {
-		return url.Values{"consistency_level": {string(r.ConsistencyLevel)}}
-	}
-	return nil
-}
-func (r *InsertObjectRequest) Body() any { return r }
-
-// InsertObjectResponses reads the data for the newly inserted object.
-type InsertObjectResponse uuid.UUID
-
-var _ json.Unmarshaler = (*InsertObjectResponse)(nil)
-
-func (r *InsertObjectResponse) UUID() *uuid.UUID { return (*uuid.UUID)(r) }
-
 // InsertObjectBatchRequest inserts a batch of objects into a collection.
 type InsertObjectBatchRequest struct {
 	RequestDefaults
@@ -110,6 +79,8 @@ type InsertObjectBatchResponse struct {
 	Errors    []string // Error messages for failed objects. Aligned with Indices.
 }
 
+var _ transport.MessageUnmarshaler[proto.BatchObjectsReply] = (*InsertObjectBatchResponse)(nil)
+
 // UnmarshalMessage implements [transport.MessageUnmarshaler].
 func (r *InsertObjectBatchResponse) UnmarshalMessage(reply *proto.BatchObjectsReply) error {
 	*r = InsertObjectBatchResponse{
@@ -122,8 +93,6 @@ func (r *InsertObjectBatchResponse) UnmarshalMessage(reply *proto.BatchObjectsRe
 	}
 	return nil
 }
-
-var _ transport.MessageUnmarshaler[proto.BatchObjectsReply] = (*InsertObjectBatchResponse)(nil)
 
 type (
 	ObjectReferences map[string][]ObjectReference
@@ -156,7 +125,7 @@ func (o *ObjectReference) MarshalText() ([]byte, error) {
 }
 
 // MarshalJSON implements json.Marshaler via [rest.Object].
-func (r *InsertObjectRequest) MarshalJSON() ([]byte, error) {
+func (r *ReplaceObjectRequest) MarshalJSON() ([]byte, error) {
 	vectors := make(map[string]any, len(r.Vectors))
 	for _, v := range r.Vectors {
 		if v.Single != nil {
@@ -184,19 +153,15 @@ func (r *InsertObjectRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(req)
 }
 
-// UnmarshalJSON implements json.Unmarshaler via [rest.Object].
-func (i *InsertObjectResponse) UnmarshalJSON(data []byte) error {
-	var o rest.Object
-	if err := json.Unmarshal(data, &o); err != nil {
-		return err
-	}
-	*i = InsertObjectResponse(*o.Id)
-	return nil
-}
-
 // ReplaceObjectRequest mirrors InsertObjectRequest but uses PUT method.
 // The collection name is sent as a path parameter.
-type ReplaceObjectRequest InsertObjectRequest
+type ReplaceObjectRequest struct {
+	RequestDefaults
+	UUID       *uuid.UUID
+	Properties map[string]any
+	References ObjectReferences
+	Vectors    []Vector
+}
 
 var _ transports.Endpoint = (*ReplaceObjectRequest)(nil)
 
@@ -217,7 +182,7 @@ func (r *ReplaceObjectRequest) Body() any {
 
 	// InsertObjectRequest already implements json.Marshaler.
 	// For replace, CollectionName and UUID should not part of the payload.
-	return &InsertObjectRequest{
+	return &ReplaceObjectRequest{
 		RequestDefaults: RequestDefaults{
 			Tenant:           r.Tenant,
 			ConsistencyLevel: r.ConsistencyLevel,
