@@ -31,13 +31,15 @@ type MessageUnmarshaler[Out ReplyMessage] interface {
 // RequestMessage enumerates all gRPC requests supported by [proto.WeaviateClient].
 type RequestMessage interface {
 	proto.SearchRequest |
-		proto.AggregateRequest
+		proto.AggregateRequest |
+		proto.BatchObjectsRequest
 }
 
 // ReplyMessage enumerates gRPC replies supported by [proto.WeaviateClient].
 type ReplyMessage interface {
 	proto.SearchReply |
-		proto.AggregateReply
+		proto.AggregateReply |
+		proto.BatchObjectsReply
 }
 
 // MethodFunc is a method of the proto.WeaviateClient interface
