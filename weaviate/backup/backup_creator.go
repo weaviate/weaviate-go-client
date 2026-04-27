@@ -14,14 +14,15 @@ import (
 const waitTimeoutCreate = time.Second
 
 type BackupCreator struct {
-	connection        *connection.Connection
-	statusGetter      *BackupCreateStatusGetter
-	includeClasses    []string
-	excludeClasses    []string
-	backend           string
-	backupID          string
-	waitForCompletion bool
-	config            *models.BackupConfig
+	connection              *connection.Connection
+	statusGetter            *BackupCreateStatusGetter
+	includeClasses          []string
+	excludeClasses          []string
+	backend                 string
+	backupID                string
+	waitForCompletion       bool
+	incrementalBaseBackupID string
+	config                  *models.BackupConfig
 }
 
 func (c *BackupCreator) WithIncludeClassNames(classNames ...string) *BackupCreator {
@@ -46,6 +47,11 @@ func (c *BackupCreator) WithBackupID(backupID string) *BackupCreator {
 	return c
 }
 
+func (c *BackupCreator) WithIncrementalBaseBackupID(prefix string) *BackupCreator {
+	c.incrementalBaseBackupID = prefix
+	return c
+}
+
 // WithWaitForCompletion block until backup is created (succeeds or fails)
 func (c *BackupCreator) WithWaitForCompletion(waitForCompletion bool) *BackupCreator {
 	c.waitForCompletion = waitForCompletion
@@ -64,6 +70,10 @@ func (c *BackupCreator) Do(ctx context.Context) (*models.BackupCreateResponse, e
 		Include: c.includeClasses,
 		Exclude: c.excludeClasses,
 		Config:  c.config,
+	}
+
+	if c.incrementalBaseBackupID != "" {
+		payload.IncrementalBaseBackupID = &c.incrementalBaseBackupID
 	}
 
 	if c.waitForCompletion {

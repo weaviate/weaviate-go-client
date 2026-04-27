@@ -75,6 +75,20 @@ func TestBackups_integration(t *testing.T) {
 			assert.Empty(t, createResponse.Error)
 		})
 
+		t.Run("create incremental backup", func(t *testing.T) {
+			createResponse, err := client.Backup().Creator().
+				WithIncludeClassNames(className).
+				WithBackend(backend).
+				WithBackupID("incr_" + backupID).
+				WithIncrementalBaseBackupID(backupID).
+				WithConfig(&models.BackupConfig{CompressionLevel: models.BackupConfigCompressionLevelZstdBestSpeed}).
+				WithWaitForCompletion(true).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, createResponse)
+		})
+
 		t.Run("check data still exist", func(t *testing.T) {
 			assertAllPizzasExist(t, client)
 		})
