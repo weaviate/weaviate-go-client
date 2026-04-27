@@ -15,6 +15,7 @@ type Role struct {
 	Cluster     []ClusterPermission
 	Collections []CollectionsPermission
 	Data        []DataPermission
+	MCP         []MCPPermission
 	Nodes       []NodesPermission
 	Roles       []RolesPermission
 	Replicate   []ReplicatePermission
@@ -72,6 +73,22 @@ func (p ClusterPermission) ExtendRole(r *Role) {
 }
 
 func (p ClusterPermission) toWeaviate() []*models.Permission {
+	out := make([]*models.Permission, len(p.Actions))
+	for i, action := range p.Actions {
+		out[i] = &models.Permission{Action: &action}
+	}
+	return out
+}
+
+type MCPPermission struct {
+	Actions []string
+}
+
+func (p MCPPermission) ExtendRole(r *Role) {
+	r.MCP = append(r.MCP, p)
+}
+
+func (p MCPPermission) toWeaviate() []*models.Permission {
 	out := make([]*models.Permission, len(p.Actions))
 	for i, action := range p.Actions {
 		out[i] = &models.Permission{Action: &action}
@@ -283,6 +300,7 @@ func (r *Role) makeWeaviatePermissions() []*models.Permission {
 	appendPermissions(len(r.Cluster), func(i int) []*models.Permission { return r.Cluster[i].toWeaviate() })
 	appendPermissions(len(r.Collections), func(i int) []*models.Permission { return r.Collections[i].toWeaviate() })
 	appendPermissions(len(r.Data), func(i int) []*models.Permission { return r.Data[i].toWeaviate() })
+	appendPermissions(len(r.MCP), func(i int) []*models.Permission { return r.MCP[i].toWeaviate() })
 	appendPermissions(len(r.Nodes), func(i int) []*models.Permission { return r.Nodes[i].toWeaviate() })
 	appendPermissions(len(r.Roles), func(i int) []*models.Permission { return r.Roles[i].toWeaviate() })
 	appendPermissions(len(r.Replicate), func(i int) []*models.Permission { return r.Replicate[i].toWeaviate() })
@@ -308,6 +326,7 @@ func roleFromWeaviate(r *models.Role) Role {
 	backups := make(mergedPermissions)
 	collections := make(mergedPermissions)
 	data := make(mergedPermissions)
+	mcp := make(mergedPermissions)
 	nodes := make(mergedPermissions)
 	roles := make(mergedPermissions)
 	clusters := make(mergedPermissions)
@@ -395,6 +414,10 @@ func roleFromWeaviate(r *models.Role) Role {
 			clusters.Add(func(actions []string, _ ...string) Permission {
 				return ClusterPermission{Actions: actions}
 			}, *perm.Action)
+		case strings.HasSuffix(*perm.Action, "mcp"):
+			mcp.Add(func(actions []string, _ ...string) Permission {
+				return MCPPermission{Actions: actions}
+			}, *perm.Action)
 		case strings.HasSuffix(*perm.Action, "tenants"):
 			tenants.Add(func(actions []string, _ ...string) Permission {
 				return TenantsPermission{Actions: actions}
@@ -410,7 +433,7 @@ func roleFromWeaviate(r *models.Role) Role {
 			log.Printf("WARN: %q action belongs to an unrecognized group, try updating the client to the latest version", *perm.Action)
 		}
 	}
-	return NewRole(*r.Name, backups, collections, data, nodes, roles, replicate, alias, clusters, tenants, users, groups)
+	return NewRole(*r.Name, backups, collections, data, mcp, nodes, roles, replicate, alias, clusters, tenants, users, groups)
 }
 
 // mergedPermissions groups permissions by resource.
