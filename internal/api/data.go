@@ -7,10 +7,14 @@ import (
 	"net/http"
 	"net/url"
 
+	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
+
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 )
 
 // InsertObjectRequest inserts a new object into a collection.
@@ -43,6 +47,57 @@ type InsertObjectResponse uuid.UUID
 var _ json.Unmarshaler = (*InsertObjectResponse)(nil)
 
 func (r *InsertObjectResponse) UUID() *uuid.UUID { return (*uuid.UUID)(r) }
+
+// InsertObjectBatchRequest inserts a batch of objects into a collection.
+type InsertObjectBatchRequest struct {
+	RequestDefaults
+	Objects []BatchObject
+}
+
+func (*InsertObjectBatchRequest) Method() transport.MethodFunc[proto.BatchObjectsRequest, proto.BatchObjectsReply] {
+	return proto.WeaviateClient.BatchObjects
+}
+
+func (r *InsertObjectBatchRequest) Body() transport.MessageMarshaler[proto.BatchObjectsRequest] {
+	return r
+}
+
+type BatchObject struct {
+	// Batch API does not allow inserting objects without UUIDs,
+	// the way POST /objects does. Normally, api package's policy
+	// would be to deal with such quirks internally and not expose
+	// that to the caller.
+	// However, in order to map an error from the batch response
+	// to the right UUID on return, the caller MUST know the UUID
+	// prior to sending the request.
+	UUID       uuid.UUID
+	Properties map[string]any
+	References ObjectReferences
+	Vectors    []Vector
+}
+
+var (
+	_ transport.Message[proto.BatchObjectsRequest, proto.BatchObjectsReply] = (*InsertObjectBatchRequest)(nil)
+	_ transport.MessageMarshaler[proto.BatchObjectsRequest]                 = (*InsertObjectBatchRequest)(nil)
+)
+
+// MarshalMessage implements [transport.MessageMarshaler].
+func (r *InsertObjectBatchRequest) MarshalMessage() (*proto.BatchObjectsRequest, error) {
+	dev.AssertNotNil(r, "r")
+	batch := make([]*proto.BatchObject, len(r.Objects))
+	for i := range r.Objects {
+		bo, err := marshalBatchObject(&r.Objects[i], r.RequestDefaults)
+		if err != nil {
+			return nil, err
+		}
+		batch[i] = bo
+	}
+
+	return &proto.BatchObjectsRequest{
+		ConsistencyLevel: r.ConsistencyLevel.proto(),
+		Objects:          batch,
+	}, nil
+}
 
 type (
 	ObjectReferences map[string][]ObjectReference
@@ -175,4 +230,80 @@ func (r *DeleteObjectRequest) Query() url.Values {
 		q.Add("consistency_level", string(r.ConsistencyLevel))
 	}
 	return q
+}
+
+func marshalBatchObject(bo *BatchObject, rd RequestDefaults) (*proto.BatchObject, error) {
+	var vectors []*proto.Vectors
+	for i := range bo.Vectors {
+		v, err := marshalVector(&bo.Vectors[i])
+		if err != nil {
+			return nil, err
+		}
+		vectors = append(vectors, v)
+	}
+
+	var properties *proto.BatchObject_Properties
+	if len(bo.Properties) > 0 || len(bo.References) > 0 {
+		properties = new(proto.BatchObject_Properties)
+		if err := marshalProperties(bo.Properties, properties); err != nil {
+			return nil, err
+		}
+		if err := marshalReferences(bo.References, properties); err != nil {
+			return nil, err
+		}
+	}
+
+	return &proto.BatchObject{
+		Uuid:       bo.UUID.String(),
+		Collection: rd.CollectionName,
+		Tenant:     rd.Tenant,
+		Vectors:    vectors,
+		Properties: properties,
+	}, nil
+}
+
+func marshalProperties(properties map[string]any, dest *proto.BatchObject_Properties) error {
+	if len(properties) == 0 {
+		return nil
+	}
+	nonRef, err := structpb.NewStruct(properties)
+	if err != nil {
+		return err
+	}
+
+	// TODO(dyma): move object / array properties out of nonRef
+	dest.NonRefProperties = nonRef
+	return nil
+}
+
+func marshalReferences(references ObjectReferences, dest *proto.BatchObject_Properties) error {
+	if len(references) == 0 {
+		return nil
+	}
+	var single []*proto.BatchObject_SingleTargetRefProps
+	var multi []*proto.BatchObject_MultiTargetRefProps
+	for name, refs := range references {
+		uuids := make(map[string][]string, 0)
+		for _, ref := range refs {
+			uuids[ref.Collection] = append(uuids[ref.Collection], ref.UUID.String())
+		}
+
+		for collection := range uuids {
+			if collection == "" {
+				single = append(single, &proto.BatchObject_SingleTargetRefProps{
+					PropName: name,
+					Uuids:    uuids[collection],
+				})
+			} else {
+				multi = append(multi, &proto.BatchObject_MultiTargetRefProps{
+					PropName:         name,
+					Uuids:            uuids[collection],
+					TargetCollection: collection,
+				})
+			}
+		}
+	}
+	dest.SingleTargetRefProps = single
+	dest.MultiTargetRefProps = multi
+	return nil
 }

@@ -1114,6 +1114,133 @@ func returnAny[T, U any](f func(*T) *U) func(*T) any {
 	}
 }
 
+func TestObjectBatchRequest_MarshalMessage(t *testing.T) {
+	// UUID is always included in the [proto.MetadataRequest].
+	testMessageMarshaler(t, []MessageMarshalerTest[proto.BatchObjectsRequest, proto.BatchObjectsReply]{
+		{
+			name: "properties",
+			req: &api.InsertObjectBatchRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"artist": "Angine de Poitrine",
+							"title":  "Mata Zyklek",
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							NonRefProperties: mustNewStruct(map[string]any{
+								"artist": "Angine de Poitrine",
+								"title":  "Mata Zyklek",
+							}),
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "references",
+			req: &api.InsertObjectBatchRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						References: api.ObjectReferences{
+							"performedBy": {
+								{UUID: testkit.UUID, Collection: "Drummers"},
+							},
+							"onLabel": {{UUID: testkit.UUID}},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							MultiTargetRefProps: []*proto.BatchObject_MultiTargetRefProps{
+								{
+									PropName:         "performedBy",
+									TargetCollection: "Drummers",
+									Uuids:            []string{testkit.UUID.String()},
+								},
+							},
+							SingleTargetRefProps: []*proto.BatchObject_SingleTargetRefProps{{
+								PropName: "onLabel",
+								Uuids:    []string{testkit.UUID.String()},
+							}},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "vectors",
+			req: &api.InsertObjectBatchRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Vectors: []api.Vector{
+							{Name: "title_vec", Single: singleVector},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Vectors: []*proto.Vectors{{
+							Name:        "title_vec",
+							Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+							VectorBytes: singleVectorBytes,
+						}},
+					},
+				},
+			},
+		},
+	})
+}
+
+// mustNewStruct panics if [structpb.NewStruct] returns an error.
+func mustNewStruct(m map[string]any) *structpb.Struct {
+	s, err := structpb.NewStruct(m)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
+
 // ----------------------------------------------------------------------------
 
 type MessageUnmarshalerTest[Out transport.ReplyMessage] struct {
