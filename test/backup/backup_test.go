@@ -75,6 +75,26 @@ func TestBackups_integration(t *testing.T) {
 			assert.Empty(t, createResponse.Error)
 		})
 
+		t.Run("create incremental backup", func(t *testing.T) {
+			createResponse, err := client.Backup().Creator().
+				WithIncludeClassNames(className).
+				WithBackend(backend).
+				WithBackupID(backupID).
+				WithIncrementalBaseBackupID("incr-").
+				WithWaitForCompletion(true).
+				Do(context.Background())
+
+			require.Nil(t, err)
+			require.NotNil(t, createResponse)
+			assert.Equal(t, "incr-"+backupID, createResponse.ID)
+			assert.Len(t, createResponse.Classes, 1)
+			assert.Contains(t, createResponse.Classes, className)
+			assert.Equal(t, dockerComposeBackupDir+"/incr-"+backupID, createResponse.Path)
+			assert.Equal(t, backup.BACKEND_FILESYSTEM, createResponse.Backend)
+			assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse.Status)
+			assert.Empty(t, createResponse.Error)
+		})
+
 		t.Run("check data still exist", func(t *testing.T) {
 			assertAllPizzasExist(t, client)
 		})
