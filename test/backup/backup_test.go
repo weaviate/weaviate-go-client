@@ -79,8 +79,8 @@ func TestBackups_integration(t *testing.T) {
 			createResponse, err := client.Backup().Creator().
 				WithIncludeClassNames(className).
 				WithBackend(backend).
-				WithBackupID(backupID).
-				WithIncrementalBaseBackupID("incr-").
+				WithBackupID(backupID + "_incr").
+				WithIncrementalBaseBackupID("incr_").
 				WithWaitForCompletion(true).
 				Do(context.Background())
 
