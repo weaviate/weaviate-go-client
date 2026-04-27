@@ -2106,9 +2106,9 @@ func TestInsertObjectBatchResponse_UnmarshalMessage(t *testing.T) {
 			},
 			dest: new(api.InsertObjectBatchResponse),
 			want: &api.InsertObjectBatchResponse{
-				Took:    92 * time.Second,
-				Indices: []int32{6, 22},
-				Errors:  []string{"Whaam!", "Whoops!"},
+				Took:      92 * time.Second,
+				Positions: []int32{6, 22},
+				Errors:    []string{"Whaam!", "Whoops!"},
 			},
 		},
 		{

@@ -71,6 +71,10 @@ type BatchObject struct {
 	// However, in order to map an error from the batch response
 	// to the right UUID on return, the caller MUST know the UUID
 	// prior to sending the request.
+	//
+	// A useful quality of BatchObject is that its zero value is useful.
+	// If is perfectly OK to insert an object with [uuid.Nil] ID, and
+	// new(BatchObject) will result in exactly that.
 	UUID       uuid.UUID
 	Properties map[string]any
 	References ObjectReferences
@@ -101,9 +105,9 @@ func (r *InsertObjectBatchRequest) MarshalMessage() (*proto.BatchObjectsRequest,
 }
 
 type InsertObjectBatchResponse struct {
-	Took    time.Duration
-	Indices []int32  // Positional indices of the failed objects. Aligned with Errors.
-	Errors  []string // Error messages for failed objects. Aligned with Indices.
+	Took      time.Duration
+	Positions []int32  // Positional indices of the failed objects. Aligned with Errors.
+	Errors    []string // Error messages for failed objects. Aligned with Indices.
 }
 
 // UnmarshalMessage implements [transport.MessageUnmarshaler].
@@ -113,7 +117,7 @@ func (r *InsertObjectBatchResponse) UnmarshalMessage(reply *proto.BatchObjectsRe
 	}
 
 	for _, e := range reply.GetErrors() {
-		r.Indices = append(r.Indices, e.Index)
+		r.Positions = append(r.Positions, e.Index)
 		r.Errors = append(r.Errors, e.Error)
 	}
 	return nil
