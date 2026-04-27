@@ -2,6 +2,7 @@ package data_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -25,23 +26,36 @@ func TestClient_Insert(t *testing.T) {
 	}
 
 	for _, tt := range []struct {
-		name   string
-		object *data.Object // Object to be inserted.
-		stubs  []testkit.Stub[api.InsertObjectRequest, api.InsertObjectResponse]
-		want   *uuid.UUID    // Expected return value.
-		err    testkit.Error // Expected error.
+		name    string
+		objects []*data.Object // Object to be inserted.
+		stubs   []testkit.Stub[api.InsertObjectBatchRequest, api.InsertObjectBatchResponse]
+		want    *data.InsertResult
+		err     testkit.Error // Expected error.
 	}{
 		{
 			name: "nil object",
-			stubs: []testkit.Stub[api.InsertObjectRequest, api.InsertObjectResponse]{{
-				Request:  &api.InsertObjectRequest{RequestDefaults: rd},
-				Response: api.InsertObjectResponse(testkit.UUID),
+			stubs: []testkit.Stub[api.InsertObjectBatchRequest, api.InsertObjectBatchResponse]{{
+				Request:  &api.InsertObjectBatchRequest{RequestDefaults: rd},
+				Response: api.InsertObjectBatchResponse{Took: 92 * time.Second},
 			}},
-			want: &testkit.UUID,
+			want: &data.InsertResult{Took: 92 * time.Second},
+		},
+		{
+			name:    "nil uuid",
+			objects: []*data.Object{{UUID: testkit.Ptr(uuid.Nil)}},
+			stubs: []testkit.Stub[api.InsertObjectBatchRequest, api.InsertObjectBatchResponse]{{
+				Request: &api.InsertObjectBatchRequest{
+					RequestDefaults: rd,
+					Objects:         []api.BatchObject{{UUID: uuid.Nil}},
+				},
+				Response: api.InsertObjectBatchResponse{Took: 92 * time.Second},
+			}},
+			want: &data.InsertResult{Took: 92 * time.Second},
 		},
 		{
 			name: "with data",
-			object: &data.Object{
+			objects: []*data.Object{{
+				UUID: testkit.Ptr(testkit.UUID),
 				Vectors: []types.Vector{
 					{Name: "single", Single: []float32{1, 2, 3}},
 				},
@@ -52,28 +66,52 @@ func TestClient_Insert(t *testing.T) {
 						{Collection: "Bar", UUID: testkit.UUID},
 					},
 				},
-			},
-			stubs: []testkit.Stub[api.InsertObjectRequest, api.InsertObjectResponse]{{
-				Request: &api.InsertObjectRequest{
-					RequestDefaults: rd,
-					Vectors: []api.Vector{
-						{Name: "single", Single: []float32{1, 2, 3}},
-					},
-					Properties: map[string]any{"foo": "bar"},
-					References: api.ObjectReferences{
-						"ref": []api.ObjectReference{
-							{Collection: "Foo", UUID: testkit.UUID},
-							{Collection: "Bar", UUID: testkit.UUID},
-						},
-					},
-				},
-				Response: api.InsertObjectResponse(testkit.UUID),
 			}},
-			want: &testkit.UUID,
+			stubs: []testkit.Stub[api.InsertObjectBatchRequest, api.InsertObjectBatchResponse]{{
+				Request: &api.InsertObjectBatchRequest{
+					RequestDefaults: rd,
+					Objects: []api.BatchObject{{
+						UUID: testkit.UUID,
+						Vectors: []api.Vector{
+							{Name: "single", Single: []float32{1, 2, 3}},
+						},
+						Properties: map[string]any{"foo": "bar"},
+						References: api.ObjectReferences{
+							"ref": []api.ObjectReference{
+								{Collection: "Foo", UUID: testkit.UUID},
+								{Collection: "Bar", UUID: testkit.UUID},
+							},
+						},
+					}},
+				},
+				Response: api.InsertObjectBatchResponse{Took: 92 * time.Second},
+			}},
+			want: &data.InsertResult{Took: 92 * time.Second},
 		},
 		{
-			name: "with error",
-			stubs: []testkit.Stub[api.InsertObjectRequest, api.InsertObjectResponse]{
+			name:    "internal server error",
+			objects: []*data.Object{{UUID: testkit.Ptr(testkit.UUID)}},
+			stubs: []testkit.Stub[api.InsertObjectBatchRequest, api.InsertObjectBatchResponse]{{
+				Request: &api.InsertObjectBatchRequest{
+					RequestDefaults: rd,
+					Objects:         []api.BatchObject{{UUID: testkit.UUID}},
+				},
+				Response: api.InsertObjectBatchResponse{
+					Took:      92 * time.Second,
+					Positions: []int32{0},
+					Errors:    []string{"Whaam!"},
+				},
+			}},
+			want: &data.InsertResult{
+				Took: 92 * time.Second,
+				Errors: map[uuid.UUID]string{
+					testkit.UUID: "Whaam!",
+				},
+			},
+		},
+		{
+			name: "with request error",
+			stubs: []testkit.Stub[api.InsertObjectBatchRequest, api.InsertObjectBatchResponse]{
 				{Err: testkit.ErrWhaam},
 			},
 			err: testkit.ExpectError,
@@ -84,7 +122,7 @@ func TestClient_Insert(t *testing.T) {
 			c := data.NewClient(transport, rd)
 			require.NotNil(t, c, "nil client")
 
-			got, err := c.Insert(t.Context(), tt.object)
+			got, err := c.Insert(t.Context(), tt.objects...)
 			tt.err.Require(t, err, "insert error")
 			require.Equal(t, tt.want, got, "returned object")
 		})
