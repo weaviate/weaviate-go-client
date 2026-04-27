@@ -2092,3 +2092,30 @@ func TestAggregateResponse_UnmarshalMessage(t *testing.T) {
 		},
 	})
 }
+
+func TestInsertObjectBatchResponse_UnmarshalMessage(t *testing.T) {
+	testMessageUnmarshaler(t, []MessageUnmarshalerTest[proto.BatchObjectsReply]{
+		{
+			name: "has errors",
+			reply: &proto.BatchObjectsReply{
+				Took: 92,
+				Errors: []*proto.BatchObjectsReply_BatchError{
+					{Index: 6, Error: "Whaam!"},
+					{Index: 22, Error: "Whoops!"},
+				},
+			},
+			dest: new(api.InsertObjectBatchResponse),
+			want: &api.InsertObjectBatchResponse{
+				Took:    92 * time.Second,
+				Indices: []int32{6, 22},
+				Errors:  []string{"Whaam!", "Whoops!"},
+			},
+		},
+		{
+			name:  "no errors",
+			reply: &proto.BatchObjectsReply{Took: 92},
+			dest:  new(api.InsertObjectBatchResponse),
+			want:  &api.InsertObjectBatchResponse{Took: 92 * time.Second},
+		},
+	})
+}
