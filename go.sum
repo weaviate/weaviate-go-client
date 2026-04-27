@@ -475,8 +475,8 @@ github.com/weaviate/s5cmd/v2 v2.0.1 h1:NLsBemDEeUa1pcqVAGl5Y2quKH8EFpkz/Z8n4s620
 github.com/weaviate/s5cmd/v2 v2.0.1/go.mod h1:JEoBF8SXVwK8qoaRKi0fPA4qi4OFmr+iVgc4XO3l/Zs=
 github.com/weaviate/sroar v0.0.13 h1:mDqhKQV4+yexbizHgwOQSqcU08ZqToaSzsWQ3jLgeGI=
 github.com/weaviate/sroar v0.0.13/go.mod h1:VgBRWPKPHRV/k9ABnD5w7QgdH9xe4RACzDzkrrK977g=
-github.com/weaviate/weaviate v1.37.1 h1:8uZpPVP/HeVHVpZbKTA5sJuYCt9sX+TGBlLa769zdxc=
-github.com/weaviate/weaviate v1.37.1/go.mod h1:dZtzUfJmL9zs/47ADqi+d/pyAQDRwFrun/dCjKj7R5A=
+github.com/weaviate/weaviate v1.37.2 h1:LgDVfNfYA01KAsHtlznuB2JoRWA5tSuoDttwe9PEg2Q=
+github.com/weaviate/weaviate v1.37.2/go.mod h1:dZtzUfJmL9zs/47ADqi+d/pyAQDRwFrun/dCjKj7R5A=
 github.com/willf/bitset v1.1.11 h1:N7Z7E9UvjW+sGsEl7k/SJrvY2reP1A07MrGuCjIOjRE=
 github.com/willf/bitset v1.1.11/go.mod h1:83CECat5yLh5zVOf4P1ErAgKA5UDvKtgyUABdr3+MjI=
 github.com/wk8/go-ordered-map/v2 v2.1.8 h1:5h/BUHu93oj4gIdvHHHGsScSTMijfx5PeYkE/fJgbpc=
