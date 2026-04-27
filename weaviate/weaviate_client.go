@@ -25,6 +25,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/misc"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/rbac"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/schema"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/tokenize"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/users"
 )
 
@@ -118,6 +119,7 @@ type Client struct {
 	users           *users.API
 	experimental    *experimental
 	groups          *groups.API
+	tokenize        *tokenize.API
 }
 
 // experimental contains all experimental client features
@@ -191,7 +193,7 @@ func NewClient(config Config) (*Client, error) {
 		connection:      con,
 		grpcClient:      grpcClient,
 		misc:            misc.New(con, dbVersionProvider),
-		schema:          schema.New(con),
+		schema:          schema.New(con, dbVersionProvider),
 		alias:           alias.New(con),
 		c11y:            contextionary.New(con),
 		classifications: classifications.New(con),
@@ -204,6 +206,7 @@ func NewClient(config Config) (*Client, error) {
 		users:           users.New(con),
 		experimental:    &experimental{grpcClient: grpcClient},
 		groups:          groups.New(con),
+		tokenize:        tokenize.New(con),
 	}
 
 	return client, nil
@@ -241,7 +244,7 @@ func New(config Config) *Client {
 		connection:      con,
 		grpcClient:      grpcClient,
 		misc:            misc.New(con, dbVersionProvider),
-		schema:          schema.New(con),
+		schema:          schema.New(con, dbVersionProvider),
 		c11y:            contextionary.New(con),
 		classifications: classifications.New(con),
 		graphQL:         graphql.New(con),
@@ -252,6 +255,7 @@ func New(config Config) *Client {
 		roles:           rbac.New(con),
 		users:           users.New(con),
 		experimental:    &experimental{grpcClient: grpcClient},
+		tokenize:        tokenize.New(con),
 	}
 
 	return client
@@ -329,6 +333,11 @@ func (c *Client) Groups() *groups.API {
 
 func (c *Client) Users() *users.API {
 	return c.users
+}
+
+// Tokenize API group — /v1/tokenize (requires Weaviate >= 1.37.0).
+func (c *Client) Tokenize() *tokenize.API {
+	return c.tokenize
 }
 
 // Experimental API group

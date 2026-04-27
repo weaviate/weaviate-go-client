@@ -150,4 +150,31 @@ func TestRBAC_integration(t *testing.T) {
 		require.Falsef(t, hasPermissions(t, roleName, removePerm),
 			"%q role should not have %q permission", roleName, models.PermissionActionDeleteTenants)
 	})
+
+	t.Run("mcp permissions", func(t *testing.T) {
+		testsuit.AtLeastWeaviateVersion(t, client, "1.37.1", "MCP permissions are only supported from v1.37.1")
+
+		roleName := "MCPManager"
+		mcpPerm := rbac.MCPPermission{Actions: []string{
+			models.PermissionActionCreateMcp,
+			models.PermissionActionReadMcp,
+			models.PermissionActionUpdateMcp,
+		}}
+
+		mustCreateRole(t, rbac.NewRole(roleName, mcpPerm))
+
+		testRole, err := rolesClient.Getter().WithName(roleName).Do(ctx)
+		require.NoErrorf(t, err, "retrieve %q", roleName)
+
+		require.Equal(t, roleName, testRole.Name)
+		require.Len(t, testRole.MCP, 1)
+		require.ElementsMatch(t, []string{
+			models.PermissionActionCreateMcp,
+			models.PermissionActionReadMcp,
+			models.PermissionActionUpdateMcp,
+		}, testRole.MCP[0].Actions)
+
+		require.True(t, hasPermissions(t, roleName, mcpPerm),
+			"%q role should have MCP permissions", roleName)
+	})
 }
