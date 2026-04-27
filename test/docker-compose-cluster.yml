@@ -21,7 +21,7 @@ services:
       RAFT_JOIN: "weaviate-0:8300,weaviate-1:8300"
       DISABLE_TELEMETRY: 'true'
       PERSISTENCE_MEMTABLES_FLUSH_IDLE_AFTER_SECONDS: 1
-
+      ENABLE_EXPERIMENTAL_ALTER_SCHEMA_DROP_VECTOR_INDEX_ENDPOINT: 'true'
   weaviate-1:
     init: true
     command:
@@ -53,4 +53,5 @@ services:
       RAFT_JOIN: "weaviate-0:8300,weaviate-1:8300"
       DISABLE_TELEMETRY: 'true'
       PERSISTENCE_MEMTABLES_FLUSH_IDLE_AFTER_SECONDS: 1
+      ENABLE_EXPERIMENTAL_ALTER_SCHEMA_DROP_VECTOR_INDEX_ENDPOINT: 'true'
 ...

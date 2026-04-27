@@ -2,16 +2,18 @@ package schema
 
 import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/db"
 )
 
 // API Conntains all the builder objects required to access the weaviate schema API.
 type API struct {
-	connection *connection.Connection
+	connection        *connection.Connection
+	dbVersionProvider *db.VersionProvider
 }
 
 // New Schema api group from connection
-func New(con *connection.Connection) *API {
-	return &API{connection: con}
+func New(con *connection.Connection, dbVersionProvider *db.VersionProvider) *API {
+	return &API{connection: con, dbVersionProvider: dbVersionProvider}
 }
 
 // Getter builder to get a weaviate schema
@@ -36,14 +38,16 @@ func (schema *API) ClassExistenceChecker() *ClassExistenceChecker {
 // ClassCreator builder to create a weaviate schema class
 func (schema *API) ClassCreator() *ClassCreator {
 	return &ClassCreator{
-		connection: schema.connection,
+		connection:        schema.connection,
+		dbVersionProvider: schema.dbVersionProvider,
 	}
 }
 
 // ClassUpdater builder to update a weaviate schema class
 func (schema *API) ClassUpdater() *ClassUpdater {
 	return &ClassUpdater{
-		connection: schema.connection,
+		connection:        schema.connection,
+		dbVersionProvider: schema.dbVersionProvider,
 	}
 }
 
