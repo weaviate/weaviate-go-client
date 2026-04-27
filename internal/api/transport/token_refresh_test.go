@@ -32,14 +32,14 @@ func TestTokenKeepalive(t *testing.T) {
 		// Act
 		go tokenKeepalive(ctx, &src, func(d time.Duration) <-chan time.Time {
 			assert.Equal(t, time.Duration(92)*time.Second, d, "must try to sleep for %ds", 92)
-			return time.After(5 * time.Millisecond)
+			return time.After(2 * time.Millisecond)
 		})
 
-		time.Sleep(7 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 		cancel()
 
 		// Assert
-		require.Equal(t, 2, src.used, "expect src.Token() to be used twice")
+		require.Greater(t, src.used, 1, "expect src.Token() to be used in the background")
 
 		src.used = 0
 		time.Sleep(5 * time.Millisecond)

@@ -34,6 +34,6 @@ func RequirePointer(t *testing.T, v any, name string) {
 	case reflect.Map, reflect.Slice, reflect.Chan, reflect.Pointer:
 		return
 	default:
-		require.FailNow(t, "%q must be a pointer", name)
+		require.FailNowf(t, "not a pointer", "%q must be a pointer", name)
 	}
 }
