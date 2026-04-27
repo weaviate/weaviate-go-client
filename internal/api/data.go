@@ -6,6 +6,7 @@ import (
 	"maps"
 	"net/http"
 	"net/url"
+	"time"
 
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 
@@ -98,6 +99,27 @@ func (r *InsertObjectBatchRequest) MarshalMessage() (*proto.BatchObjectsRequest,
 		Objects:          batch,
 	}, nil
 }
+
+type InsertObjectBatchResponse struct {
+	Took    time.Duration
+	Indices []int32  // Positional indices of the failed objects. Aligned with Errors.
+	Errors  []string // Error messages for failed objects. Aligned with Indices.
+}
+
+// UnmarshalMessage implements [transport.MessageUnmarshaler].
+func (r *InsertObjectBatchResponse) UnmarshalMessage(reply *proto.BatchObjectsReply) error {
+	*r = InsertObjectBatchResponse{
+		Took: time.Duration(reply.Took) * time.Second,
+	}
+
+	for _, e := range reply.GetErrors() {
+		r.Indices = append(r.Indices, e.Index)
+		r.Errors = append(r.Errors, e.Error)
+	}
+	return nil
+}
+
+var _ transport.MessageUnmarshaler[proto.BatchObjectsReply] = (*InsertObjectBatchResponse)(nil)
 
 type (
 	ObjectReferences map[string][]ObjectReference
