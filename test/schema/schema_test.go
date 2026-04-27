@@ -815,6 +815,44 @@ func TestSchema_integration(t *testing.T) {
 		require.NoError(t, errRm)
 	})
 
+	t.Run("Create class with BlobHash property", func(t *testing.T) {
+		ctx := context.Background()
+		client := testsuit.CreateTestClient(false)
+
+		className := "Document"
+		schemaClass := &models.Class{
+			Class:      className,
+			Vectorizer: "none",
+			Properties: []*models.Property{
+				{
+					Name:     "title",
+					DataType: schema.DataTypeText.PropString(),
+				},
+				{
+					Name:     "content",
+					DataType: schema.DataTypeBlobHash.PropString(),
+				},
+			},
+		}
+
+		client.Schema().ClassDeleter().WithClassName(className).Do(ctx)
+		err := client.Schema().ClassCreator().WithClass(schemaClass).Do(ctx)
+		require.NoError(t, err)
+
+		loadedClass, err := client.Schema().ClassGetter().WithClassName(className).Do(ctx)
+		require.NoError(t, err)
+		require.Equal(t, className, loadedClass.Class)
+		require.Len(t, loadedClass.Properties, 2)
+		assert.Equal(t, "title", loadedClass.Properties[0].Name)
+		assert.Equal(t, schema.DataTypeText.PropString(), loadedClass.Properties[0].DataType)
+		assert.Equal(t, "content", loadedClass.Properties[1].Name)
+		assert.Equal(t, schema.DataTypeBlobHash.PropString(), loadedClass.Properties[1].DataType)
+
+		// Clean up
+		errRm := client.Schema().AllDeleter().Do(ctx)
+		require.NoError(t, errRm)
+	})
+
 	t.Run("tear down weaviate", func(t *testing.T) {
 		err := testenv.TearDownLocalWeaviate()
 		if err != nil {
