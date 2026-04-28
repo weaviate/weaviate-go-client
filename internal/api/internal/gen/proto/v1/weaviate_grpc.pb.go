@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v6.33.2
-// source: v1/weaviate.proto
+// source: api/proto/v1/weaviate.proto
 
 package protocol
 
@@ -340,5 +340,5 @@ var Weaviate_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 	},
-	Metadata: "v1/weaviate.proto",
+	Metadata: "api/proto/v1/weaviate.proto",
 }

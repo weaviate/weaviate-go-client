@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.33.2
-// source: v1/aggregate.proto
+// source: api/proto/v1/aggregate.proto
 
 package protocol
 
@@ -55,7 +55,7 @@ type AggregateRequest struct {
 
 func (x *AggregateRequest) Reset() {
 	*x = AggregateRequest{}
-	mi := &file_v1_aggregate_proto_msgTypes[0]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -67,7 +67,7 @@ func (x *AggregateRequest) String() string {
 func (*AggregateRequest) ProtoMessage() {}
 
 func (x *AggregateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[0]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -80,7 +80,7 @@ func (x *AggregateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AggregateRequest.ProtoReflect.Descriptor instead.
 func (*AggregateRequest) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{0}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *AggregateRequest) GetCollection() string {
@@ -314,7 +314,7 @@ type AggregateReply struct {
 
 func (x *AggregateReply) Reset() {
 	*x = AggregateReply{}
-	mi := &file_v1_aggregate_proto_msgTypes[1]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -326,7 +326,7 @@ func (x *AggregateReply) String() string {
 func (*AggregateReply) ProtoMessage() {}
 
 func (x *AggregateReply) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[1]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -339,7 +339,7 @@ func (x *AggregateReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AggregateReply.ProtoReflect.Descriptor instead.
 func (*AggregateReply) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *AggregateReply) GetTook() float32 {
@@ -408,7 +408,7 @@ type AggregateRequest_Aggregation struct {
 
 func (x *AggregateRequest_Aggregation) Reset() {
 	*x = AggregateRequest_Aggregation{}
-	mi := &file_v1_aggregate_proto_msgTypes[2]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -420,7 +420,7 @@ func (x *AggregateRequest_Aggregation) String() string {
 func (*AggregateRequest_Aggregation) ProtoMessage() {}
 
 func (x *AggregateRequest_Aggregation) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[2]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -433,7 +433,7 @@ func (x *AggregateRequest_Aggregation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AggregateRequest_Aggregation.ProtoReflect.Descriptor instead.
 func (*AggregateRequest_Aggregation) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{0, 0}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *AggregateRequest_Aggregation) GetProperty() string {
@@ -554,7 +554,7 @@ type AggregateRequest_GroupBy struct {
 
 func (x *AggregateRequest_GroupBy) Reset() {
 	*x = AggregateRequest_GroupBy{}
-	mi := &file_v1_aggregate_proto_msgTypes[3]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -566,7 +566,7 @@ func (x *AggregateRequest_GroupBy) String() string {
 func (*AggregateRequest_GroupBy) ProtoMessage() {}
 
 func (x *AggregateRequest_GroupBy) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[3]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -579,7 +579,7 @@ func (x *AggregateRequest_GroupBy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AggregateRequest_GroupBy.ProtoReflect.Descriptor instead.
 func (*AggregateRequest_GroupBy) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{0, 1}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *AggregateRequest_GroupBy) GetCollection() string {
@@ -612,7 +612,7 @@ type AggregateRequest_Aggregation_Integer struct {
 
 func (x *AggregateRequest_Aggregation_Integer) Reset() {
 	*x = AggregateRequest_Aggregation_Integer{}
-	mi := &file_v1_aggregate_proto_msgTypes[4]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -624,7 +624,7 @@ func (x *AggregateRequest_Aggregation_Integer) String() string {
 func (*AggregateRequest_Aggregation_Integer) ProtoMessage() {}
 
 func (x *AggregateRequest_Aggregation_Integer) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[4]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -637,7 +637,7 @@ func (x *AggregateRequest_Aggregation_Integer) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use AggregateRequest_Aggregation_Integer.ProtoReflect.Descriptor instead.
 func (*AggregateRequest_Aggregation_Integer) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{0, 0, 0}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{0, 0, 0}
 }
 
 func (x *AggregateRequest_Aggregation_Integer) GetCount() bool {
@@ -712,7 +712,7 @@ type AggregateRequest_Aggregation_Number struct {
 
 func (x *AggregateRequest_Aggregation_Number) Reset() {
 	*x = AggregateRequest_Aggregation_Number{}
-	mi := &file_v1_aggregate_proto_msgTypes[5]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -724,7 +724,7 @@ func (x *AggregateRequest_Aggregation_Number) String() string {
 func (*AggregateRequest_Aggregation_Number) ProtoMessage() {}
 
 func (x *AggregateRequest_Aggregation_Number) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[5]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -737,7 +737,7 @@ func (x *AggregateRequest_Aggregation_Number) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use AggregateRequest_Aggregation_Number.ProtoReflect.Descriptor instead.
 func (*AggregateRequest_Aggregation_Number) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{0, 0, 1}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{0, 0, 1}
 }
 
 func (x *AggregateRequest_Aggregation_Number) GetCount() bool {
@@ -808,7 +808,7 @@ type AggregateRequest_Aggregation_Text struct {
 
 func (x *AggregateRequest_Aggregation_Text) Reset() {
 	*x = AggregateRequest_Aggregation_Text{}
-	mi := &file_v1_aggregate_proto_msgTypes[6]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -820,7 +820,7 @@ func (x *AggregateRequest_Aggregation_Text) String() string {
 func (*AggregateRequest_Aggregation_Text) ProtoMessage() {}
 
 func (x *AggregateRequest_Aggregation_Text) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[6]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -833,7 +833,7 @@ func (x *AggregateRequest_Aggregation_Text) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use AggregateRequest_Aggregation_Text.ProtoReflect.Descriptor instead.
 func (*AggregateRequest_Aggregation_Text) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{0, 0, 2}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{0, 0, 2}
 }
 
 func (x *AggregateRequest_Aggregation_Text) GetCount() bool {
@@ -878,7 +878,7 @@ type AggregateRequest_Aggregation_Boolean struct {
 
 func (x *AggregateRequest_Aggregation_Boolean) Reset() {
 	*x = AggregateRequest_Aggregation_Boolean{}
-	mi := &file_v1_aggregate_proto_msgTypes[7]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -890,7 +890,7 @@ func (x *AggregateRequest_Aggregation_Boolean) String() string {
 func (*AggregateRequest_Aggregation_Boolean) ProtoMessage() {}
 
 func (x *AggregateRequest_Aggregation_Boolean) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[7]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -903,7 +903,7 @@ func (x *AggregateRequest_Aggregation_Boolean) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use AggregateRequest_Aggregation_Boolean.ProtoReflect.Descriptor instead.
 func (*AggregateRequest_Aggregation_Boolean) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{0, 0, 3}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{0, 0, 3}
 }
 
 func (x *AggregateRequest_Aggregation_Boolean) GetCount() bool {
@@ -962,7 +962,7 @@ type AggregateRequest_Aggregation_Date struct {
 
 func (x *AggregateRequest_Aggregation_Date) Reset() {
 	*x = AggregateRequest_Aggregation_Date{}
-	mi := &file_v1_aggregate_proto_msgTypes[8]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -974,7 +974,7 @@ func (x *AggregateRequest_Aggregation_Date) String() string {
 func (*AggregateRequest_Aggregation_Date) ProtoMessage() {}
 
 func (x *AggregateRequest_Aggregation_Date) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[8]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -987,7 +987,7 @@ func (x *AggregateRequest_Aggregation_Date) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use AggregateRequest_Aggregation_Date.ProtoReflect.Descriptor instead.
 func (*AggregateRequest_Aggregation_Date) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{0, 0, 4}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{0, 0, 4}
 }
 
 func (x *AggregateRequest_Aggregation_Date) GetCount() bool {
@@ -1042,7 +1042,7 @@ type AggregateRequest_Aggregation_Reference struct {
 
 func (x *AggregateRequest_Aggregation_Reference) Reset() {
 	*x = AggregateRequest_Aggregation_Reference{}
-	mi := &file_v1_aggregate_proto_msgTypes[9]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1054,7 +1054,7 @@ func (x *AggregateRequest_Aggregation_Reference) String() string {
 func (*AggregateRequest_Aggregation_Reference) ProtoMessage() {}
 
 func (x *AggregateRequest_Aggregation_Reference) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[9]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1067,7 +1067,7 @@ func (x *AggregateRequest_Aggregation_Reference) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use AggregateRequest_Aggregation_Reference.ProtoReflect.Descriptor instead.
 func (*AggregateRequest_Aggregation_Reference) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{0, 0, 5}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{0, 0, 5}
 }
 
 func (x *AggregateRequest_Aggregation_Reference) GetType() bool {
@@ -1093,7 +1093,7 @@ type AggregateReply_Aggregations struct {
 
 func (x *AggregateReply_Aggregations) Reset() {
 	*x = AggregateReply_Aggregations{}
-	mi := &file_v1_aggregate_proto_msgTypes[10]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1105,7 +1105,7 @@ func (x *AggregateReply_Aggregations) String() string {
 func (*AggregateReply_Aggregations) ProtoMessage() {}
 
 func (x *AggregateReply_Aggregations) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[10]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1118,7 +1118,7 @@ func (x *AggregateReply_Aggregations) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AggregateReply_Aggregations.ProtoReflect.Descriptor instead.
 func (*AggregateReply_Aggregations) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1, 0}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1, 0}
 }
 
 func (x *AggregateReply_Aggregations) GetAggregations() []*AggregateReply_Aggregations_Aggregation {
@@ -1138,7 +1138,7 @@ type AggregateReply_Single struct {
 
 func (x *AggregateReply_Single) Reset() {
 	*x = AggregateReply_Single{}
-	mi := &file_v1_aggregate_proto_msgTypes[11]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1150,7 +1150,7 @@ func (x *AggregateReply_Single) String() string {
 func (*AggregateReply_Single) ProtoMessage() {}
 
 func (x *AggregateReply_Single) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[11]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1163,7 +1163,7 @@ func (x *AggregateReply_Single) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AggregateReply_Single.ProtoReflect.Descriptor instead.
 func (*AggregateReply_Single) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1, 1}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1, 1}
 }
 
 func (x *AggregateReply_Single) GetObjectsCount() int64 {
@@ -1191,7 +1191,7 @@ type AggregateReply_Group struct {
 
 func (x *AggregateReply_Group) Reset() {
 	*x = AggregateReply_Group{}
-	mi := &file_v1_aggregate_proto_msgTypes[12]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1203,7 +1203,7 @@ func (x *AggregateReply_Group) String() string {
 func (*AggregateReply_Group) ProtoMessage() {}
 
 func (x *AggregateReply_Group) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[12]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1216,7 +1216,7 @@ func (x *AggregateReply_Group) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AggregateReply_Group.ProtoReflect.Descriptor instead.
 func (*AggregateReply_Group) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1, 2}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1, 2}
 }
 
 func (x *AggregateReply_Group) GetObjectsCount() int64 {
@@ -1249,7 +1249,7 @@ type AggregateReply_Grouped struct {
 
 func (x *AggregateReply_Grouped) Reset() {
 	*x = AggregateReply_Grouped{}
-	mi := &file_v1_aggregate_proto_msgTypes[13]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1261,7 +1261,7 @@ func (x *AggregateReply_Grouped) String() string {
 func (*AggregateReply_Grouped) ProtoMessage() {}
 
 func (x *AggregateReply_Grouped) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[13]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1274,7 +1274,7 @@ func (x *AggregateReply_Grouped) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AggregateReply_Grouped.ProtoReflect.Descriptor instead.
 func (*AggregateReply_Grouped) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1, 3}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1, 3}
 }
 
 func (x *AggregateReply_Grouped) GetGroups() []*AggregateReply_Group {
@@ -1302,7 +1302,7 @@ type AggregateReply_Aggregations_Aggregation struct {
 
 func (x *AggregateReply_Aggregations_Aggregation) Reset() {
 	*x = AggregateReply_Aggregations_Aggregation{}
-	mi := &file_v1_aggregate_proto_msgTypes[14]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1314,7 +1314,7 @@ func (x *AggregateReply_Aggregations_Aggregation) String() string {
 func (*AggregateReply_Aggregations_Aggregation) ProtoMessage() {}
 
 func (x *AggregateReply_Aggregations_Aggregation) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[14]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1327,7 +1327,7 @@ func (x *AggregateReply_Aggregations_Aggregation) ProtoReflect() protoreflect.Me
 
 // Deprecated: Use AggregateReply_Aggregations_Aggregation.ProtoReflect.Descriptor instead.
 func (*AggregateReply_Aggregations_Aggregation) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0}
 }
 
 func (x *AggregateReply_Aggregations_Aggregation) GetProperty() string {
@@ -1460,7 +1460,7 @@ type AggregateReply_Aggregations_Aggregation_Integer struct {
 
 func (x *AggregateReply_Aggregations_Aggregation_Integer) Reset() {
 	*x = AggregateReply_Aggregations_Aggregation_Integer{}
-	mi := &file_v1_aggregate_proto_msgTypes[15]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1472,7 +1472,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Integer) String() string {
 func (*AggregateReply_Aggregations_Aggregation_Integer) ProtoMessage() {}
 
 func (x *AggregateReply_Aggregations_Aggregation_Integer) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[15]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1485,7 +1485,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Integer) ProtoReflect() protore
 
 // Deprecated: Use AggregateReply_Aggregations_Aggregation_Integer.ProtoReflect.Descriptor instead.
 func (*AggregateReply_Aggregations_Aggregation_Integer) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 0}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 0}
 }
 
 func (x *AggregateReply_Aggregations_Aggregation_Integer) GetCount() int64 {
@@ -1560,7 +1560,7 @@ type AggregateReply_Aggregations_Aggregation_Number struct {
 
 func (x *AggregateReply_Aggregations_Aggregation_Number) Reset() {
 	*x = AggregateReply_Aggregations_Aggregation_Number{}
-	mi := &file_v1_aggregate_proto_msgTypes[16]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1572,7 +1572,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Number) String() string {
 func (*AggregateReply_Aggregations_Aggregation_Number) ProtoMessage() {}
 
 func (x *AggregateReply_Aggregations_Aggregation_Number) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[16]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1585,7 +1585,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Number) ProtoReflect() protoref
 
 // Deprecated: Use AggregateReply_Aggregations_Aggregation_Number.ProtoReflect.Descriptor instead.
 func (*AggregateReply_Aggregations_Aggregation_Number) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 1}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 1}
 }
 
 func (x *AggregateReply_Aggregations_Aggregation_Number) GetCount() int64 {
@@ -1655,7 +1655,7 @@ type AggregateReply_Aggregations_Aggregation_Text struct {
 
 func (x *AggregateReply_Aggregations_Aggregation_Text) Reset() {
 	*x = AggregateReply_Aggregations_Aggregation_Text{}
-	mi := &file_v1_aggregate_proto_msgTypes[17]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1667,7 +1667,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Text) String() string {
 func (*AggregateReply_Aggregations_Aggregation_Text) ProtoMessage() {}
 
 func (x *AggregateReply_Aggregations_Aggregation_Text) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[17]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1680,7 +1680,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Text) ProtoReflect() protorefle
 
 // Deprecated: Use AggregateReply_Aggregations_Aggregation_Text.ProtoReflect.Descriptor instead.
 func (*AggregateReply_Aggregations_Aggregation_Text) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 2}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 2}
 }
 
 func (x *AggregateReply_Aggregations_Aggregation_Text) GetCount() int64 {
@@ -1718,7 +1718,7 @@ type AggregateReply_Aggregations_Aggregation_Boolean struct {
 
 func (x *AggregateReply_Aggregations_Aggregation_Boolean) Reset() {
 	*x = AggregateReply_Aggregations_Aggregation_Boolean{}
-	mi := &file_v1_aggregate_proto_msgTypes[18]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1730,7 +1730,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Boolean) String() string {
 func (*AggregateReply_Aggregations_Aggregation_Boolean) ProtoMessage() {}
 
 func (x *AggregateReply_Aggregations_Aggregation_Boolean) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[18]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1743,7 +1743,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Boolean) ProtoReflect() protore
 
 // Deprecated: Use AggregateReply_Aggregations_Aggregation_Boolean.ProtoReflect.Descriptor instead.
 func (*AggregateReply_Aggregations_Aggregation_Boolean) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 3}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 3}
 }
 
 func (x *AggregateReply_Aggregations_Aggregation_Boolean) GetCount() int64 {
@@ -1802,7 +1802,7 @@ type AggregateReply_Aggregations_Aggregation_Date struct {
 
 func (x *AggregateReply_Aggregations_Aggregation_Date) Reset() {
 	*x = AggregateReply_Aggregations_Aggregation_Date{}
-	mi := &file_v1_aggregate_proto_msgTypes[19]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1814,7 +1814,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Date) String() string {
 func (*AggregateReply_Aggregations_Aggregation_Date) ProtoMessage() {}
 
 func (x *AggregateReply_Aggregations_Aggregation_Date) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[19]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1827,7 +1827,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Date) ProtoReflect() protorefle
 
 // Deprecated: Use AggregateReply_Aggregations_Aggregation_Date.ProtoReflect.Descriptor instead.
 func (*AggregateReply_Aggregations_Aggregation_Date) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 4}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 4}
 }
 
 func (x *AggregateReply_Aggregations_Aggregation_Date) GetCount() int64 {
@@ -1883,7 +1883,7 @@ type AggregateReply_Aggregations_Aggregation_Reference struct {
 
 func (x *AggregateReply_Aggregations_Aggregation_Reference) Reset() {
 	*x = AggregateReply_Aggregations_Aggregation_Reference{}
-	mi := &file_v1_aggregate_proto_msgTypes[20]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1895,7 +1895,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Reference) String() string {
 func (*AggregateReply_Aggregations_Aggregation_Reference) ProtoMessage() {}
 
 func (x *AggregateReply_Aggregations_Aggregation_Reference) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[20]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1908,7 +1908,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Reference) ProtoReflect() proto
 
 // Deprecated: Use AggregateReply_Aggregations_Aggregation_Reference.ProtoReflect.Descriptor instead.
 func (*AggregateReply_Aggregations_Aggregation_Reference) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 5}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 5}
 }
 
 func (x *AggregateReply_Aggregations_Aggregation_Reference) GetType() string {
@@ -1934,7 +1934,7 @@ type AggregateReply_Aggregations_Aggregation_Text_TopOccurrences struct {
 
 func (x *AggregateReply_Aggregations_Aggregation_Text_TopOccurrences) Reset() {
 	*x = AggregateReply_Aggregations_Aggregation_Text_TopOccurrences{}
-	mi := &file_v1_aggregate_proto_msgTypes[21]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1946,7 +1946,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Text_TopOccurrences) String() s
 func (*AggregateReply_Aggregations_Aggregation_Text_TopOccurrences) ProtoMessage() {}
 
 func (x *AggregateReply_Aggregations_Aggregation_Text_TopOccurrences) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[21]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1959,7 +1959,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Text_TopOccurrences) ProtoRefle
 
 // Deprecated: Use AggregateReply_Aggregations_Aggregation_Text_TopOccurrences.ProtoReflect.Descriptor instead.
 func (*AggregateReply_Aggregations_Aggregation_Text_TopOccurrences) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 2, 0}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 2, 0}
 }
 
 func (x *AggregateReply_Aggregations_Aggregation_Text_TopOccurrences) GetItems() []*AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurrence {
@@ -1979,7 +1979,7 @@ type AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurrence s
 
 func (x *AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurrence) Reset() {
 	*x = AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurrence{}
-	mi := &file_v1_aggregate_proto_msgTypes[22]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1991,7 +1991,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurren
 func (*AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurrence) ProtoMessage() {}
 
 func (x *AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurrence) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[22]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2004,7 +2004,7 @@ func (x *AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurren
 
 // Deprecated: Use AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurrence.ProtoReflect.Descriptor instead.
 func (*AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurrence) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 2, 0, 0}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1, 0, 0, 2, 0, 0}
 }
 
 func (x *AggregateReply_Aggregations_Aggregation_Text_TopOccurrences_TopOccurrence) GetValue() string {
@@ -2043,7 +2043,7 @@ type AggregateReply_Group_GroupedBy struct {
 
 func (x *AggregateReply_Group_GroupedBy) Reset() {
 	*x = AggregateReply_Group_GroupedBy{}
-	mi := &file_v1_aggregate_proto_msgTypes[23]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2055,7 +2055,7 @@ func (x *AggregateReply_Group_GroupedBy) String() string {
 func (*AggregateReply_Group_GroupedBy) ProtoMessage() {}
 
 func (x *AggregateReply_Group_GroupedBy) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_aggregate_proto_msgTypes[23]
+	mi := &file_api_proto_v1_aggregate_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2068,7 +2068,7 @@ func (x *AggregateReply_Group_GroupedBy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AggregateReply_Group_GroupedBy.ProtoReflect.Descriptor instead.
 func (*AggregateReply_Group_GroupedBy) Descriptor() ([]byte, []int) {
-	return file_v1_aggregate_proto_rawDescGZIP(), []int{1, 2, 0}
+	return file_api_proto_v1_aggregate_proto_rawDescGZIP(), []int{1, 2, 0}
 }
 
 func (x *AggregateReply_Group_GroupedBy) GetPath() []string {
@@ -2224,11 +2224,11 @@ func (*AggregateReply_Group_GroupedBy_Numbers) isAggregateReply_Group_GroupedBy_
 
 func (*AggregateReply_Group_GroupedBy_Geo) isAggregateReply_Group_GroupedBy_Value() {}
 
-var File_v1_aggregate_proto protoreflect.FileDescriptor
+var File_api_proto_v1_aggregate_proto protoreflect.FileDescriptor
 
-const file_v1_aggregate_proto_rawDesc = "" +
+const file_api_proto_v1_aggregate_proto_rawDesc = "" +
 	"\n" +
-	"\x12v1/aggregate.proto\x12\vweaviate.v1\x1a\rv1/base.proto\x1a\x14v1/base_search.proto\"\x9d\x14\n" +
+	"\x1capi/proto/v1/aggregate.proto\x12\vweaviate.v1\x1a\x17api/proto/v1/base.proto\x1a\x1eapi/proto/v1/base_search.proto\"\x9d\x14\n" +
 	"\x10AggregateRequest\x12\x1e\n" +
 	"\n" +
 	"collection\x18\x01 \x01(\tR\n" +
@@ -2449,23 +2449,23 @@ const file_v1_aggregate_proto_rawDesc = "" +
 	"\v_grouped_by\x1aD\n" +
 	"\aGrouped\x129\n" +
 	"\x06groups\x18\x01 \x03(\v2!.weaviate.v1.AggregateReply.GroupR\x06groupsB\b\n" +
-	"\x06resultBs\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x16WeaviateProtoAggregateZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
+	"\x06resultB\x94\x01\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x16WeaviateProtoAggregateZUgithub.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1;protocolb\x06proto3"
 
 var (
-	file_v1_aggregate_proto_rawDescOnce sync.Once
-	file_v1_aggregate_proto_rawDescData []byte
+	file_api_proto_v1_aggregate_proto_rawDescOnce sync.Once
+	file_api_proto_v1_aggregate_proto_rawDescData []byte
 )
 
-func file_v1_aggregate_proto_rawDescGZIP() []byte {
-	file_v1_aggregate_proto_rawDescOnce.Do(func() {
-		file_v1_aggregate_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_v1_aggregate_proto_rawDesc), len(file_v1_aggregate_proto_rawDesc)))
+func file_api_proto_v1_aggregate_proto_rawDescGZIP() []byte {
+	file_api_proto_v1_aggregate_proto_rawDescOnce.Do(func() {
+		file_api_proto_v1_aggregate_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_api_proto_v1_aggregate_proto_rawDesc), len(file_api_proto_v1_aggregate_proto_rawDesc)))
 	})
-	return file_v1_aggregate_proto_rawDescData
+	return file_api_proto_v1_aggregate_proto_rawDescData
 }
 
-var file_v1_aggregate_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
-var file_v1_aggregate_proto_goTypes = []any{
+var file_api_proto_v1_aggregate_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_api_proto_v1_aggregate_proto_goTypes = []any{
 	(*AggregateRequest)(nil),                                                          // 0: weaviate.v1.AggregateRequest
 	(*AggregateReply)(nil),                                                            // 1: weaviate.v1.AggregateReply
 	(*AggregateRequest_Aggregation)(nil),                                              // 2: weaviate.v1.AggregateRequest.Aggregation
@@ -2507,7 +2507,7 @@ var file_v1_aggregate_proto_goTypes = []any{
 	(*NumberArray)(nil),                                                               // 38: weaviate.v1.NumberArray
 	(*GeoCoordinatesFilter)(nil),                                                      // 39: weaviate.v1.GeoCoordinatesFilter
 }
-var file_v1_aggregate_proto_depIdxs = []int32{
+var file_api_proto_v1_aggregate_proto_depIdxs = []int32{
 	2,  // 0: weaviate.v1.AggregateRequest.aggregations:type_name -> weaviate.v1.AggregateRequest.Aggregation
 	3,  // 1: weaviate.v1.AggregateRequest.group_by:type_name -> weaviate.v1.AggregateRequest.GroupBy
 	24, // 2: weaviate.v1.AggregateRequest.filters:type_name -> weaviate.v1.Filters
@@ -2554,14 +2554,14 @@ var file_v1_aggregate_proto_depIdxs = []int32{
 	0,  // [0:39] is the sub-list for field type_name
 }
 
-func init() { file_v1_aggregate_proto_init() }
-func file_v1_aggregate_proto_init() {
-	if File_v1_aggregate_proto != nil {
+func init() { file_api_proto_v1_aggregate_proto_init() }
+func file_api_proto_v1_aggregate_proto_init() {
+	if File_api_proto_v1_aggregate_proto != nil {
 		return
 	}
-	file_v1_base_proto_init()
-	file_v1_base_search_proto_init()
-	file_v1_aggregate_proto_msgTypes[0].OneofWrappers = []any{
+	file_api_proto_v1_base_proto_init()
+	file_api_proto_v1_base_search_proto_init()
+	file_api_proto_v1_aggregate_proto_msgTypes[0].OneofWrappers = []any{
 		(*AggregateRequest_Hybrid)(nil),
 		(*AggregateRequest_NearVector)(nil),
 		(*AggregateRequest_NearObject)(nil),
@@ -2573,11 +2573,11 @@ func file_v1_aggregate_proto_init() {
 		(*AggregateRequest_NearThermal)(nil),
 		(*AggregateRequest_NearImu)(nil),
 	}
-	file_v1_aggregate_proto_msgTypes[1].OneofWrappers = []any{
+	file_api_proto_v1_aggregate_proto_msgTypes[1].OneofWrappers = []any{
 		(*AggregateReply_SingleResult)(nil),
 		(*AggregateReply_GroupedResults)(nil),
 	}
-	file_v1_aggregate_proto_msgTypes[2].OneofWrappers = []any{
+	file_api_proto_v1_aggregate_proto_msgTypes[2].OneofWrappers = []any{
 		(*AggregateRequest_Aggregation_Int)(nil),
 		(*AggregateRequest_Aggregation_Number_)(nil),
 		(*AggregateRequest_Aggregation_Text_)(nil),
@@ -2585,10 +2585,10 @@ func file_v1_aggregate_proto_init() {
 		(*AggregateRequest_Aggregation_Date_)(nil),
 		(*AggregateRequest_Aggregation_Reference_)(nil),
 	}
-	file_v1_aggregate_proto_msgTypes[6].OneofWrappers = []any{}
-	file_v1_aggregate_proto_msgTypes[11].OneofWrappers = []any{}
-	file_v1_aggregate_proto_msgTypes[12].OneofWrappers = []any{}
-	file_v1_aggregate_proto_msgTypes[14].OneofWrappers = []any{
+	file_api_proto_v1_aggregate_proto_msgTypes[6].OneofWrappers = []any{}
+	file_api_proto_v1_aggregate_proto_msgTypes[11].OneofWrappers = []any{}
+	file_api_proto_v1_aggregate_proto_msgTypes[12].OneofWrappers = []any{}
+	file_api_proto_v1_aggregate_proto_msgTypes[14].OneofWrappers = []any{
 		(*AggregateReply_Aggregations_Aggregation_Int)(nil),
 		(*AggregateReply_Aggregations_Aggregation_Number_)(nil),
 		(*AggregateReply_Aggregations_Aggregation_Text_)(nil),
@@ -2596,13 +2596,13 @@ func file_v1_aggregate_proto_init() {
 		(*AggregateReply_Aggregations_Aggregation_Date_)(nil),
 		(*AggregateReply_Aggregations_Aggregation_Reference_)(nil),
 	}
-	file_v1_aggregate_proto_msgTypes[15].OneofWrappers = []any{}
-	file_v1_aggregate_proto_msgTypes[16].OneofWrappers = []any{}
-	file_v1_aggregate_proto_msgTypes[17].OneofWrappers = []any{}
-	file_v1_aggregate_proto_msgTypes[18].OneofWrappers = []any{}
-	file_v1_aggregate_proto_msgTypes[19].OneofWrappers = []any{}
-	file_v1_aggregate_proto_msgTypes[20].OneofWrappers = []any{}
-	file_v1_aggregate_proto_msgTypes[23].OneofWrappers = []any{
+	file_api_proto_v1_aggregate_proto_msgTypes[15].OneofWrappers = []any{}
+	file_api_proto_v1_aggregate_proto_msgTypes[16].OneofWrappers = []any{}
+	file_api_proto_v1_aggregate_proto_msgTypes[17].OneofWrappers = []any{}
+	file_api_proto_v1_aggregate_proto_msgTypes[18].OneofWrappers = []any{}
+	file_api_proto_v1_aggregate_proto_msgTypes[19].OneofWrappers = []any{}
+	file_api_proto_v1_aggregate_proto_msgTypes[20].OneofWrappers = []any{}
+	file_api_proto_v1_aggregate_proto_msgTypes[23].OneofWrappers = []any{
 		(*AggregateReply_Group_GroupedBy_Text)(nil),
 		(*AggregateReply_Group_GroupedBy_Int)(nil),
 		(*AggregateReply_Group_GroupedBy_Boolean)(nil),
@@ -2617,17 +2617,17 @@ func file_v1_aggregate_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_aggregate_proto_rawDesc), len(file_v1_aggregate_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_v1_aggregate_proto_rawDesc), len(file_api_proto_v1_aggregate_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_v1_aggregate_proto_goTypes,
-		DependencyIndexes: file_v1_aggregate_proto_depIdxs,
-		MessageInfos:      file_v1_aggregate_proto_msgTypes,
+		GoTypes:           file_api_proto_v1_aggregate_proto_goTypes,
+		DependencyIndexes: file_api_proto_v1_aggregate_proto_depIdxs,
+		MessageInfos:      file_api_proto_v1_aggregate_proto_msgTypes,
 	}.Build()
-	File_v1_aggregate_proto = out.File
-	file_v1_aggregate_proto_goTypes = nil
-	file_v1_aggregate_proto_depIdxs = nil
+	File_api_proto_v1_aggregate_proto = out.File
+	file_api_proto_v1_aggregate_proto_goTypes = nil
+	file_api_proto_v1_aggregate_proto_depIdxs = nil
 }

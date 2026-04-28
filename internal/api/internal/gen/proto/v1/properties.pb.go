@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.33.2
-// source: v1/properties.proto
+// source: api/proto/v1/properties.proto
 
 package protocol
 
@@ -31,7 +31,7 @@ type Properties struct {
 
 func (x *Properties) Reset() {
 	*x = Properties{}
-	mi := &file_v1_properties_proto_msgTypes[0]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +43,7 @@ func (x *Properties) String() string {
 func (*Properties) ProtoMessage() {}
 
 func (x *Properties) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_properties_proto_msgTypes[0]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -56,7 +56,7 @@ func (x *Properties) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Properties.ProtoReflect.Descriptor instead.
 func (*Properties) Descriptor() ([]byte, []int) {
-	return file_v1_properties_proto_rawDescGZIP(), []int{0}
+	return file_api_proto_v1_properties_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Properties) GetFields() map[string]*Value {
@@ -89,7 +89,7 @@ type Value struct {
 
 func (x *Value) Reset() {
 	*x = Value{}
-	mi := &file_v1_properties_proto_msgTypes[1]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -101,7 +101,7 @@ func (x *Value) String() string {
 func (*Value) ProtoMessage() {}
 
 func (x *Value) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_properties_proto_msgTypes[1]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -114,7 +114,7 @@ func (x *Value) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Value.ProtoReflect.Descriptor instead.
 func (*Value) Descriptor() ([]byte, []int) {
-	return file_v1_properties_proto_rawDescGZIP(), []int{1}
+	return file_api_proto_v1_properties_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Value) GetKind() isValue_Kind {
@@ -327,7 +327,7 @@ type ListValue struct {
 
 func (x *ListValue) Reset() {
 	*x = ListValue{}
-	mi := &file_v1_properties_proto_msgTypes[2]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -339,7 +339,7 @@ func (x *ListValue) String() string {
 func (*ListValue) ProtoMessage() {}
 
 func (x *ListValue) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_properties_proto_msgTypes[2]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -352,7 +352,7 @@ func (x *ListValue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListValue.ProtoReflect.Descriptor instead.
 func (*ListValue) Descriptor() ([]byte, []int) {
-	return file_v1_properties_proto_rawDescGZIP(), []int{2}
+	return file_api_proto_v1_properties_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListValue) GetKind() isListValue_Kind {
@@ -483,7 +483,7 @@ type NumberValues struct {
 
 func (x *NumberValues) Reset() {
 	*x = NumberValues{}
-	mi := &file_v1_properties_proto_msgTypes[3]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -495,7 +495,7 @@ func (x *NumberValues) String() string {
 func (*NumberValues) ProtoMessage() {}
 
 func (x *NumberValues) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_properties_proto_msgTypes[3]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -508,7 +508,7 @@ func (x *NumberValues) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NumberValues.ProtoReflect.Descriptor instead.
 func (*NumberValues) Descriptor() ([]byte, []int) {
-	return file_v1_properties_proto_rawDescGZIP(), []int{3}
+	return file_api_proto_v1_properties_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *NumberValues) GetValues() []byte {
@@ -527,7 +527,7 @@ type TextValues struct {
 
 func (x *TextValues) Reset() {
 	*x = TextValues{}
-	mi := &file_v1_properties_proto_msgTypes[4]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -539,7 +539,7 @@ func (x *TextValues) String() string {
 func (*TextValues) ProtoMessage() {}
 
 func (x *TextValues) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_properties_proto_msgTypes[4]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -552,7 +552,7 @@ func (x *TextValues) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TextValues.ProtoReflect.Descriptor instead.
 func (*TextValues) Descriptor() ([]byte, []int) {
-	return file_v1_properties_proto_rawDescGZIP(), []int{4}
+	return file_api_proto_v1_properties_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *TextValues) GetValues() []string {
@@ -571,7 +571,7 @@ type BoolValues struct {
 
 func (x *BoolValues) Reset() {
 	*x = BoolValues{}
-	mi := &file_v1_properties_proto_msgTypes[5]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -583,7 +583,7 @@ func (x *BoolValues) String() string {
 func (*BoolValues) ProtoMessage() {}
 
 func (x *BoolValues) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_properties_proto_msgTypes[5]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -596,7 +596,7 @@ func (x *BoolValues) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BoolValues.ProtoReflect.Descriptor instead.
 func (*BoolValues) Descriptor() ([]byte, []int) {
-	return file_v1_properties_proto_rawDescGZIP(), []int{5}
+	return file_api_proto_v1_properties_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *BoolValues) GetValues() []bool {
@@ -615,7 +615,7 @@ type ObjectValues struct {
 
 func (x *ObjectValues) Reset() {
 	*x = ObjectValues{}
-	mi := &file_v1_properties_proto_msgTypes[6]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -627,7 +627,7 @@ func (x *ObjectValues) String() string {
 func (*ObjectValues) ProtoMessage() {}
 
 func (x *ObjectValues) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_properties_proto_msgTypes[6]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -640,7 +640,7 @@ func (x *ObjectValues) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObjectValues.ProtoReflect.Descriptor instead.
 func (*ObjectValues) Descriptor() ([]byte, []int) {
-	return file_v1_properties_proto_rawDescGZIP(), []int{6}
+	return file_api_proto_v1_properties_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ObjectValues) GetValues() []*Properties {
@@ -659,7 +659,7 @@ type DateValues struct {
 
 func (x *DateValues) Reset() {
 	*x = DateValues{}
-	mi := &file_v1_properties_proto_msgTypes[7]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -671,7 +671,7 @@ func (x *DateValues) String() string {
 func (*DateValues) ProtoMessage() {}
 
 func (x *DateValues) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_properties_proto_msgTypes[7]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -684,7 +684,7 @@ func (x *DateValues) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DateValues.ProtoReflect.Descriptor instead.
 func (*DateValues) Descriptor() ([]byte, []int) {
-	return file_v1_properties_proto_rawDescGZIP(), []int{7}
+	return file_api_proto_v1_properties_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DateValues) GetValues() []string {
@@ -703,7 +703,7 @@ type UuidValues struct {
 
 func (x *UuidValues) Reset() {
 	*x = UuidValues{}
-	mi := &file_v1_properties_proto_msgTypes[8]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -715,7 +715,7 @@ func (x *UuidValues) String() string {
 func (*UuidValues) ProtoMessage() {}
 
 func (x *UuidValues) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_properties_proto_msgTypes[8]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -728,7 +728,7 @@ func (x *UuidValues) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UuidValues.ProtoReflect.Descriptor instead.
 func (*UuidValues) Descriptor() ([]byte, []int) {
-	return file_v1_properties_proto_rawDescGZIP(), []int{8}
+	return file_api_proto_v1_properties_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UuidValues) GetValues() []string {
@@ -750,7 +750,7 @@ type IntValues struct {
 
 func (x *IntValues) Reset() {
 	*x = IntValues{}
-	mi := &file_v1_properties_proto_msgTypes[9]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -762,7 +762,7 @@ func (x *IntValues) String() string {
 func (*IntValues) ProtoMessage() {}
 
 func (x *IntValues) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_properties_proto_msgTypes[9]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -775,7 +775,7 @@ func (x *IntValues) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IntValues.ProtoReflect.Descriptor instead.
 func (*IntValues) Descriptor() ([]byte, []int) {
-	return file_v1_properties_proto_rawDescGZIP(), []int{9}
+	return file_api_proto_v1_properties_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *IntValues) GetValues() []byte {
@@ -795,7 +795,7 @@ type GeoCoordinate struct {
 
 func (x *GeoCoordinate) Reset() {
 	*x = GeoCoordinate{}
-	mi := &file_v1_properties_proto_msgTypes[10]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -807,7 +807,7 @@ func (x *GeoCoordinate) String() string {
 func (*GeoCoordinate) ProtoMessage() {}
 
 func (x *GeoCoordinate) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_properties_proto_msgTypes[10]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -820,7 +820,7 @@ func (x *GeoCoordinate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GeoCoordinate.ProtoReflect.Descriptor instead.
 func (*GeoCoordinate) Descriptor() ([]byte, []int) {
-	return file_v1_properties_proto_rawDescGZIP(), []int{10}
+	return file_api_proto_v1_properties_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GeoCoordinate) GetLongitude() float32 {
@@ -852,7 +852,7 @@ type PhoneNumber struct {
 
 func (x *PhoneNumber) Reset() {
 	*x = PhoneNumber{}
-	mi := &file_v1_properties_proto_msgTypes[11]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -864,7 +864,7 @@ func (x *PhoneNumber) String() string {
 func (*PhoneNumber) ProtoMessage() {}
 
 func (x *PhoneNumber) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_properties_proto_msgTypes[11]
+	mi := &file_api_proto_v1_properties_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -877,7 +877,7 @@ func (x *PhoneNumber) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PhoneNumber.ProtoReflect.Descriptor instead.
 func (*PhoneNumber) Descriptor() ([]byte, []int) {
-	return file_v1_properties_proto_rawDescGZIP(), []int{11}
+	return file_api_proto_v1_properties_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *PhoneNumber) GetCountryCode() uint64 {
@@ -929,11 +929,11 @@ func (x *PhoneNumber) GetValid() bool {
 	return false
 }
 
-var File_v1_properties_proto protoreflect.FileDescriptor
+var File_api_proto_v1_properties_proto protoreflect.FileDescriptor
 
-const file_v1_properties_proto_rawDesc = "" +
+const file_api_proto_v1_properties_proto_rawDesc = "" +
 	"\n" +
-	"\x13v1/properties.proto\x12\vweaviate.v1\x1a\x1cgoogle/protobuf/struct.proto\"\x98\x01\n" +
+	"\x1dapi/proto/v1/properties.proto\x12\vweaviate.v1\x1a\x1cgoogle/protobuf/struct.proto\"\x98\x01\n" +
 	"\n" +
 	"Properties\x12;\n" +
 	"\x06fields\x18\x01 \x03(\v2#.weaviate.v1.Properties.FieldsEntryR\x06fields\x1aM\n" +
@@ -1005,23 +1005,23 @@ const file_v1_properties_proto_rawDesc = "" +
 	"\x17international_formatted\x18\x04 \x01(\tR\x16internationalFormatted\x12\x1a\n" +
 	"\bnational\x18\x05 \x01(\x04R\bnational\x12-\n" +
 	"\x12national_formatted\x18\x06 \x01(\tR\x11nationalFormatted\x12\x14\n" +
-	"\x05valid\x18\a \x01(\bR\x05validBt\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x17WeaviateProtoPropertiesZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
+	"\x05valid\x18\a \x01(\bR\x05validB\x95\x01\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x17WeaviateProtoPropertiesZUgithub.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1;protocolb\x06proto3"
 
 var (
-	file_v1_properties_proto_rawDescOnce sync.Once
-	file_v1_properties_proto_rawDescData []byte
+	file_api_proto_v1_properties_proto_rawDescOnce sync.Once
+	file_api_proto_v1_properties_proto_rawDescData []byte
 )
 
-func file_v1_properties_proto_rawDescGZIP() []byte {
-	file_v1_properties_proto_rawDescOnce.Do(func() {
-		file_v1_properties_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_v1_properties_proto_rawDesc), len(file_v1_properties_proto_rawDesc)))
+func file_api_proto_v1_properties_proto_rawDescGZIP() []byte {
+	file_api_proto_v1_properties_proto_rawDescOnce.Do(func() {
+		file_api_proto_v1_properties_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_api_proto_v1_properties_proto_rawDesc), len(file_api_proto_v1_properties_proto_rawDesc)))
 	})
-	return file_v1_properties_proto_rawDescData
+	return file_api_proto_v1_properties_proto_rawDescData
 }
 
-var file_v1_properties_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
-var file_v1_properties_proto_goTypes = []any{
+var file_api_proto_v1_properties_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_api_proto_v1_properties_proto_goTypes = []any{
 	(*Properties)(nil),      // 0: weaviate.v1.Properties
 	(*Value)(nil),           // 1: weaviate.v1.Value
 	(*ListValue)(nil),       // 2: weaviate.v1.ListValue
@@ -1037,7 +1037,7 @@ var file_v1_properties_proto_goTypes = []any{
 	nil,                     // 12: weaviate.v1.Properties.FieldsEntry
 	(structpb.NullValue)(0), // 13: google.protobuf.NullValue
 }
-var file_v1_properties_proto_depIdxs = []int32{
+var file_api_proto_v1_properties_proto_depIdxs = []int32{
 	12, // 0: weaviate.v1.Properties.fields:type_name -> weaviate.v1.Properties.FieldsEntry
 	0,  // 1: weaviate.v1.Value.object_value:type_name -> weaviate.v1.Properties
 	2,  // 2: weaviate.v1.Value.list_value:type_name -> weaviate.v1.ListValue
@@ -1060,12 +1060,12 @@ var file_v1_properties_proto_depIdxs = []int32{
 	0,  // [0:15] is the sub-list for field type_name
 }
 
-func init() { file_v1_properties_proto_init() }
-func file_v1_properties_proto_init() {
-	if File_v1_properties_proto != nil {
+func init() { file_api_proto_v1_properties_proto_init() }
+func file_api_proto_v1_properties_proto_init() {
+	if File_api_proto_v1_properties_proto != nil {
 		return
 	}
-	file_v1_properties_proto_msgTypes[1].OneofWrappers = []any{
+	file_api_proto_v1_properties_proto_msgTypes[1].OneofWrappers = []any{
 		(*Value_NumberValue)(nil),
 		(*Value_BoolValue)(nil),
 		(*Value_ObjectValue)(nil),
@@ -1079,7 +1079,7 @@ func file_v1_properties_proto_init() {
 		(*Value_NullValue)(nil),
 		(*Value_TextValue)(nil),
 	}
-	file_v1_properties_proto_msgTypes[2].OneofWrappers = []any{
+	file_api_proto_v1_properties_proto_msgTypes[2].OneofWrappers = []any{
 		(*ListValue_NumberValues)(nil),
 		(*ListValue_BoolValues)(nil),
 		(*ListValue_ObjectValues)(nil),
@@ -1092,17 +1092,17 @@ func file_v1_properties_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_properties_proto_rawDesc), len(file_v1_properties_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_v1_properties_proto_rawDesc), len(file_api_proto_v1_properties_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_v1_properties_proto_goTypes,
-		DependencyIndexes: file_v1_properties_proto_depIdxs,
-		MessageInfos:      file_v1_properties_proto_msgTypes,
+		GoTypes:           file_api_proto_v1_properties_proto_goTypes,
+		DependencyIndexes: file_api_proto_v1_properties_proto_depIdxs,
+		MessageInfos:      file_api_proto_v1_properties_proto_msgTypes,
 	}.Build()
-	File_v1_properties_proto = out.File
-	file_v1_properties_proto_goTypes = nil
-	file_v1_properties_proto_depIdxs = nil
+	File_api_proto_v1_properties_proto = out.File
+	file_api_proto_v1_properties_proto_goTypes = nil
+	file_api_proto_v1_properties_proto_depIdxs = nil
 }

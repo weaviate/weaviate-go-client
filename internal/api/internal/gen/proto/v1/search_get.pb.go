@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.33.2
-// source: v1/search_get.proto
+// source: api/proto/v1/search_get.proto
 
 package protocol
 
@@ -54,9 +54,9 @@ type SearchRequest struct {
 	NearImu      *NearIMUSearch     `protobuf:"bytes,51,opt,name=near_imu,json=nearImu,proto3,oneof" json:"near_imu,omitempty"`
 	Generative   *GenerativeSearch  `protobuf:"bytes,60,opt,name=generative,proto3,oneof" json:"generative,omitempty"`
 	Rerank       *Rerank            `protobuf:"bytes,61,opt,name=rerank,proto3,oneof" json:"rerank,omitempty"`
-	// Deprecated: Marked as deprecated in v1/search_get.proto.
+	// Deprecated: Marked as deprecated in api/proto/v1/search_get.proto.
 	Uses_123Api bool `protobuf:"varint,100,opt,name=uses_123_api,json=uses123Api,proto3" json:"uses_123_api,omitempty"`
-	// Deprecated: Marked as deprecated in v1/search_get.proto.
+	// Deprecated: Marked as deprecated in api/proto/v1/search_get.proto.
 	Uses_125Api   bool `protobuf:"varint,101,opt,name=uses_125_api,json=uses125Api,proto3" json:"uses_125_api,omitempty"`
 	Uses_127Api   bool `protobuf:"varint,102,opt,name=uses_127_api,json=uses127Api,proto3" json:"uses_127_api,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -65,7 +65,7 @@ type SearchRequest struct {
 
 func (x *SearchRequest) Reset() {
 	*x = SearchRequest{}
-	mi := &file_v1_search_get_proto_msgTypes[0]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -77,7 +77,7 @@ func (x *SearchRequest) String() string {
 func (*SearchRequest) ProtoMessage() {}
 
 func (x *SearchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[0]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -90,7 +90,7 @@ func (x *SearchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchRequest.ProtoReflect.Descriptor instead.
 func (*SearchRequest) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{0}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *SearchRequest) GetCollection() string {
@@ -268,7 +268,7 @@ func (x *SearchRequest) GetRerank() *Rerank {
 	return nil
 }
 
-// Deprecated: Marked as deprecated in v1/search_get.proto.
+// Deprecated: Marked as deprecated in api/proto/v1/search_get.proto.
 func (x *SearchRequest) GetUses_123Api() bool {
 	if x != nil {
 		return x.Uses_123Api
@@ -276,7 +276,7 @@ func (x *SearchRequest) GetUses_123Api() bool {
 	return false
 }
 
-// Deprecated: Marked as deprecated in v1/search_get.proto.
+// Deprecated: Marked as deprecated in api/proto/v1/search_get.proto.
 func (x *SearchRequest) GetUses_125Api() bool {
 	if x != nil {
 		return x.Uses_125Api
@@ -305,7 +305,7 @@ type GroupBy struct {
 
 func (x *GroupBy) Reset() {
 	*x = GroupBy{}
-	mi := &file_v1_search_get_proto_msgTypes[1]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -317,7 +317,7 @@ func (x *GroupBy) String() string {
 func (*GroupBy) ProtoMessage() {}
 
 func (x *GroupBy) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[1]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -330,7 +330,7 @@ func (x *GroupBy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupBy.ProtoReflect.Descriptor instead.
 func (*GroupBy) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{1}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GroupBy) GetPath() []string {
@@ -368,7 +368,7 @@ type SortBy struct {
 
 func (x *SortBy) Reset() {
 	*x = SortBy{}
-	mi := &file_v1_search_get_proto_msgTypes[2]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -380,7 +380,7 @@ func (x *SortBy) String() string {
 func (*SortBy) ProtoMessage() {}
 
 func (x *SortBy) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[2]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -393,7 +393,7 @@ func (x *SortBy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SortBy.ProtoReflect.Descriptor instead.
 func (*SortBy) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{2}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SortBy) GetAscending() bool {
@@ -431,7 +431,7 @@ type MetadataRequest struct {
 
 func (x *MetadataRequest) Reset() {
 	*x = MetadataRequest{}
-	mi := &file_v1_search_get_proto_msgTypes[3]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -443,7 +443,7 @@ func (x *MetadataRequest) String() string {
 func (*MetadataRequest) ProtoMessage() {}
 
 func (x *MetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[3]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -456,7 +456,7 @@ func (x *MetadataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetadataRequest.ProtoReflect.Descriptor instead.
 func (*MetadataRequest) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{3}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *MetadataRequest) GetUuid() bool {
@@ -548,7 +548,7 @@ type PropertiesRequest struct {
 
 func (x *PropertiesRequest) Reset() {
 	*x = PropertiesRequest{}
-	mi := &file_v1_search_get_proto_msgTypes[4]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -560,7 +560,7 @@ func (x *PropertiesRequest) String() string {
 func (*PropertiesRequest) ProtoMessage() {}
 
 func (x *PropertiesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[4]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -573,7 +573,7 @@ func (x *PropertiesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PropertiesRequest.ProtoReflect.Descriptor instead.
 func (*PropertiesRequest) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{4}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PropertiesRequest) GetNonRefProperties() []string {
@@ -615,7 +615,7 @@ type ObjectPropertiesRequest struct {
 
 func (x *ObjectPropertiesRequest) Reset() {
 	*x = ObjectPropertiesRequest{}
-	mi := &file_v1_search_get_proto_msgTypes[5]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -627,7 +627,7 @@ func (x *ObjectPropertiesRequest) String() string {
 func (*ObjectPropertiesRequest) ProtoMessage() {}
 
 func (x *ObjectPropertiesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[5]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -640,7 +640,7 @@ func (x *ObjectPropertiesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObjectPropertiesRequest.ProtoReflect.Descriptor instead.
 func (*ObjectPropertiesRequest) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{5}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ObjectPropertiesRequest) GetPropName() string {
@@ -676,7 +676,7 @@ type RefPropertiesRequest struct {
 
 func (x *RefPropertiesRequest) Reset() {
 	*x = RefPropertiesRequest{}
-	mi := &file_v1_search_get_proto_msgTypes[6]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -688,7 +688,7 @@ func (x *RefPropertiesRequest) String() string {
 func (*RefPropertiesRequest) ProtoMessage() {}
 
 func (x *RefPropertiesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[6]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -701,7 +701,7 @@ func (x *RefPropertiesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefPropertiesRequest.ProtoReflect.Descriptor instead.
 func (*RefPropertiesRequest) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{6}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *RefPropertiesRequest) GetReferenceProperty() string {
@@ -742,7 +742,7 @@ type Rerank struct {
 
 func (x *Rerank) Reset() {
 	*x = Rerank{}
-	mi := &file_v1_search_get_proto_msgTypes[7]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -754,7 +754,7 @@ func (x *Rerank) String() string {
 func (*Rerank) ProtoMessage() {}
 
 func (x *Rerank) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[7]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -767,7 +767,7 @@ func (x *Rerank) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Rerank.ProtoReflect.Descriptor instead.
 func (*Rerank) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{7}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Rerank) GetProperty() string {
@@ -788,7 +788,7 @@ type SearchReply struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	Took    float32                `protobuf:"fixed32,1,opt,name=took,proto3" json:"took,omitempty"`
 	Results []*SearchResult        `protobuf:"bytes,2,rep,name=results,proto3" json:"results,omitempty"`
-	// Deprecated: Marked as deprecated in v1/search_get.proto.
+	// Deprecated: Marked as deprecated in api/proto/v1/search_get.proto.
 	GenerativeGroupedResult  *string           `protobuf:"bytes,3,opt,name=generative_grouped_result,json=generativeGroupedResult,proto3,oneof" json:"generative_grouped_result,omitempty"`
 	GroupByResults           []*GroupByResult  `protobuf:"bytes,4,rep,name=group_by_results,json=groupByResults,proto3" json:"group_by_results,omitempty"`
 	GenerativeGroupedResults *GenerativeResult `protobuf:"bytes,5,opt,name=generative_grouped_results,json=generativeGroupedResults,proto3,oneof" json:"generative_grouped_results,omitempty"`
@@ -799,7 +799,7 @@ type SearchReply struct {
 
 func (x *SearchReply) Reset() {
 	*x = SearchReply{}
-	mi := &file_v1_search_get_proto_msgTypes[8]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -811,7 +811,7 @@ func (x *SearchReply) String() string {
 func (*SearchReply) ProtoMessage() {}
 
 func (x *SearchReply) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[8]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -824,7 +824,7 @@ func (x *SearchReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchReply.ProtoReflect.Descriptor instead.
 func (*SearchReply) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{8}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *SearchReply) GetTook() float32 {
@@ -841,7 +841,7 @@ func (x *SearchReply) GetResults() []*SearchResult {
 	return nil
 }
 
-// Deprecated: Marked as deprecated in v1/search_get.proto.
+// Deprecated: Marked as deprecated in api/proto/v1/search_get.proto.
 func (x *SearchReply) GetGenerativeGroupedResult() string {
 	if x != nil && x.GenerativeGroupedResult != nil {
 		return *x.GenerativeGroupedResult
@@ -881,7 +881,7 @@ type QueryProfile struct {
 
 func (x *QueryProfile) Reset() {
 	*x = QueryProfile{}
-	mi := &file_v1_search_get_proto_msgTypes[9]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -893,7 +893,7 @@ func (x *QueryProfile) String() string {
 func (*QueryProfile) ProtoMessage() {}
 
 func (x *QueryProfile) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[9]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -906,7 +906,7 @@ func (x *QueryProfile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryProfile.ProtoReflect.Descriptor instead.
 func (*QueryProfile) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{9}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *QueryProfile) GetShards() []*QueryProfile_ShardProfile {
@@ -925,7 +925,7 @@ type RerankReply struct {
 
 func (x *RerankReply) Reset() {
 	*x = RerankReply{}
-	mi := &file_v1_search_get_proto_msgTypes[10]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -937,7 +937,7 @@ func (x *RerankReply) String() string {
 func (*RerankReply) ProtoMessage() {}
 
 func (x *RerankReply) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[10]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -950,7 +950,7 @@ func (x *RerankReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RerankReply.ProtoReflect.Descriptor instead.
 func (*RerankReply) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{10}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *RerankReply) GetScore() float64 {
@@ -968,7 +968,7 @@ type GroupByResult struct {
 	NumberOfObjects int64                  `protobuf:"varint,4,opt,name=number_of_objects,json=numberOfObjects,proto3" json:"number_of_objects,omitempty"`
 	Objects         []*SearchResult        `protobuf:"bytes,5,rep,name=objects,proto3" json:"objects,omitempty"`
 	Rerank          *RerankReply           `protobuf:"bytes,6,opt,name=rerank,proto3,oneof" json:"rerank,omitempty"`
-	// Deprecated: Marked as deprecated in v1/search_get.proto.
+	// Deprecated: Marked as deprecated in api/proto/v1/search_get.proto.
 	Generative       *GenerativeReply  `protobuf:"bytes,7,opt,name=generative,proto3,oneof" json:"generative,omitempty"`
 	GenerativeResult *GenerativeResult `protobuf:"bytes,8,opt,name=generative_result,json=generativeResult,proto3,oneof" json:"generative_result,omitempty"`
 	unknownFields    protoimpl.UnknownFields
@@ -977,7 +977,7 @@ type GroupByResult struct {
 
 func (x *GroupByResult) Reset() {
 	*x = GroupByResult{}
-	mi := &file_v1_search_get_proto_msgTypes[11]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -989,7 +989,7 @@ func (x *GroupByResult) String() string {
 func (*GroupByResult) ProtoMessage() {}
 
 func (x *GroupByResult) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[11]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1002,7 +1002,7 @@ func (x *GroupByResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupByResult.ProtoReflect.Descriptor instead.
 func (*GroupByResult) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{11}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GroupByResult) GetName() string {
@@ -1047,7 +1047,7 @@ func (x *GroupByResult) GetRerank() *RerankReply {
 	return nil
 }
 
-// Deprecated: Marked as deprecated in v1/search_get.proto.
+// Deprecated: Marked as deprecated in api/proto/v1/search_get.proto.
 func (x *GroupByResult) GetGenerative() *GenerativeReply {
 	if x != nil {
 		return x.Generative
@@ -1073,7 +1073,7 @@ type SearchResult struct {
 
 func (x *SearchResult) Reset() {
 	*x = SearchResult{}
-	mi := &file_v1_search_get_proto_msgTypes[12]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1085,7 +1085,7 @@ func (x *SearchResult) String() string {
 func (*SearchResult) ProtoMessage() {}
 
 func (x *SearchResult) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[12]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1098,7 +1098,7 @@ func (x *SearchResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchResult.ProtoReflect.Descriptor instead.
 func (*SearchResult) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{12}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *SearchResult) GetProperties() *PropertiesResult {
@@ -1127,7 +1127,7 @@ type MetadataResult struct {
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// protolint:disable:next REPEATED_FIELD_NAMES_PLURALIZED
 	//
-	// Deprecated: Marked as deprecated in v1/search_get.proto.
+	// Deprecated: Marked as deprecated in api/proto/v1/search_get.proto.
 	Vector                    []float32 `protobuf:"fixed32,2,rep,packed,name=vector,proto3" json:"vector,omitempty"`
 	CreationTimeUnix          int64     `protobuf:"varint,3,opt,name=creation_time_unix,json=creationTimeUnix,proto3" json:"creation_time_unix,omitempty"`
 	CreationTimeUnixPresent   bool      `protobuf:"varint,4,opt,name=creation_time_unix_present,json=creationTimeUnixPresent,proto3" json:"creation_time_unix_present,omitempty"`
@@ -1142,9 +1142,9 @@ type MetadataResult struct {
 	ExplainScore              string    `protobuf:"bytes,13,opt,name=explain_score,json=explainScore,proto3" json:"explain_score,omitempty"`
 	ExplainScorePresent       bool      `protobuf:"varint,14,opt,name=explain_score_present,json=explainScorePresent,proto3" json:"explain_score_present,omitempty"`
 	IsConsistent              *bool     `protobuf:"varint,15,opt,name=is_consistent,json=isConsistent,proto3,oneof" json:"is_consistent,omitempty"`
-	// Deprecated: Marked as deprecated in v1/search_get.proto.
+	// Deprecated: Marked as deprecated in api/proto/v1/search_get.proto.
 	Generative string `protobuf:"bytes,16,opt,name=generative,proto3" json:"generative,omitempty"`
-	// Deprecated: Marked as deprecated in v1/search_get.proto.
+	// Deprecated: Marked as deprecated in api/proto/v1/search_get.proto.
 	GenerativePresent   bool       `protobuf:"varint,17,opt,name=generative_present,json=generativePresent,proto3" json:"generative_present,omitempty"`
 	IsConsistentPresent bool       `protobuf:"varint,18,opt,name=is_consistent_present,json=isConsistentPresent,proto3" json:"is_consistent_present,omitempty"`
 	VectorBytes         []byte     `protobuf:"bytes,19,opt,name=vector_bytes,json=vectorBytes,proto3" json:"vector_bytes,omitempty"`
@@ -1158,7 +1158,7 @@ type MetadataResult struct {
 
 func (x *MetadataResult) Reset() {
 	*x = MetadataResult{}
-	mi := &file_v1_search_get_proto_msgTypes[13]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1170,7 +1170,7 @@ func (x *MetadataResult) String() string {
 func (*MetadataResult) ProtoMessage() {}
 
 func (x *MetadataResult) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[13]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1183,7 +1183,7 @@ func (x *MetadataResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetadataResult.ProtoReflect.Descriptor instead.
 func (*MetadataResult) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{13}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *MetadataResult) GetId() string {
@@ -1193,7 +1193,7 @@ func (x *MetadataResult) GetId() string {
 	return ""
 }
 
-// Deprecated: Marked as deprecated in v1/search_get.proto.
+// Deprecated: Marked as deprecated in api/proto/v1/search_get.proto.
 func (x *MetadataResult) GetVector() []float32 {
 	if x != nil {
 		return x.Vector
@@ -1292,7 +1292,7 @@ func (x *MetadataResult) GetIsConsistent() bool {
 	return false
 }
 
-// Deprecated: Marked as deprecated in v1/search_get.proto.
+// Deprecated: Marked as deprecated in api/proto/v1/search_get.proto.
 func (x *MetadataResult) GetGenerative() string {
 	if x != nil {
 		return x.Generative
@@ -1300,7 +1300,7 @@ func (x *MetadataResult) GetGenerative() string {
 	return ""
 }
 
-// Deprecated: Marked as deprecated in v1/search_get.proto.
+// Deprecated: Marked as deprecated in api/proto/v1/search_get.proto.
 func (x *MetadataResult) GetGenerativePresent() bool {
 	if x != nil {
 		return x.GenerativePresent
@@ -1363,7 +1363,7 @@ type PropertiesResult struct {
 
 func (x *PropertiesResult) Reset() {
 	*x = PropertiesResult{}
-	mi := &file_v1_search_get_proto_msgTypes[14]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1375,7 +1375,7 @@ func (x *PropertiesResult) String() string {
 func (*PropertiesResult) ProtoMessage() {}
 
 func (x *PropertiesResult) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[14]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1388,7 +1388,7 @@ func (x *PropertiesResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PropertiesResult.ProtoReflect.Descriptor instead.
 func (*PropertiesResult) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{14}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *PropertiesResult) GetRefProps() []*RefPropertiesResult {
@@ -1436,7 +1436,7 @@ type RefPropertiesResult struct {
 
 func (x *RefPropertiesResult) Reset() {
 	*x = RefPropertiesResult{}
-	mi := &file_v1_search_get_proto_msgTypes[15]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1448,7 +1448,7 @@ func (x *RefPropertiesResult) String() string {
 func (*RefPropertiesResult) ProtoMessage() {}
 
 func (x *RefPropertiesResult) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[15]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1461,7 +1461,7 @@ func (x *RefPropertiesResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefPropertiesResult.ProtoReflect.Descriptor instead.
 func (*RefPropertiesResult) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{15}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *RefPropertiesResult) GetProperties() []*PropertiesResult {
@@ -1489,7 +1489,7 @@ type QueryProfile_SearchProfile struct {
 
 func (x *QueryProfile_SearchProfile) Reset() {
 	*x = QueryProfile_SearchProfile{}
-	mi := &file_v1_search_get_proto_msgTypes[16]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1501,7 +1501,7 @@ func (x *QueryProfile_SearchProfile) String() string {
 func (*QueryProfile_SearchProfile) ProtoMessage() {}
 
 func (x *QueryProfile_SearchProfile) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[16]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1514,7 +1514,7 @@ func (x *QueryProfile_SearchProfile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryProfile_SearchProfile.ProtoReflect.Descriptor instead.
 func (*QueryProfile_SearchProfile) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{9, 0}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{9, 0}
 }
 
 func (x *QueryProfile_SearchProfile) GetDetails() map[string]string {
@@ -1539,7 +1539,7 @@ type QueryProfile_ShardProfile struct {
 
 func (x *QueryProfile_ShardProfile) Reset() {
 	*x = QueryProfile_ShardProfile{}
-	mi := &file_v1_search_get_proto_msgTypes[17]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1551,7 +1551,7 @@ func (x *QueryProfile_ShardProfile) String() string {
 func (*QueryProfile_ShardProfile) ProtoMessage() {}
 
 func (x *QueryProfile_ShardProfile) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_search_get_proto_msgTypes[17]
+	mi := &file_api_proto_v1_search_get_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1564,7 +1564,7 @@ func (x *QueryProfile_ShardProfile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryProfile_ShardProfile.ProtoReflect.Descriptor instead.
 func (*QueryProfile_ShardProfile) Descriptor() ([]byte, []int) {
-	return file_v1_search_get_proto_rawDescGZIP(), []int{9, 1}
+	return file_api_proto_v1_search_get_proto_rawDescGZIP(), []int{9, 1}
 }
 
 func (x *QueryProfile_ShardProfile) GetName() string {
@@ -1588,11 +1588,11 @@ func (x *QueryProfile_ShardProfile) GetSearches() map[string]*QueryProfile_Searc
 	return nil
 }
 
-var File_v1_search_get_proto protoreflect.FileDescriptor
+var File_api_proto_v1_search_get_proto protoreflect.FileDescriptor
 
-const file_v1_search_get_proto_rawDesc = "" +
+const file_api_proto_v1_search_get_proto_rawDesc = "" +
 	"\n" +
-	"\x13v1/search_get.proto\x12\vweaviate.v1\x1a\rv1/base.proto\x1a\x14v1/base_search.proto\x1a\x13v1/generative.proto\x1a\x13v1/properties.proto\"\xc7\r\n" +
+	"\x1dapi/proto/v1/search_get.proto\x12\vweaviate.v1\x1a\x17api/proto/v1/base.proto\x1a\x1eapi/proto/v1/base_search.proto\x1a\x1dapi/proto/v1/generative.proto\x1a\x1dapi/proto/v1/properties.proto\"\xc7\r\n" +
 	"\rSearchRequest\x12\x1e\n" +
 	"\n" +
 	"collection\x18\x01 \x01(\tR\n" +
@@ -1789,23 +1789,23 @@ const file_v1_search_get_proto_rawDesc = "" +
 	"\n" +
 	"properties\x18\x01 \x03(\v2\x1d.weaviate.v1.PropertiesResultR\n" +
 	"properties\x12\x1b\n" +
-	"\tprop_name\x18\x02 \x01(\tR\bpropNameBs\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x16WeaviateProtoSearchGetZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
+	"\tprop_name\x18\x02 \x01(\tR\bpropNameB\x94\x01\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x16WeaviateProtoSearchGetZUgithub.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1;protocolb\x06proto3"
 
 var (
-	file_v1_search_get_proto_rawDescOnce sync.Once
-	file_v1_search_get_proto_rawDescData []byte
+	file_api_proto_v1_search_get_proto_rawDescOnce sync.Once
+	file_api_proto_v1_search_get_proto_rawDescData []byte
 )
 
-func file_v1_search_get_proto_rawDescGZIP() []byte {
-	file_v1_search_get_proto_rawDescOnce.Do(func() {
-		file_v1_search_get_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_v1_search_get_proto_rawDesc), len(file_v1_search_get_proto_rawDesc)))
+func file_api_proto_v1_search_get_proto_rawDescGZIP() []byte {
+	file_api_proto_v1_search_get_proto_rawDescOnce.Do(func() {
+		file_api_proto_v1_search_get_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_api_proto_v1_search_get_proto_rawDesc), len(file_api_proto_v1_search_get_proto_rawDesc)))
 	})
-	return file_v1_search_get_proto_rawDescData
+	return file_api_proto_v1_search_get_proto_rawDescData
 }
 
-var file_v1_search_get_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
-var file_v1_search_get_proto_goTypes = []any{
+var file_api_proto_v1_search_get_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_api_proto_v1_search_get_proto_goTypes = []any{
 	(*SearchRequest)(nil),              // 0: weaviate.v1.SearchRequest
 	(*GroupBy)(nil),                    // 1: weaviate.v1.GroupBy
 	(*SortBy)(nil),                     // 2: weaviate.v1.SortBy
@@ -1845,7 +1845,7 @@ var file_v1_search_get_proto_goTypes = []any{
 	(*Vectors)(nil),                    // 36: weaviate.v1.Vectors
 	(*Properties)(nil),                 // 37: weaviate.v1.Properties
 }
-var file_v1_search_get_proto_depIdxs = []int32{
+var file_api_proto_v1_search_get_proto_depIdxs = []int32{
 	20, // 0: weaviate.v1.SearchRequest.consistency_level:type_name -> weaviate.v1.ConsistencyLevel
 	4,  // 1: weaviate.v1.SearchRequest.properties:type_name -> weaviate.v1.PropertiesRequest
 	3,  // 2: weaviate.v1.SearchRequest.metadata:type_name -> weaviate.v1.MetadataRequest
@@ -1897,36 +1897,36 @@ var file_v1_search_get_proto_depIdxs = []int32{
 	0,  // [0:44] is the sub-list for field type_name
 }
 
-func init() { file_v1_search_get_proto_init() }
-func file_v1_search_get_proto_init() {
-	if File_v1_search_get_proto != nil {
+func init() { file_api_proto_v1_search_get_proto_init() }
+func file_api_proto_v1_search_get_proto_init() {
+	if File_api_proto_v1_search_get_proto != nil {
 		return
 	}
-	file_v1_base_proto_init()
-	file_v1_base_search_proto_init()
-	file_v1_generative_proto_init()
-	file_v1_properties_proto_init()
-	file_v1_search_get_proto_msgTypes[0].OneofWrappers = []any{}
-	file_v1_search_get_proto_msgTypes[7].OneofWrappers = []any{}
-	file_v1_search_get_proto_msgTypes[8].OneofWrappers = []any{}
-	file_v1_search_get_proto_msgTypes[11].OneofWrappers = []any{}
-	file_v1_search_get_proto_msgTypes[12].OneofWrappers = []any{}
-	file_v1_search_get_proto_msgTypes[13].OneofWrappers = []any{}
+	file_api_proto_v1_base_proto_init()
+	file_api_proto_v1_base_search_proto_init()
+	file_api_proto_v1_generative_proto_init()
+	file_api_proto_v1_properties_proto_init()
+	file_api_proto_v1_search_get_proto_msgTypes[0].OneofWrappers = []any{}
+	file_api_proto_v1_search_get_proto_msgTypes[7].OneofWrappers = []any{}
+	file_api_proto_v1_search_get_proto_msgTypes[8].OneofWrappers = []any{}
+	file_api_proto_v1_search_get_proto_msgTypes[11].OneofWrappers = []any{}
+	file_api_proto_v1_search_get_proto_msgTypes[12].OneofWrappers = []any{}
+	file_api_proto_v1_search_get_proto_msgTypes[13].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_search_get_proto_rawDesc), len(file_v1_search_get_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_v1_search_get_proto_rawDesc), len(file_api_proto_v1_search_get_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_v1_search_get_proto_goTypes,
-		DependencyIndexes: file_v1_search_get_proto_depIdxs,
-		MessageInfos:      file_v1_search_get_proto_msgTypes,
+		GoTypes:           file_api_proto_v1_search_get_proto_goTypes,
+		DependencyIndexes: file_api_proto_v1_search_get_proto_depIdxs,
+		MessageInfos:      file_api_proto_v1_search_get_proto_msgTypes,
 	}.Build()
-	File_v1_search_get_proto = out.File
-	file_v1_search_get_proto_goTypes = nil
-	file_v1_search_get_proto_depIdxs = nil
+	File_api_proto_v1_search_get_proto = out.File
+	file_api_proto_v1_search_get_proto_goTypes = nil
+	file_api_proto_v1_search_get_proto_depIdxs = nil
 }

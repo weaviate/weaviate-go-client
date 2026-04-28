@@ -3,9 +3,9 @@ syntax = "proto3";
 package weaviate.v1;
 
 import "google/protobuf/struct.proto";
-import "v1/base.proto";
+import "api/proto/v1/base.proto";
 
-option go_package = "github.com/weaviate/weaviate/grpc/generated;protocol";
+option go_package = "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1;protocol";
 option java_package = "io.weaviate.client.grpc.protocol.v1";
 option java_outer_classname = "WeaviateProtoBatch";
 

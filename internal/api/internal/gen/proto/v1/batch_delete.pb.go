@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.33.2
-// source: v1/batch_delete.proto
+// source: api/proto/v1/batch_delete.proto
 
 package protocol
 
@@ -35,7 +35,7 @@ type BatchDeleteRequest struct {
 
 func (x *BatchDeleteRequest) Reset() {
 	*x = BatchDeleteRequest{}
-	mi := &file_v1_batch_delete_proto_msgTypes[0]
+	mi := &file_api_proto_v1_batch_delete_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +47,7 @@ func (x *BatchDeleteRequest) String() string {
 func (*BatchDeleteRequest) ProtoMessage() {}
 
 func (x *BatchDeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_batch_delete_proto_msgTypes[0]
+	mi := &file_api_proto_v1_batch_delete_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +60,7 @@ func (x *BatchDeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchDeleteRequest.ProtoReflect.Descriptor instead.
 func (*BatchDeleteRequest) Descriptor() ([]byte, []int) {
-	return file_v1_batch_delete_proto_rawDescGZIP(), []int{0}
+	return file_api_proto_v1_batch_delete_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *BatchDeleteRequest) GetCollection() string {
@@ -118,7 +118,7 @@ type BatchDeleteReply struct {
 
 func (x *BatchDeleteReply) Reset() {
 	*x = BatchDeleteReply{}
-	mi := &file_v1_batch_delete_proto_msgTypes[1]
+	mi := &file_api_proto_v1_batch_delete_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -130,7 +130,7 @@ func (x *BatchDeleteReply) String() string {
 func (*BatchDeleteReply) ProtoMessage() {}
 
 func (x *BatchDeleteReply) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_batch_delete_proto_msgTypes[1]
+	mi := &file_api_proto_v1_batch_delete_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -143,7 +143,7 @@ func (x *BatchDeleteReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchDeleteReply.ProtoReflect.Descriptor instead.
 func (*BatchDeleteReply) Descriptor() ([]byte, []int) {
-	return file_v1_batch_delete_proto_rawDescGZIP(), []int{1}
+	return file_api_proto_v1_batch_delete_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *BatchDeleteReply) GetTook() float32 {
@@ -192,7 +192,7 @@ type BatchDeleteObject struct {
 
 func (x *BatchDeleteObject) Reset() {
 	*x = BatchDeleteObject{}
-	mi := &file_v1_batch_delete_proto_msgTypes[2]
+	mi := &file_api_proto_v1_batch_delete_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -204,7 +204,7 @@ func (x *BatchDeleteObject) String() string {
 func (*BatchDeleteObject) ProtoMessage() {}
 
 func (x *BatchDeleteObject) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_batch_delete_proto_msgTypes[2]
+	mi := &file_api_proto_v1_batch_delete_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -217,7 +217,7 @@ func (x *BatchDeleteObject) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchDeleteObject.ProtoReflect.Descriptor instead.
 func (*BatchDeleteObject) Descriptor() ([]byte, []int) {
-	return file_v1_batch_delete_proto_rawDescGZIP(), []int{2}
+	return file_api_proto_v1_batch_delete_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *BatchDeleteObject) GetUuid() []byte {
@@ -241,11 +241,11 @@ func (x *BatchDeleteObject) GetError() string {
 	return ""
 }
 
-var File_v1_batch_delete_proto protoreflect.FileDescriptor
+var File_api_proto_v1_batch_delete_proto protoreflect.FileDescriptor
 
-const file_v1_batch_delete_proto_rawDesc = "" +
+const file_api_proto_v1_batch_delete_proto_rawDesc = "" +
 	"\n" +
-	"\x15v1/batch_delete.proto\x12\vweaviate.v1\x1a\rv1/base.proto\"\xa6\x02\n" +
+	"\x1fapi/proto/v1/batch_delete.proto\x12\vweaviate.v1\x1a\x17api/proto/v1/base.proto\"\xa6\x02\n" +
 	"\x12BatchDeleteRequest\x12\x1e\n" +
 	"\n" +
 	"collection\x18\x01 \x01(\tR\n" +
@@ -271,30 +271,30 @@ const file_v1_batch_delete_proto_rawDesc = "" +
 	"successful\x18\x02 \x01(\bR\n" +
 	"successful\x12\x19\n" +
 	"\x05error\x18\x03 \x01(\tH\x00R\x05error\x88\x01\x01B\b\n" +
-	"\x06_errorBu\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x18WeaviateProtoBatchDeleteZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
+	"\x06_errorB\x96\x01\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x18WeaviateProtoBatchDeleteZUgithub.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1;protocolb\x06proto3"
 
 var (
-	file_v1_batch_delete_proto_rawDescOnce sync.Once
-	file_v1_batch_delete_proto_rawDescData []byte
+	file_api_proto_v1_batch_delete_proto_rawDescOnce sync.Once
+	file_api_proto_v1_batch_delete_proto_rawDescData []byte
 )
 
-func file_v1_batch_delete_proto_rawDescGZIP() []byte {
-	file_v1_batch_delete_proto_rawDescOnce.Do(func() {
-		file_v1_batch_delete_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_v1_batch_delete_proto_rawDesc), len(file_v1_batch_delete_proto_rawDesc)))
+func file_api_proto_v1_batch_delete_proto_rawDescGZIP() []byte {
+	file_api_proto_v1_batch_delete_proto_rawDescOnce.Do(func() {
+		file_api_proto_v1_batch_delete_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_api_proto_v1_batch_delete_proto_rawDesc), len(file_api_proto_v1_batch_delete_proto_rawDesc)))
 	})
-	return file_v1_batch_delete_proto_rawDescData
+	return file_api_proto_v1_batch_delete_proto_rawDescData
 }
 
-var file_v1_batch_delete_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_v1_batch_delete_proto_goTypes = []any{
+var file_api_proto_v1_batch_delete_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_api_proto_v1_batch_delete_proto_goTypes = []any{
 	(*BatchDeleteRequest)(nil), // 0: weaviate.v1.BatchDeleteRequest
 	(*BatchDeleteReply)(nil),   // 1: weaviate.v1.BatchDeleteReply
 	(*BatchDeleteObject)(nil),  // 2: weaviate.v1.BatchDeleteObject
 	(*Filters)(nil),            // 3: weaviate.v1.Filters
 	(ConsistencyLevel)(0),      // 4: weaviate.v1.ConsistencyLevel
 }
-var file_v1_batch_delete_proto_depIdxs = []int32{
+var file_api_proto_v1_batch_delete_proto_depIdxs = []int32{
 	3, // 0: weaviate.v1.BatchDeleteRequest.filters:type_name -> weaviate.v1.Filters
 	4, // 1: weaviate.v1.BatchDeleteRequest.consistency_level:type_name -> weaviate.v1.ConsistencyLevel
 	2, // 2: weaviate.v1.BatchDeleteReply.objects:type_name -> weaviate.v1.BatchDeleteObject
@@ -305,29 +305,29 @@ var file_v1_batch_delete_proto_depIdxs = []int32{
 	0, // [0:3] is the sub-list for field type_name
 }
 
-func init() { file_v1_batch_delete_proto_init() }
-func file_v1_batch_delete_proto_init() {
-	if File_v1_batch_delete_proto != nil {
+func init() { file_api_proto_v1_batch_delete_proto_init() }
+func file_api_proto_v1_batch_delete_proto_init() {
+	if File_api_proto_v1_batch_delete_proto != nil {
 		return
 	}
-	file_v1_base_proto_init()
-	file_v1_batch_delete_proto_msgTypes[0].OneofWrappers = []any{}
-	file_v1_batch_delete_proto_msgTypes[2].OneofWrappers = []any{}
+	file_api_proto_v1_base_proto_init()
+	file_api_proto_v1_batch_delete_proto_msgTypes[0].OneofWrappers = []any{}
+	file_api_proto_v1_batch_delete_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_batch_delete_proto_rawDesc), len(file_v1_batch_delete_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_v1_batch_delete_proto_rawDesc), len(file_api_proto_v1_batch_delete_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_v1_batch_delete_proto_goTypes,
-		DependencyIndexes: file_v1_batch_delete_proto_depIdxs,
-		MessageInfos:      file_v1_batch_delete_proto_msgTypes,
+		GoTypes:           file_api_proto_v1_batch_delete_proto_goTypes,
+		DependencyIndexes: file_api_proto_v1_batch_delete_proto_depIdxs,
+		MessageInfos:      file_api_proto_v1_batch_delete_proto_msgTypes,
 	}.Build()
-	File_v1_batch_delete_proto = out.File
-	file_v1_batch_delete_proto_goTypes = nil
-	file_v1_batch_delete_proto_depIdxs = nil
+	File_api_proto_v1_batch_delete_proto = out.File
+	file_api_proto_v1_batch_delete_proto_goTypes = nil
+	file_api_proto_v1_batch_delete_proto_depIdxs = nil
 }

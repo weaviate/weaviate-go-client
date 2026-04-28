@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.33.2
-// source: v1/base.proto
+// source: api/proto/v1/base.proto
 
 package protocol
 
@@ -58,11 +58,11 @@ func (x ConsistencyLevel) String() string {
 }
 
 func (ConsistencyLevel) Descriptor() protoreflect.EnumDescriptor {
-	return file_v1_base_proto_enumTypes[0].Descriptor()
+	return file_api_proto_v1_base_proto_enumTypes[0].Descriptor()
 }
 
 func (ConsistencyLevel) Type() protoreflect.EnumType {
-	return &file_v1_base_proto_enumTypes[0]
+	return &file_api_proto_v1_base_proto_enumTypes[0]
 }
 
 func (x ConsistencyLevel) Number() protoreflect.EnumNumber {
@@ -71,7 +71,7 @@ func (x ConsistencyLevel) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ConsistencyLevel.Descriptor instead.
 func (ConsistencyLevel) EnumDescriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{0}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{0}
 }
 
 type Filters_Operator int32
@@ -146,11 +146,11 @@ func (x Filters_Operator) String() string {
 }
 
 func (Filters_Operator) Descriptor() protoreflect.EnumDescriptor {
-	return file_v1_base_proto_enumTypes[1].Descriptor()
+	return file_api_proto_v1_base_proto_enumTypes[1].Descriptor()
 }
 
 func (Filters_Operator) Type() protoreflect.EnumType {
-	return &file_v1_base_proto_enumTypes[1]
+	return &file_api_proto_v1_base_proto_enumTypes[1]
 }
 
 func (x Filters_Operator) Number() protoreflect.EnumNumber {
@@ -159,7 +159,7 @@ func (x Filters_Operator) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Filters_Operator.Descriptor instead.
 func (Filters_Operator) EnumDescriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{11, 0}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{11, 0}
 }
 
 type Vectors_VectorType int32
@@ -195,11 +195,11 @@ func (x Vectors_VectorType) String() string {
 }
 
 func (Vectors_VectorType) Descriptor() protoreflect.EnumDescriptor {
-	return file_v1_base_proto_enumTypes[2].Descriptor()
+	return file_api_proto_v1_base_proto_enumTypes[2].Descriptor()
 }
 
 func (Vectors_VectorType) Type() protoreflect.EnumType {
-	return &file_v1_base_proto_enumTypes[2]
+	return &file_api_proto_v1_base_proto_enumTypes[2]
 }
 
 func (x Vectors_VectorType) Number() protoreflect.EnumNumber {
@@ -208,7 +208,7 @@ func (x Vectors_VectorType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Vectors_VectorType.Descriptor instead.
 func (Vectors_VectorType) EnumDescriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{17, 0}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{17, 0}
 }
 
 type NumberArrayProperties struct {
@@ -216,7 +216,7 @@ type NumberArrayProperties struct {
 	// will be removed in the future, use vector_bytes
 	// go client 5.4.1 depends on this field. Only remove after go client is deprecated
 	//
-	// Deprecated: Marked as deprecated in v1/base.proto.
+	// Deprecated: Marked as deprecated in api/proto/v1/base.proto.
 	Values        []float64 `protobuf:"fixed64,1,rep,packed,name=values,proto3" json:"values,omitempty"`
 	PropName      string    `protobuf:"bytes,2,opt,name=prop_name,json=propName,proto3" json:"prop_name,omitempty"`
 	ValuesBytes   []byte    `protobuf:"bytes,3,opt,name=values_bytes,json=valuesBytes,proto3" json:"values_bytes,omitempty"`
@@ -226,7 +226,7 @@ type NumberArrayProperties struct {
 
 func (x *NumberArrayProperties) Reset() {
 	*x = NumberArrayProperties{}
-	mi := &file_v1_base_proto_msgTypes[0]
+	mi := &file_api_proto_v1_base_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -238,7 +238,7 @@ func (x *NumberArrayProperties) String() string {
 func (*NumberArrayProperties) ProtoMessage() {}
 
 func (x *NumberArrayProperties) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[0]
+	mi := &file_api_proto_v1_base_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -251,10 +251,10 @@ func (x *NumberArrayProperties) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NumberArrayProperties.ProtoReflect.Descriptor instead.
 func (*NumberArrayProperties) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{0}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{0}
 }
 
-// Deprecated: Marked as deprecated in v1/base.proto.
+// Deprecated: Marked as deprecated in api/proto/v1/base.proto.
 func (x *NumberArrayProperties) GetValues() []float64 {
 	if x != nil {
 		return x.Values
@@ -286,7 +286,7 @@ type IntArrayProperties struct {
 
 func (x *IntArrayProperties) Reset() {
 	*x = IntArrayProperties{}
-	mi := &file_v1_base_proto_msgTypes[1]
+	mi := &file_api_proto_v1_base_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -298,7 +298,7 @@ func (x *IntArrayProperties) String() string {
 func (*IntArrayProperties) ProtoMessage() {}
 
 func (x *IntArrayProperties) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[1]
+	mi := &file_api_proto_v1_base_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -311,7 +311,7 @@ func (x *IntArrayProperties) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IntArrayProperties.ProtoReflect.Descriptor instead.
 func (*IntArrayProperties) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{1}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *IntArrayProperties) GetValues() []int64 {
@@ -338,7 +338,7 @@ type TextArrayProperties struct {
 
 func (x *TextArrayProperties) Reset() {
 	*x = TextArrayProperties{}
-	mi := &file_v1_base_proto_msgTypes[2]
+	mi := &file_api_proto_v1_base_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -350,7 +350,7 @@ func (x *TextArrayProperties) String() string {
 func (*TextArrayProperties) ProtoMessage() {}
 
 func (x *TextArrayProperties) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[2]
+	mi := &file_api_proto_v1_base_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -363,7 +363,7 @@ func (x *TextArrayProperties) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TextArrayProperties.ProtoReflect.Descriptor instead.
 func (*TextArrayProperties) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{2}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *TextArrayProperties) GetValues() []string {
@@ -390,7 +390,7 @@ type BooleanArrayProperties struct {
 
 func (x *BooleanArrayProperties) Reset() {
 	*x = BooleanArrayProperties{}
-	mi := &file_v1_base_proto_msgTypes[3]
+	mi := &file_api_proto_v1_base_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -402,7 +402,7 @@ func (x *BooleanArrayProperties) String() string {
 func (*BooleanArrayProperties) ProtoMessage() {}
 
 func (x *BooleanArrayProperties) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[3]
+	mi := &file_api_proto_v1_base_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -415,7 +415,7 @@ func (x *BooleanArrayProperties) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BooleanArrayProperties.ProtoReflect.Descriptor instead.
 func (*BooleanArrayProperties) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{3}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *BooleanArrayProperties) GetValues() []bool {
@@ -448,7 +448,7 @@ type ObjectPropertiesValue struct {
 
 func (x *ObjectPropertiesValue) Reset() {
 	*x = ObjectPropertiesValue{}
-	mi := &file_v1_base_proto_msgTypes[4]
+	mi := &file_api_proto_v1_base_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -460,7 +460,7 @@ func (x *ObjectPropertiesValue) String() string {
 func (*ObjectPropertiesValue) ProtoMessage() {}
 
 func (x *ObjectPropertiesValue) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[4]
+	mi := &file_api_proto_v1_base_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -473,7 +473,7 @@ func (x *ObjectPropertiesValue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObjectPropertiesValue.ProtoReflect.Descriptor instead.
 func (*ObjectPropertiesValue) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{4}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ObjectPropertiesValue) GetNonRefProperties() *structpb.Struct {
@@ -542,7 +542,7 @@ type ObjectArrayProperties struct {
 
 func (x *ObjectArrayProperties) Reset() {
 	*x = ObjectArrayProperties{}
-	mi := &file_v1_base_proto_msgTypes[5]
+	mi := &file_api_proto_v1_base_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -554,7 +554,7 @@ func (x *ObjectArrayProperties) String() string {
 func (*ObjectArrayProperties) ProtoMessage() {}
 
 func (x *ObjectArrayProperties) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[5]
+	mi := &file_api_proto_v1_base_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -567,7 +567,7 @@ func (x *ObjectArrayProperties) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObjectArrayProperties.ProtoReflect.Descriptor instead.
 func (*ObjectArrayProperties) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{5}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ObjectArrayProperties) GetValues() []*ObjectPropertiesValue {
@@ -594,7 +594,7 @@ type ObjectProperties struct {
 
 func (x *ObjectProperties) Reset() {
 	*x = ObjectProperties{}
-	mi := &file_v1_base_proto_msgTypes[6]
+	mi := &file_api_proto_v1_base_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -606,7 +606,7 @@ func (x *ObjectProperties) String() string {
 func (*ObjectProperties) ProtoMessage() {}
 
 func (x *ObjectProperties) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[6]
+	mi := &file_api_proto_v1_base_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -619,7 +619,7 @@ func (x *ObjectProperties) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ObjectProperties.ProtoReflect.Descriptor instead.
 func (*ObjectProperties) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{6}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ObjectProperties) GetValue() *ObjectPropertiesValue {
@@ -645,7 +645,7 @@ type TextArray struct {
 
 func (x *TextArray) Reset() {
 	*x = TextArray{}
-	mi := &file_v1_base_proto_msgTypes[7]
+	mi := &file_api_proto_v1_base_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -657,7 +657,7 @@ func (x *TextArray) String() string {
 func (*TextArray) ProtoMessage() {}
 
 func (x *TextArray) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[7]
+	mi := &file_api_proto_v1_base_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -670,7 +670,7 @@ func (x *TextArray) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TextArray.ProtoReflect.Descriptor instead.
 func (*TextArray) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{7}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *TextArray) GetValues() []string {
@@ -689,7 +689,7 @@ type IntArray struct {
 
 func (x *IntArray) Reset() {
 	*x = IntArray{}
-	mi := &file_v1_base_proto_msgTypes[8]
+	mi := &file_api_proto_v1_base_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -701,7 +701,7 @@ func (x *IntArray) String() string {
 func (*IntArray) ProtoMessage() {}
 
 func (x *IntArray) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[8]
+	mi := &file_api_proto_v1_base_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -714,7 +714,7 @@ func (x *IntArray) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IntArray.ProtoReflect.Descriptor instead.
 func (*IntArray) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{8}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *IntArray) GetValues() []int64 {
@@ -733,7 +733,7 @@ type NumberArray struct {
 
 func (x *NumberArray) Reset() {
 	*x = NumberArray{}
-	mi := &file_v1_base_proto_msgTypes[9]
+	mi := &file_api_proto_v1_base_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -745,7 +745,7 @@ func (x *NumberArray) String() string {
 func (*NumberArray) ProtoMessage() {}
 
 func (x *NumberArray) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[9]
+	mi := &file_api_proto_v1_base_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -758,7 +758,7 @@ func (x *NumberArray) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NumberArray.ProtoReflect.Descriptor instead.
 func (*NumberArray) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{9}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *NumberArray) GetValues() []float64 {
@@ -777,7 +777,7 @@ type BooleanArray struct {
 
 func (x *BooleanArray) Reset() {
 	*x = BooleanArray{}
-	mi := &file_v1_base_proto_msgTypes[10]
+	mi := &file_api_proto_v1_base_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -789,7 +789,7 @@ func (x *BooleanArray) String() string {
 func (*BooleanArray) ProtoMessage() {}
 
 func (x *BooleanArray) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[10]
+	mi := &file_api_proto_v1_base_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -802,7 +802,7 @@ func (x *BooleanArray) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BooleanArray.ProtoReflect.Descriptor instead.
 func (*BooleanArray) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{10}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *BooleanArray) GetValues() []bool {
@@ -817,7 +817,7 @@ type Filters struct {
 	Operator Filters_Operator       `protobuf:"varint,1,opt,name=operator,proto3,enum=weaviate.v1.Filters_Operator" json:"operator,omitempty"`
 	// protolint:disable:next REPEATED_FIELD_NAMES_PLURALIZED
 	//
-	// Deprecated: Marked as deprecated in v1/base.proto.
+	// Deprecated: Marked as deprecated in api/proto/v1/base.proto.
 	On      []string   `protobuf:"bytes,2,rep,name=on,proto3" json:"on,omitempty"` // will be removed in the future, use path
 	Filters []*Filters `protobuf:"bytes,3,rep,name=filters,proto3" json:"filters,omitempty"`
 	// Types that are valid to be assigned to TestValue:
@@ -839,7 +839,7 @@ type Filters struct {
 
 func (x *Filters) Reset() {
 	*x = Filters{}
-	mi := &file_v1_base_proto_msgTypes[11]
+	mi := &file_api_proto_v1_base_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -851,7 +851,7 @@ func (x *Filters) String() string {
 func (*Filters) ProtoMessage() {}
 
 func (x *Filters) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[11]
+	mi := &file_api_proto_v1_base_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -864,7 +864,7 @@ func (x *Filters) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Filters.ProtoReflect.Descriptor instead.
 func (*Filters) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{11}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *Filters) GetOperator() Filters_Operator {
@@ -874,7 +874,7 @@ func (x *Filters) GetOperator() Filters_Operator {
 	return Filters_OPERATOR_UNSPECIFIED
 }
 
-// Deprecated: Marked as deprecated in v1/base.proto.
+// Deprecated: Marked as deprecated in api/proto/v1/base.proto.
 func (x *Filters) GetOn() []string {
 	if x != nil {
 		return x.On
@@ -1052,7 +1052,7 @@ type FilterReferenceSingleTarget struct {
 
 func (x *FilterReferenceSingleTarget) Reset() {
 	*x = FilterReferenceSingleTarget{}
-	mi := &file_v1_base_proto_msgTypes[12]
+	mi := &file_api_proto_v1_base_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1064,7 +1064,7 @@ func (x *FilterReferenceSingleTarget) String() string {
 func (*FilterReferenceSingleTarget) ProtoMessage() {}
 
 func (x *FilterReferenceSingleTarget) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[12]
+	mi := &file_api_proto_v1_base_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1077,7 +1077,7 @@ func (x *FilterReferenceSingleTarget) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FilterReferenceSingleTarget.ProtoReflect.Descriptor instead.
 func (*FilterReferenceSingleTarget) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{12}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *FilterReferenceSingleTarget) GetOn() string {
@@ -1105,7 +1105,7 @@ type FilterReferenceMultiTarget struct {
 
 func (x *FilterReferenceMultiTarget) Reset() {
 	*x = FilterReferenceMultiTarget{}
-	mi := &file_v1_base_proto_msgTypes[13]
+	mi := &file_api_proto_v1_base_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1117,7 +1117,7 @@ func (x *FilterReferenceMultiTarget) String() string {
 func (*FilterReferenceMultiTarget) ProtoMessage() {}
 
 func (x *FilterReferenceMultiTarget) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[13]
+	mi := &file_api_proto_v1_base_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1130,7 +1130,7 @@ func (x *FilterReferenceMultiTarget) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FilterReferenceMultiTarget.ProtoReflect.Descriptor instead.
 func (*FilterReferenceMultiTarget) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{13}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *FilterReferenceMultiTarget) GetOn() string {
@@ -1163,7 +1163,7 @@ type FilterReferenceCount struct {
 
 func (x *FilterReferenceCount) Reset() {
 	*x = FilterReferenceCount{}
-	mi := &file_v1_base_proto_msgTypes[14]
+	mi := &file_api_proto_v1_base_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1175,7 +1175,7 @@ func (x *FilterReferenceCount) String() string {
 func (*FilterReferenceCount) ProtoMessage() {}
 
 func (x *FilterReferenceCount) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[14]
+	mi := &file_api_proto_v1_base_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1188,7 +1188,7 @@ func (x *FilterReferenceCount) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FilterReferenceCount.ProtoReflect.Descriptor instead.
 func (*FilterReferenceCount) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{14}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *FilterReferenceCount) GetOn() string {
@@ -1213,7 +1213,7 @@ type FilterTarget struct {
 
 func (x *FilterTarget) Reset() {
 	*x = FilterTarget{}
-	mi := &file_v1_base_proto_msgTypes[15]
+	mi := &file_api_proto_v1_base_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1225,7 +1225,7 @@ func (x *FilterTarget) String() string {
 func (*FilterTarget) ProtoMessage() {}
 
 func (x *FilterTarget) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[15]
+	mi := &file_api_proto_v1_base_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1238,7 +1238,7 @@ func (x *FilterTarget) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FilterTarget.ProtoReflect.Descriptor instead.
 func (*FilterTarget) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{15}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *FilterTarget) GetTarget() isFilterTarget_Target {
@@ -1323,7 +1323,7 @@ type GeoCoordinatesFilter struct {
 
 func (x *GeoCoordinatesFilter) Reset() {
 	*x = GeoCoordinatesFilter{}
-	mi := &file_v1_base_proto_msgTypes[16]
+	mi := &file_api_proto_v1_base_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1335,7 +1335,7 @@ func (x *GeoCoordinatesFilter) String() string {
 func (*GeoCoordinatesFilter) ProtoMessage() {}
 
 func (x *GeoCoordinatesFilter) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[16]
+	mi := &file_api_proto_v1_base_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1348,7 +1348,7 @@ func (x *GeoCoordinatesFilter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GeoCoordinatesFilter.ProtoReflect.Descriptor instead.
 func (*GeoCoordinatesFilter) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{16}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GeoCoordinatesFilter) GetLatitude() float32 {
@@ -1375,7 +1375,7 @@ func (x *GeoCoordinatesFilter) GetDistance() float32 {
 type Vectors struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// Deprecated: Marked as deprecated in v1/base.proto.
+	// Deprecated: Marked as deprecated in api/proto/v1/base.proto.
 	Index         uint64             `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"` // for multi-vec
 	VectorBytes   []byte             `protobuf:"bytes,3,opt,name=vector_bytes,json=vectorBytes,proto3" json:"vector_bytes,omitempty"`
 	Type          Vectors_VectorType `protobuf:"varint,4,opt,name=type,proto3,enum=weaviate.v1.Vectors_VectorType" json:"type,omitempty"`
@@ -1385,7 +1385,7 @@ type Vectors struct {
 
 func (x *Vectors) Reset() {
 	*x = Vectors{}
-	mi := &file_v1_base_proto_msgTypes[17]
+	mi := &file_api_proto_v1_base_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1397,7 +1397,7 @@ func (x *Vectors) String() string {
 func (*Vectors) ProtoMessage() {}
 
 func (x *Vectors) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_base_proto_msgTypes[17]
+	mi := &file_api_proto_v1_base_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1410,7 +1410,7 @@ func (x *Vectors) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Vectors.ProtoReflect.Descriptor instead.
 func (*Vectors) Descriptor() ([]byte, []int) {
-	return file_v1_base_proto_rawDescGZIP(), []int{17}
+	return file_api_proto_v1_base_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Vectors) GetName() string {
@@ -1420,7 +1420,7 @@ func (x *Vectors) GetName() string {
 	return ""
 }
 
-// Deprecated: Marked as deprecated in v1/base.proto.
+// Deprecated: Marked as deprecated in api/proto/v1/base.proto.
 func (x *Vectors) GetIndex() uint64 {
 	if x != nil {
 		return x.Index
@@ -1442,11 +1442,11 @@ func (x *Vectors) GetType() Vectors_VectorType {
 	return Vectors_VECTOR_TYPE_UNSPECIFIED
 }
 
-var File_v1_base_proto protoreflect.FileDescriptor
+var File_api_proto_v1_base_proto protoreflect.FileDescriptor
 
-const file_v1_base_proto_rawDesc = "" +
+const file_api_proto_v1_base_proto_rawDesc = "" +
 	"\n" +
-	"\rv1/base.proto\x12\vweaviate.v1\x1a\x1cgoogle/protobuf/struct.proto\"s\n" +
+	"\x17api/proto/v1/base.proto\x12\vweaviate.v1\x1a\x1cgoogle/protobuf/struct.proto\"s\n" +
 	"\x15NumberArrayProperties\x12\x1a\n" +
 	"\x06values\x18\x01 \x03(\x01B\x02\x18\x01R\x06values\x12\x1b\n" +
 	"\tprop_name\x18\x02 \x01(\tR\bpropName\x12!\n" +
@@ -1553,24 +1553,24 @@ const file_v1_base_proto_rawDesc = "" +
 	"\x1dCONSISTENCY_LEVEL_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15CONSISTENCY_LEVEL_ONE\x10\x01\x12\x1c\n" +
 	"\x18CONSISTENCY_LEVEL_QUORUM\x10\x02\x12\x19\n" +
-	"\x15CONSISTENCY_LEVEL_ALL\x10\x03Bn\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x11WeaviateProtoBaseZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
+	"\x15CONSISTENCY_LEVEL_ALL\x10\x03B\x8f\x01\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x11WeaviateProtoBaseZUgithub.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1;protocolb\x06proto3"
 
 var (
-	file_v1_base_proto_rawDescOnce sync.Once
-	file_v1_base_proto_rawDescData []byte
+	file_api_proto_v1_base_proto_rawDescOnce sync.Once
+	file_api_proto_v1_base_proto_rawDescData []byte
 )
 
-func file_v1_base_proto_rawDescGZIP() []byte {
-	file_v1_base_proto_rawDescOnce.Do(func() {
-		file_v1_base_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_v1_base_proto_rawDesc), len(file_v1_base_proto_rawDesc)))
+func file_api_proto_v1_base_proto_rawDescGZIP() []byte {
+	file_api_proto_v1_base_proto_rawDescOnce.Do(func() {
+		file_api_proto_v1_base_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_api_proto_v1_base_proto_rawDesc), len(file_api_proto_v1_base_proto_rawDesc)))
 	})
-	return file_v1_base_proto_rawDescData
+	return file_api_proto_v1_base_proto_rawDescData
 }
 
-var file_v1_base_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_v1_base_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
-var file_v1_base_proto_goTypes = []any{
+var file_api_proto_v1_base_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_api_proto_v1_base_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_api_proto_v1_base_proto_goTypes = []any{
 	(ConsistencyLevel)(0),               // 0: weaviate.v1.ConsistencyLevel
 	(Filters_Operator)(0),               // 1: weaviate.v1.Filters.Operator
 	(Vectors_VectorType)(0),             // 2: weaviate.v1.Vectors.VectorType
@@ -1594,7 +1594,7 @@ var file_v1_base_proto_goTypes = []any{
 	(*Vectors)(nil),                     // 20: weaviate.v1.Vectors
 	(*structpb.Struct)(nil),             // 21: google.protobuf.Struct
 }
-var file_v1_base_proto_depIdxs = []int32{
+var file_api_proto_v1_base_proto_depIdxs = []int32{
 	21, // 0: weaviate.v1.ObjectPropertiesValue.non_ref_properties:type_name -> google.protobuf.Struct
 	3,  // 1: weaviate.v1.ObjectPropertiesValue.number_array_properties:type_name -> weaviate.v1.NumberArrayProperties
 	4,  // 2: weaviate.v1.ObjectPropertiesValue.int_array_properties:type_name -> weaviate.v1.IntArrayProperties
@@ -1625,12 +1625,12 @@ var file_v1_base_proto_depIdxs = []int32{
 	0,  // [0:23] is the sub-list for field type_name
 }
 
-func init() { file_v1_base_proto_init() }
-func file_v1_base_proto_init() {
-	if File_v1_base_proto != nil {
+func init() { file_api_proto_v1_base_proto_init() }
+func file_api_proto_v1_base_proto_init() {
+	if File_api_proto_v1_base_proto != nil {
 		return
 	}
-	file_v1_base_proto_msgTypes[11].OneofWrappers = []any{
+	file_api_proto_v1_base_proto_msgTypes[11].OneofWrappers = []any{
 		(*Filters_ValueText)(nil),
 		(*Filters_ValueInt)(nil),
 		(*Filters_ValueBoolean)(nil),
@@ -1641,7 +1641,7 @@ func file_v1_base_proto_init() {
 		(*Filters_ValueNumberArray)(nil),
 		(*Filters_ValueGeo)(nil),
 	}
-	file_v1_base_proto_msgTypes[15].OneofWrappers = []any{
+	file_api_proto_v1_base_proto_msgTypes[15].OneofWrappers = []any{
 		(*FilterTarget_Property)(nil),
 		(*FilterTarget_SingleTarget)(nil),
 		(*FilterTarget_MultiTarget)(nil),
@@ -1651,18 +1651,18 @@ func file_v1_base_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_base_proto_rawDesc), len(file_v1_base_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_v1_base_proto_rawDesc), len(file_api_proto_v1_base_proto_rawDesc)),
 			NumEnums:      3,
 			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_v1_base_proto_goTypes,
-		DependencyIndexes: file_v1_base_proto_depIdxs,
-		EnumInfos:         file_v1_base_proto_enumTypes,
-		MessageInfos:      file_v1_base_proto_msgTypes,
+		GoTypes:           file_api_proto_v1_base_proto_goTypes,
+		DependencyIndexes: file_api_proto_v1_base_proto_depIdxs,
+		EnumInfos:         file_api_proto_v1_base_proto_enumTypes,
+		MessageInfos:      file_api_proto_v1_base_proto_msgTypes,
 	}.Build()
-	File_v1_base_proto = out.File
-	file_v1_base_proto_goTypes = nil
-	file_v1_base_proto_depIdxs = nil
+	File_api_proto_v1_base_proto = out.File
+	file_api_proto_v1_base_proto_goTypes = nil
+	file_api_proto_v1_base_proto_depIdxs = nil
 }

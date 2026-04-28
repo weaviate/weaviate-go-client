@@ -41,7 +41,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.33.2
-// source: v1/health_weaviate.proto
+// source: api/proto/v1/health_weaviate.proto
 
 package protocol
 
@@ -93,11 +93,11 @@ func (x WeaviateHealthCheckResponse_ServingStatus) String() string {
 }
 
 func (WeaviateHealthCheckResponse_ServingStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_v1_health_weaviate_proto_enumTypes[0].Descriptor()
+	return file_api_proto_v1_health_weaviate_proto_enumTypes[0].Descriptor()
 }
 
 func (WeaviateHealthCheckResponse_ServingStatus) Type() protoreflect.EnumType {
-	return &file_v1_health_weaviate_proto_enumTypes[0]
+	return &file_api_proto_v1_health_weaviate_proto_enumTypes[0]
 }
 
 func (x WeaviateHealthCheckResponse_ServingStatus) Number() protoreflect.EnumNumber {
@@ -106,7 +106,7 @@ func (x WeaviateHealthCheckResponse_ServingStatus) Number() protoreflect.EnumNum
 
 // Deprecated: Use WeaviateHealthCheckResponse_ServingStatus.Descriptor instead.
 func (WeaviateHealthCheckResponse_ServingStatus) EnumDescriptor() ([]byte, []int) {
-	return file_v1_health_weaviate_proto_rawDescGZIP(), []int{1, 0}
+	return file_api_proto_v1_health_weaviate_proto_rawDescGZIP(), []int{1, 0}
 }
 
 type WeaviateHealthCheckRequest struct {
@@ -118,7 +118,7 @@ type WeaviateHealthCheckRequest struct {
 
 func (x *WeaviateHealthCheckRequest) Reset() {
 	*x = WeaviateHealthCheckRequest{}
-	mi := &file_v1_health_weaviate_proto_msgTypes[0]
+	mi := &file_api_proto_v1_health_weaviate_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -130,7 +130,7 @@ func (x *WeaviateHealthCheckRequest) String() string {
 func (*WeaviateHealthCheckRequest) ProtoMessage() {}
 
 func (x *WeaviateHealthCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_health_weaviate_proto_msgTypes[0]
+	mi := &file_api_proto_v1_health_weaviate_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -143,7 +143,7 @@ func (x *WeaviateHealthCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WeaviateHealthCheckRequest.ProtoReflect.Descriptor instead.
 func (*WeaviateHealthCheckRequest) Descriptor() ([]byte, []int) {
-	return file_v1_health_weaviate_proto_rawDescGZIP(), []int{0}
+	return file_api_proto_v1_health_weaviate_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *WeaviateHealthCheckRequest) GetService() string {
@@ -162,7 +162,7 @@ type WeaviateHealthCheckResponse struct {
 
 func (x *WeaviateHealthCheckResponse) Reset() {
 	*x = WeaviateHealthCheckResponse{}
-	mi := &file_v1_health_weaviate_proto_msgTypes[1]
+	mi := &file_api_proto_v1_health_weaviate_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -174,7 +174,7 @@ func (x *WeaviateHealthCheckResponse) String() string {
 func (*WeaviateHealthCheckResponse) ProtoMessage() {}
 
 func (x *WeaviateHealthCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_health_weaviate_proto_msgTypes[1]
+	mi := &file_api_proto_v1_health_weaviate_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -187,7 +187,7 @@ func (x *WeaviateHealthCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WeaviateHealthCheckResponse.ProtoReflect.Descriptor instead.
 func (*WeaviateHealthCheckResponse) Descriptor() ([]byte, []int) {
-	return file_v1_health_weaviate_proto_rawDescGZIP(), []int{1}
+	return file_api_proto_v1_health_weaviate_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *WeaviateHealthCheckResponse) GetStatus() WeaviateHealthCheckResponse_ServingStatus {
@@ -197,11 +197,11 @@ func (x *WeaviateHealthCheckResponse) GetStatus() WeaviateHealthCheckResponse_Se
 	return WeaviateHealthCheckResponse_UNKNOWN
 }
 
-var File_v1_health_weaviate_proto protoreflect.FileDescriptor
+var File_api_proto_v1_health_weaviate_proto protoreflect.FileDescriptor
 
-const file_v1_health_weaviate_proto_rawDesc = "" +
+const file_api_proto_v1_health_weaviate_proto_rawDesc = "" +
 	"\n" +
-	"\x18v1/health_weaviate.proto\x12\vweaviate.v1\"6\n" +
+	"\"api/proto/v1/health_weaviate.proto\x12\vweaviate.v1\"6\n" +
 	"\x1aWeaviateHealthCheckRequest\x12\x18\n" +
 	"\aservice\x18\x01 \x01(\tR\aservice\"\xa9\x01\n" +
 	"\x1bWeaviateHealthCheckResponse\x12N\n" +
@@ -209,29 +209,29 @@ const file_v1_health_weaviate_proto_rawDesc = "" +
 	"\rServingStatus\x12\v\n" +
 	"\aUNKNOWN\x10\x00\x12\v\n" +
 	"\aSERVING\x10\x01\x12\x0f\n" +
-	"\vNOT_SERVING\x10\x02Bk\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x0eWeaviateHealthZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
+	"\vNOT_SERVING\x10\x02B\x8c\x01\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x0eWeaviateHealthZUgithub.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1;protocolb\x06proto3"
 
 var (
-	file_v1_health_weaviate_proto_rawDescOnce sync.Once
-	file_v1_health_weaviate_proto_rawDescData []byte
+	file_api_proto_v1_health_weaviate_proto_rawDescOnce sync.Once
+	file_api_proto_v1_health_weaviate_proto_rawDescData []byte
 )
 
-func file_v1_health_weaviate_proto_rawDescGZIP() []byte {
-	file_v1_health_weaviate_proto_rawDescOnce.Do(func() {
-		file_v1_health_weaviate_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_v1_health_weaviate_proto_rawDesc), len(file_v1_health_weaviate_proto_rawDesc)))
+func file_api_proto_v1_health_weaviate_proto_rawDescGZIP() []byte {
+	file_api_proto_v1_health_weaviate_proto_rawDescOnce.Do(func() {
+		file_api_proto_v1_health_weaviate_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_api_proto_v1_health_weaviate_proto_rawDesc), len(file_api_proto_v1_health_weaviate_proto_rawDesc)))
 	})
-	return file_v1_health_weaviate_proto_rawDescData
+	return file_api_proto_v1_health_weaviate_proto_rawDescData
 }
 
-var file_v1_health_weaviate_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_v1_health_weaviate_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_v1_health_weaviate_proto_goTypes = []any{
+var file_api_proto_v1_health_weaviate_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_api_proto_v1_health_weaviate_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_api_proto_v1_health_weaviate_proto_goTypes = []any{
 	(WeaviateHealthCheckResponse_ServingStatus)(0), // 0: weaviate.v1.WeaviateHealthCheckResponse.ServingStatus
 	(*WeaviateHealthCheckRequest)(nil),             // 1: weaviate.v1.WeaviateHealthCheckRequest
 	(*WeaviateHealthCheckResponse)(nil),            // 2: weaviate.v1.WeaviateHealthCheckResponse
 }
-var file_v1_health_weaviate_proto_depIdxs = []int32{
+var file_api_proto_v1_health_weaviate_proto_depIdxs = []int32{
 	0, // 0: weaviate.v1.WeaviateHealthCheckResponse.status:type_name -> weaviate.v1.WeaviateHealthCheckResponse.ServingStatus
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
@@ -240,27 +240,27 @@ var file_v1_health_weaviate_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_v1_health_weaviate_proto_init() }
-func file_v1_health_weaviate_proto_init() {
-	if File_v1_health_weaviate_proto != nil {
+func init() { file_api_proto_v1_health_weaviate_proto_init() }
+func file_api_proto_v1_health_weaviate_proto_init() {
+	if File_api_proto_v1_health_weaviate_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_health_weaviate_proto_rawDesc), len(file_v1_health_weaviate_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_v1_health_weaviate_proto_rawDesc), len(file_api_proto_v1_health_weaviate_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_v1_health_weaviate_proto_goTypes,
-		DependencyIndexes: file_v1_health_weaviate_proto_depIdxs,
-		EnumInfos:         file_v1_health_weaviate_proto_enumTypes,
-		MessageInfos:      file_v1_health_weaviate_proto_msgTypes,
+		GoTypes:           file_api_proto_v1_health_weaviate_proto_goTypes,
+		DependencyIndexes: file_api_proto_v1_health_weaviate_proto_depIdxs,
+		EnumInfos:         file_api_proto_v1_health_weaviate_proto_enumTypes,
+		MessageInfos:      file_api_proto_v1_health_weaviate_proto_msgTypes,
 	}.Build()
-	File_v1_health_weaviate_proto = out.File
-	file_v1_health_weaviate_proto_goTypes = nil
-	file_v1_health_weaviate_proto_depIdxs = nil
+	File_api_proto_v1_health_weaviate_proto = out.File
+	file_api_proto_v1_health_weaviate_proto_goTypes = nil
+	file_api_proto_v1_health_weaviate_proto_depIdxs = nil
 }

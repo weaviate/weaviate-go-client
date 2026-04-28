@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package weaviate.v1;
 
-import "v1/base.proto";
+import "api/proto/v1/base.proto";
 
-option go_package = "github.com/weaviate/weaviate/grpc/generated;protocol";
+option go_package = "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1;protocol";
 option java_package = "io.weaviate.client.grpc.protocol.v1";
 option java_outer_classname = "WeaviateProtoGenerative";
 
@@ -13,9 +13,9 @@ message GenerativeSearch {
     string prompt = 1;
     bool debug = 2;
     // only allow one at the beginning, but multiple in the future
-    repeated GenerativeProvider queries = 3;  
+    repeated GenerativeProvider queries = 3;
   }
-  
+
   message Grouped {
     string task = 1;
     optional TextArray properties = 2;

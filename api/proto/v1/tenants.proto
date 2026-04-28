@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package weaviate.v1;
 
-option go_package = "github.com/weaviate/weaviate/grpc/generated;protocol";
+option go_package = "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1;protocol";
 option java_package = "io.weaviate.client.grpc.protocol.v1";
 option java_outer_classname = "WeaviateProtoTenants";
 
@@ -11,7 +11,7 @@ enum TenantActivityStatus {
   TENANT_ACTIVITY_STATUS_HOT = 1;
   TENANT_ACTIVITY_STATUS_COLD = 2;
   // Originally TENANT_ACTIVITY_STATUS_WARM = 3;
-  reserved 3; 
+  reserved 3;
   TENANT_ACTIVITY_STATUS_FROZEN = 4;
   TENANT_ACTIVITY_STATUS_UNFREEZING = 5;
   TENANT_ACTIVITY_STATUS_FREEZING = 6;

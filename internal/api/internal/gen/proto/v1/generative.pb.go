@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.33.2
-// source: v1/generative.proto
+// source: api/proto/v1/generative.proto
 
 package protocol
 
@@ -60,11 +60,11 @@ func (x GenerativeOpenAI_ReasoningEffort) String() string {
 }
 
 func (GenerativeOpenAI_ReasoningEffort) Descriptor() protoreflect.EnumDescriptor {
-	return file_v1_generative_proto_enumTypes[0].Descriptor()
+	return file_api_proto_v1_generative_proto_enumTypes[0].Descriptor()
 }
 
 func (GenerativeOpenAI_ReasoningEffort) Type() protoreflect.EnumType {
-	return &file_v1_generative_proto_enumTypes[0]
+	return &file_api_proto_v1_generative_proto_enumTypes[0]
 }
 
 func (x GenerativeOpenAI_ReasoningEffort) Number() protoreflect.EnumNumber {
@@ -73,7 +73,7 @@ func (x GenerativeOpenAI_ReasoningEffort) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GenerativeOpenAI_ReasoningEffort.Descriptor instead.
 func (GenerativeOpenAI_ReasoningEffort) EnumDescriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{9, 0}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{9, 0}
 }
 
 type GenerativeOpenAI_Verbosity int32
@@ -112,11 +112,11 @@ func (x GenerativeOpenAI_Verbosity) String() string {
 }
 
 func (GenerativeOpenAI_Verbosity) Descriptor() protoreflect.EnumDescriptor {
-	return file_v1_generative_proto_enumTypes[1].Descriptor()
+	return file_api_proto_v1_generative_proto_enumTypes[1].Descriptor()
 }
 
 func (GenerativeOpenAI_Verbosity) Type() protoreflect.EnumType {
-	return &file_v1_generative_proto_enumTypes[1]
+	return &file_api_proto_v1_generative_proto_enumTypes[1]
 }
 
 func (x GenerativeOpenAI_Verbosity) Number() protoreflect.EnumNumber {
@@ -125,16 +125,16 @@ func (x GenerativeOpenAI_Verbosity) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GenerativeOpenAI_Verbosity.Descriptor instead.
 func (GenerativeOpenAI_Verbosity) EnumDescriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{9, 1}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{9, 1}
 }
 
 type GenerativeSearch struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Deprecated: Marked as deprecated in v1/generative.proto.
+	// Deprecated: Marked as deprecated in api/proto/v1/generative.proto.
 	SingleResponsePrompt string `protobuf:"bytes,1,opt,name=single_response_prompt,json=singleResponsePrompt,proto3" json:"single_response_prompt,omitempty"`
-	// Deprecated: Marked as deprecated in v1/generative.proto.
+	// Deprecated: Marked as deprecated in api/proto/v1/generative.proto.
 	GroupedResponseTask string `protobuf:"bytes,2,opt,name=grouped_response_task,json=groupedResponseTask,proto3" json:"grouped_response_task,omitempty"`
-	// Deprecated: Marked as deprecated in v1/generative.proto.
+	// Deprecated: Marked as deprecated in api/proto/v1/generative.proto.
 	GroupedProperties []string                  `protobuf:"bytes,3,rep,name=grouped_properties,json=groupedProperties,proto3" json:"grouped_properties,omitempty"`
 	Single            *GenerativeSearch_Single  `protobuf:"bytes,4,opt,name=single,proto3" json:"single,omitempty"`
 	Grouped           *GenerativeSearch_Grouped `protobuf:"bytes,5,opt,name=grouped,proto3" json:"grouped,omitempty"`
@@ -144,7 +144,7 @@ type GenerativeSearch struct {
 
 func (x *GenerativeSearch) Reset() {
 	*x = GenerativeSearch{}
-	mi := &file_v1_generative_proto_msgTypes[0]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -156,7 +156,7 @@ func (x *GenerativeSearch) String() string {
 func (*GenerativeSearch) ProtoMessage() {}
 
 func (x *GenerativeSearch) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[0]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -169,10 +169,10 @@ func (x *GenerativeSearch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeSearch.ProtoReflect.Descriptor instead.
 func (*GenerativeSearch) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{0}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{0}
 }
 
-// Deprecated: Marked as deprecated in v1/generative.proto.
+// Deprecated: Marked as deprecated in api/proto/v1/generative.proto.
 func (x *GenerativeSearch) GetSingleResponsePrompt() string {
 	if x != nil {
 		return x.SingleResponsePrompt
@@ -180,7 +180,7 @@ func (x *GenerativeSearch) GetSingleResponsePrompt() string {
 	return ""
 }
 
-// Deprecated: Marked as deprecated in v1/generative.proto.
+// Deprecated: Marked as deprecated in api/proto/v1/generative.proto.
 func (x *GenerativeSearch) GetGroupedResponseTask() string {
 	if x != nil {
 		return x.GroupedResponseTask
@@ -188,7 +188,7 @@ func (x *GenerativeSearch) GetGroupedResponseTask() string {
 	return ""
 }
 
-// Deprecated: Marked as deprecated in v1/generative.proto.
+// Deprecated: Marked as deprecated in api/proto/v1/generative.proto.
 func (x *GenerativeSearch) GetGroupedProperties() []string {
 	if x != nil {
 		return x.GroupedProperties
@@ -236,7 +236,7 @@ type GenerativeProvider struct {
 
 func (x *GenerativeProvider) Reset() {
 	*x = GenerativeProvider{}
-	mi := &file_v1_generative_proto_msgTypes[1]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -248,7 +248,7 @@ func (x *GenerativeProvider) String() string {
 func (*GenerativeProvider) ProtoMessage() {}
 
 func (x *GenerativeProvider) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[1]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -261,7 +261,7 @@ func (x *GenerativeProvider) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeProvider.ProtoReflect.Descriptor instead.
 func (*GenerativeProvider) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{1}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GenerativeProvider) GetReturnMetadata() bool {
@@ -509,7 +509,7 @@ type GenerativeAnthropic struct {
 
 func (x *GenerativeAnthropic) Reset() {
 	*x = GenerativeAnthropic{}
-	mi := &file_v1_generative_proto_msgTypes[2]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -521,7 +521,7 @@ func (x *GenerativeAnthropic) String() string {
 func (*GenerativeAnthropic) ProtoMessage() {}
 
 func (x *GenerativeAnthropic) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[2]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -534,7 +534,7 @@ func (x *GenerativeAnthropic) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeAnthropic.ProtoReflect.Descriptor instead.
 func (*GenerativeAnthropic) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{2}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GenerativeAnthropic) GetBaseUrl() string {
@@ -611,7 +611,7 @@ type GenerativeAnyscale struct {
 
 func (x *GenerativeAnyscale) Reset() {
 	*x = GenerativeAnyscale{}
-	mi := &file_v1_generative_proto_msgTypes[3]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -623,7 +623,7 @@ func (x *GenerativeAnyscale) String() string {
 func (*GenerativeAnyscale) ProtoMessage() {}
 
 func (x *GenerativeAnyscale) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[3]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -636,7 +636,7 @@ func (x *GenerativeAnyscale) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeAnyscale.ProtoReflect.Descriptor instead.
 func (*GenerativeAnyscale) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{3}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GenerativeAnyscale) GetBaseUrl() string {
@@ -679,7 +679,7 @@ type GenerativeAWS struct {
 
 func (x *GenerativeAWS) Reset() {
 	*x = GenerativeAWS{}
-	mi := &file_v1_generative_proto_msgTypes[4]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -691,7 +691,7 @@ func (x *GenerativeAWS) String() string {
 func (*GenerativeAWS) ProtoMessage() {}
 
 func (x *GenerativeAWS) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[4]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -704,7 +704,7 @@ func (x *GenerativeAWS) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeAWS.ProtoReflect.Descriptor instead.
 func (*GenerativeAWS) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{4}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GenerativeAWS) GetModel() string {
@@ -803,7 +803,7 @@ type GenerativeCohere struct {
 
 func (x *GenerativeCohere) Reset() {
 	*x = GenerativeCohere{}
-	mi := &file_v1_generative_proto_msgTypes[5]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -815,7 +815,7 @@ func (x *GenerativeCohere) String() string {
 func (*GenerativeCohere) ProtoMessage() {}
 
 func (x *GenerativeCohere) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[5]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -828,7 +828,7 @@ func (x *GenerativeCohere) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeCohere.ProtoReflect.Descriptor instead.
 func (*GenerativeCohere) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{5}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GenerativeCohere) GetBaseUrl() string {
@@ -916,7 +916,7 @@ type GenerativeDummy struct {
 
 func (x *GenerativeDummy) Reset() {
 	*x = GenerativeDummy{}
-	mi := &file_v1_generative_proto_msgTypes[6]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -928,7 +928,7 @@ func (x *GenerativeDummy) String() string {
 func (*GenerativeDummy) ProtoMessage() {}
 
 func (x *GenerativeDummy) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[6]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -941,7 +941,7 @@ func (x *GenerativeDummy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeDummy.ProtoReflect.Descriptor instead.
 func (*GenerativeDummy) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{6}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{6}
 }
 
 type GenerativeMistral struct {
@@ -957,7 +957,7 @@ type GenerativeMistral struct {
 
 func (x *GenerativeMistral) Reset() {
 	*x = GenerativeMistral{}
-	mi := &file_v1_generative_proto_msgTypes[7]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -969,7 +969,7 @@ func (x *GenerativeMistral) String() string {
 func (*GenerativeMistral) ProtoMessage() {}
 
 func (x *GenerativeMistral) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[7]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -982,7 +982,7 @@ func (x *GenerativeMistral) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeMistral.ProtoReflect.Descriptor instead.
 func (*GenerativeMistral) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{7}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GenerativeMistral) GetBaseUrl() string {
@@ -1033,7 +1033,7 @@ type GenerativeOllama struct {
 
 func (x *GenerativeOllama) Reset() {
 	*x = GenerativeOllama{}
-	mi := &file_v1_generative_proto_msgTypes[8]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1045,7 +1045,7 @@ func (x *GenerativeOllama) String() string {
 func (*GenerativeOllama) ProtoMessage() {}
 
 func (x *GenerativeOllama) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[8]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1058,7 +1058,7 @@ func (x *GenerativeOllama) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeOllama.ProtoReflect.Descriptor instead.
 func (*GenerativeOllama) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{8}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GenerativeOllama) GetApiEndpoint() string {
@@ -1121,7 +1121,7 @@ type GenerativeOpenAI struct {
 
 func (x *GenerativeOpenAI) Reset() {
 	*x = GenerativeOpenAI{}
-	mi := &file_v1_generative_proto_msgTypes[9]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1133,7 +1133,7 @@ func (x *GenerativeOpenAI) String() string {
 func (*GenerativeOpenAI) ProtoMessage() {}
 
 func (x *GenerativeOpenAI) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[9]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1146,7 +1146,7 @@ func (x *GenerativeOpenAI) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeOpenAI.ProtoReflect.Descriptor instead.
 func (*GenerativeOpenAI) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{9}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GenerativeOpenAI) GetFrequencyPenalty() float64 {
@@ -1290,7 +1290,7 @@ type GenerativeGoogle struct {
 
 func (x *GenerativeGoogle) Reset() {
 	*x = GenerativeGoogle{}
-	mi := &file_v1_generative_proto_msgTypes[10]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1302,7 +1302,7 @@ func (x *GenerativeGoogle) String() string {
 func (*GenerativeGoogle) ProtoMessage() {}
 
 func (x *GenerativeGoogle) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[10]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1315,7 +1315,7 @@ func (x *GenerativeGoogle) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeGoogle.ProtoReflect.Descriptor instead.
 func (*GenerativeGoogle) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{10}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GenerativeGoogle) GetFrequencyPenalty() float64 {
@@ -1435,7 +1435,7 @@ type GenerativeDatabricks struct {
 
 func (x *GenerativeDatabricks) Reset() {
 	*x = GenerativeDatabricks{}
-	mi := &file_v1_generative_proto_msgTypes[11]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1447,7 +1447,7 @@ func (x *GenerativeDatabricks) String() string {
 func (*GenerativeDatabricks) ProtoMessage() {}
 
 func (x *GenerativeDatabricks) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[11]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1460,7 +1460,7 @@ func (x *GenerativeDatabricks) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeDatabricks.ProtoReflect.Descriptor instead.
 func (*GenerativeDatabricks) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{11}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GenerativeDatabricks) GetEndpoint() string {
@@ -1554,7 +1554,7 @@ type GenerativeFriendliAI struct {
 
 func (x *GenerativeFriendliAI) Reset() {
 	*x = GenerativeFriendliAI{}
-	mi := &file_v1_generative_proto_msgTypes[12]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1566,7 +1566,7 @@ func (x *GenerativeFriendliAI) String() string {
 func (*GenerativeFriendliAI) ProtoMessage() {}
 
 func (x *GenerativeFriendliAI) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[12]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1579,7 +1579,7 @@ func (x *GenerativeFriendliAI) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeFriendliAI.ProtoReflect.Descriptor instead.
 func (*GenerativeFriendliAI) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{12}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GenerativeFriendliAI) GetBaseUrl() string {
@@ -1637,7 +1637,7 @@ type GenerativeNvidia struct {
 
 func (x *GenerativeNvidia) Reset() {
 	*x = GenerativeNvidia{}
-	mi := &file_v1_generative_proto_msgTypes[13]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1649,7 +1649,7 @@ func (x *GenerativeNvidia) String() string {
 func (*GenerativeNvidia) ProtoMessage() {}
 
 func (x *GenerativeNvidia) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[13]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1662,7 +1662,7 @@ func (x *GenerativeNvidia) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeNvidia.ProtoReflect.Descriptor instead.
 func (*GenerativeNvidia) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{13}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GenerativeNvidia) GetBaseUrl() string {
@@ -1715,7 +1715,7 @@ type GenerativeXAI struct {
 
 func (x *GenerativeXAI) Reset() {
 	*x = GenerativeXAI{}
-	mi := &file_v1_generative_proto_msgTypes[14]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1727,7 +1727,7 @@ func (x *GenerativeXAI) String() string {
 func (*GenerativeXAI) ProtoMessage() {}
 
 func (x *GenerativeXAI) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[14]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1740,7 +1740,7 @@ func (x *GenerativeXAI) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeXAI.ProtoReflect.Descriptor instead.
 func (*GenerativeXAI) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{14}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GenerativeXAI) GetBaseUrl() string {
@@ -1807,7 +1807,7 @@ type GenerativeContextualAI struct {
 
 func (x *GenerativeContextualAI) Reset() {
 	*x = GenerativeContextualAI{}
-	mi := &file_v1_generative_proto_msgTypes[15]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1819,7 +1819,7 @@ func (x *GenerativeContextualAI) String() string {
 func (*GenerativeContextualAI) ProtoMessage() {}
 
 func (x *GenerativeContextualAI) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[15]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1832,7 +1832,7 @@ func (x *GenerativeContextualAI) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeContextualAI.ProtoReflect.Descriptor instead.
 func (*GenerativeContextualAI) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{15}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GenerativeContextualAI) GetModel() string {
@@ -1893,7 +1893,7 @@ type GenerativeAnthropicMetadata struct {
 
 func (x *GenerativeAnthropicMetadata) Reset() {
 	*x = GenerativeAnthropicMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[16]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1905,7 +1905,7 @@ func (x *GenerativeAnthropicMetadata) String() string {
 func (*GenerativeAnthropicMetadata) ProtoMessage() {}
 
 func (x *GenerativeAnthropicMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[16]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1918,7 +1918,7 @@ func (x *GenerativeAnthropicMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeAnthropicMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeAnthropicMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{16}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GenerativeAnthropicMetadata) GetUsage() *GenerativeAnthropicMetadata_Usage {
@@ -1936,7 +1936,7 @@ type GenerativeAnyscaleMetadata struct {
 
 func (x *GenerativeAnyscaleMetadata) Reset() {
 	*x = GenerativeAnyscaleMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[17]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1948,7 +1948,7 @@ func (x *GenerativeAnyscaleMetadata) String() string {
 func (*GenerativeAnyscaleMetadata) ProtoMessage() {}
 
 func (x *GenerativeAnyscaleMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[17]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1961,7 +1961,7 @@ func (x *GenerativeAnyscaleMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeAnyscaleMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeAnyscaleMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{17}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{17}
 }
 
 type GenerativeAWSMetadata struct {
@@ -1972,7 +1972,7 @@ type GenerativeAWSMetadata struct {
 
 func (x *GenerativeAWSMetadata) Reset() {
 	*x = GenerativeAWSMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[18]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1984,7 +1984,7 @@ func (x *GenerativeAWSMetadata) String() string {
 func (*GenerativeAWSMetadata) ProtoMessage() {}
 
 func (x *GenerativeAWSMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[18]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1997,7 +1997,7 @@ func (x *GenerativeAWSMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeAWSMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeAWSMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{18}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{18}
 }
 
 type GenerativeCohereMetadata struct {
@@ -2012,7 +2012,7 @@ type GenerativeCohereMetadata struct {
 
 func (x *GenerativeCohereMetadata) Reset() {
 	*x = GenerativeCohereMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[19]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2024,7 +2024,7 @@ func (x *GenerativeCohereMetadata) String() string {
 func (*GenerativeCohereMetadata) ProtoMessage() {}
 
 func (x *GenerativeCohereMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[19]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2037,7 +2037,7 @@ func (x *GenerativeCohereMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeCohereMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeCohereMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{19}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GenerativeCohereMetadata) GetApiVersion() *GenerativeCohereMetadata_ApiVersion {
@@ -2076,7 +2076,7 @@ type GenerativeDummyMetadata struct {
 
 func (x *GenerativeDummyMetadata) Reset() {
 	*x = GenerativeDummyMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[20]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2088,7 +2088,7 @@ func (x *GenerativeDummyMetadata) String() string {
 func (*GenerativeDummyMetadata) ProtoMessage() {}
 
 func (x *GenerativeDummyMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[20]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2101,7 +2101,7 @@ func (x *GenerativeDummyMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeDummyMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeDummyMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{20}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{20}
 }
 
 type GenerativeMistralMetadata struct {
@@ -2113,7 +2113,7 @@ type GenerativeMistralMetadata struct {
 
 func (x *GenerativeMistralMetadata) Reset() {
 	*x = GenerativeMistralMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[21]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2125,7 +2125,7 @@ func (x *GenerativeMistralMetadata) String() string {
 func (*GenerativeMistralMetadata) ProtoMessage() {}
 
 func (x *GenerativeMistralMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[21]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2138,7 +2138,7 @@ func (x *GenerativeMistralMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeMistralMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeMistralMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{21}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GenerativeMistralMetadata) GetUsage() *GenerativeMistralMetadata_Usage {
@@ -2156,7 +2156,7 @@ type GenerativeOllamaMetadata struct {
 
 func (x *GenerativeOllamaMetadata) Reset() {
 	*x = GenerativeOllamaMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[22]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2168,7 +2168,7 @@ func (x *GenerativeOllamaMetadata) String() string {
 func (*GenerativeOllamaMetadata) ProtoMessage() {}
 
 func (x *GenerativeOllamaMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[22]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2181,7 +2181,7 @@ func (x *GenerativeOllamaMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeOllamaMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeOllamaMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{22}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{22}
 }
 
 type GenerativeOpenAIMetadata struct {
@@ -2193,7 +2193,7 @@ type GenerativeOpenAIMetadata struct {
 
 func (x *GenerativeOpenAIMetadata) Reset() {
 	*x = GenerativeOpenAIMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[23]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2205,7 +2205,7 @@ func (x *GenerativeOpenAIMetadata) String() string {
 func (*GenerativeOpenAIMetadata) ProtoMessage() {}
 
 func (x *GenerativeOpenAIMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[23]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2218,7 +2218,7 @@ func (x *GenerativeOpenAIMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeOpenAIMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeOpenAIMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{23}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *GenerativeOpenAIMetadata) GetUsage() *GenerativeOpenAIMetadata_Usage {
@@ -2238,7 +2238,7 @@ type GenerativeGoogleMetadata struct {
 
 func (x *GenerativeGoogleMetadata) Reset() {
 	*x = GenerativeGoogleMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[24]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2250,7 +2250,7 @@ func (x *GenerativeGoogleMetadata) String() string {
 func (*GenerativeGoogleMetadata) ProtoMessage() {}
 
 func (x *GenerativeGoogleMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[24]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2263,7 +2263,7 @@ func (x *GenerativeGoogleMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeGoogleMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeGoogleMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{24}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GenerativeGoogleMetadata) GetMetadata() *GenerativeGoogleMetadata_Metadata {
@@ -2289,7 +2289,7 @@ type GenerativeDatabricksMetadata struct {
 
 func (x *GenerativeDatabricksMetadata) Reset() {
 	*x = GenerativeDatabricksMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[25]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2301,7 +2301,7 @@ func (x *GenerativeDatabricksMetadata) String() string {
 func (*GenerativeDatabricksMetadata) ProtoMessage() {}
 
 func (x *GenerativeDatabricksMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[25]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2314,7 +2314,7 @@ func (x *GenerativeDatabricksMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeDatabricksMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeDatabricksMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{25}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *GenerativeDatabricksMetadata) GetUsage() *GenerativeDatabricksMetadata_Usage {
@@ -2333,7 +2333,7 @@ type GenerativeFriendliAIMetadata struct {
 
 func (x *GenerativeFriendliAIMetadata) Reset() {
 	*x = GenerativeFriendliAIMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[26]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2345,7 +2345,7 @@ func (x *GenerativeFriendliAIMetadata) String() string {
 func (*GenerativeFriendliAIMetadata) ProtoMessage() {}
 
 func (x *GenerativeFriendliAIMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[26]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2358,7 +2358,7 @@ func (x *GenerativeFriendliAIMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeFriendliAIMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeFriendliAIMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{26}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *GenerativeFriendliAIMetadata) GetUsage() *GenerativeFriendliAIMetadata_Usage {
@@ -2377,7 +2377,7 @@ type GenerativeNvidiaMetadata struct {
 
 func (x *GenerativeNvidiaMetadata) Reset() {
 	*x = GenerativeNvidiaMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[27]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2389,7 +2389,7 @@ func (x *GenerativeNvidiaMetadata) String() string {
 func (*GenerativeNvidiaMetadata) ProtoMessage() {}
 
 func (x *GenerativeNvidiaMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[27]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2402,7 +2402,7 @@ func (x *GenerativeNvidiaMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeNvidiaMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeNvidiaMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{27}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *GenerativeNvidiaMetadata) GetUsage() *GenerativeNvidiaMetadata_Usage {
@@ -2421,7 +2421,7 @@ type GenerativeXAIMetadata struct {
 
 func (x *GenerativeXAIMetadata) Reset() {
 	*x = GenerativeXAIMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[28]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2433,7 +2433,7 @@ func (x *GenerativeXAIMetadata) String() string {
 func (*GenerativeXAIMetadata) ProtoMessage() {}
 
 func (x *GenerativeXAIMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[28]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2446,7 +2446,7 @@ func (x *GenerativeXAIMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeXAIMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeXAIMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{28}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *GenerativeXAIMetadata) GetUsage() *GenerativeXAIMetadata_Usage {
@@ -2480,7 +2480,7 @@ type GenerativeMetadata struct {
 
 func (x *GenerativeMetadata) Reset() {
 	*x = GenerativeMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[29]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2492,7 +2492,7 @@ func (x *GenerativeMetadata) String() string {
 func (*GenerativeMetadata) ProtoMessage() {}
 
 func (x *GenerativeMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[29]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2505,7 +2505,7 @@ func (x *GenerativeMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{29}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *GenerativeMetadata) GetKind() isGenerativeMetadata_Kind {
@@ -2725,7 +2725,7 @@ type GenerativeReply struct {
 
 func (x *GenerativeReply) Reset() {
 	*x = GenerativeReply{}
-	mi := &file_v1_generative_proto_msgTypes[30]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2737,7 +2737,7 @@ func (x *GenerativeReply) String() string {
 func (*GenerativeReply) ProtoMessage() {}
 
 func (x *GenerativeReply) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[30]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2750,7 +2750,7 @@ func (x *GenerativeReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeReply.ProtoReflect.Descriptor instead.
 func (*GenerativeReply) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{30}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *GenerativeReply) GetResult() string {
@@ -2783,7 +2783,7 @@ type GenerativeResult struct {
 
 func (x *GenerativeResult) Reset() {
 	*x = GenerativeResult{}
-	mi := &file_v1_generative_proto_msgTypes[31]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2795,7 +2795,7 @@ func (x *GenerativeResult) String() string {
 func (*GenerativeResult) ProtoMessage() {}
 
 func (x *GenerativeResult) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[31]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2808,7 +2808,7 @@ func (x *GenerativeResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeResult.ProtoReflect.Descriptor instead.
 func (*GenerativeResult) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{31}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *GenerativeResult) GetValues() []*GenerativeReply {
@@ -2827,7 +2827,7 @@ type GenerativeDebug struct {
 
 func (x *GenerativeDebug) Reset() {
 	*x = GenerativeDebug{}
-	mi := &file_v1_generative_proto_msgTypes[32]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2839,7 +2839,7 @@ func (x *GenerativeDebug) String() string {
 func (*GenerativeDebug) ProtoMessage() {}
 
 func (x *GenerativeDebug) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[32]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2852,7 +2852,7 @@ func (x *GenerativeDebug) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeDebug.ProtoReflect.Descriptor instead.
 func (*GenerativeDebug) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{32}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *GenerativeDebug) GetFullPrompt() string {
@@ -2874,7 +2874,7 @@ type GenerativeSearch_Single struct {
 
 func (x *GenerativeSearch_Single) Reset() {
 	*x = GenerativeSearch_Single{}
-	mi := &file_v1_generative_proto_msgTypes[33]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2886,7 +2886,7 @@ func (x *GenerativeSearch_Single) String() string {
 func (*GenerativeSearch_Single) ProtoMessage() {}
 
 func (x *GenerativeSearch_Single) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[33]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2899,7 +2899,7 @@ func (x *GenerativeSearch_Single) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeSearch_Single.ProtoReflect.Descriptor instead.
 func (*GenerativeSearch_Single) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{0, 0}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *GenerativeSearch_Single) GetPrompt() string {
@@ -2936,7 +2936,7 @@ type GenerativeSearch_Grouped struct {
 
 func (x *GenerativeSearch_Grouped) Reset() {
 	*x = GenerativeSearch_Grouped{}
-	mi := &file_v1_generative_proto_msgTypes[34]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2948,7 +2948,7 @@ func (x *GenerativeSearch_Grouped) String() string {
 func (*GenerativeSearch_Grouped) ProtoMessage() {}
 
 func (x *GenerativeSearch_Grouped) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[34]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2961,7 +2961,7 @@ func (x *GenerativeSearch_Grouped) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeSearch_Grouped.ProtoReflect.Descriptor instead.
 func (*GenerativeSearch_Grouped) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{0, 1}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *GenerativeSearch_Grouped) GetTask() string {
@@ -3002,7 +3002,7 @@ type GenerativeAnthropicMetadata_Usage struct {
 
 func (x *GenerativeAnthropicMetadata_Usage) Reset() {
 	*x = GenerativeAnthropicMetadata_Usage{}
-	mi := &file_v1_generative_proto_msgTypes[35]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3014,7 +3014,7 @@ func (x *GenerativeAnthropicMetadata_Usage) String() string {
 func (*GenerativeAnthropicMetadata_Usage) ProtoMessage() {}
 
 func (x *GenerativeAnthropicMetadata_Usage) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[35]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3027,7 +3027,7 @@ func (x *GenerativeAnthropicMetadata_Usage) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use GenerativeAnthropicMetadata_Usage.ProtoReflect.Descriptor instead.
 func (*GenerativeAnthropicMetadata_Usage) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{16, 0}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{16, 0}
 }
 
 func (x *GenerativeAnthropicMetadata_Usage) GetInputTokens() int64 {
@@ -3055,7 +3055,7 @@ type GenerativeCohereMetadata_ApiVersion struct {
 
 func (x *GenerativeCohereMetadata_ApiVersion) Reset() {
 	*x = GenerativeCohereMetadata_ApiVersion{}
-	mi := &file_v1_generative_proto_msgTypes[36]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3067,7 +3067,7 @@ func (x *GenerativeCohereMetadata_ApiVersion) String() string {
 func (*GenerativeCohereMetadata_ApiVersion) ProtoMessage() {}
 
 func (x *GenerativeCohereMetadata_ApiVersion) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[36]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3080,7 +3080,7 @@ func (x *GenerativeCohereMetadata_ApiVersion) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use GenerativeCohereMetadata_ApiVersion.ProtoReflect.Descriptor instead.
 func (*GenerativeCohereMetadata_ApiVersion) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{19, 0}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{19, 0}
 }
 
 func (x *GenerativeCohereMetadata_ApiVersion) GetVersion() string {
@@ -3116,7 +3116,7 @@ type GenerativeCohereMetadata_BilledUnits struct {
 
 func (x *GenerativeCohereMetadata_BilledUnits) Reset() {
 	*x = GenerativeCohereMetadata_BilledUnits{}
-	mi := &file_v1_generative_proto_msgTypes[37]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3128,7 +3128,7 @@ func (x *GenerativeCohereMetadata_BilledUnits) String() string {
 func (*GenerativeCohereMetadata_BilledUnits) ProtoMessage() {}
 
 func (x *GenerativeCohereMetadata_BilledUnits) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[37]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3141,7 +3141,7 @@ func (x *GenerativeCohereMetadata_BilledUnits) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use GenerativeCohereMetadata_BilledUnits.ProtoReflect.Descriptor instead.
 func (*GenerativeCohereMetadata_BilledUnits) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{19, 1}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{19, 1}
 }
 
 func (x *GenerativeCohereMetadata_BilledUnits) GetInputTokens() float64 {
@@ -3182,7 +3182,7 @@ type GenerativeCohereMetadata_Tokens struct {
 
 func (x *GenerativeCohereMetadata_Tokens) Reset() {
 	*x = GenerativeCohereMetadata_Tokens{}
-	mi := &file_v1_generative_proto_msgTypes[38]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3194,7 +3194,7 @@ func (x *GenerativeCohereMetadata_Tokens) String() string {
 func (*GenerativeCohereMetadata_Tokens) ProtoMessage() {}
 
 func (x *GenerativeCohereMetadata_Tokens) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[38]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3207,7 +3207,7 @@ func (x *GenerativeCohereMetadata_Tokens) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeCohereMetadata_Tokens.ProtoReflect.Descriptor instead.
 func (*GenerativeCohereMetadata_Tokens) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{19, 2}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{19, 2}
 }
 
 func (x *GenerativeCohereMetadata_Tokens) GetInputTokens() float64 {
@@ -3235,7 +3235,7 @@ type GenerativeMistralMetadata_Usage struct {
 
 func (x *GenerativeMistralMetadata_Usage) Reset() {
 	*x = GenerativeMistralMetadata_Usage{}
-	mi := &file_v1_generative_proto_msgTypes[39]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3247,7 +3247,7 @@ func (x *GenerativeMistralMetadata_Usage) String() string {
 func (*GenerativeMistralMetadata_Usage) ProtoMessage() {}
 
 func (x *GenerativeMistralMetadata_Usage) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[39]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3260,7 +3260,7 @@ func (x *GenerativeMistralMetadata_Usage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeMistralMetadata_Usage.ProtoReflect.Descriptor instead.
 func (*GenerativeMistralMetadata_Usage) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{21, 0}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{21, 0}
 }
 
 func (x *GenerativeMistralMetadata_Usage) GetPromptTokens() int64 {
@@ -3295,7 +3295,7 @@ type GenerativeOpenAIMetadata_Usage struct {
 
 func (x *GenerativeOpenAIMetadata_Usage) Reset() {
 	*x = GenerativeOpenAIMetadata_Usage{}
-	mi := &file_v1_generative_proto_msgTypes[40]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3307,7 +3307,7 @@ func (x *GenerativeOpenAIMetadata_Usage) String() string {
 func (*GenerativeOpenAIMetadata_Usage) ProtoMessage() {}
 
 func (x *GenerativeOpenAIMetadata_Usage) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[40]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3320,7 +3320,7 @@ func (x *GenerativeOpenAIMetadata_Usage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeOpenAIMetadata_Usage.ProtoReflect.Descriptor instead.
 func (*GenerativeOpenAIMetadata_Usage) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{23, 0}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{23, 0}
 }
 
 func (x *GenerativeOpenAIMetadata_Usage) GetPromptTokens() int64 {
@@ -3354,7 +3354,7 @@ type GenerativeGoogleMetadata_TokenCount struct {
 
 func (x *GenerativeGoogleMetadata_TokenCount) Reset() {
 	*x = GenerativeGoogleMetadata_TokenCount{}
-	mi := &file_v1_generative_proto_msgTypes[41]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3366,7 +3366,7 @@ func (x *GenerativeGoogleMetadata_TokenCount) String() string {
 func (*GenerativeGoogleMetadata_TokenCount) ProtoMessage() {}
 
 func (x *GenerativeGoogleMetadata_TokenCount) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[41]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3379,7 +3379,7 @@ func (x *GenerativeGoogleMetadata_TokenCount) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use GenerativeGoogleMetadata_TokenCount.ProtoReflect.Descriptor instead.
 func (*GenerativeGoogleMetadata_TokenCount) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{24, 0}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{24, 0}
 }
 
 func (x *GenerativeGoogleMetadata_TokenCount) GetTotalBillableCharacters() int64 {
@@ -3406,7 +3406,7 @@ type GenerativeGoogleMetadata_TokenMetadata struct {
 
 func (x *GenerativeGoogleMetadata_TokenMetadata) Reset() {
 	*x = GenerativeGoogleMetadata_TokenMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[42]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3418,7 +3418,7 @@ func (x *GenerativeGoogleMetadata_TokenMetadata) String() string {
 func (*GenerativeGoogleMetadata_TokenMetadata) ProtoMessage() {}
 
 func (x *GenerativeGoogleMetadata_TokenMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[42]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3431,7 +3431,7 @@ func (x *GenerativeGoogleMetadata_TokenMetadata) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use GenerativeGoogleMetadata_TokenMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeGoogleMetadata_TokenMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{24, 1}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{24, 1}
 }
 
 func (x *GenerativeGoogleMetadata_TokenMetadata) GetInputTokenCount() *GenerativeGoogleMetadata_TokenCount {
@@ -3457,7 +3457,7 @@ type GenerativeGoogleMetadata_Metadata struct {
 
 func (x *GenerativeGoogleMetadata_Metadata) Reset() {
 	*x = GenerativeGoogleMetadata_Metadata{}
-	mi := &file_v1_generative_proto_msgTypes[43]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3469,7 +3469,7 @@ func (x *GenerativeGoogleMetadata_Metadata) String() string {
 func (*GenerativeGoogleMetadata_Metadata) ProtoMessage() {}
 
 func (x *GenerativeGoogleMetadata_Metadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[43]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3482,7 +3482,7 @@ func (x *GenerativeGoogleMetadata_Metadata) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use GenerativeGoogleMetadata_Metadata.ProtoReflect.Descriptor instead.
 func (*GenerativeGoogleMetadata_Metadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{24, 2}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{24, 2}
 }
 
 func (x *GenerativeGoogleMetadata_Metadata) GetTokenMetadata() *GenerativeGoogleMetadata_TokenMetadata {
@@ -3503,7 +3503,7 @@ type GenerativeGoogleMetadata_UsageMetadata struct {
 
 func (x *GenerativeGoogleMetadata_UsageMetadata) Reset() {
 	*x = GenerativeGoogleMetadata_UsageMetadata{}
-	mi := &file_v1_generative_proto_msgTypes[44]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3515,7 +3515,7 @@ func (x *GenerativeGoogleMetadata_UsageMetadata) String() string {
 func (*GenerativeGoogleMetadata_UsageMetadata) ProtoMessage() {}
 
 func (x *GenerativeGoogleMetadata_UsageMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[44]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3528,7 +3528,7 @@ func (x *GenerativeGoogleMetadata_UsageMetadata) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use GenerativeGoogleMetadata_UsageMetadata.ProtoReflect.Descriptor instead.
 func (*GenerativeGoogleMetadata_UsageMetadata) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{24, 3}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{24, 3}
 }
 
 func (x *GenerativeGoogleMetadata_UsageMetadata) GetPromptTokenCount() int64 {
@@ -3563,7 +3563,7 @@ type GenerativeDatabricksMetadata_Usage struct {
 
 func (x *GenerativeDatabricksMetadata_Usage) Reset() {
 	*x = GenerativeDatabricksMetadata_Usage{}
-	mi := &file_v1_generative_proto_msgTypes[45]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3575,7 +3575,7 @@ func (x *GenerativeDatabricksMetadata_Usage) String() string {
 func (*GenerativeDatabricksMetadata_Usage) ProtoMessage() {}
 
 func (x *GenerativeDatabricksMetadata_Usage) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[45]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3588,7 +3588,7 @@ func (x *GenerativeDatabricksMetadata_Usage) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use GenerativeDatabricksMetadata_Usage.ProtoReflect.Descriptor instead.
 func (*GenerativeDatabricksMetadata_Usage) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{25, 0}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{25, 0}
 }
 
 func (x *GenerativeDatabricksMetadata_Usage) GetPromptTokens() int64 {
@@ -3623,7 +3623,7 @@ type GenerativeFriendliAIMetadata_Usage struct {
 
 func (x *GenerativeFriendliAIMetadata_Usage) Reset() {
 	*x = GenerativeFriendliAIMetadata_Usage{}
-	mi := &file_v1_generative_proto_msgTypes[46]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3635,7 +3635,7 @@ func (x *GenerativeFriendliAIMetadata_Usage) String() string {
 func (*GenerativeFriendliAIMetadata_Usage) ProtoMessage() {}
 
 func (x *GenerativeFriendliAIMetadata_Usage) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[46]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3648,7 +3648,7 @@ func (x *GenerativeFriendliAIMetadata_Usage) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use GenerativeFriendliAIMetadata_Usage.ProtoReflect.Descriptor instead.
 func (*GenerativeFriendliAIMetadata_Usage) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{26, 0}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{26, 0}
 }
 
 func (x *GenerativeFriendliAIMetadata_Usage) GetPromptTokens() int64 {
@@ -3683,7 +3683,7 @@ type GenerativeNvidiaMetadata_Usage struct {
 
 func (x *GenerativeNvidiaMetadata_Usage) Reset() {
 	*x = GenerativeNvidiaMetadata_Usage{}
-	mi := &file_v1_generative_proto_msgTypes[47]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3695,7 +3695,7 @@ func (x *GenerativeNvidiaMetadata_Usage) String() string {
 func (*GenerativeNvidiaMetadata_Usage) ProtoMessage() {}
 
 func (x *GenerativeNvidiaMetadata_Usage) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[47]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3708,7 +3708,7 @@ func (x *GenerativeNvidiaMetadata_Usage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeNvidiaMetadata_Usage.ProtoReflect.Descriptor instead.
 func (*GenerativeNvidiaMetadata_Usage) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{27, 0}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{27, 0}
 }
 
 func (x *GenerativeNvidiaMetadata_Usage) GetPromptTokens() int64 {
@@ -3743,7 +3743,7 @@ type GenerativeXAIMetadata_Usage struct {
 
 func (x *GenerativeXAIMetadata_Usage) Reset() {
 	*x = GenerativeXAIMetadata_Usage{}
-	mi := &file_v1_generative_proto_msgTypes[48]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3755,7 +3755,7 @@ func (x *GenerativeXAIMetadata_Usage) String() string {
 func (*GenerativeXAIMetadata_Usage) ProtoMessage() {}
 
 func (x *GenerativeXAIMetadata_Usage) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_generative_proto_msgTypes[48]
+	mi := &file_api_proto_v1_generative_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3768,7 +3768,7 @@ func (x *GenerativeXAIMetadata_Usage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerativeXAIMetadata_Usage.ProtoReflect.Descriptor instead.
 func (*GenerativeXAIMetadata_Usage) Descriptor() ([]byte, []int) {
-	return file_v1_generative_proto_rawDescGZIP(), []int{28, 0}
+	return file_api_proto_v1_generative_proto_rawDescGZIP(), []int{28, 0}
 }
 
 func (x *GenerativeXAIMetadata_Usage) GetPromptTokens() int64 {
@@ -3792,11 +3792,11 @@ func (x *GenerativeXAIMetadata_Usage) GetTotalTokens() int64 {
 	return 0
 }
 
-var File_v1_generative_proto protoreflect.FileDescriptor
+var File_api_proto_v1_generative_proto protoreflect.FileDescriptor
 
-const file_v1_generative_proto_rawDesc = "" +
+const file_api_proto_v1_generative_proto_rawDesc = "" +
 	"\n" +
-	"\x13v1/generative.proto\x12\vweaviate.v1\x1a\rv1/base.proto\"\xe6\x04\n" +
+	"\x1dapi/proto/v1/generative.proto\x12\vweaviate.v1\x1a\x17api/proto/v1/base.proto\"\xe6\x04\n" +
 	"\x10GenerativeSearch\x128\n" +
 	"\x16single_response_prompt\x18\x01 \x01(\tB\x02\x18\x01R\x14singleResponsePrompt\x126\n" +
 	"\x15grouped_response_task\x18\x02 \x01(\tB\x02\x18\x01R\x13groupedResponseTask\x121\n" +
@@ -4271,24 +4271,24 @@ const file_v1_generative_proto_rawDesc = "" +
 	"\x0fGenerativeDebug\x12$\n" +
 	"\vfull_prompt\x18\x01 \x01(\tH\x00R\n" +
 	"fullPrompt\x88\x01\x01B\x0e\n" +
-	"\f_full_promptBt\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x17WeaviateProtoGenerativeZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
+	"\f_full_promptB\x95\x01\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x17WeaviateProtoGenerativeZUgithub.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1;protocolb\x06proto3"
 
 var (
-	file_v1_generative_proto_rawDescOnce sync.Once
-	file_v1_generative_proto_rawDescData []byte
+	file_api_proto_v1_generative_proto_rawDescOnce sync.Once
+	file_api_proto_v1_generative_proto_rawDescData []byte
 )
 
-func file_v1_generative_proto_rawDescGZIP() []byte {
-	file_v1_generative_proto_rawDescOnce.Do(func() {
-		file_v1_generative_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_v1_generative_proto_rawDesc), len(file_v1_generative_proto_rawDesc)))
+func file_api_proto_v1_generative_proto_rawDescGZIP() []byte {
+	file_api_proto_v1_generative_proto_rawDescOnce.Do(func() {
+		file_api_proto_v1_generative_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_api_proto_v1_generative_proto_rawDesc), len(file_api_proto_v1_generative_proto_rawDesc)))
 	})
-	return file_v1_generative_proto_rawDescData
+	return file_api_proto_v1_generative_proto_rawDescData
 }
 
-var file_v1_generative_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_v1_generative_proto_msgTypes = make([]protoimpl.MessageInfo, 49)
-var file_v1_generative_proto_goTypes = []any{
+var file_api_proto_v1_generative_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_api_proto_v1_generative_proto_msgTypes = make([]protoimpl.MessageInfo, 49)
+var file_api_proto_v1_generative_proto_goTypes = []any{
 	(GenerativeOpenAI_ReasoningEffort)(0),          // 0: weaviate.v1.GenerativeOpenAI.ReasoningEffort
 	(GenerativeOpenAI_Verbosity)(0),                // 1: weaviate.v1.GenerativeOpenAI.Verbosity
 	(*GenerativeSearch)(nil),                       // 2: weaviate.v1.GenerativeSearch
@@ -4342,7 +4342,7 @@ var file_v1_generative_proto_goTypes = []any{
 	(*GenerativeXAIMetadata_Usage)(nil),            // 50: weaviate.v1.GenerativeXAIMetadata.Usage
 	(*TextArray)(nil),                              // 51: weaviate.v1.TextArray
 }
-var file_v1_generative_proto_depIdxs = []int32{
+var file_api_proto_v1_generative_proto_depIdxs = []int32{
 	35, // 0: weaviate.v1.GenerativeSearch.single:type_name -> weaviate.v1.GenerativeSearch.Single
 	36, // 1: weaviate.v1.GenerativeSearch.grouped:type_name -> weaviate.v1.GenerativeSearch.Grouped
 	4,  // 2: weaviate.v1.GenerativeProvider.anthropic:type_name -> weaviate.v1.GenerativeAnthropic
@@ -4424,13 +4424,13 @@ var file_v1_generative_proto_depIdxs = []int32{
 	0,  // [0:74] is the sub-list for field type_name
 }
 
-func init() { file_v1_generative_proto_init() }
-func file_v1_generative_proto_init() {
-	if File_v1_generative_proto != nil {
+func init() { file_api_proto_v1_generative_proto_init() }
+func file_api_proto_v1_generative_proto_init() {
+	if File_api_proto_v1_generative_proto != nil {
 		return
 	}
-	file_v1_base_proto_init()
-	file_v1_generative_proto_msgTypes[1].OneofWrappers = []any{
+	file_api_proto_v1_base_proto_init()
+	file_api_proto_v1_generative_proto_msgTypes[1].OneofWrappers = []any{
 		(*GenerativeProvider_Anthropic)(nil),
 		(*GenerativeProvider_Anyscale)(nil),
 		(*GenerativeProvider_Aws)(nil),
@@ -4446,28 +4446,28 @@ func file_v1_generative_proto_init() {
 		(*GenerativeProvider_Xai)(nil),
 		(*GenerativeProvider_Contextualai)(nil),
 	}
-	file_v1_generative_proto_msgTypes[2].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[3].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[4].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[5].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[7].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[8].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[9].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[10].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[11].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[12].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[13].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[14].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[15].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[19].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[21].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[23].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[24].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[25].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[26].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[27].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[28].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[29].OneofWrappers = []any{
+	file_api_proto_v1_generative_proto_msgTypes[2].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[3].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[4].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[5].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[7].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[8].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[9].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[10].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[11].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[12].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[13].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[14].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[15].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[19].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[21].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[23].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[24].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[25].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[26].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[27].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[28].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[29].OneofWrappers = []any{
 		(*GenerativeMetadata_Anthropic)(nil),
 		(*GenerativeMetadata_Anyscale)(nil),
 		(*GenerativeMetadata_Aws)(nil),
@@ -4482,38 +4482,38 @@ func file_v1_generative_proto_init() {
 		(*GenerativeMetadata_Nvidia)(nil),
 		(*GenerativeMetadata_Xai)(nil),
 	}
-	file_v1_generative_proto_msgTypes[30].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[32].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[34].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[36].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[37].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[38].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[39].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[40].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[41].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[42].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[43].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[44].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[45].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[46].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[47].OneofWrappers = []any{}
-	file_v1_generative_proto_msgTypes[48].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[30].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[32].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[34].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[36].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[37].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[38].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[39].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[40].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[41].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[42].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[43].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[44].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[45].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[46].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[47].OneofWrappers = []any{}
+	file_api_proto_v1_generative_proto_msgTypes[48].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_generative_proto_rawDesc), len(file_v1_generative_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_v1_generative_proto_rawDesc), len(file_api_proto_v1_generative_proto_rawDesc)),
 			NumEnums:      2,
 			NumMessages:   49,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_v1_generative_proto_goTypes,
-		DependencyIndexes: file_v1_generative_proto_depIdxs,
-		EnumInfos:         file_v1_generative_proto_enumTypes,
-		MessageInfos:      file_v1_generative_proto_msgTypes,
+		GoTypes:           file_api_proto_v1_generative_proto_goTypes,
+		DependencyIndexes: file_api_proto_v1_generative_proto_depIdxs,
+		EnumInfos:         file_api_proto_v1_generative_proto_enumTypes,
+		MessageInfos:      file_api_proto_v1_generative_proto_msgTypes,
 	}.Build()
-	File_v1_generative_proto = out.File
-	file_v1_generative_proto_goTypes = nil
-	file_v1_generative_proto_depIdxs = nil
+	File_api_proto_v1_generative_proto = out.File
+	file_api_proto_v1_generative_proto_goTypes = nil
+	file_api_proto_v1_generative_proto_depIdxs = nil
 }

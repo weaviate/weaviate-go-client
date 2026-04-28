@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.33.2
-// source: v1/weaviate.proto
+// source: api/proto/v1/weaviate.proto
 
 package protocol
 
@@ -20,11 +20,11 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-var File_v1_weaviate_proto protoreflect.FileDescriptor
+var File_api_proto_v1_weaviate_proto protoreflect.FileDescriptor
 
-const file_v1_weaviate_proto_rawDesc = "" +
+const file_api_proto_v1_weaviate_proto_rawDesc = "" +
 	"\n" +
-	"\x11v1/weaviate.proto\x12\vweaviate.v1\x1a\x12v1/aggregate.proto\x1a\x0ev1/batch.proto\x1a\x15v1/batch_delete.proto\x1a\x13v1/search_get.proto\x1a\x10v1/tenants.proto2\xbc\x04\n" +
+	"\x1bapi/proto/v1/weaviate.proto\x12\vweaviate.v1\x1a\x1capi/proto/v1/aggregate.proto\x1a\x18api/proto/v1/batch.proto\x1a\x1fapi/proto/v1/batch_delete.proto\x1a\x1dapi/proto/v1/search_get.proto\x1a\x1aapi/proto/v1/tenants.proto2\xbc\x04\n" +
 	"\bWeaviate\x12@\n" +
 	"\x06Search\x12\x1a.weaviate.v1.SearchRequest\x1a\x18.weaviate.v1.SearchReply\"\x00\x12R\n" +
 	"\fBatchObjects\x12 .weaviate.v1.BatchObjectsRequest\x1a\x1e.weaviate.v1.BatchObjectsReply\"\x00\x12[\n" +
@@ -33,10 +33,10 @@ const file_v1_weaviate_proto_rawDesc = "" +
 	"\n" +
 	"TenantsGet\x12\x1e.weaviate.v1.TenantsGetRequest\x1a\x1c.weaviate.v1.TenantsGetReply\"\x00\x12I\n" +
 	"\tAggregate\x12\x1d.weaviate.v1.AggregateRequest\x1a\x1b.weaviate.v1.AggregateReply\"\x00\x12S\n" +
-	"\vBatchStream\x12\x1f.weaviate.v1.BatchStreamRequest\x1a\x1d.weaviate.v1.BatchStreamReply\"\x00(\x010\x01Bj\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\rWeaviateProtoZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
+	"\vBatchStream\x12\x1f.weaviate.v1.BatchStreamRequest\x1a\x1d.weaviate.v1.BatchStreamReply\"\x00(\x010\x01B\x8b\x01\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\rWeaviateProtoZUgithub.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1;protocolb\x06proto3"
 
-var file_v1_weaviate_proto_goTypes = []any{
+var file_api_proto_v1_weaviate_proto_goTypes = []any{
 	(*SearchRequest)(nil),          // 0: weaviate.v1.SearchRequest
 	(*BatchObjectsRequest)(nil),    // 1: weaviate.v1.BatchObjectsRequest
 	(*BatchReferencesRequest)(nil), // 2: weaviate.v1.BatchReferencesRequest
@@ -52,7 +52,7 @@ var file_v1_weaviate_proto_goTypes = []any{
 	(*AggregateReply)(nil),         // 12: weaviate.v1.AggregateReply
 	(*BatchStreamReply)(nil),       // 13: weaviate.v1.BatchStreamReply
 }
-var file_v1_weaviate_proto_depIdxs = []int32{
+var file_api_proto_v1_weaviate_proto_depIdxs = []int32{
 	0,  // 0: weaviate.v1.Weaviate.Search:input_type -> weaviate.v1.SearchRequest
 	1,  // 1: weaviate.v1.Weaviate.BatchObjects:input_type -> weaviate.v1.BatchObjectsRequest
 	2,  // 2: weaviate.v1.Weaviate.BatchReferences:input_type -> weaviate.v1.BatchReferencesRequest
@@ -74,30 +74,30 @@ var file_v1_weaviate_proto_depIdxs = []int32{
 	0,  // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_v1_weaviate_proto_init() }
-func file_v1_weaviate_proto_init() {
-	if File_v1_weaviate_proto != nil {
+func init() { file_api_proto_v1_weaviate_proto_init() }
+func file_api_proto_v1_weaviate_proto_init() {
+	if File_api_proto_v1_weaviate_proto != nil {
 		return
 	}
-	file_v1_aggregate_proto_init()
-	file_v1_batch_proto_init()
-	file_v1_batch_delete_proto_init()
-	file_v1_search_get_proto_init()
-	file_v1_tenants_proto_init()
+	file_api_proto_v1_aggregate_proto_init()
+	file_api_proto_v1_batch_proto_init()
+	file_api_proto_v1_batch_delete_proto_init()
+	file_api_proto_v1_search_get_proto_init()
+	file_api_proto_v1_tenants_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_weaviate_proto_rawDesc), len(file_v1_weaviate_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_v1_weaviate_proto_rawDesc), len(file_api_proto_v1_weaviate_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_v1_weaviate_proto_goTypes,
-		DependencyIndexes: file_v1_weaviate_proto_depIdxs,
+		GoTypes:           file_api_proto_v1_weaviate_proto_goTypes,
+		DependencyIndexes: file_api_proto_v1_weaviate_proto_depIdxs,
 	}.Build()
-	File_v1_weaviate_proto = out.File
-	file_v1_weaviate_proto_goTypes = nil
-	file_v1_weaviate_proto_depIdxs = nil
+	File_api_proto_v1_weaviate_proto = out.File
+	file_api_proto_v1_weaviate_proto_goTypes = nil
+	file_api_proto_v1_weaviate_proto_depIdxs = nil
 }

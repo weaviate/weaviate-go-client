@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.33.2
-// source: v1/tenants.proto
+// source: api/proto/v1/tenants.proto
 
 package protocol
 
@@ -79,11 +79,11 @@ func (x TenantActivityStatus) String() string {
 }
 
 func (TenantActivityStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_v1_tenants_proto_enumTypes[0].Descriptor()
+	return file_api_proto_v1_tenants_proto_enumTypes[0].Descriptor()
 }
 
 func (TenantActivityStatus) Type() protoreflect.EnumType {
-	return &file_v1_tenants_proto_enumTypes[0]
+	return &file_api_proto_v1_tenants_proto_enumTypes[0]
 }
 
 func (x TenantActivityStatus) Number() protoreflect.EnumNumber {
@@ -92,7 +92,7 @@ func (x TenantActivityStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use TenantActivityStatus.Descriptor instead.
 func (TenantActivityStatus) EnumDescriptor() ([]byte, []int) {
-	return file_v1_tenants_proto_rawDescGZIP(), []int{0}
+	return file_api_proto_v1_tenants_proto_rawDescGZIP(), []int{0}
 }
 
 type TenantsGetRequest struct {
@@ -110,7 +110,7 @@ type TenantsGetRequest struct {
 
 func (x *TenantsGetRequest) Reset() {
 	*x = TenantsGetRequest{}
-	mi := &file_v1_tenants_proto_msgTypes[0]
+	mi := &file_api_proto_v1_tenants_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -122,7 +122,7 @@ func (x *TenantsGetRequest) String() string {
 func (*TenantsGetRequest) ProtoMessage() {}
 
 func (x *TenantsGetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_tenants_proto_msgTypes[0]
+	mi := &file_api_proto_v1_tenants_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -135,7 +135,7 @@ func (x *TenantsGetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TenantsGetRequest.ProtoReflect.Descriptor instead.
 func (*TenantsGetRequest) Descriptor() ([]byte, []int) {
-	return file_v1_tenants_proto_rawDescGZIP(), []int{0}
+	return file_api_proto_v1_tenants_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *TenantsGetRequest) GetCollection() string {
@@ -180,7 +180,7 @@ type TenantNames struct {
 
 func (x *TenantNames) Reset() {
 	*x = TenantNames{}
-	mi := &file_v1_tenants_proto_msgTypes[1]
+	mi := &file_api_proto_v1_tenants_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -192,7 +192,7 @@ func (x *TenantNames) String() string {
 func (*TenantNames) ProtoMessage() {}
 
 func (x *TenantNames) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_tenants_proto_msgTypes[1]
+	mi := &file_api_proto_v1_tenants_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -205,7 +205,7 @@ func (x *TenantNames) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TenantNames.ProtoReflect.Descriptor instead.
 func (*TenantNames) Descriptor() ([]byte, []int) {
-	return file_v1_tenants_proto_rawDescGZIP(), []int{1}
+	return file_api_proto_v1_tenants_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *TenantNames) GetValues() []string {
@@ -225,7 +225,7 @@ type TenantsGetReply struct {
 
 func (x *TenantsGetReply) Reset() {
 	*x = TenantsGetReply{}
-	mi := &file_v1_tenants_proto_msgTypes[2]
+	mi := &file_api_proto_v1_tenants_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -237,7 +237,7 @@ func (x *TenantsGetReply) String() string {
 func (*TenantsGetReply) ProtoMessage() {}
 
 func (x *TenantsGetReply) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_tenants_proto_msgTypes[2]
+	mi := &file_api_proto_v1_tenants_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -250,7 +250,7 @@ func (x *TenantsGetReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TenantsGetReply.ProtoReflect.Descriptor instead.
 func (*TenantsGetReply) Descriptor() ([]byte, []int) {
-	return file_v1_tenants_proto_rawDescGZIP(), []int{2}
+	return file_api_proto_v1_tenants_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *TenantsGetReply) GetTook() float32 {
@@ -277,7 +277,7 @@ type Tenant struct {
 
 func (x *Tenant) Reset() {
 	*x = Tenant{}
-	mi := &file_v1_tenants_proto_msgTypes[3]
+	mi := &file_api_proto_v1_tenants_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -289,7 +289,7 @@ func (x *Tenant) String() string {
 func (*Tenant) ProtoMessage() {}
 
 func (x *Tenant) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_tenants_proto_msgTypes[3]
+	mi := &file_api_proto_v1_tenants_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -302,7 +302,7 @@ func (x *Tenant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Tenant.ProtoReflect.Descriptor instead.
 func (*Tenant) Descriptor() ([]byte, []int) {
-	return file_v1_tenants_proto_rawDescGZIP(), []int{3}
+	return file_api_proto_v1_tenants_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Tenant) GetName() string {
@@ -319,11 +319,11 @@ func (x *Tenant) GetActivityStatus() TenantActivityStatus {
 	return TenantActivityStatus_TENANT_ACTIVITY_STATUS_UNSPECIFIED
 }
 
-var File_v1_tenants_proto protoreflect.FileDescriptor
+var File_api_proto_v1_tenants_proto protoreflect.FileDescriptor
 
-const file_v1_tenants_proto_rawDesc = "" +
+const file_api_proto_v1_tenants_proto_rawDesc = "" +
 	"\n" +
-	"\x10v1/tenants.proto\x12\vweaviate.v1\"o\n" +
+	"\x1aapi/proto/v1/tenants.proto\x12\vweaviate.v1\"o\n" +
 	"\x11TenantsGetRequest\x12\x1e\n" +
 	"\n" +
 	"collection\x18\x01 \x01(\tR\n" +
@@ -350,31 +350,31 @@ const file_v1_tenants_proto_rawDesc = "" +
 	" TENANT_ACTIVITY_STATUS_OFFLOADED\x10\t\x12%\n" +
 	"!TENANT_ACTIVITY_STATUS_OFFLOADING\x10\n" +
 	"\x12$\n" +
-	" TENANT_ACTIVITY_STATUS_ONLOADING\x10\v\"\x04\b\x03\x10\x03Bq\n" +
-	"#io.weaviate.client.grpc.protocol.v1B\x14WeaviateProtoTenantsZ4github.com/weaviate/weaviate/grpc/generated;protocolb\x06proto3"
+	" TENANT_ACTIVITY_STATUS_ONLOADING\x10\v\"\x04\b\x03\x10\x03B\x92\x01\n" +
+	"#io.weaviate.client.grpc.protocol.v1B\x14WeaviateProtoTenantsZUgithub.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1;protocolb\x06proto3"
 
 var (
-	file_v1_tenants_proto_rawDescOnce sync.Once
-	file_v1_tenants_proto_rawDescData []byte
+	file_api_proto_v1_tenants_proto_rawDescOnce sync.Once
+	file_api_proto_v1_tenants_proto_rawDescData []byte
 )
 
-func file_v1_tenants_proto_rawDescGZIP() []byte {
-	file_v1_tenants_proto_rawDescOnce.Do(func() {
-		file_v1_tenants_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_v1_tenants_proto_rawDesc), len(file_v1_tenants_proto_rawDesc)))
+func file_api_proto_v1_tenants_proto_rawDescGZIP() []byte {
+	file_api_proto_v1_tenants_proto_rawDescOnce.Do(func() {
+		file_api_proto_v1_tenants_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_api_proto_v1_tenants_proto_rawDesc), len(file_api_proto_v1_tenants_proto_rawDesc)))
 	})
-	return file_v1_tenants_proto_rawDescData
+	return file_api_proto_v1_tenants_proto_rawDescData
 }
 
-var file_v1_tenants_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_v1_tenants_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
-var file_v1_tenants_proto_goTypes = []any{
+var file_api_proto_v1_tenants_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_api_proto_v1_tenants_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_api_proto_v1_tenants_proto_goTypes = []any{
 	(TenantActivityStatus)(0), // 0: weaviate.v1.TenantActivityStatus
 	(*TenantsGetRequest)(nil), // 1: weaviate.v1.TenantsGetRequest
 	(*TenantNames)(nil),       // 2: weaviate.v1.TenantNames
 	(*TenantsGetReply)(nil),   // 3: weaviate.v1.TenantsGetReply
 	(*Tenant)(nil),            // 4: weaviate.v1.Tenant
 }
-var file_v1_tenants_proto_depIdxs = []int32{
+var file_api_proto_v1_tenants_proto_depIdxs = []int32{
 	2, // 0: weaviate.v1.TenantsGetRequest.names:type_name -> weaviate.v1.TenantNames
 	4, // 1: weaviate.v1.TenantsGetReply.tenants:type_name -> weaviate.v1.Tenant
 	0, // 2: weaviate.v1.Tenant.activity_status:type_name -> weaviate.v1.TenantActivityStatus
@@ -385,30 +385,30 @@ var file_v1_tenants_proto_depIdxs = []int32{
 	0, // [0:3] is the sub-list for field type_name
 }
 
-func init() { file_v1_tenants_proto_init() }
-func file_v1_tenants_proto_init() {
-	if File_v1_tenants_proto != nil {
+func init() { file_api_proto_v1_tenants_proto_init() }
+func file_api_proto_v1_tenants_proto_init() {
+	if File_api_proto_v1_tenants_proto != nil {
 		return
 	}
-	file_v1_tenants_proto_msgTypes[0].OneofWrappers = []any{
+	file_api_proto_v1_tenants_proto_msgTypes[0].OneofWrappers = []any{
 		(*TenantsGetRequest_Names)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_tenants_proto_rawDesc), len(file_v1_tenants_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_v1_tenants_proto_rawDesc), len(file_api_proto_v1_tenants_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_v1_tenants_proto_goTypes,
-		DependencyIndexes: file_v1_tenants_proto_depIdxs,
-		EnumInfos:         file_v1_tenants_proto_enumTypes,
-		MessageInfos:      file_v1_tenants_proto_msgTypes,
+		GoTypes:           file_api_proto_v1_tenants_proto_goTypes,
+		DependencyIndexes: file_api_proto_v1_tenants_proto_depIdxs,
+		EnumInfos:         file_api_proto_v1_tenants_proto_enumTypes,
+		MessageInfos:      file_api_proto_v1_tenants_proto_msgTypes,
 	}.Build()
-	File_v1_tenants_proto = out.File
-	file_v1_tenants_proto_goTypes = nil
-	file_v1_tenants_proto_depIdxs = nil
+	File_api_proto_v1_tenants_proto = out.File
+	file_api_proto_v1_tenants_proto_goTypes = nil
+	file_api_proto_v1_tenants_proto_depIdxs = nil
 }
