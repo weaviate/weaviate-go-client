@@ -13,12 +13,12 @@ import (
 )
 
 func TestStartupTimeout_REST(t *testing.T) {
-	_, grpcPort, authEnabled := testsuit.GetPortAndAuthPw()
+	_, _, grpcHost, grpcPort, authEnabled := testsuit.GetHostsPortsAndAuthPw()
 	cfg := weaviate.Config{
-		Host:   fmt.Sprintf("localhost:%v", testsuit.NoWeaviatePort),
+		Host:   fmt.Sprintf("%s:%v", testsuit.BrokenHost, testsuit.BrokenPort),
 		Scheme: "http",
 		GrpcConfig: &grpc.Config{
-			Host: fmt.Sprintf("localhost:%v", grpcPort),
+			Host: fmt.Sprintf("%s:%v", grpcHost, grpcPort),
 		},
 		StartupTimeout: time.Second,
 	}
@@ -31,12 +31,12 @@ func TestStartupTimeout_REST(t *testing.T) {
 }
 
 func TestStartupTimeout_GRPC(t *testing.T) {
-	port, _, authEnabled := testsuit.GetPortAndAuthPw()
+	host, port, _, _, authEnabled := testsuit.GetHostsPortsAndAuthPw()
 	cfg := weaviate.Config{
-		Host:   fmt.Sprintf("localhost:%v", port),
+		Host:   fmt.Sprintf("%s:%v", host, port),
 		Scheme: "http",
 		GrpcConfig: &grpc.Config{
-			Host: fmt.Sprintf("localhost:%v", testsuit.NoWeaviateGRPCPort),
+			Host: fmt.Sprintf("%s:%v", testsuit.BrokenHost, testsuit.BrokenGRPCPort),
 		},
 		StartupTimeout: time.Second,
 	}

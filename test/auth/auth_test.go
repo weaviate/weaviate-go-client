@@ -48,7 +48,7 @@ func TestAuth_clientCredential(t *testing.T) {
 		}
 
 		clientCredentialConf := auth.ClientCredentials{ClientSecret: clientSecret, Scopes: tc.scope}
-		cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", tc.port), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: clientCredentialConf}
+		cfg := weaviate.Config{Host: fmt.Sprintf("%s:%v", testsuit.OIDCHost, tc.port), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: clientCredentialConf}
 		client, err := weaviate.NewClient(cfg)
 		assert.Nil(t, err)
 
@@ -76,7 +76,7 @@ func TestAuth_clientCredential_WrongParameters(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			clientCredentialConf := auth.ClientCredentials{ClientSecret: tc.secret, Scopes: tc.scope}
 
-			cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.OktaCCPort), Scheme: "http", StartupTimeout: 20 * time.Second, AuthConfig: clientCredentialConf}
+			cfg := weaviate.Config{Host: fmt.Sprintf("%s:%v", testsuit.OIDCHost, testsuit.OktaCCPort), Scheme: "http", StartupTimeout: 20 * time.Second, AuthConfig: clientCredentialConf}
 			client, err := weaviate.NewClient(cfg)
 			assert.NotNil(t, err)
 			assert.Nil(t, client)
@@ -90,13 +90,14 @@ func TestAuth_UserPW(t *testing.T) {
 		user    string
 		envVar  string
 		scope   []string
+		host    string
 		port    int
 		warning bool
 	}{
-		{name: "WCS", user: wcsUser, envVar: "WCS_DUMMY_CI_PW", port: testsuit.WCSPort, warning: false},
-		{name: "Okta (no scope)", user: oktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort, warning: false},
-		{name: "Okta", user: oktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort, scope: []string{"offline_access"}, warning: false},
-		{name: "Okta (scope without refresh)", user: oktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort, scope: []string{"offline_access"}, warning: true},
+		{name: "WCS", user: wcsUser, envVar: "WCS_DUMMY_CI_PW", host: testsuit.WCSHost, port: testsuit.WCSPort, warning: false},
+		{name: "Okta (no scope)", user: oktaUser, envVar: "OKTA_DUMMY_CI_PW", host: testsuit.OIDCHost, port: testsuit.OktaUsersPort, warning: false},
+		{name: "Okta", user: oktaUser, envVar: "OKTA_DUMMY_CI_PW", host: testsuit.OIDCHost, port: testsuit.OktaUsersPort, scope: []string{"offline_access"}, warning: false},
+		{name: "Okta (scope without refresh)", user: oktaUser, envVar: "OKTA_DUMMY_CI_PW", host: testsuit.OIDCHost, port: testsuit.OktaUsersPort, scope: []string{"offline_access"}, warning: true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -116,7 +117,7 @@ func TestAuth_UserPW(t *testing.T) {
 				// test accessing the buffer.
 				clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: tc.user, Password: pw, Scopes: tc.scope}
 
-				cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", tc.port), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: clientCredentialConf}
+				cfg := weaviate.Config{Host: fmt.Sprintf("%s:%v", tc.host, tc.port), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: clientCredentialConf}
 				client, err := weaviate.NewClient(cfg)
 				assert.Nil(t, err)
 
@@ -134,13 +135,13 @@ func TestAuth_UserPW(t *testing.T) {
 
 func TestAuth_UserPW_wrongPW(t *testing.T) {
 	clientCredentialConf := auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}
-	cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.WCSPort), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: clientCredentialConf}
+	cfg := weaviate.Config{Host: fmt.Sprintf("%s:%v", testsuit.WCSHost, testsuit.WCSPort), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: clientCredentialConf}
 	_, err := weaviate.NewClient(cfg)
 	assert.NotNil(t, err)
 }
 
 func TestNoAuthOnWeaviateWithoutAuth(t *testing.T) {
-	cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.NoAuthPort), Scheme: "http", StartupTimeout: 60 * time.Second}
+	cfg := weaviate.Config{Host: fmt.Sprintf("%s:%v", testsuit.NoAuthHost, testsuit.NoAuthPort), Scheme: "http", StartupTimeout: 60 * time.Second}
 	client, err := weaviate.NewClient(cfg)
 	assert.Nil(t, err)
 
@@ -149,7 +150,7 @@ func TestNoAuthOnWeaviateWithoutAuth(t *testing.T) {
 }
 
 func TestNoAuthOnWeaviateWithAuth(t *testing.T) {
-	cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.WCSPort), Scheme: "http", StartupTimeout: 60 * time.Second}
+	cfg := weaviate.Config{Host: fmt.Sprintf("%s:%v", testsuit.WCSHost, testsuit.WCSPort), Scheme: "http", StartupTimeout: 60 * time.Second}
 	client, err := weaviate.NewClient(cfg)
 	assert.Nil(t, err)
 
@@ -177,7 +178,7 @@ func TestAuthOnWeaviateWithoutAuth(t *testing.T) {
 			defer func() {
 				log.SetOutput(os.Stderr)
 			}()
-			cfg := weaviate.Config{Host: fmt.Sprintf("localhost:%v", testsuit.NoAuthPort), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: tc.authConfig}
+			cfg := weaviate.Config{Host: fmt.Sprintf("%s:%v", testsuit.NoAuthHost, testsuit.NoAuthPort), Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: tc.authConfig}
 			client, err := weaviate.NewClient(cfg)
 			assert.Nil(t, err)
 			assert.True(t, strings.Contains(buf.String(), "The client was configured to use authentication"))
@@ -189,7 +190,7 @@ func TestAuthOnWeaviateWithoutAuth(t *testing.T) {
 }
 
 func TestAuthNoWeaviateOnPort(t *testing.T) {
-	cfg := weaviate.Config{Host: "localhost:" + fmt.Sprint(testsuit.NoWeaviatePort), Scheme: "http", StartupTimeout: 0 * time.Second, AuthConfig: auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}}
+	cfg := weaviate.Config{Host: fmt.Sprintf("%s:%v", testsuit.BrokenHost, testsuit.BrokenPort), Scheme: "http", StartupTimeout: 0 * time.Second, AuthConfig: auth.ResourceOwnerPasswordFlow{Username: "SomeUsername", Password: "IamWrong"}}
 	_, err := weaviate.NewClient(cfg)
 	assert.NotNil(t, err)
 }
@@ -199,10 +200,11 @@ func TestAuthBearerToken(t *testing.T) {
 		name   string
 		user   string
 		envVar string
+		host   string
 		port   int
 	}{
-		{name: "WCS", user: wcsUser, envVar: "WCS_DUMMY_CI_PW", port: testsuit.WCSPort},
-		{name: "Okta", user: oktaUser, envVar: "OKTA_DUMMY_CI_PW", port: testsuit.OktaUsersPort},
+		{name: "WCS", user: wcsUser, envVar: "WCS_DUMMY_CI_PW", host: testsuit.WCSHost, port: testsuit.WCSPort},
+		{name: "Okta", user: oktaUser, envVar: "OKTA_DUMMY_CI_PW", host: testsuit.OIDCHost, port: testsuit.OktaUsersPort},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -210,7 +212,7 @@ func TestAuthBearerToken(t *testing.T) {
 			if pw == "" {
 				t.Skip("No password supplied for " + tc.name)
 			}
-			url := fmt.Sprintf("localhost:%v", tc.port)
+			url := fmt.Sprintf("%s:%v", tc.host, tc.port)
 
 			accessToken, refreshToken := getAccessToken(t, url, tc.user, pw)
 			cfg := weaviate.Config{Host: url, Scheme: "http", StartupTimeout: 60 * time.Second, AuthConfig: auth.BearerToken{AccessToken: accessToken, RefreshToken: refreshToken}}

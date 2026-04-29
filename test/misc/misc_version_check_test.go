@@ -24,9 +24,9 @@ func TestMisc_version_check(t *testing.T) {
 	})
 
 	t.Run("Weaviate is not live, perform live check", func(t *testing.T) {
-		port, _, _ := testsuit.GetPortAndAuthPw()
+		host, port, _, _, _ := testsuit.GetHostsPortsAndAuthPw()
 		cfg := &weaviate.Config{
-			Host:    fmt.Sprintf("localhost:%v", port),
+			Host:    fmt.Sprintf("%s:%v", host, port),
 			Scheme:  "http",
 			Headers: map[string]string{},
 		}
@@ -97,9 +97,9 @@ func TestMisc_empty_version_check(t *testing.T) {
 		}
 	})
 	t.Run("Weaviate is not live, perform live check", func(t *testing.T) {
-		port, _, _ := testsuit.GetPortAndAuthPw()
+		host, port, _, _, _ := testsuit.GetHostsPortsAndAuthPw()
 		cfg := &weaviate.Config{
-			Host:    fmt.Sprintf("localhost:%v", port),
+			Host:    fmt.Sprintf("%s:%v", host, port),
 			Scheme:  "http",
 			Headers: map[string]string{},
 		}

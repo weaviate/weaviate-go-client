@@ -75,12 +75,12 @@ func checkReady(initCtx context.Context, url string) error {
 //	due to syncing issues and speeds up the process
 func SetupLocalWeaviateWaitForStartup(waitForWeaviateStartup bool) error {
 	if !isExternalWeaviateRunning() {
-		port, _, authEnabled := testsuit.GetPortAndAuthPw()
+		host, port, _, _, authEnabled := testsuit.GetHostsPortsAndAuthPw()
 		if err := test.SetupWeaviate(authEnabled); err != nil {
 			return err
 		}
 		if waitForWeaviateStartup {
-			return waitForStartup(context.TODO(), fmt.Sprintf("localhost:%v", port), 1*time.Second)
+			return waitForStartup(context.TODO(), fmt.Sprintf("%s:%v", host, port), 1*time.Second)
 		}
 		return nil
 	}
@@ -123,8 +123,8 @@ func SetupLocalContainer(t *testing.T, ctx context.Context, preset test.Preset, 
 // isExternalWeaviateRunning checks if either EXTERNAL_WEAVIATE_RUNNING is set
 // or a Weaviate container is already running.
 func isExternalWeaviateRunning() bool {
-	port, _, _ := testsuit.GetPortAndAuthPw()
-	err := checkReady(context.TODO(), fmt.Sprintf("localhost:%v", port))
+	host, port, _, _, _ := testsuit.GetHostsPortsAndAuthPw()
+	err := checkReady(context.TODO(), fmt.Sprintf("%s:%v", host, port))
 	isRunning := err == nil
 
 	return envExternalWeaviateRunning || isRunning

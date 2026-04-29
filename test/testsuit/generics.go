@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"slices"
+	"strconv"
 	"testing"
 
 	"github.com/weaviate/weaviate-go-client/v5/test"
@@ -23,18 +24,58 @@ import (
 	"github.com/weaviate/weaviate/usecases/auth/authorization"
 )
 
-const (
-	NoAuthPort         = 8080
-	NoAuthGRPCPort     = 50051
-	AzurePort          = 8081
-	OktaCCPort         = 8082
-	OktaUsersPort      = 8083
-	WCSPort            = 8085
-	WCSGRPCPort        = 50056
-	NoWeaviatePort     = 8888
-	NoWeaviateGRPCPort = 55555
-	RbacPort           = 8089
+var (
+	NoAuthHost     = envStr("WV_TEST_HOST", "localhost")
+	NoAuthPort     = envInt("WV_TEST_REST_PORT", 8080)
+	NoAuthGRPCHost = envStr("WV_TEST_HOST", "localhost")
+	NoAuthGRPCPort = envInt("WV_TEST_GRPC_PORT", 50051)
+
+	WCSHost     = envStr("WV_TEST_AUTH_HOST", "localhost")
+	WCSPort     = envInt("WV_TEST_AUTH_REST_PORT", 8085)
+	WCSGRPCHost = envStr("WV_TEST_AUTH_HOST", "localhost")
+	WCSGRPCPort = envInt("WV_TEST_AUTH_GRPC_PORT", 50056)
+
+	OIDCHost      = envStr("WV_TEST_OIDC_HOST", "localhost")
+	AzurePort     = envInt("WV_TEST_OIDC_AZURE_PORT", 8081)
+	OktaCCPort    = envInt("WV_TEST_OIDC_OKTA_CC_PORT", 8082)
+	OktaUsersPort = envInt("WV_TEST_OIDC_OKTA_USERS_PORT", 8083)
+
+	RbacHost     = envStr("WV_TEST_RBAC_HOST", "localhost")
+	RbacPort     = envInt("WV_TEST_RBAC_REST_PORT", 8089)
+	RbacGRPCPort = envInt("WV_TEST_RBAC_GRPC_PORT", 50063)
+
+	VectorHost     = envStr("WV_TEST_VECTOR_HOST", "localhost")
+	VectorPort     = envInt("WV_TEST_VECTOR_REST_PORT", 8086)
+	VectorGRPCPort = envInt("WV_TEST_VECTOR_GRPC_PORT", 50057)
+
+	ClusterHost     = envStr("WV_TEST_CLUSTER_HOST", "localhost")
+	ClusterPort     = envInt("WV_TEST_CLUSTER_REST_PORT", 8087)
+	ClusterGRPCPort = envInt("WV_TEST_CLUSTER_GRPC_PORT", 50058)
+
+	BrokenHost     = envStr("WV_TEST_BROKEN_HOST", "localhost")
+	BrokenPort     = envInt("WV_TEST_BROKEN_REST_PORT", 8888)
+	BrokenGRPCPort = envInt("WV_TEST_BROKEN_GRPC_PORT", 55555)
 )
+
+// envStr returns the value of the named environment variable, or def if unset
+// or empty.
+func envStr(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
+}
+
+// envInt returns the integer value of the named environment variable, or def
+// if unset, empty, or unparseable.
+func envInt(key string, def int) int {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			return n
+		}
+	}
+	return def
+}
 
 const ENV_INTEGRATION_TESTS_AUTH = "INTEGRATION_TESTS_AUTH"
 
@@ -52,6 +93,23 @@ func GetPortAndAuthPw() (int, int, bool) {
 		grpcPort = WCSGRPCPort
 	}
 	return port, grpcPort, authEnabled
+}
+
+// GetHostsPortsAndAuthPw returns the REST host, REST port, gRPC host, gRPC
+// port, and whether auth is enabled, picking the auth-instance addresses when
+// auth is on.
+func GetHostsPortsAndAuthPw() (string, int, string, int, bool) {
+	host := NoAuthHost
+	port := NoAuthPort
+	grpcHost := NoAuthGRPCHost
+	grpcPort := NoAuthGRPCPort
+	if authEnabled {
+		host = WCSHost
+		port = WCSPort
+		grpcHost = WCSGRPCHost
+		grpcPort = WCSGRPCPort
+	}
+	return host, port, grpcHost, grpcPort, authEnabled
 }
 
 // CreateWeaviateTestSchemaFood creates a class for each semantic type (Pizza and Soup)
@@ -229,9 +287,15 @@ func CleanUpWeaviate(t *testing.T, client *weaviate.Client) {
 	}
 }
 
-// CreateTestClient running on localhost 8080
+// CreateTestClient creates a client targeting the configured test server.
 func CreateTestClient(enableGRPC bool) *weaviate.Client {
 	port, grpcPort, authEnabled := GetPortAndAuthPw()
+	host := NoAuthHost
+	grpcHost := NoAuthGRPCHost
+	if authEnabled {
+		host = WCSHost
+		grpcHost = WCSGRPCHost
+	}
 
 	headers := map[string]string{}
 	if openAIApiKey != "" {
@@ -242,13 +306,13 @@ func CreateTestClient(enableGRPC bool) *weaviate.Client {
 	}
 
 	cfg := weaviate.Config{
-		Host:    fmt.Sprintf("localhost:%v", port),
+		Host:    fmt.Sprintf("%s:%v", host, port),
 		Scheme:  "http",
 		Headers: headers,
 	}
 	if enableGRPC {
 		cfg.GrpcConfig = &grpc.Config{
-			Host: fmt.Sprintf("localhost:%v", grpcPort),
+			Host: fmt.Sprintf("%s:%v", grpcHost, grpcPort),
 		}
 	}
 
