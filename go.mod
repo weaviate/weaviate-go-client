@@ -12,7 +12,7 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/weaviate v0.40.0
 	github.com/weaviate/weaviate v1.37.2
 	go.nhat.io/grpcmock v0.33.0
-	golang.org/x/oauth2 v0.35.0
+	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.20.0
 	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.11
