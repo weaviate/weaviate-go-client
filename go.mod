@@ -3,7 +3,7 @@ module github.com/weaviate/weaviate-go-client/v5
 go 1.26
 
 require (
-	github.com/docker/go-connections v0.6.0
+	github.com/docker/go-connections v0.7.0
 	github.com/go-openapi/strfmt v0.25.0
 	github.com/google/uuid v1.6.0
 	github.com/launchdarkly/go-semver v1.0.3
