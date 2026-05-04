@@ -17,7 +17,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// DO NOT enable t.Parallel() for this test as it messes with the global state.
+// DO NOT enable t.Parallel() for this test as it modifies the global state.
 func TestNewLocal(t *testing.T) {
 	newFunc := transport.New
 	t.Cleanup(func() { transport.New = newFunc })
@@ -100,7 +100,7 @@ func TestNewLocal(t *testing.T) {
 	})
 }
 
-// DO NOT enable t.Parallel() for this test as it messes with the global state.
+// DO NOT enable t.Parallel() for this test as it modifies the global state.
 func TestNewWeaviateCloud(t *testing.T) {
 	newFunc := transport.New
 	t.Cleanup(func() { transport.New = newFunc })
@@ -208,15 +208,19 @@ func TestNewWeaviateCloud(t *testing.T) {
 		}
 
 		c, err := weaviate.NewClient(t.Context())
-		assert.NoError(t, err)
-		assert.NotNil(t, c, "nil client")
+		require.NoError(t, err)
+		require.NotNil(t, c, "nil client")
 
 		assert.NotNil(t, c.Collections, "nil collections")
 		assert.NotNil(t, c.Backup, "nil backup")
 	})
 }
 
+// DO NOT enable t.Parallel() for this test as it modifies the global state.
 func TestWithAPIKey(t *testing.T) {
+	newFunc := transport.New
+	t.Cleanup(func() { transport.New = newFunc })
+
 	var got transport.Config
 	transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
 		got = cfg
@@ -240,7 +244,11 @@ func TestWithAPIKey(t *testing.T) {
 	}
 }
 
+// DO NOT enable t.Parallel() for this test as it modifies the global state.
 func TestOIDCAuthentication(t *testing.T) {
+	newFunc := transport.New
+	t.Cleanup(func() { transport.New = newFunc })
+
 	for _, tt := range []struct {
 		name string
 		opt  weaviate.Option
@@ -284,4 +292,97 @@ func TestOIDCAuthentication(t *testing.T) {
 			assert.Equal(t, tt.auth, got.Auth, "bad auth provider")
 		})
 	}
+}
+
+// DO NOT enable t.Parallel() for this test as it modifies the global state.
+func TestLiveReady(t *testing.T) {
+	newFunc := transport.New
+	t.Cleanup(func() { transport.New = newFunc })
+
+	transportOK := testkit.NopTransport
+	transportErr := testkit.TransportFunc(func(context.Context, any, any) error { return testkit.ErrWhaam })
+
+	for _, tt := range []struct {
+		name      string
+		act       func(*weaviate.Client, context.Context) (bool, error)
+		transport internal.Transport
+		err       testkit.Error
+		want      bool
+	}{
+		{
+			name:      "live ok",
+			act:       (*weaviate.Client).IsLive,
+			transport: transportOK,
+			want:      true,
+		},
+		{
+			name:      "live err",
+			act:       (*weaviate.Client).IsLive,
+			transport: transportErr,
+			err:       testkit.ExpectError,
+		},
+		{
+			name:      "ready ok",
+			act:       (*weaviate.Client).IsReady,
+			transport: transportOK,
+			want:      true,
+		},
+		{
+			name:      "ready err",
+			act:       (*weaviate.Client).IsReady,
+			transport: transportErr,
+			err:       testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
+				return tt.transport, nil
+			}
+
+			c, err := weaviate.NewClient(t.Context())
+			require.NoError(t, err, "new client")
+			require.NotNil(t, c, "nil client")
+
+			got, err := tt.act(c, t.Context())
+			tt.err.Assert(t, err, "request error")
+			assert.Equal(t, tt.want, got, "bad result")
+		})
+	}
+}
+
+func TestMetadata(t *testing.T) {
+	newFunc := transport.New
+	t.Cleanup(func() { transport.New = newFunc })
+
+	tport := testkit.NewTransport(t, []testkit.Stub[any, any]{{
+		Request: testkit.Ptr[any](api.GetInstanceMetadataRequest),
+		Response: api.GetInstanceMetadataResponse{
+			Hostname: "example.com",
+			Version:  "v1.37.0",
+			Modules: map[string]any{
+				"text2vec-weaviate": true,
+				"backup-s3":         true,
+			},
+			GRPCMaxMessageSize: 4096,
+		},
+	}})
+	transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
+		return tport, nil
+	}
+
+	c, err := weaviate.NewClient(t.Context())
+	require.NoError(t, err, "new client")
+	require.NotNil(t, c, "nil client")
+
+	got, err := c.Metadata(t.Context())
+	assert.NoError(t, err, "request error")
+	assert.EqualValues(t, &weaviate.InstanceMetadata{
+		Hostname: "example.com",
+		Version:  "v1.37.0",
+		Modules: map[string]any{
+			"text2vec-weaviate": true,
+			"backup-s3":         true,
+		},
+		GRPCMaxMessageSize: 4096,
+	}, got, "bad result")
 }

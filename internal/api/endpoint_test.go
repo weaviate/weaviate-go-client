@@ -48,6 +48,12 @@ func TestRESTRequests(t *testing.T) {
 			wantPath:   "/.well-known/live",
 		},
 		{
+			name:       "check is ready",
+			req:        api.IsReadyRequest,
+			wantMethod: http.MethodGet,
+			wantPath:   "/.well-known/ready",
+		},
+		{
 			name:       "get instance metadata",
 			req:        api.GetInstanceMetadataRequest,
 			wantMethod: http.MethodGet,
@@ -944,6 +950,28 @@ func TestRESTResponses(t *testing.T) {
 					StartedAt:           testkit.Ptr(time.Time{}),
 					CompletedAt:         testkit.Ptr(time.Time{}),
 				},
+			},
+		},
+		{
+			name: "instance metadata",
+			body: &rest.Meta{
+				Hostname: "example.com",
+				Version:  "v1.37.0",
+				Modules: map[string]any{
+					"text2vec-weaviate": true,
+					"backup-s3":         true,
+				},
+				GrpcMaxMessageSize: 4096,
+			},
+			dest: new(api.GetInstanceMetadataResponse),
+			want: &api.GetInstanceMetadataResponse{
+				Hostname: "example.com",
+				Version:  "v1.37.0",
+				Modules: map[string]any{
+					"text2vec-weaviate": true,
+					"backup-s3":         true,
+				},
+				GRPCMaxMessageSize: 4096,
 			},
 		},
 	} {
