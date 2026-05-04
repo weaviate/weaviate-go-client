@@ -105,6 +105,10 @@
           ],
           "format": "date-time",
           "description": "Date and time in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "The namespace this user is bound to. Only populated for callers with global-operator privileges; omitted otherwise."
         }
       },
       "required": [
@@ -410,6 +414,14 @@
         },
         "userType": {
           "$ref": "#/definitions/UserTypeInput"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "The namespace this principal is bound to. Empty for global principals (e.g. static API keys)."
+        },
+        "isGlobalOperator": {
+          "type": "boolean",
+          "description": "True for principals that operate across all namespaces (e.g. static API keys). Authoritative marker for operator-level principals; do not infer from an empty namespace."
         }
       }
     },
@@ -4550,6 +4562,10 @@
                   "type": "string",
                   "format": "date-time",
                   "description": "EXPERIMENTAL, DONT USE. THIS WILL BE REMOVED AGAIN. - set the given time as creation time"
+                },
+                "namespace": {
+                  "type": "string",
+                  "description": "Namespace to bind the new user to. Required on namespace-enabled clusters. Must be set by a global operator only."
                 }
               }
             }

@@ -755,6 +755,9 @@ components:
                         - db_user
                         - db_env_user
                     type: string
+                namespace:
+                    description: The namespace this user is bound to. Only populated for callers with global-operator privileges; omitted otherwise.
+                    type: string
                 roles:
                     description: The roles associated with the user.
                     items:
@@ -1639,6 +1642,12 @@ components:
                     items:
                         type: string
                     type: array
+                isGlobalOperator:
+                    description: True for principals that operate across all namespaces (e.g. static API keys). Authoritative marker for operator-level principals; do not infer from an empty namespace.
+                    type: boolean
+                namespace:
+                    description: The namespace this principal is bound to. Empty for global principals (e.g. static API keys).
+                    type: string
                 userType:
                     $ref: '#/components/schemas/UserTypeInput'
                 username:
@@ -8504,6 +8513,9 @@ paths:
                                     default: false
                                     description: EXPERIMENTAL, DONT USE. THIS WILL BE REMOVED AGAIN. - import api key from static user
                                     type: boolean
+                                namespace:
+                                    description: Namespace to bind the new user to. Required on namespace-enabled clusters. Must be set by a global operator only.
+                                    type: string
                             type: object
                     application/yaml:
                         schema:
@@ -8516,6 +8528,9 @@ paths:
                                     default: false
                                     description: EXPERIMENTAL, DONT USE. THIS WILL BE REMOVED AGAIN. - import api key from static user
                                     type: boolean
+                                namespace:
+                                    description: Namespace to bind the new user to. Required on namespace-enabled clusters. Must be set by a global operator only.
+                                    type: string
                             type: object
                 required: false
             responses:

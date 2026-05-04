@@ -846,6 +846,9 @@ type DBUserInfo struct {
 	// DbUserType Type of the returned user.
 	DbUserType DBUserInfoDbUserType `json:"dbUserType"`
 
+	// Namespace The namespace this user is bound to. Only populated for callers with global-operator privileges; omitted otherwise.
+	Namespace string `json:"namespace,omitempty"`
+
 	// Roles The roles associated with the user.
 	Roles []string `json:"roles"`
 
@@ -2563,6 +2566,9 @@ type CreateUserJSONBody struct {
 
 	// Import EXPERIMENTAL, DONT USE. THIS WILL BE REMOVED AGAIN. - import api key from static user
 	Import bool `json:"import,omitempty"`
+
+	// Namespace Namespace to bind the new user to. Required on namespace-enabled clusters. Must be set by a global operator only.
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // DeactivateUserJSONBody defines parameters for DeactivateUser.
