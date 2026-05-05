@@ -77,7 +77,7 @@ func (c *Client) Insert(ctx context.Context, objects ...*Object) (*InsertResult,
 		Objects:         batch,
 	}
 
-	var resp api.InsertObjectBatchResponse
+	var resp api.InsertObjectsResponse
 	if err := c.transport.Do(ctx, req, &resp); err != nil {
 		return nil, fmt.Errorf("insert objects: %w", err)
 	}

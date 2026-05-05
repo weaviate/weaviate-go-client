@@ -73,17 +73,17 @@ func (r *InsertObjectsRequest) MarshalMessage() (*proto.BatchObjectsRequest, err
 	}, nil
 }
 
-type InsertObjectBatchResponse struct {
+type InsertObjectsResponse struct {
 	Took      time.Duration
 	Positions []int32  // Positional indices of the failed objects. Aligned with Errors.
 	Errors    []string // Error messages for failed objects. Aligned with Indices.
 }
 
-var _ transport.MessageUnmarshaler[proto.BatchObjectsReply] = (*InsertObjectBatchResponse)(nil)
+var _ transport.MessageUnmarshaler[proto.BatchObjectsReply] = (*InsertObjectsResponse)(nil)
 
 // UnmarshalMessage implements [transport.MessageUnmarshaler].
-func (r *InsertObjectBatchResponse) UnmarshalMessage(reply *proto.BatchObjectsReply) error {
-	*r = InsertObjectBatchResponse{
+func (r *InsertObjectsResponse) UnmarshalMessage(reply *proto.BatchObjectsReply) error {
+	*r = InsertObjectsResponse{
 		Took: time.Duration(reply.Took) * time.Second,
 	}
 
