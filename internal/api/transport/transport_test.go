@@ -224,6 +224,12 @@ func TestTransport_Do(t *testing.T) {
 					reply:   new(reply[proto.BatchObjectsReply]),
 					timeout: write,
 				},
+				{
+					name:    "batch references",
+					message: &message[proto.BatchReferencesRequest, proto.BatchReferencesReply]{},
+					reply:   new(reply[proto.BatchReferencesReply]),
+					timeout: write,
+				},
 			}) {
 				t.Run(tt.name, func(t *testing.T) {
 					var got context.Context
