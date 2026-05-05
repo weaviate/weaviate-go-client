@@ -2104,8 +2104,8 @@ func TestInsertObjectBatchResponse_UnmarshalMessage(t *testing.T) {
 					{Index: 22, Error: "Whoops!"},
 				},
 			},
-			dest: new(api.InsertObjectBatchResponse),
-			want: &api.InsertObjectBatchResponse{
+			dest: new(api.InsertObjectsResponse),
+			want: &api.InsertObjectsResponse{
 				Took:      92 * time.Second,
 				Positions: []int32{6, 22},
 				Errors:    []string{"Whaam!", "Whoops!"},
@@ -2114,8 +2114,8 @@ func TestInsertObjectBatchResponse_UnmarshalMessage(t *testing.T) {
 		{
 			name:  "no errors",
 			reply: &proto.BatchObjectsReply{Took: 92},
-			dest:  new(api.InsertObjectBatchResponse),
-			want:  &api.InsertObjectBatchResponse{Took: 92 * time.Second},
+			dest:  new(api.InsertObjectsResponse),
+			want:  &api.InsertObjectsResponse{Took: 92 * time.Second},
 		},
 	})
 }
