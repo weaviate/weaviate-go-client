@@ -240,3 +240,92 @@ func TestClient_Delete(t *testing.T) {
 		})
 	}
 }
+
+func TestClient_AddReferences(t *testing.T) {
+	rd := api.RequestDefaults{
+		CollectionName:   "Songs",
+		ConsistencyLevel: api.ConsistencyLevelOne,
+		Tenant:           "john_doe",
+	}
+
+	for _, tt := range []struct {
+		name       string
+		references []data.Reference // Reference to be inserted.
+		stubs      []testkit.Stub[api.InsertReferencesRequest, api.InsertReferencesResponse]
+		want       *data.AddReferencesResult
+		err        testkit.Error // Expected error.
+	}{
+		{
+			name: "references",
+			references: []data.Reference{
+				{ // Single-target reference, bornIn: "Cities".
+					Origin: data.ObjectPath{Collection: "Artists", Property: "bornIn", UUID: testkit.UUID},
+					UUID:   testkit.UUID,
+				},
+				{ // Multi-target reference, "hasAwards": ["Grammy", "TonyAward"].
+					Origin:     data.ObjectPath{Collection: "Songs", Property: "hasAwards", UUID: testkit.UUID},
+					Collection: "Grammy", UUID: testkit.UUID,
+				},
+			},
+			stubs: []testkit.Stub[api.InsertReferencesRequest, api.InsertReferencesResponse]{{
+				Request: &api.InsertReferencesRequest{
+					RequestDefaults: rd,
+					References: []api.Reference{
+						{
+							Origin: api.ObjectPath{Collection: "Artists", Property: "bornIn", UUID: testkit.UUID},
+							Target: api.ObjectPath{UUID: testkit.UUID},
+						},
+						{
+							Origin: api.ObjectPath{Collection: "Songs", Property: "hasAwards", UUID: testkit.UUID},
+							Target: api.ObjectPath{Collection: "Grammy", UUID: testkit.UUID},
+						},
+					},
+				},
+				Response: api.InsertReferencesResponse{Took: 92 * time.Second},
+			}},
+			want: &data.AddReferencesResult{Took: 92 * time.Second},
+		},
+		{
+			// The refernce added in this tests case {UUID: testkit.UUID} is not
+			// technically valid, because it does not specify the Origin. That's
+			// not important, because all we want to verify is that the error map
+			// in the result contains the same reference value as its only key.
+			name:       "internal server error",
+			references: []data.Reference{{UUID: testkit.UUID}},
+			stubs: []testkit.Stub[api.InsertReferencesRequest, api.InsertReferencesResponse]{{
+				Request: &api.InsertReferencesRequest{
+					RequestDefaults: rd,
+					References:      []api.Reference{{Target: api.ObjectPath{UUID: testkit.UUID}}},
+				},
+				Response: api.InsertReferencesResponse{
+					Took:      92 * time.Second,
+					Positions: []int32{0},
+					Errors:    []string{"Whaam!"},
+				},
+			}},
+			want: &data.AddReferencesResult{
+				Took: 92 * time.Second,
+				Errors: map[data.Reference]string{
+					{UUID: testkit.UUID}: "Whaam!",
+				},
+			},
+		},
+		{
+			name: "with request error",
+			stubs: []testkit.Stub[api.InsertReferencesRequest, api.InsertReferencesResponse]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+			c := data.NewClient(transport, rd)
+			require.NotNil(t, c, "nil client")
+
+			got, err := c.AddReferences(t.Context(), tt.references...)
+			tt.err.Require(t, err, "insert error")
+			require.Equal(t, tt.want, got, "returned object")
+		})
+	}
+}
