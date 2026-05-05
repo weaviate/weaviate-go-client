@@ -8,8 +8,6 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
-var IsLiveRequest = transports.StaticEndpoint(http.MethodGet, "/.well-known/live")
-
 var GetInstanceMetadataRequest = transports.StaticEndpoint(http.MethodGet, "/meta")
 
 type GetInstanceMetadataResponse struct {
