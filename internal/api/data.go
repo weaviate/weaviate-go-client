@@ -18,17 +18,17 @@ import (
 	structpb "google.golang.org/protobuf/types/known/structpb"
 )
 
-// InsertObjectBatchRequest inserts a batch of objects into a collection.
-type InsertObjectBatchRequest struct {
+// InsertObjectsRequest inserts a batch of objects into a collection.
+type InsertObjectsRequest struct {
 	RequestDefaults
 	Objects []BatchObject
 }
 
-func (*InsertObjectBatchRequest) Method() transport.MethodFunc[proto.BatchObjectsRequest, proto.BatchObjectsReply] {
+func (*InsertObjectsRequest) Method() transport.MethodFunc[proto.BatchObjectsRequest, proto.BatchObjectsReply] {
 	return proto.WeaviateClient.BatchObjects
 }
 
-func (r *InsertObjectBatchRequest) Body() transport.MessageMarshaler[proto.BatchObjectsRequest] {
+func (r *InsertObjectsRequest) Body() transport.MessageMarshaler[proto.BatchObjectsRequest] {
 	return r
 }
 
@@ -41,9 +41,9 @@ type BatchObject struct {
 	// to the right UUID on return, the caller MUST know the UUID
 	// prior to sending the request.
 	//
-	// A useful quality of BatchObject is that its zero value is useful.
-	// If is perfectly OK to insert an object with [uuid.Nil] ID, and
-	// new(BatchObject) will result in exactly that.
+	// The zero value of BatchObject is useful. If is perfectly OK
+	// to insert an object with [uuid.Nil] ID, and new(BatchObject)
+	// will produce exactly that.
 	UUID       uuid.UUID
 	Properties map[string]any
 	References ObjectReferences
@@ -51,12 +51,12 @@ type BatchObject struct {
 }
 
 var (
-	_ transport.Message[proto.BatchObjectsRequest, proto.BatchObjectsReply] = (*InsertObjectBatchRequest)(nil)
-	_ transport.MessageMarshaler[proto.BatchObjectsRequest]                 = (*InsertObjectBatchRequest)(nil)
+	_ transport.Message[proto.BatchObjectsRequest, proto.BatchObjectsReply] = (*InsertObjectsRequest)(nil)
+	_ transport.MessageMarshaler[proto.BatchObjectsRequest]                 = (*InsertObjectsRequest)(nil)
 )
 
 // MarshalMessage implements [transport.MessageMarshaler].
-func (r *InsertObjectBatchRequest) MarshalMessage() (*proto.BatchObjectsRequest, error) {
+func (r *InsertObjectsRequest) MarshalMessage() (*proto.BatchObjectsRequest, error) {
 	dev.AssertNotNil(r, "r")
 	batch := make([]*proto.BatchObject, len(r.Objects))
 	for i := range r.Objects {

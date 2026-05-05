@@ -1119,7 +1119,7 @@ func TestObjectBatchRequest_MarshalMessage(t *testing.T) {
 	testMessageMarshaler(t, []MessageMarshalerTest[proto.BatchObjectsRequest, proto.BatchObjectsReply]{
 		{
 			name: "properties",
-			req: &api.InsertObjectBatchRequest{
+			req: &api.InsertObjectsRequest{
 				RequestDefaults: api.RequestDefaults{
 					CollectionName:   "Songs",
 					Tenant:           "john_doe",
@@ -1154,7 +1154,7 @@ func TestObjectBatchRequest_MarshalMessage(t *testing.T) {
 		},
 		{
 			name: "references",
-			req: &api.InsertObjectBatchRequest{
+			req: &api.InsertObjectsRequest{
 				RequestDefaults: api.RequestDefaults{
 					CollectionName:   "Songs",
 					Tenant:           "john_doe",
@@ -1198,7 +1198,7 @@ func TestObjectBatchRequest_MarshalMessage(t *testing.T) {
 		},
 		{
 			name: "vectors",
-			req: &api.InsertObjectBatchRequest{
+			req: &api.InsertObjectsRequest{
 				RequestDefaults: api.RequestDefaults{
 					CollectionName:   "Songs",
 					Tenant:           "john_doe",

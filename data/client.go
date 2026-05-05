@@ -72,7 +72,7 @@ func (c *Client) Insert(ctx context.Context, objects ...*Object) (*InsertResult,
 		})
 	}
 
-	req := &api.InsertObjectBatchRequest{
+	req := &api.InsertObjectsRequest{
 		RequestDefaults: c.defaults,
 		Objects:         batch,
 	}
