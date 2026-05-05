@@ -46,7 +46,7 @@ type BatchObject struct {
 	// will produce exactly that.
 	UUID       uuid.UUID
 	Properties map[string]any
-	References ObjectReferences
+	References References
 	Vectors    []Vector
 }
 
@@ -94,15 +94,73 @@ func (r *InsertObjectsResponse) UnmarshalMessage(reply *proto.BatchObjectsReply)
 	return nil
 }
 
-type (
-	ObjectReferences map[string][]ObjectReference
-	ObjectReference  struct {
-		Collection string    // Collection the referenced object belongs to.
-		UUID       uuid.UUID // UUID of the referenced object.
-	}
+type InsertReferencesRequest struct {
+	RequestDefaults
+	References []Reference
+}
+
+var (
+	_ transport.Message[proto.BatchReferencesRequest, proto.BatchReferencesReply] = (*InsertReferencesRequest)(nil)
+	_ transport.MessageMarshaler[proto.BatchReferencesRequest]                    = (*InsertReferencesRequest)(nil)
 )
 
-var _ encoding.TextMarshaler = (*ObjectReference)(nil)
+func (r *InsertReferencesRequest) Method() transport.MethodFunc[proto.BatchReferencesRequest, proto.BatchReferencesReply] {
+	return proto.WeaviateClient.BatchReferences
+}
+
+func (r *InsertReferencesRequest) Body() transport.MessageMarshaler[proto.BatchReferencesRequest] {
+	return r
+}
+
+func (r *InsertReferencesRequest) MarshalMessage() (*proto.BatchReferencesRequest, error) {
+	references := make([]*proto.BatchReference, len(r.References))
+	for i, ref := range r.References {
+		references[i] = &proto.BatchReference{
+			Name:           ref.Origin.Property,
+			FromCollection: ref.Origin.Collection,
+			FromUuid:       ref.Origin.UUID.String(),
+			ToCollection:   nilZero(ref.Target.Collection),
+			ToUuid:         ref.Target.UUID.String(),
+			Tenant:         r.Tenant,
+		}
+	}
+	return &proto.BatchReferencesRequest{
+		ConsistencyLevel: r.ConsistencyLevel.proto(),
+		References:       references,
+	}, nil
+}
+
+type InsertReferencesResponse InsertObjectsResponse
+
+var _ transport.MessageUnmarshaler[proto.BatchReferencesReply] = (*InsertReferencesResponse)(nil)
+
+// UnmarshalMessage implements [transport.MessageUnmarshaler].
+func (r *InsertReferencesResponse) UnmarshalMessage(reply *proto.BatchReferencesReply) error {
+	*r = InsertReferencesResponse{
+		Took: time.Duration(reply.Took) * time.Second,
+	}
+
+	for _, e := range reply.GetErrors() {
+		r.Positions = append(r.Positions, e.Index)
+		r.Errors = append(r.Errors, e.Error)
+	}
+	return nil
+}
+
+type (
+	ObjectPath struct {
+		Collection string    // Collection name.
+		Property   string    // Property name.
+		UUID       uuid.UUID // Object ID.
+	}
+	Reference struct {
+		Origin ObjectPath // Reference origin.
+		Target ObjectPath // Target object.
+	}
+	References map[string][]Reference
+)
+
+var _ encoding.TextMarshaler = (*Reference)(nil)
 
 var (
 	beaconPrefix = []byte("weaviate://localhost/")
@@ -111,14 +169,14 @@ var (
 
 // MarshalText formats the object reference as a beacon.
 // json.Marshal will call this method and encode the result as a JSON string.
-func (o *ObjectReference) MarshalText() ([]byte, error) {
-	id, err := o.UUID.MarshalText()
+func (o *Reference) MarshalText() ([]byte, error) {
+	id, err := o.Target.UUID.MarshalText()
 	if err != nil {
 		return nil, err
 	}
 	b := append([]byte(nil), beaconPrefix...)
-	if o.Collection != "" {
-		b = append(b, o.Collection...)
+	if o.Target.Collection != "" {
+		b = append(b, o.Target.Collection...)
 		b = append(b, beaconSep...)
 	}
 	return append(b, id...), nil
@@ -159,7 +217,7 @@ type ReplaceObjectRequest struct {
 	RequestDefaults
 	UUID       *uuid.UUID
 	Properties map[string]any
-	References ObjectReferences
+	References References
 	Vectors    []Vector
 }
 
@@ -236,10 +294,10 @@ func marshalBatchObject(bo *BatchObject, rd RequestDefaults) (*proto.BatchObject
 	var properties *proto.BatchObject_Properties
 	if len(bo.Properties) > 0 || len(bo.References) > 0 {
 		properties = new(proto.BatchObject_Properties)
-		if err := marshalProperties(bo.Properties, properties); err != nil {
+		if err := marshalObjectProperties(bo.Properties, properties); err != nil {
 			return nil, err
 		}
-		if err := marshalReferences(bo.References, properties); err != nil {
+		if err := marshalReferenceProperties(bo.References, properties); err != nil {
 			return nil, err
 		}
 	}
@@ -253,7 +311,7 @@ func marshalBatchObject(bo *BatchObject, rd RequestDefaults) (*proto.BatchObject
 	}, nil
 }
 
-func marshalProperties(properties map[string]any, dest *proto.BatchObject_Properties) error {
+func marshalObjectProperties(properties map[string]any, dest *proto.BatchObject_Properties) error {
 	if len(properties) == 0 {
 		return nil
 	}
@@ -267,7 +325,7 @@ func marshalProperties(properties map[string]any, dest *proto.BatchObject_Proper
 	return nil
 }
 
-func marshalReferences(references ObjectReferences, dest *proto.BatchObject_Properties) error {
+func marshalReferenceProperties(references References, dest *proto.BatchObject_Properties) error {
 	if len(references) == 0 {
 		return nil
 	}
@@ -276,7 +334,7 @@ func marshalReferences(references ObjectReferences, dest *proto.BatchObject_Prop
 	for name, refs := range references {
 		uuids := make(map[string][]string, 0)
 		for _, ref := range refs {
-			uuids[ref.Collection] = append(uuids[ref.Collection], ref.UUID.String())
+			uuids[ref.Target.Collection] = append(uuids[ref.Target.Collection], ref.Target.UUID.String())
 		}
 
 		for collection := range uuids {

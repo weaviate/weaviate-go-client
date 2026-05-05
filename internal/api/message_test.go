@@ -1163,11 +1163,13 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 				Objects: []api.BatchObject{
 					{
 						UUID: testkit.UUID,
-						References: api.ObjectReferences{
+						References: api.References{
 							"performedBy": {
-								{UUID: testkit.UUID, Collection: "Drummers"},
+								{Target: api.ObjectPath{UUID: testkit.UUID, Collection: "Drummers"}},
 							},
-							"onLabel": {{UUID: testkit.UUID}},
+							"onLabel": {
+								{Target: api.ObjectPath{UUID: testkit.UUID}},
+							},
 						},
 					},
 				},
@@ -1239,6 +1241,67 @@ func mustNewStruct(m map[string]any) *structpb.Struct {
 		panic(err)
 	}
 	return s
+}
+
+func TestInsertReferencesRequest_MarshalMessage(t *testing.T) {
+	// UUID is always included in the [proto.MetadataRequest].
+	testMessageMarshaler(t, []MessageMarshalerTest[proto.BatchReferencesRequest, proto.BatchReferencesReply]{
+		{
+			name: "single-target",
+			req: &api.InsertReferencesRequest{
+				RequestDefaults: api.RequestDefaults{
+					ConsistencyLevel: api.ConsistencyLevelOne,
+					Tenant:           "john_doe",
+				},
+				References: []api.Reference{
+					{
+						Origin: api.ObjectPath{Collection: "Songs", Property: "performedBy", UUID: testkit.UUID},
+						Target: api.ObjectPath{UUID: testkit.UUID},
+					},
+				},
+			},
+			want: &proto.BatchReferencesRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				References: []*proto.BatchReference{
+					{
+						FromCollection: "Songs",
+						Name:           "performedBy",
+						FromUuid:       testkit.UUID.String(),
+						ToUuid:         testkit.UUID.String(),
+						Tenant:         "john_doe",
+					},
+				},
+			},
+		},
+		{
+			name: "multi-target",
+			req: &api.InsertReferencesRequest{
+				RequestDefaults: api.RequestDefaults{
+					ConsistencyLevel: api.ConsistencyLevelOne,
+					Tenant:           "john_doe",
+				},
+				References: []api.Reference{
+					{
+						Origin: api.ObjectPath{Collection: "Songs", Property: "performedBy", UUID: testkit.UUID},
+						Target: api.ObjectPath{Collection: "Artists", UUID: testkit.UUID},
+					},
+				},
+			},
+			want: &proto.BatchReferencesRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				References: []*proto.BatchReference{
+					{
+						FromCollection: "Songs",
+						Name:           "performedBy",
+						FromUuid:       testkit.UUID.String(),
+						ToCollection:   testkit.Ptr("Artists"),
+						ToUuid:         testkit.UUID.String(),
+						Tenant:         "john_doe",
+					},
+				},
+			},
+		},
+	})
 }
 
 // ----------------------------------------------------------------------------
@@ -2116,6 +2179,33 @@ func TestInsertObjectsResponse_UnmarshalMessage(t *testing.T) {
 			reply: &proto.BatchObjectsReply{Took: 92},
 			dest:  new(api.InsertObjectsResponse),
 			want:  &api.InsertObjectsResponse{Took: 92 * time.Second},
+		},
+	})
+}
+
+func TestInsertReferencesResponse_UnmarshalMessage(t *testing.T) {
+	testMessageUnmarshaler(t, []MessageUnmarshalerTest[proto.BatchReferencesReply]{
+		{
+			name: "has errors",
+			reply: &proto.BatchReferencesReply{
+				Took: 92,
+				Errors: []*proto.BatchReferencesReply_BatchError{
+					{Index: 6, Error: "Whaam!"},
+					{Index: 22, Error: "Whoops!"},
+				},
+			},
+			dest: new(api.InsertReferencesResponse),
+			want: &api.InsertReferencesResponse{
+				Took:      92 * time.Second,
+				Positions: []int32{6, 22},
+				Errors:    []string{"Whaam!", "Whoops!"},
+			},
+		},
+		{
+			name:  "no errors",
+			reply: &proto.BatchReferencesReply{Took: 92},
+			dest:  new(api.InsertReferencesResponse),
+			want:  &api.InsertReferencesResponse{Took: 92 * time.Second},
 		},
 	})
 }
