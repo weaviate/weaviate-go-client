@@ -1114,7 +1114,7 @@ func returnAny[T, U any](f func(*T) *U) func(*T) any {
 	}
 }
 
-func TestObjectBatchRequest_MarshalMessage(t *testing.T) {
+func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 	// UUID is always included in the [proto.MetadataRequest].
 	testMessageMarshaler(t, []MessageMarshalerTest[proto.BatchObjectsRequest, proto.BatchObjectsReply]{
 		{
@@ -2093,7 +2093,7 @@ func TestAggregateResponse_UnmarshalMessage(t *testing.T) {
 	})
 }
 
-func TestInsertObjectBatchResponse_UnmarshalMessage(t *testing.T) {
+func TestInsertObjectsResponse_UnmarshalMessage(t *testing.T) {
 	testMessageUnmarshaler(t, []MessageUnmarshalerTest[proto.BatchObjectsReply]{
 		{
 			name: "has errors",
