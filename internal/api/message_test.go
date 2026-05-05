@@ -1163,11 +1163,13 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 				Objects: []api.BatchObject{
 					{
 						UUID: testkit.UUID,
-						References: api.ObjectReferences{
+						References: api.References{
 							"performedBy": {
-								{UUID: testkit.UUID, Collection: "Drummers"},
+								{Target: api.ObjectPath{UUID: testkit.UUID, Collection: "Drummers"}},
 							},
-							"onLabel": {{UUID: testkit.UUID}},
+							"onLabel": {
+								{Target: api.ObjectPath{UUID: testkit.UUID}},
+							},
 						},
 					},
 				},

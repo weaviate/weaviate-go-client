@@ -29,7 +29,16 @@ type Client struct {
 }
 
 type (
-	Reference  api.ObjectReference
+	ObjectPath api.ObjectPath
+	Reference  struct {
+		// Origin of the reference. Required when creating references
+		// via [Client.AddReferences].
+		Origin ObjectPath
+		// Name of the referenced collection. Required for multi-target references.
+		Collection string
+		// ID of the referenced object.
+		UUID uuid.UUID
+	}
 	References map[string][]Reference
 )
 
@@ -142,16 +151,22 @@ func apiVectors(vectors []types.Vector) []api.Vector {
 	return vs
 }
 
-func apiReferences(rs References) api.ObjectReferences {
+func apiReferences(rs References) api.References {
 	if len(rs) == 0 {
 		return nil
 	}
 
-	out := make(api.ObjectReferences, len(rs))
+	out := make(api.References, len(rs))
 	for name, r := range rs {
-		refs := make([]api.ObjectReference, len(r))
+		refs := make([]api.Reference, len(r))
 		for i := range r {
-			refs[i] = api.ObjectReference(r[i])
+			refs[i] = api.Reference{
+				Origin: api.ObjectPath(r[i].Origin),
+				Target: api.ObjectPath{
+					Collection: r[i].Collection,
+					UUID:       r[i].UUID,
+				},
+			}
 		}
 		out[name] = refs
 	}

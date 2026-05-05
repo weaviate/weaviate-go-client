@@ -67,13 +67,13 @@ func TestRESTRequests(t *testing.T) {
 					"single": false,
 					"year":   1992,
 				},
-				References: api.ObjectReferences{
+				References: api.References{
 					"band": {
-						{UUID: testkit.UUID, Collection: "Drummers"},
-						{UUID: testkit.UUID, Collection: "Basists"},
+						{Target: api.ObjectPath{UUID: testkit.UUID, Collection: "Drummers"}},
+						{Target: api.ObjectPath{UUID: testkit.UUID, Collection: "Basists"}},
 					},
 					"label": {
-						{UUID: testkit.UUID},
+						{Target: api.ObjectPath{UUID: testkit.UUID}},
 					},
 				},
 				Vectors: []api.Vector{

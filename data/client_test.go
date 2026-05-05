@@ -76,10 +76,10 @@ func TestClient_Insert(t *testing.T) {
 							{Name: "single", Single: []float32{1, 2, 3}},
 						},
 						Properties: map[string]any{"foo": "bar"},
-						References: api.ObjectReferences{
-							"ref": []api.ObjectReference{
-								{Collection: "Foo", UUID: testkit.UUID},
-								{Collection: "Bar", UUID: testkit.UUID},
+						References: api.References{
+							"ref": []api.Reference{
+								{Target: api.ObjectPath{Collection: "Foo", UUID: testkit.UUID}},
+								{Target: api.ObjectPath{Collection: "Bar", UUID: testkit.UUID}},
 							},
 						},
 					}},
@@ -165,10 +165,10 @@ func TestClient_Replace(t *testing.T) {
 						{Name: "single", Single: []float32{1, 2, 3}},
 					},
 					Properties: map[string]any{"foo": "bar"},
-					References: api.ObjectReferences{
-						"ref": []api.ObjectReference{
-							{Collection: "Foo", UUID: testkit.UUID},
-							{Collection: "Bar", UUID: testkit.UUID},
+					References: api.References{
+						"ref": []api.Reference{
+							{Target: api.ObjectPath{Collection: "Foo", UUID: testkit.UUID}},
+							{Target: api.ObjectPath{Collection: "Bar", UUID: testkit.UUID}},
 						},
 					},
 				},
