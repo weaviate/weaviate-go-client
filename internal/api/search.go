@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"slices"
 	"time"
 
@@ -20,6 +21,7 @@ type SearchRequest struct {
 	Offset           int32
 	AutoLimit        int32
 	After            uuid.UUID
+	Filter           Filter
 	ReturnProperties []ReturnProperty
 	ReturnReferences []ReturnReference
 	ReturnVectors    []string
@@ -144,6 +146,7 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 		Offset:           uint32(r.Offset),
 		Autocut:          uint32(r.AutoLimit),
 		After:            after,
+		Filters:          marshalFilter(r.Filter),
 		Metadata: &proto.MetadataRequest{
 			Uuid:               true,
 			Distance:           r.ReturnMetadata.Distance,
@@ -713,6 +716,13 @@ func (cl ConsistencyLevel) proto() *proto.ConsistencyLevel {
 	}
 }
 
+type Filter struct {
+	Operator FilterOperator
+	Exprs    []Filter
+	Target   []string
+	Value    any
+}
+
 type FilterOperator proto.Filters_Operator
 
 const (
@@ -730,3 +740,112 @@ const (
 	FilterOperatorContainsAny      FilterOperator = FilterOperator(proto.Filters_OPERATOR_CONTAINS_ANY)
 	FilterOperatorContainsNone     FilterOperator = FilterOperator(proto.Filters_OPERATOR_CONTAINS_NONE)
 )
+
+var countRe = regexp.MustCompile(`count\((.*)\)`)
+
+func marshalFilter(f Filter) *proto.Filters {
+	pf := proto.Filters{
+		Operator: proto.Filters_Operator(f.Operator),
+	}
+	switch f.Operator {
+	case FilterOperatorAnd, FilterOperatorOr, FilterOperatorNot:
+		var fs []*proto.Filters
+		for _, expr := range f.Exprs {
+			if f := marshalFilter(expr); f != nil {
+				fs = append(fs, f)
+			}
+		}
+		if len(fs) == 0 {
+			return nil
+		}
+		pf.Filters = fs
+	default:
+		switch len(f.Target) {
+		case 0:
+			return nil
+		case 1:
+			target := f.Target[0]
+			if sub := countRe.FindStringSubmatch(target); len(sub) == 2 {
+				pf.Target = &proto.FilterTarget{
+					Target: &proto.FilterTarget_Count{
+						Count: &proto.FilterReferenceCount{
+							On: sub[1],
+						},
+					},
+				}
+			} else {
+				// TODO(dyma): handle count(property) target
+				pf.Target = &proto.FilterTarget{
+					Target: &proto.FilterTarget_Property{
+						Property: target,
+					},
+				}
+			}
+		default:
+			// TODO(dyma): handle reference targets
+		}
+
+		switch v := f.Value.(type) {
+		case string:
+			pf.TestValue = &proto.Filters_ValueText{ValueText: v}
+		case time.Time:
+			pf.TestValue = &proto.Filters_ValueText{ValueText: v.Format(TimeLayout)}
+		case bool:
+			pf.TestValue = &proto.Filters_ValueBoolean{ValueBoolean: v}
+		case int:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case int32:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case int64:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: v}
+		case float32:
+			pf.TestValue = &proto.Filters_ValueNumber{ValueNumber: float64(v)}
+		case float64:
+			pf.TestValue = &proto.Filters_ValueNumber{ValueNumber: v}
+		case []string:
+			pf.TestValue = &proto.Filters_ValueTextArray{
+				ValueTextArray: &proto.TextArray{Values: v},
+			}
+		case []bool:
+			pf.TestValue = &proto.Filters_ValueBooleanArray{
+				ValueBooleanArray: &proto.BooleanArray{Values: v},
+			}
+		case []int:
+			values := make([]int64, len(v))
+			for i := range v {
+				values[i] = int64(v[i])
+			}
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: values},
+			}
+		case []int32:
+			values := make([]int64, len(v))
+			for i := range v {
+				values[i] = int64(v[i])
+			}
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: values},
+			}
+		case []int64:
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: v},
+			}
+		case []float32:
+			values := make([]float64, len(v))
+			for i := range v {
+				values[i] = float64(v[i])
+			}
+			pf.TestValue = &proto.Filters_ValueNumberArray{
+				ValueNumberArray: &proto.NumberArray{Values: values},
+			}
+		case []float64:
+			pf.TestValue = &proto.Filters_ValueNumberArray{
+				ValueNumberArray: &proto.NumberArray{Values: v},
+			}
+		default:
+			panic("GeoProperties are not supported")
+		}
+	}
+
+	return &pf
+}
