@@ -915,3 +915,7 @@ const (
 	FilterOperatorContainsAny      FilterOperator = FilterOperator(proto.Filters_OPERATOR_CONTAINS_ANY)
 	FilterOperatorContainsNone     FilterOperator = FilterOperator(proto.Filters_OPERATOR_CONTAINS_NONE)
 )
+
+func (o FilterOperator) String() string {
+	return proto.Filters_Operator(o).String()
+}

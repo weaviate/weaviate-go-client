@@ -74,6 +74,7 @@ func hybridFunc(t internal.Transport, rd api.RequestDefaults) HybridFunc {
 			AutoLimit:              h.AutoLimit,
 			Offset:                 h.Offset,
 			After:                  h.After,
+			Filter:                 h.Filter,
 			ReturnVectors:          h.ReturnVectors,
 			ReturnMetadata:         h.ReturnMetadata,
 			ReturnProperties:       h.ReturnProperties,

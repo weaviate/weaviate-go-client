@@ -10,6 +10,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
@@ -110,6 +111,7 @@ type request struct {
 	Offset                 int32
 	AutoLimit              int32
 	After                  uuid.UUID
+	Filter                 filter.Expr
 	ReturnMetadata         ReturnMetadata
 	ReturnVectors          []string
 	ReturnReferences       []Reference
@@ -125,6 +127,7 @@ func query(ctx context.Context, t internal.Transport, r request, f func(*api.Sea
 		AutoLimit:        r.AutoLimit,
 		Offset:           r.Offset,
 		After:            r.After,
+		Filter:           marshalFilter(r.Filter),
 		ReturnVectors:    r.ReturnVectors,
 		ReturnMetadata:   api.ReturnMetadata(r.ReturnMetadata),
 		ReturnProperties: marshalReturnProperties(r.ReturnProperties, r.ReturnNestedProperties),
@@ -220,6 +223,23 @@ func marshalReturnReferences(in []Reference) []api.ReturnReference {
 		}
 	}
 	return out
+}
+
+func marshalFilter(expr filter.Expr) api.Filter {
+	if expr == nil {
+		return api.Filter{}
+	}
+	f := api.Filter{
+		Operator: expr.Operator(),
+		Target:   expr.Target(),
+		Value:    expr.Value(),
+	}
+
+	for _, e := range expr.Exprs() {
+		f.Exprs = append(f.Exprs, marshalFilter(e))
+	}
+
+	return f
 }
 
 func marshalSearchTarget(target VectorTarget) api.SearchTarget {
