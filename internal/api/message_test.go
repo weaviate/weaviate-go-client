@@ -219,6 +219,70 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "filter by single-target reference",
+			req: &api.SearchRequest{
+				Filter: api.Filter{
+					Target:   []string{"performedBy", "bornIn", "population"},
+					Operator: api.FilterOperatorGreaterThanEqual,
+					Value:    400_000,
+				},
+			},
+			want: &proto.SearchRequest{
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+				Filters: &proto.Filters{
+					Target: &proto.FilterTarget{
+						Target: &proto.FilterTarget_SingleTarget{
+							SingleTarget: &proto.FilterReferenceSingleTarget{
+								On: "performedBy",
+								Target: &proto.FilterTarget{
+									Target: &proto.FilterTarget_SingleTarget{
+										SingleTarget: &proto.FilterReferenceSingleTarget{
+											On:     "bornIn",
+											Target: propertyTarget("population"),
+										},
+									},
+								},
+							},
+						},
+					},
+					Operator:  proto.Filters_OPERATOR_GREATER_THAN_EQUAL,
+					TestValue: &proto.Filters_ValueInt{ValueInt: 400_000},
+				},
+			},
+		},
+		{
+			name: "filter by multi-target references",
+			req: &api.SearchRequest{
+				Filter: api.Filter{
+					Target:   []string{"hasAwards", "GrammyAward", "weight_kg"},
+					Operator: api.FilterOperatorEqual,
+					Value:    2.3,
+				},
+			},
+			want: &proto.SearchRequest{
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+				Filters: &proto.Filters{
+					Target: &proto.FilterTarget{
+						Target: &proto.FilterTarget_MultiTarget{
+							MultiTarget: &proto.FilterReferenceMultiTarget{
+								On:               "hasAwards",
+								TargetCollection: "GrammyAward",
+								Target:           propertyTarget("weight_kg"),
+							},
+						},
+					},
+					Operator:  proto.Filters_OPERATOR_EQUAL,
+					TestValue: &proto.Filters_ValueNumber{ValueNumber: 2.3},
+				},
+			},
+		},
+		{
 			name: "return metadata",
 			req: &api.SearchRequest{
 				ReturnMetadata: api.ReturnMetadata{
