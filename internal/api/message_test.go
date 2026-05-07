@@ -64,6 +64,14 @@ var (
 )
 
 func TestSearchRequest_MarshalMessage(t *testing.T) {
+	propertyTarget := func(s string) *proto.FilterTarget {
+		return &proto.FilterTarget{
+			Target: &proto.FilterTarget_Property{
+				Property: s,
+			},
+		}
+	}
+
 	// UUID is always included in the [proto.MetadataRequest].
 	testMessageMarshaler(t, []MessageMarshalerTest[proto.SearchRequest, proto.SearchReply]{
 		{
@@ -90,6 +98,187 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				After:            uuid.Max.String(),
 				Properties: &proto.PropertiesRequest{
 					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "filter by property",
+			req: &api.SearchRequest{
+				Filter: api.Filter{
+					Operator: api.FilterOperatorAnd,
+					Exprs: []api.Filter{
+						{
+							Target:   []string{"duration_sec"},
+							Operator: api.FilterOperatorGreaterThan,
+							Value:    123,
+						},
+						{
+							Target:   []string{"release_date"},
+							Operator: api.FilterOperatorLessThanEqual,
+							Value:    testkit.Now,
+						},
+						{
+							Operator: api.FilterOperatorOr,
+							Exprs: []api.Filter{
+								{
+									Target:   []string{"album"},
+									Operator: api.FilterOperatorEqual,
+									Value:    "Youthanasia",
+								},
+								{
+									Target:   []string{"isSingle"},
+									Operator: api.FilterOperatorEqual,
+									Value:    true,
+								},
+							},
+						},
+						{
+							Operator: api.FilterOperatorNot,
+							Exprs: []api.Filter{{
+								Target:   []string{"tags"},
+								Operator: api.FilterOperatorContainsAll,
+								Value:    []string{"#soul", "#grime"},
+							}},
+						},
+						{Operator: api.FilterOperatorAnd},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+				Filters: &proto.Filters{
+					Operator: proto.Filters_OPERATOR_AND,
+					Filters: []*proto.Filters{
+						{
+							Target:    propertyTarget("duration_sec"),
+							Operator:  proto.Filters_OPERATOR_GREATER_THAN,
+							TestValue: &proto.Filters_ValueInt{ValueInt: 123},
+						},
+						{
+							Target:    propertyTarget("release_date"),
+							Operator:  proto.Filters_OPERATOR_LESS_THAN_EQUAL,
+							TestValue: &proto.Filters_ValueText{ValueText: testkit.Now.Format(api.TimeLayout)},
+						},
+						{
+							Operator: proto.Filters_OPERATOR_OR,
+							Filters: []*proto.Filters{
+								{
+									Target:    propertyTarget("album"),
+									Operator:  proto.Filters_OPERATOR_EQUAL,
+									TestValue: &proto.Filters_ValueText{ValueText: "Youthanasia"},
+								},
+								{
+									Target:    propertyTarget("isSingle"),
+									Operator:  proto.Filters_OPERATOR_EQUAL,
+									TestValue: &proto.Filters_ValueBoolean{ValueBoolean: true},
+								},
+							},
+						},
+						{
+							Operator: proto.Filters_OPERATOR_NOT,
+							Filters: []*proto.Filters{{
+								Target:   propertyTarget("tags"),
+								Operator: proto.Filters_OPERATOR_CONTAINS_ALL,
+								TestValue: &proto.Filters_ValueTextArray{
+									ValueTextArray: &proto.TextArray{Values: []string{"#soul", "#grime"}},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "filter by reference count",
+			req: &api.SearchRequest{
+				Filter: api.Filter{
+					Target:   []string{"count(hasAwards)"},
+					Operator: api.FilterOperatorGreaterThanEqual,
+					Value:    4,
+				},
+			},
+			want: &proto.SearchRequest{
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+				Filters: &proto.Filters{
+					Target: &proto.FilterTarget{
+						Target: &proto.FilterTarget_Count{
+							Count: &proto.FilterReferenceCount{
+								On: "hasAwards",
+							},
+						},
+					},
+					Operator:  proto.Filters_OPERATOR_GREATER_THAN_EQUAL,
+					TestValue: &proto.Filters_ValueInt{ValueInt: 4},
+				},
+			},
+		},
+		{
+			name: "filter by single-target reference",
+			req: &api.SearchRequest{
+				Filter: api.Filter{
+					Target:   []string{"performedBy", "bornIn", "population"},
+					Operator: api.FilterOperatorGreaterThanEqual,
+					Value:    400_000,
+				},
+			},
+			want: &proto.SearchRequest{
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+				Filters: &proto.Filters{
+					Target: &proto.FilterTarget{
+						Target: &proto.FilterTarget_SingleTarget{
+							SingleTarget: &proto.FilterReferenceSingleTarget{
+								On: "performedBy",
+								Target: &proto.FilterTarget{
+									Target: &proto.FilterTarget_SingleTarget{
+										SingleTarget: &proto.FilterReferenceSingleTarget{
+											On:     "bornIn",
+											Target: propertyTarget("population"),
+										},
+									},
+								},
+							},
+						},
+					},
+					Operator:  proto.Filters_OPERATOR_GREATER_THAN_EQUAL,
+					TestValue: &proto.Filters_ValueInt{ValueInt: 400_000},
+				},
+			},
+		},
+		{
+			name: "filter by multi-target references",
+			req: &api.SearchRequest{
+				Filter: api.Filter{
+					Target:   []string{"hasAwards", "GrammyAward", "weight_kg"},
+					Operator: api.FilterOperatorEqual,
+					Value:    2.3,
+				},
+			},
+			want: &proto.SearchRequest{
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+				Filters: &proto.Filters{
+					Target: &proto.FilterTarget{
+						Target: &proto.FilterTarget_MultiTarget{
+							MultiTarget: &proto.FilterReferenceMultiTarget{
+								On:               "hasAwards",
+								TargetCollection: "GrammyAward",
+								Target:           propertyTarget("weight_kg"),
+							},
+						},
+					},
+					Operator:  proto.Filters_OPERATOR_EQUAL,
+					TestValue: &proto.Filters_ValueNumber{ValueNumber: 2.3},
 				},
 			},
 		},

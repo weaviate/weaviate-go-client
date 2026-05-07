@@ -3,8 +3,10 @@ package api
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"slices"
 	"time"
+	"unicode"
 
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
@@ -20,6 +22,7 @@ type SearchRequest struct {
 	Offset           int32
 	AutoLimit        int32
 	After            uuid.UUID
+	Filter           Filter
 	ReturnProperties []ReturnProperty
 	ReturnReferences []ReturnReference
 	ReturnVectors    []string
@@ -42,6 +45,12 @@ func (r *SearchRequest) Method() transport.MethodFunc[proto.SearchRequest, proto
 func (r *SearchRequest) Body() transport.MessageMarshaler[proto.SearchRequest] { return r }
 
 type (
+	Filter struct {
+		Operator FilterOperator
+		Exprs    []Filter // Sub-expressions of logical operators AND/OR/NOT.
+		Target   []string // Target of a comparison expression, i.e. property, reference.
+		Value    any      // Test value appropriate for the target data type.
+	}
 	ReturnMetadata struct {
 		CreatedAt    bool
 		LastUpdateAt bool
@@ -144,6 +153,7 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 		Offset:           uint32(r.Offset),
 		Autocut:          uint32(r.AutoLimit),
 		After:            after,
+		Filters:          marshalFilter(r.Filter),
 		Metadata: &proto.MetadataRequest{
 			Uuid:               true,
 			Distance:           r.ReturnMetadata.Distance,
@@ -260,6 +270,181 @@ func marshalReturnVectors(req *proto.MetadataRequest, vectors []string) {
 		req.Vectors = nil
 	} else {
 		req.Vectors = vectors
+	}
+}
+
+// referenceCountRe matches property names wrapped in the count() "operator".
+// If FindStringSubmatch returns a slice with 2 items, the pattern was matched,
+// and the original property name is the second item.
+var referenceCountRe = regexp.MustCompile(`count\((.*)\)`)
+
+func marshalFilter(f Filter) *proto.Filters {
+	var pf proto.Filters
+
+	switch f.Operator {
+
+	// Logical operators AND, OR, and NOT  have a list of sub-expressions, and no target.
+	case FilterOperatorAnd, FilterOperatorOr, FilterOperatorNot:
+		var fs []*proto.Filters
+		for _, expr := range f.Exprs {
+			if f := marshalFilter(expr); f != nil {
+				fs = append(fs, f)
+			}
+		}
+
+		// Using AND/OR/NOT with an empty list of sub-expressions is not
+		// a mistake, but omitting such will save a few bits on the wire.
+		if len(fs) == 0 {
+			return nil
+		}
+		pf.Filters = fs
+
+	// All other operators are comparison operators with a target and a test value.
+	default:
+		pf.Target = marshalFilterTarget(f.Target)
+		if pf.Target == nil { // A filter with nil target is not useful.
+			return nil
+		}
+
+		// The values should've really been [structpb.Value].
+		// Marshaling it would've been as simple as [structpb.NewValue].
+		switch v := f.Value.(type) {
+		case nil:
+			return nil // Null-ness should be checked via [FilterOperatorIsNull].
+		case string:
+			pf.TestValue = &proto.Filters_ValueText{ValueText: v}
+		case []string:
+			pf.TestValue = &proto.Filters_ValueTextArray{
+				ValueTextArray: &proto.TextArray{Values: v},
+			}
+		case time.Time:
+			// Date values are passed as formatted date strings.
+			pf.TestValue = &proto.Filters_ValueText{ValueText: v.Format(TimeLayout)}
+		case bool:
+			pf.TestValue = &proto.Filters_ValueBoolean{ValueBoolean: v}
+		case []bool:
+			pf.TestValue = &proto.Filters_ValueBooleanArray{
+				ValueBooleanArray: &proto.BooleanArray{Values: v},
+			}
+
+		// Integer values must be cast to int64 before marshaling.
+		// structpb package supports uints, but those are probably
+		// quite rare in the use cases where Weaviate is used, so
+		// we ignore them.
+		case int:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case int32:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case int64:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: v}
+		case []int:
+			values := make([]int64, len(v))
+			for i := range v {
+				values[i] = int64(v[i])
+			}
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: values},
+			}
+		case []int32:
+			values := make([]int64, len(v))
+			for i := range v {
+				values[i] = int64(v[i])
+			}
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: values},
+			}
+		case []int64:
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: v},
+			}
+
+		// Float values must be cast to float64 before marshaling.
+		case float32:
+			pf.TestValue = &proto.Filters_ValueNumber{ValueNumber: float64(v)}
+		case float64:
+			pf.TestValue = &proto.Filters_ValueNumber{ValueNumber: v}
+
+		case []float32:
+			values := make([]float64, len(v))
+			for i := range v {
+				values[i] = float64(v[i])
+			}
+			pf.TestValue = &proto.Filters_ValueNumberArray{
+				ValueNumberArray: &proto.NumberArray{Values: values},
+			}
+		case []float64:
+			pf.TestValue = &proto.Filters_ValueNumberArray{
+				ValueNumberArray: &proto.NumberArray{Values: v},
+			}
+		default:
+			// TODO(dyma): add GeoCoordinates property
+			panic(fmt.Sprintf("%T are not supported", v))
+		}
+	}
+
+	pf.Operator = proto.Filters_Operator(f.Operator)
+	return &pf
+}
+
+func marshalFilterTarget(path []string) *proto.FilterTarget {
+	switch len(path) {
+	case 0:
+		// An empty target is not valid. We do not return an error here
+		// because the client does not validate intpus and because empty
+		// path is a possible scenario in the recursive case (see default).
+		return nil
+	case 1:
+		// The server allows using property lenght as a filter property
+		// by wrapping its name in the len() operator, e.g. len(tags).
+		// This package extends that with a count() operator, which
+		// allows using reference count as the property. This requires
+		// the property name to be sent in the [proto.FilterTarget_Count] message.
+		property := path[0]
+		if count := referenceCountRe.FindStringSubmatch(property); len(count) == 2 {
+			return &proto.FilterTarget{
+				Target: &proto.FilterTarget_Count{
+					Count: &proto.FilterReferenceCount{
+						On: count[1],
+					},
+				},
+			}
+		} else {
+			return &proto.FilterTarget{
+				Target: &proto.FilterTarget_Property{
+					Property: property,
+				},
+			}
+		}
+	default:
+		// Here we can be sure that path has more than 1 item.
+		// If the second item starts with an uppercase letter,
+		// assume it's a collection name and marshal referenceProperty
+		// as a multi-target reference.
+		// Continue marshaling the remainder of the path recursively
+		// until the last element is a property or a count() expression.
+		referenceProperty, path := path[0], path[1:]
+		if unicode.IsUpper(rune(path[0][0])) {
+			collection, path := path[0], path[1:]
+			return &proto.FilterTarget{
+				Target: &proto.FilterTarget_MultiTarget{
+					MultiTarget: &proto.FilterReferenceMultiTarget{
+						On:               referenceProperty,
+						TargetCollection: collection,
+						Target:           marshalFilterTarget(path),
+					},
+				},
+			}
+		} else {
+			return &proto.FilterTarget{
+				Target: &proto.FilterTarget_SingleTarget{
+					SingleTarget: &proto.FilterReferenceSingleTarget{
+						On:     referenceProperty,
+						Target: marshalFilterTarget(path),
+					},
+				},
+			}
+		}
+
 	}
 }
 
@@ -711,4 +896,26 @@ func (cl ConsistencyLevel) proto() *proto.ConsistencyLevel {
 	default:
 		return nil
 	}
+}
+
+type FilterOperator proto.Filters_Operator
+
+const (
+	FilterOperatorNot              FilterOperator = FilterOperator(proto.Filters_OPERATOR_NOT)
+	FilterOperatorAnd              FilterOperator = FilterOperator(proto.Filters_OPERATOR_AND)
+	FilterOperatorOr               FilterOperator = FilterOperator(proto.Filters_OPERATOR_OR)
+	FilterOperatorEqual            FilterOperator = FilterOperator(proto.Filters_OPERATOR_EQUAL)
+	FilterOperatorLessThan         FilterOperator = FilterOperator(proto.Filters_OPERATOR_LESS_THAN)
+	FilterOperatorLessThanEqual    FilterOperator = FilterOperator(proto.Filters_OPERATOR_LESS_THAN_EQUAL)
+	FilterOperatorGreaterThan      FilterOperator = FilterOperator(proto.Filters_OPERATOR_GREATER_THAN)
+	FilterOperatorGreaterThanEqual FilterOperator = FilterOperator(proto.Filters_OPERATOR_GREATER_THAN_EQUAL)
+	FilterOperatorLike             FilterOperator = FilterOperator(proto.Filters_OPERATOR_LIKE)
+	FilterOperatorIsNull           FilterOperator = FilterOperator(proto.Filters_OPERATOR_IS_NULL)
+	FilterOperatorContainsAll      FilterOperator = FilterOperator(proto.Filters_OPERATOR_CONTAINS_ALL)
+	FilterOperatorContainsAny      FilterOperator = FilterOperator(proto.Filters_OPERATOR_CONTAINS_ANY)
+	FilterOperatorContainsNone     FilterOperator = FilterOperator(proto.Filters_OPERATOR_CONTAINS_NONE)
+)
+
+func (o FilterOperator) String() string {
+	return proto.Filters_Operator(o).String()
 }
