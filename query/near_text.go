@@ -74,6 +74,7 @@ func nearTextFunc(t internal.Transport, rd api.RequestDefaults) NearTextFunc {
 			AutoLimit:              nt.AutoLimit,
 			Offset:                 nt.Offset,
 			After:                  nt.After,
+			Filter:                 nt.Filter,
 			ReturnVectors:          nt.ReturnVectors,
 			ReturnMetadata:         nt.ReturnMetadata,
 			ReturnProperties:       nt.ReturnProperties,

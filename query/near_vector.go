@@ -54,6 +54,7 @@ func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc
 			AutoLimit:              nv.AutoLimit,
 			Offset:                 nv.Offset,
 			After:                  nv.After,
+			Filter:                 nv.Filter,
 			ReturnVectors:          nv.ReturnVectors,
 			ReturnMetadata:         nv.ReturnMetadata,
 			ReturnProperties:       nv.ReturnProperties,
