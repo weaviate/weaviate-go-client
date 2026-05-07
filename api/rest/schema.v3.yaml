@@ -1176,7 +1176,7 @@ components:
                 $ref: '#/components/schemas/SingleRef'
             type: array
         Namespace:
-            description: A cluster-level namespace used to group resources under a common administrative unit. Namespace names must start with a lowercase letter, contain only lowercase letters and digits, be 3-36 characters long, and must not be a reserved name.
+            description: A cluster-level namespace used to group resources under a common administrative unit. Namespace names must contain only lowercase letters, digits, and hyphens, must start and end with a letter or digit, must be 3-36 characters long, and must not be a reserved name.
             properties:
                 name:
                     description: The unique name of the namespace.
@@ -5338,7 +5338,7 @@ paths:
             tags:
                 - namespaces
         post:
-            description: Create a new cluster-level namespace with the given name. Names must start with a lowercase letter, contain only lowercase letters and digits, be 3-36 characters long, and must not be a reserved name.
+            description: Create a new cluster-level namespace with the given name. Names must contain only lowercase letters, digits, and hyphens, must start and end with a letter or digit, must be 3-36 characters long, and must not be a reserved name.
             operationId: createNamespace
             parameters:
                 - description: The name of the namespace. Must start with a lowercase letter, contain only lowercase letters and digits, length 3-36, and not be a reserved name.
