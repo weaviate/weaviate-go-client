@@ -5,10 +5,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/data"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
+	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
@@ -326,6 +328,82 @@ func TestClient_AddReferences(t *testing.T) {
 			got, err := c.AddReferences(t.Context(), tt.references...)
 			tt.err.Require(t, err, "insert error")
 			require.Equal(t, tt.want, got, "returned object")
+		})
+	}
+}
+
+func TestClient_DeleteSelected(t *testing.T) {
+	rd := api.RequestDefaults{
+		CollectionName:   "DeleteSelected",
+		ConsistencyLevel: api.ConsistencyLevelOne,
+		Tenant:           "john_doe",
+	}
+
+	for _, tt := range []struct {
+		name     string
+		selected data.DeleteSelected
+		stubs    []testkit.Stub[api.DeleteObjectsRequest, api.DeleteObjectsResponse]
+		want     *data.DeleteSelectedResult
+		err      testkit.Error
+	}{
+		{
+			name: "reported errors",
+			selected: data.DeleteSelected{
+				Filter: &filter.Cond{
+					Target:   []string{"reasons_to_keep"},
+					Operator: filter.IsNull,
+				},
+				DryRun:  true,
+				Verbose: true,
+			},
+			stubs: []testkit.Stub[api.DeleteObjectsRequest, api.DeleteObjectsResponse]{
+				{
+					Request: &api.DeleteObjectsRequest{
+						RequestDefaults: rd,
+						Filter: api.FilterExpr{
+							Target:   []string{"reasons_to_keep"},
+							Operator: api.FilterOperatorIsNull,
+						},
+						DryRun:  true,
+						Verbose: true,
+					},
+					Response: api.DeleteObjectsResponse{
+						Took: 92 * time.Second,
+						Errors: map[uuid.UUID]error{
+							testkit.UUID: testkit.ErrWhaam,
+							uuid.Nil:     nil,
+						},
+					},
+				},
+			},
+			want: &data.DeleteSelectedResult{
+				Took: 92 * time.Second,
+				Errors: map[uuid.UUID]error{
+					testkit.UUID: testkit.ErrWhaam,
+					uuid.Nil:     nil,
+				},
+			},
+		},
+		{
+			name: "request error",
+			selected: data.DeleteSelected{
+				DryRun:  true,
+				Verbose: true,
+			},
+			stubs: []testkit.Stub[api.DeleteObjectsRequest, api.DeleteObjectsResponse]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+			c := data.NewClient(transport, rd)
+			require.NotNil(t, c, "nil client")
+
+			got, err := c.DeleteSelected(t.Context(), tt.selected)
+			tt.err.Require(t, err, "delete error")
+			assert.EqualValues(t, tt.want, got, "bad result")
 		})
 	}
 }

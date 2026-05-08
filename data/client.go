@@ -11,6 +11,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
@@ -179,6 +180,40 @@ func (c *Client) AddReferences(ctx context.Context, references ...Reference) (*A
 	}
 
 	return r, nil
+}
+
+type DeleteSelected struct {
+	// Filter selects objects which will be deleted.
+	Filter filter.Expr
+
+	// DryRun reports UUIDs that matched the filter
+	// without deleting the objects.
+	DryRun bool
+
+	Verbose bool
+}
+
+type DeleteSelectedResult api.DeleteObjectsResponse
+
+func (c *Client) DeleteSelected(ctx context.Context, options DeleteSelected) (*DeleteSelectedResult, error) {
+	req := &api.DeleteObjectsRequest{
+		RequestDefaults: c.defaults,
+		DryRun:          options.DryRun,
+		Verbose:         options.Verbose,
+	}
+
+	if options.Filter != nil {
+		if expr := options.Filter.Expr(); expr != nil {
+			req.Filter = *expr
+		}
+	}
+
+	var resp api.DeleteObjectsResponse
+	if err := c.transport.Do(ctx, req, &resp); err != nil {
+		return nil, fmt.Errorf("delete selected objects: %w", err)
+	}
+
+	return (*DeleteSelectedResult)(&resp), nil
 }
 
 func apiVectors(vectors []types.Vector) []api.Vector {
