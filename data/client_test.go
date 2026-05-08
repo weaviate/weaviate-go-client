@@ -140,8 +140,9 @@ func TestClient_Replace(t *testing.T) {
 
 	for _, tt := range []struct {
 		name   string
-		object data.Object // Object to be replaced.
-		stub   []testkit.Stub[api.ReplaceObjectRequest, any]
+		object data.Object                   // Object to be replaced.
+		want   *types.Object[map[string]any] // Expected return value.
+		stubs  []testkit.Stub[api.ReplaceObjectRequest, any]
 		err    testkit.Error
 	}{
 		{
@@ -159,7 +160,7 @@ func TestClient_Replace(t *testing.T) {
 					},
 				},
 			},
-			stub: []testkit.Stub[api.ReplaceObjectRequest, any]{{
+			stubs: []testkit.Stub[api.ReplaceObjectRequest, any]{{
 				Request: &api.ReplaceObjectRequest{
 					RequestDefaults: rd,
 					UUID:            &testkit.UUID,
@@ -182,15 +183,15 @@ func TestClient_Replace(t *testing.T) {
 		},
 		{
 			name:   "with error",
-			object: data.Object{UUID: &testkit.UUID},
-			stub: []testkit.Stub[api.ReplaceObjectRequest, any]{
+			object: data.Object{UUID: &uuid.Nil},
+			stubs: []testkit.Stub[api.ReplaceObjectRequest, any]{
 				{Err: testkit.ErrWhaam},
 			},
 			err: testkit.ExpectError,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			transport := testkit.NewTransport(t, tt.stub)
+			transport := testkit.NewTransport(t, tt.stubs)
 			c := data.NewClient(transport, rd)
 			require.NotNil(t, c, "nil client")
 
@@ -208,15 +209,15 @@ func TestClient_Delete(t *testing.T) {
 	}
 
 	for _, tt := range []struct {
-		name string
-		uuid uuid.UUID // ID of the object to be deleted.
-		stub []testkit.Stub[api.DeleteObjectRequest, any]
-		err  testkit.Error
+		name  string
+		uuid  uuid.UUID // ID of the object to be deleted.
+		stubs []testkit.Stub[api.DeleteObjectRequest, any]
+		err   testkit.Error
 	}{
 		{
 			name: "ok",
 			uuid: testkit.UUID,
-			stub: []testkit.Stub[api.DeleteObjectRequest, any]{{
+			stubs: []testkit.Stub[api.DeleteObjectRequest, any]{{
 				Request: &api.DeleteObjectRequest{
 					RequestDefaults: rd,
 					UUID:            testkit.UUID,
@@ -226,14 +227,14 @@ func TestClient_Delete(t *testing.T) {
 		{
 			name: "with error",
 			uuid: testkit.UUID,
-			stub: []testkit.Stub[api.DeleteObjectRequest, any]{
+			stubs: []testkit.Stub[api.DeleteObjectRequest, any]{
 				{Err: testkit.ErrWhaam},
 			},
 			err: testkit.ExpectError,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			transport := testkit.NewTransport(t, tt.stub)
+			transport := testkit.NewTransport(t, tt.stubs)
 			c := data.NewClient(transport, rd)
 			require.NotNil(t, c, "nil client")
 
