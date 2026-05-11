@@ -133,6 +133,9 @@ func (t *transport) Do(ctx context.Context, req any, dest any) error {
 		case Message[proto.AggregateRequest, proto.AggregateReply]:
 			rpc = newRPC(msg, dest)
 			timeout = t.timeout.Read
+		case Message[proto.BatchObjectsRequest, proto.BatchObjectsReply]:
+			rpc = newRPC(msg, dest)
+			timeout = t.timeout.Write
 		default:
 			dev.Assert(false, "%T does not implement MessageMarshaler for any of the supported request types", msg)
 		}

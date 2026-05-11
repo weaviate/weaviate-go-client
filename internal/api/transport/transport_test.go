@@ -218,6 +218,12 @@ func TestTransport_Do(t *testing.T) {
 					reply:   new(reply[proto.AggregateReply]),
 					timeout: read,
 				},
+				{
+					name:    "batch objects",
+					message: &message[proto.BatchObjectsRequest, proto.BatchObjectsReply]{},
+					reply:   new(reply[proto.BatchObjectsReply]),
+					timeout: write,
+				},
 			}) {
 				t.Run(tt.name, func(t *testing.T) {
 					var got context.Context
