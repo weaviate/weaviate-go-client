@@ -48,7 +48,6 @@ type (
 	AsyncReplicationConfig struct {
 		DiffBatchSize                   int64         // Maximum number of keys in a diff batch.
 		DiffPerNodeTimeout              time.Duration // Timeout for computing a diff against a single node. Recommended unit: seconds.
-		ReplicationConcurrency          int64         // Maximum number of concurrent replication workers.
 		ReplicationFrequency            time.Duration // Frequency at which diff calculations are run. Recommended unit: milliseconds.
 		ReplicationFrequencyPropagating time.Duration // Replication frequency during the propagating phase. Recommended unit: milliseconds.
 		PrePropagationTimeout           time.Duration // Total timeout for the pre-propagation phase. Recommended unit: seconds.
@@ -58,7 +57,6 @@ type (
 		PropagationTimeout              time.Duration // Timeout for a single propagation batch request. Recommended unit: seconds.
 		PropagationDelay                time.Duration // Delay before newly added / updated objects are propagated. Recommended unit: milliseconds.
 		HashTreeHeight                  int64         // Height of the hash tree used to compute the diff.
-		NodePingFrequency               time.Duration // Frequency at which liveness of the target nodes is checked. Recommended unit: milliseconds.
 		LoggingFrequency                time.Duration // Frequency at which replication status is logged. Recommended unit: seconds.
 	}
 	InvertedIndexConfig struct {
@@ -220,20 +218,18 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 
 		if async := c.Replication.AsyncReplication; async != nil {
 			out.ReplicationConfig.AsyncConfig = rest.ReplicationAsyncConfig{
-				DiffBatchSize:               async.DiffBatchSize,
-				DiffPerNodeTimeout:          int64(async.DiffPerNodeTimeout.Seconds()),
-				MaxWorkers:                  async.ReplicationConcurrency,
-				Frequency:                   async.ReplicationFrequency.Milliseconds(),
-				FrequencyWhilePropagating:   async.ReplicationFrequencyPropagating.Milliseconds(),
-				PrePropagationTimeout:       int64(async.PrePropagationTimeout.Seconds()),
-				PropagationConcurrency:      async.PropagationConcurrency,
-				PropagationBatchSize:        async.PropagationBatchSize,
-				PropagationLimit:            async.PropagationLimit,
-				PropagationTimeout:          int64(async.PropagationTimeout.Seconds()),
-				PropagationDelay:            async.PropagationDelay.Milliseconds(),
-				HashtreeHeight:              async.HashTreeHeight,
-				AliveNodesCheckingFrequency: async.NodePingFrequency.Milliseconds(),
-				LoggingFrequency:            int64(async.LoggingFrequency.Seconds()),
+				DiffBatchSize:             async.DiffBatchSize,
+				DiffPerNodeTimeout:        int64(async.DiffPerNodeTimeout.Seconds()),
+				Frequency:                 async.ReplicationFrequency.Milliseconds(),
+				FrequencyWhilePropagating: async.ReplicationFrequencyPropagating.Milliseconds(),
+				PrePropagationTimeout:     int64(async.PrePropagationTimeout.Seconds()),
+				PropagationConcurrency:    async.PropagationConcurrency,
+				PropagationBatchSize:      async.PropagationBatchSize,
+				PropagationLimit:          async.PropagationLimit,
+				PropagationTimeout:        int64(async.PropagationTimeout.Seconds()),
+				PropagationDelay:          async.PropagationDelay.Milliseconds(),
+				HashtreeHeight:            async.HashTreeHeight,
+				LoggingFrequency:          int64(async.LoggingFrequency.Seconds()),
 			}
 		}
 	}
@@ -338,7 +334,6 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 			AsyncReplication: &AsyncReplicationConfig{
 				DiffBatchSize:                   class.ReplicationConfig.AsyncConfig.DiffBatchSize,
 				DiffPerNodeTimeout:              time.Duration(class.ReplicationConfig.AsyncConfig.DiffPerNodeTimeout) * time.Second,
-				ReplicationConcurrency:          class.ReplicationConfig.AsyncConfig.MaxWorkers,
 				ReplicationFrequency:            time.Duration(class.ReplicationConfig.AsyncConfig.Frequency) * time.Millisecond,
 				ReplicationFrequencyPropagating: time.Duration(class.ReplicationConfig.AsyncConfig.FrequencyWhilePropagating) * time.Millisecond,
 				PrePropagationTimeout:           time.Duration(class.ReplicationConfig.AsyncConfig.PrePropagationTimeout) * time.Second,
@@ -348,7 +343,6 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 				PropagationTimeout:              time.Duration(class.ReplicationConfig.AsyncConfig.PropagationTimeout) * time.Second,
 				PropagationDelay:                time.Duration(class.ReplicationConfig.AsyncConfig.PropagationDelay) * time.Millisecond,
 				HashTreeHeight:                  class.ReplicationConfig.AsyncConfig.HashtreeHeight,
-				NodePingFrequency:               time.Duration(class.ReplicationConfig.AsyncConfig.AliveNodesCheckingFrequency) * time.Millisecond,
 				LoggingFrequency:                time.Duration(class.ReplicationConfig.AsyncConfig.LoggingFrequency) * time.Second,
 			},
 		},
