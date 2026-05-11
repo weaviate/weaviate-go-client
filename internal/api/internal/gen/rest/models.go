@@ -1585,9 +1585,6 @@ type ReferenceMetaClassification struct {
 
 // ReplicationAsyncConfig Configuration for asynchronous replication.
 type ReplicationAsyncConfig struct {
-	// AliveNodesCheckingFrequency Interval in milliseconds at which liveness of target nodes is checked.
-	AliveNodesCheckingFrequency int64 `json:"aliveNodesCheckingFrequency,omitempty"`
-
 	// DiffBatchSize Maximum number of object keys included in a single diff batch.
 	DiffBatchSize int64 `json:"diffBatchSize,omitempty"`
 
@@ -1605,9 +1602,6 @@ type ReplicationAsyncConfig struct {
 
 	// LoggingFrequency Interval in seconds at which async replication logs its status.
 	LoggingFrequency int64 `json:"loggingFrequency,omitempty"`
-
-	// MaxWorkers Maximum number of async replication workers.
-	MaxWorkers int64 `json:"maxWorkers,omitempty"`
 
 	// PrePropagationTimeout Overall timeout in seconds for the pre-propagation phase.
 	PrePropagationTimeout int64 `json:"prePropagationTimeout,omitempty"`

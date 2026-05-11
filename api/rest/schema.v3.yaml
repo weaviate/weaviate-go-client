@@ -1817,12 +1817,6 @@ components:
         ReplicationAsyncConfig:
             description: Configuration for asynchronous replication.
             properties:
-                aliveNodesCheckingFrequency:
-                    description: Interval in milliseconds at which liveness of target nodes is checked.
-                    format: int64
-                    nullable: true
-                    type: integer
-                    x-omitempty: true
                 diffBatchSize:
                     description: Maximum number of object keys included in a single diff batch.
                     format: int64
@@ -1855,12 +1849,6 @@ components:
                     x-omitempty: true
                 loggingFrequency:
                     description: Interval in seconds at which async replication logs its status.
-                    format: int64
-                    nullable: true
-                    type: integer
-                    x-omitempty: true
-                maxWorkers:
-                    description: Maximum number of async replication workers.
                     format: int64
                     nullable: true
                     type: integer
