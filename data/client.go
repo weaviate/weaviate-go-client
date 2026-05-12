@@ -29,7 +29,16 @@ type Client struct {
 }
 
 type (
-	Reference  api.ObjectReference
+	ObjectPath api.ObjectPath
+	Reference  struct {
+		// Origin of the reference. Required when creating references
+		// via [Client.AddReferences].
+		Origin ObjectPath
+		// Name of the referenced collection. Required for multi-target references.
+		Collection string
+		// ID of the referenced object.
+		UUID uuid.UUID
+	}
 	References map[string][]Reference
 )
 
@@ -118,7 +127,7 @@ func (c *Client) Replace(ctx context.Context, o Object) error {
 	return nil
 }
 
-// Dlete an object from the collection.
+// Delete an object from the collection.
 func (c *Client) Delete(ctx context.Context, id uuid.UUID) error {
 	req := api.DeleteObjectRequest{
 		RequestDefaults: c.defaults,
@@ -128,6 +137,48 @@ func (c *Client) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("delete object: %w", err)
 	}
 	return nil
+}
+
+type AddReferencesResult struct {
+	Took   time.Duration
+	Errors map[Reference]string
+}
+
+func (c *Client) AddReferences(ctx context.Context, references ...Reference) (*AddReferencesResult, error) {
+	batch := slices.Grow([]api.Reference(nil), len(references))
+
+	for _, ref := range references {
+		batch = append(batch, api.Reference{
+			Origin: api.ObjectPath(ref.Origin),
+			Target: api.ObjectPath{
+				Collection: ref.Collection,
+				UUID:       ref.UUID,
+			},
+		})
+	}
+
+	req := &api.InsertReferencesRequest{
+		RequestDefaults: c.defaults,
+		References:      batch,
+	}
+
+	var resp api.InsertReferencesResponse
+	if err := c.transport.Do(ctx, req, &resp); err != nil {
+		return nil, fmt.Errorf("add references: %w", err)
+	}
+
+	dev.Assert(len(resp.Positions) == len(resp.Errors), "indices and errors not aligned")
+
+	r := &AddReferencesResult{
+		Took:   resp.Took,
+		Errors: internal.MakeMap[Reference, string](len(resp.Positions)),
+	}
+
+	for i, pos := range resp.Positions {
+		r.Errors[references[pos]] = resp.Errors[i]
+	}
+
+	return r, nil
 }
 
 func apiVectors(vectors []types.Vector) []api.Vector {
@@ -142,16 +193,18 @@ func apiVectors(vectors []types.Vector) []api.Vector {
 	return vs
 }
 
-func apiReferences(rs References) api.ObjectReferences {
-	if len(rs) == 0 {
-		return nil
-	}
-
-	out := make(api.ObjectReferences, len(rs))
-	for name, r := range rs {
-		refs := make([]api.ObjectReference, len(r))
-		for i := range r {
-			refs[i] = api.ObjectReference(r[i])
+func apiReferences(rs References) api.References {
+	out := internal.MakeMap[string, []api.Reference](len(rs))
+	for name, references := range rs {
+		refs := slices.Grow([]api.Reference(nil), len(references))
+		for i := range references {
+			refs = append(refs, api.Reference{
+				Origin: api.ObjectPath(references[i].Origin),
+				Target: api.ObjectPath{
+					Collection: references[i].Collection,
+					UUID:       references[i].UUID,
+				},
+			})
 		}
 		out[name] = refs
 	}

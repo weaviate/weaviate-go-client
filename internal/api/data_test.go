@@ -12,15 +12,15 @@ import (
 
 func TestObjectReference(t *testing.T) {
 	for _, tt := range []struct {
-		ref  *api.ObjectReference
+		ref  *api.Reference
 		want string
 	}{
 		{
-			ref:  &api.ObjectReference{UUID: testkit.UUID},
+			ref:  &api.Reference{Target: api.ObjectPath{UUID: testkit.UUID}},
 			want: "weaviate://localhost/" + testkit.UUID.String(),
 		},
 		{
-			ref:  &api.ObjectReference{Collection: "Songs", UUID: testkit.UUID},
+			ref:  &api.Reference{Target: api.ObjectPath{Collection: "Songs", UUID: testkit.UUID}},
 			want: "weaviate://localhost/Songs/" + testkit.UUID.String(),
 		},
 	} {
