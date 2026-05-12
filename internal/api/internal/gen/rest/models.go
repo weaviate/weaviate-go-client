@@ -320,6 +320,19 @@ const (
 	Word       TokenizeRequestTokenization = "word"
 )
 
+// Defines values for UsageLimitExceededResponseErrorCode.
+const (
+	USAGELIMITEXCEEDED UsageLimitExceededResponseErrorCode = "USAGE_LIMIT_EXCEEDED"
+)
+
+// Defines values for UsageLimitExceededResponseLimit.
+const (
+	Collections UsageLimitExceededResponseLimit = "collections"
+	Objects     UsageLimitExceededResponseLimit = "objects"
+	Shards      UsageLimitExceededResponseLimit = "shards"
+	Tenants     UsageLimitExceededResponseLimit = "tenants"
+)
+
 // Defines values for UserTypeInput.
 const (
 	UserTypeInputDb   UserTypeInput = "db"
@@ -2022,6 +2035,27 @@ type TokenizerUserDictConfig struct {
 	// Tokenizer The tokenizer to which the user dictionary should be applied. Currently, only the `kagame` ja and kr tokenizers supports user dictionaries.
 	Tokenizer string `json:"tokenizer,omitempty"`
 }
+
+// UsageLimitExceededResponse Returned with HTTP 429 when a configured Weaviate usage limit (objects/collections/tenants/shards) is exceeded. The structured fields (`errorCode`, `limit`, `value`) are stable contract; the `message` text is operator-overridable via the `USAGE_LIMITS_ERROR_MESSAGE` template.
+type UsageLimitExceededResponse struct {
+	// ErrorCode Machine-stable identifier. Always `USAGE_LIMIT_EXCEEDED` for this response.
+	ErrorCode UsageLimitExceededResponseErrorCode `json:"errorCode,omitempty"`
+
+	// Limit Which limit was hit.
+	Limit UsageLimitExceededResponseLimit `json:"limit,omitempty"`
+
+	// Message Human-readable message rendered from the `USAGE_LIMITS_ERROR_MESSAGE` template with `{limit}` and `{value}` placeholders substituted.
+	Message string `json:"message,omitempty"`
+
+	// Value The configured threshold value (the cap, not the current count).
+	Value int64 `json:"value,omitempty"`
+}
+
+// UsageLimitExceededResponseErrorCode Machine-stable identifier. Always `USAGE_LIMIT_EXCEEDED` for this response.
+type UsageLimitExceededResponseErrorCode string
+
+// UsageLimitExceededResponseLimit Which limit was hit.
+type UsageLimitExceededResponseLimit string
 
 // UserApiKey defines model for UserApiKey.
 type UserApiKey struct {

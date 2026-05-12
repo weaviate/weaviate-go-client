@@ -2461,6 +2461,30 @@ components:
                     description: The tokenizer to which the user dictionary should be applied. Currently, only the `kagame` ja and kr tokenizers supports user dictionaries.
                     type: string
             type: object
+        UsageLimitExceededResponse:
+            description: Returned with HTTP 429 when a configured Weaviate usage limit (objects/collections/tenants/shards) is exceeded. The structured fields (`errorCode`, `limit`, `value`) are stable contract; the `message` text is operator-overridable via the `USAGE_LIMITS_ERROR_MESSAGE` template.
+            properties:
+                errorCode:
+                    description: Machine-stable identifier. Always `USAGE_LIMIT_EXCEEDED` for this response.
+                    enum:
+                        - USAGE_LIMIT_EXCEEDED
+                    type: string
+                limit:
+                    description: Which limit was hit.
+                    enum:
+                        - objects
+                        - collections
+                        - tenants
+                        - shards
+                    type: string
+                message:
+                    description: Human-readable message rendered from the `USAGE_LIMITS_ERROR_MESSAGE` template with `{limit}` and `{value}` placeholders substituted.
+                    type: string
+                value:
+                    description: The configured threshold value (the cap, not the current count).
+                    format: int64
+                    type: integer
+            type: object
         UserApiKey:
             properties:
                 apikey:
@@ -4647,6 +4671,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
                     description: The request syntax is correct, but the server couldn't process it due to semantic issues. Please check the values in your request. Ensure the collection exists and the object properties are valid.
+                "429":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UsageLimitExceededResponse'
+                    description: The configured object-count usage limit was exceeded. The whole batch is rejected (no partial fill); the client decides what to retry. See `UsageLimitExceededResponse` for the limit value.
                 "500":
                     content:
                         application/json:
@@ -5627,6 +5657,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
                     description: The request syntax is correct, but the server couldn't process it due to semantic issues. Please check the values in your request. Ensure the collection exists and the object properties are valid.
+                "429":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UsageLimitExceededResponse'
+                    description: The configured object-count usage limit was exceeded. See `UsageLimitExceededResponse` for the limit value.
                 "500":
                     content:
                         application/json:
@@ -7430,6 +7466,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
                     description: Invalid collection definition provided. Check the definition structure and properties.
+                "429":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UsageLimitExceededResponse'
+                    description: A configured usage limit (collections/shards) was exceeded. See the `UsageLimitExceededResponse` body for which limit and the configured value.
                 "500":
                     content:
                         application/json:
@@ -8036,6 +8078,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
                     description: Invalid request.
+                "429":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UsageLimitExceededResponse'
+                    description: The configured tenant-per-collection usage limit was exceeded. See `UsageLimitExceededResponse` for the limit value.
                 "500":
                     content:
                         application/json:
