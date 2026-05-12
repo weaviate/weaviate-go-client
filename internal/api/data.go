@@ -86,60 +86,26 @@ func (r *InsertObjectsResponse) UnmarshalMessage(reply *proto.BatchObjectsReply)
 	*r = InsertObjectsResponse{
 		Took: time.Duration(reply.Took) * time.Second,
 	}
-
 	for _, e := range reply.GetErrors() {
 		r.Positions = append(r.Positions, e.Index)
 		r.Errors = append(r.Errors, e.Error)
 	}
-	return nil
+  return nil
 }
 
-type InsertReferencesRequest struct {
-	RequestDefaults
-	References []Reference
+type InsertObjectsResponse struct {
+	Took      time.Duration
+	Positions []int32  // Positional indices of the failed objects. Aligned with Errors.
+	Errors    []string // Error messages for failed objects. Aligned with Indices.
 }
 
-var (
-	_ transport.Message[proto.BatchReferencesRequest, proto.BatchReferencesReply] = (*InsertReferencesRequest)(nil)
-	_ transport.MessageMarshaler[proto.BatchReferencesRequest]                    = (*InsertReferencesRequest)(nil)
-)
-
-func (r *InsertReferencesRequest) Method() transport.MethodFunc[proto.BatchReferencesRequest, proto.BatchReferencesReply] {
-	return proto.WeaviateClient.BatchReferences
-}
-
-func (r *InsertReferencesRequest) Body() transport.MessageMarshaler[proto.BatchReferencesRequest] {
-	return r
-}
-
-func (r *InsertReferencesRequest) MarshalMessage() (*proto.BatchReferencesRequest, error) {
-	references := make([]*proto.BatchReference, len(r.References))
-	for i, ref := range r.References {
-		references[i] = &proto.BatchReference{
-			Name:           ref.Origin.Property,
-			FromCollection: ref.Origin.Collection,
-			FromUuid:       ref.Origin.UUID.String(),
-			ToCollection:   nilZero(ref.Target.Collection),
-			ToUuid:         ref.Target.UUID.String(),
-			Tenant:         r.Tenant,
-		}
-	}
-	return &proto.BatchReferencesRequest{
-		ConsistencyLevel: r.ConsistencyLevel.proto(),
-		References:       references,
-	}, nil
-}
-
-type InsertReferencesResponse InsertObjectsResponse
-
-var _ transport.MessageUnmarshaler[proto.BatchReferencesReply] = (*InsertReferencesResponse)(nil)
+var _ transport.MessageUnmarshaler[proto.BatchObjectsReply] = (*InsertObjectsResponse)(nil)
 
 // UnmarshalMessage implements [transport.MessageUnmarshaler].
-func (r *InsertReferencesResponse) UnmarshalMessage(reply *proto.BatchReferencesReply) error {
-	*r = InsertReferencesResponse{
+func (r *InsertObjectsResponse) UnmarshalMessage(reply *proto.BatchObjectsReply) error {
+	*r = InsertObjectsResponse{
 		Took: time.Duration(reply.Took) * time.Second,
 	}
-
 	for _, e := range reply.GetErrors() {
 		r.Positions = append(r.Positions, e.Index)
 		r.Errors = append(r.Errors, e.Error)

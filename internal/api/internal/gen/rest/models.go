@@ -846,6 +846,9 @@ type DBUserInfo struct {
 	// DbUserType Type of the returned user.
 	DbUserType DBUserInfoDbUserType `json:"dbUserType"`
 
+	// Namespace The namespace this user is bound to. Only populated for callers with global-operator privileges; omitted otherwise.
+	Namespace string `json:"namespace,omitempty"`
+
 	// Roles The roles associated with the user.
 	Roles []string `json:"roles"`
 
@@ -1161,7 +1164,7 @@ type MultiTenancyConfig struct {
 // MultipleRef Multiple instances of references to other objects.
 type MultipleRef = []SingleRef
 
-// Namespace A cluster-level namespace used to group resources under a common administrative unit. Namespace names must start with a lowercase letter, contain only lowercase letters and digits, be 3-36 characters long, and must not be a reserved name.
+// Namespace A cluster-level namespace used to group resources under a common administrative unit. Namespace names must contain only lowercase letters, digits, and hyphens, must start and end with a letter or digit, must be 3-36 characters long, and must not be a reserved name.
 type Namespace struct {
 	// Name The unique name of the namespace.
 	Name string `json:"name,omitempty"`
@@ -1582,9 +1585,6 @@ type ReferenceMetaClassification struct {
 
 // ReplicationAsyncConfig Configuration for asynchronous replication.
 type ReplicationAsyncConfig struct {
-	// AliveNodesCheckingFrequency Interval in milliseconds at which liveness of target nodes is checked.
-	AliveNodesCheckingFrequency int64 `json:"aliveNodesCheckingFrequency,omitempty"`
-
 	// DiffBatchSize Maximum number of object keys included in a single diff batch.
 	DiffBatchSize int64 `json:"diffBatchSize,omitempty"`
 
@@ -1602,9 +1602,6 @@ type ReplicationAsyncConfig struct {
 
 	// LoggingFrequency Interval in seconds at which async replication logs its status.
 	LoggingFrequency int64 `json:"loggingFrequency,omitempty"`
-
-	// MaxWorkers Maximum number of async replication workers.
-	MaxWorkers int64 `json:"maxWorkers,omitempty"`
 
 	// PrePropagationTimeout Overall timeout in seconds for the pre-propagation phase.
 	PrePropagationTimeout int64 `json:"prePropagationTimeout,omitempty"`
@@ -2563,6 +2560,9 @@ type CreateUserJSONBody struct {
 
 	// Import EXPERIMENTAL, DONT USE. THIS WILL BE REMOVED AGAIN. - import api key from static user
 	Import bool `json:"import,omitempty"`
+
+	// Namespace Namespace to bind the new user to. Required on namespace-enabled clusters. Must be set by a global operator only.
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // DeactivateUserJSONBody defines parameters for DeactivateUser.

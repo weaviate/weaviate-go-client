@@ -105,6 +105,10 @@
           ],
           "format": "date-time",
           "description": "Date and time in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "The namespace this user is bound to. Only populated for callers with global-operator privileges; omitted otherwise."
         }
       },
       "required": [
@@ -410,6 +414,14 @@
         },
         "userType": {
           "$ref": "#/definitions/UserTypeInput"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "The namespace this principal is bound to. Empty for global principals (e.g. static API keys)."
+        },
+        "isGlobalOperator": {
+          "type": "boolean",
+          "description": "True for principals that operate across all namespaces (e.g. static API keys). Authoritative marker for operator-level principals; do not infer from an empty namespace."
         }
       }
     },
@@ -2315,13 +2327,6 @@
       "description": "Configuration for asynchronous replication.",
       "type": "object",
       "properties": {
-        "maxWorkers": {
-          "description": "Maximum number of async replication workers.",
-          "type": "integer",
-          "format": "int64",
-          "x-nullable": true,
-          "x-omitempty": true
-        },
         "hashtreeHeight": {
           "description": "Height of the hashtree used for diffing.",
           "type": "integer",
@@ -2338,13 +2343,6 @@
         },
         "frequencyWhilePropagating": {
           "description": "Frequency in milliseconds at which async replication runs while propagation is active.",
-          "type": "integer",
-          "format": "int64",
-          "x-nullable": true,
-          "x-omitempty": true
-        },
-        "aliveNodesCheckingFrequency": {
-          "description": "Interval in milliseconds at which liveness of target nodes is checked.",
           "type": "integer",
           "format": "int64",
           "x-nullable": true,
@@ -3500,7 +3498,7 @@
     },
     "Namespace": {
       "type": "object",
-      "description": "A cluster-level namespace used to group resources under a common administrative unit. Namespace names must start with a lowercase letter, contain only lowercase letters and digits, be 3-36 characters long, and must not be a reserved name.",
+      "description": "A cluster-level namespace used to group resources under a common administrative unit. Namespace names must contain only lowercase letters, digits, and hyphens, must start and end with a letter or digit, must be 3-36 characters long, and must not be a reserved name.",
       "properties": {
         "name": {
           "description": "The unique name of the namespace.",
@@ -4550,6 +4548,10 @@
                   "type": "string",
                   "format": "date-time",
                   "description": "EXPERIMENTAL, DONT USE. THIS WILL BE REMOVED AGAIN. - set the given time as creation time"
+                },
+                "namespace": {
+                  "type": "string",
+                  "description": "Namespace to bind the new user to. Required on namespace-enabled clusters. Must be set by a global operator only."
                 }
               }
             }
@@ -9126,7 +9128,7 @@
     "/namespaces/{namespace_id}": {
       "post": {
         "summary": "Create a new namespace",
-        "description": "Create a new cluster-level namespace with the given name. Names must start with a lowercase letter, contain only lowercase letters and digits, be 3-36 characters long, and must not be a reserved name.",
+        "description": "Create a new cluster-level namespace with the given name. Names must contain only lowercase letters, digits, and hyphens, must start and end with a letter or digit, must be 3-36 characters long, and must not be a reserved name.",
         "operationId": "createNamespace",
         "tags": [
           "namespaces"

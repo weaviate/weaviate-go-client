@@ -755,6 +755,9 @@ components:
                         - db_user
                         - db_env_user
                     type: string
+                namespace:
+                    description: The namespace this user is bound to. Only populated for callers with global-operator privileges; omitted otherwise.
+                    type: string
                 roles:
                     description: The roles associated with the user.
                     items:
@@ -1173,7 +1176,7 @@ components:
                 $ref: '#/components/schemas/SingleRef'
             type: array
         Namespace:
-            description: A cluster-level namespace used to group resources under a common administrative unit. Namespace names must start with a lowercase letter, contain only lowercase letters and digits, be 3-36 characters long, and must not be a reserved name.
+            description: A cluster-level namespace used to group resources under a common administrative unit. Namespace names must contain only lowercase letters, digits, and hyphens, must start and end with a letter or digit, must be 3-36 characters long, and must not be a reserved name.
             properties:
                 name:
                     description: The unique name of the namespace.
@@ -1639,6 +1642,12 @@ components:
                     items:
                         type: string
                     type: array
+                isGlobalOperator:
+                    description: True for principals that operate across all namespaces (e.g. static API keys). Authoritative marker for operator-level principals; do not infer from an empty namespace.
+                    type: boolean
+                namespace:
+                    description: The namespace this principal is bound to. Empty for global principals (e.g. static API keys).
+                    type: string
                 userType:
                     $ref: '#/components/schemas/UserTypeInput'
                 username:
@@ -1808,12 +1817,6 @@ components:
         ReplicationAsyncConfig:
             description: Configuration for asynchronous replication.
             properties:
-                aliveNodesCheckingFrequency:
-                    description: Interval in milliseconds at which liveness of target nodes is checked.
-                    format: int64
-                    nullable: true
-                    type: integer
-                    x-omitempty: true
                 diffBatchSize:
                     description: Maximum number of object keys included in a single diff batch.
                     format: int64
@@ -1846,12 +1849,6 @@ components:
                     x-omitempty: true
                 loggingFrequency:
                     description: Interval in seconds at which async replication logs its status.
-                    format: int64
-                    nullable: true
-                    type: integer
-                    x-omitempty: true
-                maxWorkers:
-                    description: Maximum number of async replication workers.
                     format: int64
                     nullable: true
                     type: integer
@@ -5329,7 +5326,7 @@ paths:
             tags:
                 - namespaces
         post:
-            description: Create a new cluster-level namespace with the given name. Names must start with a lowercase letter, contain only lowercase letters and digits, be 3-36 characters long, and must not be a reserved name.
+            description: Create a new cluster-level namespace with the given name. Names must contain only lowercase letters, digits, and hyphens, must start and end with a letter or digit, must be 3-36 characters long, and must not be a reserved name.
             operationId: createNamespace
             parameters:
                 - description: The name of the namespace. Must start with a lowercase letter, contain only lowercase letters and digits, length 3-36, and not be a reserved name.
@@ -8504,6 +8501,9 @@ paths:
                                     default: false
                                     description: EXPERIMENTAL, DONT USE. THIS WILL BE REMOVED AGAIN. - import api key from static user
                                     type: boolean
+                                namespace:
+                                    description: Namespace to bind the new user to. Required on namespace-enabled clusters. Must be set by a global operator only.
+                                    type: string
                             type: object
                     application/yaml:
                         schema:
@@ -8516,6 +8516,9 @@ paths:
                                     default: false
                                     description: EXPERIMENTAL, DONT USE. THIS WILL BE REMOVED AGAIN. - import api key from static user
                                     type: boolean
+                                namespace:
+                                    description: Namespace to bind the new user to. Required on namespace-enabled clusters. Must be set by a global operator only.
+                                    type: string
                             type: object
                 required: false
             responses:

@@ -10,6 +10,7 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v6/backup"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
+	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/auth"
@@ -17,6 +18,8 @@ import (
 )
 
 type Client struct {
+	transport internal.Transport
+
 	Backup      *backup.Client
 	Collections *collections.Client
 }
@@ -124,6 +127,7 @@ func newClient(ctx context.Context, options []Option) (*Client, error) {
 	}
 
 	return &Client{
+		transport:   t,
 		Collections: collections.NewClient(t),
 		Backup:      backup.NewClient(t),
 	}, nil
@@ -260,4 +264,36 @@ func WithTokenSource(src oauth2.TokenSource) Option {
 	return func(c *config) {
 		c.Auth = src
 	}
+}
+
+// IsLive reports instance / cluster liveness.
+func (c *Client) IsLive(ctx context.Context) (bool, error) {
+	if err := c.transport.Do(ctx, api.IsLiveRequest, nil); err != nil {
+		return false, fmt.Errorf("is live: %w", err)
+	}
+	return true, nil
+}
+
+// IsReady reports instance / cluster readiness.
+func (c *Client) IsReady(ctx context.Context) (bool, error) {
+	if err := c.transport.Do(ctx, api.IsReadyRequest, nil); err != nil {
+		return false, fmt.Errorf("is ready: %w", err)
+	}
+	return true, nil
+}
+
+type InstanceMetadata api.GetInstanceMetadataResponse
+
+// Metadata fetches instance / cluster metadata.
+func (c *Client) Metadata(ctx context.Context) (*InstanceMetadata, error) {
+	var resp api.GetInstanceMetadataResponse
+	if err := c.transport.Do(ctx, api.GetInstanceMetadataRequest, &resp); err != nil {
+		return nil, fmt.Errorf("get metadata: %w", err)
+	}
+	return &InstanceMetadata{
+		Hostname:           resp.Hostname,
+		Version:            resp.Version,
+		Modules:            resp.Modules,
+		GRPCMaxMessageSize: resp.GRPCMaxMessageSize,
+	}, nil
 }
