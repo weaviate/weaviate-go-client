@@ -1181,6 +1181,12 @@ components:
                 name:
                     description: The unique name of the namespace.
                     type: string
+                state:
+                    description: 'Lifecycle state. "active" namespaces accept all operations. "deleting" namespaces are being removed: new classes, aliases, and users can no longer be created in the namespace, and the namespace itself disappears once removal completes.'
+                    enum:
+                        - active
+                        - deleting
+                    type: string
             type: object
         NamespaceListResponse:
             description: Response object containing a list of namespaces.
@@ -5265,7 +5271,7 @@ paths:
                 - namespaces
     /namespaces/{namespace_id}:
         delete:
-            description: Hard-delete a namespace by its name.
+            description: 'Mark a namespace for deletion. The endpoint is asynchronous: the namespace is flipped to the "deleting" state and its dynamic users are removed synchronously; classes and aliases are torn down by the leader on a periodic cleanup tick. Repeated calls while the namespace is still in the "deleting" state are idempotent and return 202.'
             operationId: deleteNamespace
             parameters:
                 - description: The name of the namespace.
@@ -5275,9 +5281,9 @@ paths:
                   schema:
                     type: string
             responses:
-                "204":
+                "202":
                     content: {}
-                    description: Successfully deleted.
+                    description: The namespace has been marked for deletion. Cleanup of its classes, aliases, and users completes asynchronously.
                 "401":
                     content: {}
                     description: Unauthorized or invalid credentials.
@@ -5392,7 +5398,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
-                    description: A namespace with the specified name already exists.
+                    description: A namespace with the specified name already exists, or a namespace with the same name is currently being deleted. Differentiate by reading the human-readable message in the error payload.
                 "422":
                     content:
                         application/json:

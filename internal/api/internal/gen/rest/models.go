@@ -134,6 +134,12 @@ const (
 	GroupTypeOidc GroupType = "oidc"
 )
 
+// Defines values for NamespaceState.
+const (
+	Active   NamespaceState = "active"
+	Deleting NamespaceState = "deleting"
+)
+
 // Defines values for NestedPropertyTokenization.
 const (
 	NestedPropertyTokenizationField      NestedPropertyTokenization = "field"
@@ -1181,7 +1187,13 @@ type MultipleRef = []SingleRef
 type Namespace struct {
 	// Name The unique name of the namespace.
 	Name string `json:"name,omitempty"`
+
+	// State Lifecycle state. "active" namespaces accept all operations. "deleting" namespaces are being removed: new classes, aliases, and users can no longer be created in the namespace, and the namespace itself disappears once removal completes.
+	State NamespaceState `json:"state,omitempty"`
 }
+
+// NamespaceState Lifecycle state. "active" namespaces accept all operations. "deleting" namespaces are being removed: new classes, aliases, and users can no longer be created in the namespace, and the namespace itself disappears once removal completes.
+type NamespaceState string
 
 // NamespaceListResponse Response object containing a list of namespaces.
 type NamespaceListResponse = []Namespace
