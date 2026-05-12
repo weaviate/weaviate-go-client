@@ -10,8 +10,8 @@ import (
 )
 
 type Role struct {
-	ID          string
-	Permissions Permissions
+	ID string
+	Permissions
 }
 
 var (
@@ -23,15 +23,15 @@ type Permissions struct {
 	Aliases     []AliasPermission
 	Backups     []BackupsPermission
 	Cluster     []ClusterPermission
-	Collections []CollectionsPermission
+	Collections []CollectionPermission
 	Data        []DataPermission
-	Groups      []GroupsPermission
+	Groups      []GroupPermission
 	Namespaces  []NamespacePermission
 	Nodes       []NodesPermission
 	Replication []ReplicationPermission
-	Roles       []RolesPermission
-	Tenants     []TenantsPermission
-	Users       []UsersPermission
+	Roles       []RolePermission
+	Tenants     []TenantPermission
+	Users       []UserPermission
 }
 
 type CreateRoleRequest struct {
@@ -55,15 +55,15 @@ type Permission struct {
 	Alias       AliasPermission
 	Backups     BackupsPermission
 	Cluster     ClusterPermission
-	Collections CollectionsPermission
+	Collections CollectionPermission
 	Data        DataPermission
-	Groups      GroupsPermission
+	Groups      GroupPermission
 	Namespaces  NamespacePermission
 	Nodes       NodesPermission
 	Replication ReplicationPermission
-	Roles       RolesPermission
-	Tenants     TenantsPermission
-	Users       UsersPermission
+	Roles       RolePermission
+	Tenants     TenantPermission
+	Users       UserPermission
 }
 
 type (
@@ -84,7 +84,7 @@ type (
 	ClusterPermission struct {
 		Read bool `json:"-"`
 	}
-	CollectionsPermission struct {
+	CollectionPermission struct {
 		Collection string `json:"collection,omitempty"`
 
 		Create bool `json:"-"`
@@ -102,7 +102,7 @@ type (
 		Update bool `json:"-"`
 		Delete bool `json:"-"`
 	}
-	GroupsPermission struct {
+	GroupPermission struct {
 		GroupID string `json:"group,omitempty"`
 		Type    string `json:"groupType,omitempty"`
 
@@ -114,10 +114,10 @@ type (
 
 		Manage bool `json:"-"`
 	}
-	NodesVerbosity  rest.PermissionNodesVerbosity // api.NodeVerbosity
+	NodeVerbosity   rest.PermissionNodesVerbosity // api.NodeVerbosity
 	NodesPermission struct {
-		Collection string         `json:"collection,omitempty"`
-		Verbosity  NodesVerbosity `json:"verbosity,omitempty"`
+		Collection string        `json:"collection,omitempty"`
+		Verbosity  NodeVerbosity `json:"verbosity,omitempty"`
 
 		Read bool `json:"-"`
 	}
@@ -130,17 +130,17 @@ type (
 		Update bool `json:"-"`
 		Delete bool `json:"-"`
 	}
-	RolesScope      rest.PermissionRolesScope
-	RolesPermission struct {
-		RoleID string     `json:"role,omitempty"`
-		Scope  RolesScope `json:"scope,omitempty"`
+	RoleScope      rest.PermissionRolesScope
+	RolePermission struct {
+		RoleID string    `json:"role,omitempty"`
+		Scope  RoleScope `json:"scope,omitempty"`
 
 		Create bool `json:"-"`
 		Read   bool `json:"-"`
 		Update bool `json:"-"`
 		Delete bool `json:"-"`
 	}
-	TenantsPermission struct {
+	TenantPermission struct {
 		Collection string `json:"collection,omitempty"`
 		Tenant     string `json:"tenant,omitempty"`
 
@@ -149,7 +149,7 @@ type (
 		Update bool `json:"-"`
 		Delete bool `json:"-"`
 	}
-	UsersPermission struct {
+	UserPermission struct {
 		UserID string `json:"user,omitempty"`
 
 		Create bool `json:"-"`
@@ -160,11 +160,11 @@ type (
 )
 
 const (
-	NodeVerbosityMinimal = NodesVerbosity(rest.Minimal)
-	NodeVerbosityVerbose = NodesVerbosity(rest.Verbose)
+	NodeVerbosityMinimal = NodeVerbosity(rest.Minimal)
+	NodeVerbosityVerbose = NodeVerbosity(rest.Verbose)
 
-	RolesScopeAll   = RolesScope(rest.PermissionRolesScopeAll)
-	RolesScopeMatch = RolesScope(rest.PermissionRolesScopeMatch)
+	RoleScopeAll   = RoleScope(rest.PermissionRolesScopeAll)
+	RoleScopeMatch = RoleScope(rest.PermissionRolesScopeMatch)
 )
 
 func (r *Role) MarshalJSON() ([]byte, error) {
@@ -182,7 +182,7 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		permissions = append(permissions, permission)
 	}
 
-	for _, p := range r.Permissions.Aliases {
+	for _, p := range r.Aliases {
 		if p.Create {
 			add(rest.CreateAliases, p)
 		}
@@ -197,19 +197,19 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	for _, p := range r.Permissions.Backups {
+	for _, p := range r.Backups {
 		if p.Manage {
 			add(rest.ManageBackups, p)
 		}
 	}
 
-	for _, p := range r.Permissions.Cluster {
+	for _, p := range r.Cluster {
 		if p.Read {
 			add(rest.ReadCluster, nil)
 		}
 	}
 
-	for _, p := range r.Permissions.Collections {
+	for _, p := range r.Collections {
 		if p.Create {
 			add(rest.CreateCollections, p)
 		}
@@ -224,7 +224,7 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	for _, p := range r.Permissions.Data {
+	for _, p := range r.Data {
 		if p.Create {
 			add(rest.CreateData, p)
 		}
@@ -239,7 +239,7 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	for _, p := range r.Permissions.Groups {
+	for _, p := range r.Groups {
 		if p.Read {
 			add(rest.ReadGroups, p)
 		}
@@ -248,19 +248,19 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	for _, p := range r.Permissions.Namespaces {
+	for _, p := range r.Namespaces {
 		if p.Manage {
 			add(rest.ManageNamespaces, p)
 		}
 	}
 
-	for _, p := range r.Permissions.Nodes {
+	for _, p := range r.Nodes {
 		if p.Read {
 			add(rest.ReadNodes, p)
 		}
 	}
 
-	for _, p := range r.Permissions.Replication {
+	for _, p := range r.Replication {
 		if p.Create {
 			add(rest.CreateReplicate, p)
 		}
@@ -275,7 +275,7 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	for _, p := range r.Permissions.Roles {
+	for _, p := range r.Roles {
 		if p.Create {
 			add(rest.CreateRoles, p)
 		}
@@ -290,7 +290,7 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	for _, p := range r.Permissions.Tenants {
+	for _, p := range r.Tenants {
 		if p.Create {
 			add(rest.CreateTenants, p)
 		}
@@ -305,7 +305,7 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	for _, p := range r.Permissions.Users {
+	for _, p := range r.Users {
 		if p.Create {
 			add(rest.CreateUsers, p)
 		}
@@ -346,7 +346,7 @@ func (r *Role) UnmarshalJSON(data []byte) error {
 			Role        json.RawMessage       `json:"roles"`
 			Tenant      json.RawMessage       `json:"tenants"`
 			User        json.RawMessage       `json:"users"`
-		}
+		} `json:"permissions"`
 	}
 
 	if err := json.Unmarshal(data, &role); err != nil {
@@ -356,7 +356,6 @@ func (r *Role) UnmarshalJSON(data []byte) error {
 	*r = Role{ID: role.ID}
 
 	lookup := make(map[string]any)
-	ps := &r.Permissions
 	for _, p := range role.Permissions {
 		var kind string
 		if parts := strings.Split(string(p.Action), "_"); len(parts) != 0 {
@@ -367,73 +366,73 @@ func (r *Role) UnmarshalJSON(data []byte) error {
 
 		switch p.Action {
 		case rest.CreateAliases:
-			find(lookup, kind, p.Alias, &ps.Aliases).Create = true
+			find(lookup, kind, p.Alias, &r.Aliases).Create = true
 		case rest.ReadAliases:
-			find(lookup, kind, p.Alias, &ps.Aliases).Read = true
+			find(lookup, kind, p.Alias, &r.Aliases).Read = true
 		case rest.UpdateAliases:
-			find(lookup, kind, p.Alias, &ps.Aliases).Update = true
+			find(lookup, kind, p.Alias, &r.Aliases).Update = true
 		case rest.DeleteAliases:
-			find(lookup, kind, p.Alias, &ps.Aliases).Delete = true
+			find(lookup, kind, p.Alias, &r.Aliases).Delete = true
 		case rest.ManageBackups:
-			find(lookup, kind, p.Backup, &ps.Backups).Manage = true
+			find(lookup, kind, p.Backup, &r.Backups).Manage = true
 		case rest.ReadCluster:
-			find(lookup, kind, p.Cluster, &ps.Cluster).Read = true
+			find(lookup, kind, p.Cluster, &r.Cluster).Read = true
 		case rest.CreateCollections:
-			find(lookup, kind, p.Collection, &ps.Collections).Create = true
+			find(lookup, kind, p.Collection, &r.Collections).Create = true
 		case rest.ReadCollections:
-			find(lookup, kind, p.Collection, &ps.Collections).Read = true
+			find(lookup, kind, p.Collection, &r.Collections).Read = true
 		case rest.UpdateCollections:
-			find(lookup, kind, p.Collection, &ps.Collections).Update = true
+			find(lookup, kind, p.Collection, &r.Collections).Update = true
 		case rest.DeleteCollections:
-			find(lookup, kind, p.Collection, &ps.Collections).Delete = true
+			find(lookup, kind, p.Collection, &r.Collections).Delete = true
 		case rest.CreateData:
-			find(lookup, kind, p.Data, &ps.Data).Create = true
+			find(lookup, kind, p.Data, &r.Data).Create = true
 		case rest.ReadData:
-			find(lookup, kind, p.Data, &ps.Data).Read = true
+			find(lookup, kind, p.Data, &r.Data).Read = true
 		case rest.UpdateData:
-			find(lookup, kind, p.Data, &ps.Data).Update = true
+			find(lookup, kind, p.Data, &r.Data).Update = true
 		case rest.DeleteData:
-			find(lookup, kind, p.Data, &ps.Data).Delete = true
+			find(lookup, kind, p.Data, &r.Data).Delete = true
 		case rest.ReadGroups:
-			find(lookup, kind, p.Group, &ps.Groups).Read = true
+			find(lookup, kind, p.Group, &r.Groups).Read = true
 		case rest.AssignAndRevokeGroups:
-			find(lookup, kind, p.Group, &ps.Groups).AssignAndRevoke = true
+			find(lookup, kind, p.Group, &r.Groups).AssignAndRevoke = true
 		case rest.ManageNamespaces:
-			find(lookup, kind, p.Namespace, &ps.Namespaces).Manage = true
+			find(lookup, kind, p.Namespace, &r.Namespaces).Manage = true
 		case rest.ReadNodes:
-			find(lookup, kind, p.Node, &ps.Nodes).Read = true
+			find(lookup, kind, p.Node, &r.Nodes).Read = true
 		case rest.CreateReplicate:
-			find(lookup, kind, p.Replication, &ps.Replication).Create = true
+			find(lookup, kind, p.Replication, &r.Replication).Create = true
 		case rest.ReadReplicate:
-			find(lookup, kind, p.Replication, &ps.Replication).Read = true
+			find(lookup, kind, p.Replication, &r.Replication).Read = true
 		case rest.UpdateReplicate:
-			find(lookup, kind, p.Replication, &ps.Replication).Update = true
+			find(lookup, kind, p.Replication, &r.Replication).Update = true
 		case rest.DeleteReplicate:
-			find(lookup, kind, p.Replication, &ps.Replication).Delete = true
+			find(lookup, kind, p.Replication, &r.Replication).Delete = true
 		case rest.CreateRoles:
-			find(lookup, kind, p.Role, &ps.Roles).Create = true
+			find(lookup, kind, p.Role, &r.Roles).Create = true
 		case rest.ReadRoles:
-			find(lookup, kind, p.Role, &ps.Roles).Read = true
+			find(lookup, kind, p.Role, &r.Roles).Read = true
 		case rest.UpdateRoles:
-			find(lookup, kind, p.Role, &ps.Roles).Update = true
+			find(lookup, kind, p.Role, &r.Roles).Update = true
 		case rest.DeleteRoles:
-			find(lookup, kind, p.Role, &ps.Roles).Delete = true
+			find(lookup, kind, p.Role, &r.Roles).Delete = true
 		case rest.CreateTenants:
-			find(lookup, kind, p.Tenant, &ps.Tenants).Create = true
+			find(lookup, kind, p.Tenant, &r.Tenants).Create = true
 		case rest.ReadTenants:
-			find(lookup, kind, p.Tenant, &ps.Tenants).Read = true
+			find(lookup, kind, p.Tenant, &r.Tenants).Read = true
 		case rest.UpdateTenants:
-			find(lookup, kind, p.Tenant, &ps.Tenants).Update = true
+			find(lookup, kind, p.Tenant, &r.Tenants).Update = true
 		case rest.DeleteTenants:
-			find(lookup, kind, p.Tenant, &ps.Tenants).Delete = true
+			find(lookup, kind, p.Tenant, &r.Tenants).Delete = true
 		case rest.CreateUsers:
-			find(lookup, kind, p.User, &ps.Users).Create = true
+			find(lookup, kind, p.User, &r.Users).Create = true
 		case rest.ReadUsers:
-			find(lookup, kind, p.User, &ps.Users).Read = true
+			find(lookup, kind, p.User, &r.Users).Read = true
 		case rest.UpdateUsers:
-			find(lookup, kind, p.User, &ps.Users).Update = true
+			find(lookup, kind, p.User, &r.Users).Update = true
 		case rest.DeleteUsers:
-			find(lookup, kind, p.User, &ps.Users).Delete = true
+			find(lookup, kind, p.User, &r.Users).Delete = true
 		}
 	}
 

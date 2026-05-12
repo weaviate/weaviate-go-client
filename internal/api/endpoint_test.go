@@ -510,7 +510,7 @@ func TestRESTRequests(t *testing.T) {
 							{Collection: "Songs", Manage: true},
 						},
 						Cluster: []api.ClusterPermission{{Read: true}},
-						Collections: []api.CollectionsPermission{
+						Collections: []api.CollectionPermission{
 							{Collection: "Songs", Create: true, Read: true},
 							{Collection: "Artists", Update: true, Delete: true},
 						},
@@ -524,7 +524,7 @@ func TestRESTRequests(t *testing.T) {
 								Update: true, Delete: true,
 							},
 						},
-						Groups: []api.GroupsPermission{
+						Groups: []api.GroupPermission{
 							{
 								GroupID: "external", Type: "oidc",
 								Read: true, AssignAndRevoke: true,
@@ -547,17 +547,17 @@ func TestRESTRequests(t *testing.T) {
 								Update: true, Delete: true,
 							},
 						},
-						Roles: []api.RolesPermission{
+						Roles: []api.RolePermission{
 							{
-								RoleID: "rock-n-role", Scope: api.RolesScopeAll,
+								RoleID: "rock-n-role", Scope: api.RoleScopeAll,
 								Create: true, Read: true,
 							},
 							{
-								RoleID: "rock-n-role", Scope: api.RolesScopeMatch,
+								RoleID: "rock-n-role", Scope: api.RoleScopeMatch,
 								Update: true, Delete: true,
 							},
 						},
-						Tenants: []api.TenantsPermission{
+						Tenants: []api.TenantPermission{
 							{
 								Collection: "Songs", Tenant: "john_doe",
 								Create: true, Read: true,
@@ -567,7 +567,7 @@ func TestRESTRequests(t *testing.T) {
 								Update: true, Delete: true,
 							},
 						},
-						Users: []api.UsersPermission{
+						Users: []api.UserPermission{
 							{UserID: "john_doe", Create: true, Read: true},
 							{UserID: "jane_doe", Update: true, Delete: true},
 						},
@@ -734,28 +734,28 @@ func TestRESTRequests(t *testing.T) {
 						"action": "create_roles",
 						"roles": map[string]any{
 							"role":  "rock-n-role",
-							"scope": api.RolesScopeAll,
+							"scope": api.RoleScopeAll,
 						},
 					},
 					{
 						"action": "read_roles",
 						"roles": map[string]any{
 							"role":  "rock-n-role",
-							"scope": api.RolesScopeAll,
+							"scope": api.RoleScopeAll,
 						},
 					},
 					{
 						"action": "update_roles",
 						"roles": map[string]any{
 							"role":  "rock-n-role",
-							"scope": api.RolesScopeMatch,
+							"scope": api.RoleScopeMatch,
 						},
 					},
 					{
 						"action": "delete_roles",
 						"roles": map[string]any{
 							"role":  "rock-n-role",
-							"scope": api.RolesScopeMatch,
+							"scope": api.RoleScopeMatch,
 						},
 					},
 					{
@@ -1303,28 +1303,28 @@ func TestRESTResponses(t *testing.T) {
 						"action": "create_roles",
 						"roles": map[string]any{
 							"role":  "rock-n-role",
-							"scope": api.RolesScopeAll,
+							"scope": api.RoleScopeAll,
 						},
 					},
 					{
 						"action": "read_roles",
 						"roles": map[string]any{
 							"role":  "rock-n-role",
-							"scope": api.RolesScopeAll,
+							"scope": api.RoleScopeAll,
 						},
 					},
 					{
 						"action": "update_roles",
 						"roles": map[string]any{
 							"role":  "rock-n-role",
-							"scope": api.RolesScopeMatch,
+							"scope": api.RoleScopeMatch,
 						},
 					},
 					{
 						"action": "delete_roles",
 						"roles": map[string]any{
 							"role":  "rock-n-role",
-							"scope": api.RolesScopeMatch,
+							"scope": api.RoleScopeMatch,
 						},
 					},
 					{
@@ -1399,7 +1399,7 @@ func TestRESTResponses(t *testing.T) {
 						{Collection: "Songs", Manage: true},
 					},
 					Cluster: []api.ClusterPermission{{Read: true}},
-					Collections: []api.CollectionsPermission{
+					Collections: []api.CollectionPermission{
 						{Collection: "Songs", Create: true, Read: true},
 						{Collection: "Artists", Update: true, Delete: true},
 					},
@@ -1413,7 +1413,7 @@ func TestRESTResponses(t *testing.T) {
 							Update: true, Delete: true,
 						},
 					},
-					Groups: []api.GroupsPermission{
+					Groups: []api.GroupPermission{
 						{
 							GroupID: "external", Type: "oidc",
 							Read: true, AssignAndRevoke: true,
@@ -1436,17 +1436,17 @@ func TestRESTResponses(t *testing.T) {
 							Update: true, Delete: true,
 						},
 					},
-					Roles: []api.RolesPermission{
+					Roles: []api.RolePermission{
 						{
-							RoleID: "rock-n-role", Scope: api.RolesScopeAll,
+							RoleID: "rock-n-role", Scope: api.RoleScopeAll,
 							Create: true, Read: true,
 						},
 						{
-							RoleID: "rock-n-role", Scope: api.RolesScopeMatch,
+							RoleID: "rock-n-role", Scope: api.RoleScopeMatch,
 							Update: true, Delete: true,
 						},
 					},
-					Tenants: []api.TenantsPermission{
+					Tenants: []api.TenantPermission{
 						{
 							Collection: "Songs", Tenant: "john_doe",
 							Create: true, Read: true,
@@ -1456,7 +1456,7 @@ func TestRESTResponses(t *testing.T) {
 							Update: true, Delete: true,
 						},
 					},
-					Users: []api.UsersPermission{
+					Users: []api.UserPermission{
 						{UserID: "john_doe", Create: true, Read: true},
 						{UserID: "jane_doe", Update: true, Delete: true},
 					},
