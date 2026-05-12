@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
@@ -416,51 +417,130 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 }
 
 func (r *Role) UnmarshalJSON(data []byte) error {
-	var role rest.Role
+	var role struct {
+		ID          string `json:"name"`
+		Permissions []struct {
+			Action      rest.PermissionAction `json:"action"`
+			Alias       json.RawMessage       `json:"aliases"`
+			Backup      json.RawMessage       `json:"backups"`
+			Cluster     json.RawMessage       `json:"cluster"`
+			Collection  json.RawMessage       `json:"collections"`
+			Data        json.RawMessage       `json:"data"`
+			Group       json.RawMessage       `json:"groups"`
+			Namespace   json.RawMessage       `json:"namespaces"`
+			Node        json.RawMessage       `json:"nodes"`
+			Replication json.RawMessage       `json:"replicate"`
+			Role        json.RawMessage       `json:"roles"`
+			Tenant      json.RawMessage       `json:"tenants"`
+			User        json.RawMessage       `json:"users"`
+		}
+	}
+
 	if err := json.Unmarshal(data, &role); err != nil {
 		return err
 	}
 
-	*r = Role{ID: role.Name}
+	*r = Role{ID: role.ID}
 
 	lookup := make(map[string]any)
+	ps := &r.Permissions
 	for _, p := range role.Permissions {
+		var kind string
+		if parts := strings.Split(string(p.Action), "_"); len(parts) != 0 {
+			kind = parts[len(parts)-1]
+		} else {
+			continue
+		}
+
 		switch p.Action {
 		case rest.CreateAliases:
-			merge(lookup, "aliases"+p.Aliases.Collection+p.Aliases.Alias, &r.Permissions.Aliases, func(dest *AliasPermission) {
-				dest.Collection = p.Aliases.Collection
-				dest.Alias = p.Aliases.Alias
-				dest.Create = true
-			})
+			find(lookup, kind, p.Alias, &ps.Aliases).Create = true
 		case rest.ReadAliases:
-			merge(lookup, "aliases"+p.Aliases.Collection+p.Aliases.Alias, &r.Permissions.Aliases, func(dest *AliasPermission) {
-				dest.Collection = p.Aliases.Collection
-				dest.Alias = p.Aliases.Alias
-				dest.Read = true
-			})
+			find(lookup, kind, p.Alias, &ps.Aliases).Read = true
 		case rest.UpdateAliases:
-			merge(lookup, "aliases"+p.Aliases.Collection+p.Aliases.Alias, &r.Permissions.Aliases, func(dest *AliasPermission) {
-				dest.Collection = p.Aliases.Collection
-				dest.Alias = p.Aliases.Alias
-				dest.Update = true
-			})
+			find(lookup, kind, p.Alias, &ps.Aliases).Update = true
 		case rest.DeleteAliases:
-			merge(lookup, "aliases"+p.Aliases.Collection+p.Aliases.Alias, &r.Permissions.Aliases, func(dest *AliasPermission) {
-				dest.Collection = p.Aliases.Collection
-				dest.Alias = p.Aliases.Alias
-				dest.Delete = true
-			})
+			find(lookup, kind, p.Alias, &ps.Aliases).Delete = true
+		case rest.ManageBackups:
+			find(lookup, kind, p.Backup, &ps.Backups).Manage = true
+		case rest.ReadCluster:
+			find(lookup, kind, p.Cluster, &ps.Cluster).Read = true
+		case rest.CreateCollections:
+			find(lookup, kind, p.Collection, &ps.Collections).Create = true
+		case rest.ReadCollections:
+			find(lookup, kind, p.Collection, &ps.Collections).Read = true
+		case rest.UpdateCollections:
+			find(lookup, kind, p.Collection, &ps.Collections).Update = true
+		case rest.DeleteCollections:
+			find(lookup, kind, p.Collection, &ps.Collections).Delete = true
+		case rest.CreateData:
+			find(lookup, kind, p.Data, &ps.Data).Create = true
+		case rest.ReadData:
+			find(lookup, kind, p.Data, &ps.Data).Read = true
+		case rest.UpdateData:
+			find(lookup, kind, p.Data, &ps.Data).Update = true
+		case rest.DeleteData:
+			find(lookup, kind, p.Data, &ps.Data).Delete = true
+		case rest.ReadGroups:
+			find(lookup, kind, p.Group, &ps.Groups).Read = true
+		case rest.AssignAndRevokeGroups:
+			find(lookup, kind, p.Group, &ps.Groups).AssignAndRevoke = true
+		case rest.ManageNamespaces:
+			find(lookup, kind, p.Namespace, &ps.Namespaces).Manage = true
+		case rest.ReadNodes:
+			find(lookup, kind, p.Node, &ps.Nodes).Read = true
+		case rest.CreateReplicate:
+			find(lookup, kind, p.Replication, &ps.Replication).Create = true
+		case rest.ReadReplicate:
+			find(lookup, kind, p.Replication, &ps.Replication).Read = true
+		case rest.UpdateReplicate:
+			find(lookup, kind, p.Replication, &ps.Replication).Update = true
+		case rest.DeleteReplicate:
+			find(lookup, kind, p.Replication, &ps.Replication).Delete = true
+		case rest.CreateRoles:
+			find(lookup, kind, p.Role, &ps.Roles).Create = true
+		case rest.ReadRoles:
+			find(lookup, kind, p.Role, &ps.Roles).Read = true
+		case rest.UpdateRoles:
+			find(lookup, kind, p.Role, &ps.Roles).Update = true
+		case rest.DeleteRoles:
+			find(lookup, kind, p.Role, &ps.Roles).Delete = true
+		case rest.CreateTenants:
+			find(lookup, kind, p.Tenant, &ps.Tenants).Create = true
+		case rest.ReadTenants:
+			find(lookup, kind, p.Tenant, &ps.Tenants).Read = true
+		case rest.UpdateTenants:
+			find(lookup, kind, p.Tenant, &ps.Tenants).Update = true
+		case rest.DeleteTenants:
+			find(lookup, kind, p.Tenant, &ps.Tenants).Delete = true
+		case rest.CreateUsers:
+			find(lookup, kind, p.User, &ps.Users).Create = true
+		case rest.ReadUsers:
+			find(lookup, kind, p.User, &ps.Users).Read = true
+		case rest.UpdateUsers:
+			find(lookup, kind, p.User, &ps.Users).Update = true
+		case rest.DeleteUsers:
+			find(lookup, kind, p.User, &ps.Users).Delete = true
 		}
 	}
+
 	return nil
 }
 
-func merge[T any](lookup map[string]any, key string, slice *[]T, set func(*T)) {
+func find[T any](lookup map[string]any, kind string, data json.RawMessage, dest *[]T) *T {
+	key := kind + string(data)
 	addr, ok := lookup[key]
 	if !ok {
-		*slice = append(*slice, *new(T))
-		addr = &(*slice)[len(*slice)-1]
+		var t T
+		if len(data) > 0 {
+			if err := json.Unmarshal(data, &t); err != nil {
+				return new(T)
+			}
+		}
+		*dest = append(*dest, t)
+		addr = &(*dest)[len(*dest)-1]
 		lookup[key] = addr
+
 	}
-	set(addr.(*T))
+	return addr.(*T)
 }

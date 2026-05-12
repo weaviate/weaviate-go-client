@@ -1176,209 +1176,209 @@ func TestRESTResponses(t *testing.T) {
 							"alias":      "Musicians",
 						},
 					},
-					// 	{
-					// 		"action": "manage_backups",
-					// 		"backups": map[string]any{
-					// 			"collection": "Songs",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "read_cluster",
-					// 	},
-					// 	{
-					// 		"action": "create_collections",
-					// 		"collections": map[string]any{
-					// 			"collection": "Songs",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "read_collections",
-					// 		"collections": map[string]any{
-					// 			"collection": "Songs",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "update_collections",
-					// 		"collections": map[string]any{
-					// 			"collection": "Artists",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "delete_collections",
-					// 		"collections": map[string]any{
-					// 			"collection": "Artists",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "create_data",
-					// 		"data": map[string]any{
-					// 			"collection": "Songs",
-					// 			"tenant":     "john_doe",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "read_data",
-					// 		"data": map[string]any{
-					// 			"collection": "Songs",
-					// 			"tenant":     "john_doe",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "update_data",
-					// 		"data": map[string]any{
-					// 			"collection": "Artists",
-					// 			"object":     "12345678-.*",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "delete_data",
-					// 		"data": map[string]any{
-					// 			"collection": "Artists",
-					// 			"object":     "12345678-.*",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "read_groups",
-					// 		"groups": map[string]any{
-					// 			"group":     "external",
-					// 			"groupType": "oidc",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "assign_and_revoke_groups",
-					// 		"groups": map[string]any{
-					// 			"group":     "external",
-					// 			"groupType": "oidc",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "manage_namespaces",
-					// 		"namespaces": map[string]any{
-					// 			"namespace": "sandbox",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "read_nodes",
-					// 		"nodes": map[string]any{
-					// 			"collection": "Songs",
-					// 			"verbosity":  api.NodeVerbosityMinimal,
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "read_nodes",
-					// 		"nodes": map[string]any{
-					// 			"collection": "Artists",
-					// 			"verbosity":  api.NodeVerbosityVerbose,
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "create_replicate",
-					// 		"replicate": map[string]any{
-					// 			"collection": "Songs",
-					// 			"shard":      "abc",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "read_replicate",
-					// 		"replicate": map[string]any{
-					// 			"collection": "Songs",
-					// 			"shard":      "abc",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "update_replicate",
-					// 		"replicate": map[string]any{
-					// 			"collection": "Songs",
-					// 			"shard":      "xyz",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "delete_replicate",
-					// 		"replicate": map[string]any{
-					// 			"collection": "Songs",
-					// 			"shard":      "xyz",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "create_roles",
-					// 		"roles": map[string]any{
-					// 			"role":  "rock-n-role",
-					// 			"scope": api.RolesScopeAll,
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "read_roles",
-					// 		"roles": map[string]any{
-					// 			"role":  "rock-n-role",
-					// 			"scope": api.RolesScopeAll,
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "update_roles",
-					// 		"roles": map[string]any{
-					// 			"role":  "rock-n-role",
-					// 			"scope": api.RolesScopeMatch,
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "delete_roles",
-					// 		"roles": map[string]any{
-					// 			"role":  "rock-n-role",
-					// 			"scope": api.RolesScopeMatch,
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "create_tenants",
-					// 		"tenants": map[string]any{
-					// 			"collection": "Songs",
-					// 			"tenant":     "john_doe",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "read_tenants",
-					// 		"tenants": map[string]any{
-					// 			"collection": "Songs",
-					// 			"tenant":     "john_doe",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "update_tenants",
-					// 		"tenants": map[string]any{
-					// 			"collection": "Artists",
-					// 			"tenant":     "*",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "delete_tenants",
-					// 		"tenants": map[string]any{
-					// 			"collection": "Artists",
-					// 			"tenant":     "*",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "create_users",
-					// 		"users": map[string]any{
-					// 			"user": "john_doe",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "read_users",
-					// 		"users": map[string]any{
-					// 			"user": "john_doe",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "update_users",
-					// 		"users": map[string]any{
-					// 			"user": "jane_doe",
-					// 		},
-					// 	},
-					// 	{
-					// 		"action": "delete_users",
-					// 		"users": map[string]any{
-					// 			"user": "jane_doe",
-					// 		},
-					// 	},
+					{
+						"action": "manage_backups",
+						"backups": map[string]any{
+							"collection": "Songs",
+						},
+					},
+					{
+						"action": "read_cluster",
+					},
+					{
+						"action": "create_collections",
+						"collections": map[string]any{
+							"collection": "Songs",
+						},
+					},
+					{
+						"action": "read_collections",
+						"collections": map[string]any{
+							"collection": "Songs",
+						},
+					},
+					{
+						"action": "update_collections",
+						"collections": map[string]any{
+							"collection": "Artists",
+						},
+					},
+					{
+						"action": "delete_collections",
+						"collections": map[string]any{
+							"collection": "Artists",
+						},
+					},
+					{
+						"action": "create_data",
+						"data": map[string]any{
+							"collection": "Songs",
+							"tenant":     "john_doe",
+						},
+					},
+					{
+						"action": "read_data",
+						"data": map[string]any{
+							"collection": "Songs",
+							"tenant":     "john_doe",
+						},
+					},
+					{
+						"action": "update_data",
+						"data": map[string]any{
+							"collection": "Artists",
+							"object":     "12345678-.*",
+						},
+					},
+					{
+						"action": "delete_data",
+						"data": map[string]any{
+							"collection": "Artists",
+							"object":     "12345678-.*",
+						},
+					},
+					{
+						"action": "read_groups",
+						"groups": map[string]any{
+							"group":     "external",
+							"groupType": "oidc",
+						},
+					},
+					{
+						"action": "assign_and_revoke_groups",
+						"groups": map[string]any{
+							"group":     "external",
+							"groupType": "oidc",
+						},
+					},
+					{
+						"action": "manage_namespaces",
+						"namespaces": map[string]any{
+							"namespace": "sandbox",
+						},
+					},
+					{
+						"action": "read_nodes",
+						"nodes": map[string]any{
+							"collection": "Songs",
+							"verbosity":  api.NodeVerbosityMinimal,
+						},
+					},
+					{
+						"action": "read_nodes",
+						"nodes": map[string]any{
+							"collection": "Artists",
+							"verbosity":  api.NodeVerbosityVerbose,
+						},
+					},
+					{
+						"action": "create_replicate",
+						"replicate": map[string]any{
+							"collection": "Songs",
+							"shard":      "abc",
+						},
+					},
+					{
+						"action": "read_replicate",
+						"replicate": map[string]any{
+							"collection": "Songs",
+							"shard":      "abc",
+						},
+					},
+					{
+						"action": "update_replicate",
+						"replicate": map[string]any{
+							"collection": "Songs",
+							"shard":      "xyz",
+						},
+					},
+					{
+						"action": "delete_replicate",
+						"replicate": map[string]any{
+							"collection": "Songs",
+							"shard":      "xyz",
+						},
+					},
+					{
+						"action": "create_roles",
+						"roles": map[string]any{
+							"role":  "rock-n-role",
+							"scope": api.RolesScopeAll,
+						},
+					},
+					{
+						"action": "read_roles",
+						"roles": map[string]any{
+							"role":  "rock-n-role",
+							"scope": api.RolesScopeAll,
+						},
+					},
+					{
+						"action": "update_roles",
+						"roles": map[string]any{
+							"role":  "rock-n-role",
+							"scope": api.RolesScopeMatch,
+						},
+					},
+					{
+						"action": "delete_roles",
+						"roles": map[string]any{
+							"role":  "rock-n-role",
+							"scope": api.RolesScopeMatch,
+						},
+					},
+					{
+						"action": "create_tenants",
+						"tenants": map[string]any{
+							"collection": "Songs",
+							"tenant":     "john_doe",
+						},
+					},
+					{
+						"action": "read_tenants",
+						"tenants": map[string]any{
+							"collection": "Songs",
+							"tenant":     "john_doe",
+						},
+					},
+					{
+						"action": "update_tenants",
+						"tenants": map[string]any{
+							"collection": "Artists",
+							"tenant":     "*",
+						},
+					},
+					{
+						"action": "delete_tenants",
+						"tenants": map[string]any{
+							"collection": "Artists",
+							"tenant":     "*",
+						},
+					},
+					{
+						"action": "create_users",
+						"users": map[string]any{
+							"user": "john_doe",
+						},
+					},
+					{
+						"action": "read_users",
+						"users": map[string]any{
+							"user": "john_doe",
+						},
+					},
+					{
+						"action": "update_users",
+						"users": map[string]any{
+							"user": "jane_doe",
+						},
+					},
+					{
+						"action": "delete_users",
+						"users": map[string]any{
+							"user": "jane_doe",
+						},
+					},
 				},
 			},
 			dest: new(api.Role),
@@ -1395,71 +1395,71 @@ func TestRESTResponses(t *testing.T) {
 							Update: true, Delete: true,
 						},
 					},
-					// Backups: []api.BackupsPermission{
-					// 	{Collection: "Songs", Manage: true},
-					// },
-					// Cluster: []api.ClusterPermission{{Read: true}},
-					// Collections: []api.CollectionsPermission{
-					// 	{Collection: "Songs", Create: true, Read: true},
-					// 	{Collection: "Artists", Update: true, Delete: true},
-					// },
-					// Data: []api.DataPermission{
-					// 	{
-					// 		Collection: "Songs", Tenant: "john_doe",
-					// 		Create: true, Read: true,
-					// 	},
-					// 	{
-					// 		Collection: "Artists", Object: "12345678-.*",
-					// 		Update: true, Delete: true,
-					// 	},
-					// },
-					// Groups: []api.GroupsPermission{
-					// 	{
-					// 		GroupID: "external", Type: "oidc",
-					// 		Read: true, AssignAndRevoke: true,
-					// 	},
-					// },
-					// Namespaces: []api.NamespacePermission{
-					// 	{Namespace: "sandbox", Manage: true},
-					// },
-					// Nodes: []api.NodesPermission{
-					// 	{Collection: "Songs", Verbosity: api.NodeVerbosityMinimal, Read: true},
-					// 	{Collection: "Artists", Verbosity: api.NodeVerbosityVerbose, Read: true},
-					// },
-					// Replication: []api.ReplicationPermission{
-					// 	{
-					// 		Collection: "Songs", Shard: "abc",
-					// 		Create: true, Read: true,
-					// 	},
-					// 	{
-					// 		Collection: "Songs", Shard: "xyz",
-					// 		Update: true, Delete: true,
-					// 	},
-					// },
-					// Roles: []api.RolesPermission{
-					// 	{
-					// 		RoleID: "rock-n-role", Scope: api.RolesScopeAll,
-					// 		Create: true, Read: true,
-					// 	},
-					// 	{
-					// 		RoleID: "rock-n-role", Scope: api.RolesScopeMatch,
-					// 		Update: true, Delete: true,
-					// 	},
-					// },
-					// Tenants: []api.TenantsPermission{
-					// 	{
-					// 		Collection: "Songs", Tenant: "john_doe",
-					// 		Create: true, Read: true,
-					// 	},
-					// 	{
-					// 		Collection: "Artists", Tenant: "*",
-					// 		Update: true, Delete: true,
-					// 	},
-					// },
-					// Users: []api.UsersPermission{
-					// 	{UserID: "john_doe", Create: true, Read: true},
-					// 	{UserID: "jane_doe", Update: true, Delete: true},
-					// },
+					Backups: []api.BackupsPermission{
+						{Collection: "Songs", Manage: true},
+					},
+					Cluster: []api.ClusterPermission{{Read: true}},
+					Collections: []api.CollectionsPermission{
+						{Collection: "Songs", Create: true, Read: true},
+						{Collection: "Artists", Update: true, Delete: true},
+					},
+					Data: []api.DataPermission{
+						{
+							Collection: "Songs", Tenant: "john_doe",
+							Create: true, Read: true,
+						},
+						{
+							Collection: "Artists", Object: "12345678-.*",
+							Update: true, Delete: true,
+						},
+					},
+					Groups: []api.GroupsPermission{
+						{
+							GroupID: "external", Type: "oidc",
+							Read: true, AssignAndRevoke: true,
+						},
+					},
+					Namespaces: []api.NamespacePermission{
+						{Namespace: "sandbox", Manage: true},
+					},
+					Nodes: []api.NodesPermission{
+						{Collection: "Songs", Verbosity: api.NodeVerbosityMinimal, Read: true},
+						{Collection: "Artists", Verbosity: api.NodeVerbosityVerbose, Read: true},
+					},
+					Replication: []api.ReplicationPermission{
+						{
+							Collection: "Songs", Shard: "abc",
+							Create: true, Read: true,
+						},
+						{
+							Collection: "Songs", Shard: "xyz",
+							Update: true, Delete: true,
+						},
+					},
+					Roles: []api.RolesPermission{
+						{
+							RoleID: "rock-n-role", Scope: api.RolesScopeAll,
+							Create: true, Read: true,
+						},
+						{
+							RoleID: "rock-n-role", Scope: api.RolesScopeMatch,
+							Update: true, Delete: true,
+						},
+					},
+					Tenants: []api.TenantsPermission{
+						{
+							Collection: "Songs", Tenant: "john_doe",
+							Create: true, Read: true,
+						},
+						{
+							Collection: "Artists", Tenant: "*",
+							Update: true, Delete: true,
+						},
+					},
+					Users: []api.UsersPermission{
+						{UserID: "john_doe", Create: true, Read: true},
+						{UserID: "jane_doe", Update: true, Delete: true},
+					},
 				},
 			},
 		},
