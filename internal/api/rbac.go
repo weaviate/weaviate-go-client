@@ -169,241 +169,154 @@ const (
 
 func (r *Role) MarshalJSON() ([]byte, error) {
 	permissions := make([]map[string]any, 0)
+
+	add := func(action rest.PermissionAction, data any) {
+		permission := map[string]any{"action": action}
+		if data != nil {
+			var kind string
+			if parts := strings.Split(string(action), "_"); len(parts) != 0 {
+				kind = parts[len(parts)-1]
+				permission[kind] = data
+			}
+		}
+		permissions = append(permissions, permission)
+	}
+
 	for _, p := range r.Permissions.Aliases {
 		if p.Create {
-			permissions = append(permissions, map[string]any{
-				"action":  rest.CreateAliases,
-				"aliases": p,
-			})
+			add(rest.CreateAliases, p)
 		}
 		if p.Read {
-			permissions = append(permissions, map[string]any{
-				"action":  rest.ReadAliases,
-				"aliases": p,
-			})
+			add(rest.ReadAliases, p)
 		}
 		if p.Update {
-			permissions = append(permissions, map[string]any{
-				"action":  rest.UpdateAliases,
-				"aliases": p,
-			})
+			add(rest.UpdateAliases, p)
 		}
 		if p.Delete {
-			permissions = append(permissions, map[string]any{
-				"action":  rest.DeleteAliases,
-				"aliases": p,
-			})
+			add(rest.DeleteAliases, p)
 		}
 	}
 
 	for _, p := range r.Permissions.Backups {
 		if p.Manage {
-			permissions = append(permissions, map[string]any{
-				"action":  rest.ManageBackups,
-				"backups": p,
-			})
+			add(rest.ManageBackups, p)
 		}
 	}
 
 	for _, p := range r.Permissions.Cluster {
 		if p.Read {
-			permissions = append(permissions, map[string]any{
-				"action": rest.ReadCluster,
-			})
+			add(rest.ReadCluster, nil)
 		}
 	}
 
 	for _, p := range r.Permissions.Collections {
 		if p.Create {
-			permissions = append(permissions, map[string]any{
-				"action":      rest.CreateCollections,
-				"collections": p,
-			})
+			add(rest.CreateCollections, p)
 		}
 		if p.Read {
-			permissions = append(permissions, map[string]any{
-				"action":      rest.ReadCollections,
-				"collections": p,
-			})
+			add(rest.ReadCollections, p)
 		}
 		if p.Update {
-			permissions = append(permissions, map[string]any{
-				"action":      rest.UpdateCollections,
-				"collections": p,
-			})
+			add(rest.UpdateCollections, p)
 		}
 		if p.Delete {
-			permissions = append(permissions, map[string]any{
-				"action":      rest.DeleteCollections,
-				"collections": p,
-			})
+			add(rest.DeleteCollections, p)
 		}
 	}
 
 	for _, p := range r.Permissions.Data {
 		if p.Create {
-			permissions = append(permissions, map[string]any{
-				"action": rest.CreateData,
-				"data":   p,
-			})
+			add(rest.CreateData, p)
 		}
 		if p.Read {
-			permissions = append(permissions, map[string]any{
-				"action": rest.ReadData,
-				"data":   p,
-			})
+			add(rest.ReadData, p)
 		}
 		if p.Update {
-			permissions = append(permissions, map[string]any{
-				"action": rest.UpdateData,
-				"data":   p,
-			})
+			add(rest.UpdateData, p)
 		}
 		if p.Delete {
-			permissions = append(permissions, map[string]any{
-				"action": rest.DeleteData,
-				"data":   p,
-			})
+			add(rest.DeleteData, p)
 		}
 	}
+
 	for _, p := range r.Permissions.Groups {
 		if p.Read {
-			permissions = append(permissions, map[string]any{
-				"action": rest.ReadGroups,
-				"groups": p,
-			})
+			add(rest.ReadGroups, p)
 		}
 		if p.AssignAndRevoke {
-			permissions = append(permissions, map[string]any{
-				"action": rest.AssignAndRevokeGroups,
-				"groups": p,
-			})
+			add(rest.AssignAndRevokeGroups, p)
 		}
 	}
 
 	for _, p := range r.Permissions.Namespaces {
 		if p.Manage {
-			permissions = append(permissions, map[string]any{
-				"action":     rest.ManageNamespaces,
-				"namespaces": p,
-			})
+			add(rest.ManageNamespaces, p)
 		}
 	}
 
 	for _, p := range r.Permissions.Nodes {
 		if p.Read {
-			permissions = append(permissions, map[string]any{
-				"action": rest.ReadNodes,
-				"nodes":  p,
-			})
+			add(rest.ReadNodes, p)
 		}
 	}
 
 	for _, p := range r.Permissions.Replication {
 		if p.Create {
-			permissions = append(permissions, map[string]any{
-				"action":    rest.CreateReplicate,
-				"replicate": p,
-			})
+			add(rest.CreateReplicate, p)
 		}
 		if p.Read {
-			permissions = append(permissions, map[string]any{
-				"action":    rest.ReadReplicate,
-				"replicate": p,
-			})
+			add(rest.ReadReplicate, p)
 		}
 		if p.Update {
-			permissions = append(permissions, map[string]any{
-				"action":    rest.UpdateReplicate,
-				"replicate": p,
-			})
+			add(rest.UpdateReplicate, p)
 		}
 		if p.Delete {
-			permissions = append(permissions, map[string]any{
-				"action":    rest.DeleteReplicate,
-				"replicate": p,
-			})
+			add(rest.DeleteReplicate, p)
 		}
 	}
 
 	for _, p := range r.Permissions.Roles {
 		if p.Create {
-			permissions = append(permissions, map[string]any{
-				"action": rest.CreateRoles,
-				"roles":  p,
-			})
+			add(rest.CreateRoles, p)
 		}
 		if p.Read {
-			permissions = append(permissions, map[string]any{
-				"action": rest.ReadRoles,
-				"roles":  p,
-			})
+			add(rest.ReadRoles, p)
 		}
 		if p.Update {
-			permissions = append(permissions, map[string]any{
-				"action": rest.UpdateRoles,
-				"roles":  p,
-			})
+			add(rest.UpdateRoles, p)
 		}
 		if p.Delete {
-			permissions = append(permissions, map[string]any{
-				"action": rest.DeleteRoles,
-				"roles":  p,
-			})
+			add(rest.DeleteRoles, p)
 		}
 	}
 
 	for _, p := range r.Permissions.Tenants {
 		if p.Create {
-			permissions = append(permissions, map[string]any{
-				"action":  rest.CreateTenants,
-				"tenants": p,
-			})
+			add(rest.CreateTenants, p)
 		}
 		if p.Read {
-			permissions = append(permissions, map[string]any{
-				"action":  rest.ReadTenants,
-				"tenants": p,
-			})
+			add(rest.ReadTenants, p)
 		}
 		if p.Update {
-			permissions = append(permissions, map[string]any{
-				"action":  rest.UpdateTenants,
-				"tenants": p,
-			})
+			add(rest.UpdateTenants, p)
 		}
 		if p.Delete {
-			permissions = append(permissions, map[string]any{
-				"action":  rest.DeleteTenants,
-				"tenants": p,
-			})
+			add(rest.DeleteTenants, p)
 		}
 	}
 
 	for _, p := range r.Permissions.Users {
 		if p.Create {
-			permissions = append(permissions, map[string]any{
-				"action": rest.CreateUsers,
-				"users":  p,
-			})
+			add(rest.CreateUsers, p)
 		}
 		if p.Read {
-			permissions = append(permissions, map[string]any{
-				"action": rest.ReadUsers,
-				"users":  p,
-			})
+			add(rest.ReadUsers, p)
 		}
 		if p.Update {
-			permissions = append(permissions, map[string]any{
-				"action": rest.UpdateUsers,
-				"users":  p,
-			})
+			add(rest.UpdateUsers, p)
 		}
 		if p.Delete {
-			permissions = append(permissions, map[string]any{
-				"action": rest.DeleteUsers,
-				"users":  p,
-			})
+			add(rest.DeleteUsers, p)
 		}
 	}
 
