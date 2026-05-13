@@ -831,6 +831,72 @@ func TestRESTRequests(t *testing.T) {
 			wantMethod: http.MethodGet,
 			wantPath:   "/authz/roles",
 		},
+		{
+			name:       "get assigned users",
+			req:        api.GetAssignedUsersRequest("rock-n-role"),
+			wantMethod: http.MethodGet,
+			wantPath:   "/authz/roles/rock-n-role/users",
+		},
+		{
+			name:       "get user assignments",
+			req:        api.GetUserAssignmentsRequest("rock-n-role"),
+			wantMethod: http.MethodGet,
+			wantPath:   "/authz/roles/rock-n-role/user-assignments",
+		},
+		{
+			name:       "get group assignments",
+			req:        api.GetGroupAssignmentsRequest("rock-n-role"),
+			wantMethod: http.MethodGet,
+			wantPath:   "/authz/roles/rock-n-role/group-assignments",
+		},
+		{
+			name: "add permissions to role",
+			req: &api.AddPermissionsRequest{
+				RoleID: "rock-n-role",
+				Permissions: api.Permissions{
+					Cluster: []api.ClusterPermission{
+						{Read: true},
+					},
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/roles/rock-n-role/add-permissions",
+			wantBody: map[string]any{
+				"permissions": []map[string]any{
+					{"action": "read_cluster"},
+				},
+			},
+		},
+		{
+			name: "remove permissions from role",
+			req: &api.RemovePermissionsRequest{
+				RoleID: "rock-n-role",
+				Permissions: api.Permissions{
+					Cluster: []api.ClusterPermission{
+						{Read: true},
+					},
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/roles/rock-n-role/remove-permissions",
+			wantBody: map[string]any{
+				"permissions": []map[string]any{
+					{"action": "read_cluster"},
+				},
+			},
+		},
+		{
+			name: "check role has permission",
+			req: &api.HasPermissionRequest{
+				RoleID:  "rock-n-role",
+				Cluster: api.ClusterPermission{Read: true},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/roles/rock-n-role/has-permission",
+			wantBody: map[string]any{
+				"action": "read_cluster",
+			},
+		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)
@@ -1461,6 +1527,36 @@ func TestRESTResponses(t *testing.T) {
 						{UserID: "jane_doe", Update: true, Delete: true},
 					},
 				},
+			},
+		},
+		{
+			name: "role has permission",
+			body: testkit.Ptr(true),
+			dest: new(api.HasPermissionResponse),
+			want: testkit.Ptr[api.HasPermissionResponse](true),
+		},
+		{
+			name: "user assignment",
+			body: map[string]any{
+				"userId":   "john_doe",
+				"userType": "db_env",
+			},
+			dest: new(api.UserAssignment),
+			want: &api.UserAssignment{
+				ID:   "john_doe",
+				Type: "db_env",
+			},
+		},
+		{
+			name: "group assignment",
+			body: map[string]any{
+				"groupId":   "external",
+				"groupType": "oidc",
+			},
+			dest: new(api.GroupAssignment),
+			want: &api.GroupAssignment{
+				ID:   "external",
+				Type: "oidc",
 			},
 		},
 	} {

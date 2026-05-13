@@ -202,6 +202,9 @@ func (rc *RolesClient) AssignedUserIDs(ctx context.Context, roleID string) ([]st
 	return []string(resp), nil
 }
 
+// TODO(dyma): replace with map[username]usertype?
+// Or just User, containing Type and ID, but other fields zeroed.
+// Otherwise we're polluting the API.
 type UserAssignment api.UserAssignment
 
 func (rc *RolesClient) UserAssignments(ctx context.Context, roleID string) ([]UserAssignment, error) {

@@ -182,8 +182,8 @@ type (
 		Type string `json:"userType"`
 	}
 	GroupAssignment struct {
-		ID   string `json:"userId"`
-		Type string `json:"userType"`
+		ID   string `json:"groupId"`
+		Type string `json:"groupType"`
 	}
 )
 
@@ -335,8 +335,10 @@ func (r *HasPermissionRequest) MarshalJSON() ([]byte, error) {
 	}
 
 	permission := map[string]any{"action": action}
-	if kind := permissionKind(action); kind != "" {
-		permission[kind] = data
+	if data != nil {
+		if kind := permissionKind(action); kind != "" {
+			permission[kind] = data
+		}
 	}
 	return json.Marshal(permission)
 }
