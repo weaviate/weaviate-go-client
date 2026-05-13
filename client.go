@@ -15,6 +15,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/auth"
+	"github.com/weaviate/weaviate-go-client/v6/rbac"
 	"golang.org/x/oauth2"
 )
 
@@ -23,6 +24,7 @@ type Client struct {
 
 	Backup      *backup.Client
 	Collections *collections.Client
+	Roles       *rbac.RolesClient
 }
 
 var _ io.Closer = (*Client)(nil)
@@ -133,6 +135,7 @@ func newClient(ctx context.Context, options []Option) (*Client, error) {
 		transport:   t,
 		Collections: collections.NewClient(t),
 		Backup:      backup.NewClient(t),
+		Roles:       rbac.NewRolesClient(t),
 	}, nil
 }
 
