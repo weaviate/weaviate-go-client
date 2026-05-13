@@ -4803,6 +4803,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
                     description: Forbidden
+                "410":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Endpoint not available in the current cluster configuration.
                 "500":
                     content:
                         application/json:
@@ -4845,6 +4851,12 @@ paths:
                 "404":
                     content: {}
                     description: Classification with the given ID not found.
+                "410":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Endpoint not available in the current cluster configuration.
                 "500":
                     content:
                         application/json:
@@ -5097,6 +5109,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
                     description: Forbidden
+                "410":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Endpoint not available in the current cluster configuration.
                 "422":
                     content:
                         application/json:
@@ -5150,6 +5168,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
                     description: Forbidden
+                "410":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Endpoint not available in the current cluster configuration.
                 "422":
                     content:
                         application/json:
@@ -5597,6 +5621,12 @@ paths:
                 "404":
                     content: {}
                     description: Successful query result but no matching objects were found.
+                "410":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Endpoint not available in the current cluster configuration.
                 "422":
                     content:
                         application/json:
@@ -6338,6 +6368,12 @@ paths:
                 "404":
                     content: {}
                     description: Object not found.
+                "410":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Endpoint not available in the current cluster configuration.
                 "500":
                     content:
                         application/json:
@@ -6393,6 +6429,12 @@ paths:
                 "404":
                     content: {}
                     description: Object not found.
+                "410":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Endpoint not available in the current cluster configuration.
                 "500":
                     content:
                         application/json:
@@ -6434,6 +6476,12 @@ paths:
                 "404":
                     content: {}
                     description: Object does not exist.
+                "410":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Endpoint not available in the current cluster configuration.
                 "500":
                     content:
                         application/json:
@@ -6493,6 +6541,12 @@ paths:
                 "404":
                     content: {}
                     description: Object not found.
+                "410":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Endpoint not available in the current cluster configuration.
                 "422":
                     content:
                         application/json:
@@ -6559,6 +6613,12 @@ paths:
                 "404":
                     content: {}
                     description: Object not found.
+                "410":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Endpoint not available in the current cluster configuration.
                 "422":
                     content:
                         application/json:
@@ -6632,6 +6692,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
                     description: Object or reference not found.
+                "410":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Endpoint not available in the current cluster configuration.
                 "500":
                     content:
                         application/json:
@@ -6692,6 +6758,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
                     description: Forbidden
+                "410":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Endpoint not available in the current cluster configuration.
                 "422":
                     content:
                         application/json:
@@ -6758,6 +6830,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
                     description: Forbidden
+                "410":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Endpoint not available in the current cluster configuration.
                 "422":
                     content:
                         application/json:
@@ -7566,6 +7644,12 @@ paths:
                 "404":
                     content: {}
                     description: Collection not found.
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Invalid collection name provided (e.g. malformed namespace prefix). Check the ErrorResponse for details.
                 "500":
                     content:
                         application/json:
