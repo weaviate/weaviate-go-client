@@ -45,10 +45,15 @@ func (r *CreateRoleRequest) Method() string { return http.MethodPost }
 func (r *CreateRoleRequest) Path() string   { return "/authz/roles" }
 func (r *CreateRoleRequest) Body() any      { return &r.Role }
 
+// GetRoleRequest fetches the role by it's ID.
+// Use with [ResourceExistsResponse] or [Role] response types.
 var GetRoleRequest = transports.IdentityEndpoint[string](http.MethodGet, "/authz/roles/%s")
 
+// ListRolesRequest fetches all roles defined in the cluster.
+// Use with []Role response type.
 var ListRolesRequest = transports.StaticEndpoint(http.MethodGet, "/authz/roles")
 
+// DeleteRoleRequest deletes a role by it's ID.
 var DeleteRoleRequest = transports.IdentityEndpoint[string](http.MethodDelete, "/authz/roles/%s")
 
 type Permission struct {
@@ -167,9 +172,14 @@ const (
 	RoleScopeMatch = RoleScope(rest.PermissionRolesScopeMatch)
 )
 
+// MarshalJSON flattens role's permissions, creating an individual
+// entry for every action.
 func (r *Role) MarshalJSON() ([]byte, error) {
 	permissions := make([]map[string]any, 0)
 
+	// Add permission with given action and resources.
+	// The last part of the action string is the resource kind,
+	// e.g. "aliases" in "create_aliases" or "groups" in "assign_and_revoke_groups".
 	add := func(action rest.PermissionAction, data any) {
 		permission := map[string]any{"action": action}
 		if data != nil {
@@ -329,6 +339,7 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// UnmarshalJSON groups role's permissions by resources.
 func (r *Role) UnmarshalJSON(data []byte) error {
 	var role struct {
 		ID          string `json:"name"`
@@ -355,91 +366,107 @@ func (r *Role) UnmarshalJSON(data []byte) error {
 
 	*r = Role{ID: role.ID}
 
+	// Set of permissions with unique resource identifiers.
+	// The key is a concatenation of <kind> and <data>, such
+	// that mulitple permissions for the same resource are
+	// represented as a single instance. The value is the
+	// permission itself, e.g. [AliasPermission].
 	lookup := make(map[string]any)
 	for _, p := range role.Permissions {
-		var kind string
-		if parts := strings.Split(string(p.Action), "_"); len(parts) != 0 {
-			kind = parts[len(parts)-1]
-		} else {
-			continue
-		}
-
 		switch p.Action {
 		case rest.CreateAliases:
-			find(lookup, kind, p.Alias, &r.Aliases).Create = true
+			find(lookup, p.Action, p.Alias, &r.Aliases).Create = true
 		case rest.ReadAliases:
-			find(lookup, kind, p.Alias, &r.Aliases).Read = true
+			find(lookup, p.Action, p.Alias, &r.Aliases).Read = true
 		case rest.UpdateAliases:
-			find(lookup, kind, p.Alias, &r.Aliases).Update = true
+			find(lookup, p.Action, p.Alias, &r.Aliases).Update = true
 		case rest.DeleteAliases:
-			find(lookup, kind, p.Alias, &r.Aliases).Delete = true
+			find(lookup, p.Action, p.Alias, &r.Aliases).Delete = true
 		case rest.ManageBackups:
-			find(lookup, kind, p.Backup, &r.Backups).Manage = true
+			find(lookup, p.Action, p.Backup, &r.Backups).Manage = true
 		case rest.ReadCluster:
-			find(lookup, kind, p.Cluster, &r.Cluster).Read = true
+			find(lookup, p.Action, p.Cluster, &r.Cluster).Read = true
 		case rest.CreateCollections:
-			find(lookup, kind, p.Collection, &r.Collections).Create = true
+			find(lookup, p.Action, p.Collection, &r.Collections).Create = true
 		case rest.ReadCollections:
-			find(lookup, kind, p.Collection, &r.Collections).Read = true
+			find(lookup, p.Action, p.Collection, &r.Collections).Read = true
 		case rest.UpdateCollections:
-			find(lookup, kind, p.Collection, &r.Collections).Update = true
+			find(lookup, p.Action, p.Collection, &r.Collections).Update = true
 		case rest.DeleteCollections:
-			find(lookup, kind, p.Collection, &r.Collections).Delete = true
+			find(lookup, p.Action, p.Collection, &r.Collections).Delete = true
 		case rest.CreateData:
-			find(lookup, kind, p.Data, &r.Data).Create = true
+			find(lookup, p.Action, p.Data, &r.Data).Create = true
 		case rest.ReadData:
-			find(lookup, kind, p.Data, &r.Data).Read = true
+			find(lookup, p.Action, p.Data, &r.Data).Read = true
 		case rest.UpdateData:
-			find(lookup, kind, p.Data, &r.Data).Update = true
+			find(lookup, p.Action, p.Data, &r.Data).Update = true
 		case rest.DeleteData:
-			find(lookup, kind, p.Data, &r.Data).Delete = true
+			find(lookup, p.Action, p.Data, &r.Data).Delete = true
 		case rest.ReadGroups:
-			find(lookup, kind, p.Group, &r.Groups).Read = true
+			find(lookup, p.Action, p.Group, &r.Groups).Read = true
 		case rest.AssignAndRevokeGroups:
-			find(lookup, kind, p.Group, &r.Groups).AssignAndRevoke = true
+			find(lookup, p.Action, p.Group, &r.Groups).AssignAndRevoke = true
 		case rest.ManageNamespaces:
-			find(lookup, kind, p.Namespace, &r.Namespaces).Manage = true
+			find(lookup, p.Action, p.Namespace, &r.Namespaces).Manage = true
 		case rest.ReadNodes:
-			find(lookup, kind, p.Node, &r.Nodes).Read = true
+			find(lookup, p.Action, p.Node, &r.Nodes).Read = true
 		case rest.CreateReplicate:
-			find(lookup, kind, p.Replication, &r.Replication).Create = true
+			find(lookup, p.Action, p.Replication, &r.Replication).Create = true
 		case rest.ReadReplicate:
-			find(lookup, kind, p.Replication, &r.Replication).Read = true
+			find(lookup, p.Action, p.Replication, &r.Replication).Read = true
 		case rest.UpdateReplicate:
-			find(lookup, kind, p.Replication, &r.Replication).Update = true
+			find(lookup, p.Action, p.Replication, &r.Replication).Update = true
 		case rest.DeleteReplicate:
-			find(lookup, kind, p.Replication, &r.Replication).Delete = true
+			find(lookup, p.Action, p.Replication, &r.Replication).Delete = true
 		case rest.CreateRoles:
-			find(lookup, kind, p.Role, &r.Roles).Create = true
+			find(lookup, p.Action, p.Role, &r.Roles).Create = true
 		case rest.ReadRoles:
-			find(lookup, kind, p.Role, &r.Roles).Read = true
+			find(lookup, p.Action, p.Role, &r.Roles).Read = true
 		case rest.UpdateRoles:
-			find(lookup, kind, p.Role, &r.Roles).Update = true
+			find(lookup, p.Action, p.Role, &r.Roles).Update = true
 		case rest.DeleteRoles:
-			find(lookup, kind, p.Role, &r.Roles).Delete = true
+			find(lookup, p.Action, p.Role, &r.Roles).Delete = true
 		case rest.CreateTenants:
-			find(lookup, kind, p.Tenant, &r.Tenants).Create = true
+			find(lookup, p.Action, p.Tenant, &r.Tenants).Create = true
 		case rest.ReadTenants:
-			find(lookup, kind, p.Tenant, &r.Tenants).Read = true
+			find(lookup, p.Action, p.Tenant, &r.Tenants).Read = true
 		case rest.UpdateTenants:
-			find(lookup, kind, p.Tenant, &r.Tenants).Update = true
+			find(lookup, p.Action, p.Tenant, &r.Tenants).Update = true
 		case rest.DeleteTenants:
-			find(lookup, kind, p.Tenant, &r.Tenants).Delete = true
+			find(lookup, p.Action, p.Tenant, &r.Tenants).Delete = true
 		case rest.CreateUsers:
-			find(lookup, kind, p.User, &r.Users).Create = true
+			find(lookup, p.Action, p.User, &r.Users).Create = true
 		case rest.ReadUsers:
-			find(lookup, kind, p.User, &r.Users).Read = true
+			find(lookup, p.Action, p.User, &r.Users).Read = true
 		case rest.UpdateUsers:
-			find(lookup, kind, p.User, &r.Users).Update = true
+			find(lookup, p.Action, p.User, &r.Users).Update = true
 		case rest.DeleteUsers:
-			find(lookup, kind, p.User, &r.Users).Delete = true
+			find(lookup, p.Action, p.User, &r.Users).Delete = true
 		}
 	}
 
 	return nil
 }
 
-func find[T any](lookup map[string]any, kind string, data json.RawMessage, dest *[]T) *T {
+// find retrieves the data for the permission for the given resource.
+// The key is a concatenation of permission <kind> and <data>. The kind
+// is assumed to be the last part of the action, as per the namind convention.
+// If no permission for the given key exists, one is created by unmarshaling
+// data into a new instance of T and is appended to the dest.
+//
+// If kind could not be found (action contains no "_") or data cannot be
+// unmarshaled, find returns new(T), such that it is always safe to use
+// the return value without a nil-check. Some permissions might not have
+// any resource description, i.e. data is empty; for these, the unmarshaling
+// is skipped, and a zero value of T is appended to dest.
+func find[T any](lookup map[string]any, action rest.PermissionAction, data json.RawMessage, dest *[]T) *T {
+	var kind string
+	if parts := strings.Split(string(action), "_"); len(parts) != 0 {
+		kind = parts[len(parts)-1]
+	} else {
+		return new(T)
+	}
+
 	key := kind + string(data)
 	addr, ok := lookup[key]
 	if !ok {
@@ -452,7 +479,6 @@ func find[T any](lookup map[string]any, kind string, data json.RawMessage, dest 
 		*dest = append(*dest, t)
 		addr = &(*dest)[len(*dest)-1]
 		lookup[key] = addr
-
 	}
 	return addr.(*T)
 }
