@@ -6,10 +6,16 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
 
 type RolesClient struct {
 	transport internal.Transport
+}
+
+func NewRolesClient(t internal.Transport) *RolesClient {
+	dev.AssertNotNil(t, "transport")
+	return &RolesClient{transport: t}
 }
 
 type Role struct {
@@ -122,27 +128,33 @@ func (rc *RolesClient) Delete(ctx context.Context, roleID string) error {
 	return nil
 }
 
-type AddPermissions Role
+type AddPermissions struct {
+	RoleID      string
+	Permissions Permissions
+}
 
 func (rc *RolesClient) AddPermissions(ctx context.Context, options AddPermissions) error {
 	req := &api.AddPermissionsRequest{
-		RoleID:      options.ID,
+		RoleID:      options.RoleID,
 		Permissions: marshalPermissions(&options.Permissions),
 	}
-	if err := rc.transport.Do(ctx, &req, nil); err != nil {
+	if err := rc.transport.Do(ctx, req, nil); err != nil {
 		return fmt.Errorf("add role permissions: %w", err)
 	}
 	return nil
 }
 
-type RemovePermissions Role
+type RemovePermissions struct {
+	RoleID      string
+	Permissions Permissions
+}
 
 func (rc *RolesClient) RemovePermissions(ctx context.Context, options RemovePermissions) error {
 	req := &api.RemovePermissionsRequest{
-		RoleID:      options.ID,
+		RoleID:      options.RoleID,
 		Permissions: marshalPermissions(&options.Permissions),
 	}
-	if err := rc.transport.Do(ctx, &req, nil); err != nil {
+	if err := rc.transport.Do(ctx, req, nil); err != nil {
 		return fmt.Errorf("remove role permissions: %w", err)
 	}
 	return nil
@@ -166,7 +178,7 @@ type HasPermission struct {
 
 // HasPermission checks if a role contains a permission.
 // Only one permission can be checked in a single call.
-func (rc *RolesClient) HasPermission(ctx context.Context, roleID string, options HasPermission) (bool, error) {
+func (rc *RolesClient) HasPermission(ctx context.Context, options HasPermission) (bool, error) {
 	req := &api.HasPermissionRequest{
 		RoleID:      options.RoleID,
 		Alias:       api.AliasPermission(options.Alias),
