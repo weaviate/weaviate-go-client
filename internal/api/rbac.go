@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
@@ -10,8 +11,8 @@ import (
 )
 
 type Role struct {
-	ID string
-	Permissions
+	ID          string `json:"name"`
+	Permissions `json:"permissions"`
 }
 
 var (
@@ -34,42 +35,7 @@ type Permissions struct {
 	Users       []UserPermission
 }
 
-type CreateRoleRequest struct {
-	transports.BaseEndpoint
-	Role Role
-}
-
-var _ transports.Endpoint = (*CreateRoleRequest)(nil)
-
-func (r *CreateRoleRequest) Method() string { return http.MethodPost }
-func (r *CreateRoleRequest) Path() string   { return "/authz/roles" }
-func (r *CreateRoleRequest) Body() any      { return &r.Role }
-
-// GetRoleRequest fetches the role by it's ID.
-// Use with [ResourceExistsResponse] or [Role] response types.
-var GetRoleRequest = transports.IdentityEndpoint[string](http.MethodGet, "/authz/roles/%s")
-
-// ListRolesRequest fetches all roles defined in the cluster.
-// Use with []Role response type.
-var ListRolesRequest = transports.StaticEndpoint(http.MethodGet, "/authz/roles")
-
-// DeleteRoleRequest deletes a role by it's ID.
-var DeleteRoleRequest = transports.IdentityEndpoint[string](http.MethodDelete, "/authz/roles/%s")
-
-type Permission struct {
-	Alias       AliasPermission
-	Backups     BackupsPermission
-	Cluster     ClusterPermission
-	Collections CollectionPermission
-	Data        DataPermission
-	Groups      GroupPermission
-	Namespaces  NamespacePermission
-	Nodes       NodesPermission
-	Replication ReplicationPermission
-	Roles       RolePermission
-	Tenants     TenantPermission
-	Users       UserPermission
-}
+var _ json.Marshaler = (*Permissions)(nil)
 
 type (
 	AliasPermission struct {
@@ -172,9 +138,212 @@ const (
 	RoleScopeMatch = RoleScope(rest.PermissionRolesScopeMatch)
 )
 
-// MarshalJSON flattens role's permissions, creating an individual
-// entry for every action.
+type CreateRoleRequest struct {
+	transports.BaseEndpoint
+	Role Role
+}
+
+var _ transports.Endpoint = (*CreateRoleRequest)(nil)
+
+func (r *CreateRoleRequest) Method() string { return http.MethodPost }
+func (r *CreateRoleRequest) Path() string   { return "/authz/roles" }
+func (r *CreateRoleRequest) Body() any      { return &r.Role }
+
+// GetRoleRequest fetches the role by it's ID.
+// Use with [ResourceExistsResponse] or [Role] response types.
+var GetRoleRequest = transports.IdentityEndpoint[string](http.MethodGet, "/authz/roles/%s")
+
+// ListRolesRequest fetches all roles defined in the cluster.
+// Use with []Role response type.
+var ListRolesRequest = transports.StaticEndpoint(http.MethodGet, "/authz/roles")
+
+// DeleteRoleRequest deletes a role by it's ID.
+var DeleteRoleRequest = transports.IdentityEndpoint[string](http.MethodDelete, "/authz/roles/%s")
+
+// GetAssignedUsersRequest retrieves IDs of users this role is assigned to.
+// Use with [GetAssignedUsersResponse].
+var GetAssignedUsersRequest = transports.IdentityEndpoint[string](http.MethodGet, "/authz/roles/%s/users")
+
+type GetAssignedUsersResponse []string
+
+// GetUserAssignmentsRequest retrieves IDs and type of users this role is assigned to.
+// Use with [UserAssignment].
+var GetUserAssignmentsRequest = transports.IdentityEndpoint[string](http.MethodGet, "/authz/roles/%s/user-assignments")
+
+// GetUserAssignmentsRequest retrieves IDs and type of groups this role is assigned to.
+// Use with [GroupAssignment].
+var GetGroupAssignmentsRequest = transports.IdentityEndpoint[string](http.MethodGet, "/authz/roles/%s/group-assignments")
+
+// oapi-codegen does not generate inline response types.
+// https://github.com/oapi-codegen/oapi-codegen/issues/513
+type (
+	UserAssignment struct {
+		ID   string `json:"userId"`
+		Type string `json:"userType"`
+	}
+	GroupAssignment struct {
+		ID   string `json:"userId"`
+		Type string `json:"userType"`
+	}
+)
+
+// AddPermissionsRequest adds permissions to a role.
+type AddPermissionsRequest struct {
+	transports.BaseEndpoint
+	RoleID      string      `json:"-"`
+	Permissions Permissions `json:"permissions"`
+}
+
+var _ transports.Endpoint = (*AddPermissionsRequest)(nil)
+
+func (*AddPermissionsRequest) Method() string { return http.MethodPost }
+func (r *AddPermissionsRequest) Path() string {
+	return "/authz/roles/" + url.PathEscape(r.RoleID) + "/add-permissions"
+}
+func (r *AddPermissionsRequest) Body() any { return &r }
+
+// RemovePermissionsRequest removes permissions from a role.
+type RemovePermissionsRequest struct {
+	transports.BaseEndpoint
+	RoleID      string      `json:"-"`
+	Permissions Permissions `json:"permissions"`
+}
+
+var _ transports.Endpoint = (*RemovePermissionsRequest)(nil)
+
+func (*RemovePermissionsRequest) Method() string { return http.MethodPost }
+func (r *RemovePermissionsRequest) Path() string {
+	return "/authz/roles/" + url.PathEscape(r.RoleID) + "/remove-permissions"
+}
+func (r *RemovePermissionsRequest) Body() any { return &r }
+
+// HasPermissionRequest checks if a role contains a permission.
+type HasPermissionRequest struct {
+	transports.BaseEndpoint
+
+	RoleID      string
+	Alias       AliasPermission
+	Backups     BackupsPermission
+	Cluster     ClusterPermission
+	Collections CollectionPermission
+	Data        DataPermission
+	Groups      GroupPermission
+	Namespaces  NamespacePermission
+	Nodes       NodesPermission
+	Replication ReplicationPermission
+	Roles       RolePermission
+	Tenants     TenantPermission
+	Users       UserPermission
+}
+
+var (
+	_ transports.Endpoint = (*HasPermissionRequest)(nil)
+	_ json.Marshaler      = (*HasPermissionRequest)(nil)
+)
+
+func (*HasPermissionRequest) Method() string { return http.MethodPost }
+func (r *HasPermissionRequest) Path() string {
+	return "/authz/roles/" + url.PathEscape(r.RoleID) + "/has-permission"
+}
+func (r *HasPermissionRequest) Body() any { return &r }
+
 func (r *Role) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		ID          string       `json:"name"`
+		Permissions *Permissions `json:"permissions"`
+	}{
+		ID:          r.ID,
+		Permissions: &r.Permissions,
+	})
+}
+
+type HasPermissionResponse bool
+
+func (r *HasPermissionRequest) MarshalJSON() ([]byte, error) {
+	var action rest.PermissionAction
+	var data any
+
+	switch {
+	case r.Alias.Create:
+		action, data = rest.CreateAliases, r.Alias
+	case r.Alias.Read:
+		action, data = rest.ReadAliases, r.Alias
+	case r.Alias.Update:
+		action, data = rest.UpdateAliases, r.Alias
+	case r.Alias.Delete:
+		action, data = rest.DeleteAliases, r.Alias
+	case r.Backups.Manage:
+		action, data = rest.ManageBackups, r.Backups
+	case r.Cluster.Read:
+		action, data = rest.ReadCluster, nil
+	case r.Collections.Create:
+		action, data = rest.CreateCollections, r.Collections
+	case r.Collections.Read:
+		action, data = rest.ReadCollections, r.Collections
+	case r.Collections.Update:
+		action, data = rest.UpdateCollections, r.Collections
+	case r.Collections.Delete:
+		action, data = rest.DeleteCollections, r.Collections
+	case r.Data.Create:
+		action, data = rest.CreateData, r.Data
+	case r.Data.Read:
+		action, data = rest.ReadData, r.Data
+	case r.Data.Update:
+		action, data = rest.UpdateData, r.Data
+	case r.Data.Delete:
+		action, data = rest.DeleteData, r.Data
+	case r.Groups.Read:
+		action, data = rest.ReadGroups, r.Groups
+	case r.Groups.AssignAndRevoke:
+		action, data = rest.AssignAndRevokeGroups, r.Groups
+	case r.Namespaces.Manage:
+		action, data = rest.ManageNamespaces, r.Namespaces
+	case r.Nodes.Read:
+		action, data = rest.ReadNodes, r.Nodes
+	case r.Replication.Create:
+		action, data = rest.CreateReplicate, r.Replication
+	case r.Replication.Read:
+		action, data = rest.ReadReplicate, r.Replication
+	case r.Replication.Update:
+		action, data = rest.UpdateReplicate, r.Replication
+	case r.Replication.Delete:
+		action, data = rest.DeleteReplicate, r.Replication
+	case r.Roles.Create:
+		action, data = rest.CreateRoles, r.Roles
+	case r.Roles.Read:
+		action, data = rest.ReadRoles, r.Roles
+	case r.Roles.Update:
+		action, data = rest.UpdateRoles, r.Roles
+	case r.Roles.Delete:
+		action, data = rest.DeleteRoles, r.Roles
+	case r.Tenants.Create:
+		action, data = rest.CreateTenants, r.Tenants
+	case r.Tenants.Read:
+		action, data = rest.ReadTenants, r.Tenants
+	case r.Tenants.Update:
+		action, data = rest.UpdateTenants, r.Tenants
+	case r.Tenants.Delete:
+		action, data = rest.DeleteTenants, r.Tenants
+	case r.Users.Create:
+		action, data = rest.CreateUsers, r.Users
+	case r.Users.Read:
+		action, data = rest.ReadUsers, r.Users
+	case r.Users.Update:
+		action, data = rest.UpdateUsers, r.Users
+	case r.Users.Delete:
+		action, data = rest.DeleteUsers, r.Users
+	}
+
+	permission := map[string]any{"action": action}
+	if kind := permissionKind(action); kind != "" {
+		permission[kind] = data
+	}
+	return json.Marshal(permission)
+}
+
+// MarshalJSON flattens permissions into an array,
+// creating an individual entry for every action.
+func (ps *Permissions) MarshalJSON() ([]byte, error) {
 	permissions := make([]map[string]any, 0)
 
 	// Add permission with given action and resources.
@@ -183,16 +352,14 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 	add := func(action rest.PermissionAction, data any) {
 		permission := map[string]any{"action": action}
 		if data != nil {
-			var kind string
-			if parts := strings.Split(string(action), "_"); len(parts) != 0 {
-				kind = parts[len(parts)-1]
+			if kind := permissionKind(action); kind != "" {
 				permission[kind] = data
 			}
 		}
 		permissions = append(permissions, permission)
 	}
 
-	for _, p := range r.Aliases {
+	for _, p := range ps.Aliases {
 		if p.Create {
 			add(rest.CreateAliases, p)
 		}
@@ -207,19 +374,19 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	for _, p := range r.Backups {
+	for _, p := range ps.Backups {
 		if p.Manage {
 			add(rest.ManageBackups, p)
 		}
 	}
 
-	for _, p := range r.Cluster {
+	for _, p := range ps.Cluster {
 		if p.Read {
 			add(rest.ReadCluster, nil)
 		}
 	}
 
-	for _, p := range r.Collections {
+	for _, p := range ps.Collections {
 		if p.Create {
 			add(rest.CreateCollections, p)
 		}
@@ -234,7 +401,7 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	for _, p := range r.Data {
+	for _, p := range ps.Data {
 		if p.Create {
 			add(rest.CreateData, p)
 		}
@@ -249,7 +416,7 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	for _, p := range r.Groups {
+	for _, p := range ps.Groups {
 		if p.Read {
 			add(rest.ReadGroups, p)
 		}
@@ -258,19 +425,19 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	for _, p := range r.Namespaces {
+	for _, p := range ps.Namespaces {
 		if p.Manage {
 			add(rest.ManageNamespaces, p)
 		}
 	}
 
-	for _, p := range r.Nodes {
+	for _, p := range ps.Nodes {
 		if p.Read {
 			add(rest.ReadNodes, p)
 		}
 	}
 
-	for _, p := range r.Replication {
+	for _, p := range ps.Replication {
 		if p.Create {
 			add(rest.CreateReplicate, p)
 		}
@@ -285,7 +452,7 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	for _, p := range r.Roles {
+	for _, p := range ps.Roles {
 		if p.Create {
 			add(rest.CreateRoles, p)
 		}
@@ -300,7 +467,7 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	for _, p := range r.Tenants {
+	for _, p := range ps.Tenants {
 		if p.Create {
 			add(rest.CreateTenants, p)
 		}
@@ -315,7 +482,7 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	for _, p := range r.Users {
+	for _, p := range ps.Users {
 		if p.Create {
 			add(rest.CreateUsers, p)
 		}
@@ -330,17 +497,14 @@ func (r *Role) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	return json.Marshal(&struct {
-		ID          string           `json:"name"`
-		Permissions []map[string]any `json:"permissions"`
-	}{
-		ID:          r.ID,
-		Permissions: permissions,
-	})
+	return json.Marshal(permissions)
 }
 
 // UnmarshalJSON groups role's permissions by resources.
 func (r *Role) UnmarshalJSON(data []byte) error {
+	// [rest.Role] does not easily lend itself to merging,
+	// we get more control by using our own data type and
+	// unmarshaling concrete permissions lazily.
 	var role struct {
 		ID          string `json:"name"`
 		Permissions []struct {
@@ -448,6 +612,13 @@ func (r *Role) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func permissionKind(action rest.PermissionAction) string {
+	if parts := strings.Split(string(action), "_"); len(parts) != 0 {
+		return parts[len(parts)-1]
+	}
+	return ""
+}
+
 // find retrieves the data for the permission for the given resource.
 // The key is a concatenation of permission <kind> and <data>. The kind
 // is assumed to be the last part of the action, as per the namind convention.
@@ -460,10 +631,8 @@ func (r *Role) UnmarshalJSON(data []byte) error {
 // any resource description, i.e. data is empty; for these, the unmarshaling
 // is skipped, and a zero value of T is appended to dest.
 func find[T any](lookup map[string]any, action rest.PermissionAction, data json.RawMessage, dest *[]T) *T {
-	var kind string
-	if parts := strings.Split(string(action), "_"); len(parts) != 0 {
-		kind = parts[len(parts)-1]
-	} else {
+	kind := permissionKind(action)
+	if kind == "" {
 		return new(T)
 	}
 
