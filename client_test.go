@@ -413,6 +413,7 @@ func TestClient_Close(t *testing.T) {
 	assert.True(t, bool(closed), "closing client closes transport")
 }
 
+// spyCloser is true after [spyCloser.Close] has been called.
 type spyCloser bool
 
 func (spy *spyCloser) Close() error {
