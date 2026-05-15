@@ -2,6 +2,7 @@ package weaviate_test
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -385,4 +386,36 @@ func TestMetadata(t *testing.T) {
 		},
 		GRPCMaxMessageSize: 4096,
 	}, got, "bad result")
+}
+
+func TestClient_Close(t *testing.T) {
+	newFunc := transport.New
+	t.Cleanup(func() { transport.New = newFunc })
+
+	var closed spyCloser
+	transport.New = func(context.Context, transport.Config) (internal.Transport, error) {
+		return struct {
+			internal.Transport
+			io.Closer
+		}{
+			Transport: testkit.NopTransport,
+			Closer:    &closed,
+		}, nil
+	}
+
+	c, err := weaviate.NewClient(t.Context())
+	assert.NoError(t, err, "new client")
+	require.NotNil(t, c, "nil client")
+	assert.False(t, bool(closed), "new client closes transport")
+
+	err = c.Close()
+	assert.NoError(t, err, "close error")
+	assert.True(t, bool(closed), "closing client closes transport")
+}
+
+type spyCloser bool
+
+func (spy *spyCloser) Close() error {
+	*spy = true
+	return nil
 }

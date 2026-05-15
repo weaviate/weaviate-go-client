@@ -3,6 +3,7 @@ package weaviate
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -23,6 +24,8 @@ type Client struct {
 	Backup      *backup.Client
 	Collections *collections.Client
 }
+
+var _ io.Closer = (*Client)(nil)
 
 // NewClient returns a new client. Nothing is configured by default and
 // the following must be provided:
@@ -296,4 +299,11 @@ func (c *Client) Metadata(ctx context.Context) (*InstanceMetadata, error) {
 		Modules:            resp.Modules,
 		GRPCMaxMessageSize: resp.GRPCMaxMessageSize,
 	}, nil
+}
+
+func (c *Client) Close() error {
+	if cl, ok := c.transport.(io.Closer); ok {
+		return cl.Close()
+	}
+	return nil
 }
