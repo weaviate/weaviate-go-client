@@ -32,6 +32,7 @@ type Permissions struct {
 	Groups      []GroupPermission
 	Namespaces  []NamespacePermission
 	Nodes       []NodesPermission
+	MCP         []MCPPermission
 	Replication []ReplicationPermission
 	Roles       []RolePermission
 	Tenants     []TenantPermission
@@ -53,6 +54,7 @@ type (
 		Read bool
 	}
 	NamespacePermission   api.NamespacePermission
+	MCPPermission         api.MCPPermission
 	ReplicationPermission api.ReplicationPermission
 	RoleScope             api.RoleScope
 	RolePermission        struct {
@@ -276,6 +278,9 @@ func marshalPermissions(ps *Permissions) api.Permissions {
 			Verbosity:  api.NodeVerbosity(p.Verbosity),
 		})
 	}
+	for _, p := range ps.MCP {
+		out.MCP = append(out.MCP, api.MCPPermission(p))
+	}
 	for _, p := range ps.Replication {
 		out.Replication = append(out.Replication, api.ReplicationPermission(p))
 	}
@@ -322,6 +327,9 @@ func unmarshalRole(r *api.Role) *Role {
 			Collection: p.Collection,
 			Verbosity:  NodeVerbosity(p.Verbosity),
 		})
+	}
+	for _, p := range r.MCP {
+		role.MCP = append(role.MCP, MCPPermission(p))
 	}
 	for _, p := range r.Replication {
 		role.Replication = append(role.Replication, ReplicationPermission(p))

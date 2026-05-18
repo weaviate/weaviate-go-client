@@ -537,6 +537,9 @@ func TestRESTRequests(t *testing.T) {
 							{Collection: "Songs", Verbosity: api.NodeVerbosityMinimal, Read: true},
 							{Collection: "Artists", Verbosity: api.NodeVerbosityVerbose, Read: true},
 						},
+						MCP: []api.MCPPermission{
+							{Create: true, Read: true, Update: true},
+						},
 						Replication: []api.ReplicationPermission{
 							{
 								Collection: "Songs", Shard: "abc",
@@ -701,6 +704,15 @@ func TestRESTRequests(t *testing.T) {
 							"collection": "Artists",
 							"verbosity":  api.NodeVerbosityVerbose,
 						},
+					},
+					{
+						"action": "create_mcp",
+					},
+					{
+						"action": "read_mcp",
+					},
+					{
+						"action": "update_mcp",
 					},
 					{
 						"action": "create_replicate",
@@ -1338,6 +1350,15 @@ func TestRESTResponses(t *testing.T) {
 						},
 					},
 					{
+						"action": "create_mcp",
+					},
+					{
+						"action": "read_mcp",
+					},
+					{
+						"action": "update_mcp",
+					},
+					{
 						"action": "create_replicate",
 						"replicate": map[string]any{
 							"collection": "Songs",
@@ -1491,6 +1512,9 @@ func TestRESTResponses(t *testing.T) {
 					Nodes: []api.NodesPermission{
 						{Collection: "Songs", Verbosity: api.NodeVerbosityMinimal, Read: true},
 						{Collection: "Artists", Verbosity: api.NodeVerbosityVerbose, Read: true},
+					},
+					MCP: []api.MCPPermission{
+						{Create: true, Read: true, Update: true},
 					},
 					Replication: []api.ReplicationPermission{
 						{

@@ -29,6 +29,7 @@ type Permissions struct {
 	Groups      []GroupPermission
 	Namespaces  []NamespacePermission
 	Nodes       []NodesPermission
+	MCP         []MCPPermission
 	Replication []ReplicationPermission
 	Roles       []RolePermission
 	Tenants     []TenantPermission
@@ -91,6 +92,11 @@ type (
 		Verbosity  NodeVerbosity `json:"verbosity,omitempty"`
 
 		Read bool `json:"-"`
+	}
+	MCPPermission struct {
+		Create bool
+		Read   bool
+		Update bool
 	}
 	ReplicationPermission struct {
 		Collection string `json:"collection,omitempty"`
@@ -230,6 +236,7 @@ type HasPermissionRequest struct {
 	Groups      GroupPermission
 	Namespaces  NamespacePermission
 	Nodes       NodesPermission
+	MCP         MCPPermission
 	Replication ReplicationPermission
 	Roles       RolePermission
 	Tenants     TenantPermission
@@ -300,6 +307,12 @@ func (r *HasPermissionRequest) MarshalJSON() ([]byte, error) {
 		action, data = rest.ManageNamespaces, r.Namespaces
 	case r.Nodes.Read:
 		action, data = rest.ReadNodes, r.Nodes
+	case r.MCP.Create:
+		action = rest.CreateMcp
+	case r.MCP.Read:
+		action = rest.ReadMcp
+	case r.MCP.Update:
+		action = rest.UpdateMcp
 	case r.Replication.Create:
 		action, data = rest.CreateReplicate, r.Replication
 	case r.Replication.Read:
@@ -439,6 +452,18 @@ func (ps *Permissions) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	for _, p := range ps.MCP {
+		if p.Create {
+			add(rest.CreateMcp, nil)
+		}
+		if p.Read {
+			add(rest.ReadMcp, nil)
+		}
+		if p.Update {
+			add(rest.UpdateMcp, nil)
+		}
+	}
+
 	for _, p := range ps.Replication {
 		if p.Create {
 			add(rest.CreateReplicate, p)
@@ -519,6 +544,7 @@ func (r *Role) UnmarshalJSON(data []byte) error {
 			Group       json.RawMessage       `json:"groups"`
 			Namespace   json.RawMessage       `json:"namespaces"`
 			Node        json.RawMessage       `json:"nodes"`
+			MCP         json.RawMessage       `json:"mcp"`
 			Replication json.RawMessage       `json:"replicate"`
 			Role        json.RawMessage       `json:"roles"`
 			Tenant      json.RawMessage       `json:"tenants"`
@@ -576,6 +602,12 @@ func (r *Role) UnmarshalJSON(data []byte) error {
 			find(lookup, p.Action, p.Namespace, &r.Namespaces).Manage = true
 		case rest.ReadNodes:
 			find(lookup, p.Action, p.Node, &r.Nodes).Read = true
+		case rest.CreateMcp:
+			find(lookup, p.Action, p.MCP, &r.MCP).Create = true
+		case rest.ReadMcp:
+			find(lookup, p.Action, p.MCP, &r.MCP).Read = true
+		case rest.UpdateMcp:
+			find(lookup, p.Action, p.MCP, &r.MCP).Update = true
 		case rest.CreateReplicate:
 			find(lookup, p.Action, p.Replication, &r.Replication).Create = true
 		case rest.ReadReplicate:
