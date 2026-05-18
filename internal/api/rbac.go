@@ -129,10 +129,11 @@ type (
 	UserPermission struct {
 		UserID string `json:"user,omitempty"`
 
-		Create bool `json:"-"`
-		Read   bool `json:"-"`
-		Update bool `json:"-"`
-		Delete bool `json:"-"`
+		Create          bool `json:"-"`
+		Read            bool `json:"-"`
+		Update          bool `json:"-"`
+		Delete          bool `json:"-"`
+		AssignAndRevoke bool `json:"-"`
 	}
 )
 
@@ -345,6 +346,8 @@ func (r *HasPermissionRequest) MarshalJSON() ([]byte, error) {
 		action, data = rest.UpdateUsers, r.Users
 	case r.Users.Delete:
 		action, data = rest.DeleteUsers, r.Users
+	case r.Users.AssignAndRevoke:
+		action, data = rest.AssignAndRevokeUsers, r.Users
 	}
 
 	permission := map[string]any{"action": action}
@@ -522,6 +525,9 @@ func (ps *Permissions) MarshalJSON() ([]byte, error) {
 		if p.Delete {
 			add(rest.DeleteUsers, p)
 		}
+		if p.AssignAndRevoke {
+			add(rest.AssignAndRevokeUsers, p)
+		}
 	}
 
 	return json.Marshal(permissions)
@@ -640,6 +646,8 @@ func (r *Role) UnmarshalJSON(data []byte) error {
 			find(lookup, p.Action, p.User, &r.Users).Update = true
 		case rest.DeleteUsers:
 			find(lookup, p.Action, p.User, &r.Users).Delete = true
+		case rest.AssignAndRevokeUsers:
+			find(lookup, p.Action, p.User, &r.Users).AssignAndRevoke = true
 		}
 	}
 

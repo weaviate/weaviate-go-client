@@ -573,6 +573,7 @@ func TestRESTRequests(t *testing.T) {
 						Users: []api.UserPermission{
 							{UserID: "john_doe", Create: true, Read: true},
 							{UserID: "jane_doe", Update: true, Delete: true},
+							{UserID: "jim_beam", AssignAndRevoke: true},
 						},
 					},
 				},
@@ -820,6 +821,12 @@ func TestRESTRequests(t *testing.T) {
 						"action": "delete_users",
 						"users": map[string]any{
 							"user": "jane_doe",
+						},
+					},
+					{
+						"action": "assign_and_revoke_users",
+						"users": map[string]any{
+							"user": "jim_beam",
 						},
 					},
 				},
@@ -1466,6 +1473,12 @@ func TestRESTResponses(t *testing.T) {
 							"user": "jane_doe",
 						},
 					},
+					{
+						"action": "assign_and_revoke_users",
+						"users": map[string]any{
+							"user": "jim_beam",
+						},
+					},
 				},
 			},
 			dest: new(api.Role),
@@ -1549,6 +1562,7 @@ func TestRESTResponses(t *testing.T) {
 					Users: []api.UserPermission{
 						{UserID: "john_doe", Create: true, Read: true},
 						{UserID: "jane_doe", Update: true, Delete: true},
+						{UserID: "jim_beam", AssignAndRevoke: true},
 					},
 				},
 			},
