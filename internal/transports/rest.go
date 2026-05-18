@@ -240,12 +240,16 @@ type identityEndpoint[I any] struct {
 var _ Endpoint = (*identityEndpoint[any])(nil)
 
 func (r *identityEndpoint[I]) Method() string { return r.method }
-func (r *identityEndpoint[I]) Path() string {
-	id := any(r.id)
-	if s, ok := id.(string); ok {
-		id = url.PathEscape(s)
+func (r *identityEndpoint[I]) Path() string   { return Path(r.pathFmt, r.id) }
+
+// Path URL-encodes all string elements of a and formats the output to pathFmt.
+func Path(pathFmt string, a ...any) string {
+	for i := range a {
+		if s, ok := a[i].(string); ok {
+			a[i] = url.PathEscape(s)
+		}
 	}
-	return fmt.Sprintf(r.pathFmt, id)
+	return fmt.Sprintf(pathFmt, a...)
 }
 
 // StaticEndpoint creates a new static endpoint with a method and a path.

@@ -914,6 +914,157 @@ func TestRESTRequests(t *testing.T) {
 				"action": "read_cluster",
 			},
 		},
+		{
+			name:       "get own user info",
+			req:        api.GetOwnUserInfoRequest,
+			wantMethod: http.MethodGet,
+			wantPath:   "/users/own-info",
+		},
+		{
+			name: "get roles assigned to the user (include permissions)",
+			req: &api.GetAssignedRolesRequest{
+				Entity:             api.EntityUser,
+				ID:                 "john-malkovich",
+				Type:               api.UserTypeDB,
+				IncludePermissions: true,
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/authz/users/john-malkovich/roles/db",
+			wantQuery:  url.Values{"includePermissions": {"true"}},
+		},
+		{
+			name: "get roles assigned to the group (include permissions)",
+			req: &api.GetAssignedRolesRequest{
+				Entity:             api.EntityGroup,
+				ID:                 "external",
+				Type:               api.GroupTypeOIDC,
+				IncludePermissions: true,
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/authz/groups/external/roles/oidc",
+			wantQuery:  url.Values{"includePermissions": {"true"}},
+		},
+		{
+			name: "assign roles to user",
+			req: &api.AssignRolesRequest{
+				Entity: api.EntityUser,
+				ID:     "john-malkovich",
+				Type:   api.UserTypeDB,
+				Roles:  []string{"rock-n-role", "sushi-role"},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/users/john-malkovich/assign",
+			wantBody: rest.AssignRoleToUserJSONBody{
+				UserType: rest.UserTypeInputDb,
+				Roles:    []string{"rock-n-role", "sushi-role"},
+			},
+		},
+		{
+			name: "assign roles to group",
+			req: &api.AssignRolesRequest{
+				Entity: api.EntityGroup,
+				ID:     "external",
+				Type:   api.GroupTypeOIDC,
+				Roles:  []string{"rock-n-role", "sushi-role"},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/groups/external/assign",
+			wantBody: rest.AssignRoleToGroupJSONBody{
+				GroupType: rest.GroupTypeOidc,
+				Roles:     []string{"rock-n-role", "sushi-role"},
+			},
+		},
+		{
+			name: "revoke roles from user",
+			req: &api.RevokeRolesRequest{
+				Entity: api.EntityUser,
+				ID:     "john-malkovich",
+				Type:   api.UserTypeDB,
+				Roles:  []string{"rock-n-role", "sushi-role"},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/users/john-malkovich/revoke",
+			wantBody: rest.RevokeRoleFromUserJSONBody{
+				UserType: rest.UserTypeInputDb,
+				Roles:    []string{"rock-n-role", "sushi-role"},
+			},
+		},
+		{
+			name: "revoke roles from group",
+			req: &api.RevokeRolesRequest{
+				Entity: api.EntityGroup,
+				ID:     "external",
+				Type:   api.GroupTypeOIDC,
+				Roles:  []string{"rock-n-role", "sushi-role"},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/groups/external/revoke",
+			wantBody: rest.RevokeRoleFromGroupJSONBody{
+				GroupType: rest.GroupTypeOidc,
+				Roles:     []string{"rock-n-role", "sushi-role"},
+			},
+		},
+		{
+			name:       "list groups",
+			req:        api.ListGroupsRequest,
+			wantMethod: http.MethodGet,
+			wantPath:   "/authz/groups/oidc",
+		},
+		{
+			name:       "create db user",
+			req:        api.CreateUserRequest("john-malkovich"),
+			wantMethod: http.MethodPost,
+			wantPath:   "/users/db/john-malkovich",
+		},
+		{
+			name:       "delete db user",
+			req:        api.DeleteUserRequest("john-malkovich"),
+			wantMethod: http.MethodDelete,
+			wantPath:   "/users/db/john-malkovich",
+		},
+		{
+			name:       "activate db user",
+			req:        api.ActivateUserRequest("john-malkovich"),
+			wantMethod: http.MethodPost,
+			wantPath:   "/users/db/john-malkovich/activate",
+		},
+		{
+			name: "deactivate db user (revoke api key)",
+			req: &api.DeactivateUserRequest{
+				ID:        "john-malkovich",
+				RevokeKey: true,
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/users/db/john-malkovich/deactivate",
+			wantBody: rest.DeactivateUserJSONRequestBody{
+				RevokeKey: true,
+			},
+		},
+		{
+			name:       "rotate db user api key",
+			req:        api.RotateUserKeyRequest("john-malkovich"),
+			wantMethod: http.MethodPost,
+			wantPath:   "/users/db/john-malkovich/rotate-key",
+		},
+		{
+			name: "get db user info",
+			req: &api.GetUserInfoRequest{
+				ID:                "john-malkovich",
+				IncludeLastUsedAt: true,
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/users/db/john-malkovich",
+			wantQuery:  url.Values{"includeLastUsedTime": {"true"}},
+		},
+		{
+			name: "list db users",
+			req: &api.ListUsersRequest{
+				IncludeLastUsedAt: true,
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/users/db",
+			wantQuery:  url.Values{"includeLastUsedTime": {"true"}},
+		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)

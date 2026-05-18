@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
@@ -204,7 +205,7 @@ var _ transports.Endpoint = (*AddPermissionsRequest)(nil)
 
 func (*AddPermissionsRequest) Method() string { return http.MethodPost }
 func (r *AddPermissionsRequest) Path() string {
-	return "/authz/roles/" + url.PathEscape(r.RoleID) + "/add-permissions"
+	return transports.Path("/authz/roles/%s/add-permissions", r.RoleID)
 }
 func (r *AddPermissionsRequest) Body() any { return &r }
 
@@ -691,4 +692,211 @@ func find[T any](lookup map[string]any, action rest.PermissionAction, data json.
 		lookup[key] = addr
 	}
 	return addr.(*T)
+}
+
+// GetOwnUserInfoRequest fetches user info for the current user.
+var GetOwnUserInfoRequest = transports.StaticEndpoint(http.MethodGet, "/users/own-info")
+
+const (
+	EntityUser  = "users"
+	EntityGroup = "groups"
+
+	UserTypeDB    = "db"
+	UserTypeDBEnv = "db_env"
+	UserTypeOIDC  = "oidc"
+
+	GroupTypeOIDC = "oidc"
+)
+
+// GetAssignedRolesRequest fetches roles assigned to a user or a group.
+// Use with [Role].
+type GetAssignedRolesRequest struct {
+	transports.BaseEndpoint
+
+	Entity string // [EntityUser] or [EntityGroup]
+	ID     string // User or Group ID
+	Type   string // User or Group type
+
+	IncludePermissions bool // Include permissions associated with each role.
+}
+
+var _ transports.Endpoint = (*GetAssignedRolesRequest)(nil)
+
+func (*GetAssignedRolesRequest) Method() string { return http.MethodGet }
+func (r *GetAssignedRolesRequest) Path() string {
+	return transports.Path("/authz/"+r.Entity+"/%s/roles/"+r.Type, r.ID)
+}
+
+func (r *GetAssignedRolesRequest) Query() url.Values {
+	if !r.IncludePermissions {
+		return nil
+	}
+	return url.Values{"includePermissions": {"true"}}
+}
+
+type AssignRolesRequest struct {
+	transports.BaseEndpoint
+
+	Entity string   // [EntityUser] or [EntityGroup]
+	ID     string   // User or Group ID
+	Type   string   // User or Group type
+	Roles  []string // IDs of roles to assign
+}
+
+var (
+	_ transports.Endpoint = (*AssignRolesRequest)(nil)
+	_ json.Marshaler      = (*AssignRolesRequest)(nil)
+)
+
+func (*AssignRolesRequest) Method() string { return http.MethodPost }
+func (r *AssignRolesRequest) Path() string {
+	return transports.Path("/authz/"+r.Entity+"/%s/assign", r.ID)
+}
+
+func (r *AssignRolesRequest) Body() any { return r }
+
+func (r *AssignRolesRequest) MarshalJSON() ([]byte, error) {
+	switch r.Entity {
+	case EntityUser:
+		return json.Marshal(rest.AssignRoleToUserJSONBody{
+			UserType: rest.UserTypeInput(r.Type),
+			Roles:    r.Roles,
+		})
+	case EntityGroup:
+		return json.Marshal(rest.AssignRoleToGroupJSONBody{
+			GroupType: rest.GroupType(r.Type),
+			Roles:     r.Roles,
+		})
+	default:
+		dev.Unreachable()
+	}
+	return nil, nil
+}
+
+type RevokeRolesRequest struct {
+	transports.BaseEndpoint
+
+	Entity string   // [EntityUser] or [EntityGroup]
+	ID     string   // User or Group ID
+	Type   string   // User or Group type
+	Roles  []string // IDs of roles to assign
+}
+
+var (
+	_ transports.Endpoint = (*RevokeRolesRequest)(nil)
+	_ json.Marshaler      = (*RevokeRolesRequest)(nil)
+)
+
+func (*RevokeRolesRequest) Method() string { return http.MethodPost }
+func (r *RevokeRolesRequest) Path() string {
+	return transports.Path("/authz/"+r.Entity+"/%s/revoke", r.ID)
+}
+
+func (r *RevokeRolesRequest) Body() any { return r }
+
+func (r *RevokeRolesRequest) MarshalJSON() ([]byte, error) {
+	switch r.Entity {
+	case EntityUser:
+		return json.Marshal(rest.AssignRoleToUserJSONBody{
+			UserType: rest.UserTypeInput(r.Type),
+			Roles:    r.Roles,
+		})
+	case EntityGroup:
+		return json.Marshal(rest.AssignRoleToGroupJSONBody{
+			GroupType: rest.GroupType(r.Type),
+			Roles:     r.Roles,
+		})
+	default:
+		dev.Unreachable()
+	}
+	return nil, nil
+}
+
+// ListGroupsRequest fetches IDs of the all known OIDC groups.
+var ListGroupsRequest = transports.StaticEndpoint(http.MethodGet, "/authz/groups/oidc")
+
+// ============================================================================
+// TODO(dyma): I wonder how many of the following requests will eventually
+// include Namespace in the body. Probably deleting a namespaced user will
+// need that. So they will likely not stay IdentityEndpoints for long.
+// We can leave them like as is for alpha.3, or until namespaces stabilize,
+// that's just something to keep in mind.
+// ============================================================================
+
+// CreateUserRequest creates a new user with type [UserTypeDB].
+// Use with [CreateUserResponse].
+var CreateUserRequest = transports.IdentityEndpoint[string](http.MethodPost, "/users/db/%s")
+
+type CreateUserResponse struct {
+	APIKey string `json:"apiKey"`
+}
+
+// DeleteUserRequest deletes a [UserTypeDB] user.
+var DeleteUserRequest = transports.IdentityEndpoint[string](http.MethodDelete, "/users/db/%s")
+
+// ActivateUserRequest activates a [UserTypeDB] user.
+var ActivateUserRequest = transports.IdentityEndpoint[string](http.MethodPost, "/users/db/%s/activate")
+
+// DeactivateUserRequest deactivates a [UserTypeDB] user.
+type DeactivateUserRequest struct {
+	transports.BaseEndpoint
+
+	ID        string
+	RevokeKey bool
+}
+
+var _ transports.Endpoint = (*DeactivateUserRequest)(nil)
+
+func (*DeactivateUserRequest) Method() string { return http.MethodPost }
+func (r *DeactivateUserRequest) Path() string {
+	return transports.Path("/users/db/%s/deactivate", r.ID)
+}
+func (r *DeactivateUserRequest) Body() any { return r }
+
+func (r *DeactivateUserRequest) MarshalJSON() ([]byte, error) {
+	return json.Marshal(rest.DeactivateUserJSONRequestBody{
+		RevokeKey: r.RevokeKey,
+	})
+}
+
+// RotateUserKeyRequest generates a new API key for a [UserTypeDB] user.
+// Use with [RotateUserKeyResponse].
+var RotateUserKeyRequest = transports.IdentityEndpoint[string](http.MethodPost, "/users/db/%s/rotate-key")
+
+type RotateUserKeyResponse CreateUserResponse
+
+// GetUserInfoRequest fetches user info for a [UserTypeDB] user.
+type GetUserInfoRequest struct {
+	transports.BaseEndpoint
+
+	ID                string
+	IncludeLastUsedAt bool
+}
+
+var _ transports.Endpoint = (*DeactivateUserRequest)(nil)
+
+func (*GetUserInfoRequest) Method() string { return http.MethodGet }
+func (r *GetUserInfoRequest) Path() string { return transports.Path("/users/db/%s", r.ID) }
+func (r *GetUserInfoRequest) Query() url.Values {
+	if !r.IncludeLastUsedAt {
+		return nil
+	}
+	return url.Values{"includeLastUsedTime": {"true"}}
+}
+
+// ListUsersRequest fetches user info for all [UserTypeDB] users.
+type ListUsersRequest struct {
+	transports.BaseEndpoint
+	IncludeLastUsedAt bool
+}
+
+var _ transports.Endpoint = (*DeactivateUserRequest)(nil)
+
+func (*ListUsersRequest) Method() string { return http.MethodGet }
+func (r *ListUsersRequest) Path() string { return "/users/db" }
+func (r *ListUsersRequest) Query() url.Values {
+	if !r.IncludeLastUsedAt {
+		return nil
+	}
+	return url.Values{"includeLastUsedTime": {"true"}}
 }
