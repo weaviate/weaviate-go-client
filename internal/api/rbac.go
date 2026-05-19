@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
-	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
@@ -722,10 +721,21 @@ func (r *GetOwnUserInfoResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-const (
-	EntityUser  = "users"
-	EntityGroup = "groups"
+type (
+	RBACEntity interface{ Path() string }
+	UserID     string
+	GroupID    string
+)
 
+var (
+	_ RBACEntity = (*UserID)(nil)
+	_ RBACEntity = (*GroupID)(nil)
+)
+
+func (id UserID) Path() string  { return transports.Path("/authz/users/%s", id) }
+func (id GroupID) Path() string { return transports.Path("/authz/groups/%s", id) }
+
+const (
 	RBACKindDB   = "db"
 	RBACKindOIDC = "oidc"
 )
@@ -735,9 +745,8 @@ const (
 type GetAssignedRolesRequest struct {
 	transports.BaseEndpoint
 
-	Entity string // [EntityUser] or [EntityGroup]
-	ID     string // User or Group ID
-	Kind   string // User or Group kind
+	Entity RBACEntity // [UserID] or [GroupID]
+	Kind   string     // [RBACKindDB] or [RBACKindOIDC]
 
 	IncludePermissions bool // Include permissions associated with each role.
 }
@@ -745,10 +754,7 @@ type GetAssignedRolesRequest struct {
 var _ transports.Endpoint = (*GetAssignedRolesRequest)(nil)
 
 func (*GetAssignedRolesRequest) Method() string { return http.MethodGet }
-func (r *GetAssignedRolesRequest) Path() string {
-	return transports.Path("/authz/"+r.Entity+"/%s/roles/"+r.Kind, r.ID)
-}
-
+func (r *GetAssignedRolesRequest) Path() string { return r.Entity.Path() + "/roles/" + r.Kind }
 func (r *GetAssignedRolesRequest) Query() url.Values {
 	if !r.IncludePermissions {
 		return nil
@@ -756,82 +762,54 @@ func (r *GetAssignedRolesRequest) Query() url.Values {
 	return url.Values{"includePermissions": {"true"}}
 }
 
-type AssignRolesRequest struct {
+const (
+	RBACActionAssign = "assign"
+	RBACActionRevoke = "revoke"
+)
+
+// ManageRolesRequest assigns or revokes roles from an RBAC entity.
+type ManageRolesRequest struct {
 	transports.BaseEndpoint
 
-	Entity string   // [EntityUser] or [EntityGroup]
-	ID     string   // User or Group ID
-	Kind   string   // User or Group kind
-	Roles  []string // IDs of roles to assign
+	Entity RBACEntity // [UserID] or [GroupID]
+	Kind   string     // [RBACKindDB] or [RBACKindOIDC]
+	Action string     // [RBACActionAssign] or [RBACActionRevoke]
+	Roles  []string   // IDs of roles to assign
 }
 
 var (
-	_ transports.Endpoint = (*AssignRolesRequest)(nil)
-	_ json.Marshaler      = (*AssignRolesRequest)(nil)
+	_ transports.Endpoint = (*ManageRolesRequest)(nil)
+	_ json.Marshaler      = (*ManageRolesRequest)(nil)
 )
 
-func (*AssignRolesRequest) Method() string { return http.MethodPost }
-func (r *AssignRolesRequest) Path() string {
-	return transports.Path("/authz/"+r.Entity+"/%s/assign", r.ID)
-}
-
-func (r *AssignRolesRequest) Body() any { return r }
-
-func (r *AssignRolesRequest) MarshalJSON() ([]byte, error) {
-	switch r.Entity {
-	case EntityUser:
-		return json.Marshal(rest.AssignRoleToUserJSONBody{
-			UserType: rest.UserTypeInput(r.Kind),
-			Roles:    r.Roles,
-		})
-	case EntityGroup:
-		return json.Marshal(rest.AssignRoleToGroupJSONBody{
-			GroupType: rest.GroupType(r.Kind),
-			Roles:     r.Roles,
-		})
-	default:
-		dev.Unreachable()
+func (*ManageRolesRequest) Method() string { return http.MethodPost }
+func (r *ManageRolesRequest) Path() string { return r.Entity.Path() + "/" + r.Action }
+func (r *ManageRolesRequest) Body() any    { return r }
+func (r *ManageRolesRequest) MarshalJSON() ([]byte, error) {
+	// [rest.AssignRoleToUserJSONBody], [rest.AssignRoleToGroupJSONBody],
+	// [rest.RevokeRoleFromUserJSONBody], and [rest.RevokeRoleFromGroupJSONBody]
+	// are practically identical. The only difference is the userType vs groupType
+	// key to identify the RBAC entity. This simple struct allows us to unify
+	// request body marshaling with minimal branching.
+	//
+	// To avoid drift, endpoint_test.go uses models from rest package
+	// to validate the generated JSON payloads.
+	// in endpoint_test.go
+	var req struct {
+		UserKind  string   `json:"userType,omitempty"`
+		GroupKind string   `json:"groupType,omitempty"`
+		Roles     []string `json:"roles"`
 	}
-	return nil, nil
-}
 
-type RevokeRolesRequest struct {
-	transports.BaseEndpoint
-
-	Entity string   // [EntityUser] or [EntityGroup]
-	ID     string   // User or Group ID
-	Kind   string   // User or Group kind
-	Roles  []string // IDs of roles to assign
-}
-
-var (
-	_ transports.Endpoint = (*RevokeRolesRequest)(nil)
-	_ json.Marshaler      = (*RevokeRolesRequest)(nil)
-)
-
-func (*RevokeRolesRequest) Method() string { return http.MethodPost }
-func (r *RevokeRolesRequest) Path() string {
-	return transports.Path("/authz/"+r.Entity+"/%s/revoke", r.ID)
-}
-
-func (r *RevokeRolesRequest) Body() any { return r }
-
-func (r *RevokeRolesRequest) MarshalJSON() ([]byte, error) {
-	switch r.Entity {
-	case EntityUser:
-		return json.Marshal(rest.AssignRoleToUserJSONBody{
-			UserType: rest.UserTypeInput(r.Kind),
-			Roles:    r.Roles,
-		})
-	case EntityGroup:
-		return json.Marshal(rest.AssignRoleToGroupJSONBody{
-			GroupType: rest.GroupType(r.Kind),
-			Roles:     r.Roles,
-		})
-	default:
-		dev.Unreachable()
+	req.Roles = r.Roles
+	switch r.Entity.(type) {
+	case UserID:
+		req.UserKind = r.Kind
+	case GroupID:
+		req.GroupKind = r.Kind
 	}
-	return nil, nil
+
+	return json.Marshal(&req)
 }
 
 // ListGroupsRequest fetches IDs of the all known OIDC groups.

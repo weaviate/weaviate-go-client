@@ -923,8 +923,7 @@ func TestRESTRequests(t *testing.T) {
 		{
 			name: "get roles assigned to the user (include permissions)",
 			req: &api.GetAssignedRolesRequest{
-				Entity:             api.EntityUser,
-				ID:                 "john-malkovich",
+				Entity:             api.UserID("john-malkovich"),
 				Kind:               api.RBACKindDB,
 				IncludePermissions: true,
 			},
@@ -935,8 +934,7 @@ func TestRESTRequests(t *testing.T) {
 		{
 			name: "get roles assigned to the group (include permissions)",
 			req: &api.GetAssignedRolesRequest{
-				Entity:             api.EntityGroup,
-				ID:                 "external",
+				Entity:             api.GroupID("external"),
 				Kind:               api.RBACKindOIDC,
 				IncludePermissions: true,
 			},
@@ -946,10 +944,10 @@ func TestRESTRequests(t *testing.T) {
 		},
 		{
 			name: "assign roles to user",
-			req: &api.AssignRolesRequest{
-				Entity: api.EntityUser,
-				ID:     "john-malkovich",
+			req: &api.ManageRolesRequest{
+				Entity: api.UserID("john-malkovich"),
 				Kind:   api.RBACKindDB,
+				Action: api.RBACActionAssign,
 				Roles:  []string{"rock-n-role", "sushi-role"},
 			},
 			wantMethod: http.MethodPost,
@@ -961,10 +959,10 @@ func TestRESTRequests(t *testing.T) {
 		},
 		{
 			name: "assign roles to group",
-			req: &api.AssignRolesRequest{
-				Entity: api.EntityGroup,
-				ID:     "external",
+			req: &api.ManageRolesRequest{
+				Entity: api.GroupID("external"),
 				Kind:   api.RBACKindOIDC,
+				Action: api.RBACActionAssign,
 				Roles:  []string{"rock-n-role", "sushi-role"},
 			},
 			wantMethod: http.MethodPost,
@@ -976,10 +974,10 @@ func TestRESTRequests(t *testing.T) {
 		},
 		{
 			name: "revoke roles from user",
-			req: &api.RevokeRolesRequest{
-				Entity: api.EntityUser,
-				ID:     "john-malkovich",
+			req: &api.ManageRolesRequest{
+				Entity: api.UserID("john-malkovich"),
 				Kind:   api.RBACKindDB,
+				Action: api.RBACActionRevoke,
 				Roles:  []string{"rock-n-role", "sushi-role"},
 			},
 			wantMethod: http.MethodPost,
@@ -991,10 +989,10 @@ func TestRESTRequests(t *testing.T) {
 		},
 		{
 			name: "revoke roles from group",
-			req: &api.RevokeRolesRequest{
-				Entity: api.EntityGroup,
-				ID:     "external",
+			req: &api.ManageRolesRequest{
+				Entity: api.GroupID("external"),
 				Kind:   api.RBACKindOIDC,
+				Action: api.RBACActionRevoke,
 				Roles:  []string{"rock-n-role", "sushi-role"},
 			},
 			wantMethod: http.MethodPost,
