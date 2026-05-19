@@ -836,6 +836,8 @@ var DeleteUserRequest = transports.IdentityEndpoint[string](http.MethodDelete, "
 var ActivateUserRequest = transports.IdentityEndpoint[string](http.MethodPost, "/users/db/%s/activate")
 
 // DeactivateUserRequest deactivates a [RBACKindDB] user.
+// TODO(dyma): the response needs to implement [transport.StatucAccepter] to handle
+// "already deactivated" case.
 type DeactivateUserRequest struct {
 	transports.BaseEndpoint
 
@@ -857,11 +859,11 @@ func (r *DeactivateUserRequest) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// RotateUserKeyRequest generates a new API key for a [RBACKindDB] user.
-// Use with [RotateUserKeyResponse].
-var RotateUserKeyRequest = transports.IdentityEndpoint[string](http.MethodPost, "/users/db/%s/rotate-key")
+// RotateAPIKeyRequest generates a new API key for a [RBACKindDB] user.
+// Use with [RotateAPIKeyResponse].
+var RotateAPIKeyRequest = transports.IdentityEndpoint[string](http.MethodPost, "/users/db/%s/rotate-key")
 
-type RotateUserKeyResponse CreateUserResponse
+type RotateAPIKeyResponse CreateUserResponse
 
 const (
 	UserTypeDB    = "db_user"     // User created via REST API.

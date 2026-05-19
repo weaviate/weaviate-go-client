@@ -78,41 +78,41 @@ const (
 	RoleScopeMatch = RoleScope(api.RoleScopeMatch)
 )
 
-func (rc *RolesClient) Create(ctx context.Context, r Role) error {
+func (c *RolesClient) Create(ctx context.Context, r Role) error {
 	req := &api.CreateRoleRequest{
 		Role: api.Role{
 			ID:          r.ID,
 			Permissions: marshalPermissions(&r.Permissions),
 		},
 	}
-	if err := rc.transport.Do(ctx, req, nil); err != nil {
+	if err := c.transport.Do(ctx, req, nil); err != nil {
 		return fmt.Errorf("create role: %w", err)
 	}
 	return nil
 }
 
 // Exists returns true and nil error if role with the given roleID exists.
-func (rc *RolesClient) Exists(ctx context.Context, roleID string) (bool, error) {
+func (c *RolesClient) Exists(ctx context.Context, roleID string) (bool, error) {
 	var resp api.ResourceExistsResponse
-	if err := rc.transport.Do(ctx, api.GetRoleRequest(roleID), &resp); err != nil {
+	if err := c.transport.Do(ctx, api.GetRoleRequest(roleID), &resp); err != nil {
 		return false, fmt.Errorf("check role exists: %w", err)
 	}
 	return resp.Bool(), nil
 }
 
 // Get fetches a role with the given roleID.
-func (rc *RolesClient) Get(ctx context.Context, roleID string) (*Role, error) {
+func (c *RolesClient) Get(ctx context.Context, roleID string) (*Role, error) {
 	var resp api.Role
-	if err := rc.transport.Do(ctx, api.GetRoleRequest(roleID), &resp); err != nil {
+	if err := c.transport.Do(ctx, api.GetRoleRequest(roleID), &resp); err != nil {
 		return nil, fmt.Errorf("get role: %w", err)
 	}
 	return unmarshalRole(&resp), nil
 }
 
 // List fetches all roles defined in the cluster.
-func (rc *RolesClient) List(ctx context.Context) ([]Role, error) {
+func (c *RolesClient) List(ctx context.Context) ([]Role, error) {
 	var resp []api.Role
-	if err := rc.transport.Do(ctx, api.ListRolesRequest, &resp); err != nil {
+	if err := c.transport.Do(ctx, api.ListRolesRequest, &resp); err != nil {
 		return nil, fmt.Errorf("list role: %w", err)
 	}
 	var roles []Role
@@ -123,8 +123,8 @@ func (rc *RolesClient) List(ctx context.Context) ([]Role, error) {
 }
 
 // Delete deletes a role with the given roleID.
-func (rc *RolesClient) Delete(ctx context.Context, roleID string) error {
-	if err := rc.transport.Do(ctx, api.DeleteRoleRequest(roleID), nil); err != nil {
+func (c *RolesClient) Delete(ctx context.Context, roleID string) error {
+	if err := c.transport.Do(ctx, api.DeleteRoleRequest(roleID), nil); err != nil {
 		return fmt.Errorf("delete role: %w", err)
 	}
 	return nil
@@ -135,13 +135,13 @@ type AddPermissions struct {
 	Permissions Permissions
 }
 
-func (rc *RolesClient) AddPermissions(ctx context.Context, options AddPermissions) error {
+func (c *RolesClient) AddPermissions(ctx context.Context, options AddPermissions) error {
 	req := &api.ManagePermissionsRequest{
 		RoleID:      options.RoleID,
 		Action:      api.PermissionActionAdd,
 		Permissions: marshalPermissions(&options.Permissions),
 	}
-	if err := rc.transport.Do(ctx, req, nil); err != nil {
+	if err := c.transport.Do(ctx, req, nil); err != nil {
 		return fmt.Errorf("add role permissions: %w", err)
 	}
 	return nil
@@ -152,13 +152,13 @@ type RemovePermissions struct {
 	Permissions Permissions
 }
 
-func (rc *RolesClient) RemovePermissions(ctx context.Context, options RemovePermissions) error {
+func (c *RolesClient) RemovePermissions(ctx context.Context, options RemovePermissions) error {
 	req := &api.ManagePermissionsRequest{
 		RoleID:      options.RoleID,
 		Action:      api.PermissionActionRemove,
 		Permissions: marshalPermissions(&options.Permissions),
 	}
-	if err := rc.transport.Do(ctx, req, nil); err != nil {
+	if err := c.transport.Do(ctx, req, nil); err != nil {
 		return fmt.Errorf("remove role permissions: %w", err)
 	}
 	return nil
@@ -184,7 +184,7 @@ type HasPermission struct {
 
 // HasPermission checks if a role contains a permission.
 // Only one permission can be checked in a single call.
-func (rc *RolesClient) HasPermission(ctx context.Context, options HasPermission) (bool, error) {
+func (c *RolesClient) HasPermission(ctx context.Context, options HasPermission) (bool, error) {
 	req, err := marshalHasPermission(options)
 	if err != nil {
 		return false, err
@@ -192,15 +192,15 @@ func (rc *RolesClient) HasPermission(ctx context.Context, options HasPermission)
 	req.RoleID = options.RoleID
 
 	var resp api.HasPermissionResponse
-	if err := rc.transport.Do(ctx, req, &resp); err != nil {
+	if err := c.transport.Do(ctx, req, &resp); err != nil {
 		return false, fmt.Errorf("check role has permission: %w", err)
 	}
 	return bool(resp), nil
 }
 
-func (rc *RolesClient) AssignedUserIDs(ctx context.Context, roleID string) ([]string, error) {
+func (c *RolesClient) AssignedUserIDs(ctx context.Context, roleID string) ([]string, error) {
 	var resp api.GetAssignedUsersResponse
-	if err := rc.transport.Do(ctx, api.GetAssignedUsersRequest(roleID), &resp); err != nil {
+	if err := c.transport.Do(ctx, api.GetAssignedUsersRequest(roleID), &resp); err != nil {
 		return nil, fmt.Errorf("get assigned users: %w", err)
 	}
 	return []string(resp), nil
@@ -208,9 +208,9 @@ func (rc *RolesClient) AssignedUserIDs(ctx context.Context, roleID string) ([]st
 
 type UserInfo api.UserInfo
 
-func (rc *RolesClient) UserAssignments(ctx context.Context, roleID string) ([]UserInfo, error) {
+func (c *RolesClient) UserAssignments(ctx context.Context, roleID string) ([]UserInfo, error) {
 	var resp []api.UserInfo
-	if err := rc.transport.Do(ctx, api.GetUserAssignmentsRequest(roleID), &resp); err != nil {
+	if err := c.transport.Do(ctx, api.GetUserAssignmentsRequest(roleID), &resp); err != nil {
 		return nil, fmt.Errorf("get user assignments: %w", err)
 	}
 
@@ -223,9 +223,9 @@ func (rc *RolesClient) UserAssignments(ctx context.Context, roleID string) ([]Us
 
 type GroupInfo api.GroupInfo
 
-func (rc *RolesClient) GroupAssignments(ctx context.Context, roleID string) ([]GroupInfo, error) {
+func (c *RolesClient) GroupAssignments(ctx context.Context, roleID string) ([]GroupInfo, error) {
 	var resp []api.GroupInfo
-	if err := rc.transport.Do(ctx, api.GetGroupAssignmentsRequest(roleID), &resp); err != nil {
+	if err := c.transport.Do(ctx, api.GetGroupAssignmentsRequest(roleID), &resp); err != nil {
 		return nil, fmt.Errorf("get group assignments: %w", err)
 	}
 

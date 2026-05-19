@@ -1042,7 +1042,7 @@ func TestRESTRequests(t *testing.T) {
 		},
 		{
 			name:       "rotate db user api key",
-			req:        api.RotateUserKeyRequest("john-malkovich"),
+			req:        api.RotateAPIKeyRequest("john-malkovich"),
 			wantMethod: http.MethodPost,
 			wantPath:   "/users/db/john-malkovich/rotate-key",
 		},
@@ -1779,8 +1779,8 @@ func TestRESTResponses(t *testing.T) {
 			body: &rest.UserApiKey{
 				Apikey: "abracadabra",
 			},
-			dest: new(api.RotateUserKeyResponse),
-			want: &api.RotateUserKeyResponse{
+			dest: new(api.RotateAPIKeyResponse),
+			want: &api.RotateAPIKeyResponse{
 				APIKey: "abracadabra",
 			},
 		},
