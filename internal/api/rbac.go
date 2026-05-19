@@ -695,17 +695,39 @@ func find[T any](lookup map[string]any, action rest.PermissionAction, data json.
 }
 
 // GetOwnUserInfoRequest fetches user info for the current user.
+// Use with [GetOwnUserInfoResponse].
 var GetOwnUserInfoRequest = transports.StaticEndpoint(http.MethodGet, "/users/own-info")
+
+type GetOwnUserInfoResponse struct {
+	ID     string
+	Roles  []Role
+	Groups []string
+}
+
+var _ json.Unmarshaler = (*GetOwnUserInfoResponse)(nil)
+
+func (r *GetOwnUserInfoResponse) UnmarshalJSON(data []byte) error {
+	var resp struct {
+		rest.UserOwnInfo
+		Roles []Role `json:"roles"`
+	}
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return err
+	}
+	*r = GetOwnUserInfoResponse{
+		ID:     resp.Username,
+		Roles:  resp.Roles,
+		Groups: resp.Groups,
+	}
+	return nil
+}
 
 const (
 	EntityUser  = "users"
 	EntityGroup = "groups"
 
-	UserTypeDB    = "db"
-	UserTypeDBEnv = "db_env"
-	UserTypeOIDC  = "oidc"
-
-	GroupTypeOIDC = "oidc"
+	RBACKindDB   = "db"
+	RBACKindOIDC = "oidc"
 )
 
 // GetAssignedRolesRequest fetches roles assigned to a user or a group.
@@ -715,7 +737,7 @@ type GetAssignedRolesRequest struct {
 
 	Entity string // [EntityUser] or [EntityGroup]
 	ID     string // User or Group ID
-	Type   string // User or Group type
+	Kind   string // User or Group kind
 
 	IncludePermissions bool // Include permissions associated with each role.
 }
@@ -724,7 +746,7 @@ var _ transports.Endpoint = (*GetAssignedRolesRequest)(nil)
 
 func (*GetAssignedRolesRequest) Method() string { return http.MethodGet }
 func (r *GetAssignedRolesRequest) Path() string {
-	return transports.Path("/authz/"+r.Entity+"/%s/roles/"+r.Type, r.ID)
+	return transports.Path("/authz/"+r.Entity+"/%s/roles/"+r.Kind, r.ID)
 }
 
 func (r *GetAssignedRolesRequest) Query() url.Values {
@@ -739,7 +761,7 @@ type AssignRolesRequest struct {
 
 	Entity string   // [EntityUser] or [EntityGroup]
 	ID     string   // User or Group ID
-	Type   string   // User or Group type
+	Kind   string   // User or Group kind
 	Roles  []string // IDs of roles to assign
 }
 
@@ -759,12 +781,12 @@ func (r *AssignRolesRequest) MarshalJSON() ([]byte, error) {
 	switch r.Entity {
 	case EntityUser:
 		return json.Marshal(rest.AssignRoleToUserJSONBody{
-			UserType: rest.UserTypeInput(r.Type),
+			UserType: rest.UserTypeInput(r.Kind),
 			Roles:    r.Roles,
 		})
 	case EntityGroup:
 		return json.Marshal(rest.AssignRoleToGroupJSONBody{
-			GroupType: rest.GroupType(r.Type),
+			GroupType: rest.GroupType(r.Kind),
 			Roles:     r.Roles,
 		})
 	default:
@@ -778,7 +800,7 @@ type RevokeRolesRequest struct {
 
 	Entity string   // [EntityUser] or [EntityGroup]
 	ID     string   // User or Group ID
-	Type   string   // User or Group type
+	Kind   string   // User or Group kind
 	Roles  []string // IDs of roles to assign
 }
 
@@ -798,12 +820,12 @@ func (r *RevokeRolesRequest) MarshalJSON() ([]byte, error) {
 	switch r.Entity {
 	case EntityUser:
 		return json.Marshal(rest.AssignRoleToUserJSONBody{
-			UserType: rest.UserTypeInput(r.Type),
+			UserType: rest.UserTypeInput(r.Kind),
 			Roles:    r.Roles,
 		})
 	case EntityGroup:
 		return json.Marshal(rest.AssignRoleToGroupJSONBody{
-			GroupType: rest.GroupType(r.Type),
+			GroupType: rest.GroupType(r.Kind),
 			Roles:     r.Roles,
 		})
 	default:
@@ -813,7 +835,10 @@ func (r *RevokeRolesRequest) MarshalJSON() ([]byte, error) {
 }
 
 // ListGroupsRequest fetches IDs of the all known OIDC groups.
+// Use with [ListGroupsResponse].
 var ListGroupsRequest = transports.StaticEndpoint(http.MethodGet, "/authz/groups/oidc")
+
+type ListGroupsResponse []string
 
 // ============================================================================
 // TODO(dyma): I wonder how many of the following requests will eventually
@@ -823,21 +848,32 @@ var ListGroupsRequest = transports.StaticEndpoint(http.MethodGet, "/authz/groups
 // that's just something to keep in mind.
 // ============================================================================
 
-// CreateUserRequest creates a new user with type [UserTypeDB].
+// CreateUserRequest creates a new user with type [RBACKindDB].
 // Use with [CreateUserResponse].
 var CreateUserRequest = transports.IdentityEndpoint[string](http.MethodPost, "/users/db/%s")
 
 type CreateUserResponse struct {
-	APIKey string `json:"apiKey"`
+	APIKey string
 }
 
-// DeleteUserRequest deletes a [UserTypeDB] user.
+var _ json.Unmarshaler = (*CreateUserResponse)(nil)
+
+func (r *CreateUserResponse) UnmarshalJSON(data []byte) error {
+	var resp rest.UserApiKey
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return err
+	}
+	*r = CreateUserResponse{APIKey: resp.Apikey}
+	return nil
+}
+
+// DeleteUserRequest deletes a [RBACKindDB] user.
 var DeleteUserRequest = transports.IdentityEndpoint[string](http.MethodDelete, "/users/db/%s")
 
-// ActivateUserRequest activates a [UserTypeDB] user.
+// ActivateUserRequest activates a [RBACKindDB] user.
 var ActivateUserRequest = transports.IdentityEndpoint[string](http.MethodPost, "/users/db/%s/activate")
 
-// DeactivateUserRequest deactivates a [UserTypeDB] user.
+// DeactivateUserRequest deactivates a [RBACKindDB] user.
 type DeactivateUserRequest struct {
 	transports.BaseEndpoint
 
@@ -859,13 +895,42 @@ func (r *DeactivateUserRequest) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// RotateUserKeyRequest generates a new API key for a [UserTypeDB] user.
+// RotateUserKeyRequest generates a new API key for a [RBACKindDB] user.
 // Use with [RotateUserKeyResponse].
 var RotateUserKeyRequest = transports.IdentityEndpoint[string](http.MethodPost, "/users/db/%s/rotate-key")
 
 type RotateUserKeyResponse CreateUserResponse
 
-// GetUserInfoRequest fetches user info for a [UserTypeDB] user.
+const (
+	UserTypeDB    = "db_user"
+	UserTypeDBEnv = "db_env"
+)
+
+type UserInfo struct {
+	ID     string
+	Type   string
+	Active bool
+	Roles  []string
+}
+
+var _ json.Unmarshaler = (*UserInfo)(nil)
+
+func (ui *UserInfo) UnmarshalJSON(data []byte) error {
+	var resp rest.DBUserInfo
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return err
+	}
+	*ui = UserInfo{
+		ID:     resp.UserId,
+		Type:   string(resp.DbUserType),
+		Active: resp.Active,
+		Roles:  resp.Roles,
+	}
+	return nil
+}
+
+// GetUserInfoRequest fetches user info for a [RBACKindDB] user.
+// Use with [UserInfo].
 type GetUserInfoRequest struct {
 	transports.BaseEndpoint
 
@@ -884,7 +949,8 @@ func (r *GetUserInfoRequest) Query() url.Values {
 	return url.Values{"includeLastUsedTime": {"true"}}
 }
 
-// ListUsersRequest fetches user info for all [UserTypeDB] users.
+// ListUsersRequest fetches user info for all [RBACKindDB] users.
+// Use with [UserInfo] slice.
 type ListUsersRequest struct {
 	transports.BaseEndpoint
 	IncludeLastUsedAt bool
