@@ -204,35 +204,32 @@ func (rc *RolesClient) AssignedUserIDs(ctx context.Context, roleID string) ([]st
 	return []string(resp), nil
 }
 
-// TODO(dyma): replace with map[username]usertype?
-// Or just User, containing Type and ID, but other fields zeroed.
-// Otherwise we're polluting the API.
-type UserAssignment api.UserAssignment
+type UserInfo api.UserInfo
 
-func (rc *RolesClient) UserAssignments(ctx context.Context, roleID string) ([]UserAssignment, error) {
-	var resp []api.UserAssignment
+func (rc *RolesClient) UserAssignments(ctx context.Context, roleID string) ([]UserInfo, error) {
+	var resp []api.UserInfo
 	if err := rc.transport.Do(ctx, api.GetUserAssignmentsRequest(roleID), &resp); err != nil {
 		return nil, fmt.Errorf("get user assignments: %w", err)
 	}
 
-	out := make([]UserAssignment, len(resp))
+	out := make([]UserInfo, len(resp))
 	for i := range resp {
-		out[i] = UserAssignment(resp[i])
+		out[i] = UserInfo(resp[i])
 	}
 	return out, nil
 }
 
-type GroupAssignment api.GroupAssignment
+type GroupInfo api.GroupInfo
 
-func (rc *RolesClient) GroupAssignments(ctx context.Context, roleID string) ([]GroupAssignment, error) {
-	var resp []api.GroupAssignment
+func (rc *RolesClient) GroupAssignments(ctx context.Context, roleID string) ([]GroupInfo, error) {
+	var resp []api.GroupInfo
 	if err := rc.transport.Do(ctx, api.GetGroupAssignmentsRequest(roleID), &resp); err != nil {
 		return nil, fmt.Errorf("get group assignments: %w", err)
 	}
 
-	out := make([]GroupAssignment, len(resp))
+	out := make([]GroupInfo, len(resp))
 	for i := range resp {
-		out[i] = GroupAssignment(resp[i])
+		out[i] = GroupInfo(resp[i])
 	}
 	return out, nil
 }

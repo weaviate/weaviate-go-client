@@ -173,25 +173,18 @@ var GetAssignedUsersRequest = transports.IdentityEndpoint[string](http.MethodGet
 type GetAssignedUsersResponse []string
 
 // GetUserAssignmentsRequest retrieves IDs and type of users this role is assigned to.
-// Use with [UserAssignment].
+// Use with [UserInfo] slice. Note that only [UserInfo.ID] and [UserInfo.Type] fields
+// will be populated.
 var GetUserAssignmentsRequest = transports.IdentityEndpoint[string](http.MethodGet, "/authz/roles/%s/user-assignments")
 
 // GetUserAssignmentsRequest retrieves IDs and type of groups this role is assigned to.
-// Use with [GroupAssignment].
+// Use with [GroupInfo] slice.
 var GetGroupAssignmentsRequest = transports.IdentityEndpoint[string](http.MethodGet, "/authz/roles/%s/group-assignments")
 
-// oapi-codegen does not generate inline response types.
-// https://github.com/oapi-codegen/oapi-codegen/issues/513
-type (
-	UserAssignment struct {
-		ID   string `json:"userId"`
-		Type string `json:"userType"`
-	}
-	GroupAssignment struct {
-		ID   string `json:"groupId"`
-		Type string `json:"groupType"`
-	}
-)
+type GroupInfo struct {
+	ID   string `json:"groupId"`
+	Type string `json:"groupType"`
+}
 
 // AddPermissionsRequest adds permissions to a role.
 type AddPermissionsRequest struct {
@@ -880,27 +873,39 @@ var RotateUserKeyRequest = transports.IdentityEndpoint[string](http.MethodPost, 
 type RotateUserKeyResponse CreateUserResponse
 
 const (
-	UserTypeDB    = "db_user"
-	UserTypeDBEnv = "db_env"
+	UserTypeDB    = "db_user"     // User created via REST API.
+	UserTypeDBEnv = "db_env_user" // User defined in the server environment.
+	UserTypeOIDC  = "oidc"        // User managed by an OIDC provider.
+
+	GroupTypeOIDC = "oidc" // Group managed by an OIDC provider.
 )
 
 type UserInfo struct {
-	ID     string
-	Type   string
-	Active bool
-	Roles  []string
+	ID     string   // User ID.
+	Type   string   // [UserTypeDB] or [UserTypeDBEnv]
+	Active bool     // Is the user activated?
+	Roles  []string // Roles assigned to this user.
 }
 
 var _ json.Unmarshaler = (*UserInfo)(nil)
 
 func (ui *UserInfo) UnmarshalJSON(data []byte) error {
-	var resp rest.DBUserInfo
+	var resp struct {
+		rest.DBUserInfo
+		UserType string `json:"userType"`
+	}
 	if err := json.Unmarshal(data, &resp); err != nil {
 		return err
 	}
+
+	userType := resp.UserType
+	if userType == "" {
+		userType = string(resp.DbUserType)
+	}
+
 	*ui = UserInfo{
 		ID:     resp.UserId,
-		Type:   string(resp.DbUserType),
+		Type:   userType,
 		Active: resp.Active,
 		Roles:  resp.Roles,
 	}
@@ -931,6 +936,7 @@ func (r *GetUserInfoRequest) Query() url.Values {
 // Use with [UserInfo] slice.
 type ListUsersRequest struct {
 	transports.BaseEndpoint
+
 	IncludeLastUsedAt bool
 }
 

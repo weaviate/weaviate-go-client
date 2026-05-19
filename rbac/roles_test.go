@@ -411,26 +411,26 @@ func TestRolesClient_UserAssignments(t *testing.T) {
 	for _, tt := range []struct {
 		name   string
 		roleID string
-		stubs  []testkit.Stub[any, []api.UserAssignment]
-		want   []rbac.UserAssignment
+		stubs  []testkit.Stub[any, []api.UserInfo]
+		want   []rbac.UserInfo
 		err    testkit.Error
 	}{
 		{
 			name:   "ok",
 			roleID: "rock-n-role",
-			stubs: []testkit.Stub[any, []api.UserAssignment]{{
+			stubs: []testkit.Stub[any, []api.UserInfo]{{
 				Request: testkit.Ptr(api.GetUserAssignmentsRequest("rock-n-role")),
-				Response: []api.UserAssignment{
+				Response: []api.UserInfo{
 					{ID: "john_doe", Type: "db_env"},
 				},
 			}},
-			want: []rbac.UserAssignment{
+			want: []rbac.UserInfo{
 				{ID: "john_doe", Type: "db_env"},
 			},
 		},
 		{
 			name: "with error",
-			stubs: []testkit.Stub[any, []api.UserAssignment]{
+			stubs: []testkit.Stub[any, []api.UserInfo]{
 				{Err: testkit.ErrWhaam},
 			},
 			err: testkit.ExpectError,
@@ -452,26 +452,26 @@ func TestRolesClient_GroupAssignments(t *testing.T) {
 	for _, tt := range []struct {
 		name   string
 		roleID string
-		stubs  []testkit.Stub[any, []api.GroupAssignment]
-		want   []rbac.GroupAssignment
+		stubs  []testkit.Stub[any, []api.GroupInfo]
+		want   []rbac.GroupInfo
 		err    testkit.Error
 	}{
 		{
 			name:   "ok",
 			roleID: "rock-n-role",
-			stubs: []testkit.Stub[any, []api.GroupAssignment]{{
+			stubs: []testkit.Stub[any, []api.GroupInfo]{{
 				Request: testkit.Ptr(api.GetGroupAssignmentsRequest("rock-n-role")),
-				Response: []api.GroupAssignment{
+				Response: []api.GroupInfo{
 					{ID: "external", Type: "oidc"},
 				},
 			}},
-			want: []rbac.GroupAssignment{
+			want: []rbac.GroupInfo{
 				{ID: "external", Type: "oidc"},
 			},
 		},
 		{
 			name: "with error",
-			stubs: []testkit.Stub[any, []api.GroupAssignment]{
+			stubs: []testkit.Stub[any, []api.GroupInfo]{
 				{Err: testkit.ErrWhaam},
 			},
 			err: testkit.ExpectError,

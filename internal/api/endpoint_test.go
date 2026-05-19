@@ -1719,16 +1719,16 @@ func TestRESTResponses(t *testing.T) {
 			want: testkit.Ptr[api.HasPermissionResponse](true),
 		},
 		{
-			name: "user assignment",
-			body: map[string]any{
+			name: "user assignments",
+			body: []map[string]any{{
 				"userId":   "john_doe",
-				"userType": "db_env",
-			},
-			dest: new(api.UserAssignment),
-			want: &api.UserAssignment{
+				"userType": rest.DBUserInfoDbUserTypeDbEnvUser,
+			}},
+			dest: new([]api.UserInfo),
+			want: &[]api.UserInfo{{
 				ID:   "john_doe",
-				Type: "db_env",
-			},
+				Type: api.UserTypeDBEnv,
+			}},
 		},
 		{
 			name: "group assignment",
@@ -1736,8 +1736,8 @@ func TestRESTResponses(t *testing.T) {
 				"groupId":   "external",
 				"groupType": "oidc",
 			},
-			dest: new(api.GroupAssignment),
-			want: &api.GroupAssignment{
+			dest: new(api.GroupInfo),
+			want: &api.GroupInfo{
 				ID:   "external",
 				Type: "oidc",
 			},
