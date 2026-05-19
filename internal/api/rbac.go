@@ -186,35 +186,26 @@ type GroupInfo struct {
 	Type string `json:"groupType"`
 }
 
-// AddPermissionsRequest adds permissions to a role.
-type AddPermissionsRequest struct {
+const (
+	PermissionActionAdd    = "add"
+	PermissionActionRemove = "remove"
+)
+
+// ManagePermissionsRequest adds permissions to a role.
+type ManagePermissionsRequest struct {
 	transports.BaseEndpoint
 	RoleID      string      `json:"-"`
+	Action      string      `json:"-"`
 	Permissions Permissions `json:"permissions"`
 }
 
-var _ transports.Endpoint = (*AddPermissionsRequest)(nil)
+var _ transports.Endpoint = (*ManagePermissionsRequest)(nil)
 
-func (*AddPermissionsRequest) Method() string { return http.MethodPost }
-func (r *AddPermissionsRequest) Path() string {
-	return transports.Path("/authz/roles/%s/add-permissions", r.RoleID)
+func (*ManagePermissionsRequest) Method() string { return http.MethodPost }
+func (r *ManagePermissionsRequest) Path() string {
+	return transports.Path("/authz/roles/%s/%s-permissions", r.RoleID, r.Action)
 }
-func (r *AddPermissionsRequest) Body() any { return &r }
-
-// RemovePermissionsRequest removes permissions from a role.
-type RemovePermissionsRequest struct {
-	transports.BaseEndpoint
-	RoleID      string      `json:"-"`
-	Permissions Permissions `json:"permissions"`
-}
-
-var _ transports.Endpoint = (*RemovePermissionsRequest)(nil)
-
-func (*RemovePermissionsRequest) Method() string { return http.MethodPost }
-func (r *RemovePermissionsRequest) Path() string {
-	return "/authz/roles/" + url.PathEscape(r.RoleID) + "/remove-permissions"
-}
-func (r *RemovePermissionsRequest) Body() any { return &r }
+func (r *ManagePermissionsRequest) Body() any { return r }
 
 // HasPermissionRequest checks if a role contains a permission.
 type HasPermissionRequest struct {
@@ -756,8 +747,8 @@ func (r *GetAssignedRolesRequest) Query() url.Values {
 }
 
 const (
-	RBACActionAssign = "assign"
-	RBACActionRevoke = "revoke"
+	RoleActionAssign = "assign"
+	RoleActionRevoke = "revoke"
 )
 
 // ManageRolesRequest assigns or revokes roles from an RBAC entity.

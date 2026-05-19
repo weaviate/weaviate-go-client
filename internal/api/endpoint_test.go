@@ -868,8 +868,9 @@ func TestRESTRequests(t *testing.T) {
 		},
 		{
 			name: "add permissions to role",
-			req: &api.AddPermissionsRequest{
+			req: &api.ManagePermissionsRequest{
 				RoleID: "rock-n-role",
+				Action: api.PermissionActionAdd,
 				Permissions: api.Permissions{
 					Cluster: []api.ClusterPermission{
 						{Read: true},
@@ -886,8 +887,9 @@ func TestRESTRequests(t *testing.T) {
 		},
 		{
 			name: "remove permissions from role",
-			req: &api.RemovePermissionsRequest{
+			req: &api.ManagePermissionsRequest{
 				RoleID: "rock-n-role",
+				Action: api.PermissionActionRemove,
 				Permissions: api.Permissions{
 					Cluster: []api.ClusterPermission{
 						{Read: true},
@@ -947,7 +949,7 @@ func TestRESTRequests(t *testing.T) {
 			req: &api.ManageRolesRequest{
 				Entity: api.UserID("john-malkovich"),
 				Kind:   api.RBACKindDB,
-				Action: api.RBACActionAssign,
+				Action: api.RoleActionAssign,
 				Roles:  []string{"rock-n-role", "sushi-role"},
 			},
 			wantMethod: http.MethodPost,
@@ -962,7 +964,7 @@ func TestRESTRequests(t *testing.T) {
 			req: &api.ManageRolesRequest{
 				Entity: api.GroupID("external"),
 				Kind:   api.RBACKindOIDC,
-				Action: api.RBACActionAssign,
+				Action: api.RoleActionAssign,
 				Roles:  []string{"rock-n-role", "sushi-role"},
 			},
 			wantMethod: http.MethodPost,
@@ -977,7 +979,7 @@ func TestRESTRequests(t *testing.T) {
 			req: &api.ManageRolesRequest{
 				Entity: api.UserID("john-malkovich"),
 				Kind:   api.RBACKindDB,
-				Action: api.RBACActionRevoke,
+				Action: api.RoleActionRevoke,
 				Roles:  []string{"rock-n-role", "sushi-role"},
 			},
 			wantMethod: http.MethodPost,
@@ -992,7 +994,7 @@ func TestRESTRequests(t *testing.T) {
 			req: &api.ManageRolesRequest{
 				Entity: api.GroupID("external"),
 				Kind:   api.RBACKindOIDC,
-				Action: api.RBACActionRevoke,
+				Action: api.RoleActionRevoke,
 				Roles:  []string{"rock-n-role", "sushi-role"},
 			},
 			wantMethod: http.MethodPost,

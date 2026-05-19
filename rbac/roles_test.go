@@ -193,7 +193,7 @@ func TestRolesClient_AddPermissions(t *testing.T) {
 	for _, tt := range []struct {
 		name  string
 		add   rbac.AddPermissions
-		stubs []testkit.Stub[api.AddPermissionsRequest, any]
+		stubs []testkit.Stub[api.ManagePermissionsRequest, any]
 		err   testkit.Error
 	}{
 		{
@@ -206,9 +206,10 @@ func TestRolesClient_AddPermissions(t *testing.T) {
 					},
 				},
 			},
-			stubs: []testkit.Stub[api.AddPermissionsRequest, any]{{
-				Request: &api.AddPermissionsRequest{
+			stubs: []testkit.Stub[api.ManagePermissionsRequest, any]{{
+				Request: &api.ManagePermissionsRequest{
 					RoleID: "rock-n-role",
+					Action: api.PermissionActionAdd,
 					Permissions: api.Permissions{
 						Cluster: []api.ClusterPermission{
 							{Read: true},
@@ -219,7 +220,7 @@ func TestRolesClient_AddPermissions(t *testing.T) {
 		},
 		{
 			name: "with error",
-			stubs: []testkit.Stub[api.AddPermissionsRequest, any]{
+			stubs: []testkit.Stub[api.ManagePermissionsRequest, any]{
 				{Err: testkit.ErrWhaam},
 			},
 			err: testkit.ExpectError,
@@ -240,7 +241,7 @@ func TestRolesClient_RemovePermissions(t *testing.T) {
 	for _, tt := range []struct {
 		name   string
 		remove rbac.RemovePermissions
-		stubs  []testkit.Stub[api.RemovePermissionsRequest, any]
+		stubs  []testkit.Stub[api.ManagePermissionsRequest, any]
 		err    testkit.Error
 	}{
 		{
@@ -253,9 +254,10 @@ func TestRolesClient_RemovePermissions(t *testing.T) {
 					},
 				},
 			},
-			stubs: []testkit.Stub[api.RemovePermissionsRequest, any]{{
-				Request: &api.RemovePermissionsRequest{
+			stubs: []testkit.Stub[api.ManagePermissionsRequest, any]{{
+				Request: &api.ManagePermissionsRequest{
 					RoleID: "rock-n-role",
+					Action: api.PermissionActionRemove,
 					Permissions: api.Permissions{
 						Cluster: []api.ClusterPermission{
 							{Read: true},
@@ -266,7 +268,7 @@ func TestRolesClient_RemovePermissions(t *testing.T) {
 		},
 		{
 			name: "with error",
-			stubs: []testkit.Stub[api.RemovePermissionsRequest, any]{
+			stubs: []testkit.Stub[api.ManagePermissionsRequest, any]{
 				{Err: testkit.ErrWhaam},
 			},
 			err: testkit.ExpectError,
