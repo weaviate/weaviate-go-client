@@ -22,7 +22,7 @@ type SearchRequest struct {
 	Offset           int32
 	AutoLimit        int32
 	After            uuid.UUID
-	Filter           Filter
+	Filter           FilterExpr
 	ReturnProperties []ReturnProperty
 	ReturnReferences []ReturnReference
 	ReturnVectors    []string
@@ -45,11 +45,11 @@ func (r *SearchRequest) Method() transport.MethodFunc[proto.SearchRequest, proto
 func (r *SearchRequest) Body() transport.MessageMarshaler[proto.SearchRequest] { return r }
 
 type (
-	Filter struct {
+	FilterExpr struct {
 		Operator FilterOperator
-		Exprs    []Filter // Sub-expressions of logical operators AND/OR/NOT.
-		Target   []string // Target of a comparison expression, i.e. property, reference.
-		Value    any      // Test value appropriate for the target data type.
+		Exprs    []FilterExpr // Sub-expressions of logical operators AND/OR/NOT.
+		Target   []string     // Target of a comparison expression, i.e. property, reference.
+		Value    any          // Test value appropriate for the target data type.
 	}
 	ReturnMetadata struct {
 		CreatedAt    bool
@@ -278,7 +278,7 @@ func marshalReturnVectors(req *proto.MetadataRequest, vectors []string) {
 // and the original property name is the second item.
 var referenceCountRe = regexp.MustCompile(`count\((.*)\)`)
 
-func marshalFilter(f Filter) *proto.Filters {
+func marshalFilter(f FilterExpr) *proto.Filters {
 	var pf proto.Filters
 
 	switch f.Operator {
@@ -901,19 +901,19 @@ func (cl ConsistencyLevel) proto() *proto.ConsistencyLevel {
 type FilterOperator proto.Filters_Operator
 
 const (
-	FilterOperatorNot              FilterOperator = FilterOperator(proto.Filters_OPERATOR_NOT)
-	FilterOperatorAnd              FilterOperator = FilterOperator(proto.Filters_OPERATOR_AND)
-	FilterOperatorOr               FilterOperator = FilterOperator(proto.Filters_OPERATOR_OR)
-	FilterOperatorEqual            FilterOperator = FilterOperator(proto.Filters_OPERATOR_EQUAL)
-	FilterOperatorLessThan         FilterOperator = FilterOperator(proto.Filters_OPERATOR_LESS_THAN)
-	FilterOperatorLessThanEqual    FilterOperator = FilterOperator(proto.Filters_OPERATOR_LESS_THAN_EQUAL)
-	FilterOperatorGreaterThan      FilterOperator = FilterOperator(proto.Filters_OPERATOR_GREATER_THAN)
-	FilterOperatorGreaterThanEqual FilterOperator = FilterOperator(proto.Filters_OPERATOR_GREATER_THAN_EQUAL)
-	FilterOperatorLike             FilterOperator = FilterOperator(proto.Filters_OPERATOR_LIKE)
-	FilterOperatorIsNull           FilterOperator = FilterOperator(proto.Filters_OPERATOR_IS_NULL)
-	FilterOperatorContainsAll      FilterOperator = FilterOperator(proto.Filters_OPERATOR_CONTAINS_ALL)
-	FilterOperatorContainsAny      FilterOperator = FilterOperator(proto.Filters_OPERATOR_CONTAINS_ANY)
-	FilterOperatorContainsNone     FilterOperator = FilterOperator(proto.Filters_OPERATOR_CONTAINS_NONE)
+	FilterOperatorNot              = FilterOperator(proto.Filters_OPERATOR_NOT)
+	FilterOperatorAnd              = FilterOperator(proto.Filters_OPERATOR_AND)
+	FilterOperatorOr               = FilterOperator(proto.Filters_OPERATOR_OR)
+	FilterOperatorEqual            = FilterOperator(proto.Filters_OPERATOR_EQUAL)
+	FilterOperatorLessThan         = FilterOperator(proto.Filters_OPERATOR_LESS_THAN)
+	FilterOperatorLessThanEqual    = FilterOperator(proto.Filters_OPERATOR_LESS_THAN_EQUAL)
+	FilterOperatorGreaterThan      = FilterOperator(proto.Filters_OPERATOR_GREATER_THAN)
+	FilterOperatorGreaterThanEqual = FilterOperator(proto.Filters_OPERATOR_GREATER_THAN_EQUAL)
+	FilterOperatorLike             = FilterOperator(proto.Filters_OPERATOR_LIKE)
+	FilterOperatorIsNull           = FilterOperator(proto.Filters_OPERATOR_IS_NULL)
+	FilterOperatorContainsAll      = FilterOperator(proto.Filters_OPERATOR_CONTAINS_ALL)
+	FilterOperatorContainsAny      = FilterOperator(proto.Filters_OPERATOR_CONTAINS_ANY)
+	FilterOperatorContainsNone     = FilterOperator(proto.Filters_OPERATOR_CONTAINS_NONE)
 )
 
 func (o FilterOperator) String() string {

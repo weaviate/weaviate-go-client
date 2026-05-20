@@ -46,11 +46,27 @@ func TestNearVector(t *testing.T) {
 					Single: singleVector,
 				},
 				Filter: filter.And{
-					filter.Not(filter.Property[string]("album").Like(".*Blood")),
+					filter.Not{&filter.Cond{
+						Target:   []string{"album"},
+						Operator: filter.Like,
+						Value:    ".*Blood",
+					}},
 					filter.Or{
-						filter.Len("tags").LessThanEqual(22),
-						filter.Property[string]("tags").ContainsNone("#doom", "#punk"),
-						filter.ReferenceCount("performedBy").Equal(4),
+						&filter.Cond{
+							Target:   filter.Len("tags"),
+							Operator: filter.LessThanEqual,
+							Value:    int64(22),
+						},
+						&filter.Cond{
+							Target:   []string{"tags"},
+							Operator: filter.ContainsNone,
+							Value:    []string{"#doom", "#punk"},
+						},
+						&filter.Cond{
+							Target:   filter.ReferenceCount("performedBy"),
+							Operator: filter.Equal,
+							Value:    int64(4),
+						},
 					},
 				},
 				ReturnMetadata: query.ReturnMetadata{
@@ -100,12 +116,12 @@ func TestNearVector(t *testing.T) {
 						Offset:          2,
 						AutoLimit:       3,
 						After:           testkit.UUID,
-						Filter: api.Filter{
+						Filter: api.FilterExpr{
 							Operator: api.FilterOperatorAnd,
-							Exprs: []api.Filter{
+							Exprs: []api.FilterExpr{
 								{
 									Operator: api.FilterOperatorNot,
-									Exprs: []api.Filter{{
+									Exprs: []api.FilterExpr{{
 										Operator: api.FilterOperatorLike,
 										Target:   []string{"album"},
 										Value:    ".*Blood",
@@ -113,7 +129,7 @@ func TestNearVector(t *testing.T) {
 								},
 								{
 									Operator: api.FilterOperatorOr,
-									Exprs: []api.Filter{
+									Exprs: []api.FilterExpr{
 										{
 											Operator: api.FilterOperatorLessThanEqual,
 											Target:   []string{"len(tags)"},

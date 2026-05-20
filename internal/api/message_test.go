@@ -104,9 +104,9 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 		{
 			name: "filter by property",
 			req: &api.SearchRequest{
-				Filter: api.Filter{
+				Filter: api.FilterExpr{
 					Operator: api.FilterOperatorAnd,
-					Exprs: []api.Filter{
+					Exprs: []api.FilterExpr{
 						{
 							Target:   []string{"duration_sec"},
 							Operator: api.FilterOperatorGreaterThan,
@@ -119,7 +119,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 						},
 						{
 							Operator: api.FilterOperatorOr,
-							Exprs: []api.Filter{
+							Exprs: []api.FilterExpr{
 								{
 									Target:   []string{"album"},
 									Operator: api.FilterOperatorEqual,
@@ -134,7 +134,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 						},
 						{
 							Operator: api.FilterOperatorNot,
-							Exprs: []api.Filter{{
+							Exprs: []api.FilterExpr{{
 								Target:   []string{"tags"},
 								Operator: api.FilterOperatorContainsAll,
 								Value:    []string{"#soul", "#grime"},
@@ -194,7 +194,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 		{
 			name: "filter by reference count",
 			req: &api.SearchRequest{
-				Filter: api.Filter{
+				Filter: api.FilterExpr{
 					Target:   []string{"count(hasAwards)"},
 					Operator: api.FilterOperatorGreaterThanEqual,
 					Value:    4,
@@ -221,7 +221,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 		{
 			name: "filter by single-target reference",
 			req: &api.SearchRequest{
-				Filter: api.Filter{
+				Filter: api.FilterExpr{
 					Target:   []string{"performedBy", "bornIn", "population"},
 					Operator: api.FilterOperatorGreaterThanEqual,
 					Value:    400_000,
@@ -256,7 +256,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 		{
 			name: "filter by multi-target references",
 			req: &api.SearchRequest{
-				Filter: api.Filter{
+				Filter: api.FilterExpr{
 					Target:   []string{"hasAwards", "GrammyAward", "weight_kg"},
 					Operator: api.FilterOperatorEqual,
 					Value:    2.3,

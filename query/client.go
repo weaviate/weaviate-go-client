@@ -127,11 +127,16 @@ func query(ctx context.Context, t internal.Transport, r request, f func(*api.Sea
 		AutoLimit:        r.AutoLimit,
 		Offset:           r.Offset,
 		After:            r.After,
-		Filter:           marshalFilter(r.Filter),
 		ReturnVectors:    r.ReturnVectors,
 		ReturnMetadata:   api.ReturnMetadata(r.ReturnMetadata),
 		ReturnProperties: marshalReturnProperties(r.ReturnProperties, r.ReturnNestedProperties),
 		ReturnReferences: marshalReturnReferences(r.ReturnReferences),
+	}
+
+	if r.Filter != nil {
+		if expr := r.Filter.Expr(); expr != nil {
+			req.Filter = *expr
+		}
 	}
 
 	f(req)
@@ -223,23 +228,6 @@ func marshalReturnReferences(in []Reference) []api.ReturnReference {
 		}
 	}
 	return out
-}
-
-func marshalFilter(expr filter.Expr) api.Filter {
-	if expr == nil {
-		return api.Filter{}
-	}
-	f := api.Filter{
-		Operator: expr.Operator(),
-		Target:   expr.Target(),
-		Value:    expr.Value(),
-	}
-
-	for _, e := range expr.Exprs() {
-		f.Exprs = append(f.Exprs, marshalFilter(e))
-	}
-
-	return f
 }
 
 func marshalSearchTarget(target VectorTarget) api.SearchTarget {
