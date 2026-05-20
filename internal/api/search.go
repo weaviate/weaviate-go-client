@@ -394,7 +394,7 @@ func marshalFilterTarget(path []string) *proto.FilterTarget {
 		// path is a possible scenario in the recursive case (see default).
 		return nil
 	case 1:
-		// The server allows using property lenght as a filter property
+		// The server allows using property length as a filter property
 		// by wrapping its name in the len() operator, e.g. len(tags).
 		// This package extends that with a count() operator, which
 		// allows using reference count as the property. This requires
@@ -444,7 +444,6 @@ func marshalFilterTarget(path []string) *proto.FilterTarget {
 				},
 			}
 		}
-
 	}
 }
 
