@@ -13,6 +13,7 @@ var (
 	_ Expr = (*Cond)(nil)
 	_ Expr = (*And)(nil)
 	_ Expr = (*Or)(nil)
+	_ Expr = (*Not)(nil)
 )
 
 type Operator api.FilterOperator
