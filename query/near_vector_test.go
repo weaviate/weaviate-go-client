@@ -46,11 +46,13 @@ func TestNearVector(t *testing.T) {
 					Single: singleVector,
 				},
 				Filter: filter.And{
-					filter.Not{&filter.Cond{
-						Target:   []string{"album"},
-						Operator: filter.Like,
-						Value:    ".*Blood",
-					}},
+					filter.Not{
+						P: &filter.Cond{
+							Target:   []string{"album"},
+							Operator: filter.Like,
+							Value:    ".*Blood",
+						},
+					},
 					filter.Or{
 						&filter.Cond{
 							Target:   filter.Len("tags"),
