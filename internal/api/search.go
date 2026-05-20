@@ -422,6 +422,12 @@ func marshalFilterTarget(path []string) *proto.FilterTarget {
 		// as a multi-target reference.
 		// Continue marshaling the remainder of the path recursively
 		// until the last element is a property or a count() expression.
+		//
+		// TODO(dyma): Weaviate might not enforce that properties be lowercase,
+		// in which case (no pun intended), we may accidentally confuse a property
+		// for a name of the collection. Instead, we could use some special formatting
+		// like 'property#Collection' for multi-target references and search for #
+		// in the path element rather than checking IsUpper.
 		referenceProperty, path := path[0], path[1:]
 		if unicode.IsUpper(rune(path[0][0])) {
 			collection, path := path[0], path[1:]
