@@ -267,6 +267,36 @@ func TestFilter(t *testing.T) {
 				Value:    4,
 			},
 		},
+		{
+			name: "empty AND group",
+			expr: filter.And{},
+			want: nil,
+		},
+		{
+			name: "empty OR group",
+			expr: filter.Or{},
+			want: nil,
+		},
+		{
+			name: "nil filter in AND group",
+			expr: filter.And{nil},
+			want: nil,
+		},
+		{
+			name: "nil filter in OR group",
+			expr: filter.Or{nil},
+			want: nil,
+		},
+		{
+			name: "negating a nil filter",
+			expr: filter.Not{nil},
+			want: nil,
+		},
+		{
+			name: "negating an empty AND group",
+			expr: filter.Not{filter.And{}},
+			want: nil,
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			checkExpr(t, tt.expr.Expr(), tt.want)
@@ -278,6 +308,9 @@ func TestFilter(t *testing.T) {
 // target, test value, and sub-expressions.
 func checkExpr(t *testing.T, got, want *api.FilterExpr) {
 	assert.Equal(t, want, got)
+	if want == nil {
+		return
+	}
 	assert.Len(t, got.Exprs, len(want.Exprs), "sub-expressions")
 	for i := range got.Exprs {
 		checkExpr(t, &got.Exprs[i], &want.Exprs[i])

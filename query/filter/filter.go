@@ -85,11 +85,16 @@ func (and And) Expr() *api.FilterExpr {
 	if len(and) == 0 {
 		return nil
 	}
-	exprs := make([]api.FilterExpr, len(and))
-	for i := range and {
-		if expr := and[i].Expr(); expr != nil {
-			exprs[i] = *expr
+	exprs := make([]api.FilterExpr, 0, len(and))
+	for _, ex := range and {
+		if ex != nil {
+			if expr := ex.Expr(); expr != nil {
+				exprs = append(exprs, *expr)
+			}
 		}
+	}
+	if len(exprs) == 0 {
+		return nil
 	}
 	return &api.FilterExpr{
 		Operator: api.FilterOperatorAnd,
@@ -105,11 +110,16 @@ func (or Or) Expr() *api.FilterExpr {
 	if len(or) == 0 {
 		return nil
 	}
-	exprs := make([]api.FilterExpr, len(or))
-	for i := range or {
-		if expr := or[i].Expr(); expr != nil {
-			exprs[i] = *expr
+	exprs := make([]api.FilterExpr, 0, len(or))
+	for _, ex := range or {
+		if ex != nil {
+			if expr := ex.Expr(); expr != nil {
+				exprs = append(exprs, *expr)
+			}
 		}
+	}
+	if len(exprs) == 0 {
+		return nil
 	}
 	return &api.FilterExpr{
 		Operator: api.FilterOperatorOr,
@@ -121,6 +131,9 @@ func (or Or) Expr() *api.FilterExpr {
 type Not struct{ P Expr }
 
 func (not Not) Expr() *api.FilterExpr {
+	if not.P == nil {
+		return nil
+	}
 	expr := not.P.Expr()
 	if expr == nil {
 		return nil
