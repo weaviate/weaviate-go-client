@@ -51,7 +51,9 @@ func InjectLegacyDefaultVectorIndexType(p *db.VersionProvider, class *models.Cla
 	if supportsServerSideDefaultVectorIndexType(p.Version()) {
 		return
 	}
-	if class.VectorIndexType == "" {
+	// Only inject a class-level VectorIndexType when the class is NOT using
+	// named vectors (VectorConfig). Mixing both is rejected by the server.
+	if class.VectorIndexType == "" && len(class.VectorConfig) == 0 {
 		class.VectorIndexType = "hnsw"
 	}
 	for k, vc := range class.VectorConfig {
