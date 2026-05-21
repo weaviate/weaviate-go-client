@@ -2,6 +2,7 @@ package schema
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,6 +11,15 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate"
 	"github.com/weaviate/weaviate/entities/models"
 )
+
+// imageTag returns the value of the named env var, falling back to defaultTag
+// when the var is unset or empty.
+func imageTag(envVar, defaultTag string) string {
+	if v := os.Getenv(envVar); v != "" {
+		return v
+	}
+	return defaultTag
+}
 
 // serverVersion bundles a Weaviate image tag with optional server-side env var
 // overrides that modify default behaviour (e.g. DEFAULT_VECTOR_INDEX=flat).
@@ -27,8 +37,9 @@ type serverVersion struct {
 func TestDefaultVectorIndexType_Legacy137_4_InjectsHnsw(t *testing.T) {
 	ctx := context.Background()
 
-	container, err := docker.StartWeaviateWithEnv(ctx, "semitechnologies/weaviate:1.37.4", nil)
-	require.NoError(t, err, "start Weaviate 1.37.4 container")
+	legacyTag := imageTag("WEAVIATE_VERSION_LEGACY", "1.37.4")
+	container, err := docker.StartWeaviateWithEnv(ctx, "semitechnologies/weaviate:"+legacyTag, nil)
+	require.NoError(t, err, "start Weaviate legacy container (%s)", legacyTag)
 	defer func() {
 		require.NoError(t, container.Terminate(ctx))
 	}()
@@ -85,12 +96,14 @@ func TestDefaultVectorIndexType_New137_5_AppliesServerDefault(t *testing.T) {
 	extraEnv := map[string]string{
 		"DEFAULT_VECTOR_INDEX": "flat",
 	}
-	// 1.37.5-e0fe0d5.amd64 is a locally-built image from stable/v1.37 HEAD
-	// (commit ea7a136193) which includes the DEFAULT_VECTOR_INDEX feature
-	// merged in a63dc833d8. The version string reports as "1.37.5-..." which
-	// the supportsServerSideDefaultVectorIndexType helper treats as >= 1.37.5.
-	container, err := docker.StartWeaviateWithEnv(ctx, "semitechnologies/weaviate:1.37.5-e0fe0d5.amd64", extraEnv)
-	require.NoError(t, err, "start Weaviate 1.37.5 container")
+	// The new-version image tag is read from WEAVIATE_VERSION (existing
+	// repo-wide convention). Default is a locally-built 1.37.5 image that
+	// includes the DEFAULT_VECTOR_INDEX feature. The version string reports
+	// as "1.37.5-..." which the supportsServerSideDefaultVectorIndexType
+	// helper treats as >= 1.37.5.
+	newTag := imageTag("WEAVIATE_VERSION", "1.37.5-e0fe0d5.amd64")
+	container, err := docker.StartWeaviateWithEnv(ctx, "semitechnologies/weaviate:"+newTag, extraEnv)
+	require.NoError(t, err, "start Weaviate new container (%s)", newTag)
 	defer func() {
 		require.NoError(t, container.Terminate(ctx))
 	}()
@@ -146,12 +159,12 @@ func TestDefaultVectorIndexType_ExplicitFlat_BothVersions(t *testing.T) {
 
 	versions := []serverVersion{
 		{
-			name:  "legacy 1.37.4",
-			image: "semitechnologies/weaviate:1.37.4",
+			name:  "legacy " + imageTag("WEAVIATE_VERSION_LEGACY", "1.37.4"),
+			image: "semitechnologies/weaviate:" + imageTag("WEAVIATE_VERSION_LEGACY", "1.37.4"),
 		},
 		{
-			name:  "new 1.37.5 with DEFAULT_VECTOR_INDEX=flat",
-			image: "semitechnologies/weaviate:1.37.5-e0fe0d5.amd64",
+			name:  "new " + imageTag("WEAVIATE_VERSION", "1.37.5-e0fe0d5.amd64") + " with DEFAULT_VECTOR_INDEX=flat",
+			image: "semitechnologies/weaviate:" + imageTag("WEAVIATE_VERSION", "1.37.5-e0fe0d5.amd64"),
 			extraEnv: map[string]string{
 				"DEFAULT_VECTOR_INDEX": "flat",
 			},
