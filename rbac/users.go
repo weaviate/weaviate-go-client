@@ -3,9 +3,11 @@ package rbac
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
 
 type UsersClient struct {
@@ -15,6 +17,8 @@ type UsersClient struct {
 }
 
 func NewUsersClient(t internal.Transport) *UsersClient {
+	dev.AssertNotNil(t, "transport")
+
 	return &UsersClient{
 		transport: t,
 		DB: &DBUsersClient{
@@ -32,14 +36,28 @@ func NewUsersClient(t internal.Transport) *UsersClient {
 	}
 }
 
-type MyUser struct {
+type MyUserInfo struct {
 	ID     string
 	Roles  []Role
 	Groups []string
 }
 
-func (c *UsersClient) MyUser(ctx context.Context) (*MyUser, error) {
-	return nil, nil
+func (c *UsersClient) MyUserInfo(ctx context.Context) (*MyUserInfo, error) {
+	var resp api.GetOwnUserInfoResponse
+	if err := c.transport.Do(ctx, api.GetOwnUserInfoRequest, &resp); err != nil {
+		return nil, fmt.Errorf("get my user info: %w", err)
+	}
+
+	roles := slices.Grow([]Role(nil), len(resp.Roles))
+	for i := range resp.Roles {
+		roles = append(roles, unmarshalRole(&resp.Roles[i]))
+	}
+
+	return &MyUserInfo{
+		ID:     resp.ID,
+		Groups: resp.Groups,
+		Roles:  roles,
+	}, nil
 }
 
 type kindClient struct {
@@ -47,20 +65,62 @@ type kindClient struct {
 	kind      string
 }
 
-type AssignedRoles struct {
+type AssignedRolesOptions struct {
 	UserID             string
 	IncludePermissions bool
 }
 
-func (c *kindClient) AssignedRoles(ctx context.Context, options AssignedRoles) ([]Role, error) {
-	return nil, nil
+func (c *kindClient) AssignedRoles(ctx context.Context, options AssignedRolesOptions) ([]Role, error) {
+	req := &api.GetAssignedRolesRequest{
+		Kind:               c.kind,
+		Entity:             api.UserID(options.UserID),
+		IncludePermissions: options.IncludePermissions,
+	}
+
+	var resp []api.Role
+	if err := c.transport.Do(ctx, req, &resp); err != nil {
+		return nil, fmt.Errorf("get assigned roles: %w", err)
+	}
+	roles := slices.Grow([]Role(nil), len(resp))
+	for i := range resp {
+		roles = append(roles, unmarshalRole(&resp[i]))
+	}
+	return roles, nil
 }
 
-func (c *kindClient) AssignRoles(ctx context.Context, userID string, roles ...string) error {
+type AssignRolesOptions struct {
+	UserID string
+	Roles  []string
+}
+
+func (c *kindClient) AssignRoles(ctx context.Context, options AssignRolesOptions) error {
+	req := &api.ManageRolesRequest{
+		Kind:   c.kind,
+		Entity: api.UserID(options.UserID),
+		Action: api.RoleActionAssign,
+		Roles:  options.Roles,
+	}
+	if err := c.transport.Do(ctx, req, nil); err != nil {
+		return fmt.Errorf("assign roles: %w", err)
+	}
 	return nil
 }
 
-func (c *kindClient) RevokeRoles(ctx context.Context, userID string, roles ...string) error {
+type RevokeRolesOptions struct {
+	UserID string
+	Roles  []string
+}
+
+func (c *kindClient) RevokeRoles(ctx context.Context, options RevokeRolesOptions) error {
+	req := &api.ManageRolesRequest{
+		Kind:   c.kind,
+		Entity: api.UserID(options.UserID),
+		Action: api.RoleActionRevoke,
+		Roles:  options.Roles,
+	}
+	if err := c.transport.Do(ctx, req, nil); err != nil {
+		return fmt.Errorf("revoke roles: %w", err)
+	}
 	return nil
 }
 
@@ -91,12 +151,12 @@ func (c *DBUsersClient) Activate(ctx context.Context, userID string) error {
 	return nil
 }
 
-type DeactivateOptions struct {
+type DeactivateUserOptions struct {
 	ID        string
 	RevokeKey bool
 }
 
-func (c *DBUsersClient) Deactivate(ctx context.Context, options DeactivateOptions) error {
+func (c *DBUsersClient) Deactivate(ctx context.Context, options DeactivateUserOptions) error {
 	req := &api.DeactivateUserRequest{
 		ID:        options.ID,
 		RevokeKey: options.RevokeKey,
@@ -115,12 +175,20 @@ func (c *DBUsersClient) RotateKey(ctx context.Context, userID string) (string, e
 	return resp.APIKey, nil
 }
 
-type ByNameOptions struct {
+const (
+	UserTypeDB    = api.UserTypeDB    // User created via REST API.
+	UserTypeDBEnv = api.UserTypeDBEnv // User defined in the server environment.
+	UserTypeOIDC  = api.UserTypeOIDC  // User managed by an OIDC provider.
+
+	GroupTypeOIDC = api.GroupTypeOIDC // Group managed by an OIDC provider.
+)
+
+type UserInfoOptions struct {
 	ID                string
 	IncludeLastUsedAt bool
 }
 
-func (c *DBUsersClient) ByName(ctx context.Context, options ByNameOptions) (*UserInfo, error) {
+func (c *DBUsersClient) UserInfo(ctx context.Context, options UserInfoOptions) (*UserInfo, error) {
 	req := &api.GetUserInfoRequest{
 		ID:                options.ID,
 		IncludeLastUsedAt: options.IncludeLastUsedAt,

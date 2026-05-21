@@ -3,6 +3,7 @@ package rbac
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
@@ -106,7 +107,8 @@ func (c *RolesClient) Get(ctx context.Context, roleID string) (*Role, error) {
 	if err := c.transport.Do(ctx, api.GetRoleRequest(roleID), &resp); err != nil {
 		return nil, fmt.Errorf("get role: %w", err)
 	}
-	return unmarshalRole(&resp), nil
+	role := unmarshalRole(&resp)
+	return &role, nil
 }
 
 // List fetches all roles defined in the cluster.
@@ -115,9 +117,9 @@ func (c *RolesClient) List(ctx context.Context) ([]Role, error) {
 	if err := c.transport.Do(ctx, api.ListRolesRequest, &resp); err != nil {
 		return nil, fmt.Errorf("list role: %w", err)
 	}
-	var roles []Role
+	roles := slices.Grow([]Role(nil), len(resp))
 	for i := range resp {
-		roles = append(roles, *unmarshalRole(&resp[i]))
+		roles = append(roles, unmarshalRole(&resp[i]))
 	}
 	return roles, nil
 }
@@ -286,7 +288,7 @@ func marshalPermissions(ps *Permissions) api.Permissions {
 	return out
 }
 
-func unmarshalRole(r *api.Role) *Role {
+func unmarshalRole(r *api.Role) Role {
 	role := Role{ID: r.ID}
 	for _, p := range r.Aliases {
 		role.Aliases = append(role.Aliases, AliasPermission(p))
@@ -333,7 +335,7 @@ func unmarshalRole(r *api.Role) *Role {
 	for _, p := range r.Users {
 		role.Users = append(role.Users, UserPermission(p))
 	}
-	return &role
+	return role
 }
 
 // marshalHasPermission returns [api.HasPermissionRequest] with exacly 1 permission

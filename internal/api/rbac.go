@@ -725,7 +725,7 @@ const (
 )
 
 // GetAssignedRolesRequest fetches roles assigned to a user or a group.
-// Use with [Role].
+// Use with [Role] slice.
 type GetAssignedRolesRequest struct {
 	transports.BaseEndpoint
 
