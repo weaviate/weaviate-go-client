@@ -29,6 +29,7 @@ func (cc *ClassCreator) Do(ctx context.Context) error {
 	if err := internal.CheckTextAnalyzerSupport(cc.dbVersionProvider, cc.class); err != nil {
 		return err
 	}
+	internal.InjectLegacyDefaultVectorIndexType(cc.dbVersionProvider, cc.class)
 	responseData, err := cc.connection.RunREST(ctx, "/schema", http.MethodPost, cc.class)
 	return except.CheckResponseDataErrorAndStatusCode(responseData, err, 200)
 }
