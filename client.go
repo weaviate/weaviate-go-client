@@ -25,6 +25,8 @@ type Client struct {
 	Backup      *backup.Client
 	Collections *collections.Client
 	Roles       *rbac.RolesClient
+	Users       *rbac.UsersClient
+	Groups      *rbac.GroupsClient
 }
 
 var _ io.Closer = (*Client)(nil)
