@@ -22,16 +22,10 @@ func NewUsersClient(t internal.Transport) *UsersClient {
 	return &UsersClient{
 		transport: t,
 		DB: &DBUsersClient{
-			kindClient: &kindClient{
-				transport: t,
-				kind:      api.RBACKindDB,
-			},
+			kindClient: newKindClient[api.UserID](t, api.RBACKindDB),
 		},
 		OIDC: &OIDCUsersClient{
-			kindClient: &kindClient{
-				transport: t,
-				kind:      api.RBACKindOIDC,
-			},
+			kindClient: newKindClient[api.UserID](t, api.RBACKindOIDC),
 		},
 	}
 }
@@ -60,20 +54,27 @@ func (c *UsersClient) MyUserInfo(ctx context.Context) (*MyUserInfo, error) {
 	}, nil
 }
 
-type kindClient struct {
+func newKindClient[ID api.UserID | api.GroupID](t internal.Transport, kind string) *kindClient[ID] {
+	return &kindClient[ID]{
+		transport: t,
+		kind:      kind,
+	}
+}
+
+type kindClient[ID api.UserID | api.GroupID] struct {
 	transport internal.Transport
 	kind      string
 }
 
 type AssignedRolesOptions struct {
-	UserID             string
+	ID                 string
 	IncludePermissions bool
 }
 
-func (c *kindClient) AssignedRoles(ctx context.Context, options AssignedRolesOptions) ([]Role, error) {
+func (c *kindClient[ID]) AssignedRoles(ctx context.Context, options AssignedRolesOptions) ([]Role, error) {
 	req := &api.GetAssignedRolesRequest{
 		Kind:               c.kind,
-		Entity:             api.UserID(options.UserID),
+		Entity:             api.RBACEntity(ID(options.ID)),
 		IncludePermissions: options.IncludePermissions,
 	}
 
@@ -89,14 +90,14 @@ func (c *kindClient) AssignedRoles(ctx context.Context, options AssignedRolesOpt
 }
 
 type AssignRolesOptions struct {
-	UserID string
-	Roles  []string
+	ID    string
+	Roles []string
 }
 
-func (c *kindClient) AssignRoles(ctx context.Context, options AssignRolesOptions) error {
+func (c *kindClient[ID]) AssignRoles(ctx context.Context, options AssignRolesOptions) error {
 	req := &api.ManageRolesRequest{
 		Kind:   c.kind,
-		Entity: api.UserID(options.UserID),
+		Entity: api.RBACEntity(ID(options.ID)),
 		Action: api.RoleActionAssign,
 		Roles:  options.Roles,
 	}
@@ -107,14 +108,14 @@ func (c *kindClient) AssignRoles(ctx context.Context, options AssignRolesOptions
 }
 
 type RevokeRolesOptions struct {
-	UserID string
-	Roles  []string
+	ID    string
+	Roles []string
 }
 
-func (c *kindClient) RevokeRoles(ctx context.Context, options RevokeRolesOptions) error {
+func (c *kindClient[ID]) RevokeRoles(ctx context.Context, options RevokeRolesOptions) error {
 	req := &api.ManageRolesRequest{
 		Kind:   c.kind,
-		Entity: api.UserID(options.UserID),
+		Entity: api.RBACEntity(ID(options.ID)),
 		Action: api.RoleActionRevoke,
 		Roles:  options.Roles,
 	}
@@ -125,8 +126,8 @@ func (c *kindClient) RevokeRoles(ctx context.Context, options RevokeRolesOptions
 }
 
 type (
-	DBUsersClient   struct{ *kindClient }
-	OIDCUsersClient struct{ *kindClient }
+	DBUsersClient   struct{ *kindClient[api.UserID] }
+	OIDCUsersClient struct{ *kindClient[api.UserID] }
 )
 
 func (c *DBUsersClient) Create(ctx context.Context, userID string) (string, error) {

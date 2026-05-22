@@ -84,7 +84,7 @@ func TestUsersClient_DB_AssignedRoles(t *testing.T) {
 		{
 			name: "ok",
 			options: rbac.AssignedRolesOptions{
-				UserID:             "john-malkovich",
+				ID:                 "john-malkovich",
 				IncludePermissions: false,
 			},
 			stubs: []testkit.Stub[api.GetAssignedRolesRequest, []api.Role]{{
@@ -134,8 +134,8 @@ func TestUsersClient_DB_AssignRoles(t *testing.T) {
 		{
 			name: "ok",
 			options: rbac.AssignRolesOptions{
-				UserID: "john-malkovich",
-				Roles:  []string{"rock-n-role", "sushi-role"},
+				ID:    "john-malkovich",
+				Roles: []string{"rock-n-role", "sushi-role"},
 			},
 			stubs: []testkit.Stub[api.ManageRolesRequest, any]{{
 				Request: &api.ManageRolesRequest{
@@ -176,8 +176,8 @@ func TestUsersClient_DB_RevokeRoles(t *testing.T) {
 		{
 			name: "ok",
 			options: rbac.RevokeRolesOptions{
-				UserID: "john-malkovich",
-				Roles:  []string{"rock-n-role", "sushi-role"},
+				ID:    "john-malkovich",
+				Roles: []string{"rock-n-role", "sushi-role"},
 			},
 			stubs: []testkit.Stub[api.ManageRolesRequest, any]{{
 				Request: &api.ManageRolesRequest{
