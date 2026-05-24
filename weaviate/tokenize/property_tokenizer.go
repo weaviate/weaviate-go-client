@@ -2,6 +2,7 @@ package tokenize
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -58,5 +59,36 @@ func (p *PropertyTokenizer) Do(ctx context.Context) (*TokenizeResult, error) {
 	if decodeErr := responseData.DecodeBodyIntoTarget(&result); decodeErr != nil {
 		return nil, decodeErr
 	}
+	// Weaviate >=1.37.4 no longer echoes `tokenization`; backfill from the schema.
+	// Only paid when the server omitted the field — older servers skip the lookup.
+	if result.Tokenization == "" {
+		if t, _ := p.fetchPropertyTokenization(ctx); t != "" {
+			result.Tokenization = Tokenization(t)
+		}
+	}
 	return &result, nil
+}
+
+// fetchPropertyTokenization returns "" on any failure: backfill is best-effort
+// and must not mask the tokenize result with a schema error.
+func (p *PropertyTokenizer) fetchPropertyTokenization(ctx context.Context) (string, error) {
+	resp, err := p.connection.RunREST(ctx, "/schema/"+p.className, http.MethodGet, nil)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return "", err
+	}
+	var class struct {
+		Properties []struct {
+			Name         string `json:"name"`
+			Tokenization string `json:"tokenization"`
+		} `json:"properties"`
+	}
+	if err := json.Unmarshal(resp.Body, &class); err != nil {
+		return "", err
+	}
+	for _, prop := range class.Properties {
+		if prop.Name == p.propertyName {
+			return prop.Tokenization, nil
+		}
+	}
+	return "", nil
 }

@@ -31,17 +31,21 @@ func TestTokenize_integration(t *testing.T) {
 	// -------- Serialization ------------------------------------------------
 
 	t.Run("Tokenization_Enum", func(t *testing.T) {
+		// Weaviate >=1.37.4 filters default stopwords on the query side for `word`;
+		// older versions return query == indexed.
+		queryStopwordsFiltered := testsuit.ServerAtLeast(t, client, "1.37.4")
 		cases := []struct {
-			name     string
-			method   tokenize.Tokenization
-			text     string
-			expected []string
+			name            string
+			method          tokenize.Tokenization
+			text            string
+			expectedIndexed []string
+			expectedQuery   []string // nil = same as expectedIndexed
 		}{
-			{"word", tokenize.Word, "The quick brown fox", []string{"the", "quick", "brown", "fox"}},
-			{"lowercase", tokenize.Lowercase, "Hello World Test", []string{"hello", "world", "test"}},
-			{"whitespace", tokenize.Whitespace, "Hello World Test", []string{"Hello", "World", "Test"}},
-			{"field", tokenize.Field, "  Hello World  ", []string{"Hello World"}},
-			{"trigram", tokenize.Trigram, "Hello", []string{"hel", "ell", "llo"}},
+			{"word", tokenize.Word, "The quick brown fox", []string{"the", "quick", "brown", "fox"}, []string{"quick", "brown", "fox"}},
+			{"lowercase", tokenize.Lowercase, "Hello World Test", []string{"hello", "world", "test"}, nil},
+			{"whitespace", tokenize.Whitespace, "Hello World Test", []string{"Hello", "World", "Test"}, nil},
+			{"field", tokenize.Field, "  Hello World  ", []string{"Hello World"}, nil},
+			{"trigram", tokenize.Trigram, "Hello", []string{"hel", "ell", "llo"}, nil},
 		}
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
@@ -52,8 +56,12 @@ func TestTokenize_integration(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, result)
 				assert.Equal(t, tc.method, result.Tokenization)
-				assert.Equal(t, tc.expected, result.Indexed)
-				assert.Equal(t, tc.expected, result.Query)
+				assert.Equal(t, tc.expectedIndexed, result.Indexed)
+				wantQuery := tc.expectedIndexed
+				if queryStopwordsFiltered && tc.expectedQuery != nil {
+					wantQuery = tc.expectedQuery
+				}
+				assert.Equal(t, wantQuery, result.Query)
 			})
 		}
 	})
@@ -124,6 +132,11 @@ func TestTokenize_integration(t *testing.T) {
 	})
 
 	t.Run("CustomPreset_Additions", func(t *testing.T) {
+		// 1.37.4 changed `stopwordPresets` to `[]string`; SDK still emits the
+		// legacy map. TODO: rework SDK API and re-enable (weaviate/weaviate#11079).
+		if testsuit.ServerAtLeast(t, client, "1.37.4") {
+			t.Skip("custom stopword presets need an SDK API rework for 1.37.4+ wire shape")
+		}
 		cfg := &tokenize.AnalyzerConfig{StopwordPreset: "custom"}
 		presets := map[string]*tokenize.StopwordConfig{
 			"custom": {Additions: []string{"test"}},
@@ -140,6 +153,9 @@ func TestTokenize_integration(t *testing.T) {
 	})
 
 	t.Run("CustomPreset_BaseAndRemovals", func(t *testing.T) {
+		if testsuit.ServerAtLeast(t, client, "1.37.4") {
+			t.Skip("custom stopword presets need an SDK API rework for 1.37.4+ wire shape")
+		}
 		cfg := &tokenize.AnalyzerConfig{StopwordPreset: "en-no-the"}
 		presets := map[string]*tokenize.StopwordConfig{
 			"en-no-the": {Preset: "en", Removals: []string{"the"}},
@@ -169,6 +185,10 @@ func TestTokenize_integration(t *testing.T) {
 	})
 
 	t.Run("AnalyzerConfig_Echoed", func(t *testing.T) {
+		// Behaviour still covered by AsciiFold/StopwordPreset_String etc.
+		if testsuit.ServerAtLeast(t, client, "1.37.4") {
+			t.Skip("server no longer echoes AnalyzerConfig on response (weaviate/weaviate#11079)")
+		}
 		cfg := &tokenize.AnalyzerConfig{
 			AsciiFold:       ptrBool(true),
 			AsciiFoldIgnore: []string{"é"},

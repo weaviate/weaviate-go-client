@@ -65,5 +65,9 @@ func (b *TextTokenizer) Do(ctx context.Context) (*TokenizeResult, error) {
 	if decodeErr := responseData.DecodeBodyIntoTarget(&result); decodeErr != nil {
 		return nil, decodeErr
 	}
+	// Weaviate >=1.37.4 no longer echoes `tokenization`; backfill from the request.
+	if result.Tokenization == "" {
+		result.Tokenization = b.tokenization
+	}
 	return &result, nil
 }
