@@ -327,10 +327,6 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 				ValueBooleanArray: &proto.BooleanArray{Values: v},
 			}
 
-		// Integer values must be cast to int64 before marshaling.
-		// structpb package supports uints, but those are probably
-		// quite rare in the use cases where Weaviate is used, so
-		// we ignore them.
 		case int:
 			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
 		case int32:
@@ -356,6 +352,37 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 		case []int64:
 			pf.TestValue = &proto.Filters_ValueIntArray{
 				ValueIntArray: &proto.IntArray{Values: v},
+			}
+
+		case uint:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case uint32:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case uint64:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case []uint:
+			values := make([]int64, len(v))
+			for i := range v {
+				values[i] = int64(v[i])
+			}
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: values},
+			}
+		case []uint32:
+			values := make([]int64, len(v))
+			for i := range v {
+				values[i] = int64(v[i])
+			}
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: values},
+			}
+		case []uint64:
+			values := make([]int64, len(v))
+			for i := range v {
+				values[i] = int64(v[i])
+			}
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: values},
 			}
 
 		// Float values must be cast to float64 before marshaling.
