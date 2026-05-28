@@ -85,7 +85,7 @@ type (
 
 		Manage bool `json:"-"`
 	}
-	NodeVerbosity   rest.PermissionNodesVerbosity // api.NodeVerbosity
+	NodeVerbosity   rest.PermissionNodesVerbosity
 	NodesPermission struct {
 		Collection string        `json:"collection,omitempty"`
 		Verbosity  NodeVerbosity `json:"verbosity,omitempty"`
@@ -662,7 +662,7 @@ func permissionKind(action rest.PermissionAction) string {
 
 // find retrieves the data for the permission for the given resource.
 // The key is a concatenation of permission <kind> and <data>. The kind
-// is assumed to be the last part of the action, as per the namind convention.
+// is assumed to be the last part of the action, as per the naming convention.
 // If no permission for the given key exists, one is created by unmarshaling
 // data into a new instance of T and is appended to the dest.
 //
