@@ -67,7 +67,6 @@ type (
 	DataPermission struct {
 		Collection string `json:"collection,omitempty"`
 		Tenant     string `json:"tenant,omitempty"`
-		Object     string `json:"object,omitempty"`
 
 		Create bool `json:"-"`
 		Read   bool `json:"-"`

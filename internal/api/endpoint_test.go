@@ -520,8 +520,8 @@ func TestRESTRequests(t *testing.T) {
 								Create: true, Read: true,
 							},
 							{
-								Collection: "Artists", Object: "12345678-.*",
-								Update: true, Delete: true,
+								Collection: "Artists",
+								Update:     true, Delete: true,
 							},
 						},
 						Groups: []api.GroupPermission{
@@ -1509,8 +1509,8 @@ func TestRESTResponses(t *testing.T) {
 							Create: true, Read: true,
 						},
 						{
-							Collection: "Artists", Object: "12345678-.*",
-							Update: true, Delete: true,
+							Collection: "Artists",
+							Update:     true, Delete: true,
 						},
 					},
 					Groups: []api.GroupPermission{
