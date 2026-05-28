@@ -45,7 +45,7 @@ func Certainty(c float64) VectorSimilarity { return VectorSimilarity{certainty: 
 // NearVectorFunc runs plain near vector search.
 type NearVectorFunc func(context.Context, NearVector) (*Result, error)
 
-// nearVectorFunc makes internal.Transport available to nearVector via a closure.
+// nearVectorFunc makes internal.Transport available to [query] via a closure.
 func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc {
 	return func(ctx context.Context, nv NearVector) (*Result, error) {
 		return query(ctx, t, request{

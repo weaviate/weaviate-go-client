@@ -65,7 +65,7 @@ const (
 // HybridFunc runs plain near text search.
 type HybridFunc func(context.Context, Hybrid) (*Result, error)
 
-// hybridFunc makes internal.Transport available to nearText via a closure.
+// hybridFunc makes internal.Transport available to [query] via a closure.
 func hybridFunc(t internal.Transport, rd api.RequestDefaults) HybridFunc {
 	return func(ctx context.Context, h Hybrid) (*Result, error) {
 		return query(ctx, t, request{
