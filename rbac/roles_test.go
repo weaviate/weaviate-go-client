@@ -3,6 +3,7 @@ package rbac_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
@@ -283,7 +284,9 @@ func TestRolesClient_RemovePermissions(t *testing.T) {
 }
 
 func TestRolesClient_HasPermission(t *testing.T) {
-	for _, tt := range []struct {
+	for _, tt := range testkit.WithOnly(t, []struct {
+		testkit.Only
+
 		name       string
 		permission rbac.HasPermission
 		stubs      []testkit.Stub[api.HasPermissionRequest, api.HasPermissionResponse]
@@ -321,13 +324,40 @@ func TestRolesClient_HasPermission(t *testing.T) {
 			want: false,
 		},
 		{
+			name: "too many actions",
+			permission: rbac.HasPermission{
+				RoleID: "rock-n-role",
+				Collection: rbac.CollectionPermission{
+					Create: true, Read: true, Update: true,
+				},
+			},
+			err: testkit.Error(func(tt assert.TestingT, got error, a ...any) bool {
+				return assert.ErrorContains(tt, got, "3 were provided")
+			}),
+		},
+		{
+			name: "multiple permissions",
+			permission: rbac.HasPermission{
+				RoleID:     "rock-n-role",
+				Cluster:    rbac.ClusterPermission{Read: true},
+				Collection: rbac.CollectionPermission{Read: true},
+			},
+			err: testkit.Error(func(tt assert.TestingT, got error, a ...any) bool {
+				return assert.ErrorContains(tt, got, "2 were provided")
+			}),
+		},
+		{
 			name: "with error",
+			permission: rbac.HasPermission{
+				RoleID:  "rock-n-role",
+				Cluster: rbac.ClusterPermission{Read: true},
+			},
 			stubs: []testkit.Stub[api.HasPermissionRequest, api.HasPermissionResponse]{
 				{Err: testkit.ErrWhaam},
 			},
-			err: testkit.ExpectError,
+			err: testkit.ErrorIs(testkit.ErrWhaam),
 		},
-	} {
+	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			transport := testkit.NewTransport(t, tt.stubs)
 			c := rbac.NewRolesClient(transport)
@@ -349,7 +379,7 @@ func TestRolesClient_AssignedUserIDs(t *testing.T) {
 		err    testkit.Error
 	}{
 		{
-			name:   "has permission",
+			name:   "ok",
 			roleID: "rock-n-role",
 			stubs: []testkit.Stub[any, api.GetAssignedUsersResponse]{{
 				Request:  testkit.Ptr(api.GetAssignedUsersRequest("rock-n-role")),
@@ -386,7 +416,7 @@ func TestRolesClient_UserAssignments(t *testing.T) {
 		err    testkit.Error
 	}{
 		{
-			name:   "has permission",
+			name:   "ok",
 			roleID: "rock-n-role",
 			stubs: []testkit.Stub[any, []api.UserAssignment]{{
 				Request: testkit.Ptr(api.GetUserAssignmentsRequest("rock-n-role")),
@@ -427,7 +457,7 @@ func TestRolesClient_GroupAssignments(t *testing.T) {
 		err    testkit.Error
 	}{
 		{
-			name:   "has permission",
+			name:   "ok",
 			roleID: "rock-n-role",
 			stubs: []testkit.Stub[any, []api.GroupAssignment]{{
 				Request: testkit.Ptr(api.GetGroupAssignmentsRequest("rock-n-role")),

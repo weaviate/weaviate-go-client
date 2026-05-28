@@ -168,39 +168,27 @@ type HasPermission struct {
 	Alias       AliasPermission
 	Backups     BackupsPermission
 	Cluster     ClusterPermission
-	Collections CollectionPermission
+	Collection  CollectionPermission
 	Data        DataPermission
-	Groups      GroupPermission
+	Group       GroupPermission
+	MCP         MCPPermission
+	Namespaces  NamespacePermission
 	Nodes       NodesPermission
 	Replication ReplicationPermission
-	Roles       RolePermission
-	Tenants     TenantPermission
-	Users       UserPermission
+	Role        RolePermission
+	Tenant      TenantPermission
+	User        UserPermission
 }
 
 // HasPermission checks if a role contains a permission.
 // Only one permission can be checked in a single call.
 func (rc *RolesClient) HasPermission(ctx context.Context, options HasPermission) (bool, error) {
-	req := &api.HasPermissionRequest{
-		RoleID:      options.RoleID,
-		Alias:       api.AliasPermission(options.Alias),
-		Backups:     api.BackupsPermission(options.Backups),
-		Cluster:     api.ClusterPermission(options.Cluster),
-		Collections: api.CollectionPermission(options.Collections),
-		Data:        api.DataPermission(options.Data),
-		Groups:      api.GroupPermission(options.Groups),
-		Nodes: api.NodesPermission{
-			Collection: options.Nodes.Collection,
-			Verbosity:  api.NodeVerbosity(options.Nodes.Verbosity),
-		},
-		Replication: api.ReplicationPermission(options.Replication),
-		Roles: api.RolePermission{
-			RoleID: options.Roles.RoleID,
-			Scope:  api.RoleScope(options.Roles.Scope),
-		},
-		Tenants: api.TenantPermission(options.Tenants),
-		Users:   api.UserPermission(options.Users),
+	req, err := marshalHasPermission(options)
+	if err != nil {
+		return false, err
 	}
+	req.RoleID = options.RoleID
+
 	var resp api.HasPermissionResponse
 	if err := rc.transport.Do(ctx, req, &resp); err != nil {
 		return false, fmt.Errorf("check role has permission: %w", err)
@@ -347,4 +335,162 @@ func unmarshalRole(r *api.Role) *Role {
 		role.Users = append(role.Users, UserPermission(p))
 	}
 	return &role
+}
+
+// marshalHasPermission returns [api.HasPermissionRequest] with exacly 1 permission
+// (action + data) pair set and returns an error if more permissions are set in has.
+// This validation happens at this step, because internal/api expects the request
+// to be valid and will only send a single permission, even if more have been set,
+// so the server cannot perform this validation.
+//
+// NOTE(dyma): we might want to introduce some Validator interface in the transport
+// layer, which every request object can optionally implement, so that all validation
+// is done right before we marshal the request and dispatch to the actual transport.
+func marshalHasPermission(has HasPermission) (*api.HasPermissionRequest, error) {
+	var count int
+	for _, check := range []bool{
+		has.Alias.Create,
+	} {
+		if check {
+			count++
+		}
+	}
+	if has.Alias.Create {
+		count++
+	}
+	if has.Alias.Read {
+		count++
+	}
+	if has.Alias.Update {
+		count++
+	}
+	if has.Alias.Delete {
+		count++
+	}
+	if has.Backups.Manage {
+		count++
+	}
+	if has.Cluster.Read {
+		count++
+	}
+	if has.Collection.Create {
+		count++
+	}
+	if has.Collection.Read {
+		count++
+	}
+	if has.Collection.Update {
+		count++
+	}
+	if has.Collection.Delete {
+		count++
+	}
+	if has.Data.Create {
+		count++
+	}
+	if has.Data.Read {
+		count++
+	}
+	if has.Data.Update {
+		count++
+	}
+	if has.Data.Delete {
+		count++
+	}
+	if has.Group.Read {
+		count++
+	}
+	if has.Group.AssignAndRevoke {
+		count++
+	}
+	if has.Namespaces.Manage {
+		count++
+	}
+	if has.Nodes.Read {
+		count++
+	}
+	if has.MCP.Create {
+		count++
+	}
+	if has.MCP.Read {
+		count++
+	}
+	if has.MCP.Update {
+		count++
+	}
+	if has.Replication.Create {
+		count++
+	}
+	if has.Replication.Read {
+		count++
+	}
+	if has.Replication.Update {
+		count++
+	}
+	if has.Replication.Delete {
+		count++
+	}
+	if has.Role.Create {
+		count++
+	}
+	if has.Role.Read {
+		count++
+	}
+	if has.Role.Update {
+		count++
+	}
+	if has.Role.Delete {
+		count++
+	}
+	if has.Tenant.Create {
+		count++
+	}
+	if has.Tenant.Read {
+		count++
+	}
+	if has.Tenant.Update {
+		count++
+	}
+	if has.Tenant.Delete {
+		count++
+	}
+	if has.User.Create {
+		count++
+	}
+	if has.User.Read {
+		count++
+	}
+	if has.User.Update {
+		count++
+	}
+	if has.User.Delete {
+		count++
+	}
+	if has.User.AssignAndRevoke {
+		count++
+	}
+
+	if count == 1 {
+		return &api.HasPermissionRequest{
+			Alias:       api.AliasPermission(has.Alias),
+			Backups:     api.BackupsPermission(has.Backups),
+			Cluster:     api.ClusterPermission(has.Cluster),
+			Collections: api.CollectionPermission(has.Collection),
+			Data:        api.DataPermission(has.Data),
+			Groups:      api.GroupPermission(has.Group),
+			Nodes: api.NodesPermission{
+				Collection: has.Nodes.Collection,
+				Verbosity:  api.NodeVerbosity(has.Nodes.Verbosity),
+			},
+			Replication: api.ReplicationPermission(has.Replication),
+			Roles: api.RolePermission{
+				RoleID: has.Role.RoleID,
+				Scope:  api.RoleScope(has.Role.Scope),
+			},
+			Tenants: api.TenantPermission(has.Tenant),
+			Users:   api.UserPermission(has.User),
+		}, nil
+	}
+
+	return nil, fmt.Errorf("has-permission accepts 1 permission but %d were provided", count)
 }

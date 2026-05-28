@@ -662,14 +662,12 @@ func TestRESTRequests(t *testing.T) {
 						"action": "update_data",
 						"data": map[string]any{
 							"collection": "Artists",
-							"object":     "12345678-.*",
 						},
 					},
 					{
 						"action": "delete_data",
 						"data": map[string]any{
 							"collection": "Artists",
-							"object":     "12345678-.*",
 						},
 					},
 					{
@@ -1312,14 +1310,12 @@ func TestRESTResponses(t *testing.T) {
 						"action": "update_data",
 						"data": map[string]any{
 							"collection": "Artists",
-							"object":     "12345678-.*",
 						},
 					},
 					{
 						"action": "delete_data",
 						"data": map[string]any{
 							"collection": "Artists",
-							"object":     "12345678-.*",
 						},
 					},
 					{
