@@ -10,9 +10,9 @@ import (
 )
 
 type Hybrid struct {
-	Limit                  int32            // Limit the number of results returned for the query.
-	Offset                 int32            // Skip the first N objects in the collection.
-	AutoLimit              int32            // Return objects in the first N similarity clusters.
+	Limit                  int              // Limit the number of results returned for the query.
+	Offset                 int              // Skip the first N objects in the collection.
+	AutoLimit              int              // Return objects in the first N similarity clusters.
 	After                  uuid.UUID        // Skip all objects before the one with this ID.
 	Filter                 filter.Expr      // Filter results based on their properties.
 	ReturnMetadata         ReturnMetadata   // Select query and object metadata to return for each object.
@@ -70,9 +70,9 @@ func hybridFunc(t internal.Transport, rd api.RequestDefaults) HybridFunc {
 	return func(ctx context.Context, h Hybrid) (*Result, error) {
 		return query(ctx, t, request{
 			RequestDefaults:        rd,
-			Limit:                  h.Limit,
-			AutoLimit:              h.AutoLimit,
-			Offset:                 h.Offset,
+			Limit:                  int32(h.Limit),
+			AutoLimit:              int32(h.AutoLimit),
+			Offset:                 int32(h.Offset),
 			After:                  h.After,
 			Filter:                 h.Filter,
 			ReturnVectors:          h.ReturnVectors,

@@ -10,9 +10,9 @@ import (
 )
 
 type OverAll struct {
-	Limit                  int32            // Limit the number of results returned for the query.
-	Offset                 int32            // Skip the first N objects in the collection.
-	AutoLimit              int32            // Return objects in the first N similarity clusters.
+	Limit                  int              // Limit the number of results returned for the query.
+	Offset                 int              // Skip the first N objects in the collection.
+	AutoLimit              int              // Return objects in the first N similarity clusters.
 	After                  uuid.UUID        // Skip all objects before the one with this ID.
 	Filter                 filter.Expr      // Filter results based on their properties.
 	ReturnMetadata         ReturnMetadata   // Select query and object metadata to return for each object.
@@ -36,9 +36,9 @@ func overAllFunc(t internal.Transport, rd api.RequestDefaults) OverAllFunc {
 	return func(ctx context.Context, oaf OverAll) (*Result, error) {
 		return query(ctx, t, request{
 			RequestDefaults:        rd,
-			Limit:                  oaf.Limit,
-			AutoLimit:              oaf.AutoLimit,
-			Offset:                 oaf.Offset,
+			Limit:                  int32(oaf.Limit),
+			AutoLimit:              int32(oaf.AutoLimit),
+			Offset:                 int32(oaf.Offset),
 			After:                  oaf.After,
 			Filter:                 oaf.Filter,
 			ReturnVectors:          oaf.ReturnVectors,
