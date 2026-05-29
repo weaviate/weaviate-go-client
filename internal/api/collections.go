@@ -73,6 +73,12 @@ type (
 	MultiTenancyConfig rest.MultiTenancyConfig
 )
 
+const (
+	FieldUUID          = "_id"
+	FieldCreatedAt     = "_creationTimeUnix"
+	FieldLastUpdatedAt = "_lastUpdateTimeUnix"
+)
+
 // DataType defines supported property data types.
 type DataType string
 

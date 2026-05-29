@@ -10,6 +10,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
@@ -110,6 +111,7 @@ type request struct {
 	Offset                 int32
 	AutoLimit              int32
 	After                  uuid.UUID
+	Filter                 filter.Expr
 	ReturnMetadata         ReturnMetadata
 	ReturnVectors          []string
 	ReturnReferences       []Reference
@@ -129,6 +131,12 @@ func query(ctx context.Context, t internal.Transport, r request, f func(*api.Sea
 		ReturnMetadata:   api.ReturnMetadata(r.ReturnMetadata),
 		ReturnProperties: marshalReturnProperties(r.ReturnProperties, r.ReturnNestedProperties),
 		ReturnReferences: marshalReturnReferences(r.ReturnReferences),
+	}
+
+	if r.Filter != nil {
+		if expr := r.Filter.Expr(); expr != nil {
+			req.Filter = *expr
+		}
 	}
 
 	f(req)

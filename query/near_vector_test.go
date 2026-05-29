@@ -9,6 +9,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/query"
+	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
@@ -41,6 +42,35 @@ func TestNearVector(t *testing.T) {
 				AutoLimit:  3,
 				After:      testkit.UUID,
 				Similarity: query.Distance(.456),
+				Target: &types.Vector{
+					Single: singleVector,
+				},
+				Filter: filter.And{
+					filter.Not{
+						P: &filter.Cond{
+							Target:   "album",
+							Operator: filter.Like,
+							Value:    ".*Blood",
+						},
+					},
+					filter.Or{
+						&filter.Cond{
+							Target:   filter.Len("tags"),
+							Operator: filter.LessThanEqual,
+							Value:    int64(22),
+						},
+						&filter.Cond{
+							Target:   "tags",
+							Operator: filter.ContainsNone,
+							Value:    []string{"#doom", "#punk"},
+						},
+						&filter.Cond{
+							Target:   filter.Reference("performedBy").Count(),
+							Operator: filter.Equal,
+							Value:    int64(4),
+						},
+					},
+				},
 				ReturnMetadata: query.ReturnMetadata{
 					CreatedAt:    true,
 					LastUpdateAt: true,
@@ -48,9 +78,6 @@ func TestNearVector(t *testing.T) {
 					Certainty:    true,
 					Score:        true,
 					ExplainScore: true,
-				},
-				Target: &types.Vector{
-					Single: singleVector,
 				},
 				ReturnVectors:    []string{"title_vec", "lyrics_vec"},
 				ReturnProperties: []string{"title", "duration_sec", "release_date"},
@@ -91,6 +118,39 @@ func TestNearVector(t *testing.T) {
 						Offset:          2,
 						AutoLimit:       3,
 						After:           testkit.UUID,
+						Filter: api.FilterExpr{
+							Operator: api.FilterOperatorAnd,
+							Exprs: []api.FilterExpr{
+								{
+									Operator: api.FilterOperatorNot,
+									Exprs: []api.FilterExpr{{
+										Operator: api.FilterOperatorLike,
+										Target:   []string{"album"},
+										Value:    ".*Blood",
+									}},
+								},
+								{
+									Operator: api.FilterOperatorOr,
+									Exprs: []api.FilterExpr{
+										{
+											Operator: api.FilterOperatorLessThanEqual,
+											Target:   []string{"len(tags)"},
+											Value:    int64(22),
+										},
+										{
+											Operator: api.FilterOperatorContainsNone,
+											Target:   []string{"tags"},
+											Value:    []string{"#doom", "#punk"},
+										},
+										{
+											Operator: api.FilterOperatorEqual,
+											Target:   []string{"count(performedBy)"},
+											Value:    int64(4),
+										},
+									},
+								},
+							},
+						},
 						ReturnMetadata: api.ReturnMetadata{
 							CreatedAt:    true,
 							LastUpdateAt: true,
