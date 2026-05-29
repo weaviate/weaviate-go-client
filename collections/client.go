@@ -80,6 +80,10 @@ func (h *Handle) Tenant() string {
 	return h.defaults.Tenant
 }
 
+func (h *Handle) Objects(ctx context.Context) *query.ObjectIterator {
+	return query.NewObjectIterator(ctx, h.Query)
+}
+
 // HandleOption configures request defaults for collection handle.
 type HandleOption func(*api.RequestDefaults)
 
