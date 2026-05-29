@@ -17,7 +17,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "eq",
 			expr: &filter.Cond{
-				Target:   []string{"size"},
+				Target:   "size",
 				Operator: filter.Equal,
 				Value:    3,
 			},
@@ -30,7 +30,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "lt",
 			expr: &filter.Cond{
-				Target:   []string{"size"},
+				Target:   "size",
 				Operator: filter.LessThan,
 				Value:    3,
 			},
@@ -43,7 +43,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "lte",
 			expr: &filter.Cond{
-				Target:   []string{"size"},
+				Target:   "size",
 				Operator: filter.LessThanEqual,
 				Value:    3,
 			},
@@ -56,7 +56,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "gt",
 			expr: &filter.Cond{
-				Target:   []string{"size"},
+				Target:   "size",
 				Operator: filter.GreaterThan,
 				Value:    3,
 			},
@@ -69,7 +69,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "gte",
 			expr: &filter.Cond{
-				Target:   []string{"size"},
+				Target:   "size",
 				Operator: filter.GreaterThanEqual,
 				Value:    3,
 			},
@@ -82,7 +82,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "like",
 			expr: &filter.Cond{
-				Target:   []string{"model"},
+				Target:   "model",
 				Operator: filter.Like,
 				Value:    "[0-9]+Roadster",
 			},
@@ -95,7 +95,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "null",
 			expr: &filter.Cond{
-				Target:   []string{"discount"},
+				Target:   "discount",
 				Operator: filter.IsNull,
 			},
 			want: &api.FilterExpr{
@@ -106,7 +106,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "contains all",
 			expr: &filter.Cond{
-				Target:   []string{"gears"},
+				Target:   "gears",
 				Operator: filter.ContainsAll,
 				Value:    []int{1, 2, 3},
 			},
@@ -119,7 +119,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "contains any",
 			expr: &filter.Cond{
-				Target:   []string{"gears"},
+				Target:   "gears",
 				Operator: filter.ContainsAny,
 				Value:    []int{1, 2, 3},
 			},
@@ -132,7 +132,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "contains none",
 			expr: &filter.Cond{
-				Target:   []string{"gears"},
+				Target:   "gears",
 				Operator: filter.ContainsNone,
 				Value:    []int{1, 2, 3},
 			},
@@ -158,7 +158,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "reference count",
 			expr: &filter.Cond{
-				Target:   filter.ReferenceCount("soldIn"),
+				Target:   filter.Reference("soldIn").Count(),
 				Operator: filter.LessThan,
 				Value:    10,
 			},
@@ -172,12 +172,12 @@ func TestFilter(t *testing.T) {
 			name: "and",
 			expr: filter.And{
 				&filter.Cond{
-					Target:   []string{"length"},
+					Target:   "length",
 					Operator: filter.Equal,
 					Value:    2,
 				},
 				&filter.Cond{
-					Target:   []string{"width"},
+					Target:   "width",
 					Operator: filter.Equal,
 					Value:    3,
 				},
@@ -194,12 +194,12 @@ func TestFilter(t *testing.T) {
 			name: "or",
 			expr: filter.Or{
 				&filter.Cond{
-					Target:   []string{"length"},
+					Target:   "length",
 					Operator: filter.Equal,
 					Value:    2,
 				},
 				&filter.Cond{
-					Target:   []string{"width"},
+					Target:   "width",
 					Operator: filter.Equal,
 					Value:    3,
 				},
@@ -216,7 +216,7 @@ func TestFilter(t *testing.T) {
 			name: "not",
 			expr: filter.Not{
 				&filter.Cond{
-					Target:   []string{"length"},
+					Target:   "length",
 					Operator: filter.Equal,
 					Value:    2,
 				},
@@ -231,7 +231,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "reference",
 			expr: &filter.Cond{
-				Target:   []string{"ownedBy", "name"},
+				Target:   filter.Reference("ownedBy").Property("name"),
 				Operator: filter.Like,
 				Value:    ".*_doe",
 			},
@@ -244,7 +244,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "len(property) in reference",
 			expr: &filter.Cond{
-				Target:   filter.Len("ownedBy", "name"),
+				Target:   filter.Len(filter.Reference("ownedBy").Property("name")),
 				Operator: filter.GreaterThan,
 				Value:    12,
 			},
@@ -257,7 +257,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "reference count in reference",
 			expr: &filter.Cond{
-				Target:   filter.ReferenceCount("ownedBy", "hasFriends"),
+				Target:   filter.Reference("ownedBy").Reference("hasFriends").Count(),
 				Operator: filter.LessThan,
 				Value:    4,
 			},

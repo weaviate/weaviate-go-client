@@ -1,6 +1,8 @@
 package filter
 
 import (
+	"strings"
+
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 )
 
@@ -40,22 +42,18 @@ type Cond struct {
 	// It is representsed as a path to the filter property:
 	//
 	//   - For regular properties, it is the name of the target property.
-	//   - For properties belonging to a single-target reference, it is
-	//     then name of the reference property followed by the name of
-	//     the target property, arbitrarily nested.
-	//   - For properties belonging to a multi-target reference, it is
-	//     the name of the reference property followed by the name of
-	//     the target collection and the property therein, arbitrarily nested.
+	//   - For properties belonging to a referenced collection, it is
+	//     the path to that property constructed via [Reference] methods.
 	//
 	// Example:
 	//
-	//	[]string{"album"} 									// Property "album" of the root Songs collection
-	//	[]string{"performedBy", "given_name"} 				// Property "given_name" of the referenced Artists collection (single-target reference)
-	//	[]string{"hasAwards", "GrammyAward", "year"} 		// Property "year" of the referenced Grammy collection (multi-target reference)
-	//	[]string{"performedBy", "bornIn", "population"}  	// performedBy -[Artists]-> bornIn -[Cities]-> population
+	//	"album" 															// Property "album" of the root Songs collection
+	//	Reference("performedBy").Property("given_name") 					// Property "given_name" of the referenced Artists collection (single-target reference)
+	//	Reference("hasAwards").Collection("GrammyAward").Property("year")	// Property "year" of the referenced Grammy collection (multi-target reference)
+	//	Reference("performedBy").Reference("bornIn").Property("population")	// performedBy -[Artists]-> bornIn -[Cities]-> population
 	//
-	// See [Len] and [ReferenceCount].
-	Target []string
+	// See [Len].
+	Target string
 
 	// Value represents the right-hand side of the filter expression.
 	// Its type should match the data type of the [Target] property.
@@ -73,7 +71,7 @@ func (c *Cond) Expr() *api.FilterExpr {
 	}
 	return &api.FilterExpr{
 		Operator: api.FilterOperator(c.Operator),
-		Target:   c.Target,
+		Target:   split(c.Target),
 		Value:    c.Value,
 	}
 }
@@ -151,18 +149,44 @@ var (
 	LastUpdatedAt = api.FieldLastUpdatedAt // Last update time property name.
 )
 
-// Len turns the last element of the property path into a len(property) expression.
-func Len(path ...string) []string {
+// Len turns the property target a len(property) expression.
+// Do not use together with the output of [Reference.Count].
+func Len(property string) string {
+	path := split(property)
 	if l := len(path); l > 0 {
 		path[l-1] = "len(" + path[l-1] + ")"
 	}
-	return path
+	return join(path...)
 }
 
-// ReferenceCount turns the last element of the property path into reference-count target.
-func ReferenceCount(path ...string) []string {
+// Reference describes the path to the target property.
+// The path may contain any arbitrary number of "hops",
+// each pointing to another collection.
+//
+// Every path must terminate either in a collection property (see [Reference.Property]),
+// or reference-count target (see [Reference.Count]).
+type Reference string
+
+// Reference adds another "hop" to the path.
+func (r Reference) Reference(reference string) Reference { return Reference(r.Property(reference)) }
+
+// Collection specifies target collection name for a multi-target reference.
+func (r Reference) Collection(collection string) Reference { panic("implement") }
+
+// Property appends a property target at the end of the reference path.
+func (r Reference) Property(property string) string { return join(string(r), property) }
+
+// Count converts the reference path into a reference-count target.
+func (r Reference) Count() string {
+	path := split(string(r))
 	if l := len(path); l > 0 {
 		path[l-1] = "count(" + path[l-1] + ")"
 	}
-	return path
+	return join(path...)
 }
+
+// pathSep separates parts of the concatenated Target path.
+const pathSep = "/"
+
+func split(s string) []string { return strings.Split(s, pathSep) }
+func join(s ...string) string { return strings.Join(s, pathSep) }

@@ -48,7 +48,7 @@ func TestNearVector(t *testing.T) {
 				Filter: filter.And{
 					filter.Not{
 						P: &filter.Cond{
-							Target:   []string{"album"},
+							Target:   "album",
 							Operator: filter.Like,
 							Value:    ".*Blood",
 						},
@@ -60,12 +60,12 @@ func TestNearVector(t *testing.T) {
 							Value:    int64(22),
 						},
 						&filter.Cond{
-							Target:   []string{"tags"},
+							Target:   "tags",
 							Operator: filter.ContainsNone,
 							Value:    []string{"#doom", "#punk"},
 						},
 						&filter.Cond{
-							Target:   filter.ReferenceCount("performedBy"),
+							Target:   filter.Reference("performedBy").Count(),
 							Operator: filter.Equal,
 							Value:    int64(4),
 						},
