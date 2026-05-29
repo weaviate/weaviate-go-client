@@ -57,6 +57,12 @@ func (it *ObjectIterator) fetch(pageSize int, pageToken string) (string, error) 
 		return "", err
 	}
 
+	// iterator.Pager will mark the iterator as exhausted and return
+	// [iterator.Done] on every subsequent call to Next or NextPage.
+	if len(r.Objects) == 0 {
+		return "", nil
+	}
+
 	var i int
 	for i = range r.Objects {
 		it.items = append(it.items, &r.Objects[i])
