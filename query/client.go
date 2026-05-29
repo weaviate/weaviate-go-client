@@ -20,6 +20,7 @@ func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
 	return &Client{
 		transport:  t,
 		defaults:   rd,
+		OverAll:    overAllFunc(t, rd),
 		NearVector: nearVectorFunc(t, rd),
 		NearText:   nearTextFunc(t, rd),
 		Hybrid:     hybridFunc(t, rd),
@@ -30,6 +31,7 @@ type Client struct {
 	transport internal.Transport
 	defaults  api.RequestDefaults
 
+	OverAll    OverAllFunc
 	NearVector NearVectorFunc
 	NearText   NearTextFunc
 	Hybrid     HybridFunc
