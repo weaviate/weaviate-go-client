@@ -431,7 +431,9 @@ func MultiTargetReference(property, collection string) string {
 // Otherwise, collection is the remainder of the string following [multiRefSep].
 func splitReferenceTarget(ref string) (property, collection string) {
 	parts := strings.Split(ref, multiRefSep)
-	dev.Assert(len(parts) > 0, "len(parts)")
+
+	// multiRefSep is not an empty string, so parts will always be non-empty.
+	dev.Assert(len(parts) > 0, "len(reference path)")
 
 	property = parts[0]
 	if len(parts) > 1 {

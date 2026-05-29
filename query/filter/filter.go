@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
 
 // Expr describes a filter expression. Expressions can be combined into [And] and [Or] groups.
@@ -173,9 +174,10 @@ func (r Reference) Reference(reference string) Reference { return Reference(r.Pr
 // Collection specifies target collection name for a multi-target reference.
 func (r Reference) Collection(collection string) Reference {
 	path := split(string(r))
-	if l := len(path); l > 0 {
-		path[l-1] = api.MultiTargetReference(path[l-1], collection)
-	}
+	l := len(path)
+	dev.Assert(l > 0, "len(reference path)")
+
+	path[l-1] = api.MultiTargetReference(path[l-1], collection)
 	return Reference(join(path...))
 }
 
@@ -185,14 +187,15 @@ func (r Reference) Property(property string) string { return join(string(r), pro
 // Count converts the reference path into a reference-count target.
 func (r Reference) Count() string {
 	path := split(string(r))
-	if l := len(path); l > 0 {
-		path[l-1] = "count(" + path[l-1] + ")"
-	}
+	l := len(path)
+	dev.Assert(l > 0, "len(reference path)")
+
+	path[l-1] = "count(" + path[l-1] + ")"
 	return join(path...)
 }
 
 // pathSep separates parts of the concatenated Target path.
 const pathSep = "/"
 
-func split(s string) []string { return strings.Split(s, pathSep) }
+func split(s string) []string { return strings.Split(s, pathSep) } // Returned slice is always non-empty.
 func join(s ...string) string { return strings.Join(s, pathSep) }
