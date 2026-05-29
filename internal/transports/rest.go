@@ -229,6 +229,7 @@ func IdentityEndpoint[I any](method, pathFmt string) func(I) any {
 
 // identityEndpoint implements [Endpoint] for endpoints that use some ID parameter
 // in the request path, e.g. 'DELETE /users/<user-id>' or 'GET /artist/<artist-id>/songs'.
+// String IDs will be URL-encoded via [url.PathEscape] so using a raw value is safe.
 // See [IdentityEndpoint] for more details.
 type identityEndpoint[I any] struct {
 	BaseEndpoint
@@ -238,8 +239,14 @@ type identityEndpoint[I any] struct {
 
 var _ Endpoint = (*identityEndpoint[any])(nil)
 
-func (r *identityEndpoint[T]) Method() string { return r.method }
-func (r *identityEndpoint[T]) Path() string   { return fmt.Sprintf(r.pathFmt, r.id) }
+func (r *identityEndpoint[I]) Method() string { return r.method }
+func (r *identityEndpoint[I]) Path() string {
+	id := any(r.id)
+	if s, ok := id.(string); ok {
+		id = url.PathEscape(s)
+	}
+	return fmt.Sprintf(r.pathFmt, id)
+}
 
 // StaticEndpoint creates a new static endpoint with a method and a path.
 func StaticEndpoint(method, path string) *staticEndpoint {

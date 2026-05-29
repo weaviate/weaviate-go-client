@@ -490,6 +490,430 @@ func TestRESTRequests(t *testing.T) {
 			wantMethod: http.MethodDelete,
 			wantPath:   "/backups/filesystem/bak-1/restore",
 		},
+		{
+			name: "create role",
+			req: &api.CreateRoleRequest{
+				Role: api.Role{
+					ID: "rock-n-role",
+					Permissions: api.Permissions{
+						Aliases: []api.AliasPermission{
+							{
+								Collection: "Songs", Alias: "Records",
+								Create: true, Read: true,
+							},
+							{
+								Collection: "Artists", Alias: "Musicians",
+								Update: true, Delete: true,
+							},
+						},
+						Backups: []api.BackupsPermission{
+							{Collection: "Songs", Manage: true},
+						},
+						Cluster: []api.ClusterPermission{{Read: true}},
+						Collections: []api.CollectionPermission{
+							{Collection: "Songs", Create: true, Read: true},
+							{Collection: "Artists", Update: true, Delete: true},
+						},
+						Data: []api.DataPermission{
+							{
+								Collection: "Songs", Tenant: "john_doe",
+								Create: true, Read: true,
+							},
+							{
+								Collection: "Artists",
+								Update:     true, Delete: true,
+							},
+						},
+						Groups: []api.GroupPermission{
+							{
+								GroupID: "external", Type: "oidc",
+								Read: true, AssignAndRevoke: true,
+							},
+						},
+						Namespaces: []api.NamespacePermission{
+							{Namespace: "sandbox", Manage: true},
+						},
+						Nodes: []api.NodesPermission{
+							{Collection: "Songs", Verbosity: api.NodeVerbosityMinimal, Read: true},
+							{Collection: "Artists", Verbosity: api.NodeVerbosityVerbose, Read: true},
+						},
+						MCP: []api.MCPPermission{
+							{Create: true, Read: true, Update: true},
+						},
+						Replication: []api.ReplicationPermission{
+							{
+								Collection: "Songs", Shard: "abc",
+								Create: true, Read: true,
+							},
+							{
+								Collection: "Songs", Shard: "xyz",
+								Update: true, Delete: true,
+							},
+						},
+						Roles: []api.RolePermission{
+							{
+								RoleID: "rock-n-role", Scope: api.RoleScopeAll,
+								Create: true, Read: true,
+							},
+							{
+								RoleID: "rock-n-role", Scope: api.RoleScopeMatch,
+								Update: true, Delete: true,
+							},
+						},
+						Tenants: []api.TenantPermission{
+							{
+								Collection: "Songs", Tenant: "john_doe",
+								Create: true, Read: true,
+							},
+							{
+								Collection: "Artists", Tenant: "*",
+								Update: true, Delete: true,
+							},
+						},
+						Users: []api.UserPermission{
+							{UserID: "john_doe", Create: true, Read: true},
+							{UserID: "jane_doe", Update: true, Delete: true},
+							{UserID: "jim_beam", AssignAndRevoke: true},
+						},
+					},
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/roles",
+			wantBody: map[string]any{
+				"name": "rock-n-role",
+				"permissions": []map[string]any{
+					{
+						"action": "create_aliases",
+						"aliases": map[string]any{
+							"collection": "Songs",
+							"alias":      "Records",
+						},
+					},
+					{
+						"action": "read_aliases",
+						"aliases": map[string]any{
+							"collection": "Songs",
+							"alias":      "Records",
+						},
+					},
+					{
+						"action": "update_aliases",
+						"aliases": map[string]any{
+							"collection": "Artists",
+							"alias":      "Musicians",
+						},
+					},
+					{
+						"action": "delete_aliases",
+						"aliases": map[string]any{
+							"collection": "Artists",
+							"alias":      "Musicians",
+						},
+					},
+					{
+						"action": "manage_backups",
+						"backups": map[string]any{
+							"collection": "Songs",
+						},
+					},
+					{
+						"action": "read_cluster",
+					},
+					{
+						"action": "create_collections",
+						"collections": map[string]any{
+							"collection": "Songs",
+						},
+					},
+					{
+						"action": "read_collections",
+						"collections": map[string]any{
+							"collection": "Songs",
+						},
+					},
+					{
+						"action": "update_collections",
+						"collections": map[string]any{
+							"collection": "Artists",
+						},
+					},
+					{
+						"action": "delete_collections",
+						"collections": map[string]any{
+							"collection": "Artists",
+						},
+					},
+					{
+						"action": "create_data",
+						"data": map[string]any{
+							"collection": "Songs",
+							"tenant":     "john_doe",
+						},
+					},
+					{
+						"action": "read_data",
+						"data": map[string]any{
+							"collection": "Songs",
+							"tenant":     "john_doe",
+						},
+					},
+					{
+						"action": "update_data",
+						"data": map[string]any{
+							"collection": "Artists",
+						},
+					},
+					{
+						"action": "delete_data",
+						"data": map[string]any{
+							"collection": "Artists",
+						},
+					},
+					{
+						"action": "read_groups",
+						"groups": map[string]any{
+							"group":     "external",
+							"groupType": "oidc",
+						},
+					},
+					{
+						"action": "assign_and_revoke_groups",
+						"groups": map[string]any{
+							"group":     "external",
+							"groupType": "oidc",
+						},
+					},
+					{
+						"action": "manage_namespaces",
+						"namespaces": map[string]any{
+							"namespace": "sandbox",
+						},
+					},
+					{
+						"action": "read_nodes",
+						"nodes": map[string]any{
+							"collection": "Songs",
+							"verbosity":  api.NodeVerbosityMinimal,
+						},
+					},
+					{
+						"action": "read_nodes",
+						"nodes": map[string]any{
+							"collection": "Artists",
+							"verbosity":  api.NodeVerbosityVerbose,
+						},
+					},
+					{
+						"action": "create_mcp",
+					},
+					{
+						"action": "read_mcp",
+					},
+					{
+						"action": "update_mcp",
+					},
+					{
+						"action": "create_replicate",
+						"replicate": map[string]any{
+							"collection": "Songs",
+							"shard":      "abc",
+						},
+					},
+					{
+						"action": "read_replicate",
+						"replicate": map[string]any{
+							"collection": "Songs",
+							"shard":      "abc",
+						},
+					},
+					{
+						"action": "update_replicate",
+						"replicate": map[string]any{
+							"collection": "Songs",
+							"shard":      "xyz",
+						},
+					},
+					{
+						"action": "delete_replicate",
+						"replicate": map[string]any{
+							"collection": "Songs",
+							"shard":      "xyz",
+						},
+					},
+					{
+						"action": "create_roles",
+						"roles": map[string]any{
+							"role":  "rock-n-role",
+							"scope": api.RoleScopeAll,
+						},
+					},
+					{
+						"action": "read_roles",
+						"roles": map[string]any{
+							"role":  "rock-n-role",
+							"scope": api.RoleScopeAll,
+						},
+					},
+					{
+						"action": "update_roles",
+						"roles": map[string]any{
+							"role":  "rock-n-role",
+							"scope": api.RoleScopeMatch,
+						},
+					},
+					{
+						"action": "delete_roles",
+						"roles": map[string]any{
+							"role":  "rock-n-role",
+							"scope": api.RoleScopeMatch,
+						},
+					},
+					{
+						"action": "create_tenants",
+						"tenants": map[string]any{
+							"collection": "Songs",
+							"tenant":     "john_doe",
+						},
+					},
+					{
+						"action": "read_tenants",
+						"tenants": map[string]any{
+							"collection": "Songs",
+							"tenant":     "john_doe",
+						},
+					},
+					{
+						"action": "update_tenants",
+						"tenants": map[string]any{
+							"collection": "Artists",
+							"tenant":     "*",
+						},
+					},
+					{
+						"action": "delete_tenants",
+						"tenants": map[string]any{
+							"collection": "Artists",
+							"tenant":     "*",
+						},
+					},
+					{
+						"action": "create_users",
+						"users": map[string]any{
+							"user": "john_doe",
+						},
+					},
+					{
+						"action": "read_users",
+						"users": map[string]any{
+							"user": "john_doe",
+						},
+					},
+					{
+						"action": "update_users",
+						"users": map[string]any{
+							"user": "jane_doe",
+						},
+					},
+					{
+						"action": "delete_users",
+						"users": map[string]any{
+							"user": "jane_doe",
+						},
+					},
+					{
+						"action": "assign_and_revoke_users",
+						"users": map[string]any{
+							"user": "jim_beam",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "get role",
+			req:        api.GetRoleRequest("rock-n-role"),
+			wantMethod: http.MethodGet,
+			wantPath:   "/authz/roles/rock-n-role",
+		},
+		{
+			name:       "delete role",
+			req:        api.DeleteRoleRequest("rock-n-role"),
+			wantMethod: http.MethodDelete,
+			wantPath:   "/authz/roles/rock-n-role",
+		},
+		{
+			name:       "list roles",
+			req:        api.ListRolesRequest,
+			wantMethod: http.MethodGet,
+			wantPath:   "/authz/roles",
+		},
+		{
+			name:       "get assigned users",
+			req:        api.GetAssignedUsersRequest("rock-n-role"),
+			wantMethod: http.MethodGet,
+			wantPath:   "/authz/roles/rock-n-role/users",
+		},
+		{
+			name:       "get user assignments",
+			req:        api.GetUserAssignmentsRequest("rock-n-role"),
+			wantMethod: http.MethodGet,
+			wantPath:   "/authz/roles/rock-n-role/user-assignments",
+		},
+		{
+			name:       "get group assignments",
+			req:        api.GetGroupAssignmentsRequest("rock-n-role"),
+			wantMethod: http.MethodGet,
+			wantPath:   "/authz/roles/rock-n-role/group-assignments",
+		},
+		{
+			name: "add permissions to role",
+			req: &api.AddPermissionsRequest{
+				RoleID: "rock-n-role",
+				Permissions: api.Permissions{
+					Cluster: []api.ClusterPermission{
+						{Read: true},
+					},
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/roles/rock-n-role/add-permissions",
+			wantBody: map[string]any{
+				"permissions": []map[string]any{
+					{"action": "read_cluster"},
+				},
+			},
+		},
+		{
+			name: "remove permissions from role",
+			req: &api.RemovePermissionsRequest{
+				RoleID: "rock-n-role",
+				Permissions: api.Permissions{
+					Cluster: []api.ClusterPermission{
+						{Read: true},
+					},
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/roles/rock-n-role/remove-permissions",
+			wantBody: map[string]any{
+				"permissions": []map[string]any{
+					{"action": "read_cluster"},
+				},
+			},
+		},
+		{
+			name: "check role has permission",
+			req: &api.HasPermissionRequest{
+				RoleID:  "rock-n-role",
+				Cluster: api.ClusterPermission{Read: true},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/roles/rock-n-role/has-permission",
+			wantBody: map[string]any{
+				"action": "read_cluster",
+			},
+		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)
@@ -800,6 +1224,373 @@ func TestRESTResponses(t *testing.T) {
 					"backup-s3":         true,
 				},
 				GRPCMaxMessageSize: 4096,
+			},
+		},
+		{
+			name: "get role response",
+			body: map[string]any{
+				"name": "rock-n-role",
+				"permissions": []map[string]any{
+					{
+						"action": "create_aliases",
+						"aliases": map[string]any{
+							"collection": "Songs",
+							"alias":      "Records",
+						},
+					},
+					{
+						"action": "read_aliases",
+						"aliases": map[string]any{
+							"collection": "Songs",
+							"alias":      "Records",
+						},
+					},
+					{
+						"action": "update_aliases",
+						"aliases": map[string]any{
+							"collection": "Artists",
+							"alias":      "Musicians",
+						},
+					},
+					{
+						"action": "delete_aliases",
+						"aliases": map[string]any{
+							"collection": "Artists",
+							"alias":      "Musicians",
+						},
+					},
+					{
+						"action": "manage_backups",
+						"backups": map[string]any{
+							"collection": "Songs",
+						},
+					},
+					{
+						"action": "read_cluster",
+					},
+					{
+						"action": "create_collections",
+						"collections": map[string]any{
+							"collection": "Songs",
+						},
+					},
+					{
+						"action": "read_collections",
+						"collections": map[string]any{
+							"collection": "Songs",
+						},
+					},
+					{
+						"action": "update_collections",
+						"collections": map[string]any{
+							"collection": "Artists",
+						},
+					},
+					{
+						"action": "delete_collections",
+						"collections": map[string]any{
+							"collection": "Artists",
+						},
+					},
+					{
+						"action": "create_data",
+						"data": map[string]any{
+							"collection": "Songs",
+							"tenant":     "john_doe",
+						},
+					},
+					{
+						"action": "read_data",
+						"data": map[string]any{
+							"collection": "Songs",
+							"tenant":     "john_doe",
+						},
+					},
+					{
+						"action": "update_data",
+						"data": map[string]any{
+							"collection": "Artists",
+						},
+					},
+					{
+						"action": "delete_data",
+						"data": map[string]any{
+							"collection": "Artists",
+						},
+					},
+					{
+						"action": "read_groups",
+						"groups": map[string]any{
+							"group":     "external",
+							"groupType": "oidc",
+						},
+					},
+					{
+						"action": "assign_and_revoke_groups",
+						"groups": map[string]any{
+							"group":     "external",
+							"groupType": "oidc",
+						},
+					},
+					{
+						"action": "manage_namespaces",
+						"namespaces": map[string]any{
+							"namespace": "sandbox",
+						},
+					},
+					{
+						"action": "read_nodes",
+						"nodes": map[string]any{
+							"collection": "Songs",
+							"verbosity":  api.NodeVerbosityMinimal,
+						},
+					},
+					{
+						"action": "read_nodes",
+						"nodes": map[string]any{
+							"collection": "Artists",
+							"verbosity":  api.NodeVerbosityVerbose,
+						},
+					},
+					{
+						"action": "create_mcp",
+					},
+					{
+						"action": "read_mcp",
+					},
+					{
+						"action": "update_mcp",
+					},
+					{
+						"action": "create_replicate",
+						"replicate": map[string]any{
+							"collection": "Songs",
+							"shard":      "abc",
+						},
+					},
+					{
+						"action": "read_replicate",
+						"replicate": map[string]any{
+							"collection": "Songs",
+							"shard":      "abc",
+						},
+					},
+					{
+						"action": "update_replicate",
+						"replicate": map[string]any{
+							"collection": "Songs",
+							"shard":      "xyz",
+						},
+					},
+					{
+						"action": "delete_replicate",
+						"replicate": map[string]any{
+							"collection": "Songs",
+							"shard":      "xyz",
+						},
+					},
+					{
+						"action": "create_roles",
+						"roles": map[string]any{
+							"role":  "rock-n-role",
+							"scope": api.RoleScopeAll,
+						},
+					},
+					{
+						"action": "read_roles",
+						"roles": map[string]any{
+							"role":  "rock-n-role",
+							"scope": api.RoleScopeAll,
+						},
+					},
+					{
+						"action": "update_roles",
+						"roles": map[string]any{
+							"role":  "rock-n-role",
+							"scope": api.RoleScopeMatch,
+						},
+					},
+					{
+						"action": "delete_roles",
+						"roles": map[string]any{
+							"role":  "rock-n-role",
+							"scope": api.RoleScopeMatch,
+						},
+					},
+					{
+						"action": "create_tenants",
+						"tenants": map[string]any{
+							"collection": "Songs",
+							"tenant":     "john_doe",
+						},
+					},
+					{
+						"action": "read_tenants",
+						"tenants": map[string]any{
+							"collection": "Songs",
+							"tenant":     "john_doe",
+						},
+					},
+					{
+						"action": "update_tenants",
+						"tenants": map[string]any{
+							"collection": "Artists",
+							"tenant":     "*",
+						},
+					},
+					{
+						"action": "delete_tenants",
+						"tenants": map[string]any{
+							"collection": "Artists",
+							"tenant":     "*",
+						},
+					},
+					{
+						"action": "create_users",
+						"users": map[string]any{
+							"user": "john_doe",
+						},
+					},
+					{
+						"action": "read_users",
+						"users": map[string]any{
+							"user": "john_doe",
+						},
+					},
+					{
+						"action": "update_users",
+						"users": map[string]any{
+							"user": "jane_doe",
+						},
+					},
+					{
+						"action": "delete_users",
+						"users": map[string]any{
+							"user": "jane_doe",
+						},
+					},
+					{
+						"action": "assign_and_revoke_users",
+						"users": map[string]any{
+							"user": "jim_beam",
+						},
+					},
+				},
+			},
+			dest: new(api.Role),
+			want: &api.Role{
+				ID: "rock-n-role",
+				Permissions: api.Permissions{
+					Aliases: []api.AliasPermission{
+						{
+							Collection: "Songs", Alias: "Records",
+							Create: true, Read: true,
+						},
+						{
+							Collection: "Artists", Alias: "Musicians",
+							Update: true, Delete: true,
+						},
+					},
+					Backups: []api.BackupsPermission{
+						{Collection: "Songs", Manage: true},
+					},
+					Cluster: []api.ClusterPermission{{Read: true}},
+					Collections: []api.CollectionPermission{
+						{Collection: "Songs", Create: true, Read: true},
+						{Collection: "Artists", Update: true, Delete: true},
+					},
+					Data: []api.DataPermission{
+						{
+							Collection: "Songs", Tenant: "john_doe",
+							Create: true, Read: true,
+						},
+						{
+							Collection: "Artists",
+							Update:     true, Delete: true,
+						},
+					},
+					Groups: []api.GroupPermission{
+						{
+							GroupID: "external", Type: "oidc",
+							Read: true, AssignAndRevoke: true,
+						},
+					},
+					Namespaces: []api.NamespacePermission{
+						{Namespace: "sandbox", Manage: true},
+					},
+					Nodes: []api.NodesPermission{
+						{Collection: "Songs", Verbosity: api.NodeVerbosityMinimal, Read: true},
+						{Collection: "Artists", Verbosity: api.NodeVerbosityVerbose, Read: true},
+					},
+					MCP: []api.MCPPermission{
+						{Create: true, Read: true, Update: true},
+					},
+					Replication: []api.ReplicationPermission{
+						{
+							Collection: "Songs", Shard: "abc",
+							Create: true, Read: true,
+						},
+						{
+							Collection: "Songs", Shard: "xyz",
+							Update: true, Delete: true,
+						},
+					},
+					Roles: []api.RolePermission{
+						{
+							RoleID: "rock-n-role", Scope: api.RoleScopeAll,
+							Create: true, Read: true,
+						},
+						{
+							RoleID: "rock-n-role", Scope: api.RoleScopeMatch,
+							Update: true, Delete: true,
+						},
+					},
+					Tenants: []api.TenantPermission{
+						{
+							Collection: "Songs", Tenant: "john_doe",
+							Create: true, Read: true,
+						},
+						{
+							Collection: "Artists", Tenant: "*",
+							Update: true, Delete: true,
+						},
+					},
+					Users: []api.UserPermission{
+						{UserID: "john_doe", Create: true, Read: true},
+						{UserID: "jane_doe", Update: true, Delete: true},
+						{UserID: "jim_beam", AssignAndRevoke: true},
+					},
+				},
+			},
+		},
+		{
+			name: "role has permission",
+			body: testkit.Ptr(true),
+			dest: new(api.HasPermissionResponse),
+			want: testkit.Ptr[api.HasPermissionResponse](true),
+		},
+		{
+			name: "user assignment",
+			body: map[string]any{
+				"userId":   "john_doe",
+				"userType": "db_env",
+			},
+			dest: new(api.UserAssignment),
+			want: &api.UserAssignment{
+				ID:   "john_doe",
+				Type: "db_env",
+			},
+		},
+		{
+			name: "group assignment",
+			body: map[string]any{
+				"groupId":   "external",
+				"groupType": "oidc",
+			},
+			dest: new(api.GroupAssignment),
+			want: &api.GroupAssignment{
+				ID:   "external",
+				Type: "oidc",
 			},
 		},
 	} {

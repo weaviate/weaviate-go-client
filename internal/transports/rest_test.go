@@ -272,9 +272,9 @@ func TestBaseEndoint(t *testing.T) {
 
 func TestIdentityEndpoint(t *testing.T) {
 	t.Run("string", func(t *testing.T) {
-		id := "test-id"
+		id := "test id"
 		pathFmt := "/string/%s"
-		wantPath := fmt.Sprintf(pathFmt, id)
+		wantPath := "/string/test%20id" // url-encoded
 
 		factory := transports.IdentityEndpoint[string](http.MethodGet, pathFmt)
 		req := factory(id)
