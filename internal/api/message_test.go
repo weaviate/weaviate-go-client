@@ -257,7 +257,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			name: "filter by multi-target references",
 			req: &api.SearchRequest{
 				Filter: api.FilterExpr{
-					Target:   []string{"hasAwards", "GrammyAward", "weight_kg"},
+					Target:   []string{api.MultiTargetReference("hasAwards", "GrammyAward"), "weight_kg"},
 					Operator: api.FilterOperatorEqual,
 					Value:    2.3,
 				},

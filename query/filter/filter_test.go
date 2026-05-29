@@ -268,6 +268,19 @@ func TestFilter(t *testing.T) {
 			},
 		},
 		{
+			name: "multi-target reference",
+			expr: &filter.Cond{
+				Operator: filter.GreaterThanEqual,
+				Target:   filter.Reference("hasAwards").Collection("GrammyAwards").Property("year"),
+				Value:    1974,
+			},
+			want: &api.FilterExpr{
+				Operator: api.FilterOperatorGreaterThanEqual,
+				Target:   []string{"hasAwards:GrammyAwards", "year"},
+				Value:    1974,
+			},
+		},
+		{
 			name: "empty AND group",
 			expr: filter.And{},
 			want: nil,

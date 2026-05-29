@@ -49,7 +49,7 @@ type Cond struct {
 	//
 	//	"album" 															// Property "album" of the root Songs collection
 	//	Reference("performedBy").Property("given_name") 					// Property "given_name" of the referenced Artists collection (single-target reference)
-	//	Reference("hasAwards").Collection("GrammyAward").Property("year")	// Property "year" of the referenced Grammy collection (multi-target reference)
+	//	Reference("hasAwards").Collection("GrammyAwards").Property("year")	// Property "year" of the referenced GrammyAwards collection (multi-target reference)
 	//	Reference("performedBy").Reference("bornIn").Property("population")	// performedBy -[Artists]-> bornIn -[Cities]-> population
 	//
 	// See [Len].
@@ -171,7 +171,13 @@ type Reference string
 func (r Reference) Reference(reference string) Reference { return Reference(r.Property(reference)) }
 
 // Collection specifies target collection name for a multi-target reference.
-func (r Reference) Collection(collection string) Reference { panic("implement") }
+func (r Reference) Collection(collection string) Reference {
+	path := split(string(r))
+	if l := len(path); l > 0 {
+		path[l-1] = api.MultiTargetReference(path[l-1], collection)
+	}
+	return Reference(join(path...))
+}
 
 // Property appends a property target at the end of the reference path.
 func (r Reference) Property(property string) string { return join(string(r), property) }

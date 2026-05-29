@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strings"
 	"time"
-	"unicode"
 
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
@@ -413,6 +413,33 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 	return &pf
 }
 
+// multiRefSep separates parts of the concatenated multi-target reference.
+const multiRefSep = ":"
+
+// MultiTargetReference constructs a multi-target reference such that
+// the name of the property and collection components are encoded unambiguously.
+//
+// Weaviate does not require a property name to be lowercase, so we cannot
+// rely on a heuristic a Collection being the only possible upper-case part
+// of the filter target path.
+func MultiTargetReference(property, collection string) string {
+	return property + multiRefSep + collection
+}
+
+// splitReferenceTarget returns the reference-property and collection components
+// of a reference target. If it's a single-target reference, collection is empty.
+// Otherwise, collection is the remainder of the string following [multiRefSep].
+func splitReferenceTarget(ref string) (property, collection string) {
+	parts := strings.Split(ref, multiRefSep)
+	dev.Assert(len(parts) > 0, "len(parts)")
+
+	property = parts[0]
+	if len(parts) > 1 {
+		collection = parts[1]
+	}
+	return
+}
+
 func marshalFilterTarget(path []string) *proto.FilterTarget {
 	switch len(path) {
 	case 0:
@@ -445,23 +472,17 @@ func marshalFilterTarget(path []string) *proto.FilterTarget {
 	default:
 		// Here we can be sure that path has more than 1 item.
 		// If the second item starts with an uppercase letter,
-		// assume it's a collection name and marshal referenceProperty
+		// assume it's a collection name and marshal property
 		// as a multi-target reference.
 		// Continue marshaling the remainder of the path recursively
 		// until the last element is a property or a count() expression.
-		//
-		// TODO(dyma): Weaviate might not enforce that properties be lowercase,
-		// in which case (no pun intended), we may accidentally confuse a property
-		// for a name of the collection. Instead, we could use some special formatting
-		// like 'property#Collection' for multi-target references and search for #
-		// in the path element rather than checking IsUpper.
-		referenceProperty, path := path[0], path[1:]
-		if unicode.IsUpper(rune(path[0][0])) {
-			collection, path := path[0], path[1:]
+		property, collection := splitReferenceTarget(path[0])
+		path = path[1:]
+		if collection != "" {
 			return &proto.FilterTarget{
 				Target: &proto.FilterTarget_MultiTarget{
 					MultiTarget: &proto.FilterReferenceMultiTarget{
-						On:               referenceProperty,
+						On:               property,
 						TargetCollection: collection,
 						Target:           marshalFilterTarget(path),
 					},
@@ -471,7 +492,7 @@ func marshalFilterTarget(path []string) *proto.FilterTarget {
 			return &proto.FilterTarget{
 				Target: &proto.FilterTarget_SingleTarget{
 					SingleTarget: &proto.FilterReferenceSingleTarget{
-						On:     referenceProperty,
+						On:     property,
 						Target: marshalFilterTarget(path),
 					},
 				},
