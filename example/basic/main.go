@@ -33,34 +33,41 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// If SampleProducts collection does not exist, create it.
+	CollectionName := "GoThings"
+
+	// If GoThings collection does not exist, create it.
 	canSearch := true
-	if ok, err := c.Collections.Exists(ctx, "SampleProducts"); err != nil {
+	if ok, err := c.Collections.Exists(ctx, CollectionName); err != nil {
 		log.Fatal(err)
 	} else if !ok {
-		c.Collections.Create(ctx, collections.Collection{
-			Name: "SampleProducts",
+		if err := c.Collections.Create(ctx, collections.Collection{
+			Name: CollectionName,
 			Properties: []collections.Property{
 				{Name: "name", DataType: collections.DataTypeText},
 				{Name: "description", DataType: collections.DataTypeText},
 				{Name: "url", DataType: collections.DataTypeText},
 			},
-		})
+		}); err != nil {
+			log.Fatal(err)
+		}
 
 		// Current client version does not support defining vector indices.
 		// Without one, similarity search is not possible.
 		canSearch = false
 	}
 
-	// Get a handle for SampleProducts collection.
-	products := c.Collections.Use("SampleProducts")
+	// Cleanup after the test is done.
+	defer c.Collections.Delete(ctx, CollectionName)
+
+	// Get a handle for GoThings collection.
+	products := c.Collections.Use(CollectionName)
 
 	// Insert some objects, logging the "before" and "after" counts.
 	count, err := products.Count(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("collection SampleProducts has %d objects", count)
+	log.Printf("collection GoThings has %d objects", count)
 
 	for i := range 5 {
 		obj, err := products.Data.Insert(ctx, nil)
@@ -75,10 +82,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("collection SampleProducts has %d objects", count)
+	log.Printf("collection GoThings has %d objects", count)
 
 	if !canSearch {
-		log.Print("collection SampleProducts has no vector indices")
+		log.Print("collection GoThings has no vector indices")
 		return
 	}
 
