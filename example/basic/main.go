@@ -40,7 +40,7 @@ func main() {
 	if ok, err := c.Collections.Exists(ctx, CollectionName); err != nil {
 		log.Fatal(err)
 	} else if !ok {
-		if err := c.Collections.Create(ctx, collections.Collection{
+		if _, err := c.Collections.Create(ctx, collections.Collection{
 			Name: CollectionName,
 			Properties: []collections.Property{
 				{Name: "name", DataType: collections.DataTypeText},
@@ -70,11 +70,13 @@ func main() {
 	log.Printf("collection GoThings has %d objects", count)
 
 	for i := range 5 {
-		obj, err := products.Data.Insert(ctx, nil)
+		res, err := products.Data.Insert(ctx, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("\tobject #%d=%q\n", i, obj.UUID)
+		for id, msg := range res.Errors {
+			fmt.Printf("\tobject #%d (%s) failed with error %q\n", i, id, msg)
+		}
 	}
 
 	count, err = products.Count(ctx)
