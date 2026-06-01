@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - v6
+  pull_request:
+    branches:
+      - v6
 
 jobs:
   examples:
@@ -14,9 +17,8 @@ jobs:
         EXAMPLE:
           - "basic"
     env:
-      # TODO(dyma): update GH secrets names
-      WEAVIATE_HOST: ${{ secrets.WEAVIATE_HOST }}
-      WEAVIATE_API_KEY: ${{ secrets.WEAVIATE_API_KEY }}
+      WEAVIATE_HOST: ${{ secrets.WCD_EXAMPLE_HOST }}
+      WEAVIATE_API_KEY: ${{ secrets.WCD_EXAMPLE_API_KEY }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -25,6 +27,6 @@ jobs:
           cache: true
       - name: example/${{ matrix.EXAMPLE }}
         run: -|
-          pushd ./example/${{ matrix.EXAMPLE }} \
+          cd ./example/${{ matrix.EXAMPLE }} \
           && go run . \
-          && popd
+          && cd -
