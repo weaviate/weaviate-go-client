@@ -10,9 +10,9 @@ import (
 )
 
 type NearVector struct {
-	Limit                  int32            // Limit the number of results returned for the query.
-	Offset                 int32            // Skip the first N objects in the collection.
-	AutoLimit              int32            // Return objects in the first N similarity clusters.
+	Limit                  int              // Limit the number of results returned for the query.
+	Offset                 int              // Skip the first N objects in the collection.
+	AutoLimit              int              // Return objects in the first N similarity clusters.
 	After                  uuid.UUID        // Skip all objects before the one with this ID.
 	Filter                 filter.Expr      // Filter results based on their properties.
 	ReturnMetadata         ReturnMetadata   // Select query and object metadata to return for each object.
@@ -50,9 +50,9 @@ func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc
 	return func(ctx context.Context, nv NearVector) (*Result, error) {
 		return query(ctx, t, request{
 			RequestDefaults:        rd,
-			Limit:                  nv.Limit,
-			AutoLimit:              nv.AutoLimit,
-			Offset:                 nv.Offset,
+			Limit:                  int32(nv.Limit),
+			AutoLimit:              int32(nv.AutoLimit),
+			Offset:                 int32(nv.Offset),
 			After:                  nv.After,
 			Filter:                 nv.Filter,
 			ReturnVectors:          nv.ReturnVectors,

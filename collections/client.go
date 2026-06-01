@@ -80,6 +80,13 @@ func (h *Handle) Tenant() string {
 	return h.defaults.Tenant
 }
 
+// Objects creates a new iterator for objects in target collection.
+// The context ctx will be used for all requests throughtout the
+// iterator's lifecycle.
+func (h *Handle) Objects(ctx context.Context) *query.ObjectIterator {
+	return query.NewObjectIterator(ctx, h.Query)
+}
+
 // HandleOption configures request defaults for collection handle.
 type HandleOption func(*api.RequestDefaults)
 

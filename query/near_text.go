@@ -10,9 +10,9 @@ import (
 )
 
 type NearText struct {
-	Limit                  int32            // Limit the number of results returned for the query.
-	Offset                 int32            // Skip the first N objects in the collection.
-	AutoLimit              int32            // Return objects in the first N similarity clusters.
+	Limit                  int              // Limit the number of results returned for the query.
+	Offset                 int              // Skip the first N objects in the collection.
+	AutoLimit              int              // Return objects in the first N similarity clusters.
 	After                  uuid.UUID        // Skip all objects before the one with this ID.
 	Filter                 filter.Expr      // Filter results based on their properties.
 	ReturnMetadata         ReturnMetadata   // Select query and object metadata to return for each object.
@@ -65,14 +65,14 @@ func (s *Selection) MMR() *MMR { return s.mmr }
 // NearTextFunc runs plain near text search.
 type NearTextFunc func(context.Context, NearText) (*Result, error)
 
-// nearTextFunc makes internal.Transport available to nearText via a closure.
+// nearTextFunc makes internal.Transport available to [query] via a closure.
 func nearTextFunc(t internal.Transport, rd api.RequestDefaults) NearTextFunc {
 	return func(ctx context.Context, nt NearText) (*Result, error) {
 		return query(ctx, t, request{
 			RequestDefaults:        rd,
-			Limit:                  nt.Limit,
-			AutoLimit:              nt.AutoLimit,
-			Offset:                 nt.Offset,
+			Limit:                  int32(nt.Limit),
+			AutoLimit:              int32(nt.AutoLimit),
+			Offset:                 int32(nt.Offset),
 			After:                  nt.After,
 			Filter:                 nt.Filter,
 			ReturnVectors:          nt.ReturnVectors,
