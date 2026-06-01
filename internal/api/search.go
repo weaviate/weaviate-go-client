@@ -310,7 +310,9 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 		// Marshaling it would've been as simple as [structpb.NewValue].
 		switch v := f.Value.(type) {
 		case nil:
-			return nil // Null-ness should be checked via [FilterOperatorIsNull].
+			if f.Operator != FilterOperatorIsNull {
+				return nil // Null-ness should be checked via IsNull operator.
+			}
 		case string:
 			pf.TestValue = &proto.Filters_ValueText{ValueText: v}
 		case []string:

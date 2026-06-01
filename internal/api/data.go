@@ -3,11 +3,13 @@ package api
 import (
 	"encoding"
 	"encoding/json"
+	"errors"
 	"maps"
 	"net/http"
 	"net/url"
 	"time"
 
+	"github.com/weaviate/weaviate-go-client/v6/internal"
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 
 	"github.com/google/uuid"
@@ -353,5 +355,67 @@ func marshalReferenceProperties(references References, dest *proto.BatchObject_P
 	}
 	dest.SingleTargetRefProps = single
 	dest.MultiTargetRefProps = multi
+	return nil
+}
+
+type DeleteObjectsRequest struct {
+	RequestDefaults
+	Filter          FilterExpr
+	Verbose, DryRun bool
+}
+
+var (
+	_ transport.Message[proto.BatchDeleteRequest, proto.BatchDeleteReply] = (*DeleteObjectsRequest)(nil)
+	_ transport.MessageMarshaler[proto.BatchDeleteRequest]                = (*DeleteObjectsRequest)(nil)
+)
+
+func (r *DeleteObjectsRequest) Method() transport.MethodFunc[proto.BatchDeleteRequest, proto.BatchDeleteReply] {
+	return proto.WeaviateClient.BatchDelete
+}
+
+func (r *DeleteObjectsRequest) Body() transport.MessageMarshaler[proto.BatchDeleteRequest] {
+	return r
+}
+
+func (r *DeleteObjectsRequest) MarshalMessage() (*proto.BatchDeleteRequest, error) {
+	return &proto.BatchDeleteRequest{
+		Collection:       r.CollectionName,
+		Tenant:           nilZero(r.Tenant),
+		ConsistencyLevel: r.ConsistencyLevel.proto(),
+		Verbose:          r.Verbose,
+		DryRun:           r.DryRun,
+		Filters:          marshalFilter(r.Filter),
+	}, nil
+}
+
+type DeleteObjectsResponse struct {
+	Took   time.Duration
+	Errors map[uuid.UUID]error
+}
+
+var _ transport.MessageUnmarshaler[proto.BatchDeleteReply] = (*DeleteObjectsResponse)(nil)
+
+func (r *DeleteObjectsResponse) UnmarshalMessage(reply *proto.BatchDeleteReply) error {
+	dev.AssertNotNil(reply, "reply")
+
+	errs := internal.MakeMap[uuid.UUID, error](int(reply.Matches))
+	for _, object := range reply.Objects {
+		id, err := uuid.FromBytes(object.Uuid)
+		if err != nil {
+			return err
+		}
+
+		var respErr error
+		if !object.Successful && object.Error != nil {
+			respErr = errors.New(*object.Error)
+		}
+
+		errs[id] = respErr
+	}
+
+	*r = DeleteObjectsResponse{
+		Took:   time.Duration(reply.Took) * time.Second,
+		Errors: errs,
+	}
 	return nil
 }

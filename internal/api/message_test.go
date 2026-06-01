@@ -64,14 +64,6 @@ var (
 )
 
 func TestSearchRequest_MarshalMessage(t *testing.T) {
-	propertyTarget := func(s string) *proto.FilterTarget {
-		return &proto.FilterTarget{
-			Target: &proto.FilterTarget_Property{
-				Property: s,
-			},
-		}
-	}
-
 	// UUID is always included in the [proto.MetadataRequest].
 	testMessageMarshaler(t, []MessageMarshalerTest[proto.SearchRequest, proto.SearchReply]{
 		{
@@ -1099,6 +1091,14 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 	})
 }
 
+func propertyTarget(s string) *proto.FilterTarget {
+	return &proto.FilterTarget{
+		Target: &proto.FilterTarget_Property{
+			Property: s,
+		},
+	}
+}
+
 // TestAggregateRequest_MarshalMessage tests that api.AggregateRequest creates
 // the expected proto.AggregateRequest when its MarshalMessage is called.
 // Most of the test cases are split by property type to simplify error logs;
@@ -1488,6 +1488,51 @@ func TestInsertReferencesRequest_MarshalMessage(t *testing.T) {
 						Tenant:         "john_doe",
 					},
 				},
+			},
+		},
+	})
+}
+
+func TestDeleteObjectsRequest_MarshalMessage(t *testing.T) {
+	testMessageMarshaler(t, []MessageMarshalerTest[proto.BatchDeleteRequest, proto.BatchDeleteReply]{
+		{
+			name: "with request defaults",
+			req: &api.DeleteObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+					Tenant:           "john_doe",
+				},
+				Filter: api.FilterExpr{
+					Target:   []string{"album"},
+					Operator: api.FilterOperatorIsNull,
+				},
+				DryRun:  true,
+				Verbose: true,
+			},
+			want: &proto.BatchDeleteRequest{
+				Collection:       "Songs",
+				Tenant:           testkit.Ptr("john_doe"),
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Filters: &proto.Filters{
+					Target:   propertyTarget("album"),
+					Operator: proto.Filters_OPERATOR_IS_NULL,
+				},
+				DryRun:  true,
+				Verbose: true,
+			},
+		},
+		{
+			name: "no tenant",
+			req: &api.DeleteObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+			},
+			want: &proto.BatchDeleteRequest{
+				Collection:       "Songs",
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
 			},
 		},
 	})
@@ -2395,6 +2440,38 @@ func TestInsertReferencesResponse_UnmarshalMessage(t *testing.T) {
 			reply: &proto.BatchReferencesReply{Took: 92},
 			dest:  new(api.InsertReferencesResponse),
 			want:  &api.InsertReferencesResponse{Took: 92 * time.Second},
+		},
+	})
+}
+
+func TestDeleteObjectsResponse_UnmarshalMessage(t *testing.T) {
+	testMessageUnmarshaler(t, []MessageUnmarshalerTest[proto.BatchDeleteReply]{
+		{
+			name: "has errors",
+			reply: &proto.BatchDeleteReply{
+				Took:       92,
+				Matches:    2,
+				Successful: 1,
+				Failed:     1,
+				Objects: []*proto.BatchDeleteObject{
+					{Uuid: testkit.UUID[:], Error: testkit.Ptr(testkit.ErrWhaam.Error())},
+					{Uuid: uuid.Nil[:], Successful: true, Error: nil},
+				},
+			},
+			dest: new(api.DeleteObjectsResponse),
+			want: &api.DeleteObjectsResponse{
+				Took: 92 * time.Second,
+				Errors: map[uuid.UUID]error{
+					testkit.UUID: testkit.ErrWhaam,
+					uuid.Nil:     nil,
+				},
+			},
+		},
+		{
+			name:  "no errors",
+			reply: &proto.BatchDeleteReply{Took: 92},
+			dest:  new(api.DeleteObjectsResponse),
+			want:  &api.DeleteObjectsResponse{Took: 92 * time.Second},
 		},
 	})
 }
