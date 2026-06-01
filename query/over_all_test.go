@@ -37,7 +37,7 @@ func TestOverAll(t *testing.T) {
 				After:     testkit.UUID,
 				Filter: filter.Not{
 					P: &filter.Cond{
-						Target:   []string{"album"},
+						Target:   "album",
 						Operator: filter.Like,
 						Value:    ".*Blood",
 					},

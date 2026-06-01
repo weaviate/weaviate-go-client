@@ -343,3 +343,9 @@ func TestStaticEndpoint(t *testing.T) {
 	assert.Nil(t, static.Query(), "query")
 	assert.Nil(t, static.Body(), "body")
 }
+
+func TestPath(t *testing.T) {
+	want := "/path/url%20encode%20me"
+	got := transports.Path("/path/%s", "url encode me")
+	assert.Equal(t, got, want)
+}

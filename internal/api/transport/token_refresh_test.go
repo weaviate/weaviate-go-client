@@ -43,6 +43,8 @@ func TestTokenKeepalive(t *testing.T) {
 
 		src.used = 0
 		time.Sleep(5 * time.Millisecond)
+
+		// FIXME(dyma): this can flake
 		require.Zero(t, src.used, "no src.Token() after context is canceled")
 	})
 }

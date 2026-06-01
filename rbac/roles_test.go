@@ -193,7 +193,7 @@ func TestRolesClient_AddPermissions(t *testing.T) {
 	for _, tt := range []struct {
 		name  string
 		add   rbac.AddPermissions
-		stubs []testkit.Stub[api.AddPermissionsRequest, any]
+		stubs []testkit.Stub[api.ManagePermissionsRequest, any]
 		err   testkit.Error
 	}{
 		{
@@ -206,9 +206,10 @@ func TestRolesClient_AddPermissions(t *testing.T) {
 					},
 				},
 			},
-			stubs: []testkit.Stub[api.AddPermissionsRequest, any]{{
-				Request: &api.AddPermissionsRequest{
+			stubs: []testkit.Stub[api.ManagePermissionsRequest, any]{{
+				Request: &api.ManagePermissionsRequest{
 					RoleID: "rock-n-role",
+					Verb:   api.PermissionVerbAdd,
 					Permissions: api.Permissions{
 						Cluster: []api.ClusterPermission{
 							{Read: true},
@@ -219,7 +220,7 @@ func TestRolesClient_AddPermissions(t *testing.T) {
 		},
 		{
 			name: "with error",
-			stubs: []testkit.Stub[api.AddPermissionsRequest, any]{
+			stubs: []testkit.Stub[api.ManagePermissionsRequest, any]{
 				{Err: testkit.ErrWhaam},
 			},
 			err: testkit.ExpectError,
@@ -240,7 +241,7 @@ func TestRolesClient_RemovePermissions(t *testing.T) {
 	for _, tt := range []struct {
 		name   string
 		remove rbac.RemovePermissions
-		stubs  []testkit.Stub[api.RemovePermissionsRequest, any]
+		stubs  []testkit.Stub[api.ManagePermissionsRequest, any]
 		err    testkit.Error
 	}{
 		{
@@ -253,9 +254,10 @@ func TestRolesClient_RemovePermissions(t *testing.T) {
 					},
 				},
 			},
-			stubs: []testkit.Stub[api.RemovePermissionsRequest, any]{{
-				Request: &api.RemovePermissionsRequest{
+			stubs: []testkit.Stub[api.ManagePermissionsRequest, any]{{
+				Request: &api.ManagePermissionsRequest{
 					RoleID: "rock-n-role",
+					Verb:   api.PermissionVerbRemove,
 					Permissions: api.Permissions{
 						Cluster: []api.ClusterPermission{
 							{Read: true},
@@ -266,7 +268,7 @@ func TestRolesClient_RemovePermissions(t *testing.T) {
 		},
 		{
 			name: "with error",
-			stubs: []testkit.Stub[api.RemovePermissionsRequest, any]{
+			stubs: []testkit.Stub[api.ManagePermissionsRequest, any]{
 				{Err: testkit.ErrWhaam},
 			},
 			err: testkit.ExpectError,
@@ -411,26 +413,26 @@ func TestRolesClient_UserAssignments(t *testing.T) {
 	for _, tt := range []struct {
 		name   string
 		roleID string
-		stubs  []testkit.Stub[any, []api.UserAssignment]
-		want   []rbac.UserAssignment
+		stubs  []testkit.Stub[any, []api.UserInfo]
+		want   []rbac.UserInfo
 		err    testkit.Error
 	}{
 		{
 			name:   "ok",
 			roleID: "rock-n-role",
-			stubs: []testkit.Stub[any, []api.UserAssignment]{{
+			stubs: []testkit.Stub[any, []api.UserInfo]{{
 				Request: testkit.Ptr(api.GetUserAssignmentsRequest("rock-n-role")),
-				Response: []api.UserAssignment{
+				Response: []api.UserInfo{
 					{ID: "john_doe", Type: "db_env"},
 				},
 			}},
-			want: []rbac.UserAssignment{
+			want: []rbac.UserInfo{
 				{ID: "john_doe", Type: "db_env"},
 			},
 		},
 		{
 			name: "with error",
-			stubs: []testkit.Stub[any, []api.UserAssignment]{
+			stubs: []testkit.Stub[any, []api.UserInfo]{
 				{Err: testkit.ErrWhaam},
 			},
 			err: testkit.ExpectError,
@@ -452,26 +454,26 @@ func TestRolesClient_GroupAssignments(t *testing.T) {
 	for _, tt := range []struct {
 		name   string
 		roleID string
-		stubs  []testkit.Stub[any, []api.GroupAssignment]
-		want   []rbac.GroupAssignment
+		stubs  []testkit.Stub[any, []api.GroupInfo]
+		want   []rbac.GroupInfo
 		err    testkit.Error
 	}{
 		{
 			name:   "ok",
 			roleID: "rock-n-role",
-			stubs: []testkit.Stub[any, []api.GroupAssignment]{{
+			stubs: []testkit.Stub[any, []api.GroupInfo]{{
 				Request: testkit.Ptr(api.GetGroupAssignmentsRequest("rock-n-role")),
-				Response: []api.GroupAssignment{
+				Response: []api.GroupInfo{
 					{ID: "external", Type: "oidc"},
 				},
 			}},
-			want: []rbac.GroupAssignment{
+			want: []rbac.GroupInfo{
 				{ID: "external", Type: "oidc"},
 			},
 		},
 		{
 			name: "with error",
-			stubs: []testkit.Stub[any, []api.GroupAssignment]{
+			stubs: []testkit.Stub[any, []api.GroupInfo]{
 				{Err: testkit.ErrWhaam},
 			},
 			err: testkit.ExpectError,

@@ -3,6 +3,7 @@ package rbac
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
@@ -78,53 +79,54 @@ const (
 	RoleScopeMatch = RoleScope(api.RoleScopeMatch)
 )
 
-func (rc *RolesClient) Create(ctx context.Context, r Role) error {
+func (c *RolesClient) Create(ctx context.Context, r Role) error {
 	req := &api.CreateRoleRequest{
 		Role: api.Role{
 			ID:          r.ID,
 			Permissions: marshalPermissions(&r.Permissions),
 		},
 	}
-	if err := rc.transport.Do(ctx, req, nil); err != nil {
+	if err := c.transport.Do(ctx, req, nil); err != nil {
 		return fmt.Errorf("create role: %w", err)
 	}
 	return nil
 }
 
 // Exists returns true and nil error if role with the given roleID exists.
-func (rc *RolesClient) Exists(ctx context.Context, roleID string) (bool, error) {
+func (c *RolesClient) Exists(ctx context.Context, roleID string) (bool, error) {
 	var resp api.ResourceExistsResponse
-	if err := rc.transport.Do(ctx, api.GetRoleRequest(roleID), &resp); err != nil {
+	if err := c.transport.Do(ctx, api.GetRoleRequest(roleID), &resp); err != nil {
 		return false, fmt.Errorf("check role exists: %w", err)
 	}
 	return resp.Bool(), nil
 }
 
 // Get fetches a role with the given roleID.
-func (rc *RolesClient) Get(ctx context.Context, roleID string) (*Role, error) {
+func (c *RolesClient) Get(ctx context.Context, roleID string) (*Role, error) {
 	var resp api.Role
-	if err := rc.transport.Do(ctx, api.GetRoleRequest(roleID), &resp); err != nil {
+	if err := c.transport.Do(ctx, api.GetRoleRequest(roleID), &resp); err != nil {
 		return nil, fmt.Errorf("get role: %w", err)
 	}
-	return unmarshalRole(&resp), nil
+	role := unmarshalRole(&resp)
+	return &role, nil
 }
 
 // List fetches all roles defined in the cluster.
-func (rc *RolesClient) List(ctx context.Context) ([]Role, error) {
+func (c *RolesClient) List(ctx context.Context) ([]Role, error) {
 	var resp []api.Role
-	if err := rc.transport.Do(ctx, api.ListRolesRequest, &resp); err != nil {
+	if err := c.transport.Do(ctx, api.ListRolesRequest, &resp); err != nil {
 		return nil, fmt.Errorf("list role: %w", err)
 	}
-	var roles []Role
+	roles := slices.Grow([]Role(nil), len(resp))
 	for i := range resp {
-		roles = append(roles, *unmarshalRole(&resp[i]))
+		roles = append(roles, unmarshalRole(&resp[i]))
 	}
 	return roles, nil
 }
 
 // Delete deletes a role with the given roleID.
-func (rc *RolesClient) Delete(ctx context.Context, roleID string) error {
-	if err := rc.transport.Do(ctx, api.DeleteRoleRequest(roleID), nil); err != nil {
+func (c *RolesClient) Delete(ctx context.Context, roleID string) error {
+	if err := c.transport.Do(ctx, api.DeleteRoleRequest(roleID), nil); err != nil {
 		return fmt.Errorf("delete role: %w", err)
 	}
 	return nil
@@ -135,12 +137,13 @@ type AddPermissions struct {
 	Permissions Permissions
 }
 
-func (rc *RolesClient) AddPermissions(ctx context.Context, options AddPermissions) error {
-	req := &api.AddPermissionsRequest{
+func (c *RolesClient) AddPermissions(ctx context.Context, options AddPermissions) error {
+	req := &api.ManagePermissionsRequest{
 		RoleID:      options.RoleID,
+		Verb:        api.PermissionVerbAdd,
 		Permissions: marshalPermissions(&options.Permissions),
 	}
-	if err := rc.transport.Do(ctx, req, nil); err != nil {
+	if err := c.transport.Do(ctx, req, nil); err != nil {
 		return fmt.Errorf("add role permissions: %w", err)
 	}
 	return nil
@@ -151,12 +154,13 @@ type RemovePermissions struct {
 	Permissions Permissions
 }
 
-func (rc *RolesClient) RemovePermissions(ctx context.Context, options RemovePermissions) error {
-	req := &api.RemovePermissionsRequest{
+func (c *RolesClient) RemovePermissions(ctx context.Context, options RemovePermissions) error {
+	req := &api.ManagePermissionsRequest{
 		RoleID:      options.RoleID,
+		Verb:        api.PermissionVerbRemove,
 		Permissions: marshalPermissions(&options.Permissions),
 	}
-	if err := rc.transport.Do(ctx, req, nil); err != nil {
+	if err := c.transport.Do(ctx, req, nil); err != nil {
 		return fmt.Errorf("remove role permissions: %w", err)
 	}
 	return nil
@@ -182,7 +186,7 @@ type HasPermission struct {
 
 // HasPermission checks if a role contains a permission.
 // Only one permission can be checked in a single call.
-func (rc *RolesClient) HasPermission(ctx context.Context, options HasPermission) (bool, error) {
+func (c *RolesClient) HasPermission(ctx context.Context, options HasPermission) (bool, error) {
 	req, err := marshalHasPermission(options)
 	if err != nil {
 		return false, err
@@ -190,49 +194,46 @@ func (rc *RolesClient) HasPermission(ctx context.Context, options HasPermission)
 	req.RoleID = options.RoleID
 
 	var resp api.HasPermissionResponse
-	if err := rc.transport.Do(ctx, req, &resp); err != nil {
+	if err := c.transport.Do(ctx, req, &resp); err != nil {
 		return false, fmt.Errorf("check role has permission: %w", err)
 	}
 	return bool(resp), nil
 }
 
-func (rc *RolesClient) AssignedUserIDs(ctx context.Context, roleID string) ([]string, error) {
+func (c *RolesClient) AssignedUserIDs(ctx context.Context, roleID string) ([]string, error) {
 	var resp api.GetAssignedUsersResponse
-	if err := rc.transport.Do(ctx, api.GetAssignedUsersRequest(roleID), &resp); err != nil {
+	if err := c.transport.Do(ctx, api.GetAssignedUsersRequest(roleID), &resp); err != nil {
 		return nil, fmt.Errorf("get assigned users: %w", err)
 	}
 	return []string(resp), nil
 }
 
-// TODO(dyma): replace with map[username]usertype?
-// Or just User, containing Type and ID, but other fields zeroed.
-// Otherwise we're polluting the API.
-type UserAssignment api.UserAssignment
+type UserInfo api.UserInfo
 
-func (rc *RolesClient) UserAssignments(ctx context.Context, roleID string) ([]UserAssignment, error) {
-	var resp []api.UserAssignment
-	if err := rc.transport.Do(ctx, api.GetUserAssignmentsRequest(roleID), &resp); err != nil {
+func (c *RolesClient) UserAssignments(ctx context.Context, roleID string) ([]UserInfo, error) {
+	var resp []api.UserInfo
+	if err := c.transport.Do(ctx, api.GetUserAssignmentsRequest(roleID), &resp); err != nil {
 		return nil, fmt.Errorf("get user assignments: %w", err)
 	}
 
-	out := make([]UserAssignment, len(resp))
+	out := make([]UserInfo, len(resp))
 	for i := range resp {
-		out[i] = UserAssignment(resp[i])
+		out[i] = UserInfo(resp[i])
 	}
 	return out, nil
 }
 
-type GroupAssignment api.GroupAssignment
+type GroupInfo api.GroupInfo
 
-func (rc *RolesClient) GroupAssignments(ctx context.Context, roleID string) ([]GroupAssignment, error) {
-	var resp []api.GroupAssignment
-	if err := rc.transport.Do(ctx, api.GetGroupAssignmentsRequest(roleID), &resp); err != nil {
+func (c *RolesClient) GroupAssignments(ctx context.Context, roleID string) ([]GroupInfo, error) {
+	var resp []api.GroupInfo
+	if err := c.transport.Do(ctx, api.GetGroupAssignmentsRequest(roleID), &resp); err != nil {
 		return nil, fmt.Errorf("get group assignments: %w", err)
 	}
 
-	out := make([]GroupAssignment, len(resp))
+	out := make([]GroupInfo, len(resp))
 	for i := range resp {
-		out[i] = GroupAssignment(resp[i])
+		out[i] = GroupInfo(resp[i])
 	}
 	return out, nil
 }
@@ -287,7 +288,7 @@ func marshalPermissions(ps *Permissions) api.Permissions {
 	return out
 }
 
-func unmarshalRole(r *api.Role) *Role {
+func unmarshalRole(r *api.Role) Role {
 	role := Role{ID: r.ID}
 	for _, p := range r.Aliases {
 		role.Aliases = append(role.Aliases, AliasPermission(p))
@@ -334,7 +335,7 @@ func unmarshalRole(r *api.Role) *Role {
 	for _, p := range r.Users {
 		role.Users = append(role.Users, UserPermission(p))
 	}
-	return &role
+	return role
 }
 
 // marshalHasPermission returns [api.HasPermissionRequest] with exacly 1 permission

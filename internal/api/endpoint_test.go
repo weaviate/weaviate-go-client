@@ -868,8 +868,9 @@ func TestRESTRequests(t *testing.T) {
 		},
 		{
 			name: "add permissions to role",
-			req: &api.AddPermissionsRequest{
+			req: &api.ManagePermissionsRequest{
 				RoleID: "rock-n-role",
+				Verb:   api.PermissionVerbAdd,
 				Permissions: api.Permissions{
 					Cluster: []api.ClusterPermission{
 						{Read: true},
@@ -886,8 +887,9 @@ func TestRESTRequests(t *testing.T) {
 		},
 		{
 			name: "remove permissions from role",
-			req: &api.RemovePermissionsRequest{
+			req: &api.ManagePermissionsRequest{
 				RoleID: "rock-n-role",
+				Verb:   api.PermissionVerbRemove,
 				Permissions: api.Permissions{
 					Cluster: []api.ClusterPermission{
 						{Read: true},
@@ -913,6 +915,155 @@ func TestRESTRequests(t *testing.T) {
 			wantBody: map[string]any{
 				"action": "read_cluster",
 			},
+		},
+		{
+			name:       "get own user info",
+			req:        api.GetOwnUserInfoRequest,
+			wantMethod: http.MethodGet,
+			wantPath:   "/users/own-info",
+		},
+		{
+			name: "get roles assigned to the user (include permissions)",
+			req: &api.GetAssignedRolesRequest{
+				Entity:             api.UserID("john-malkovich"),
+				Kind:               api.RBACKindDB,
+				IncludePermissions: true,
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/authz/users/john-malkovich/roles/db",
+			wantQuery:  url.Values{"includePermissions": {"true"}},
+		},
+		{
+			name: "get roles assigned to the group (include permissions)",
+			req: &api.GetAssignedRolesRequest{
+				Entity:             api.GroupID("external"),
+				Kind:               api.RBACKindOIDC,
+				IncludePermissions: true,
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/authz/groups/external/roles/oidc",
+			wantQuery:  url.Values{"includePermissions": {"true"}},
+		},
+		{
+			name: "assign roles to user",
+			req: &api.ManageRolesRequest{
+				Entity: api.UserID("john-malkovich"),
+				Kind:   api.RBACKindDB,
+				Verb:   api.RoleVerbAssign,
+				Roles:  []string{"rock-n-role", "sushi-role"},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/users/john-malkovich/assign",
+			wantBody: rest.AssignRoleToUserJSONBody{
+				UserType: rest.UserTypeInputDb,
+				Roles:    []string{"rock-n-role", "sushi-role"},
+			},
+		},
+		{
+			name: "assign roles to group",
+			req: &api.ManageRolesRequest{
+				Entity: api.GroupID("external"),
+				Kind:   api.RBACKindOIDC,
+				Verb:   api.RoleVerbAssign,
+				Roles:  []string{"rock-n-role", "sushi-role"},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/groups/external/assign",
+			wantBody: rest.AssignRoleToGroupJSONBody{
+				GroupType: rest.GroupTypeOidc,
+				Roles:     []string{"rock-n-role", "sushi-role"},
+			},
+		},
+		{
+			name: "revoke roles from user",
+			req: &api.ManageRolesRequest{
+				Entity: api.UserID("john-malkovich"),
+				Kind:   api.RBACKindDB,
+				Verb:   api.RoleVerbRevoke,
+				Roles:  []string{"rock-n-role", "sushi-role"},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/users/john-malkovich/revoke",
+			wantBody: rest.RevokeRoleFromUserJSONBody{
+				UserType: rest.UserTypeInputDb,
+				Roles:    []string{"rock-n-role", "sushi-role"},
+			},
+		},
+		{
+			name: "revoke roles from group",
+			req: &api.ManageRolesRequest{
+				Entity: api.GroupID("external"),
+				Kind:   api.RBACKindOIDC,
+				Verb:   api.RoleVerbRevoke,
+				Roles:  []string{"rock-n-role", "sushi-role"},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/groups/external/revoke",
+			wantBody: rest.RevokeRoleFromGroupJSONBody{
+				GroupType: rest.GroupTypeOidc,
+				Roles:     []string{"rock-n-role", "sushi-role"},
+			},
+		},
+		{
+			name:       "list groups",
+			req:        api.ListGroupsRequest,
+			wantMethod: http.MethodGet,
+			wantPath:   "/authz/groups/oidc",
+		},
+		{
+			name:       "create db user",
+			req:        api.CreateUserRequest("john-malkovich"),
+			wantMethod: http.MethodPost,
+			wantPath:   "/users/db/john-malkovich",
+		},
+		{
+			name:       "delete db user",
+			req:        api.DeleteUserRequest("john-malkovich"),
+			wantMethod: http.MethodDelete,
+			wantPath:   "/users/db/john-malkovich",
+		},
+		{
+			name:       "activate db user",
+			req:        api.ActivateUserRequest("john-malkovich"),
+			wantMethod: http.MethodPost,
+			wantPath:   "/users/db/john-malkovich/activate",
+		},
+		{
+			name: "deactivate db user (revoke api key)",
+			req: &api.DeactivateUserRequest{
+				ID:        "john-malkovich",
+				RevokeKey: true,
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/users/db/john-malkovich/deactivate",
+			wantBody: rest.DeactivateUserJSONRequestBody{
+				RevokeKey: true,
+			},
+		},
+		{
+			name:       "rotate db user api key",
+			req:        api.RotateAPIKeyRequest("john-malkovich"),
+			wantMethod: http.MethodPost,
+			wantPath:   "/users/db/john-malkovich/rotate-key",
+		},
+		{
+			name: "get db user info",
+			req: &api.GetUserInfoRequest{
+				ID:                "john-malkovich",
+				IncludeLastUsedAt: true,
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/users/db/john-malkovich",
+			wantQuery:  url.Values{"includeLastUsedTime": {"true"}},
+		},
+		{
+			name: "list db users",
+			req: &api.ListUsersRequest{
+				IncludeLastUsedAt: true,
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/users/db",
+			wantQuery:  url.Values{"includeLastUsedTime": {"true"}},
 		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1570,16 +1721,16 @@ func TestRESTResponses(t *testing.T) {
 			want: testkit.Ptr[api.HasPermissionResponse](true),
 		},
 		{
-			name: "user assignment",
-			body: map[string]any{
+			name: "user assignments",
+			body: []map[string]any{{
 				"userId":   "john_doe",
-				"userType": "db_env",
-			},
-			dest: new(api.UserAssignment),
-			want: &api.UserAssignment{
+				"userType": rest.DBUserInfoDbUserTypeDbEnvUser,
+			}},
+			dest: new([]api.UserInfo),
+			want: &[]api.UserInfo{{
 				ID:   "john_doe",
-				Type: "db_env",
-			},
+				Type: api.UserTypeDBEnv,
+			}},
 		},
 		{
 			name: "group assignment",
@@ -1587,11 +1738,89 @@ func TestRESTResponses(t *testing.T) {
 				"groupId":   "external",
 				"groupType": "oidc",
 			},
-			dest: new(api.GroupAssignment),
-			want: &api.GroupAssignment{
+			dest: new(api.GroupInfo),
+			want: &api.GroupInfo{
 				ID:   "external",
 				Type: "oidc",
 			},
+		},
+		{
+			name: "own user info",
+			body: &rest.UserOwnInfo{
+				Username: "john-malkovich",
+				Roles: []rest.Role{
+					{Name: "rock-n-role"},
+					{Name: "sushi-role"},
+				},
+				Groups: []string{"external"},
+			},
+			dest: new(api.GetOwnUserInfoResponse),
+			want: &api.GetOwnUserInfoResponse{
+				ID: "john-malkovich",
+				Roles: []api.Role{
+					{ID: "rock-n-role"},
+					{ID: "sushi-role"},
+				},
+				Groups: []string{"external"},
+			},
+		},
+		{
+			name: "create db user",
+			body: &rest.UserApiKey{
+				Apikey: "abracadabra",
+			},
+			dest: new(api.CreateUserResponse),
+			want: &api.CreateUserResponse{
+				APIKey: "abracadabra",
+			},
+		},
+		{
+			name: "rotate db user api key",
+			body: &rest.UserApiKey{
+				Apikey: "abracadabra",
+			},
+			dest: new(api.RotateAPIKeyResponse),
+			want: &api.RotateAPIKeyResponse{
+				APIKey: "abracadabra",
+			},
+		},
+		{
+			name: "get user info",
+			body: &rest.DBUserInfo{
+				UserId:     "john-malkovich",
+				DbUserType: rest.DBUserInfoDbUserTypeDbUser,
+				Active:     true,
+				Roles:      []string{"external"},
+			},
+			dest: new(api.UserInfo),
+			want: &api.UserInfo{
+				ID:     "john-malkovich",
+				Type:   "db_user",
+				Active: true,
+				Roles:  []string{"external"},
+			},
+		},
+		{
+			name: "list db users",
+			body: []rest.DBUserInfo{{
+				UserId:     "john-malkovich",
+				DbUserType: rest.DBUserInfoDbUserTypeDbUser,
+				Active:     true,
+				Roles:      []string{"external"},
+			}},
+			dest: new([]api.UserInfo),
+			want: &[]api.UserInfo{{
+				ID:     "john-malkovich",
+				Type:   "db_user",
+				Active: true,
+				Roles:  []string{"external"},
+			}},
+		},
+		{
+			name: "list groups",
+			body: []string{"internal", "external"},
+			dest: new(api.ListGroupsResponse),
+			want: &api.ListGroupsResponse{"internal", "external"},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
