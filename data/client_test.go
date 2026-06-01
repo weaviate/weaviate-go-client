@@ -351,7 +351,7 @@ func TestClient_DeleteSelected(t *testing.T) {
 			name: "reported errors",
 			selected: data.DeleteSelected{
 				Filter: &filter.Cond{
-					Target:   []string{"reasons_to_keep"},
+					Target:   "reasons_to_keep",
 					Operator: filter.IsNull,
 				},
 				DryRun:  true,
