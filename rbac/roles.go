@@ -140,7 +140,7 @@ type AddPermissions struct {
 func (c *RolesClient) AddPermissions(ctx context.Context, options AddPermissions) error {
 	req := &api.ManagePermissionsRequest{
 		RoleID:      options.RoleID,
-		Action:      api.PermissionActionAdd,
+		Verb:        api.PermissionVerbAdd,
 		Permissions: marshalPermissions(&options.Permissions),
 	}
 	if err := c.transport.Do(ctx, req, nil); err != nil {
@@ -157,7 +157,7 @@ type RemovePermissions struct {
 func (c *RolesClient) RemovePermissions(ctx context.Context, options RemovePermissions) error {
 	req := &api.ManagePermissionsRequest{
 		RoleID:      options.RoleID,
-		Action:      api.PermissionActionRemove,
+		Verb:        api.PermissionVerbRemove,
 		Permissions: marshalPermissions(&options.Permissions),
 	}
 	if err := c.transport.Do(ctx, req, nil); err != nil {

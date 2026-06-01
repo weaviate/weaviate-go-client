@@ -209,7 +209,7 @@ func TestRolesClient_AddPermissions(t *testing.T) {
 			stubs: []testkit.Stub[api.ManagePermissionsRequest, any]{{
 				Request: &api.ManagePermissionsRequest{
 					RoleID: "rock-n-role",
-					Action: api.PermissionActionAdd,
+					Verb:   api.PermissionVerbAdd,
 					Permissions: api.Permissions{
 						Cluster: []api.ClusterPermission{
 							{Read: true},
@@ -257,7 +257,7 @@ func TestRolesClient_RemovePermissions(t *testing.T) {
 			stubs: []testkit.Stub[api.ManagePermissionsRequest, any]{{
 				Request: &api.ManagePermissionsRequest{
 					RoleID: "rock-n-role",
-					Action: api.PermissionActionRemove,
+					Verb:   api.PermissionVerbRemove,
 					Permissions: api.Permissions{
 						Cluster: []api.ClusterPermission{
 							{Read: true},

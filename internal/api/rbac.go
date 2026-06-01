@@ -187,15 +187,15 @@ type GroupInfo struct {
 }
 
 const (
-	PermissionActionAdd    = "add"
-	PermissionActionRemove = "remove"
+	PermissionVerbAdd    = "add"
+	PermissionVerbRemove = "remove"
 )
 
 // ManagePermissionsRequest adds permissions to a role.
 type ManagePermissionsRequest struct {
 	transports.BaseEndpoint
 	RoleID      string      `json:"-"`
-	Action      string      `json:"-"`
+	Verb        string      `json:"-"` // [PermissionVerbAdd] or [PermissionVerbRemove]
 	Permissions Permissions `json:"permissions"`
 }
 
@@ -203,7 +203,7 @@ var _ transports.Endpoint = (*ManagePermissionsRequest)(nil)
 
 func (*ManagePermissionsRequest) Method() string { return http.MethodPost }
 func (r *ManagePermissionsRequest) Path() string {
-	return transports.Path("/authz/roles/%s/%s-permissions", r.RoleID, r.Action)
+	return transports.Path("/authz/roles/%s/%s-permissions", r.RoleID, r.Verb)
 }
 func (r *ManagePermissionsRequest) Body() any { return r }
 
@@ -747,8 +747,8 @@ func (r *GetAssignedRolesRequest) Query() url.Values {
 }
 
 const (
-	RoleActionAssign = "assign"
-	RoleActionRevoke = "revoke"
+	RoleVerbAssign = "assign"
+	RoleVerbRevoke = "revoke"
 )
 
 // ManageRolesRequest assigns or revokes roles from an RBAC entity.
@@ -757,7 +757,7 @@ type ManageRolesRequest struct {
 
 	Entity RBACEntity // [UserID] or [GroupID]
 	Kind   string     // [RBACKindDB] or [RBACKindOIDC]
-	Action string     // [RBACActionAssign] or [RBACActionRevoke]
+	Verb   string     // [RoleVerbAssign] or [RoleVerbRevoke]
 	Roles  []string   // IDs of roles to assign
 }
 
@@ -767,7 +767,7 @@ var (
 )
 
 func (*ManageRolesRequest) Method() string { return http.MethodPost }
-func (r *ManageRolesRequest) Path() string { return r.Entity.Path() + "/" + r.Action }
+func (r *ManageRolesRequest) Path() string { return r.Entity.Path() + "/" + r.Verb }
 func (r *ManageRolesRequest) Body() any    { return r }
 func (r *ManageRolesRequest) MarshalJSON() ([]byte, error) {
 	// [rest.AssignRoleToUserJSONBody], [rest.AssignRoleToGroupJSONBody],

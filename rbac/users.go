@@ -98,7 +98,7 @@ func (c *kindClient[ID]) AssignRoles(ctx context.Context, options AssignRolesOpt
 	req := &api.ManageRolesRequest{
 		Kind:   c.kind,
 		Entity: api.RBACEntity(ID(options.ID)),
-		Action: api.RoleActionAssign,
+		Verb:   api.RoleVerbAssign,
 		Roles:  options.Roles,
 	}
 	if err := c.transport.Do(ctx, req, nil); err != nil {
@@ -116,7 +116,7 @@ func (c *kindClient[ID]) RevokeRoles(ctx context.Context, options RevokeRolesOpt
 	req := &api.ManageRolesRequest{
 		Kind:   c.kind,
 		Entity: api.RBACEntity(ID(options.ID)),
-		Action: api.RoleActionRevoke,
+		Verb:   api.RoleVerbRevoke,
 		Roles:  options.Roles,
 	}
 	if err := c.transport.Do(ctx, req, nil); err != nil {

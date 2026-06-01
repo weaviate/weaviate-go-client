@@ -82,7 +82,7 @@ func TestGroupsClient_AssignRoles(t *testing.T) {
 				Request: &api.ManageRolesRequest{
 					Kind:   api.RBACKindOIDC,
 					Entity: api.GroupID("external"),
-					Action: api.RoleActionAssign,
+					Verb:   api.RoleVerbAssign,
 					Roles:  []string{"rock-n-role", "sushi-role"},
 				},
 			}},
@@ -123,7 +123,7 @@ func TestGroupsClient_RevokeRoles(t *testing.T) {
 				Request: &api.ManageRolesRequest{
 					Kind:   api.RBACKindOIDC,
 					Entity: api.GroupID("external"),
-					Action: api.RoleActionRevoke,
+					Verb:   api.RoleVerbRevoke,
 					Roles:  []string{"rock-n-role", "sushi-role"},
 				},
 			}},
