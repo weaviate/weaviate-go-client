@@ -16,6 +16,7 @@ jobs:
       matrix:
         example:
           - "basic"
+          - "rbac"
     env:
       WEAVIATE_HOST: ${{ secrets.WCD_EXAMPLE_HOST }}
       WEAVIATE_API_KEY: ${{ secrets.WCD_EXAMPLE_API_KEY }}
