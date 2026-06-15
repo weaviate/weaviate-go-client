@@ -138,6 +138,8 @@ func newClient(ctx context.Context, options []Option) (*Client, error) {
 		Collections: collections.NewClient(t),
 		Backup:      backup.NewClient(t),
 		Roles:       rbac.NewRolesClient(t),
+		Users:       rbac.NewUsersClient(t),
+		Groups:      rbac.NewGroupsClient(t),
 	}, nil
 }
 
