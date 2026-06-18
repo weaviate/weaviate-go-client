@@ -1013,6 +1013,92 @@ func TestBackups_integration(t *testing.T) {
 		}), "backups are not in ascending order")
 	})
 
+	t.Run("incremental backup returns IncrementalBaseBackupID in status and list", func(t *testing.T) {
+		testsuit.AtLeastWeaviateVersion(t, client, "1.37.6", "IncrementalBaseBackupID in responses is only supported from 1.37.6")
+
+		testsuit.CreateTestSchemaAndData(t, client)
+		defer testsuit.CleanUpWeaviate(t, client)
+
+		class := "Pizza"
+		backend := backup.BACKEND_FILESYSTEM
+		baseBackupID := fmt.Sprintf("incr-base-%d", random.Int63())
+		incrBackupID := fmt.Sprintf("incr-child-%d", random.Int63())
+
+		assertAllPizzasExist(t, client)
+
+		// Create base backup
+		t.Run("create base backup", func(t *testing.T) {
+			createResponse, err := client.Backup().Creator().
+				WithIncludeClassNames(class).
+				WithBackend(backend).
+				WithBackupID(baseBackupID).
+				WithWaitForCompletion(true).
+				Do(t.Context())
+
+			require.NoError(t, err)
+			require.NotNil(t, createResponse)
+			assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse.Status)
+		})
+
+		// Create incremental backup referencing the base
+		t.Run("create incremental backup", func(t *testing.T) {
+			createResponse, err := client.Backup().Creator().
+				WithIncludeClassNames(class).
+				WithBackend(backend).
+				WithBackupID(incrBackupID).
+				WithIncrementalBaseBackupID(baseBackupID).
+				WithWaitForCompletion(true).
+				Do(t.Context())
+
+			require.NoError(t, err)
+			require.NotNil(t, createResponse)
+			assert.Equal(t, models.BackupCreateResponseStatusSUCCESS, *createResponse.Status)
+		})
+
+		// Verify IncrementalBaseBackupID is populated in status response
+		t.Run("check incremental backup status has IncrementalBaseBackupID", func(t *testing.T) {
+			statusResponse, err := client.Backup().CreateStatusGetter().
+				WithBackend(backend).
+				WithBackupID(incrBackupID).
+				Do(t.Context())
+
+			require.NoError(t, err)
+			require.NotNil(t, statusResponse)
+			assert.Equal(t, incrBackupID, statusResponse.ID)
+			assert.Equal(t, models.BackupCreateStatusResponseStatusSUCCESS, *statusResponse.Status)
+			assert.Equal(t, baseBackupID, statusResponse.IncrementalBaseBackupID, "IncrementalBaseBackupID should match the base backup ID")
+		})
+
+		// Verify IncrementalBaseBackupID is populated in list response
+		t.Run("check incremental backup in list has IncrementalBaseBackupID", func(t *testing.T) {
+			all, err := client.Backup().Lister().WithBackend(backend).Do(t.Context())
+			require.NoError(t, err)
+
+			var found bool
+			for _, b := range all {
+				if b.ID == incrBackupID {
+					found = true
+					assert.Equal(t, baseBackupID, b.IncrementalBaseBackupID, "IncrementalBaseBackupID should match the base backup ID")
+					break
+				}
+			}
+			require.True(t, found, "incremental backup should be in the list")
+		})
+
+		// Verify base backup does not have IncrementalBaseBackupID set
+		t.Run("check base backup status has empty IncrementalBaseBackupID", func(t *testing.T) {
+			statusResponse, err := client.Backup().CreateStatusGetter().
+				WithBackend(backend).
+				WithBackupID(baseBackupID).
+				Do(t.Context())
+
+			require.NoError(t, err)
+			require.NotNil(t, statusResponse)
+			assert.Equal(t, baseBackupID, statusResponse.ID)
+			assert.Empty(t, statusResponse.IncrementalBaseBackupID, "base backup should not have IncrementalBaseBackupID")
+		})
+	})
+
 	t.Run("create and restore with overwriteAlias points to original collection", func(t *testing.T) {
 		ctx := context.Background()
 		client := testsuit.CreateTestClient(false)
