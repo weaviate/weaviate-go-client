@@ -2,6 +2,7 @@ package weaviate
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/auth"
+	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 	"github.com/weaviate/weaviate-go-client/v6/rbac"
 	"golang.org/x/oauth2"
 )
@@ -118,17 +120,7 @@ func newClient(ctx context.Context, options []Option) (*Client, error) {
 		c.Header.Add(headerWeaviateClusterURL, clusterURL)
 	}
 
-	t, err := transport.New(ctx, transport.Config{
-		Scheme:   c.Scheme,
-		RESTHost: c.RESTHost,
-		RESTPort: c.RESTPort,
-		GRPCHost: c.GRPCHost,
-		GRPCPort: c.GRPCPort,
-		Header:   c.Header,
-		Auth:     c.Auth,
-		Timeout:  c.Timeout,
-		Version:  api.Version,
-	})
+	t, err := newTransport(ctx, c)
 	if err != nil {
 		return nil, fmt.Errorf("weaviate: new client: %w", err)
 	}
@@ -313,4 +305,64 @@ func (c *Client) Close() error {
 		return cl.Close()
 	}
 	return nil
+}
+
+// HTTPError is returned if the underlying REST request returns an unexpected error code.
+type HTTPError struct {
+	httpErr *transports.HTTPError
+
+	Code int    // HTTP status code.
+	Body string // Response body, if any.
+}
+
+func (err *HTTPError) Error() string {
+	return err.httpErr.Error()
+}
+
+// errorTransport maps errors returned by the underlying transport to their public variants.
+type errorTransport struct{ t internal.Transport }
+
+func (et *errorTransport) Do(ctx context.Context, req, dest any) error {
+	err := et.t.Do(ctx, req, dest)
+	if err == nil {
+		return nil
+	}
+
+	var httpErr *transports.HTTPError
+	switch {
+	case errors.As(err, &httpErr):
+		err = &HTTPError{
+			httpErr: httpErr,
+			Code:    httpErr.Code,
+			Body:    httpErr.Body,
+		}
+	}
+	return err
+}
+
+func (et *errorTransport) Close() error {
+	if cl, ok := et.t.(io.Closer); ok {
+		return cl.Close()
+	}
+	return nil
+}
+
+// newTransport returns an [internal.Transport] for REST and gRPC requests.
+func newTransport(ctx context.Context, c config) (internal.Transport, error) {
+	t, err := transport.New(ctx, transport.Config{
+		Scheme:   c.Scheme,
+		RESTHost: c.RESTHost,
+		RESTPort: c.RESTPort,
+		GRPCHost: c.GRPCHost,
+		GRPCPort: c.GRPCPort,
+		Header:   c.Header,
+		Auth:     c.Auth,
+		Timeout:  c.Timeout,
+		Version:  api.Version,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &errorTransport{t}, nil
 }
