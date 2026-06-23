@@ -22,6 +22,10 @@ type BackupInfo struct {
 	CompletedAt         *time.Time
 	IncludesCollections []string
 	SizeGiB             *float32
+
+	// IncrementalBaseBackupID is the ID of the base backup this incremental
+	// backup was built on; empty if the backup is not incremental.
+	IncrementalBaseBackupID string
 }
 
 var _ json.Unmarshaler = (*BackupInfo)(nil)
@@ -232,6 +236,8 @@ func (b *BackupInfo) UnmarshalJSON(data []byte) error {
 		StartedAt           *time.Time `json:"startedAt,omitempty"`
 		CompletedAt         *time.Time `json:"completedAt,omitempty"`
 		SizeGiB             *float32   `json:"size,omitempty"`
+
+		IncrementalBaseBackupID string `json:"incremental_base_backup_id,omitempty"`
 	}
 
 	if err := json.Unmarshal(data, &bak); err != nil {
@@ -249,6 +255,8 @@ func (b *BackupInfo) UnmarshalJSON(data []byte) error {
 		CompletedAt:         bak.CompletedAt,
 		IncludesCollections: bak.IncludesCollections,
 		SizeGiB:             bak.SizeGiB,
+
+		IncrementalBaseBackupID: bak.IncrementalBaseBackupID,
 	}
 	return nil
 }
