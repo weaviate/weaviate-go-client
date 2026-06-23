@@ -38,6 +38,12 @@ type Info struct {
 	// this value only exists for completed backups.
 	SizeGiB *float32
 
+	// IncrementalBaseBackupID is the ID of the base backup this incremental
+	// backup was built on. It is empty when the backup is not incremental.
+	// It is populated for status and list responses on backups created with
+	// PrefixIncremental set.
+	IncrementalBaseBackupID string
+
 	c         *Client
 	operation api.BackupOperation
 }
@@ -254,6 +260,8 @@ func infoFromAPI(bak *api.BackupInfo, c *Client, op api.BackupOperation) Info {
 		CompletedAt:         bak.CompletedAt,
 		IncludesCollections: bak.IncludesCollections,
 		SizeGiB:             bak.SizeGiB,
+
+		IncrementalBaseBackupID: bak.IncrementalBaseBackupID,
 
 		operation: op,
 		c:         c,
