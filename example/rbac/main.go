@@ -34,6 +34,12 @@ func main() {
 	// and can read/write the emails.
 	// Admins are an external OIDC group; an admin can modify
 	// the Emails collection.
+	exists, err := c.Collections.Exists(ctx, "Emails")
+	catch(err)
+	if exists {
+		catch(c.Collections.Delete(ctx, "Emails"))
+	}
+
 	_, err = c.Collections.Create(ctx, collections.Collection{
 		Name: "Emails",
 		Properties: []collections.Property{
@@ -41,24 +47,24 @@ func main() {
 			{Name: "body", DataType: collections.DataTypeText},
 		},
 	})
-	catch(err)
 	defer c.Collections.Delete(ctx, "Emails")
+	catch(err)
 
 	// Create admin role and assign it to "mailbox-admins" group.
 	err = c.Roles.Create(ctx, rbac.Role{
-		ID: "admin",
+		ID: "custom-admin-role",
 		Permissions: rbac.Permissions{
 			Collections: []rbac.CollectionPermission{
 				{Collection: "Emails", Read: true, Update: true},
 			},
 		},
 	})
+	defer c.Roles.Delete(ctx, "custom-admin-role")
 	catch(err)
-	defer c.Roles.Delete(ctx, "admin")
 
 	err = c.Groups.AssignRoles(ctx, rbac.AssignRolesOptions{
 		ID:    "mailbox-admins",
-		Roles: []string{"admin"},
+		Roles: []string{"custom-admin-role"},
 	})
 	catch(err)
 
@@ -71,8 +77,8 @@ func main() {
 
 	for username := range apiKeys {
 		apiKey, err = c.Users.DB.Create(ctx, username)
+		defer c.Users.DB.Delete(ctx, username)
 		catch(err)
-		defer c.Users.DB.Delete(ctx, "username")
 
 		apiKeys[username] = apiKey
 
@@ -96,11 +102,11 @@ func main() {
 	// Verify all roles exist and permissions are assigned correctly
 	roles, err := c.Roles.List(ctx)
 	catch(err)
-	log.Printf("Roles: %v", roles)
+	log.Printf("Roles: %+v", roles)
 
 	users, err := c.Users.DB.List(ctx, rbac.ListUsersOptions{})
 	catch(err)
-	log.Printf("Users: %v", users)
+	log.Printf("Users: %+v", users)
 
 	ok, err := c.Roles.HasPermission(ctx, rbac.HasPermission{
 		RoleID: "user-alex",
@@ -110,20 +116,20 @@ func main() {
 	log.Printf("user-alex has read_data permission: %t", ok)
 
 	ok, err = c.Roles.HasPermission(ctx, rbac.HasPermission{
-		RoleID: "admin",
+		RoleID: "custom-admin-role",
 		Data:   rbac.DataPermission{Collection: "Emails", Tenant: "user-alex", Read: true},
 	})
 	catch(err)
-	log.Printf("admin has read_data permission: %t", ok)
+	log.Printf("custom-admin-role has read_data permission: %t", ok)
 
 	ok, err = c.Roles.HasPermission(ctx, rbac.HasPermission{
-		RoleID: "admin",
+		RoleID: "custom-admin-role",
 		Collection: rbac.CollectionPermission{
 			Collection: "Emails", Update: true,
 		},
 	})
 	catch(err)
-	log.Printf("admin has update_collections permission for Emails: %t", ok)
+	log.Printf("custom-admin-role has update_collections permission for Emails: %t", ok)
 
 	// Revoke role from cindy.
 	err = c.Users.DB.RevokeRoles(ctx, rbac.RevokeRolesOptions{
@@ -137,7 +143,7 @@ func main() {
 
 	// Add delete_collections to admin role
 	err = c.Roles.AddPermissions(ctx, rbac.AddPermissions{
-		RoleID: "admin",
+		RoleID: "custom-admin-role",
 		Permissions: rbac.Permissions{
 			Collections: []rbac.CollectionPermission{
 				{Collection: "Emails", Delete: true},
@@ -147,18 +153,17 @@ func main() {
 	catch(err)
 
 	ok, err = c.Roles.HasPermission(ctx, rbac.HasPermission{
-		RoleID: "admin",
+		RoleID: "custom-admin-role",
 		Collection: rbac.CollectionPermission{
 			Collection: "Emails", Delete: true,
 		},
 	})
 	catch(err)
-	log.Printf("admin has delete_collections permission for Emails: %t", ok)
+	log.Printf("custom-admin-role has delete_collections permission for Emails: %t", ok)
 }
 
 func catch(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Fatal(err)
 }
