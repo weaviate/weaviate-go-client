@@ -29,27 +29,24 @@ func main() {
 
 	// Connect to a WCD cluster.
 	c, err := weaviate.NewWeaviateCloud(ctx, host, apiKey)
-	if err != nil {
-		log.Fatal(err)
-	}
+	catch(err)
 
 	CollectionName := "GoThings"
 
 	// If GoThings collection does not exist, create it.
 	canSearch := true
-	if ok, err := c.Collections.Exists(ctx, CollectionName); err != nil {
-		log.Fatal(err)
-	} else if !ok {
-		if _, err := c.Collections.Create(ctx, collections.Collection{
+	ok, err := c.Collections.Exists(ctx, CollectionName)
+	catch(err)
+	if !ok {
+		_, err := c.Collections.Create(ctx, collections.Collection{
 			Name: CollectionName,
 			Properties: []collections.Property{
 				{Name: "name", DataType: collections.DataTypeText},
 				{Name: "description", DataType: collections.DataTypeText},
 				{Name: "url", DataType: collections.DataTypeText},
 			},
-		}); err != nil {
-			log.Fatal(err)
-		}
+		})
+		catch(err)
 
 		// Current client version does not support defining vector indices.
 		// Without one, similarity search is not possible.
@@ -64,9 +61,8 @@ func main() {
 
 	// Insert some objects, logging the "before" and "after" counts.
 	count, err := products.Count(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
+	catch(err)
+
 	log.Printf("collection GoThings has %d objects", count)
 
 	for i := range 5 {
@@ -80,9 +76,7 @@ func main() {
 	}
 
 	count, err = products.Count(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
+	catch(err)
 
 	log.Printf("collection GoThings has %d objects", count)
 
@@ -98,9 +92,7 @@ func main() {
 		Limit:         3,
 		ReturnVectors: []string{"text2vec_weaviate"}, // the default vector name
 	})
-	if err != nil {
-		log.Fatal(err)
-	}
+	catch(err)
 
 	log.Printf("NearText[sneakers, flipflops] returned %d objects:", len(nt.Objects))
 	for _, obj := range nt.Objects {
@@ -121,9 +113,7 @@ func main() {
 		ReturnProperties: []string{"name", "url"},
 		ReturnMetadata:   query.ReturnMetadata{Distance: true},
 	})
-	if err != nil {
-		log.Fatal(err)
-	}
+	catch(err)
 
 	// Scan results into our custom Go struct
 	type Product struct {
@@ -132,9 +122,7 @@ func main() {
 	}
 
 	decoded := make([]query.Object[Product], len(nv.Objects))
-	if err := query.Decode(nv, &decoded); err != nil {
-		log.Fatal(err)
-	}
+	catch(query.Decode(nv, &decoded))
 
 	log.Print("NearVector[max_distance=.56] returned these 3 entries:")
 	for _, obj := range decoded {
@@ -146,9 +134,7 @@ func main() {
 			{Property: "name", TopOccurrences: true, TopOccurencesCutoff: 10},
 		},
 	}, aggregate.GroupBy{Property: "name", Limit: 5})
-	if err != nil {
-		log.Fatal(err)
-	}
+	catch(err)
 
 	for _, group := range grouped.Groups {
 		log.Printf("Group %q has %d objects (value=%q)", group.Property, len(group.Aggregations.Text), group.Value)
@@ -157,5 +143,11 @@ func main() {
 				fmt.Printf("\t- %q occurs %d times\n", top.Value, top.OccursTimes)
 			}
 		}
+	}
+}
+
+func catch(err error) {
+	if err != nil {
+		log.Fatal(err)
 	}
 }
