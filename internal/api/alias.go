@@ -70,3 +70,17 @@ func (a *Alias) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
+
+func (r *ListAliasesResponse) UnmarshalJSON(data []byte) error {
+	var list rest.AliasResponse
+	if err := json.Unmarshal(data, &list); err != nil {
+		return err
+	}
+	for _, a := range list.Aliases {
+		*r = append(*r, Alias{
+			Collection: a.Class,
+			Alias:      a.Alias,
+		})
+	}
+	return nil
+}

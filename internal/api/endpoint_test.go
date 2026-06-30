@@ -1136,7 +1136,9 @@ func TestRESTRequests(t *testing.T) {
 // TestRESTResponses verifies that response objects in the 'api' package
 // unmarshal response JSONs correctly.
 func TestRESTResponses(t *testing.T) {
-	for _, tt := range []struct {
+	for _, tt := range testkit.WithOnly(t, []struct {
+		testkit.Only
+
 		name string
 		body any // Response body.
 		dest any // Set dest to a pointer to the response struct.
@@ -1869,7 +1871,33 @@ func TestRESTResponses(t *testing.T) {
 			dest: new(api.ListGroupsResponse),
 			want: &api.ListGroupsResponse{"internal", "external"},
 		},
-	} {
+		{
+			name: "get alias",
+			body: &rest.Alias{
+				Class: "GeorgeBarnes",
+				Alias: "MachineGunKelly",
+			},
+			dest: new(api.Alias),
+			want: &api.Alias{
+				Collection: "GeorgeBarnes",
+				Alias:      "MachineGunKelly",
+			},
+		},
+		{
+			name: "list aliases",
+			body: &rest.AliasResponse{
+				Aliases: []rest.Alias{
+					{Class: "GeorgeBarnes", Alias: "MachineGunKelly"},
+					{Class: "LouisAttanasio", Alias: "LouieHaHa"},
+				},
+			},
+			dest: new(api.ListAliasesResponse),
+			want: &api.ListAliasesResponse{
+				{Collection: "GeorgeBarnes", Alias: "MachineGunKelly"},
+				{Collection: "LouisAttanasio", Alias: "LouieHaHa"},
+			},
+		},
+	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.NotNil(t, tt.body, "incomplete test case: body is nil")
 			testkit.RequirePointer(t, tt.body, "body")
