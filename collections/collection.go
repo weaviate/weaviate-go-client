@@ -5,6 +5,9 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
 
+// Alias defines an alias for a collection.
+type Alias api.Alias
+
 type (
 	Collection struct {
 		Name          string

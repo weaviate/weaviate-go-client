@@ -1065,6 +1065,53 @@ func TestRESTRequests(t *testing.T) {
 			wantPath:   "/users/db",
 			wantQuery:  url.Values{"includeLastUsedTime": {"true"}},
 		},
+		{
+			name:       "list aliases",
+			req:        api.ListAliasesRequest,
+			wantMethod: http.MethodGet,
+			wantPath:   "/aliases",
+		},
+		{
+			name: "create alias",
+			req: &api.CreateAliasRequest{
+				Alias: api.Alias{
+					Collection: "GeorgeBarnes",
+					Alias:      "MachineGunKelly",
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/aliases",
+			wantBody: rest.AliasesCreateJSONRequestBody{
+				Class: "GeorgeBarnes",
+				Alias: "MachineGunKelly",
+			},
+		},
+		{
+			name:       "get an alias",
+			req:        api.GetAliasRequest("MachineGunKelly"),
+			wantMethod: http.MethodGet,
+			wantPath:   "/aliases/MachineGunKelly",
+		},
+		{
+			name: "update an alias",
+			req: &api.UpdateAliasRequest{
+				Alias: api.Alias{
+					Alias:      "MachineGunKelly",
+					Collection: "ColsonBaker",
+				},
+			},
+			wantMethod: http.MethodPut,
+			wantPath:   "/aliases/MachineGunKelly",
+			wantBody: rest.AliasesUpdateJSONRequestBody{
+				Class: "ColsonBaker",
+			},
+		},
+		{
+			name:       "delete an alias",
+			req:        api.DeleteAliasRequest("MachineGunKelly"),
+			wantMethod: http.MethodDelete,
+			wantPath:   "/aliases/MachineGunKelly",
+		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)
@@ -1089,7 +1136,9 @@ func TestRESTRequests(t *testing.T) {
 // TestRESTResponses verifies that response objects in the 'api' package
 // unmarshal response JSONs correctly.
 func TestRESTResponses(t *testing.T) {
-	for _, tt := range []struct {
+	for _, tt := range testkit.WithOnly(t, []struct {
+		testkit.Only
+
 		name string
 		body any // Response body.
 		dest any // Set dest to a pointer to the response struct.
@@ -1822,7 +1871,33 @@ func TestRESTResponses(t *testing.T) {
 			dest: new(api.ListGroupsResponse),
 			want: &api.ListGroupsResponse{"internal", "external"},
 		},
-	} {
+		{
+			name: "get alias",
+			body: &rest.Alias{
+				Class: "GeorgeBarnes",
+				Alias: "MachineGunKelly",
+			},
+			dest: new(api.Alias),
+			want: &api.Alias{
+				Collection: "GeorgeBarnes",
+				Alias:      "MachineGunKelly",
+			},
+		},
+		{
+			name: "list aliases",
+			body: &rest.AliasResponse{
+				Aliases: []rest.Alias{
+					{Class: "GeorgeBarnes", Alias: "MachineGunKelly"},
+					{Class: "LouisAttanasio", Alias: "LouieHaHa"},
+				},
+			},
+			dest: new(api.ListAliasesResponse),
+			want: &api.ListAliasesResponse{
+				{Collection: "GeorgeBarnes", Alias: "MachineGunKelly"},
+				{Collection: "LouisAttanasio", Alias: "LouieHaHa"},
+			},
+		},
+	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.NotNil(t, tt.body, "incomplete test case: body is nil")
 			testkit.RequirePointer(t, tt.body, "body")

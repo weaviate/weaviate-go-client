@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/weaviate/weaviate-go-client/v6/alias"
 	"github.com/weaviate/weaviate-go-client/v6/backup"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
@@ -22,6 +23,7 @@ import (
 type Client struct {
 	transport internal.Transport
 
+	Alias       *alias.Client
 	Backup      *backup.Client
 	Collections *collections.Client
 	Roles       *rbac.RolesClient
@@ -135,6 +137,7 @@ func newClient(ctx context.Context, options []Option) (*Client, error) {
 
 	return &Client{
 		transport:   t,
+		Alias:       alias.NewClient(t),
 		Collections: collections.NewClient(t),
 		Backup:      backup.NewClient(t),
 		Roles:       rbac.NewRolesClient(t),
