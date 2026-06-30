@@ -212,8 +212,9 @@ func TestNewWeaviateCloud(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, c, "nil client")
 
-		assert.NotNil(t, c.Collections, "nil collections")
+		assert.NotNil(t, c.Alias, "nil alias")
 		assert.NotNil(t, c.Backup, "nil backup")
+		assert.NotNil(t, c.Collections, "nil collections")
 		assert.NotNil(t, c.Roles, "nil roles")
 		assert.NotNil(t, c.Users, "nil users")
 		assert.NotNil(t, c.Groups, "nil groups")
