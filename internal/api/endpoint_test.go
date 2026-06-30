@@ -1065,6 +1065,53 @@ func TestRESTRequests(t *testing.T) {
 			wantPath:   "/users/db",
 			wantQuery:  url.Values{"includeLastUsedTime": {"true"}},
 		},
+		{
+			name:       "list aliases",
+			req:        api.ListAliasesRequest,
+			wantMethod: http.MethodGet,
+			wantPath:   "/aliases",
+		},
+		{
+			name: "create alias",
+			req: &api.CreateAliasRequest{
+				Alias: api.Alias{
+					Collection: "GeorgeBarnes",
+					Alias:      "MachineGunKelly",
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/aliases",
+			wantBody: rest.AliasesCreateJSONRequestBody{
+				Class: "GeorgeBarnes",
+				Alias: "MachineGunKelly",
+			},
+		},
+		{
+			name:       "get an alias",
+			req:        api.GetAliasRequest("MachineGunKelly"),
+			wantMethod: http.MethodGet,
+			wantPath:   "/aliases/MachineGunKelly",
+		},
+		{
+			name: "update an alias",
+			req: &api.UpdateAliasRequest{
+				Alias: api.Alias{
+					Alias:      "MachineGunKelly",
+					Collection: "ColsonBaker",
+				},
+			},
+			wantMethod: http.MethodPut,
+			wantPath:   "/aliases/MachineGunKelly",
+			wantBody: rest.AliasesUpdateJSONRequestBody{
+				Class: "ColsonBaker",
+			},
+		},
+		{
+			name:       "delete an alias",
+			req:        api.DeleteAliasRequest("MachineGunKelly"),
+			wantMethod: http.MethodDelete,
+			wantPath:   "/aliases/MachineGunKelly",
+		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)
