@@ -10,6 +10,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/query"
+	"github.com/weaviate/weaviate-go-client/v6/tenant"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
@@ -53,6 +54,7 @@ type Handle struct {
 	Aggregate *aggregate.Client
 	Data      *data.Client
 	Query     *query.Client
+	Tenants   *tenant.Client
 }
 
 func newHandle(t internal.Transport, rd api.RequestDefaults) *Handle {
@@ -65,6 +67,7 @@ func newHandle(t internal.Transport, rd api.RequestDefaults) *Handle {
 		Aggregate: aggregate.NewClient(t, rd),
 		Data:      data.NewClient(t, rd),
 		Query:     query.NewClient(t, rd),
+		Tenants:   tenant.NewClient(t, rd.CollectionName),
 	}
 }
 
