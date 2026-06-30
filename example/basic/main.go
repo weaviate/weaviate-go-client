@@ -4,39 +4,29 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/weaviate/weaviate-go-client/v6"
 	"github.com/weaviate/weaviate-go-client/v6/aggregate"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
+	"github.com/weaviate/weaviate-go-client/v6/example"
 	"github.com/weaviate/weaviate-go-client/v6/query"
 )
 
-const (
-	EnvHost   = "WEAVIATE_HOST"
-	EnvAPIKey = "WEAVIATE_API_KEY"
-)
-
 func main() {
-	host, hasHost := os.LookupEnv(EnvHost)
-	apiKey, hasKey := os.LookupEnv(EnvAPIKey)
-	if !hasHost || !hasKey {
-		log.Printf("%q and %q must be defined. Skipping example.", EnvHost, EnvAPIKey)
-		return
-	}
-
 	ctx := context.Background()
+	host, apiKey := example.ConnectionParams()
 
 	// Connect to a WCD cluster.
 	c, err := weaviate.NewWeaviateCloud(ctx, host, apiKey)
-	catch(err)
+	example.Catch(err)
+	defer c.Close()
 
 	CollectionName := "GoThings"
 
 	// If GoThings collection does not exist, create it.
 	canSearch := true
 	ok, err := c.Collections.Exists(ctx, CollectionName)
-	catch(err)
+	example.Catch(err)
 	if !ok {
 		_, err := c.Collections.Create(ctx, collections.Collection{
 			Name: CollectionName,
@@ -46,7 +36,7 @@ func main() {
 				{Name: "url", DataType: collections.DataTypeText},
 			},
 		})
-		catch(err)
+		example.Catch(err)
 
 		// Current client version does not support defining vector indices.
 		// Without one, similarity search is not possible.
@@ -61,7 +51,7 @@ func main() {
 
 	// Insert some objects, logging the "before" and "after" counts.
 	count, err := products.Count(ctx)
-	catch(err)
+	example.Catch(err)
 
 	log.Printf("collection GoThings has %d objects", count)
 
@@ -76,7 +66,7 @@ func main() {
 	}
 
 	count, err = products.Count(ctx)
-	catch(err)
+	example.Catch(err)
 
 	log.Printf("collection GoThings has %d objects", count)
 
@@ -92,7 +82,7 @@ func main() {
 		Limit:         3,
 		ReturnVectors: []string{"text2vec_weaviate"}, // the default vector name
 	})
-	catch(err)
+	example.Catch(err)
 
 	log.Printf("NearText[sneakers, flipflops] returned %d objects:", len(nt.Objects))
 	for _, obj := range nt.Objects {
@@ -113,7 +103,7 @@ func main() {
 		ReturnProperties: []string{"name", "url"},
 		ReturnMetadata:   query.ReturnMetadata{Distance: true},
 	})
-	catch(err)
+	example.Catch(err)
 
 	// Scan results into our custom Go struct
 	type Product struct {
@@ -122,7 +112,7 @@ func main() {
 	}
 
 	decoded := make([]query.Object[Product], len(nv.Objects))
-	catch(query.Decode(nv, &decoded))
+	example.Catch(query.Decode(nv, &decoded))
 
 	log.Print("NearVector[max_distance=.56] returned these 3 entries:")
 	for _, obj := range decoded {
@@ -134,7 +124,7 @@ func main() {
 			{Property: "name", TopOccurrences: true, TopOccurencesCutoff: 10},
 		},
 	}, aggregate.GroupBy{Property: "name", Limit: 5})
-	catch(err)
+	example.Catch(err)
 
 	for _, group := range grouped.Groups {
 		log.Printf("Group %q has %d objects (value=%q)", group.Property, len(group.Aggregations.Text), group.Value)
@@ -143,11 +133,5 @@ func main() {
 				fmt.Printf("\t- %q occurs %d times\n", top.Value, top.OccursTimes)
 			}
 		}
-	}
-}
-
-func catch(err error) {
-	if err != nil {
-		log.Fatal(err)
 	}
 }

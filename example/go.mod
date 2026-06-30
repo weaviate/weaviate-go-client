@@ -1,4 +1,4 @@
-module example
+module github.com/weaviate/weaviate-go-client/v6/example
 
 go 1.26.1
 

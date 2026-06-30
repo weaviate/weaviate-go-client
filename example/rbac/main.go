@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"log"
-	"os"
 
 	"github.com/weaviate/weaviate-go-client/v6"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
+	"github.com/weaviate/weaviate-go-client/v6/example"
 	"github.com/weaviate/weaviate-go-client/v6/rbac"
 )
 
@@ -16,18 +16,13 @@ const (
 )
 
 func main() {
-	host, hasHost := os.LookupEnv(EnvHost)
-	apiKey, hasKey := os.LookupEnv(EnvAPIKey)
-	if !hasHost || !hasKey {
-		log.Printf("%q and %q must be defined. Skipping example.", EnvHost, EnvAPIKey)
-		return
-	}
-
 	ctx := context.Background()
+	host, apiKey := example.ConnectionParams()
 
 	// Connect to a WCD cluster.
 	c, err := weaviate.NewWeaviateCloud(ctx, host, apiKey)
-	catch(err)
+	example.Catch(err)
+	defer c.Close()
 
 	// All emails are stored in the Emails collection.
 	// Each user has a dedicated tenant (not created here),
@@ -35,9 +30,9 @@ func main() {
 	// Admins are an external OIDC group; an admin can modify
 	// the Emails collection.
 	exists, err := c.Collections.Exists(ctx, "Emails")
-	catch(err)
+	example.Catch(err)
 	if exists {
-		catch(c.Collections.Delete(ctx, "Emails"))
+		example.Catch(c.Collections.Delete(ctx, "Emails"))
 	}
 
 	_, err = c.Collections.Create(ctx, collections.Collection{
@@ -48,7 +43,7 @@ func main() {
 		},
 	})
 	defer c.Collections.Delete(ctx, "Emails")
-	catch(err)
+	example.Catch(err)
 
 	// Create admin role and assign it to "mailbox-admins" group.
 	err = c.Roles.Create(ctx, rbac.Role{
@@ -60,13 +55,13 @@ func main() {
 		},
 	})
 	defer c.Roles.Delete(ctx, "custom-admin-role")
-	catch(err)
+	example.Catch(err)
 
 	err = c.Groups.AssignRoles(ctx, rbac.AssignRolesOptions{
 		ID:    "mailbox-admins",
 		Roles: []string{"custom-admin-role"},
 	})
-	catch(err)
+	example.Catch(err)
 
 	// Create user accounts and obtain API keys for them.
 	apiKeys := map[string]string{
@@ -78,7 +73,7 @@ func main() {
 	for username := range apiKeys {
 		apiKey, err = c.Users.DB.Create(ctx, username)
 		defer c.Users.DB.Delete(ctx, username)
-		catch(err)
+		example.Catch(err)
 
 		apiKeys[username] = apiKey
 
@@ -90,7 +85,7 @@ func main() {
 				},
 			},
 		})
-		catch(err)
+		example.Catch(err)
 		defer c.Roles.Delete(ctx, "user-"+username)
 
 		err = c.Users.DB.AssignRoles(ctx, rbac.AssignRolesOptions{
@@ -101,25 +96,25 @@ func main() {
 
 	// Verify all roles exist and permissions are assigned correctly
 	roles, err := c.Roles.List(ctx)
-	catch(err)
+	example.Catch(err)
 	log.Printf("Roles: %+v", roles)
 
 	users, err := c.Users.DB.List(ctx, rbac.ListUsersOptions{})
-	catch(err)
+	example.Catch(err)
 	log.Printf("Users: %+v", users)
 
 	ok, err := c.Roles.HasPermission(ctx, rbac.HasPermission{
 		RoleID: "user-alex",
 		Data:   rbac.DataPermission{Collection: "Emails", Tenant: "user-alex", Read: true},
 	})
-	catch(err)
+	example.Catch(err)
 	log.Printf("user-alex has read_data permission: %t", ok)
 
 	ok, err = c.Roles.HasPermission(ctx, rbac.HasPermission{
 		RoleID: "custom-admin-role",
 		Data:   rbac.DataPermission{Collection: "Emails", Tenant: "user-alex", Read: true},
 	})
-	catch(err)
+	example.Catch(err)
 	log.Printf("custom-admin-role has read_data permission: %t", ok)
 
 	ok, err = c.Roles.HasPermission(ctx, rbac.HasPermission{
@@ -128,7 +123,7 @@ func main() {
 			Collection: "Emails", Update: true,
 		},
 	})
-	catch(err)
+	example.Catch(err)
 	log.Printf("custom-admin-role has update_collections permission for Emails: %t", ok)
 
 	// Revoke role from cindy.
@@ -136,7 +131,7 @@ func main() {
 		ID:    "cindy",
 		Roles: []string{"user-cindy"},
 	})
-	catch(err)
+	example.Catch(err)
 
 	assignments, err := c.Roles.UserAssignments(ctx, "user-cindy")
 	log.Printf("Users assigned to user-cindy role: %v", assignments)
@@ -150,7 +145,7 @@ func main() {
 			},
 		},
 	})
-	catch(err)
+	example.Catch(err)
 
 	ok, err = c.Roles.HasPermission(ctx, rbac.HasPermission{
 		RoleID: "custom-admin-role",
@@ -158,12 +153,6 @@ func main() {
 			Collection: "Emails", Delete: true,
 		},
 	})
-	catch(err)
+	example.Catch(err)
 	log.Printf("custom-admin-role has delete_collections permission for Emails: %t", ok)
-}
-
-func catch(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
 }
