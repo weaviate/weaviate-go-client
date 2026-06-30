@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/alias"
+	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 )
@@ -18,13 +19,13 @@ func TestNewClient(t *testing.T) {
 func TestClient_Create(t *testing.T) {
 	for _, tt := range []struct {
 		name  string
-		alias alias.Alias
+		alias collections.Alias
 		stubs []testkit.Stub[api.CreateAliasRequest, any]
 		err   testkit.Error // Expected error.
 	}{
 		{
 			name: "successfully",
-			alias: alias.Alias{
+			alias: collections.Alias{
 				Collection: "GeorgeBarnes",
 				Alias:      "MachineGunKelly",
 			},
@@ -63,7 +64,7 @@ func TestClient_Get(t *testing.T) {
 		name  string
 		alias string
 		stubs []testkit.Stub[any, api.Alias]
-		want  *alias.Alias
+		want  *collections.Alias
 		err   testkit.Error // Expected error.
 	}{
 		{
@@ -78,7 +79,7 @@ func TestClient_Get(t *testing.T) {
 					},
 				},
 			},
-			want: &alias.Alias{
+			want: &collections.Alias{
 				Collection: "GeorgeBarnes",
 				Alias:      "MachineGunKelly",
 			},
@@ -109,7 +110,7 @@ func TestClient_List(t *testing.T) {
 		name  string
 		alias string
 		stubs []testkit.Stub[any, api.ListAliasesResponse]
-		want  []alias.Alias
+		want  []collections.Alias
 		err   testkit.Error // Expected error.
 	}{
 		{
@@ -124,7 +125,7 @@ func TestClient_List(t *testing.T) {
 					},
 				},
 			},
-			want: []alias.Alias{
+			want: []collections.Alias{
 				{Collection: "GeorgeBarnes", Alias: "MachineGunKelly"},
 				{Collection: "LouisAttanasio", Alias: "LouieHaHa"},
 			},
@@ -153,13 +154,13 @@ func TestClient_List(t *testing.T) {
 func TestClient_Update(t *testing.T) {
 	for _, tt := range []struct {
 		name  string
-		alias alias.Alias
+		alias collections.Alias
 		stubs []testkit.Stub[api.UpdateAliasRequest, any]
 		err   testkit.Error // Expected error.
 	}{
 		{
 			name: "successfully",
-			alias: alias.Alias{
+			alias: collections.Alias{
 				Collection: "GeorgeBarnes",
 				Alias:      "MachineGunKelly",
 			},

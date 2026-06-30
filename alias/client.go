@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
@@ -18,10 +19,8 @@ type Client struct {
 	transport internal.Transport
 }
 
-type Alias api.Alias
-
 // Create a new alias for a collection.
-func (c *Client) Create(ctx context.Context, a Alias) error {
+func (c *Client) Create(ctx context.Context, a collections.Alias) error {
 	req := &api.CreateAliasRequest{
 		Alias: api.Alias(a),
 	}
@@ -32,30 +31,30 @@ func (c *Client) Create(ctx context.Context, a Alias) error {
 }
 
 // Get the alias by name if one exists.
-func (c *Client) Get(ctx context.Context, alias string) (*Alias, error) {
+func (c *Client) Get(ctx context.Context, alias string) (*collections.Alias, error) {
 	var a api.Alias
 	if err := c.transport.Do(ctx, api.GetAliasRequest(alias), &a); err != nil {
 		return nil, fmt.Errorf("get alias: %w", err)
 	}
-	return (*Alias)(&a), nil
+	return (*collections.Alias)(&a), nil
 }
 
 // List all defined aliases.
-func (c *Client) List(ctx context.Context) ([]Alias, error) {
+func (c *Client) List(ctx context.Context) ([]collections.Alias, error) {
 	var list api.ListAliasesResponse
 	if err := c.transport.Do(ctx, api.ListAliasesRequest, &list); err != nil {
 		return nil, fmt.Errorf("list aliases: %w", err)
 	}
 
-	aliases := make([]Alias, len(list))
+	aliases := make([]collections.Alias, len(list))
 	for i := range list {
-		aliases[i] = Alias(list[i])
+		aliases[i] = collections.Alias(list[i])
 	}
 	return aliases, nil
 }
 
 // Update re-assigns the alias to a different collection.
-func (c *Client) Update(ctx context.Context, a Alias) error {
+func (c *Client) Update(ctx context.Context, a collections.Alias) error {
 	req := &api.UpdateAliasRequest{
 		Alias: api.Alias(a),
 	}
