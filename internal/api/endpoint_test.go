@@ -1112,6 +1112,50 @@ func TestRESTRequests(t *testing.T) {
 			wantMethod: http.MethodDelete,
 			wantPath:   "/aliases/MachineGunKelly",
 		},
+		{
+			name: "create tenants",
+			req: &api.CreateTenantsRequest{
+				Collection: "Songs",
+				Tenants: []api.Tenant{
+					{Name: "john_doe", Status: api.TenantStatusActive},
+					{Name: "jane_doe", Status: api.TenantStatusFrozen},
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/schema/Songs/tenants",
+			wantBody: rest.TenantsCreateJSONRequestBody{
+				{Name: "john_doe", ActivityStatus: rest.ACTIVE},
+				{Name: "jane_doe", ActivityStatus: rest.FROZEN},
+			},
+		},
+		{
+			name: "update tenants",
+			req: &api.UpdateTenantsRequest{
+				Collection: "Songs",
+				Tenants: []api.Tenant{
+					{Name: "john_doe", Status: api.TenantStatusActive},
+					{Name: "jane_doe", Status: api.TenantStatusFrozen},
+				},
+			},
+			wantMethod: http.MethodPut,
+			wantPath:   "/schema/Songs/tenants",
+			wantBody: rest.TenantsUpdateJSONRequestBody{
+				{Name: "john_doe", ActivityStatus: rest.ACTIVE},
+				{Name: "jane_doe", ActivityStatus: rest.FROZEN},
+			},
+		},
+		{
+			name: "delete tenants",
+			req: &api.DeleteTenantsRequest{
+				Collection: "Songs",
+				Tenants:    []string{"john_doe", "jane_doe"},
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/schema/Songs/tenants",
+			wantBody: rest.TenantsDeleteJSONRequestBody{
+				"john_doe", "jane_doe",
+			},
+		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)
