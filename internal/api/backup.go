@@ -225,19 +225,18 @@ func (r *RestoreBackupRequest) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 func (b *BackupInfo) UnmarshalJSON(data []byte) error {
 	var bak struct {
-		Backend string       `json:"backend,omitempty"`
-		ID      string       `json:"id,omitempty"`
-		Bucket  string       `json:"bucket,omitempty"`
-		Path    string       `json:"path,omitempty"`
-		Error   string       `json:"error,omitempty"`
-		Status  BackupStatus `json:"status,omitempty"`
+		Backend                 string       `json:"backend,omitempty"`
+		ID                      string       `json:"id,omitempty"`
+		Bucket                  string       `json:"bucket,omitempty"`
+		Path                    string       `json:"path,omitempty"`
+		Error                   string       `json:"error,omitempty"`
+		Status                  BackupStatus `json:"status,omitempty"`
+		IncrementalBaseBackupID string       `json:"incremental_base_backup_id,omitempty"`
 
 		IncludesCollections []string   `json:"classes,omitempty"`
 		StartedAt           *time.Time `json:"startedAt,omitempty"`
 		CompletedAt         *time.Time `json:"completedAt,omitempty"`
 		SizeGiB             *float32   `json:"size,omitempty"`
-
-		IncrementalBaseBackupID string `json:"incremental_base_backup_id,omitempty"`
 	}
 
 	if err := json.Unmarshal(data, &bak); err != nil {
@@ -245,17 +244,16 @@ func (b *BackupInfo) UnmarshalJSON(data []byte) error {
 	}
 
 	*b = BackupInfo{
-		Backend:             bak.Backend,
-		ID:                  bak.ID,
-		Bucket:              bak.Bucket,
-		Path:                bak.Path,
-		Error:               bak.Error,
-		Status:              bak.Status,
-		StartedAt:           bak.StartedAt,
-		CompletedAt:         bak.CompletedAt,
-		IncludesCollections: bak.IncludesCollections,
-		SizeGiB:             bak.SizeGiB,
-
+		Backend:                 bak.Backend,
+		ID:                      bak.ID,
+		Bucket:                  bak.Bucket,
+		Path:                    bak.Path,
+		Error:                   bak.Error,
+		Status:                  bak.Status,
+		StartedAt:               bak.StartedAt,
+		CompletedAt:             bak.CompletedAt,
+		IncludesCollections:     bak.IncludesCollections,
+		SizeGiB:                 bak.SizeGiB,
 		IncrementalBaseBackupID: bak.IncrementalBaseBackupID,
 	}
 	return nil

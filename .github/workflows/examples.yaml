@@ -24,6 +24,5 @@ jobs:
           go-version: "1.26"
           cache: true
       - name: example/${{ matrix.example }}
-        run: |-
-          cd ./example/${{ matrix.example }}
-          go run .
+        working-directory: ./example
+        run: go run ./${{ matrix.example }}

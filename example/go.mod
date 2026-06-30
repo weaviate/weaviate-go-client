@@ -1,4 +1,4 @@
-module example/rbac
+module example
 
 go 1.26.1
 
@@ -40,4 +40,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/weaviate/weaviate-go-client/v6 v6.0.0-example => ../../
+replace github.com/weaviate/weaviate-go-client/v6 v6.0.0-example => ../
