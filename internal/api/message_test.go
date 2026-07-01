@@ -1538,6 +1538,31 @@ func TestDeleteObjectsRequest_MarshalMessage(t *testing.T) {
 	})
 }
 
+func TestGetTenantsRequest_MarshalMessage(t *testing.T) {
+	testMessageMarshaler(t, []MessageMarshalerTest[proto.TenantsGetRequest, proto.TenantsGetReply]{
+		{
+			name: "with tenant names",
+			req: &api.GetTenantsRequest{
+				Collection: "Songs",
+				Tenants:    []string{"john_doe", "jane_doe"},
+			},
+			want: &proto.TenantsGetRequest{
+				Collection: "Songs",
+				Params: &proto.TenantsGetRequest_Names{
+					Names: &proto.TenantNames{
+						Values: []string{"john_doe", "jane_doe"},
+					},
+				},
+			},
+		},
+		{
+			name: "list all",
+			req:  &api.GetTenantsRequest{Collection: "Songs"},
+			want: &proto.TenantsGetRequest{Collection: "Songs"},
+		},
+	})
+}
+
 // ----------------------------------------------------------------------------
 
 type MessageUnmarshalerTest[Out transport.ReplyMessage] struct {
@@ -2472,6 +2497,25 @@ func TestDeleteObjectsResponse_UnmarshalMessage(t *testing.T) {
 			reply: &proto.BatchDeleteReply{Took: 92},
 			dest:  new(api.DeleteObjectsResponse),
 			want:  &api.DeleteObjectsResponse{Took: 92 * time.Second},
+		},
+	})
+}
+
+func TestGetTenantsResponse_UnmarshalMessage(t *testing.T) {
+	testMessageUnmarshaler(t, []MessageUnmarshalerTest[proto.TenantsGetReply]{
+		{
+			name: "tenants",
+			reply: &proto.TenantsGetReply{
+				Tenants: []*proto.Tenant{
+					{Name: "john_doe", ActivityStatus: proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_COLD},
+					{Name: "jane_doe", ActivityStatus: proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_FROZEN},
+				},
+			},
+			dest: new(api.GetTenantsResponse),
+			want: &api.GetTenantsResponse{
+				{Name: "john_doe", Status: api.TenantStatusCold},
+				{Name: "jane_doe", Status: api.TenantStatusFrozen},
+			},
 		},
 	})
 }
