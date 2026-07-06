@@ -200,7 +200,6 @@ func TestRESTRequests(t *testing.T) {
 						VirtualPerPhysical:  50,
 					},
 					Replication: &api.ReplicationConfig{
-						AsyncEnabled:     false,
 						Factor:           6,
 						DeletionStrategy: api.TimeBasedResolution,
 						AsyncReplication: &api.AsyncReplicationConfig{
@@ -281,7 +280,6 @@ func TestRESTRequests(t *testing.T) {
 					"virtualPerPhysical":  50,
 				},
 				ReplicationConfig: rest.ReplicationConfig{
-					AsyncEnabled:     false,
 					Factor:           6,
 					DeletionStrategy: rest.TimeBasedResolution,
 					AsyncConfig: rest.ReplicationAsyncConfig{
@@ -1274,7 +1272,6 @@ func TestRESTResponses(t *testing.T) {
 					"virtualPerPhysical":  50,
 				},
 				ReplicationConfig: rest.ReplicationConfig{
-					AsyncEnabled:     false,
 					Factor:           6,
 					DeletionStrategy: rest.TimeBasedResolution,
 					AsyncConfig: rest.ReplicationAsyncConfig{
@@ -1355,7 +1352,6 @@ func TestRESTResponses(t *testing.T) {
 					VirtualPerPhysical:  50,
 				},
 				Replication: &api.ReplicationConfig{
-					AsyncEnabled:     false,
 					Factor:           6,
 					DeletionStrategy: api.TimeBasedResolution,
 					AsyncReplication: &api.AsyncReplicationConfig{
