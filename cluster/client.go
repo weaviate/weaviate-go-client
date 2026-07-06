@@ -123,13 +123,13 @@ func (c *Client) ListNodes(ctx context.Context, options ListNodesOptions) ([]Nod
 	out := make([]Node, len(resp))
 	for i, node := range resp {
 		shards := slices.Grow([]Shard(nil), len(node.Shards))
-		for si, s := range node.Shards {
+		for _, s := range node.Shards {
 			replications := slices.Grow([]ReplicationStatus(nil), len(s.OngoingReplications))
-			for ri, r := range s.OngoingReplications {
-				replications[ri] = ReplicationStatus(r)
+			for _, r := range s.OngoingReplications {
+				replications = append(replications, ReplicationStatus(r))
 			}
 
-			shards[si] = Shard{
+			shards = append(shards, Shard{
 				Name:                 s.Name,
 				Collection:           s.Collection,
 				ObjectCount:          s.ObjectCount,
@@ -138,7 +138,7 @@ func (c *Client) ListNodes(ctx context.Context, options ListNodesOptions) ([]Nod
 				VectorIndexingStatus: s.VectorIndexingStatus,
 				VectorQueueLength:    s.VectorQueueLength,
 				OngoingReplications:  replications,
-			}
+			})
 		}
 
 		out[i] = Node{
