@@ -40,7 +40,6 @@ type (
 		VirtualPerPhysical  int
 	}
 	ReplicationConfig struct {
-		AsyncEnabled     bool                    // Enable asynchronous replication.
 		AsyncReplication *AsyncReplicationConfig // Fine-tuning parameters for async replication.
 		Factor           int                     // Number of times a collection is replicated.
 		DeletionStrategy DeletionStrategy        // Conflict resolution strategy for deleted objects.
@@ -217,7 +216,6 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 
 	if c.Replication != nil {
 		out.ReplicationConfig = rest.ReplicationConfig{
-			AsyncEnabled:     c.Replication.AsyncEnabled,
 			Factor:           c.Replication.Factor,
 			DeletionStrategy: rest.ReplicationConfigDeletionStrategy(c.Replication.DeletionStrategy),
 		}
@@ -334,7 +332,6 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 		Properties:  properties,
 		References:  references,
 		Replication: &ReplicationConfig{
-			AsyncEnabled:     class.ReplicationConfig.AsyncEnabled,
 			Factor:           class.ReplicationConfig.Factor,
 			DeletionStrategy: DeletionStrategy(class.ReplicationConfig.DeletionStrategy),
 			AsyncReplication: &AsyncReplicationConfig{

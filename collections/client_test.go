@@ -132,7 +132,6 @@ func TestClient_Create(t *testing.T) {
 					VirtualPerPhysical:  50,
 				},
 				Replication: &collections.ReplicationConfig{
-					AsyncEnabled:     false,
 					Factor:           6,
 					DeletionStrategy: collections.TimeBasedResolution,
 					AsyncReplication: &collections.AsyncReplicationConfig{
@@ -215,7 +214,6 @@ func TestClient_Create(t *testing.T) {
 								VirtualPerPhysical:  50,
 							},
 							Replication: &api.ReplicationConfig{
-								AsyncEnabled:     false,
 								Factor:           6,
 								DeletionStrategy: api.TimeBasedResolution,
 								AsyncReplication: &api.AsyncReplicationConfig{
@@ -363,7 +361,6 @@ func TestClient_GetConfig(t *testing.T) {
 							VirtualPerPhysical:  50,
 						},
 						Replication: &api.ReplicationConfig{
-							AsyncEnabled:     false,
 							Factor:           6,
 							DeletionStrategy: api.TimeBasedResolution,
 							AsyncReplication: &api.AsyncReplicationConfig{
@@ -445,7 +442,6 @@ func TestClient_GetConfig(t *testing.T) {
 					VirtualPerPhysical:  50,
 				},
 				Replication: &collections.ReplicationConfig{
-					AsyncEnabled:     false,
 					Factor:           6,
 					DeletionStrategy: collections.TimeBasedResolution,
 					AsyncReplication: &collections.AsyncReplicationConfig{
