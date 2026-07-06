@@ -1,23 +1,56 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
+type Replication struct {
+	ID              uuid.UUID
+	Type            ReplicationType
+	Collection      string             // The collection being replicated.
+	Shard           string             // The shard being replicated.
+	Source          string             // The source node.
+	Target          string             // The target node.
+	CanCancel       bool               // Whether this replication can be canceled.
+	CancelScheduled bool               // Whether this replication is scheduled for cancelation.
+	DeleteScheduled bool               // Whether this replication is scheduled for deletion.
+	StartedAt       time.Time          // Time at which the replication was initiated.
+	Current         ReplicationStage   // Current stage of the replication.
+	History         []ReplicationStage // History of previous replication stages.
+}
+
+var _ json.Unmarshaler = (*Replication)(nil)
+
+type ReplicationStage struct {
+	State     ReplicationState
+	Errors    []ReplicationError
+	StartedAt time.Time
+}
+
+type ReplicationError struct {
+	Message string    // Error message.
+	Time    time.Time // Time when the error has occurred.
+}
+
+// CreateReplicationRequest starts a new replication.
+// Use with [Replication] as response destination.
 type CreateReplicationRequest struct {
 	transports.BaseEndpoint
 
-	Type       ReplicationType
-	Collection string // Collection to be replicated.
-	Shard      string // Shard to be replicated.
-	Source     string // The source node.
-	Target     string // The target node.
+	Type       ReplicationType // Operation type.
+	Collection string          // Collection to be replicated.
+	Shard      string          // Shard to be replicated.
+	Source     string          // The source node.
+	Target     string          // The target node.
 }
 
 var _ transports.Endpoint = (*CreateReplicationRequest)(nil)
@@ -34,6 +67,18 @@ func (r *CreateReplicationRequest) Body() any {
 	}
 }
 
+type ReplicationState rest.ReplicationReplicateDetailsReplicaStatusState
+
+const (
+	ReplicationStateCanceled    = ReplicationState(rest.CANCELLED)
+	ReplicationStateDehydrating = ReplicationState(rest.DEHYDRATING)
+	ReplicationStateFinalizing  = ReplicationState(rest.FINALIZING)
+	ReplicationStateHydrating   = ReplicationState(rest.HYDRATING)
+	ReplicationStateIntegrating = ReplicationState(rest.INTEGRATING)
+	ReplicationStateReady       = ReplicationState(rest.READY)
+	ReplicationStateRegistered  = ReplicationState(rest.REGISTERED)
+)
+
 type ReplicationType rest.ReplicationReplicateReplicaRequestType
 
 const (
@@ -42,12 +87,15 @@ const (
 )
 
 // GetReplicationRequest retrieves a replication operation by its UUID.
+// Use with [Replication] as response destination.
 type GetReplicationRequest struct {
 	transports.BaseEndpoint
 
 	UUID           uuid.UUID // Replication ID.
 	IncludeHistory bool      // Include history of status changes in the reply.
 }
+
+var _ transports.Endpoint = (*GetReplicationRequest)(nil)
 
 func (GetReplicationRequest) Method() string  { return http.MethodGet }
 func (r *GetReplicationRequest) Path() string { return "/replication/replicate/" + r.UUID.String() }
@@ -57,6 +105,8 @@ func (r *GetReplicationRequest) Query() url.Values {
 	}
 }
 
+// ListReplicationsRequest retrieves all replications, optionally filtered.
+// Use with [ListReplicationsResponse].
 type ListReplicationsRequest struct {
 	transports.BaseEndpoint
 
@@ -65,6 +115,8 @@ type ListReplicationsRequest struct {
 	Target         string // The target node.
 	IncludeHistory bool   // Include history of status changes in the reply.
 }
+
+var _ transports.Endpoint = (*ListReplicationsRequest)(nil)
 
 func (ListReplicationsRequest) Method() string  { return http.MethodGet }
 func (r *ListReplicationsRequest) Path() string { return "/replication/replicate/list" }
@@ -87,8 +139,62 @@ func (r *ListReplicationsRequest) Query() url.Values {
 	return v
 }
 
+type ListReplicationsResponse []Replication
+
 var (
-	CancelReplicationRequest     = transports.IdentityEndpoint[uuid.UUID](http.MethodPost, "/replication/replicate/%s/cancel")
-	DeleteReplicationRequest     = transports.IdentityEndpoint[uuid.UUID](http.MethodDelete, "/replication/replicate/%s")
+	// Cancel a replication by its UUID.
+	CancelReplicationRequest = transports.IdentityEndpoint[uuid.UUID](http.MethodPost, "/replication/replicate/%s/cancel")
+	// Delete a replication by its UUID.
+	DeleteReplicationRequest = transports.IdentityEndpoint[uuid.UUID](http.MethodDelete, "/replication/replicate/%s")
+	// Delete all replication operations in a cluster.
 	DeleteAllReplicationsRequest = transports.StaticEndpoint(http.MethodDelete, "/replication/replicate")
 )
+
+func (r *Replication) UnmarshalJSON(data []byte) error {
+	var resp rest.ReplicationReplicateDetailsReplicaResponse
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return err
+	}
+
+	var id uuid.UUID
+	if resp.Id != nil {
+		id = *resp.Id
+	}
+
+	stage := func(s rest.ReplicationReplicateDetailsReplicaStatus) ReplicationStage {
+		errs := slices.Grow([]ReplicationError(nil), len(s.Errors))
+		for _, e := range s.Errors {
+			errs = append(errs, ReplicationError{
+				Message: e.Message,
+				Time:    time.UnixMilli(e.WhenErroredUnixMs),
+			})
+		}
+
+		return ReplicationStage{
+			State:     ReplicationState(s.State),
+			StartedAt: time.UnixMilli(s.WhenStartedUnixMs),
+			Errors:    errs,
+		}
+	}
+
+	history := slices.Grow([]ReplicationStage(nil), len(resp.StatusHistory))
+	for _, s := range resp.StatusHistory {
+		history = append(history, stage(s))
+	}
+
+	*r = Replication{
+		Type:            ReplicationType(resp.Type),
+		ID:              id,
+		Collection:      resp.Collection,
+		Shard:           resp.Shard,
+		Source:          resp.SourceNode,
+		Target:          resp.TargetNode,
+		CanCancel:       !resp.Uncancelable,
+		CancelScheduled: resp.ScheduledForCancel,
+		DeleteScheduled: resp.ScheduledForDelete,
+		StartedAt:       time.UnixMilli(resp.WhenStartedUnixMs),
+		Current:         stage(resp.Status),
+		History:         history,
+	}
+	return nil
+}

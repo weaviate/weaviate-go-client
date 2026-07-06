@@ -2135,6 +2135,60 @@ func TestRESTResponses(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "replication info",
+			body: &rest.ReplicationReplicateDetailsReplicaResponse{
+				Type:               rest.ReplicationReplicateDetailsReplicaResponseTypeMOVE,
+				Id:                 &testkit.UUID,
+				Collection:         "Songs",
+				Shard:              "abc",
+				SourceNode:         "node-0",
+				TargetNode:         "node-1",
+				Uncancelable:       true,
+				ScheduledForCancel: true,
+				ScheduledForDelete: true,
+				WhenStartedUnixMs:  testkit.Now.UnixMilli(),
+				Status: rest.ReplicationReplicateDetailsReplicaStatus{
+					State:             rest.FINALIZING,
+					WhenStartedUnixMs: testkit.Now.UnixMilli(),
+				},
+				StatusHistory: []rest.ReplicationReplicateDetailsReplicaStatus{
+					{
+						State: rest.INTEGRATING,
+						Errors: []rest.ReplicationReplicateDetailsReplicaStatusError{
+							{Message: "Whaam!", WhenErroredUnixMs: testkit.Now.UnixMilli()},
+						},
+						WhenStartedUnixMs: testkit.Now.UnixMilli(),
+					},
+				},
+			},
+			dest: new(api.Replication),
+			want: &api.Replication{
+				Type:            api.ReplicationMove,
+				ID:              testkit.UUID,
+				Collection:      "Songs",
+				Shard:           "abc",
+				Source:          "node-0",
+				Target:          "node-1",
+				CanCancel:       false,
+				CancelScheduled: true,
+				DeleteScheduled: true,
+				StartedAt:       testkit.Now,
+				Current: api.ReplicationStage{
+					State:     api.ReplicationStateFinalizing,
+					StartedAt: testkit.Now,
+				},
+				History: []api.ReplicationStage{
+					{
+						State:     api.ReplicationStateIntegrating,
+						StartedAt: testkit.Now,
+						Errors: []api.ReplicationError{
+							{Message: "Whaam!", Time: testkit.Now},
+						},
+					},
+				},
+			},
+		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.NotNil(t, tt.body, "incomplete test case: body is nil")
