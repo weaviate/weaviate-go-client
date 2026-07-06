@@ -2694,9 +2694,6 @@ type ReplicationConfig struct {
 	// AsyncConfig Configuration for asynchronous replication.
 	AsyncConfig ReplicationAsyncConfig `json:"asyncConfig,omitempty"`
 
-	// AsyncEnabled Enable asynchronous replication (default: `false`).
-	AsyncEnabled bool `json:"asyncEnabled"`
-
 	// DeletionStrategy Conflict resolution strategy for deleted objects.
 	DeletionStrategy ReplicationConfigDeletionStrategy `json:"deletionStrategy,omitempty"`
 
@@ -3686,9 +3683,6 @@ type CreateUserJSONBody struct {
 
 	// Import EXPERIMENTAL, DONT USE. THIS WILL BE REMOVED AGAIN. - import api key from static user
 	Import bool `json:"import,omitempty"`
-
-	// Namespace Namespace to bind the new user to. Required on namespace-enabled clusters. Must be set by a global operator only.
-	Namespace string `json:"namespace,omitempty"`
 }
 
 // DeactivateUserJSONBody defines parameters for DeactivateUser.
