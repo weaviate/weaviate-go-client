@@ -21,7 +21,7 @@ type ShardReplica struct {
 type GetShardsRequest struct {
 	transports.BaseEndpoint
 	Collection string // Required parameter.
-	Shard      string // Optional: if ommitted, all shards are returned.
+	Shard      string // Optional: if omitted, all shards are returned.
 }
 
 var _ transports.Endpoint = (*GetShardsRequest)(nil)
@@ -95,7 +95,7 @@ const (
 
 type GetNodesRequest struct {
 	transports.BaseEndpoint
-	Collection string // Optional: if ommitted, all nodes are returned.
+	Collection string // Optional: if omitted, all nodes are returned.
 	Shard      string // Optional: if set, only nodes containing this shard are returned.
 	Verbosity  NodeVerbosity
 }

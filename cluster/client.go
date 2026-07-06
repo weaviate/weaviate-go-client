@@ -24,7 +24,7 @@ type ShardReplica api.ShardReplica
 
 type ListShardReplicasOptions struct {
 	Collection string // Required parameter.
-	Shard      string // Optional: if ommitted, all shards are returned.
+	Shard      string // Optional: if omitted, all shards are returned.
 }
 
 // ListShardReplicas returns a list of shards and all their replicas.
@@ -36,7 +36,7 @@ func (c *Client) ListShardReplicas(ctx context.Context, options ListShardReplica
 
 	var resp api.GetShardsResponse
 	if err := c.transport.Do(ctx, req, &resp); err != nil {
-		return nil, fmt.Errorf("get sharding state: %w", err)
+		return nil, fmt.Errorf("list shard replicas: %w", err)
 	}
 
 	out := make([]ShardReplica, len(resp))
@@ -98,7 +98,7 @@ const (
 )
 
 type ListNodesOptions struct {
-	Collection string // Optional: if ommitted, all nodes are returned.
+	Collection string // Optional: if omitted, all nodes are returned.
 	Shard      string // Optional: if set, only nodes containing this shard are returned.
 	Verbose    bool   // Optional: set to true to fetch complete node info.
 }
@@ -117,7 +117,7 @@ func (c *Client) ListNodes(ctx context.Context, options ListNodesOptions) ([]Nod
 
 	var resp api.GetNodesResponse
 	if err := c.transport.Do(ctx, req, &resp); err != nil {
-		return nil, fmt.Errorf("get sharding state: %w", err)
+		return nil, fmt.Errorf("list nodes: %w", err)
 	}
 
 	out := make([]Node, len(resp))
