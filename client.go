@@ -11,6 +11,7 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v6/alias"
 	"github.com/weaviate/weaviate-go-client/v6/backup"
+	"github.com/weaviate/weaviate-go-client/v6/cluster"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
@@ -29,6 +30,7 @@ type Client struct {
 	Roles       *rbac.RolesClient
 	Users       *rbac.UsersClient
 	Groups      *rbac.GroupsClient
+	Cluster     *cluster.Client
 }
 
 var _ io.Closer = (*Client)(nil)
@@ -143,6 +145,7 @@ func newClient(ctx context.Context, options []Option) (*Client, error) {
 		Roles:       rbac.NewRolesClient(t),
 		Users:       rbac.NewUsersClient(t),
 		Groups:      rbac.NewGroupsClient(t),
+		Cluster:     cluster.NewClient(t),
 	}, nil
 }
 

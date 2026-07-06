@@ -200,7 +200,6 @@ func TestRESTRequests(t *testing.T) {
 						VirtualPerPhysical:  50,
 					},
 					Replication: &api.ReplicationConfig{
-						AsyncEnabled:     false,
 						Factor:           6,
 						DeletionStrategy: api.TimeBasedResolution,
 						AsyncReplication: &api.AsyncReplicationConfig{
@@ -281,7 +280,6 @@ func TestRESTRequests(t *testing.T) {
 					"virtualPerPhysical":  50,
 				},
 				ReplicationConfig: rest.ReplicationConfig{
-					AsyncEnabled:     false,
 					Factor:           6,
 					DeletionStrategy: rest.TimeBasedResolution,
 					AsyncConfig: rest.ReplicationAsyncConfig{
@@ -1156,6 +1154,52 @@ func TestRESTRequests(t *testing.T) {
 				"john_doe", "jane_doe",
 			},
 		},
+		{
+			name:       "get all shards",
+			req:        &api.GetShardsRequest{Collection: "Songs"},
+			wantMethod: http.MethodGet,
+			wantPath:   "/replication/sharding-state",
+			wantQuery:  url.Values{"collection": {"Songs"}},
+		},
+		{
+			name: "get one shard",
+			req: &api.GetShardsRequest{
+				Collection: "Songs",
+				Shard:      "xyz",
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/replication/sharding-state",
+			wantQuery: url.Values{
+				"collection": {"Songs"},
+				"shard":      {"xyz"},
+			},
+		},
+		{
+			name: "get all nodes in the cluster",
+			req: &api.GetNodesRequest{
+				Verbosity: api.NodeVerbosityVerbose,
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/nodes",
+			wantQuery:  url.Values{"output": {"verbose"}},
+		},
+		{
+			name: "get all nodes in a collection",
+			req: &api.GetNodesRequest{
+				Collection: "Songs",
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/nodes/Songs",
+		},
+		{
+			name: "get all nodes for shard",
+			req: &api.GetNodesRequest{
+				Shard: "xyz",
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/nodes",
+			wantQuery:  url.Values{"shardName": {"xyz"}},
+		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)
@@ -1228,7 +1272,6 @@ func TestRESTResponses(t *testing.T) {
 					"virtualPerPhysical":  50,
 				},
 				ReplicationConfig: rest.ReplicationConfig{
-					AsyncEnabled:     false,
 					Factor:           6,
 					DeletionStrategy: rest.TimeBasedResolution,
 					AsyncConfig: rest.ReplicationAsyncConfig{
@@ -1309,7 +1352,6 @@ func TestRESTResponses(t *testing.T) {
 					VirtualPerPhysical:  50,
 				},
 				Replication: &api.ReplicationConfig{
-					AsyncEnabled:     false,
 					Factor:           6,
 					DeletionStrategy: api.TimeBasedResolution,
 					AsyncReplication: &api.AsyncReplicationConfig{
@@ -1939,6 +1981,98 @@ func TestRESTResponses(t *testing.T) {
 			want: &api.ListAliasesResponse{
 				{Collection: "GeorgeBarnes", Alias: "MachineGunKelly"},
 				{Collection: "LouisAttanasio", Alias: "LouieHaHa"},
+			},
+		},
+		{
+			name: "shard replicas",
+			body: &rest.ReplicationShardingStateResponse{
+				ShardingState: rest.ReplicationShardingState{
+					Shards: []rest.ReplicationShardReplicas{
+						{Shard: "abc", Replicas: []string{"abc-1", "abc-2"}},
+						{Shard: "xyz", Replicas: []string{"xyz-1", "xyz-2"}},
+					},
+				},
+			},
+			dest: new(api.GetShardsResponse),
+			want: &api.GetShardsResponse{
+				{Shard: "abc", Replicas: []string{"abc-1", "abc-2"}},
+				{Shard: "xyz", Replicas: []string{"xyz-1", "xyz-2"}},
+			},
+		},
+		{
+			name: "nodes",
+			body: &rest.NodesStatusResponse{
+				Nodes: []rest.NodeStatus{
+					{
+						Name:            "node-1",
+						Status:          rest.NodeStatusStatusHEALTHY,
+						GitHash:         "5cc3aa3",
+						Version:         "1.37.3",
+						OperationalMode: rest.ScaleOut,
+						Stats: rest.NodeStats{
+							ObjectCount: 4096,
+							ShardCount:  8,
+						},
+						Shards: []rest.NodeShardStatus{
+							{
+								Name:                 "abc",
+								Class:                "Song",
+								ObjectCount:          256,
+								Compressed:           true,
+								Loaded:               true,
+								VectorIndexingStatus: "ok",
+								VectorQueueLength:    16,
+								AsyncReplicationStatus: []rest.AsyncReplicationStatus{
+									{
+										TargetNode:              "node-2",
+										ObjectsPropagated:       1024,
+										StartDiffTimeUnixMillis: 3600,
+									},
+								},
+							},
+						},
+						BatchStats: rest.BatchStats{
+							QueueLength:   512,
+							RatePerSecond: 64,
+						},
+					},
+				},
+			},
+			dest: new(api.GetNodesResponse),
+			want: &api.GetNodesResponse{
+				{
+					Name:    "node-1",
+					Status:  api.NodeStatusHealthy,
+					GitHash: "5cc3aa3",
+					Version: "1.37.3",
+					Mode:    api.NodeModeScaleOut,
+					Stats: api.NodeStats{
+						ObjectCount: 4096,
+						ShardCount:  8,
+					},
+					Shards: []api.Shard{
+						{
+							Name:                 "abc",
+							Collection:           "Song",
+							ObjectCount:          256,
+							Compressed:           true,
+							Loaded:               true,
+							VectorIndexingStatus: "ok",
+							VectorQueueLength:    16,
+							OngoingReplications: []api.ReplicationStatus{
+								{
+									TargetNode:         "node-2",
+									ObjectsPropagated:  1024,
+									LastIterationStart: time.UnixMilli(3600),
+								},
+							},
+						},
+					},
+					BatchStats: api.BatchStats{
+						QueueLength:   512,
+						RatePerSecond: 64,
+					},
+				},
 			},
 		},
 	}) {
