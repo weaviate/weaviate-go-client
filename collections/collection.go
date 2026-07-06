@@ -39,7 +39,6 @@ type (
 		DesiredVirtualCount int
 	}
 	ReplicationConfig struct {
-		AsyncEnabled     bool                    // Enable asynchronous replication.
 		AsyncReplication *AsyncReplicationConfig // Fine-tune asynchronous replication.
 		DeletionStrategy DeletionStrategy        // Conflict resolution strategy for deleted objects.
 		Factor           int                     // Number of times a collection is replicated.
@@ -147,7 +146,6 @@ func collectionToAPI(c *Collection) api.Collection {
 
 	if c.Replication != nil {
 		out.Replication = &api.ReplicationConfig{
-			AsyncEnabled:     c.Replication.AsyncEnabled,
 			Factor:           c.Replication.Factor,
 			DeletionStrategy: api.DeletionStrategy(c.Replication.DeletionStrategy),
 			AsyncReplication: (*api.AsyncReplicationConfig)(c.Replication.AsyncReplication),
@@ -213,7 +211,6 @@ func collectionFromAPI(c *api.Collection) Collection {
 	var replication *ReplicationConfig
 	if c.Replication != nil {
 		replication = &ReplicationConfig{
-			AsyncEnabled:     c.Replication.AsyncEnabled,
 			Factor:           c.Replication.Factor,
 			DeletionStrategy: DeletionStrategy(c.Replication.DeletionStrategy),
 			AsyncReplication: (*AsyncReplicationConfig)(c.Replication.AsyncReplication),
