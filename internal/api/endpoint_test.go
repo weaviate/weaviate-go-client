@@ -1221,7 +1221,7 @@ func TestRESTRequests(t *testing.T) {
 		},
 		{
 			name:       "get replication",
-			req:        &api.GetReplicationRequest{UUID: testkit.UUID},
+			req:        &api.GetReplicationRequest{ID: testkit.UUID},
 			wantMethod: http.MethodGet,
 			wantPath:   "/replication/replicate/" + testkit.UUID.String(),
 			wantQuery:  url.Values{"includeHistory": {"false"}},

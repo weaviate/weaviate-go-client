@@ -91,14 +91,14 @@ const (
 type GetReplicationRequest struct {
 	transports.BaseEndpoint
 
-	UUID           uuid.UUID // Replication ID.
+	ID             uuid.UUID // Replication ID.
 	IncludeHistory bool      // Include history of status changes in the reply.
 }
 
 var _ transports.Endpoint = (*GetReplicationRequest)(nil)
 
 func (GetReplicationRequest) Method() string  { return http.MethodGet }
-func (r *GetReplicationRequest) Path() string { return "/replication/replicate/" + r.UUID.String() }
+func (r *GetReplicationRequest) Path() string { return "/replication/replicate/" + r.ID.String() }
 func (r *GetReplicationRequest) Query() url.Values {
 	return url.Values{
 		"includeHistory": {fmt.Sprintf("%t", r.IncludeHistory)},
