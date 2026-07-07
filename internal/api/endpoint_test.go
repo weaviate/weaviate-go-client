@@ -1200,6 +1200,66 @@ func TestRESTRequests(t *testing.T) {
 			wantPath:   "/nodes",
 			wantQuery:  url.Values{"shardName": {"xyz"}},
 		},
+		{
+			name: "create replication",
+			req: &api.CreateReplicationRequest{
+				Type:       api.ReplicationCopy,
+				Collection: "Songs",
+				Shard:      "abc",
+				Source:     "node-0",
+				Target:     "node-2",
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/replication/replicate",
+			wantBody: rest.ReplicateJSONRequestBody{
+				Type:       rest.ReplicationReplicateReplicaRequestTypeCOPY,
+				Collection: "Songs",
+				Shard:      "abc",
+				SourceNode: "node-0",
+				TargetNode: "node-2",
+			},
+		},
+		{
+			name:       "get replication",
+			req:        &api.GetReplicationRequest{ID: testkit.UUID},
+			wantMethod: http.MethodGet,
+			wantPath:   "/replication/replicate/" + testkit.UUID.String(),
+			wantQuery:  url.Values{"includeHistory": {"false"}},
+		},
+		{
+			name: "list replications",
+			req: &api.ListReplicationsRequest{
+				Collection:     "Songs",
+				Target:         "node-1",
+				IncludeHistory: true,
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/replication/replicate/list",
+			wantQuery: url.Values{
+				"includeHistory": {"true"},
+				"collection":     {"Songs"},
+				"targetNode":     {"node-1"},
+				// "shard" is not included because it's empty
+			},
+		},
+		{
+			name:       "cancel replication",
+			req:        api.CancelReplicationRequest(testkit.UUID),
+			wantMethod: http.MethodPost,
+			wantPath:   "/replication/replicate/" + testkit.UUID.String() + "/cancel",
+		},
+		{
+			name:       "delete a replication",
+			req:        api.DeleteReplicationRequest(testkit.UUID),
+			wantMethod: http.MethodDelete,
+			wantPath:   "/replication/replicate/" + testkit.UUID.String(),
+		},
+		{
+			name:       "delete all replications",
+			req:        api.DeleteAllReplicationsRequest,
+			wantMethod: http.MethodDelete,
+			wantPath:   "/replication/replicate",
+		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)
@@ -2071,6 +2131,60 @@ func TestRESTResponses(t *testing.T) {
 					BatchStats: api.BatchStats{
 						QueueLength:   512,
 						RatePerSecond: 64,
+					},
+				},
+			},
+		},
+		{
+			name: "replication info",
+			body: &rest.ReplicationReplicateDetailsReplicaResponse{
+				Type:               rest.ReplicationReplicateDetailsReplicaResponseTypeMOVE,
+				Id:                 &testkit.UUID,
+				Collection:         "Songs",
+				Shard:              "abc",
+				SourceNode:         "node-0",
+				TargetNode:         "node-1",
+				Uncancelable:       true,
+				ScheduledForCancel: true,
+				ScheduledForDelete: true,
+				WhenStartedUnixMs:  testkit.Now.UnixMilli(),
+				Status: rest.ReplicationReplicateDetailsReplicaStatus{
+					State:             rest.FINALIZING,
+					WhenStartedUnixMs: testkit.Now.UnixMilli(),
+				},
+				StatusHistory: []rest.ReplicationReplicateDetailsReplicaStatus{
+					{
+						State: rest.INTEGRATING,
+						Errors: []rest.ReplicationReplicateDetailsReplicaStatusError{
+							{Message: "Whaam!", WhenErroredUnixMs: testkit.Now.UnixMilli()},
+						},
+						WhenStartedUnixMs: testkit.Now.UnixMilli(),
+					},
+				},
+			},
+			dest: new(api.Replication),
+			want: &api.Replication{
+				Type:            api.ReplicationMove,
+				ID:              testkit.UUID,
+				Collection:      "Songs",
+				Shard:           "abc",
+				Source:          "node-0",
+				Target:          "node-1",
+				CanCancel:       false,
+				CancelScheduled: true,
+				DeleteScheduled: true,
+				StartedAt:       testkit.Now,
+				Current: api.ReplicationStage{
+					State:     api.ReplicationStateFinalizing,
+					StartedAt: testkit.Now,
+				},
+				History: []api.ReplicationStage{
+					{
+						State:     api.ReplicationStateIntegrating,
+						StartedAt: testkit.Now,
+						Errors: []api.ReplicationError{
+							{Message: "Whaam!", Time: testkit.Now},
+						},
 					},
 				},
 			},
