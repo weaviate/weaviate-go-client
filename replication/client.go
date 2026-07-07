@@ -102,7 +102,7 @@ func (c *Client) Get(ctx context.Context, options GetOptions) (*Operation, error
 
 	var resp api.Replication
 	if err := c.transport.Do(ctx, req, &resp); err != nil {
-		return nil, fmt.Errorf("create replication: %w", err)
+		return nil, fmt.Errorf("get replication: %w", err)
 	}
 
 	op := newOperation(&resp)
@@ -127,7 +127,7 @@ func (c *Client) List(ctx context.Context, options ListOptions) ([]Operation, er
 
 	var resp api.ListReplicationsResponse
 	if err := c.transport.Do(ctx, req, &resp); err != nil {
-		return nil, fmt.Errorf("create replication: %w", err)
+		return nil, fmt.Errorf("list replications: %w", err)
 	}
 
 	out := slices.Grow([]Operation(nil), len(resp))
@@ -194,7 +194,7 @@ func (c *Client) Delete(ctx context.Context, id uuid.UUID) error {
 
 // DeleteAll deletes information about all replication operations.
 func (c *Client) DeleteAll(ctx context.Context) error {
-	if err := c.transport.Do(ctx, api.DeleteReplicationRequest, nil); err != nil {
+	if err := c.transport.Do(ctx, api.DeleteAllReplicationsRequest, nil); err != nil {
 		return fmt.Errorf("delete all replications: %w", err)
 	}
 	return nil
