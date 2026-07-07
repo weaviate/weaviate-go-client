@@ -16,18 +16,19 @@ func TestNewClient(t *testing.T) {
 	}, "nil transport")
 }
 
-func TestClient_Create(t *testing.T) {
+// Move and Copy and both thin wrappers around the CreateReplication
+// request, so its enought that we test one of them.
+func TestClient_Move(t *testing.T) {
 	for _, tt := range []struct {
 		name    string
-		options replication.CreateOptions
+		options replication.MoveOptions
 		stubs   []testkit.Stub[api.CreateReplicationRequest, any]
 		want    *replication.Operation
 		err     testkit.Error // Expected error.
 	}{
 		{
 			name: "successfully",
-			options: replication.CreateOptions{
-				Type:       replication.Copy,
+			options: replication.MoveOptions{
 				Collection: "Songs",
 				Shard:      "abc",
 				Source:     "node-0",
@@ -36,15 +37,15 @@ func TestClient_Create(t *testing.T) {
 			stubs: []testkit.Stub[api.CreateReplicationRequest, any]{
 				{
 					Request: &api.CreateReplicationRequest{
-						Type:       api.ReplicationCopy,
+						Type:       api.ReplicationMove,
 						Collection: "Songs",
 						Shard:      "abc",
 						Source:     "node-0",
 						Target:     "node-1",
 					},
 					Response: api.Replication{
+						Type:       api.ReplicationMove,
 						ID:         testkit.UUID,
-						Type:       api.ReplicationCopy,
 						Collection: "Songs",
 						Shard:      "abc",
 						Source:     "node-0",
@@ -54,8 +55,8 @@ func TestClient_Create(t *testing.T) {
 				},
 			},
 			want: &replication.Operation{
+				Type:       replication.Move,
 				ID:         testkit.UUID,
-				Type:       replication.Copy,
 				Collection: "Songs",
 				Shard:      "abc",
 				Source:     "node-0",
@@ -76,8 +77,8 @@ func TestClient_Create(t *testing.T) {
 			c := replication.NewClient(transport)
 			require.NotNil(t, c, "nil client")
 
-			got, err := c.Create(t.Context(), tt.options)
-			tt.err.Require(t, err, "create error")
+			got, err := c.Move(t.Context(), tt.options)
+			tt.err.Require(t, err, "move error")
 			require.EqualExportedValues(t, tt.want, got, "returned operation")
 		})
 	}
@@ -104,8 +105,8 @@ func TestClient_Get(t *testing.T) {
 						IncludeHistory: false,
 					},
 					Response: api.Replication{
-						ID:         testkit.UUID,
 						Type:       api.ReplicationCopy,
+						ID:         testkit.UUID,
 						Collection: "Songs",
 						Shard:      "abc",
 						Source:     "node-0",
@@ -115,8 +116,8 @@ func TestClient_Get(t *testing.T) {
 				},
 			},
 			want: &replication.Operation{
-				ID:         testkit.UUID,
 				Type:       replication.Copy,
+				ID:         testkit.UUID,
 				Collection: "Songs",
 				Shard:      "abc",
 				Source:     "node-0",
@@ -168,8 +169,8 @@ func TestClient_List(t *testing.T) {
 					},
 					Response: []api.Replication{
 						{
-							ID:         testkit.UUID,
 							Type:       api.ReplicationCopy,
+							ID:         testkit.UUID,
 							Collection: "Songs",
 							Shard:      "abc",
 							Source:     "node-0",
@@ -184,8 +185,8 @@ func TestClient_List(t *testing.T) {
 			},
 			want: []replication.Operation{
 				{
-					ID:         testkit.UUID,
 					Type:       replication.Copy,
+					ID:         testkit.UUID,
 					Collection: "Songs",
 					Shard:      "abc",
 					Source:     "node-0",

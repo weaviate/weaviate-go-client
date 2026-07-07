@@ -62,18 +62,32 @@ const (
 	Move = Type(api.ReplicationMove)
 )
 
+type (
+	MoveOptions CreateOptions
+	CopyOptions CreateOptions
+)
+
+// Move starts a MOVE operation for the shard data.
+func (c *Client) Move(ctx context.Context, options MoveOptions) (*Operation, error) {
+	return c.create(ctx, api.ReplicationMove, CreateOptions(options))
+}
+
+// Copy starts a COPY operation for the shard data.
+func (c *Client) Copy(ctx context.Context, options CopyOptions) (*Operation, error) {
+	return c.create(ctx, api.ReplicationCopy, CreateOptions(options))
+}
+
 type CreateOptions struct {
-	Type       Type   // Required: Operation type.
 	Collection string // Required: Collection to be replicated.
 	Shard      string // Required: Shard to be replicated.
 	Source     string // Required: The source node.
 	Target     string // Required: The target node.
 }
 
-// Create starts a new replicatio operation.
-func (c *Client) Create(ctx context.Context, options CreateOptions) (*Operation, error) {
+// create starts a new replication operation.
+func (c *Client) create(ctx context.Context, rt api.ReplicationType, options CreateOptions) (*Operation, error) {
 	req := &api.CreateReplicationRequest{
-		Type:       api.ReplicationType(options.Type),
+		Type:       rt,
 		Collection: options.Collection,
 		Shard:      options.Shard,
 		Source:     options.Source,
