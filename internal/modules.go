@@ -67,13 +67,6 @@ func (ms *Modules) Decode(name string, raw map[string]any) (Module, error) {
 
 	dev.AssertType[Module](m, "module")
 
-	// Delegate to custom Decode hook if the module has one.
-	if d, ok := m.(interface {
-		Decode(map[string]any) (Module, error)
-	}); ok {
-		return d.Decode(raw)
-	}
-
 	// Decode using our mapstructure wrapper.
 	if err := Decode(raw, &m); err != nil {
 		return nil, err

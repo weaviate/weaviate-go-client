@@ -53,21 +53,6 @@ func TestModules(t *testing.T) {
 			assert.Subset(t, decoded.(internal.CustomModule).Raw(), raw, "map is preserved")
 		}
 	})
-
-	t.Run("custom decode hook", func(t *testing.T) {
-		helloworld := decoder{"hello": "world"}
-		ms.Register(helloworld)
-
-		foobar := decoder{"foo": "bar"}
-		encoded, err := ms.Encode(foobar)
-		require.NoError(t, err, "encode")
-		require.EqualValues(t, foobar, encoded, "encoded to its actual contents")
-
-		decoded, err := ms.Decode("decoder-module", encoded)
-		require.NoError(t, err, "decode")
-		require.Subset(t, decoded, helloworld, "contains custom values")
-		require.NotSubset(t, decoded, foobar, "contains unexpected values")
-	})
 }
 
 // module implements [internal.Module] for a simple struct.
@@ -85,13 +70,3 @@ type invalid int
 var _ internal.Module = (*invalid)(nil)
 
 func (invalid) Name() string { return "bad-module" }
-
-// decoder always returns its initial value on Decode.
-type decoder map[string]any
-
-var _ internal.Module = (*decoder)(nil)
-
-func (decoder) Name() string { return "decoder-module" }
-func (d decoder) Decode(map[string]any) (internal.Module, error) {
-	return d, nil
-}
