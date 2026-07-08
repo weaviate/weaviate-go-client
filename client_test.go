@@ -2,6 +2,7 @@ package weaviate_test
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -15,6 +16,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/auth"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
+	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 	"golang.org/x/oauth2"
 )
 
@@ -425,4 +427,62 @@ type spyCloser bool
 func (spy *spyCloser) Close() error {
 	*spy = true
 	return nil
+}
+
+func TestClientHTTPError(t *testing.T) {
+	newFunc := transport.New
+	t.Cleanup(func() { transport.New = newFunc })
+
+	for _, tt := range []struct {
+		err  error
+		want *weaviate.HTTPError
+	}{
+		{
+			err: &transports.HTTPError{
+				Code: http.StatusBadRequest,
+				Body: "Bad Request",
+			},
+			want: &weaviate.HTTPError{
+				Code: http.StatusBadRequest,
+				Body: "Bad Request",
+			},
+		},
+		{
+			err: fmt.Errorf("more context: %w", &transports.HTTPError{
+				Code: http.StatusBadRequest,
+				Body: "Bad Request",
+			}),
+			want: &weaviate.HTTPError{
+				Code: http.StatusBadRequest,
+				Body: "Bad Request",
+			},
+		},
+		{
+			err:  testkit.ErrWhaam,
+			want: nil,
+		},
+	} {
+		t.Run(fmt.Sprintf("%T=%t", tt.err, tt.want == nil), func(t *testing.T) {
+			transport.New = func(context.Context, transport.Config) (internal.Transport, error) {
+				return testkit.TransportFunc(func(context.Context, any, any) error {
+					return tt.err
+				}), nil
+			}
+
+			c, err := weaviate.NewClient(t.Context())
+			assert.NoError(t, err, "new client")
+			require.NotNil(t, c, "nil client")
+
+			_, err = c.IsLive(t.Context())
+
+			if tt.want == nil {
+				assert.NotErrorIs(t, err, tt.want)
+			} else {
+				var got *weaviate.HTTPError
+				if assert.ErrorAs(t, err, &got) {
+					assert.EqualExportedValues(t, tt.want, got)
+				}
+			}
+		})
+	}
 }
