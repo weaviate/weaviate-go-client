@@ -27,7 +27,7 @@ func Decode[T any](m map[string]any, dest *T) error {
 // Decode is a thin wrapper around mapstructure.Decode
 // that encodes a Go struct into a map[string]any.
 // It uses "json" tags instead of the default "mapstructure".
-func Encode[T any](v *T, dest map[string]any) error {
+func Encode(v any, dest map[string]any) error {
 	d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		TagName: tagName,
 		Result:  &dest,
