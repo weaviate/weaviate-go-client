@@ -126,6 +126,14 @@ func TestClient_Create(t *testing.T) {
 						Collections: []string{"Singers", "Bands"},
 					},
 				},
+				Vectors: map[string]collections.VectorConfig{
+					"lyrics_vec": {},
+					"title_vec": {
+						Vectorizer: testkit.Module{
+							"url": "example.com",
+						},
+					},
+				},
 				Sharding: &collections.ShardingConfig{
 					DesiredCount:        3,
 					DesiredVirtualCount: 150,
@@ -206,6 +214,14 @@ func TestClient_Create(t *testing.T) {
 								{
 									Name:        "artist",
 									Collections: []string{"Singers", "Bands"},
+								},
+							},
+							Vectors: map[string]api.VectorConfig{
+								"lyrics_vec": {},
+								"title_vec": {
+									Vectorizer: testkit.Module{
+										"url": "example.com",
+									},
 								},
 							},
 							Sharding: &api.ShardingConfig{
@@ -355,6 +371,14 @@ func TestClient_GetConfig(t *testing.T) {
 								Collections: []string{"Singers", "Bands"},
 							},
 						},
+						Vectors: map[string]api.VectorConfig{
+							"lyrics_vec": {},
+							"title_vec": {
+								Vectorizer: testkit.Module{
+									"url": "example.com",
+								},
+							},
+						},
 						Sharding: &api.ShardingConfig{
 							DesiredCount:        3,
 							DesiredVirtualCount: 150,
@@ -434,6 +458,14 @@ func TestClient_GetConfig(t *testing.T) {
 					{
 						Name:        "artist",
 						Collections: []string{"Singers", "Bands"},
+					},
+				},
+				Vectors: map[string]collections.VectorConfig{
+					"lyrics_vec": {},
+					"title_vec": {
+						Vectorizer: testkit.Module{
+							"url": "example.com",
+						},
 					},
 				},
 				Sharding: &collections.ShardingConfig{

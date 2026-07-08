@@ -5,9 +5,15 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
+	"github.com/weaviate/weaviate-go-client/v6/modules"
 )
+
+func init() {
+	modules.Register(*new(noneVectorizer))
+}
 
 type (
 	Collection struct {
@@ -15,6 +21,7 @@ type (
 		Description   string
 		Properties    []Property
 		References    []ReferenceProperty
+		Vectors       map[string]VectorConfig
 		Sharding      *ShardingConfig
 		Replication   *ReplicationConfig
 		InvertedIndex *InvertedIndexConfig
@@ -71,6 +78,33 @@ type (
 	StopwordConfig     rest.StopwordConfig
 	MultiTenancyConfig rest.MultiTenancyConfig
 )
+
+type VectorConfig struct {
+	// Index any // TODO(dyma)
+	// Compression any // TODO(dyma)
+
+	// Vectorizer module. If no module is selected, the field should be set
+	// to an implementation encoding the "none" option for this module kind.
+	// The value is encoded via [modules.Encode] and does not receive any
+	// special treatment in this package.
+	Vectorizer modules.Module
+}
+
+// noneVectorizer serializes as `"none": {}`, which is a special value
+// the server expects if no vectorizer module should be configured.
+//
+// The client will replace any nil [VectorConfig.Vectorizer] with noneVectorizer on write.
+// On read, the custom Decode hook ensures the user continues to see a nil.
+//
+// It is defined here in internal/api and not in the public modules package
+// because it really is a quirk of the server that the end user should not
+// need to be concerned with.
+type noneVectorizer struct{}
+
+var _ modules.Module = (*noneVectorizer)(nil)
+
+func (noneVectorizer) Name() string                                   { return "none" }
+func (noneVectorizer) Decode(map[string]any) (internal.Module, error) { return nil, nil }
 
 const (
 	FieldUUID          = "_id"
@@ -178,7 +212,7 @@ var (
 	_ json.Unmarshaler = (*Collection)(nil)
 )
 
-// MarshaJSON marshals Collection via [rest.Class].
+// MarshalJSON marshals Collection via [rest.Class].
 func (c *Collection) MarshalJSON() ([]byte, error) {
 	properties := make([]rest.Property, len(c.Properties)+len(c.References))
 	for i, p := range c.Properties {
@@ -200,10 +234,36 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	vectors := internal.MakeMap[string, rest.VectorConfig](len(c.Vectors))
+	for k, v := range c.Vectors {
+		var indexType string
+		var indexConf map[string]any
+		// if v.Index != nil {
+		// 	indexType = v.Index.Type()
+		// }
+
+		if v.Vectorizer == nil {
+			v.Vectorizer = new(noneVectorizer)
+		}
+		vectorizer, err := modules.Encode(v.Vectorizer)
+		if err != nil {
+			return nil, err
+		}
+
+		vectors[k] = rest.VectorConfig{
+			VectorIndexType:   indexType,
+			VectorIndexConfig: indexConf,
+			Vectorizer: map[string]any{
+				v.Vectorizer.Name(): vectorizer,
+			},
+		}
+	}
+
 	out := &rest.Class{
-		Class:       c.Name,
-		Description: c.Description,
-		Properties:  properties,
+		Class:        c.Name,
+		Description:  c.Description,
+		Properties:   properties,
+		VectorConfig: vectors,
 	}
 
 	if c.Sharding != nil {
@@ -317,6 +377,25 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 		}
 	}
 
+	vectors := internal.MakeMap[string, VectorConfig](len(class.VectorConfig))
+	for k, v := range class.VectorConfig {
+		var vectorizer modules.Module
+		var err error
+		for name, raw := range v.Vectorizer {
+			if m, ok := raw.(map[string]any); ok {
+				vectorizer, err = modules.Decode(name, m)
+			}
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		vectors[k] = VectorConfig{
+			Vectorizer: vectorizer,
+		}
+	}
+
 	var sharding ShardingConfig
 	if len(class.ShardingConfig) > 0 {
 		// In case any of the fields are not ints, the cast will return a zero value.
@@ -331,6 +410,7 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 		Description: class.Description,
 		Properties:  properties,
 		References:  references,
+		Vectors:     vectors,
 		Replication: &ReplicationConfig{
 			Factor:           class.ReplicationConfig.Factor,
 			DeletionStrategy: DeletionStrategy(class.ReplicationConfig.DeletionStrategy),

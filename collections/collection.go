@@ -1,6 +1,7 @@
 package collections
 
 import (
+	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
@@ -14,6 +15,7 @@ type (
 		Description   string
 		Properties    []Property
 		References    []Reference
+		Vectors       map[string]VectorConfig
 		Sharding      *ShardingConfig
 		Replication   *ReplicationConfig
 		InvertedIndex *InvertedIndexConfig
@@ -57,6 +59,8 @@ type (
 	StopwordConfig     api.StopwordConfig
 	MultiTenancyConfig api.MultiTenancyConfig
 )
+
+type VectorConfig api.VectorConfig
 
 // DataType defines supported property data types.
 type DataType api.DataType
@@ -128,11 +132,17 @@ func collectionToAPI(c *Collection) api.Collection {
 		}
 	}
 
+	vectors := internal.MakeMap[string, api.VectorConfig](len(c.Vectors))
+	for k, v := range c.Vectors {
+		vectors[k] = api.VectorConfig(v)
+	}
+
 	out := api.Collection{
 		Name:         c.Name,
 		Description:  c.Description,
 		Properties:   properties,
 		References:   references,
+		Vectors:      vectors,
 		MultiTenancy: (*api.MultiTenancyConfig)(c.MultiTenancy),
 	}
 
@@ -199,6 +209,11 @@ func collectionFromAPI(c *api.Collection) Collection {
 		}
 	}
 
+	vectors := internal.MakeMap[string, VectorConfig](len(c.Vectors))
+	for k, v := range c.Vectors {
+		vectors[k] = VectorConfig(v)
+	}
+
 	var sharding *ShardingConfig
 	if c.Sharding != nil {
 		sharding = &ShardingConfig{
@@ -235,6 +250,7 @@ func collectionFromAPI(c *api.Collection) Collection {
 		Description:   c.Description,
 		Properties:    properties,
 		References:    references,
+		Vectors:       vectors,
 		Sharding:      sharding,
 		Replication:   replication,
 		InvertedIndex: invertedIndex,
