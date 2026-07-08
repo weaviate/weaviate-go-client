@@ -86,7 +86,7 @@ var _ internal.Module = (*invalid)(nil)
 
 func (invalid) Name() string { return "bad-module" }
 
-// decoder always decodes to the same map set by v.
+// decoder always returns its initial value on Decode.
 type decoder map[string]any
 
 var _ internal.Module = (*decoder)(nil)
