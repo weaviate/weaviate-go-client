@@ -217,10 +217,15 @@ func TestClient_Create(t *testing.T) {
 								},
 							},
 							Vectors: map[string]api.VectorConfig{
-								"lyrics_vec": {},
+								"lyrics_vec": {
+									Vectorizer: api.NoneVectorizer,
+								},
 								"title_vec": {
-									Vectorizer: testkit.Module{
-										"url": "example.com",
+									Vectorizer: api.Module{
+										Name: testkit.ModuleName,
+										Conf: map[string]any{
+											"url": "example.com",
+										},
 									},
 								},
 							},
@@ -372,10 +377,15 @@ func TestClient_GetConfig(t *testing.T) {
 							},
 						},
 						Vectors: map[string]api.VectorConfig{
-							"lyrics_vec": {},
+							"lyrics_vec": {
+								Vectorizer: api.NoneVectorizer,
+							},
 							"title_vec": {
-								Vectorizer: testkit.Module{
-									"url": "example.com",
+								Vectorizer: api.Module{
+									Name: testkit.ModuleName,
+									Conf: map[string]any{
+										"url": "example.com",
+									},
 								},
 							},
 						},

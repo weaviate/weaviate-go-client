@@ -196,11 +196,16 @@ func TestRESTRequests(t *testing.T) {
 					},
 					Vectors: map[string]api.VectorConfig{
 						"lyrics_vec": {
-							Vectorizer: testkit.Module{
-								"url": "example.com",
+							Vectorizer: api.Module{
+								Name: testkit.ModuleName,
+								Conf: map[string]any{
+									"url": "example.com",
+								},
 							},
 						},
-						"title_vec": {}, // none vectorizer
+						"title_vec": {
+							Vectorizer: api.NoneVectorizer,
+						},
 					},
 					Sharding: &api.ShardingConfig{
 						DesiredCount:        3,
@@ -1444,11 +1449,16 @@ func TestRESTResponses(t *testing.T) {
 				},
 				Vectors: map[string]api.VectorConfig{
 					"lyrics_vec": {
-						Vectorizer: testkit.Module{
-							"url": "example.com",
+						Vectorizer: api.Module{
+							Name: testkit.ModuleName,
+							Conf: map[string]any{
+								"url": "example.com",
+							},
 						},
 					},
-					"title_vec": {},
+					"title_vec": {
+						Vectorizer: api.NoneVectorizer,
+					},
 				},
 				Sharding: &api.ShardingConfig{
 					DesiredCount:        3,
