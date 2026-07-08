@@ -287,6 +287,12 @@ func expireEarly(src oauth2.TokenSource) (oauth2.TokenSource, error) {
 // about when the old one expires. A failed attempt to fetch the token
 // is not retried and the function exits early. It is safe to call with
 // a nil src.
+//
+// The ticker is intentionally a function and not a [time.Ticker]
+// or even the chan time.Time itself. The expiration may vary from
+// between tokens, so using a ticker with constant interval would
+// be incorrect. This does create more garbage, as [time.After] creates
+// a fresh [time.Ticker] on every iteration.
 func tokenKeepalive(ctx context.Context, src oauth2.TokenSource, tickFunc func(time.Duration) <-chan time.Time) {
 	if src == nil {
 		return
