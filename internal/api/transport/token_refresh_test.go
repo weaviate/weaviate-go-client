@@ -33,11 +33,9 @@ func TestTokenKeepalive(t *testing.T) {
 		defer close(c)
 
 		// tick asserts that the caller tried to set the timer for the right duration,
-		// then returns a channel that can be read from immediately.
+		// then returns a channel we can feed time.Time on to drive the goroutine.
 		tick := func(d time.Duration) <-chan time.Time {
 			assert.Equal(t, time.Duration(92)*time.Second, d, "must try to sleep for %ds", 92)
-
-			// time.After(0) and the underlying time.NewTicker(0) panic on 0 input.
 			return c
 		}
 
