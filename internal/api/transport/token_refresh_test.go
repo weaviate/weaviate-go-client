@@ -29,23 +29,31 @@ func TestTokenKeepalive(t *testing.T) {
 			Expiry:    testkit.Now.Add(92 * time.Second),
 		}}
 
-		// Act
-		go tokenKeepalive(ctx, &src, func(d time.Duration) <-chan time.Time {
-			assert.Equal(t, time.Duration(92)*time.Second, d, "must try to sleep for %ds", 92)
-			return time.After(2 * time.Millisecond)
-		})
+		c := make(chan time.Time)
+		defer close(c)
 
-		time.Sleep(10 * time.Millisecond)
+		// tick asserts that the caller tried to set the timer for the right duration,
+		// then returns a channel that can be read from immediately.
+		tick := func(d time.Duration) <-chan time.Time {
+			assert.Equal(t, time.Duration(92)*time.Second, d, "must try to sleep for %ds", 92)
+
+			// time.After(0) and the underlying time.NewTicker(0) panic on 0 input.
+			return c
+		}
+
+		// Act
+		go tokenKeepalive(ctx, &src, tick)
+
+		// Wait until tokenKeepaline has received from this channel at least once.
+		// Then cancel the context.
+		c <- time.Now()
 		cancel()
 
 		// Assert
-		require.Greater(t, src.used, 1, "expect src.Token() to be used in the background")
+		assert.GreaterOrEqual(t, src.used, 1, "expect src.Token() to be used in the background")
 
 		src.used = 0
-		time.Sleep(5 * time.Millisecond)
-
-		// FIXME(dyma): this can flake
-		require.Zero(t, src.used, "no src.Token() after context is canceled")
+		assert.Zero(t, src.used, "no src.Token() after context is canceled")
 	})
 }
 
