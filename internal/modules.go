@@ -19,6 +19,17 @@ type CustomModule interface {
 	Raw() map[string]any
 }
 
+// Modules is a registry of modules keyed by their [Module.Name].
+//
+// In addition to module registration, it supports encoding the
+// module as a map[string]any and decoding a map back into the type
+// registerred for the key.
+//
+// N.B.: before being sent to the server, each module is ultimately
+// encoded into a JSON string, and is decoded from a JSON string on read.
+// The reason Encode/Decode do not work with [json.RawMessage] or a plain
+// []byte is that internal/gen/rest/modules.go reads module configuration
+// into interface{}, which json package specializes to map[string]any.
 type Modules struct {
 	registry sync.Map // Module registry.
 }
