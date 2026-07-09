@@ -365,10 +365,11 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 
 	vectors := internal.MakeMap[string, VectorConfig](len(class.VectorConfig))
 	for k, v := range class.VectorConfig {
-		var vectorizer *Module
+		var vc VectorConfig
+
 		for name, raw := range v.Vectorizer {
 			if conf, ok := raw.(map[string]any); ok && name != noneVectorizer.Name {
-				vectorizer = &Module{
+				vc.Vectorizer = &Module{
 					Name: name,
 					Conf: conf,
 				}
@@ -376,9 +377,14 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 			break
 		}
 
-		vectors[k] = VectorConfig{
-			Vectorizer: vectorizer,
+		if v.VectorIndexConfig != nil {
+			vc.Index = &Module{
+				Name: v.VectorIndexType,
+				Conf: v.VectorIndexConfig,
+			}
 		}
+
+		vectors[k] = vc
 	}
 
 	var sharding ShardingConfig
