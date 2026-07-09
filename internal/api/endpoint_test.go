@@ -202,16 +202,14 @@ func TestRESTRequests(t *testing.T) {
 									"distance": "cosine",
 								},
 							},
-							Vectorizer: api.Module{
+							Vectorizer: &api.Module{
 								Name: testkit.ModuleName,
 								Conf: map[string]any{
 									"url": "example.com",
 								},
 							},
 						},
-						"title_vec": {
-							Vectorizer: api.NoneVectorizer,
-						},
+						"title_vec": {},
 					},
 					Sharding: &api.ShardingConfig{
 						DesiredCount:        3,
@@ -1459,16 +1457,14 @@ func TestRESTResponses(t *testing.T) {
 				},
 				Vectors: map[string]api.VectorConfig{
 					"lyrics_vec": {
-						Vectorizer: api.Module{
+						Vectorizer: &api.Module{
 							Name: testkit.ModuleName,
 							Conf: map[string]any{
 								"url": "example.com",
 							},
 						},
 					},
-					"title_vec": {
-						Vectorizer: api.NoneVectorizer,
-					},
+					"title_vec": {},
 				},
 				Sharding: &api.ShardingConfig{
 					DesiredCount:        3,

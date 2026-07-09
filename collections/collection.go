@@ -161,14 +161,12 @@ func collectionToAPI(c *Collection) (api.Collection, error) {
 			}
 		}
 
-		if v.Vectorizer == nil {
-			vc.Vectorizer = api.NoneVectorizer
-		} else {
+		if v.Vectorizer != nil {
 			conf, err := modules.Registry.Encode(v.Vectorizer)
 			if err != nil {
 				return api.Collection{}, err
 			}
-			vc.Vectorizer = api.Module{
+			vc.Vectorizer = &api.Module{
 				Name: v.Vectorizer.Name(),
 				Conf: conf,
 			}
@@ -261,7 +259,7 @@ func collectionFromAPI(c *api.Collection) (Collection, error) {
 			vc.Index = conf
 		}
 
-		if v.Vectorizer.Name != api.NoneVectorizer.Name {
+		if v.Vectorizer != nil {
 			conf, err := modules.Registry.Decode(v.Vectorizer.Name, v.Vectorizer.Conf)
 			if err != nil {
 				return Collection{}, err
