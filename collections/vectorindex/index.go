@@ -4,8 +4,6 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 )
 
-type Module internal.Module[Type]
-
 // Registry stores all vector index types defined by this package.
 var Registry internal.Modules[Type]
 
