@@ -16,23 +16,14 @@ import (
 )
 
 type (
-	Module internal.Module
-	Custom internal.CustomModule
+	Module internal.Module[string]
+	Custom internal.CustomModule[string]
 )
 
-var registry internal.Modules
+// Registry stores all modules registered with this package.
+var Registry internal.Modules[string]
 
+// Register a module to the package's [Registry].
 func Register(m Module) {
-	registry.Register(m)
-}
-
-// Encode creates a map of all public fields of the module struct.
-func Encode(m Module) (map[string]any, error) {
-	return registry.Encode(m)
-}
-
-// Decode creates a new instance of the module struct.
-// The type depends on the type registered for the name.
-func Decode(name string, raw map[string]any) (Module, error) {
-	return registry.Decode(name, raw)
+	Registry.Register(m)
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
+	"github.com/weaviate/weaviate-go-client/v6/collections/vectorindex"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/types"
@@ -132,6 +133,12 @@ func TestClient_Create(t *testing.T) {
 						Vectorizer: testkit.Module{
 							"url": "example.com",
 						},
+						Index: vectorindex.HFresh{
+							Distance:         vectorindex.DistanceCosine,
+							MaxPostingSizeKB: 1024,
+							ReplicaCount:     8,
+							SearchProbe:      64,
+						},
 					},
 				},
 				Sharding: &collections.ShardingConfig{
@@ -225,6 +232,15 @@ func TestClient_Create(t *testing.T) {
 										Name: testkit.ModuleName,
 										Conf: map[string]any{
 											"url": "example.com",
+										},
+									},
+									Index: &api.Module{
+										Name: "hfresh",
+										Conf: map[string]any{
+											"distance":         vectorindex.DistanceCosine,
+											"maxPostingSizeKB": 1024,
+											"replicas":         8,
+											"searchProbe":      64,
 										},
 									},
 								},
@@ -387,6 +403,15 @@ func TestClient_GetConfig(t *testing.T) {
 										"url": "example.com",
 									},
 								},
+								Index: &api.Module{
+									Name: "hfresh",
+									Conf: map[string]any{
+										"distance":         vectorindex.DistanceCosine,
+										"maxPostingSizeKB": 1024,
+										"replicas":         8,
+										"searchProbe":      64,
+									},
+								},
 							},
 						},
 						Sharding: &api.ShardingConfig{
@@ -475,6 +500,12 @@ func TestClient_GetConfig(t *testing.T) {
 					"title_vec": {
 						Vectorizer: testkit.Module{
 							"url": "example.com",
+						},
+						Index: vectorindex.HFresh{
+							Distance:         vectorindex.DistanceCosine,
+							MaxPostingSizeKB: 1024,
+							ReplicaCount:     8,
+							SearchProbe:      64,
 						},
 					},
 				},

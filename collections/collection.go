@@ -1,6 +1,7 @@
 package collections
 
 import (
+	"github.com/weaviate/weaviate-go-client/v6/collections/vectorindex"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
@@ -61,14 +62,17 @@ type (
 	MultiTenancyConfig api.MultiTenancyConfig
 )
 
+type VectorIndex internal.Module[vectorindex.Type]
+
 type VectorConfig struct {
-	// Index any // TODO(dyma)
+	Index VectorIndex
 	// Compression any // TODO(dyma)
 
 	// Vectorizer module. If no module is selected, the field should be set
 	// to an implementation encoding the "none" option for this module kind.
 	// The value is encoded via [modules.Encode] and does not receive any
 	// special treatment in this package.
+	// See v6/modules package for available vectorizers.
 	Vectorizer modules.Module
 }
 
@@ -144,29 +148,33 @@ func collectionToAPI(c *Collection) (api.Collection, error) {
 
 	vectors := internal.MakeMap[string, api.VectorConfig](len(c.Vectors))
 	for k, v := range c.Vectors {
-		// var indexType string
-		// var indexConf map[string]any
-		// if v.Index != nil {
-		// 	indexType = v.Index.Type()
-		// }
+		var vc api.VectorConfig
 
-		var vectorizer api.Module
-		if v.Vectorizer == nil {
-			vectorizer = api.NoneVectorizer
-		} else {
-			conf, err := modules.Encode(v.Vectorizer)
+		if v.Index != nil {
+			conf, err := vectorindex.Registry.Encode(v.Index)
 			if err != nil {
 				return api.Collection{}, err
 			}
-			vectorizer = api.Module{
+			vc.Index = &api.Module{
+				Name: string(v.Index.Name()),
+				Conf: conf,
+			}
+		}
+
+		if v.Vectorizer == nil {
+			vc.Vectorizer = api.NoneVectorizer
+		} else {
+			conf, err := modules.Registry.Encode(v.Vectorizer)
+			if err != nil {
+				return api.Collection{}, err
+			}
+			vc.Vectorizer = api.Module{
 				Name: v.Vectorizer.Name(),
 				Conf: conf,
 			}
 		}
 
-		vectors[k] = api.VectorConfig{
-			Vectorizer: vectorizer,
-		}
+		vectors[k] = vc
 	}
 
 	out := api.Collection{
@@ -243,18 +251,24 @@ func collectionFromAPI(c *api.Collection) (Collection, error) {
 
 	vectors := internal.MakeMap[string, VectorConfig](len(c.Vectors))
 	for k, v := range c.Vectors {
+		var vc VectorConfig
 
-		var vectorizer modules.Module
-		if v.Vectorizer.Name != api.NoneVectorizer.Name {
-			conf, err := modules.Decode(v.Vectorizer.Name, v.Vectorizer.Conf)
+		if v.Index != nil {
+			conf, err := vectorindex.Registry.Decode(v.Index.Name, v.Index.Conf)
 			if err != nil {
 				return Collection{}, err
 			}
-			vectorizer = conf
+			vc.Index = conf
 		}
-		vectors[k] = VectorConfig{
-			Vectorizer: vectorizer,
+
+		if v.Vectorizer.Name != api.NoneVectorizer.Name {
+			conf, err := modules.Registry.Decode(v.Vectorizer.Name, v.Vectorizer.Conf)
+			if err != nil {
+				return Collection{}, err
+			}
+			vc.Vectorizer = conf
 		}
+		vectors[k] = vc
 	}
 
 	var sharding *ShardingConfig

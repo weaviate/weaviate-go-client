@@ -75,8 +75,10 @@ type (
 )
 
 type VectorConfig struct {
-	// Index any // TODO(dyma)
 	// Compression any // TODO(dyma)
+
+	// Vector index configuration.
+	Index *Module
 
 	// Vectorizer module.
 	Vectorizer Module
@@ -361,7 +363,6 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 	vectors := internal.MakeMap[string, VectorConfig](len(class.VectorConfig))
 	for k, v := range class.VectorConfig {
 		var vectorizer Module
-		var err error
 		for name, raw := range v.Vectorizer {
 			if conf, ok := raw.(map[string]any); ok {
 				vectorizer = Module{
@@ -370,9 +371,6 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 				}
 			}
 			break
-		}
-		if err != nil {
-			return err
 		}
 
 		vectors[k] = VectorConfig{
