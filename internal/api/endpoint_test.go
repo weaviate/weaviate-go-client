@@ -196,6 +196,12 @@ func TestRESTRequests(t *testing.T) {
 					},
 					Vectors: map[string]api.VectorConfig{
 						"lyrics_vec": {
+							Index: &api.Module{
+								Name: "hfresh",
+								Conf: map[string]any{
+									"distance": "cosine",
+								},
+							},
 							Vectorizer: api.Module{
 								Name: testkit.ModuleName,
 								Conf: map[string]any{
@@ -289,6 +295,10 @@ func TestRESTRequests(t *testing.T) {
 				},
 				VectorConfig: map[string]rest.VectorConfig{
 					"lyrics_vec": {
+						VectorIndexType: "hfresh",
+						VectorIndexConfig: map[string]any{
+							"distance": "cosine",
+						},
 						Vectorizer: map[string]any{
 							testkit.ModuleName: map[string]any{
 								"url": "example.com",

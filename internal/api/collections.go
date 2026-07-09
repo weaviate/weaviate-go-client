@@ -230,8 +230,12 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 
 	vectors := internal.MakeMap[string, rest.VectorConfig](len(c.Vectors))
 	for k, v := range c.Vectors {
-		var indexType string         // TODO(dyma)
-		var indexConf map[string]any // TODO(dyma)
+		var indexType string
+		var indexConf map[string]any
+
+		if v.Index != nil {
+			indexType, indexConf = v.Index.Name, v.Index.Conf
+		}
 
 		vectors[k] = rest.VectorConfig{
 			VectorIndexType:   indexType,
