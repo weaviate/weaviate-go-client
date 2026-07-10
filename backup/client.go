@@ -38,11 +38,9 @@ type Info struct {
 	// this value only exists for completed backups.
 	SizeGiB *float32
 
-	// IncrementalBaseBackupID is the ID of the base backup this incremental
-	// backup was built on. It is empty when the backup is not incremental.
-	// It is populated for status and list responses on backups created with
-	// PrefixIncremental set.
-	IncrementalBaseBackupID string
+	// BaseBackupID is the ID of the backup this incremental backup was built on.
+	// This field is empty if the backup is not incremental.
+	BaseBackupID string
 
 	c         *Client
 	operation api.BackupOperation
@@ -93,7 +91,7 @@ type CreateOptions struct {
 	Bucket             string           // Dedicated bucket name.
 	IncludeCollections []string         // Collections to be included in the backup.
 	ExcludeCollections []string         // Collections to be excluded from the backup.
-	PrefixIncremental  string           // Backup ID prefix. Setting it enables incremental backups.
+	BaseBackupID       string           // BaseBackupID for an incremental backup.
 	MaxCPUPercentage   int              // Maximum %CPU utilization.
 	ChunkSizeMiB       int              // Target chunk size in MiB.
 	CompressionLevel   CompressionLevel // Hint for selecting the optimal compression algorithm.
@@ -109,7 +107,7 @@ func (c *Client) Create(ctx context.Context, options CreateOptions) (*Info, erro
 		Endpoint:           options.Endpoint,
 		IncludeCollections: options.IncludeCollections,
 		ExcludeCollections: options.ExcludeCollections,
-		PrefixIncremental:  options.PrefixIncremental,
+		BaseBackupID:       options.BaseBackupID,
 		MaxCPUPercentage:   options.MaxCPUPercentage,
 		ChunkSizeMiB:       options.ChunkSizeMiB,
 		CompressionLevel:   api.BackupCompressionLevel(options.CompressionLevel),
@@ -254,14 +252,13 @@ func infoFromAPI(bak *api.BackupInfo, c *Client, op api.BackupOperation) Info {
 		ID:                  bak.ID,
 		Path:                bak.Path,
 		Backend:             bak.Backend,
+		BaseBackupID:        bak.BaseBackupID,
 		Status:              Status(bak.Status),
 		Error:               bak.Error,
 		StartedAt:           bak.StartedAt,
 		CompletedAt:         bak.CompletedAt,
 		IncludesCollections: bak.IncludesCollections,
 		SizeGiB:             bak.SizeGiB,
-
-		IncrementalBaseBackupID: bak.IncrementalBaseBackupID,
 
 		operation: op,
 		c:         c,

@@ -34,7 +34,7 @@ func TestClient_Create(t *testing.T) {
 				Bucket:             "my-backups",
 				IncludeCollections: []string{"Songs"},
 				ExcludeCollections: []string{"Pizza"},
-				PrefixIncremental:  "incr-bak-",
+				BaseBackupID:       "bak-0",
 				MaxCPUPercentage:   92,
 				ChunkSizeMiB:       20,
 				CompressionLevel:   backup.CompressionLevelDefault,
@@ -49,7 +49,7 @@ func TestClient_Create(t *testing.T) {
 						Bucket:             "my-backups",
 						IncludeCollections: []string{"Songs"},
 						ExcludeCollections: []string{"Pizza"},
-						PrefixIncremental:  "incr-bak-",
+						BaseBackupID:       "bak-0",
 						MaxCPUPercentage:   92,
 						ChunkSizeMiB:       20,
 						CompressionLevel:   api.BackupCompressionLevelDefault,
@@ -191,15 +191,15 @@ func TestClient_List(t *testing.T) {
 						StartingTimeAsc: true,
 					},
 					Response: []api.BackupInfo{
-						{ID: "bak-1"},
-						{ID: "bak-2"},
+						{ID: "bak-1", BaseBackupID: "bak-0"},
+						{ID: "bak-2", BaseBackupID: "bak-1"},
 						{ID: "bak-3"},
 					},
 				},
 			},
 			want: []backup.Info{
-				{ID: "bak-1"},
-				{ID: "bak-2"},
+				{ID: "bak-1", BaseBackupID: "bak-0"},
+				{ID: "bak-2", BaseBackupID: "bak-1"},
 				{ID: "bak-3"},
 			},
 		},
@@ -221,111 +221,6 @@ func TestClient_List(t *testing.T) {
 			require.EqualExportedValues(t, tt.want, got, "returned info")
 		})
 	}
-}
-
-// TestClient_IncrementalBaseBackupID verifies that the IncrementalBaseBackupID
-// returned by the server is surfaced on backup.Info for both the create-status
-// getter and the list endpoint, and that it stays empty for non-incremental
-// backups. This mirrors the behavior added on main (commit 480aa7e), adapted to
-// v6's mock-based client tests.
-func TestClient_IncrementalBaseBackupID(t *testing.T) {
-	const (
-		backend      = "filesystem"
-		baseBackupID = "incr-base-1"
-		incrBackupID = "incr-child-1"
-	)
-
-	t.Run("create status surfaces IncrementalBaseBackupID", func(t *testing.T) {
-		stubs := []testkit.Stub[api.BackupStatusRequest, api.BackupInfo]{
-			{
-				Request: &api.BackupStatusRequest{
-					Backend:   backend,
-					ID:        incrBackupID,
-					Operation: api.BackupOperationCreate,
-				},
-				Response: api.BackupInfo{
-					Backend:                 backend,
-					ID:                      incrBackupID,
-					Status:                  api.BackupStatusSuccess,
-					IncrementalBaseBackupID: baseBackupID,
-				},
-			},
-		}
-		transport := testkit.NewTransport(t, stubs)
-		c := backup.NewClient(transport)
-		require.NotNil(t, c, "nil client")
-
-		got, err := c.GetCreateStatus(t.Context(), backup.GetStatusOptions{
-			Backend: backend,
-			ID:      incrBackupID,
-		})
-		require.NoError(t, err, "get create status")
-		require.NotNil(t, got, "nil info")
-		require.Equal(t, baseBackupID, got.IncrementalBaseBackupID,
-			"IncrementalBaseBackupID should match the base backup ID")
-	})
-
-	t.Run("create status leaves IncrementalBaseBackupID empty for base backup", func(t *testing.T) {
-		stubs := []testkit.Stub[api.BackupStatusRequest, api.BackupInfo]{
-			{
-				Request: &api.BackupStatusRequest{
-					Backend:   backend,
-					ID:        baseBackupID,
-					Operation: api.BackupOperationCreate,
-				},
-				Response: api.BackupInfo{
-					Backend: backend,
-					ID:      baseBackupID,
-					Status:  api.BackupStatusSuccess,
-				},
-			},
-		}
-		transport := testkit.NewTransport(t, stubs)
-		c := backup.NewClient(transport)
-		require.NotNil(t, c, "nil client")
-
-		got, err := c.GetCreateStatus(t.Context(), backup.GetStatusOptions{
-			Backend: backend,
-			ID:      baseBackupID,
-		})
-		require.NoError(t, err, "get create status")
-		require.NotNil(t, got, "nil info")
-		require.Empty(t, got.IncrementalBaseBackupID,
-			"base backup should not have IncrementalBaseBackupID")
-	})
-
-	t.Run("list surfaces IncrementalBaseBackupID", func(t *testing.T) {
-		stubs := []testkit.Stub[api.ListBackupsRequest, []api.BackupInfo]{
-			{
-				Request: &api.ListBackupsRequest{Backend: backend},
-				Response: []api.BackupInfo{
-					{ID: baseBackupID, Status: api.BackupStatusSuccess},
-					{
-						ID:                      incrBackupID,
-						Status:                  api.BackupStatusSuccess,
-						IncrementalBaseBackupID: baseBackupID,
-					},
-				},
-			},
-		}
-		transport := testkit.NewTransport(t, stubs)
-		c := backup.NewClient(transport)
-		require.NotNil(t, c, "nil client")
-
-		got, err := c.List(t.Context(), backup.ListOptions{Backend: backend})
-		require.NoError(t, err, "list backups")
-		require.Len(t, got, 2, "returned backups")
-
-		byID := make(map[string]backup.Info, len(got))
-		for _, b := range got {
-			byID[b.ID] = b
-		}
-
-		require.Equal(t, baseBackupID, byID[incrBackupID].IncrementalBaseBackupID,
-			"incremental backup should reference the base backup ID")
-		require.Empty(t, byID[baseBackupID].IncrementalBaseBackupID,
-			"base backup should not have IncrementalBaseBackupID")
-	})
 }
 
 func TestClient_Cancel(t *testing.T) {

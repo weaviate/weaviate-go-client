@@ -11,21 +11,18 @@ import (
 )
 
 type BackupInfo struct {
-	Backend string
-	ID      string
-	Bucket  string
-	Path    string
-	Error   string
-	Status  BackupStatus
+	Backend      string
+	ID           string
+	Bucket       string
+	Path         string
+	BaseBackupID string
+	Error        string
+	Status       BackupStatus
 
+	IncludesCollections []string
 	StartedAt           *time.Time
 	CompletedAt         *time.Time
-	IncludesCollections []string
 	SizeGiB             *float32
-
-	// IncrementalBaseBackupID is the ID of the base backup this incremental
-	// backup was built on; empty if the backup is not incremental.
-	IncrementalBaseBackupID string
 }
 
 var _ json.Unmarshaler = (*BackupInfo)(nil)
@@ -79,7 +76,7 @@ type CreateBackupRequest struct {
 	Bucket             string
 	IncludeCollections []string
 	ExcludeCollections []string
-	PrefixIncremental  string
+	BaseBackupID       string
 	MaxCPUPercentage   int
 	ChunkSizeMiB       int
 	CompressionLevel   BackupCompressionLevel
@@ -190,7 +187,7 @@ func (r *CreateBackupRequest) MarshalJSON() ([]byte, error) {
 		Id:                      r.ID,
 		Include:                 r.IncludeCollections,
 		Exclude:                 r.ExcludeCollections,
-		IncrementalBaseBackupId: r.PrefixIncremental,
+		IncrementalBaseBackupId: r.BaseBackupID,
 		Config: rest.BackupConfig{
 			Path:             r.BackupPath,
 			Bucket:           r.Bucket,
@@ -225,13 +222,13 @@ func (r *RestoreBackupRequest) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 func (b *BackupInfo) UnmarshalJSON(data []byte) error {
 	var bak struct {
-		Backend                 string       `json:"backend,omitempty"`
-		ID                      string       `json:"id,omitempty"`
-		Bucket                  string       `json:"bucket,omitempty"`
-		Path                    string       `json:"path,omitempty"`
-		Error                   string       `json:"error,omitempty"`
-		Status                  BackupStatus `json:"status,omitempty"`
-		IncrementalBaseBackupID string       `json:"incremental_base_backup_id,omitempty"`
+		Backend      string       `json:"backend,omitempty"`
+		ID           string       `json:"id,omitempty"`
+		Bucket       string       `json:"bucket,omitempty"`
+		Path         string       `json:"path,omitempty"`
+		BaseBackupID string       `json:"incremental_base_backup_id,omitempty"`
+		Error        string       `json:"error,omitempty"`
+		Status       BackupStatus `json:"status,omitempty"`
 
 		IncludesCollections []string   `json:"classes,omitempty"`
 		StartedAt           *time.Time `json:"startedAt,omitempty"`
@@ -244,17 +241,17 @@ func (b *BackupInfo) UnmarshalJSON(data []byte) error {
 	}
 
 	*b = BackupInfo{
-		Backend:                 bak.Backend,
-		ID:                      bak.ID,
-		Bucket:                  bak.Bucket,
-		Path:                    bak.Path,
-		Error:                   bak.Error,
-		Status:                  bak.Status,
-		StartedAt:               bak.StartedAt,
-		CompletedAt:             bak.CompletedAt,
-		IncludesCollections:     bak.IncludesCollections,
-		SizeGiB:                 bak.SizeGiB,
-		IncrementalBaseBackupID: bak.IncrementalBaseBackupID,
+		Backend:             bak.Backend,
+		ID:                  bak.ID,
+		Bucket:              bak.Bucket,
+		Path:                bak.Path,
+		BaseBackupID:        bak.BaseBackupID,
+		Error:               bak.Error,
+		Status:              bak.Status,
+		IncludesCollections: bak.IncludesCollections,
+		StartedAt:           bak.StartedAt,
+		CompletedAt:         bak.CompletedAt,
+		SizeGiB:             bak.SizeGiB,
 	}
 	return nil
 }

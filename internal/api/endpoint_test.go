@@ -375,7 +375,7 @@ func TestRESTRequests(t *testing.T) {
 				Bucket:             "my-backups",
 				IncludeCollections: []string{"Songs"},
 				ExcludeCollections: []string{"Pizza"},
-				PrefixIncremental:  "incr-bak-",
+				BaseBackupID:       "bak-0",
 				MaxCPUPercentage:   92,
 				ChunkSizeMiB:       20,
 				CompressionLevel:   api.BackupCompressionLevelDefault,
@@ -386,7 +386,7 @@ func TestRESTRequests(t *testing.T) {
 				Id:                      "bak-1",
 				Include:                 []string{"Songs"},
 				Exclude:                 []string{"Pizza"},
-				IncrementalBaseBackupId: "incr-bak-",
+				IncrementalBaseBackupId: "bak-0",
 				Config: rest.BackupConfig{
 					Path:             "/path/to/backup",
 					Bucket:           "my-backups",
@@ -1518,10 +1518,11 @@ func TestRESTResponses(t *testing.T) {
 			name: "backup list response",
 			body: rest.BackupListResponse{
 				{
-					Id:      "bak-1",
-					Classes: []string{"Artists"},
-					Status:  rest.BackupListResponseStatusTRANSFERRING,
-					Size:    92,
+					Id:                      "bak-1",
+					Classes:                 []string{"Artists"},
+					IncrementalBaseBackupId: "bak-0",
+					Status:                  rest.BackupListResponseStatusTRANSFERRING,
+					Size:                    92,
 				},
 				{
 					Id:      "bak-2",
@@ -1535,6 +1536,7 @@ func TestRESTResponses(t *testing.T) {
 				{
 					ID:                  "bak-1",
 					IncludesCollections: []string{"Artists"},
+					BaseBackupID:        "bak-0",
 					Status:              api.BackupStatusTransferring,
 					SizeGiB:             testkit.Ptr[float32](92),
 					StartedAt:           testkit.Ptr(time.Time{}),
