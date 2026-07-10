@@ -202,6 +202,15 @@ func TestRESTRequests(t *testing.T) {
 									"distance": "cosine",
 								},
 							},
+							Compression: &api.Module{
+								Name: "rq",
+								Conf: map[string]any{
+									"enabled":       true,
+									"cache":         true,
+									"bits":          1,
+									"rescore_limit": 16,
+								},
+							},
 							Vectorizer: &api.Module{
 								Name: testkit.ModuleName,
 								Conf: map[string]any{
@@ -296,6 +305,12 @@ func TestRESTRequests(t *testing.T) {
 						VectorIndexType: "hfresh",
 						VectorIndexConfig: map[string]any{
 							"distance": "cosine",
+							"rq": map[string]any{
+								"enabled":       true,
+								"cache":         true,
+								"bits":          1,
+								"rescore_limit": 16,
+							},
 						},
 						Vectorizer: map[string]any{
 							testkit.ModuleName: map[string]any{
@@ -1366,6 +1381,12 @@ func TestRESTResponses(t *testing.T) {
 						VectorIndexType: "hfresh",
 						VectorIndexConfig: map[string]any{
 							"distance": "cosine",
+							"rq": map[string]any{
+								"enabled":       true,
+								"cache":         true,
+								"bits":          1,
+								"rescore_limit": 16,
+							},
 						},
 						Vectorizer: map[string]any{
 							testkit.ModuleName: map[string]any{
@@ -1465,6 +1486,15 @@ func TestRESTResponses(t *testing.T) {
 							Name: "hfresh",
 							Conf: map[string]any{
 								"distance": "cosine",
+							},
+						},
+						Compression: &api.Module{
+							Name: "rq",
+							Conf: map[string]any{
+								"enabled":       true,
+								"cache":         true,
+								"bits":          float64(1),
+								"rescore_limit": float64(16),
 							},
 						},
 						Vectorizer: &api.Module{

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/weaviate/weaviate-go-client/v6/collections/compression"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
@@ -75,10 +76,11 @@ type (
 )
 
 type VectorConfig struct {
-	// Compression any // TODO(dyma)
-
 	// Vector index configuration.
 	Index *Module
+
+	// Compression algorithm.
+	Compression *Module
 
 	// Vectorizer module.
 	Vectorizer *Module
@@ -232,6 +234,10 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 		if v.Index != nil {
 			vc.VectorIndexType = v.Index.Name
 			vc.VectorIndexConfig = v.Index.Conf
+
+			if v.Compression != nil {
+				vc.VectorIndexConfig[v.Compression.Name] = v.Compression.Conf
+			}
 		}
 
 		vectorizer := noneVectorizer
@@ -377,11 +383,25 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 			break
 		}
 
-		if v.VectorIndexConfig != nil {
+		if conf := v.VectorIndexConfig; conf != nil {
+			// Compression config map is embedded into the vector index configuration.
+			// If we can find any of the registered compresison modules there, we can
+			// extract them into a Module and remove that entry from conf map.
+			if name, ok := compression.Registry.Find(conf); ok {
+				if m, ok := conf[name].(map[string]any); ok {
+					vc.Compression = &Module{
+						Name: name,
+						Conf: m,
+					}
+				}
+				delete(conf, name)
+			}
+
 			vc.Index = &Module{
 				Name: v.VectorIndexType,
-				Conf: v.VectorIndexConfig,
+				Conf: conf,
 			}
+
 		}
 
 		vectors[k] = vc
