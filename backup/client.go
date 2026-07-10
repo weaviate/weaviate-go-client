@@ -20,9 +20,10 @@ type Client struct {
 }
 
 type Info struct {
-	Backend string // Backup storage backend
-	ID      string // Backup ID
-	Path    string // Path to backup in the backend storage
+	Backend string // Backup storage backend.
+	ID      string // Backup ID.
+	Bucket  string // Dedicated bucket name.
+	Path    string // Path to backup in the backend storage.
 	Error   string // Backup creation / restoration error.
 	Status  Status // Backup creation / restoration status.
 
@@ -249,9 +250,10 @@ const completed api.BackupOperation = api.BackupOperation(api.BackupOperationCre
 
 func infoFromAPI(bak *api.BackupInfo, c *Client, op api.BackupOperation) Info {
 	return Info{
+		Backend:             bak.Backend,
 		ID:                  bak.ID,
 		Path:                bak.Path,
-		Backend:             bak.Backend,
+		Bucket:              bak.Bucket,
 		BaseBackupID:        bak.BaseBackupID,
 		Status:              Status(bak.Status),
 		Error:               bak.Error,
