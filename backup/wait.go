@@ -95,7 +95,7 @@ func AwaitStatus(ctx context.Context, bak *Info, want Status, options ...AwaitOp
 	_, hasDeadline := ctx.Deadline()
 	dev.Assert(hasDeadline, "unbounded await context")
 
-	cfg := GetStatus{Backend: bak.Backend, ID: bak.ID}
+	cfg := GetStatusOptions{Backend: bak.Backend, ID: bak.ID}
 	current := bak
 	for {
 		select {

@@ -18,15 +18,15 @@ func TestNewClient(t *testing.T) {
 
 func TestClient_Create(t *testing.T) {
 	for _, tt := range []struct {
-		name   string
-		create backup.Create
-		stubs  []testkit.Stub[api.CreateBackupRequest, api.BackupInfo]
-		want   *backup.Info  // Expected return value.
-		err    testkit.Error // Expected error.
+		name    string
+		options backup.CreateOptions
+		stubs   []testkit.Stub[api.CreateBackupRequest, api.BackupInfo]
+		want    *backup.Info  // Expected return value.
+		err     testkit.Error // Expected error.
 	}{
 		{
 			name: "successfully",
-			create: backup.Create{
+			options: backup.CreateOptions{
 				Backend:            "filesystem",
 				ID:                 "bak-1",
 				Path:               "/path/to/backup",
@@ -84,7 +84,7 @@ func TestClient_Create(t *testing.T) {
 			c := backup.NewClient(transport)
 			require.NotNil(t, c, "nil client")
 
-			got, err := c.Create(t.Context(), tt.create)
+			got, err := c.Create(t.Context(), tt.options)
 			tt.err.Require(t, err, "create error")
 			require.EqualExportedValues(t, tt.want, got, "returned info")
 		})
@@ -94,14 +94,14 @@ func TestClient_Create(t *testing.T) {
 func TestClient_Restore(t *testing.T) {
 	for _, tt := range []struct {
 		name    string
-		restore backup.Restore
+		options backup.RestoreOptions
 		stubs   []testkit.Stub[api.RestoreBackupRequest, api.BackupInfo]
 		want    *backup.Info  // Expected return value.
 		err     testkit.Error // Expected error.
 	}{
 		{
 			name: "successfully",
-			restore: backup.Restore{
+			options: backup.RestoreOptions{
 				Backend:            "filesystem",
 				ID:                 "bak-1",
 				Path:               "/path/to/backup",
@@ -163,7 +163,7 @@ func TestClient_Restore(t *testing.T) {
 			c := backup.NewClient(transport)
 			require.NotNil(t, c, "nil client")
 
-			got, err := c.Restore(t.Context(), tt.restore)
+			got, err := c.Restore(t.Context(), tt.options)
 			tt.err.Require(t, err, "restore error")
 			require.EqualExportedValues(t, tt.want, got, "returned info")
 		})
@@ -172,15 +172,15 @@ func TestClient_Restore(t *testing.T) {
 
 func TestClient_List(t *testing.T) {
 	for _, tt := range []struct {
-		name  string
-		list  backup.List
-		stubs []testkit.Stub[api.ListBackupsRequest, []api.BackupInfo]
-		want  []backup.Info // Expected return value.
-		err   testkit.Error // Expected error.
+		name    string
+		options backup.ListOptions
+		stubs   []testkit.Stub[api.ListBackupsRequest, []api.BackupInfo]
+		want    []backup.Info // Expected return value.
+		err     testkit.Error // Expected error.
 	}{
 		{
 			name: "successfully",
-			list: backup.List{
+			options: backup.ListOptions{
 				Backend:         "filesystem",
 				StartingTimeAsc: true,
 			},
@@ -216,7 +216,7 @@ func TestClient_List(t *testing.T) {
 			c := backup.NewClient(transport)
 			require.NotNil(t, c, "nil client")
 
-			got, err := c.List(t.Context(), tt.list)
+			got, err := c.List(t.Context(), tt.options)
 			tt.err.Require(t, err, "list error")
 			require.EqualExportedValues(t, tt.want, got, "returned info")
 		})
@@ -255,7 +255,7 @@ func TestClient_IncrementalBaseBackupID(t *testing.T) {
 		c := backup.NewClient(transport)
 		require.NotNil(t, c, "nil client")
 
-		got, err := c.GetCreateStatus(t.Context(), backup.GetStatus{
+		got, err := c.GetCreateStatus(t.Context(), backup.GetStatusOptions{
 			Backend: backend,
 			ID:      incrBackupID,
 		})
@@ -284,7 +284,7 @@ func TestClient_IncrementalBaseBackupID(t *testing.T) {
 		c := backup.NewClient(transport)
 		require.NotNil(t, c, "nil client")
 
-		got, err := c.GetCreateStatus(t.Context(), backup.GetStatus{
+		got, err := c.GetCreateStatus(t.Context(), backup.GetStatusOptions{
 			Backend: backend,
 			ID:      baseBackupID,
 		})
@@ -312,7 +312,7 @@ func TestClient_IncrementalBaseBackupID(t *testing.T) {
 		c := backup.NewClient(transport)
 		require.NotNil(t, c, "nil client")
 
-		got, err := c.List(t.Context(), backup.List{Backend: backend})
+		got, err := c.List(t.Context(), backup.ListOptions{Backend: backend})
 		require.NoError(t, err, "list backups")
 		require.Len(t, got, 2, "returned backups")
 
@@ -338,7 +338,7 @@ func TestClient_Cancel(t *testing.T) {
 		{
 			name: "cancel create successfully",
 			cancel: func(ctx context.Context, c *backup.Client) error {
-				return c.CancelCreate(ctx, backup.Cancel{
+				return c.CancelCreate(ctx, backup.CancelOptions{
 					Backend: "filesystem",
 					ID:      "bak-1",
 				})
@@ -356,7 +356,7 @@ func TestClient_Cancel(t *testing.T) {
 		{
 			name: "cancel create with error",
 			cancel: func(ctx context.Context, c *backup.Client) error {
-				return c.CancelCreate(ctx, backup.Cancel{})
+				return c.CancelCreate(ctx, backup.CancelOptions{})
 			},
 			stubs: []testkit.Stub[api.CancelBackupRequest, any]{
 				{Err: testkit.ErrWhaam},
@@ -366,7 +366,7 @@ func TestClient_Cancel(t *testing.T) {
 		{
 			name: "cancel restore successfully",
 			cancel: func(ctx context.Context, c *backup.Client) error {
-				return c.CancelRestore(ctx, backup.Cancel{
+				return c.CancelRestore(ctx, backup.CancelOptions{
 					Backend: "filesystem",
 					ID:      "bak-1",
 				})
@@ -384,7 +384,7 @@ func TestClient_Cancel(t *testing.T) {
 		{
 			name: "cancel restore with error",
 			cancel: func(ctx context.Context, c *backup.Client) error {
-				return c.CancelRestore(ctx, backup.Cancel{})
+				return c.CancelRestore(ctx, backup.CancelOptions{})
 			},
 			stubs: []testkit.Stub[api.CancelBackupRequest, any]{
 				{Err: testkit.ErrWhaam},

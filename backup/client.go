@@ -85,7 +85,7 @@ const (
 	RBACRestoreNone RBACRestore = RBACRestore(api.RBACRestoreNone)
 )
 
-type Create struct {
+type CreateOptions struct {
 	Backend            string           // Required: backend storage.
 	ID                 string           // Required: backup ID.
 	Path               string           // Path to backup in the backend storage.
@@ -100,7 +100,7 @@ type Create struct {
 }
 
 /** Create a new backup.*/
-func (c *Client) Create(ctx context.Context, options Create) (*Info, error) {
+func (c *Client) Create(ctx context.Context, options CreateOptions) (*Info, error) {
 	req := &api.CreateBackupRequest{
 		Backend:            options.Backend,
 		ID:                 options.ID,
@@ -124,7 +124,7 @@ func (c *Client) Create(ctx context.Context, options Create) (*Info, error) {
 	return &info, nil
 }
 
-type Restore struct {
+type RestoreOptions struct {
 	Backend            string            // Required: backend storage.
 	ID                 string            // Required: backup ID.
 	Path               string            // Path to backup in the backend storage.
@@ -139,7 +139,7 @@ type Restore struct {
 	NodeMapping        map[string]string // Remap node names stored in the backup.
 }
 
-func (c *Client) Restore(ctx context.Context, options Restore) (*Info, error) {
+func (c *Client) Restore(ctx context.Context, options RestoreOptions) (*Info, error) {
 	req := &api.RestoreBackupRequest{
 		Backend:            options.Backend,
 		ID:                 options.ID,
@@ -164,20 +164,20 @@ func (c *Client) Restore(ctx context.Context, options Restore) (*Info, error) {
 	return &info, nil
 }
 
-type GetStatus struct {
+type GetStatusOptions struct {
 	Backend string // Required: Backend storage.
 	ID      string // Required: Backup ID.
 }
 
-func (c *Client) GetCreateStatus(ctx context.Context, options GetStatus) (*Info, error) {
+func (c *Client) GetCreateStatus(ctx context.Context, options GetStatusOptions) (*Info, error) {
 	return c.getStatus(ctx, options, api.BackupOperationCreate)
 }
 
-func (c *Client) GetRestoreStatus(ctx context.Context, options GetStatus) (*Info, error) {
+func (c *Client) GetRestoreStatus(ctx context.Context, options GetStatusOptions) (*Info, error) {
 	return c.getStatus(ctx, options, api.BackupOperationRestore)
 }
 
-func (c *Client) getStatus(ctx context.Context, options GetStatus, operation api.BackupOperation) (*Info, error) {
+func (c *Client) getStatus(ctx context.Context, options GetStatusOptions, operation api.BackupOperation) (*Info, error) {
 	req := &api.BackupStatusRequest{
 		Backend:   options.Backend,
 		ID:        options.ID,
@@ -193,12 +193,12 @@ func (c *Client) getStatus(ctx context.Context, options GetStatus, operation api
 	return &info, nil
 }
 
-type List struct {
+type ListOptions struct {
 	Backend         string // Required: Backend storage.
 	StartingTimeAsc bool   // Set to true to order backups by their StartedAt time in ascending order.
 }
 
-func (c *Client) List(ctx context.Context, options List) ([]Info, error) {
+func (c *Client) List(ctx context.Context, options ListOptions) ([]Info, error) {
 	req := &api.ListBackupsRequest{
 		Backend:         options.Backend,
 		StartingTimeAsc: options.StartingTimeAsc,
@@ -216,22 +216,22 @@ func (c *Client) List(ctx context.Context, options List) ([]Info, error) {
 	return infos, nil
 }
 
-type Cancel struct {
+type CancelOptions struct {
 	Backend string // Required: Backend storage.
 	ID      string // Required: Backup ID.
 }
 
 // Cancel an in-progress backup creation.
-func (c *Client) CancelCreate(ctx context.Context, options Cancel) error {
+func (c *Client) CancelCreate(ctx context.Context, options CancelOptions) error {
 	return c.cancel(ctx, options, api.BackupOperationCreate)
 }
 
 // Cancel an in-progress backup restoration.
-func (c *Client) CancelRestore(ctx context.Context, options Cancel) error {
+func (c *Client) CancelRestore(ctx context.Context, options CancelOptions) error {
 	return c.cancel(ctx, options, api.BackupOperationRestore)
 }
 
-func (c *Client) cancel(ctx context.Context, options Cancel, op api.BackupOperation) error {
+func (c *Client) cancel(ctx context.Context, options CancelOptions, op api.BackupOperation) error {
 	req := api.CancelBackupRequest{
 		Backend:   options.Backend,
 		ID:        options.ID,
