@@ -1,6 +1,7 @@
 package collections
 
 import (
+	"github.com/weaviate/weaviate-go-client/v6/collections/compression"
 	"github.com/weaviate/weaviate-go-client/v6/collections/vectorindex"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
@@ -62,11 +63,14 @@ type (
 	MultiTenancyConfig api.MultiTenancyConfig
 )
 
-type VectorIndex internal.Module[vectorindex.Type]
+type (
+	VectorIndex internal.Module[vectorindex.Type]
+	Compression internal.Module[compression.Type]
+)
 
 type VectorConfig struct {
-	Index VectorIndex
-	// Compression any // TODO(dyma)
+	Index       VectorIndex
+	Compression Compression
 
 	// Vectorizer module. If no module is selected, the field should be set
 	// to an implementation encoding the "none" option for this module kind.
@@ -157,6 +161,17 @@ func collectionToAPI(c *Collection) (api.Collection, error) {
 			}
 			vc.Index = &api.Module{
 				Name: string(v.Index.Name()),
+				Conf: conf,
+			}
+		}
+
+		if v.Compression != nil {
+			conf, err := compression.Registry.Encode(v.Compression)
+			if err != nil {
+				return api.Collection{}, err
+			}
+			vc.Compression = &api.Module{
+				Name: string(v.Compression.Name()),
 				Conf: conf,
 			}
 		}
@@ -257,6 +272,14 @@ func collectionFromAPI(c *api.Collection) (Collection, error) {
 				return Collection{}, err
 			}
 			vc.Index = conf
+		}
+
+		if v.Compression != nil {
+			conf, err := compression.Registry.Decode(v.Compression.Name, v.Compression.Conf)
+			if err != nil {
+				return Collection{}, err
+			}
+			vc.Compression = conf
 		}
 
 		if v.Vectorizer != nil {
