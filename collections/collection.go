@@ -69,14 +69,25 @@ type (
 )
 
 type VectorConfig struct {
-	Index       VectorIndex
+	// Vector index configuration.
+	// See [collections/vectorindex] package for available index options.
+	Index VectorIndex
+
+	// Compression algorithm for vector data.
+	// See [collections/compression] package for available algorithms.
 	Compression Compression
+
+	// SkipDefaultCompression prevents the server from selecting the default
+	// compression algorithm when [Compression] does not specify any.
+	// If set to true, vector data will be stored in its original shape until
+	// compression is manually enabled later.
+	SkipDefaultCompression bool
 
 	// Vectorizer module. If no module is selected, the field should be set
 	// to an implementation encoding the "none" option for this module kind.
 	// The value is encoded via [modules.Encode] and does not receive any
 	// special treatment in this package.
-	// See v6/modules package for available vectorizers.
+	// See ./modules package for available vectorizers.
 	Vectorizer modules.Module
 }
 
@@ -165,6 +176,7 @@ func collectionToAPI(c *Collection) (api.Collection, error) {
 			}
 		}
 
+		vc.SkipDefaultCompression = v.SkipDefaultCompression
 		if v.Compression != nil {
 			conf, err := compression.Registry.Encode(v.Compression)
 			if err != nil {
@@ -274,6 +286,7 @@ func collectionFromAPI(c *api.Collection) (Collection, error) {
 			vc.Index = conf
 		}
 
+		vc.SkipDefaultCompression = v.SkipDefaultCompression
 		if v.Compression != nil {
 			conf, err := compression.Registry.Decode(v.Compression.Name, v.Compression.Conf)
 			if err != nil {

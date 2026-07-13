@@ -80,7 +80,8 @@ type VectorConfig struct {
 	Index *Module
 
 	// Compression algorithm.
-	Compression *Module
+	Compression            *Module
+	SkipDefaultCompression bool
 
 	// Vectorizer module.
 	Vectorizer *Module
@@ -205,6 +206,8 @@ var (
 	_ json.Unmarshaler = (*Collection)(nil)
 )
 
+const skipDefaultCompressionKey = "skipDefaultQuantization"
+
 // MarshalJSON marshals Collection via [rest.Class].
 func (c *Collection) MarshalJSON() ([]byte, error) {
 	properties := make([]rest.Property, len(c.Properties)+len(c.References))
@@ -235,9 +238,16 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 			vc.VectorIndexType = v.Index.Name
 			vc.VectorIndexConfig = v.Index.Conf
 
-			if v.Compression != nil {
+			if !v.SkipDefaultCompression && v.Compression != nil {
 				vc.VectorIndexConfig[v.Compression.Name] = v.Compression.Conf
 			}
+		}
+
+		if v.SkipDefaultCompression {
+			if vc.VectorIndexConfig == nil {
+				vc.VectorIndexConfig = make(map[string]any, 1)
+			}
+			vc.VectorIndexConfig[skipDefaultCompressionKey] = true
 		}
 
 		vectorizer := noneVectorizer
@@ -395,6 +405,13 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 					}
 				}
 				delete(conf, name)
+			}
+
+			if v, ok := conf[skipDefaultCompressionKey]; ok {
+				delete(conf, skipDefaultCompressionKey)
+				if skip, ok := v.(bool); ok {
+					vc.SkipDefaultCompression = skip
+				}
 			}
 
 			vc.Index = &Module{

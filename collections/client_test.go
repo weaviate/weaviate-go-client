@@ -147,6 +147,7 @@ func TestClient_Create(t *testing.T) {
 							"url": "example.com",
 						},
 					},
+					"audio_vec": {SkipDefaultCompression: true},
 				},
 				Sharding: &collections.ShardingConfig{
 					DesiredCount:        3,
@@ -258,6 +259,7 @@ func TestClient_Create(t *testing.T) {
 										},
 									},
 								},
+								"audio_vec": {SkipDefaultCompression: true},
 							},
 							Sharding: &api.ShardingConfig{
 								DesiredCount:        3,
@@ -434,6 +436,7 @@ func TestClient_GetConfig(t *testing.T) {
 									},
 								},
 							},
+							"audio_vec": {SkipDefaultCompression: true},
 						},
 						Sharding: &api.ShardingConfig{
 							DesiredCount:        3,
@@ -535,6 +538,7 @@ func TestClient_GetConfig(t *testing.T) {
 							"url": "example.com",
 						},
 					},
+					"audio_vec": {SkipDefaultCompression: true},
 				},
 				Sharding: &collections.ShardingConfig{
 					DesiredCount:        3,

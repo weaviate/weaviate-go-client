@@ -219,6 +219,7 @@ func TestRESTRequests(t *testing.T) {
 							},
 						},
 						"title_vec": {},
+						"audio_vec": {SkipDefaultCompression: true},
 					},
 					Sharding: &api.ShardingConfig{
 						DesiredCount:        3,
@@ -319,6 +320,14 @@ func TestRESTRequests(t *testing.T) {
 						},
 					},
 					"title_vec": {
+						Vectorizer: map[string]any{
+							"none": map[string]any{},
+						},
+					},
+					"audio_vec": {
+						VectorIndexConfig: map[string]any{
+							"skipDefaultQuantization": true,
+						},
 						Vectorizer: map[string]any{
 							"none": map[string]any{},
 						},
@@ -1399,6 +1408,13 @@ func TestRESTResponses(t *testing.T) {
 							"none": map[string]any{},
 						},
 					},
+					"audio_vec": {
+						VectorIndexType: "hfresh",
+						VectorIndexConfig: map[string]any{
+							"distance":                "manhattan",
+							"skipDefaultQuantization": true,
+						},
+					},
 				},
 				ShardingConfig: map[string]any{
 					"desiredCount":        3,
@@ -1505,6 +1521,15 @@ func TestRESTResponses(t *testing.T) {
 						},
 					},
 					"title_vec": {},
+					"audio_vec": {
+						Index: &api.Module{
+							Name: "hfresh",
+							Conf: map[string]any{
+								"distance": "manhattan",
+							},
+						},
+						SkipDefaultCompression: true,
+					},
 				},
 				Sharding: &api.ShardingConfig{
 					DesiredCount:        3,
