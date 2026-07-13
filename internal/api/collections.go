@@ -239,6 +239,9 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 			vc.VectorIndexConfig = v.Index.Conf
 
 			if !v.SkipDefaultCompression && v.Compression != nil {
+				// "enabled" flag is hidden from the user,
+				// and we only set it at the API threshold.
+				v.Compression.Conf["enabled"] = true
 				vc.VectorIndexConfig[v.Compression.Name] = v.Compression.Conf
 			}
 		}

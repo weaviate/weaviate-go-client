@@ -14,7 +14,6 @@ type Type string
 var _ internal.Module[Type] = (*RQ)(nil)
 
 type RQ struct {
-	Enabled      bool `json:"enabled"`
 	Bits         int  `json:"bits"`
 	RescoreLimit int  `json:"rescore_limit"`
 	Cache        bool `json:"cache"`

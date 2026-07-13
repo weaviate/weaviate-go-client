@@ -138,7 +138,6 @@ func TestClient_Create(t *testing.T) {
 							SearchProbe:      64,
 						},
 						Compression: compression.RQ{
-							Enabled:      true,
 							Cache:        true,
 							Bits:         1,
 							RescoreLimit: 16,
@@ -246,7 +245,6 @@ func TestClient_Create(t *testing.T) {
 									Compression: &api.Module{
 										Name: "rq",
 										Conf: map[string]any{
-											"enabled":       true,
 											"cache":         true,
 											"bits":          1,
 											"rescore_limit": 16,
@@ -423,7 +421,6 @@ func TestClient_GetConfig(t *testing.T) {
 								Compression: &api.Module{
 									Name: "rq",
 									Conf: map[string]any{
-										"enabled":       true,
 										"cache":         true,
 										"bits":          1,
 										"rescore_limit": 16,
@@ -529,7 +526,6 @@ func TestClient_GetConfig(t *testing.T) {
 							SearchProbe:      64,
 						},
 						Compression: compression.RQ{
-							Enabled:      true,
 							Cache:        true,
 							Bits:         1,
 							RescoreLimit: 16,
