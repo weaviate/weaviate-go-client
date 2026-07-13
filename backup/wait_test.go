@@ -123,7 +123,7 @@ func TestAwaitStatus(t *testing.T) {
 			require.NotNil(t, c, "nil client")
 
 			// GetCreateStatus is part of test setup, always called with t.Context()
-			bak, err := c.GetCreateStatus(t.Context(), backup.GetStatus{})
+			bak, err := c.GetCreateStatus(t.Context(), backup.GetStatusOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, bak, "nil backup from get-status")
 
@@ -186,7 +186,7 @@ func TestInfo_IsCompleted(t *testing.T) {
 		c := backup.NewClient(transport)
 		require.NotNil(t, c, "nil backup client")
 
-		all, err := c.List(t.Context(), backup.List{})
+		all, err := c.List(t.Context(), backup.ListOptions{})
 		assert.NoError(t, err)
 		for _, bak := range all {
 			assert.True(t, bak.IsCompleted(), "bak-%s: List must return completed backups", bak.ID)
