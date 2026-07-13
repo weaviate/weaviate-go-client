@@ -398,7 +398,7 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 
 		if conf := v.VectorIndexConfig; conf != nil {
 			// Compression config map is embedded into the vector index configuration.
-			// If we can find any of the registered compresison modules there, we can
+			// If we can find any of the registered compression modules there, we can
 			// extract them into a Module and remove that entry from conf map.
 			if name, ok := compression.Registry.Find(conf); ok {
 				if m, ok := conf[name].(map[string]any); ok {
