@@ -196,16 +196,20 @@ func TestRESTRequests(t *testing.T) {
 					},
 					Vectors: map[string]api.VectorConfig{
 						"lyrics_vec": {
-							Vectorizer: api.Module{
+							Index: &api.Module{
+								Name: "hfresh",
+								Conf: map[string]any{
+									"distance": "cosine",
+								},
+							},
+							Vectorizer: &api.Module{
 								Name: testkit.ModuleName,
 								Conf: map[string]any{
 									"url": "example.com",
 								},
 							},
 						},
-						"title_vec": {
-							Vectorizer: api.NoneVectorizer,
-						},
+						"title_vec": {},
 					},
 					Sharding: &api.ShardingConfig{
 						DesiredCount:        3,
@@ -289,17 +293,17 @@ func TestRESTRequests(t *testing.T) {
 				},
 				VectorConfig: map[string]rest.VectorConfig{
 					"lyrics_vec": {
+						VectorIndexType: "hfresh",
+						VectorIndexConfig: map[string]any{
+							"distance": "cosine",
+						},
 						Vectorizer: map[string]any{
 							testkit.ModuleName: map[string]any{
 								"url": "example.com",
 							},
 						},
 					},
-					"title_vec": {
-						Vectorizer: map[string]any{
-							"none": map[string]any{},
-						},
-					},
+					"title_vec": {},
 				},
 				ShardingConfig: map[string]any{
 					"desiredCount":        3,
@@ -1355,17 +1359,17 @@ func TestRESTResponses(t *testing.T) {
 				},
 				VectorConfig: map[string]rest.VectorConfig{
 					"lyrics_vec": {
+						VectorIndexType: "hfresh",
+						VectorIndexConfig: map[string]any{
+							"distance": "cosine",
+						},
 						Vectorizer: map[string]any{
 							testkit.ModuleName: map[string]any{
 								"url": "example.com",
 							},
 						},
 					},
-					"title_vec": {
-						Vectorizer: map[string]any{
-							"none": map[string]any{},
-						},
-					},
+					"title_vec": {},
 				},
 				ShardingConfig: map[string]any{
 					"desiredCount":        3,
@@ -1449,16 +1453,20 @@ func TestRESTResponses(t *testing.T) {
 				},
 				Vectors: map[string]api.VectorConfig{
 					"lyrics_vec": {
-						Vectorizer: api.Module{
+						Index: &api.Module{
+							Name: "hfresh",
+							Conf: map[string]any{
+								"distance": "cosine",
+							},
+						},
+						Vectorizer: &api.Module{
 							Name: testkit.ModuleName,
 							Conf: map[string]any{
 								"url": "example.com",
 							},
 						},
 					},
-					"title_vec": {
-						Vectorizer: api.NoneVectorizer,
-					},
+					"title_vec": {},
 				},
 				Sharding: &api.ShardingConfig{
 					DesiredCount:        3,

@@ -8,7 +8,7 @@ import (
 type ConsistencyLevel api.ConsistencyLevel
 
 const (
-	ConsistencyLevelOne    ConsistencyLevel = ConsistencyLevel(api.ConsistencyLevelOne)
-	ConsistencyLevelQuorum ConsistencyLevel = ConsistencyLevel(api.ConsistencyLevelQuorum)
-	ConsistencyLevelAll    ConsistencyLevel = ConsistencyLevel(api.ConsistencyLevelAll)
+	ConsistencyLevelOne    = ConsistencyLevel(api.ConsistencyLevelOne)
+	ConsistencyLevelQuorum = ConsistencyLevel(api.ConsistencyLevelQuorum)
+	ConsistencyLevelAll    = ConsistencyLevel(api.ConsistencyLevelAll)
 )

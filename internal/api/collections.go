@@ -75,28 +75,19 @@ type (
 )
 
 type VectorConfig struct {
-	// Index any // TODO(dyma)
 	// Compression any // TODO(dyma)
 
+	// Vector index configuration.
+	Index *Module
+
 	// Vectorizer module.
-	Vectorizer Module
+	Vectorizer *Module
 }
 
 type Module struct {
 	Name string         // Module name.
 	Conf map[string]any // Module configuration.
 }
-
-// NoneVectorizer serializes as `"none": {}`, which is a special value
-// the server expects if no vectorizer module should be configured.
-//
-// The client will replace any nil [VectorConfig.Vectorizer] with noneVectorizer on write.
-// On read, the custom Decode hook ensures the user continues to see a nil.
-//
-// It is defined here in internal/api and not in the public modules package
-// because it really is a quirk of the server that the end user should not
-// need to be concerned with.
-var NoneVectorizer = Module{Name: "none", Conf: make(map[string]any)}
 
 const (
 	FieldUUID          = "_id"
@@ -228,16 +219,20 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 
 	vectors := internal.MakeMap[string, rest.VectorConfig](len(c.Vectors))
 	for k, v := range c.Vectors {
-		var indexType string         // TODO(dyma)
-		var indexConf map[string]any // TODO(dyma)
+		var vc rest.VectorConfig
 
-		vectors[k] = rest.VectorConfig{
-			VectorIndexType:   indexType,
-			VectorIndexConfig: indexConf,
-			Vectorizer: map[string]any{
-				v.Vectorizer.Name: v.Vectorizer.Conf,
-			},
+		if v.Index != nil {
+			vc.VectorIndexType = v.Index.Name
+			vc.VectorIndexConfig = v.Index.Conf
 		}
+
+		if v.Vectorizer != nil {
+			vc.Vectorizer = map[string]any{
+				v.Vectorizer.Name: v.Vectorizer.Conf,
+			}
+		}
+
+		vectors[k] = vc
 	}
 
 	out := &rest.Class{
@@ -360,24 +355,26 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 
 	vectors := internal.MakeMap[string, VectorConfig](len(class.VectorConfig))
 	for k, v := range class.VectorConfig {
-		var vectorizer Module
-		var err error
+		var vc VectorConfig
+
 		for name, raw := range v.Vectorizer {
 			if conf, ok := raw.(map[string]any); ok {
-				vectorizer = Module{
+				vc.Vectorizer = &Module{
 					Name: name,
 					Conf: conf,
 				}
 			}
 			break
 		}
-		if err != nil {
-			return err
+
+		if v.VectorIndexConfig != nil {
+			vc.Index = &Module{
+				Name: v.VectorIndexType,
+				Conf: v.VectorIndexConfig,
+			}
 		}
 
-		vectors[k] = VectorConfig{
-			Vectorizer: vectorizer,
-		}
+		vectors[k] = vc
 	}
 
 	var sharding ShardingConfig

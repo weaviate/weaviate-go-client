@@ -9,7 +9,7 @@ import (
 )
 
 func TestModules(t *testing.T) {
-	var ms internal.Modules
+	var ms internal.Modules[string]
 	ms.Register(*new(module))
 
 	t.Run("non-struct module", func(t *testing.T) {
@@ -49,9 +49,22 @@ func TestModules(t *testing.T) {
 		assert.NoError(t, err, "decode")
 		require.NotNil(t, decoded, "decoded value")
 		assert.Equal(t, "unknown", decoded.Name(), "module name")
-		if assert.Implements(t, (*internal.CustomModule)(nil), decoded) {
-			assert.Subset(t, decoded.(internal.CustomModule).Raw(), raw, "map is preserved")
+		if assert.Implements(t, (*internal.CustomModule[string])(nil), decoded) {
+			assert.Subset(t, decoded.(internal.CustomModule[string]).Raw(), raw, "map is preserved")
 		}
+	})
+
+	t.Run("custom key type roundtrip", func(t *testing.T) {
+		var ms internal.Modules[str]
+		ms.Register(*new(custom))
+
+		five := custom{Value: 5}
+		encoded, err := ms.Encode(five)
+		require.NoError(t, err, "encode")
+
+		decoded, err := ms.Decode("str-module", encoded)
+		assert.NoError(t, err, "decode")
+		assert.Equal(t, five, decoded, "decoded value")
 	})
 }
 
@@ -60,13 +73,22 @@ type module struct {
 	Value int `json:"value"`
 }
 
-var _ internal.Module = (*module)(nil)
+var _ internal.Module[string] = (*module)(nil)
 
 func (module) Name() string { return "test-module" }
 
 // invalid implements [internal.Module] for an integer.
 type invalid int
 
-var _ internal.Module = (*invalid)(nil)
+var _ internal.Module[string] = (*invalid)(nil)
 
 func (invalid) Name() string { return "bad-module" }
+
+type (
+	custom struct{ Value int }
+	str    string
+)
+
+var _ internal.Module[str] = (*custom)(nil)
+
+func (custom) Name() str { return "str-module" }
