@@ -319,11 +319,7 @@ func TestRESTRequests(t *testing.T) {
 							},
 						},
 					},
-					"title_vec": {
-						Vectorizer: map[string]any{
-							"none": map[string]any{},
-						},
-					},
+					"title_vec": {},
 					"audio_vec": {
 						VectorIndexConfig: map[string]any{
 							"skipDefaultQuantization": true,
@@ -1403,11 +1399,7 @@ func TestRESTResponses(t *testing.T) {
 							},
 						},
 					},
-					"title_vec": {
-						Vectorizer: map[string]any{
-							"none": map[string]any{},
-						},
-					},
+					"title_vec": {},
 					"audio_vec": {
 						VectorIndexType: "hfresh",
 						VectorIndexConfig: map[string]any{

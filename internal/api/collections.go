@@ -92,14 +92,6 @@ type Module struct {
 	Conf map[string]any // Module configuration.
 }
 
-// noneVectorizer serializes as `"none": {}`, which is a special value
-// the server expects if no vectorizer module should be configured.
-//
-// It is defined here in internal/api and not in the public modules package
-// because it really is a quirk of the server that the end user should not
-// need to be concerned with.
-var noneVectorizer = &Module{Name: "none", Conf: make(map[string]any)}
-
 const (
 	FieldUUID          = "_id"
 	FieldCreatedAt     = "_creationTimeUnix"
@@ -253,12 +245,10 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 			vc.VectorIndexConfig[skipDefaultCompressionKey] = true
 		}
 
-		vectorizer := noneVectorizer
 		if v.Vectorizer != nil {
-			vectorizer = v.Vectorizer
-		}
-		vc.Vectorizer = map[string]any{
-			vectorizer.Name: vectorizer.Conf,
+			vc.Vectorizer = map[string]any{
+				v.Vectorizer.Name: v.Vectorizer.Conf,
+			}
 		}
 
 		vectors[k] = vc
@@ -387,7 +377,7 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 		var vc VectorConfig
 
 		for name, raw := range v.Vectorizer {
-			if conf, ok := raw.(map[string]any); ok && name != noneVectorizer.Name {
+			if conf, ok := raw.(map[string]any); ok {
 				vc.Vectorizer = &Module{
 					Name: name,
 					Conf: conf,
