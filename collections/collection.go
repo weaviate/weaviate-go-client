@@ -1,8 +1,10 @@
 package collections
 
 import (
+	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"github.com/weaviate/weaviate-go-client/v6/modules"
 )
 
 // Alias defines an alias for a collection.
@@ -14,6 +16,7 @@ type (
 		Description   string
 		Properties    []Property
 		References    []Reference
+		Vectors       map[string]VectorConfig
 		Sharding      *ShardingConfig
 		Replication   *ReplicationConfig
 		InvertedIndex *InvertedIndexConfig
@@ -58,6 +61,17 @@ type (
 	MultiTenancyConfig api.MultiTenancyConfig
 )
 
+type VectorConfig struct {
+	// Index any // TODO(dyma)
+	// Compression any // TODO(dyma)
+
+	// Vectorizer module. If no module is selected, the field should be set
+	// to an implementation encoding the "none" option for this module kind.
+	// The value is encoded via [modules.Encode] and does not receive any
+	// special treatment in this package.
+	Vectorizer modules.Module
+}
+
 // DataType defines supported property data types.
 type DataType api.DataType
 
@@ -99,7 +113,7 @@ const (
 	TimeBasedResolution   DeletionStrategy = DeletionStrategy(api.TimeBasedResolution)
 )
 
-func collectionToAPI(c *Collection) api.Collection {
+func collectionToAPI(c *Collection) (api.Collection, error) {
 	var properties []api.Property
 	if len(c.Properties) > 0 {
 		properties = make([]api.Property, len(c.Properties))
@@ -128,11 +142,39 @@ func collectionToAPI(c *Collection) api.Collection {
 		}
 	}
 
+	vectors := internal.MakeMap[string, api.VectorConfig](len(c.Vectors))
+	for k, v := range c.Vectors {
+		// var indexType string
+		// var indexConf map[string]any
+		// if v.Index != nil {
+		// 	indexType = v.Index.Type()
+		// }
+
+		var vectorizer api.Module
+		if v.Vectorizer == nil {
+			vectorizer = api.NoneVectorizer
+		} else {
+			conf, err := modules.Encode(v.Vectorizer)
+			if err != nil {
+				return api.Collection{}, err
+			}
+			vectorizer = api.Module{
+				Name: v.Vectorizer.Name(),
+				Conf: conf,
+			}
+		}
+
+		vectors[k] = api.VectorConfig{
+			Vectorizer: vectorizer,
+		}
+	}
+
 	out := api.Collection{
 		Name:         c.Name,
 		Description:  c.Description,
 		Properties:   properties,
 		References:   references,
+		Vectors:      vectors,
 		MultiTenancy: (*api.MultiTenancyConfig)(c.MultiTenancy),
 	}
 
@@ -164,11 +206,11 @@ func collectionToAPI(c *Collection) api.Collection {
 		}
 	}
 
-	return out
+	return out, nil
 }
 
 // collectionFromAPI converts api.Collection into Collection.
-func collectionFromAPI(c *api.Collection) Collection {
+func collectionFromAPI(c *api.Collection) (Collection, error) {
 	dev.AssertNotNil(c, "c")
 
 	var properties []Property
@@ -196,6 +238,22 @@ func collectionFromAPI(c *api.Collection) Collection {
 				Name:        ref.Name,
 				Collections: ref.Collections,
 			}
+		}
+	}
+
+	vectors := internal.MakeMap[string, VectorConfig](len(c.Vectors))
+	for k, v := range c.Vectors {
+
+		var vectorizer modules.Module
+		if v.Vectorizer.Name != api.NoneVectorizer.Name {
+			conf, err := modules.Decode(v.Vectorizer.Name, v.Vectorizer.Conf)
+			if err != nil {
+				return Collection{}, err
+			}
+			vectorizer = conf
+		}
+		vectors[k] = VectorConfig{
+			Vectorizer: vectorizer,
 		}
 	}
 
@@ -235,11 +293,12 @@ func collectionFromAPI(c *api.Collection) Collection {
 		Description:   c.Description,
 		Properties:    properties,
 		References:    references,
+		Vectors:       vectors,
 		Sharding:      sharding,
 		Replication:   replication,
 		InvertedIndex: invertedIndex,
 		MultiTenancy:  (*MultiTenancyConfig)(c.MultiTenancy),
-	}
+	}, nil
 }
 
 func nestedPropertiesFromAPI(nested []api.Property) []Property {

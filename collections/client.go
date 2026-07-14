@@ -117,7 +117,12 @@ func (h *Handle) Count(ctx context.Context) (int64, error) {
 //
 // Avoid passing multiple options arguments at once -- only the last one will be applied.
 func (c *Client) Create(ctx context.Context, collection Collection) (*Handle, error) {
-	req := &api.CreateCollectionRequest{Collection: collectionToAPI(&collection)}
+	x, err := collectionToAPI(&collection)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &api.CreateCollectionRequest{Collection: x}
 
 	// No need to read the result of the request, we only need the name to create a handle.
 	if err := c.t.Do(ctx, req, nil); err != nil {
@@ -133,7 +138,10 @@ func (c *Client) GetConfig(ctx context.Context, collectionName string) (*Collect
 	if err := c.t.Do(ctx, api.GetCollectionRequest(collectionName), &resp); err != nil {
 		return nil, fmt.Errorf("get collection config: %w", err)
 	}
-	collection := collectionFromAPI(&resp)
+	collection, err := collectionFromAPI(&resp)
+	if err != nil {
+		return nil, err
+	}
 	return &collection, nil
 }
 
@@ -150,7 +158,11 @@ func (c *Client) List(ctx context.Context) ([]Collection, error) {
 
 	out := make([]Collection, len(resp))
 	for i, c := range resp {
-		out[i] = collectionFromAPI(&c)
+		x, err := collectionFromAPI(&c)
+		if err != nil {
+			return nil, err
+		}
+		out[i] = x
 	}
 	return out, nil
 }

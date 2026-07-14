@@ -194,6 +194,19 @@ func TestRESTRequests(t *testing.T) {
 							Collections: []string{"Singers", "Bands"},
 						},
 					},
+					Vectors: map[string]api.VectorConfig{
+						"lyrics_vec": {
+							Vectorizer: api.Module{
+								Name: testkit.ModuleName,
+								Conf: map[string]any{
+									"url": "example.com",
+								},
+							},
+						},
+						"title_vec": {
+							Vectorizer: api.NoneVectorizer,
+						},
+					},
 					Sharding: &api.ShardingConfig{
 						DesiredCount:        3,
 						DesiredVirtualCount: 150,
@@ -272,6 +285,20 @@ func TestRESTRequests(t *testing.T) {
 					{
 						Name:     "artist",
 						DataType: []string{"Singers", "Bands"},
+					},
+				},
+				VectorConfig: map[string]rest.VectorConfig{
+					"lyrics_vec": {
+						Vectorizer: map[string]any{
+							testkit.ModuleName: map[string]any{
+								"url": "example.com",
+							},
+						},
+					},
+					"title_vec": {
+						Vectorizer: map[string]any{
+							"none": map[string]any{},
+						},
 					},
 				},
 				ShardingConfig: map[string]any{
@@ -1326,6 +1353,20 @@ func TestRESTResponses(t *testing.T) {
 						DataType: []string{"Singers", "Bands"},
 					},
 				},
+				VectorConfig: map[string]rest.VectorConfig{
+					"lyrics_vec": {
+						Vectorizer: map[string]any{
+							testkit.ModuleName: map[string]any{
+								"url": "example.com",
+							},
+						},
+					},
+					"title_vec": {
+						Vectorizer: map[string]any{
+							"none": map[string]any{},
+						},
+					},
+				},
 				ShardingConfig: map[string]any{
 					"desiredCount":        3,
 					"desiredVirtualCount": 150,
@@ -1404,6 +1445,19 @@ func TestRESTResponses(t *testing.T) {
 					{
 						Name:        "artist",
 						Collections: []string{"Singers", "Bands"},
+					},
+				},
+				Vectors: map[string]api.VectorConfig{
+					"lyrics_vec": {
+						Vectorizer: api.Module{
+							Name: testkit.ModuleName,
+							Conf: map[string]any{
+								"url": "example.com",
+							},
+						},
+					},
+					"title_vec": {
+						Vectorizer: api.NoneVectorizer,
 					},
 				},
 				Sharding: &api.ShardingConfig{
