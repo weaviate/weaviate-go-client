@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/weaviate/weaviate-go-client/v6/collections/compression"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
@@ -75,10 +76,12 @@ type (
 )
 
 type VectorConfig struct {
-	// Compression any // TODO(dyma)
-
 	// Vector index configuration.
 	Index *Module
+
+	// Compression algorithm.
+	Compression            *Module
+	SkipDefaultCompression bool
 
 	// Vectorizer module.
 	Vectorizer *Module
@@ -195,6 +198,8 @@ var (
 	_ json.Unmarshaler = (*Collection)(nil)
 )
 
+const skipDefaultCompressionKey = "skipDefaultQuantization"
+
 // MarshalJSON marshals Collection via [rest.Class].
 func (c *Collection) MarshalJSON() ([]byte, error) {
 	properties := make([]rest.Property, len(c.Properties)+len(c.References))
@@ -224,6 +229,20 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 		if v.Index != nil {
 			vc.VectorIndexType = v.Index.Name
 			vc.VectorIndexConfig = v.Index.Conf
+
+			if !v.SkipDefaultCompression && v.Compression != nil {
+				// "enabled" flag is hidden from the user,
+				// and we only set it at the API threshold.
+				v.Compression.Conf["enabled"] = true
+				vc.VectorIndexConfig[v.Compression.Name] = v.Compression.Conf
+			}
+		}
+
+		if v.SkipDefaultCompression {
+			if vc.VectorIndexConfig == nil {
+				vc.VectorIndexConfig = make(map[string]any, 1)
+			}
+			vc.VectorIndexConfig[skipDefaultCompressionKey] = true
 		}
 
 		if v.Vectorizer != nil {
@@ -367,11 +386,32 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 			break
 		}
 
-		if v.VectorIndexConfig != nil {
+		if conf := v.VectorIndexConfig; conf != nil {
+			// Compression config map is embedded into the vector index configuration.
+			// If we can find any of the registered compression modules there, we can
+			// extract them into a Module and remove that entry from conf map.
+			if name, ok := compression.Registry.Find(conf); ok {
+				if m, ok := conf[name].(map[string]any); ok {
+					vc.Compression = &Module{
+						Name: name,
+						Conf: m,
+					}
+				}
+				delete(conf, name)
+			}
+
+			if v, ok := conf[skipDefaultCompressionKey]; ok {
+				delete(conf, skipDefaultCompressionKey)
+				if skip, ok := v.(bool); ok {
+					vc.SkipDefaultCompression = skip
+				}
+			}
+
 			vc.Index = &Module{
 				Name: v.VectorIndexType,
-				Conf: v.VectorIndexConfig,
+				Conf: conf,
 			}
+
 		}
 
 		vectors[k] = vc

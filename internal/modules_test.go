@@ -8,7 +8,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 )
 
-func TestModules(t *testing.T) {
+func TestModules_EncodeDecode(t *testing.T) {
 	var ms internal.Modules[string]
 	ms.Register(*new(module))
 
@@ -66,6 +66,45 @@ func TestModules(t *testing.T) {
 		assert.NoError(t, err, "decode")
 		assert.Equal(t, five, decoded, "decoded value")
 	})
+}
+
+func TestModules_Find(t *testing.T) {
+	var ms internal.Modules[string]
+	ms.Register(*new(module))
+
+	for _, tt := range []struct {
+		name  string
+		m     map[string]any
+		found assert.BoolAssertionFunc
+		want  string
+	}{
+		{
+			name: "key present",
+			m: map[string]any{
+				"foo":         "bar",
+				"hello":       "world",
+				"test-module": 5,
+			},
+			found: assert.True,
+			want:  "test-module",
+		},
+		{
+			name: "key not present",
+			m: map[string]any{
+				"foo":   "bar",
+				"hello": "world",
+			},
+			found: assert.False,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			key, ok := ms.Find(tt.m)
+
+			if tt.found(t, ok, "found a match") {
+				assert.Equal(t, tt.want, key, "module name")
+			}
+		})
+	}
 }
 
 // module implements [internal.Module] for a simple struct.

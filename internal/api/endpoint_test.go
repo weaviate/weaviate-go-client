@@ -202,6 +202,15 @@ func TestRESTRequests(t *testing.T) {
 									"distance": "cosine",
 								},
 							},
+							Compression: &api.Module{
+								Name: "rq",
+								Conf: map[string]any{
+									"enabled":       true,
+									"cache":         true,
+									"bits":          1,
+									"rescore_limit": 16,
+								},
+							},
 							Vectorizer: &api.Module{
 								Name: testkit.ModuleName,
 								Conf: map[string]any{
@@ -210,6 +219,7 @@ func TestRESTRequests(t *testing.T) {
 							},
 						},
 						"title_vec": {},
+						"audio_vec": {SkipDefaultCompression: true},
 					},
 					Sharding: &api.ShardingConfig{
 						DesiredCount:        3,
@@ -296,6 +306,12 @@ func TestRESTRequests(t *testing.T) {
 						VectorIndexType: "hfresh",
 						VectorIndexConfig: map[string]any{
 							"distance": "cosine",
+							"rq": map[string]any{
+								"enabled":       true,
+								"cache":         true,
+								"bits":          1,
+								"rescore_limit": 16,
+							},
 						},
 						Vectorizer: map[string]any{
 							testkit.ModuleName: map[string]any{
@@ -304,6 +320,14 @@ func TestRESTRequests(t *testing.T) {
 						},
 					},
 					"title_vec": {},
+					"audio_vec": {
+						VectorIndexConfig: map[string]any{
+							"skipDefaultQuantization": true,
+						},
+						Vectorizer: map[string]any{
+							"none": map[string]any{},
+						},
+					},
 				},
 				ShardingConfig: map[string]any{
 					"desiredCount":        3,
@@ -1362,6 +1386,12 @@ func TestRESTResponses(t *testing.T) {
 						VectorIndexType: "hfresh",
 						VectorIndexConfig: map[string]any{
 							"distance": "cosine",
+							"rq": map[string]any{
+								"enabled":       true,
+								"cache":         true,
+								"bits":          1,
+								"rescore_limit": 16,
+							},
 						},
 						Vectorizer: map[string]any{
 							testkit.ModuleName: map[string]any{
@@ -1370,6 +1400,13 @@ func TestRESTResponses(t *testing.T) {
 						},
 					},
 					"title_vec": {},
+					"audio_vec": {
+						VectorIndexType: "hfresh",
+						VectorIndexConfig: map[string]any{
+							"distance":                "manhattan",
+							"skipDefaultQuantization": true,
+						},
+					},
 				},
 				ShardingConfig: map[string]any{
 					"desiredCount":        3,
@@ -1459,6 +1496,15 @@ func TestRESTResponses(t *testing.T) {
 								"distance": "cosine",
 							},
 						},
+						Compression: &api.Module{
+							Name: "rq",
+							Conf: map[string]any{
+								"enabled":       true,
+								"cache":         true,
+								"bits":          float64(1),
+								"rescore_limit": float64(16),
+							},
+						},
 						Vectorizer: &api.Module{
 							Name: testkit.ModuleName,
 							Conf: map[string]any{
@@ -1467,6 +1513,15 @@ func TestRESTResponses(t *testing.T) {
 						},
 					},
 					"title_vec": {},
+					"audio_vec": {
+						Index: &api.Module{
+							Name: "hfresh",
+							Conf: map[string]any{
+								"distance": "manhattan",
+							},
+						},
+						SkipDefaultCompression: true,
+					},
 				},
 				Sharding: &api.ShardingConfig{
 					DesiredCount:        3,

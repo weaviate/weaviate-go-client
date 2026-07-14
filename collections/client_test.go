@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
+	"github.com/weaviate/weaviate-go-client/v6/collections/compression"
 	"github.com/weaviate/weaviate-go-client/v6/collections/vectorindex"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
@@ -130,16 +131,22 @@ func TestClient_Create(t *testing.T) {
 				Vectors: map[string]collections.VectorConfig{
 					"lyrics_vec": {},
 					"title_vec": {
-						Vectorizer: testkit.Module{
-							"url": "example.com",
-						},
 						Index: vectorindex.HFresh{
 							Distance:         vectorindex.DistanceCosine,
 							MaxPostingSizeKB: 1024,
 							ReplicaCount:     8,
 							SearchProbe:      64,
 						},
+						Compression: compression.RQ{
+							Cache:        true,
+							Bits:         1,
+							RescoreLimit: 16,
+						},
+						Vectorizer: testkit.Module{
+							"url": "example.com",
+						},
 					},
+					"audio_vec": {SkipDefaultCompression: true},
 				},
 				Sharding: &collections.ShardingConfig{
 					DesiredCount:        3,
@@ -226,12 +233,6 @@ func TestClient_Create(t *testing.T) {
 							Vectors: map[string]api.VectorConfig{
 								"lyrics_vec": {},
 								"title_vec": {
-									Vectorizer: &api.Module{
-										Name: testkit.ModuleName,
-										Conf: map[string]any{
-											"url": "example.com",
-										},
-									},
 									Index: &api.Module{
 										Name: "hfresh",
 										Conf: map[string]any{
@@ -241,7 +242,22 @@ func TestClient_Create(t *testing.T) {
 											"searchProbe":      64,
 										},
 									},
+									Compression: &api.Module{
+										Name: "rq",
+										Conf: map[string]any{
+											"cache":         true,
+											"bits":          1,
+											"rescore_limit": 16,
+										},
+									},
+									Vectorizer: &api.Module{
+										Name: testkit.ModuleName,
+										Conf: map[string]any{
+											"url": "example.com",
+										},
+									},
 								},
+								"audio_vec": {SkipDefaultCompression: true},
 							},
 							Sharding: &api.ShardingConfig{
 								DesiredCount:        3,
@@ -393,12 +409,6 @@ func TestClient_GetConfig(t *testing.T) {
 						Vectors: map[string]api.VectorConfig{
 							"lyrics_vec": {},
 							"title_vec": {
-								Vectorizer: &api.Module{
-									Name: testkit.ModuleName,
-									Conf: map[string]any{
-										"url": "example.com",
-									},
-								},
 								Index: &api.Module{
 									Name: "hfresh",
 									Conf: map[string]any{
@@ -408,7 +418,22 @@ func TestClient_GetConfig(t *testing.T) {
 										"searchProbe":      64,
 									},
 								},
+								Compression: &api.Module{
+									Name: "rq",
+									Conf: map[string]any{
+										"cache":         true,
+										"bits":          1,
+										"rescore_limit": 16,
+									},
+								},
+								Vectorizer: &api.Module{
+									Name: testkit.ModuleName,
+									Conf: map[string]any{
+										"url": "example.com",
+									},
+								},
 							},
+							"audio_vec": {SkipDefaultCompression: true},
 						},
 						Sharding: &api.ShardingConfig{
 							DesiredCount:        3,
@@ -494,16 +519,22 @@ func TestClient_GetConfig(t *testing.T) {
 				Vectors: map[string]collections.VectorConfig{
 					"lyrics_vec": {},
 					"title_vec": {
-						Vectorizer: testkit.Module{
-							"url": "example.com",
-						},
 						Index: vectorindex.HFresh{
 							Distance:         vectorindex.DistanceCosine,
 							MaxPostingSizeKB: 1024,
 							ReplicaCount:     8,
 							SearchProbe:      64,
 						},
+						Compression: compression.RQ{
+							Cache:        true,
+							Bits:         1,
+							RescoreLimit: 16,
+						},
+						Vectorizer: testkit.Module{
+							"url": "example.com",
+						},
 					},
+					"audio_vec": {SkipDefaultCompression: true},
 				},
 				Sharding: &collections.ShardingConfig{
 					DesiredCount:        3,

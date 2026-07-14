@@ -83,6 +83,25 @@ func (*Modules[T]) Encode(m Module[T]) (map[string]any, error) {
 	return v, nil
 }
 
+// Find returns the first key from map m for which a module
+// exists in the registry; found indicates if such key exists.
+// The registry is iterated in a random order and the method
+// returns after the first match.
+func (ms *Modules[T]) Find(m map[string]any) (key string, found bool) {
+	ms.registry.Range(func(k any, _ any) bool {
+		name, ok := k.(string)
+		if ok {
+			if _, ok = m[name]; ok {
+				key = name
+				found = true
+				return false
+			}
+		}
+		return true
+	})
+	return
+}
+
 // customModule implements a simple [CustomModule].
 type customModule[T ~string] struct {
 	name string
