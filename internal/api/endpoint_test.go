@@ -303,11 +303,7 @@ func TestRESTRequests(t *testing.T) {
 							},
 						},
 					},
-					"title_vec": {
-						Vectorizer: map[string]any{
-							"none": map[string]any{},
-						},
-					},
+					"title_vec": {},
 				},
 				ShardingConfig: map[string]any{
 					"desiredCount":        3,
@@ -1373,11 +1369,7 @@ func TestRESTResponses(t *testing.T) {
 							},
 						},
 					},
-					"title_vec": {
-						Vectorizer: map[string]any{
-							"none": map[string]any{},
-						},
-					},
+					"title_vec": {},
 				},
 				ShardingConfig: map[string]any{
 					"desiredCount":        3,
