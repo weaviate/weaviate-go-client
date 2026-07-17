@@ -1600,13 +1600,15 @@ func TestBatchStreamRequest_MarshalMessage(t *testing.T) {
 						Tenant:         "john_doe",
 					},
 				}
-				b.AddObject(&api.BatchObject{
+				// It's OK to use the top-level t here, as this step
+				// MUST succeed for a test to make sense.
+				require.NoError(t, b.AddObject(&api.BatchObject{
 					UUID: testkit.UUID,
 					Properties: map[string]any{
 						"artist": "Angine de Poitrine",
 						"title":  "Mata Zyklek",
 					},
-				})
+				}))
 				b.AddReference(&api.Reference{
 					Origin: api.ObjectPath{
 						Collection: "Songs",
