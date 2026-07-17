@@ -35,7 +35,8 @@ type RequestMessage interface {
 		proto.BatchObjectsRequest |
 		proto.BatchReferencesRequest |
 		proto.BatchDeleteRequest |
-		proto.TenantsGetRequest
+		proto.TenantsGetRequest |
+		proto.BatchStreamRequest
 }
 
 // ReplyMessage enumerates gRPC replies supported by [proto.WeaviateClient].
@@ -45,7 +46,8 @@ type ReplyMessage interface {
 		proto.BatchObjectsReply |
 		proto.BatchReferencesReply |
 		proto.BatchDeleteReply |
-		proto.TenantsGetReply
+		proto.TenantsGetReply |
+		proto.BatchStreamReply
 }
 
 // MethodFunc is a method of the proto.WeaviateClient interface
