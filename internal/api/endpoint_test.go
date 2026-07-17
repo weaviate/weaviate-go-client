@@ -324,9 +324,6 @@ func TestRESTRequests(t *testing.T) {
 						VectorIndexConfig: map[string]any{
 							"skipDefaultQuantization": true,
 						},
-						Vectorizer: map[string]any{
-							"none": map[string]any{},
-						},
 					},
 				},
 				ShardingConfig: map[string]any{
