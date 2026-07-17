@@ -2411,6 +2411,188 @@ components:
                     description: Name of the schema.
                     type: string
             type: object
+        SearchCommon:
+            description: Fields shared by every REST search request (near-text, and — when built — hybrid, bm25, near-object). Unknown fields are ignored (platform parity with the other endpoints). Reserved fields are accepted by the schema but rejected by the server with 422 until the corresponding feature ships.
+            properties:
+                auto_limit:
+                    description: Cut results off at the first steep drop in score (autocut). The value is the number of score jumps to allow before cutting.
+                    format: int64
+                    nullable: true
+                    type: integer
+                consistency_level:
+                    description: The consistency level for the read.
+                    enum:
+                        - ONE
+                        - QUORUM
+                        - ALL
+                    type: string
+                group_by:
+                    description: Reserved for grouped search. Returns 422 (not yet supported).
+                    nullable: true
+                    type: string
+                grouped_task:
+                    description: Reserved for grouped retrieval-augmented generation. Returns 422 (not yet supported).
+                    nullable: true
+                    type: string
+                limit:
+                    description: The maximum number of objects to return. Omitted or `0` falls back to the server default (`QUERY_DEFAULTS_LIMIT`); a value above `QUERY_MAXIMUM_RESULTS` is rejected.
+                    format: int64
+                    nullable: true
+                    type: integer
+                number_of_groups:
+                    description: Reserved for grouped search. Returns 422 (not yet supported).
+                    format: int64
+                    nullable: true
+                    type: integer
+                objects_per_group:
+                    description: Reserved for grouped search. Returns 422 (not yet supported).
+                    format: int64
+                    nullable: true
+                    type: integer
+                offset:
+                    description: The number of objects to skip before returning results. Used with `limit` for pagination.
+                    format: int64
+                    nullable: true
+                    type: integer
+                rerank_property:
+                    description: Reserved for reranking. Returns 422 (not yet supported).
+                    nullable: true
+                    type: string
+                rerank_query:
+                    description: Reserved for reranking. Returns 422 (not yet supported).
+                    nullable: true
+                    type: string
+                return_metadata:
+                    description: The retrieval metadata to return under each result's `metadata` key. The object `id` is always returned as each result's `id` field. Omitted or empty returns no `metadata` block.
+                    items:
+                        enum:
+                            - distance
+                            - certainty
+                            - score
+                            - explain_score
+                            - creation_time
+                            - last_update_time
+                        type: string
+                    type: array
+                return_properties:
+                    description: The properties to return. A dot-path selects one hop across a reference (e.g. `hasAuthor.name`). Omitted returns all non-reference, non-blob properties; an empty array returns no properties.
+                    items:
+                        type: string
+                    type: array
+                single_prompt:
+                    description: Reserved for per-object retrieval-augmented generation. Returns 422 (not yet supported).
+                    nullable: true
+                    type: string
+                tenant:
+                    description: The tenant to search in a multi-tenant collection.
+                    type: string
+                where:
+                    $ref: '#/components/schemas/WhereFilter'
+            type: object
+        SearchNearTextRequest:
+            allOf:
+                - $ref: '#/components/schemas/SearchCommon'
+                - properties:
+                    certainty:
+                        description: Minimum normalized certainty of a match. Only for cosine-distance vector indexes. Mutually exclusive with `distance`.
+                        format: float64
+                        nullable: true
+                        type: number
+                    distance:
+                        description: Maximum vector distance of a match. Mutually exclusive with `certainty`.
+                        format: float64
+                        nullable: true
+                        type: number
+                    query:
+                        description: The concept(s) to search for, as an array of strings. Multiple entries perform a multi-concept search. A single concept is a one-element array, e.g. `["space opera"]`.
+                        items:
+                            type: string
+                        type: array
+                    target_vector:
+                        description: The named vector to search. Required when the collection has more than one named vector.
+                        type: string
+                  required:
+                    - query
+                  type: object
+            description: Request body for the near-text search endpoint. The query is vectorized server-side by the collection's vectorizer module and the closest objects are returned. Extends the shared search fields (`SearchCommon`) with the near-text-specific `query`, `certainty`, `distance` and `target_vector`.
+        SearchResponse:
+            description: 'The result of a REST search: the matched objects as `{id, properties, references, metadata}` envelopes, plus the server-side processing time. Shared by all REST search endpoints.'
+            properties:
+                results:
+                    description: The matched objects, ordered by relevance.
+                    items:
+                        $ref: '#/components/schemas/SearchResultObject'
+                    type: array
+                    x-omitempty: false
+                took_ms:
+                    description: Server-side processing time in milliseconds.
+                    format: int64
+                    type: integer
+                    x-omitempty: false
+            required:
+                - results
+                - took_ms
+            type: object
+        SearchResultMetadata:
+            description: The retrieval metadata of a single search hit, populated according to `return_metadata`. Every field is optional and only present when it was requested and is computable for the search.
+            properties:
+                certainty:
+                    description: The normalized certainty of the hit. Only computable on cosine-distance vector indexes.
+                    format: float
+                    nullable: true
+                    type: number
+                creation_time:
+                    description: The object's creation time, as epoch milliseconds.
+                    format: int64
+                    nullable: true
+                    type: integer
+                distance:
+                    description: The vector distance between the hit and the query.
+                    format: float
+                    nullable: true
+                    type: number
+                explain_score:
+                    description: An explanation of how the score was computed.
+                    nullable: true
+                    type: string
+                last_update_time:
+                    description: The object's last-update time, as epoch milliseconds.
+                    format: int64
+                    nullable: true
+                    type: integer
+                score:
+                    description: The relevance score of the hit.
+                    format: float
+                    nullable: true
+                    type: number
+            type: object
+        SearchResultObject:
+            description: 'A single search hit: the object''s `id` (always returned), the selected non-reference properties under `properties`, the selected cross-references under `references`, and the requested retrieval metadata under `metadata`.'
+            properties:
+                id:
+                    description: The object's UUID. Always returned.
+                    format: uuid
+                    type: string
+                    x-go-type: '*openapi_types.UUID'
+                metadata:
+                    $ref: '#/components/schemas/SearchResultMetadata'
+                properties:
+                    additionalProperties:
+                        $ref: '#/components/schemas/JsonObject'
+                    description: The selected non-reference properties of the object; nested (object / object[]) properties are pruned to the selected nested fields. Always present — `{}` when the request selects no properties.
+                    type: object
+                    x-omitempty: false
+                references:
+                    additionalProperties:
+                        items:
+                            $ref: '#/components/schemas/JsonObject'
+                        type: array
+                    description: 'The selected cross-references: reference name to the array of referenced objects, each carrying the selected one-hop properties. Omitted when the request selects no references.'
+                    type: object
+            required:
+                - id
+                - properties
+            type: object
         ShardProgress:
             description: Progress information for exporting a single shard
             properties:
@@ -5687,18 +5869,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
                     description: Not Found - Namespace does not exist, or the namespaces feature is not enabled on this cluster.
-                "409":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ErrorResponse'
-                    description: The namespace is being deleted; `home_node` cannot be updated while the namespace is in the `deleting` state.
                 "422":
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
-                    description: The request syntax is correct, but the server couldn't process it due to semantic issues (e.g. invalid name format, reserved name, or unknown home_node).
+                    description: The request syntax is correct, but the server couldn't process it due to semantic issues (e.g. invalid name format, reserved name, unknown home_node, or the namespace being in the `deleting` state).
                 "500":
                     content:
                         application/json:
@@ -8815,6 +8991,89 @@ paths:
                 - schema
             x-serviceIds:
                 - weaviate.local.manipulate.meta
+    /search/{collection}/near-text:
+        post:
+            description: Performs a semantic (near-text) search over the objects of a collection. The query text is vectorized server-side by the collection's vectorizer module and the closest objects are returned, each as an envelope of its `id`, the selected `properties`, the selected `references` and, when requested, its retrieval `metadata`.
+            operationId: search.nearText
+            parameters:
+                - description: The name (or alias) of the collection to search. A lowercase first letter is normalized to the canonical uppercase form.
+                  in: path
+                  name: collection
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SearchNearTextRequest'
+                description: The near-text search request.
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SearchResponse'
+                    description: Search performed successfully.
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: An invalid parameter value (e.g. empty query, negative paging, unknown property) or an unparseable request body.
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Unauthorized or invalid credentials.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Unknown collection or tenant.
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: 'Either a request-schema violation (a missing required field such as `query`, or an invalid enum value), or a well-formed request that cannot run: no vectorizer module is configured for the collection, target_vector is missing on a multi-named-vector collection, certainty is used on a non-cosine index, a reserved (not yet supported) parameter is present, the tenant usage does not match the collection''s multi-tenancy configuration, a where filter targets a property whose inverted index is disabled, or the experimental REST Search API is not enabled (set EXPERIMENTAL_REST_SEARCH_ENABLED=true).'
+                "429":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: The server's query rate limit was reached; retry later.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: An error has occurred while trying to fulfill the request. Most likely the ErrorResponse will contain more information about the error.
+                "502":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: The embedding provider failed to vectorize the query; the search cannot run.
+                "503":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: The server is in an operational mode that blocks searches (e.g. WRITE_ONLY); retry once the server returns to normal operation.
+            summary: Search a collection with near-text
+            tags:
+                - search
+            x-codegen-request-body-name: body
     /tasks:
         get:
             operationId: distributedTasks.get
@@ -9342,6 +9601,8 @@ tags:
     - description: Operations for performing actions on multiple data items (objects or references) in a single API request. Batch operations significantly improve performance and efficiency, especially for bulk data imports or large-scale deletions, by reducing network overhead compared to sending individual requests. These endpoints allow for creating multiple objects or deleting objects based on filters.
       name: batch
     - name: graphql
+    - description: Operations for querying collections over REST. The near-text endpoint performs semantic vector search with server-side embedding of the query text; each result carries the object's `id`, the selected `properties`, the selected `references` and, when requested, its retrieval `metadata`.
+      name: search
     - name: meta
     - description: 'Operations related to managing collections. In Weaviate, ''collections'' (formerly called ''classes'') store your data objects. Each collection has a definition that specifies its data structure (properties and their data types), vectorizer settings (how vectors are generated or managed), and indexing configuration (how data is indexed for efficient search). These endpoints allow you to create, retrieve, update, and delete collection definitions. For detailed usage and code examples on interacting with collections, see the documentation: [https://weaviate.io/developers/weaviate/manage-data/collections](https://weaviate.io/developers/weaviate/manage-data/collections).'
       name: schema
