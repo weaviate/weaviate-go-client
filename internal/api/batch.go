@@ -44,7 +44,6 @@ type BatchRequest struct {
 
 	objects    []*proto.BatchObject
 	references []*proto.BatchReference
-	last       any
 }
 
 var _ transport.MessageMarshaler[proto.BatchStreamRequest] = (*BatchRequest)(nil)
@@ -72,7 +71,6 @@ func (req *BatchRequest) AddObject(bo *BatchObject) error {
 		return err
 	}
 	req.objects = append(req.objects, pbo)
-	req.last = (*BatchObject)(nil)
 	return nil
 }
 
@@ -86,16 +84,16 @@ func (req *BatchRequest) AddReference(ref *Reference) {
 		Tenant:         req.Tenant,
 	}
 	req.references = append(req.references, pref)
-	req.last = (*Reference)(nil)
 }
 
-// Pop removes the last added [BatchObject] or [Reference] from the batch.
+// Pop removes the last added [BatchObject] from the batch.
 // Safe to call on an empty batch.
-func (req *BatchRequest) Pop() {
-	switch req.last.(type) {
-	case *BatchObject:
-		req.objects = req.objects[:len(req.objects)-1]
-	case *Reference:
-		req.references = req.references[:len(req.references)-1]
-	}
+func (req *BatchRequest) PopObject() {
+	req.objects = req.objects[:len(req.objects)-1]
+}
+
+// PopReference removes the last added [Reference] from the batch.
+// Safe to call on an empty batch.
+func (req *BatchRequest) PopReference() {
+	req.references = req.references[:len(req.references)-1]
 }

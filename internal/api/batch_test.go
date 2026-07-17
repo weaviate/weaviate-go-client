@@ -31,12 +31,12 @@ func TestBatchRequest(t *testing.T) {
 	}
 	checkContains(want{objects: 3, references: 0})
 
-	br.Pop()
+	br.PopObject()
 	checkContains(want{objects: 2, references: 0})
 
 	br.AddReference(new(api.Reference))
 	checkContains(want{objects: 2, references: 1})
 
-	br.Pop()
+	br.PopReference()
 	checkContains(want{objects: 2, references: 0})
 }
