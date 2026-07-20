@@ -9,6 +9,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/ssb"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	protoutil "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -66,12 +67,12 @@ func TestBatch(t *testing.T) {
 
 	t.Run("add", func(t *testing.T) {
 		t.Run("all objects fit the batch", func(t *testing.T) {
-			bs := batchStream{maxSize: expectObjects(3)}
-			b := bs.NewBatch()
+			sad := streamAdapter{maxSize: expectObjects(3)}
+			b := sad.NewBatch()
 
 			for i := range 3 {
 				err := b.Add(ssb.Data{Object: object})
-				if assert.LessOrEqual(t, batchSize(t, b.(*batch)), bs.maxSize) {
+				if assert.LessOrEqual(t, batchSize(t, b.(*batch)), sad.maxSize) {
 					assert.NoErrorf(t, err, "add item #%d to batch", i+1)
 				}
 			}
@@ -81,8 +82,8 @@ func TestBatch(t *testing.T) {
 		})
 
 		t.Run("object is too large", func(t *testing.T) {
-			bs := batchStream{RequestDefaults: rd, maxSize: expectObjects(1) / 2}
-			b := bs.NewBatch()
+			sad := streamAdapter{maxSize: expectObjects(1) / 2}
+			b := sad.NewBatch()
 
 			err := b.Add(ssb.Data{Object: object})
 			assert.ErrorIs(t, err, ssb.ErrTooLarge)
@@ -90,21 +91,21 @@ func TestBatch(t *testing.T) {
 	})
 
 	t.Run("send", func(t *testing.T) {
-		var c client
-		bs := batchStream{
+		var ms mockStream
+		sad := streamAdapter{
 			RequestDefaults: rd,
-			c:               &c,
+			stream:          &ms,
 			maxSize:         expectObjects(5),
 		}
-		b := bs.NewBatch()
+		b := sad.NewBatch()
 
 		require.NoError(t, b.Add(ssb.Data{Object: object}), "add item to batch")
 
 		err := b.Send()
 		assert.NoError(t, err, "send batch")
-		assert.NotNil(t, c.sent, "sent request")
+		assert.NotNil(t, ms.sent, "sent request")
 
-		objects := c.sent.GetData().GetObjects().GetValues()
+		objects := ms.sent.GetData().GetObjects().GetValues()
 		assert.Len(t, objects, 1)
 		assert.EqualExportedValues(t, protoObject, objects[0])
 	})
@@ -116,22 +117,22 @@ func batchSize(t *testing.T, b *batch) int {
 	return size
 }
 
-type client struct {
-	// Embedded Client helps client satisfy the interface
+type mockStream struct {
+	// Embedded BatchStream helps client satisfy the interface
 	// without implementing methods not used in the test.
-	Client
+	transport.BatchStream
 
 	sent *proto.BatchStreamRequest // Last request that was sent via this client.
 	recv *proto.BatchStreamReply   // Return value for [Client.Recv].
 }
 
-func (c *client) Send(req *proto.BatchStreamRequest) error {
-	c.sent = req
+func (ms *mockStream) Send(req *proto.BatchStreamRequest) error {
+	ms.sent = req
 	return nil
 }
 
-func (c *client) Recv() (*proto.BatchStreamReply, error) {
-	return c.recv, nil
+func (ms *mockStream) Recv() (*proto.BatchStreamReply, error) {
+	return ms.recv, nil
 }
 
 func TestStream_Recv(t *testing.T) {
@@ -239,9 +240,9 @@ func TestStream_Recv(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			bs := batchStream{c: &client{recv: tt.recv}}
+			sad := streamAdapter{stream: &mockStream{recv: tt.recv}}
 
-			got, err := bs.Recv()
+			got, err := sad.Recv()
 			require.NoError(t, err, "recv error")
 
 			assert.EqualExportedValues(t, tt.want, got, "received event")

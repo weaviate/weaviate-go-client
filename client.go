@@ -12,11 +12,13 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v6/alias"
 	"github.com/weaviate/weaviate-go-client/v6/backup"
+	"github.com/weaviate/weaviate-go-client/v6/batch"
 	"github.com/weaviate/weaviate-go-client/v6/cluster"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport/stream"
 	"github.com/weaviate/weaviate-go-client/v6/internal/auth"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 	"github.com/weaviate/weaviate-go-client/v6/rbac"
@@ -374,4 +376,15 @@ func newTransport(ctx context.Context, c config) (internal.Transport, error) {
 	}
 
 	return &errorTransport{t}, nil
+}
+
+// Batch opens a new batch stream. The context will be used throughout
+// the whole streaming process and may be used to terminate it abruptly.
+// In a normal course of operation, a batch should be closed explicitly.
+func (c *Client) Batch(ctx context.Context) (*batch.Client, error) {
+	st, ok := c.transport.(stream.Transport)
+	if !ok {
+		return nil, fmt.Errorf("transport %T does not support streaming", c.transport)
+	}
+	return batch.NewClient(ctx, st)
 }

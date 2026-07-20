@@ -8,52 +8,58 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/ssb"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
-	"google.golang.org/grpc"
 	protoutil "google.golang.org/protobuf/proto"
 )
 
-type Client grpc.BidiStreamingClient[proto.BatchStreamRequest, proto.BatchStreamReply]
-
-// NewStreamFunc opens a new streaming client. The underlying stream
-// supports messages up to maxSize bytes when marshaled.
-type NewStreamFunc func(context.Context) (client Client, maxSize int, err error)
-
-func (f NewStreamFunc) NewStream(ctx context.Context, rd api.RequestDefaults) (ssb.Stream, error) {
-	client, maxSize, err := f(ctx)
-	if err != nil {
-		return nil, err
-	}
-	dev.AssertNotNil(client, "client")
-	return &batchStream{
-		RequestDefaults: rd,
-		c:               client,
-		maxSize:         maxSize,
-	}, nil
+// Transport supports asynchronous bidirectional streaming.
+type Transport interface {
+	// NewStream opens a new [transport.BatchStream].
+	// The underlying stream messages up to maxSize bytes when marshaled.
+	NewStream(ctx context.Context) (_ transport.BatchStream, maxSize int, _ error)
 }
 
-type batchStream struct {
+// NewOpenFunc adapts the t streams to [ssb.Stream].
+func NewOpenFunc(t Transport) ssb.OpenFunc {
+	return func(ctx context.Context, rd api.RequestDefaults) (ssb.Stream, error) {
+		stream, maxSize, err := t.NewStream(ctx)
+		if err != nil {
+			return nil, err
+		}
+		dev.AssertNotNil(stream, "client")
+		return &streamAdapter{
+			RequestDefaults: rd,
+			stream:          stream,
+			maxSize:         maxSize,
+		}, nil
+	}
+}
+
+// streamAdapter implements [ssb.Stream] on top of [transport.BatchStream].
+type streamAdapter struct {
 	api.RequestDefaults
-	c       Client
-	maxSize int
+
+	stream  transport.BatchStream // Delegate stream transport.
+	maxSize int                   // Maximum size request size in bytes.
 }
 
 // NewBatch cretes a new sized container that accumulates
-// batch data until it reaches [Client]'s maximum request size.
-func (bs *batchStream) NewBatch() ssb.Batch {
+// batch data until it reaches [transport.BatchStream]'s maximum request size.
+func (sad *streamAdapter) NewBatch() ssb.Batch {
 	return &batch{
-		c:       bs.c,
-		maxSize: bs.maxSize,
+		stream:  sad.stream,
+		maxSize: sad.maxSize,
 		BatchRequest: api.BatchRequest{
-			RequestDefaults: bs.RequestDefaults,
+			RequestDefaults: sad.RequestDefaults,
 		},
 	}
 }
 
-func (bs *batchStream) Recv() (ssb.Event, error) {
+func (sad *streamAdapter) Recv() (ssb.Event, error) {
 	var event ssb.Event
 
-	reply, err := bs.c.Recv()
+	reply, err := sad.stream.Recv()
 	if err != nil {
 		return event, err
 	}
@@ -107,15 +113,16 @@ func (bs *batchStream) Recv() (ssb.Event, error) {
 	return event, nil
 }
 
-func (bs *batchStream) Close() error {
+func (sad *streamAdapter) Close() error {
 	return nil
 }
 
 type batch struct {
 	api.BatchRequest
-	c       Client
-	maxSize int
-	curSize int
+
+	stream  transport.BatchStream // Delegate stream transport.
+	maxSize int                   // Maximum size request size in bytes.
+	curSize int                   // Current request size in bytes.
 }
 
 func (b *batch) Add(d ssb.Data) error {
@@ -157,7 +164,7 @@ func (b *batch) Send() error {
 	if err != nil {
 		return err
 	}
-	return b.c.Send(req)
+	return b.stream.Send(req)
 }
 
 // size returns the estimated size of the marshaled message, in bytes.

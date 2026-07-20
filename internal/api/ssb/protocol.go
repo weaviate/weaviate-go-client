@@ -8,6 +8,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 )
 
+// OpenFunc opens a new streaming client.
 type OpenFunc func(context.Context, api.RequestDefaults) (Stream, error)
 
 type Stream interface {

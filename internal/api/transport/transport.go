@@ -315,8 +315,10 @@ func tokenKeepalive(ctx context.Context, src oauth2.TokenSource, tickFunc func(t
 	}
 }
 
+type BatchStream grpc.BidiStreamingClient[proto.BatchStreamRequest, proto.BatchStreamReply]
+
 // NewStream opens a new batch streaming client.
-func (t *transport) NewStream(ctx context.Context) (grpc.BidiStreamingClient[proto.BatchStreamRequest, proto.BatchStreamReply], int, error) {
+func (t *transport) NewStream(ctx context.Context) (BatchStream, int, error) {
 	c := t.gRPC.Client()
 	dev.AssertNotNil(c, "gRPC client")
 
