@@ -170,17 +170,23 @@ var (
 
 // MarshalText formats the object reference as a beacon.
 // json.Marshal will call this method and encode the result as a JSON string.
-func (o *Reference) MarshalText() ([]byte, error) {
-	id, err := o.Target.UUID.MarshalText()
+func (r *Reference) MarshalText() ([]byte, error) {
+	id, err := r.Target.UUID.MarshalText()
 	if err != nil {
 		return nil, err
 	}
 	b := append([]byte(nil), beaconPrefix...)
-	if o.Target.Collection != "" {
-		b = append(b, o.Target.Collection...)
+	if r.Target.Collection != "" {
+		b = append(b, r.Target.Collection...)
 		b = append(b, beaconSep...)
 	}
 	return append(b, id...), nil
+}
+
+// String formats the object reference as a beacon.
+func (r *Reference) String() string {
+	b, _ := r.MarshalText()
+	return string(b)
 }
 
 // MarshalJSON implements json.Marshaler via [rest.Object].
