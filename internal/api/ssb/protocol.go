@@ -16,7 +16,6 @@ import (
 )
 
 type ClientConfig struct {
-	api.RequestDefaults
 	Context   context.Context
 	Transport Transport
 	QueueSize int // Queue buffer size.
@@ -29,7 +28,6 @@ func NewClient(conf ClientConfig) (*Client, error) {
 	c := &Client{
 		ctx:       ctx,
 		cancel:    cancel,
-		defaults:  conf.RequestDefaults,
 		transport: conf.Transport,
 		queue:     make(chan *Task, conf.QueueSize),
 		retry:     make(chan []*Task, conf.BatchSize),
@@ -75,7 +73,7 @@ func (t *Task) TimesRetried() int     { return int(t.retries.Load()) }
 
 type Transport interface {
 	// NewStream opens a new streaming client and starts the batch stream.
-	NewStream(context.Context, api.RequestDefaults) (Stream, error)
+	NewStream(context.Context) (Stream, error)
 
 	// NewRequest returns a new batch request
 	// sized appropriately to the transport's capacity.
@@ -241,21 +239,20 @@ type Client struct {
 	ctx    context.Context
 	cancel context.CancelCauseFunc // Cancels client context.
 
-	defaults  api.RequestDefaults // Defaults for all outgoing requests.
-	transport Transport           // Transport provides Stream and BatchRequest.
-	queue     chan *Task          // Task queue.
-	retry     chan []*Task        // Retry queue.
-	batch     *batch              // Batch container.
-	state     *state              // State controls
-	wip       *cache              // Tasks taken off the queue but not yet completed.
-	canRetry  RetryFunc           // Retry decides if a task will be retried.
+	transport Transport    // Transport provides Stream and BatchRequest.
+	queue     chan *Task   // Task queue.
+	retry     chan []*Task // Retry queue.
+	batch     *batch       // Batch container.
+	state     *state       // State controls
+	wip       *cache       // Tasks taken off the queue but not yet completed.
+	canRetry  RetryFunc    // Retry decides if a task will be retried.
 
 	// FIXME(dyma): this needs to be protected by mutex
 	cancelSend context.CancelCauseFunc // Cancels the context of the "send" goroutine.
 }
 
 func (c *Client) init() error {
-	s, err := c.transport.NewStream(c.ctx, c.defaults)
+	s, err := c.transport.NewStream(c.ctx)
 	if err != nil {
 		return err
 	}
@@ -282,7 +279,6 @@ func (c *Client) send(ctx context.Context, s Stream) {
 			}
 			c.state.set(inFlight)
 		}
-		return
 	}
 
 	if fatal = c.state.await(ctx, canPrepare); fatal != nil {

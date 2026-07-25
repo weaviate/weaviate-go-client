@@ -1594,33 +1594,34 @@ func TestBatchStreamRequest_MarshalMessage(t *testing.T) {
 		{
 			name: "batch data",
 			req: func() *api.BatchRequest {
-				b := &api.BatchRequest{
-					RequestDefaults: api.RequestDefaults{
-						CollectionName: "Songs",
-						Tenant:         "john_doe",
-					},
-				}
+				br := &api.BatchRequest{MaxSize: 1 << 10}
+				var added bool
+
 				// It's OK to use the top-level t here, as this step
 				// MUST succeed for a test to make sense.
-				require.NoError(t, b.AddObject(&api.BatchObject{
-					UUID: testkit.UUID,
-					Properties: map[string]any{
-						"artist": "Angine de Poitrine",
-						"title":  "Mata Zyklek",
-					},
-				}))
-				b.AddReference(&api.Reference{
-					Origin: api.ObjectPath{
-						Collection: "Songs",
-						UUID:       testkit.UUID,
-						Property:   "performedBy",
-					},
-					Target: api.ObjectPath{
-						Collection: "Drummers",
-						UUID:       testkit.UUID,
+				added, _ = br.Add(&proto.BatchObject{
+					Uuid:       testkit.UUID.String(),
+					Collection: "Songs",
+					Tenant:     "john_doe",
+					Properties: &proto.BatchObject_Properties{
+						NonRefProperties: mustNewStruct(map[string]any{
+							"artist": "Angine de Poitrine",
+							"title":  "Mata Zyklek",
+						}),
 					},
 				})
-				return b
+				require.True(t, added, "added object")
+
+				added, _ = br.Add(&proto.BatchReference{
+					Name:           "performedBy",
+					FromCollection: "Songs",
+					FromUuid:       testkit.UUID.String(),
+					ToCollection:   testkit.Ptr("Drummers"),
+					ToUuid:         testkit.UUID.String(),
+					Tenant:         "john_doe",
+				})
+				require.True(t, added, "added reference")
+				return br
 			}(),
 			want: &proto.BatchStreamRequest{
 				Message: &proto.BatchStreamRequest_Data_{

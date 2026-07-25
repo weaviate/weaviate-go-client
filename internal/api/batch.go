@@ -2,8 +2,10 @@ package api
 
 import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 
 	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
+	protoutil "google.golang.org/protobuf/proto"
 )
 
 // StartStreamRequest initiates an SSB stream with the given consistency level.
@@ -40,7 +42,7 @@ func (*stopStreamRequest) MarshalMessage() (*proto.BatchStreamRequest, error) {
 
 // BatchRequest accumulates objects and references into batched requests.
 type BatchRequest struct {
-	RequestDefaults
+	MaxSize int // Maximum size request size in bytes.
 
 	objects    []*proto.BatchObject
 	references []*proto.BatchReference
@@ -64,36 +66,44 @@ func (req *BatchRequest) MarshalMessage() (*proto.BatchStreamRequest, error) {
 	}, nil
 }
 
-// AddObject adds a [BatchObject] to the batch.
-func (req *BatchRequest) AddObject(bo *BatchObject) error {
-	pbo, err := marshalBatchObject(bo, req.RequestDefaults)
-	if err != nil {
-		return err
+func (req *BatchRequest) Add(v any) (added, full bool) {
+	var pop func()
+
+	switch v := v.(type) {
+	case *proto.BatchObject:
+		req.objects = append(req.objects, v)
+		pop = req.popObject
+	case *proto.BatchReference:
+		req.references = append(req.references, v)
+		pop = req.popReference
+	default:
+		dev.Unreachable()
 	}
-	req.objects = append(req.objects, pbo)
-	return nil
+
+	reqSize := req.size()
+	full = reqSize >= req.MaxSize
+	added = reqSize <= req.MaxSize
+	if !added {
+		pop()
+	}
+	return
 }
 
-func (req *BatchRequest) AddReference(ref *Reference) {
-	pref := &proto.BatchReference{
-		Name:           ref.Origin.Property,
-		FromCollection: ref.Origin.Collection,
-		FromUuid:       ref.Origin.UUID.String(),
-		ToCollection:   nilZero(ref.Target.Collection),
-		ToUuid:         ref.Target.UUID.String(),
-		Tenant:         req.Tenant,
-	}
-	req.references = append(req.references, pref)
+// size returns the estimated size of the marshaled message, in bytes.
+func (req *BatchRequest) size() int {
+	m, err := req.MarshalMessage()
+	dev.Assert(err == nil, "marshal message failed")
+	return protoutil.Size(m)
 }
 
 // Pop removes the last added [BatchObject] from the batch.
 // Safe to call on an empty batch.
-func (req *BatchRequest) PopObject() {
+func (req *BatchRequest) popObject() {
 	req.objects = req.objects[:len(req.objects)-1]
 }
 
-// PopReference removes the last added [Reference] from the batch.
+// popReference removes the last added [Reference] from the batch.
 // Safe to call on an empty batch.
-func (req *BatchRequest) PopReference() {
+func (req *BatchRequest) popReference() {
 	req.references = req.references[:len(req.references)-1]
 }

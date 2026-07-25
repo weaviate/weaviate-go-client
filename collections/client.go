@@ -5,9 +5,11 @@ import (
 	"fmt"
 
 	"github.com/weaviate/weaviate-go-client/v6/aggregate"
+	"github.com/weaviate/weaviate-go-client/v6/batch"
 	"github.com/weaviate/weaviate-go-client/v6/data"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport/stream"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/query"
 	"github.com/weaviate/weaviate-go-client/v6/tenant"
@@ -90,6 +92,27 @@ func (h *Handle) Objects(ctx context.Context) *query.ObjectIterator {
 	return query.NewObjectIterator(ctx, h.Query)
 }
 
+// Count objects in the collection, respecting the tenant if provided.
+func (h *Handle) Count(ctx context.Context) (int64, error) {
+	req := api.CountObjectsRequest(h.defaults)
+	var resp api.CountObjectsResponse
+	if err := h.transport.Do(ctx, &req, &resp); err != nil {
+		return 0, fmt.Errorf("count objects: %w", err)
+	}
+	return resp.Int64(), nil
+}
+
+// Batch opens a new batch stream. The context will be used throughout
+// the whole streaming process and may be used to terminate it abruptly.
+// In a normal course of operation, a batch should be closed explicitly.
+func (h *Handle) Batch(ctx context.Context) (*batch.Client, error) {
+	st, ok := h.transport.(stream.Transport)
+	if !ok {
+		return nil, fmt.Errorf("transport %T does not support streaming", h.transport)
+	}
+	return batch.NewClient(ctx, st, h.defaults)
+}
+
 // HandleOption configures request defaults for collection handle.
 type HandleOption func(*api.RequestDefaults)
 
@@ -100,16 +123,6 @@ func (h *Handle) WithOptions(options ...HandleOption) *Handle {
 		opt(&defaults)
 	}
 	return newHandle(h.transport, defaults)
-}
-
-// Count objects in the collection, respecting the tenant if provided.
-func (h *Handle) Count(ctx context.Context) (int64, error) {
-	req := api.CountObjectsRequest(h.defaults)
-	var resp api.CountObjectsResponse
-	if err := h.transport.Do(ctx, &req, &resp); err != nil {
-		return 0, fmt.Errorf("count objects: %w", err)
-	}
-	return resp.Int64(), nil
 }
 
 // Create new collection in the schema. A collection can be created with just the name.

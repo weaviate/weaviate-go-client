@@ -1,9 +1,11 @@
 package stream
 
 import (
+	"context"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
@@ -11,110 +13,48 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/ssb"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
-	protoutil "google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func TestBatch(t *testing.T) {
-	rd := api.RequestDefaults{
-		CollectionName: "Songs",
-		Tenant:         "john_doe",
-	}
-	properties := map[string]any{
-		"title":        "Man Made of Meat",
-		"artist":       "Viagra Boys",
-		"album":        "viagr aboys",
-		"duration_sec": 189,
-	}
-
-	protoProperties, err := structpb.NewStruct(properties)
-	require.NoError(t, err, "marshal properties")
-
-	object := &api.BatchObject{
-		UUID:       testkit.UUID,
-		Properties: properties,
-	}
-
-	// protoObject is the marshaled version of object.
-	protoObject := &proto.BatchObject{
-		Collection: rd.CollectionName,
-		Tenant:     rd.Tenant,
-		Uuid:       testkit.UUID.String(),
-		Properties: &proto.BatchObject_Properties{
-			NonRefProperties: protoProperties,
-		},
-	}
-
-	// expectObjects calculates batch size in bytes that can fit n protoObject copies.
-	expectObjects := func(n int) int {
-		objects := make([]*proto.BatchObject, n)
-		for i := range n {
-			objects[i] = protoObject
-		}
-		return protoutil.Size(&proto.BatchStreamRequest{
-			Message: &proto.BatchStreamRequest_Data_{
-				Data: &proto.BatchStreamRequest_Data{
-					Objects: &proto.BatchStreamRequest_Data_Objects{
-						Values: objects,
-					},
-					References: &proto.BatchStreamRequest_Data_References{
-						Values: nil,
-					},
-				},
-			},
-		})
-	}
-
-	t.Run("add", func(t *testing.T) {
-		t.Run("all objects fit the batch", func(t *testing.T) {
-			sad := streamAdapter{maxSize: expectObjects(3)}
-			b := sad.NewBatch()
-
-			for i := range 3 {
-				err := b.Add(ssb.Data{Object: object})
-				if assert.LessOrEqual(t, batchSize(t, b.(*batch)), sad.maxSize) {
-					assert.NoErrorf(t, err, "add item #%d to batch", i+1)
-				}
-			}
-
-			err := b.Add(ssb.Data{Object: object})
-			assert.ErrorIs(t, err, ssb.ErrBatchFull, "add 4th item")
-		})
-
-		t.Run("object is too large", func(t *testing.T) {
-			sad := streamAdapter{maxSize: expectObjects(1) / 2}
-			b := sad.NewBatch()
-
-			err := b.Add(ssb.Data{Object: object})
-			assert.ErrorIs(t, err, ssb.ErrTooLarge)
-		})
-	})
-
-	t.Run("send", func(t *testing.T) {
-		var ms mockStream
-		sad := streamAdapter{
-			RequestDefaults: rd,
-			stream:          &ms,
-			maxSize:         expectObjects(5),
-		}
-		b := sad.NewBatch()
-
-		require.NoError(t, b.Add(ssb.Data{Object: object}), "add item to batch")
-
-		err := b.Send()
-		assert.NoError(t, err, "send batch")
-		assert.NotNil(t, ms.sent, "sent request")
-
-		objects := ms.sent.GetData().GetObjects().GetValues()
-		assert.Len(t, objects, 1)
-		assert.EqualExportedValues(t, protoObject, objects[0])
-	})
+type mockTransport struct {
+	maxSize int
+	stream  *mockStream
 }
 
-func batchSize(t *testing.T, b *batch) int {
-	size, err := b.size()
-	require.NoError(t, err, "get batch size")
-	return size
+func (mt *mockTransport) MaxSize() int { return mt.maxSize }
+func (mt *mockTransport) NewStream(context.Context) (transport.BatchStream, error) {
+	return mt.stream, nil
+}
+
+func TestTransportAdapter_NewStream(t *testing.T) {
+	rd := api.RequestDefaults{ConsistencyLevel: api.ConsistencyLevelQuorum}
+	ms := new(mockStream)
+	tad := NewAdapter(&mockTransport{stream: ms}, rd)
+	assert.NotNil(t, tad, "nil transport adapter")
+
+	s, err := tad.NewStream(t.Context())
+	assert.NoError(t, err, "new stream")
+	assert.NotNil(t, s, "nil stream")
+
+	assert.NotNil(t, ms.sent, "sent one message down the stream")
+	if assert.IsType(t, ms.sent.Message, (*proto.BatchStreamRequest_Start_)(nil)) {
+		assert.Equal(t,
+			proto.ConsistencyLevel_CONSISTENCY_LEVEL_QUORUM,
+			ms.sent.GetStart().GetConsistencyLevel(),
+			"stream started with a wrong consistency level",
+		)
+	}
+}
+
+func TestTransportAdapter_NewRequest(t *testing.T) {
+	tad := NewAdapter(&mockTransport{maxSize: 1 << 10}, api.RequestDefaults{})
+	assert.NotNil(t, tad, "nil transport adapter")
+
+	req := tad.NewRequest()
+	assert.NotNil(t, req, "nil batch request")
+
+	if assert.IsType(t, req, (*api.BatchRequest)(nil)) {
+		assert.Equal(t, 1<<10, req.(*api.BatchRequest).MaxSize, "max batch size")
+	}
 }
 
 type mockStream struct {
@@ -133,6 +73,28 @@ func (ms *mockStream) Send(req *proto.BatchStreamRequest) error {
 
 func (ms *mockStream) Recv() (*proto.BatchStreamReply, error) {
 	return ms.recv, nil
+}
+
+func TestStream_Send(t *testing.T) {
+	req := api.BatchRequest{
+		MaxSize: 1 << 10,
+	}
+
+	objects := make([]*proto.BatchObject, 5)
+	for i := range objects {
+		objects[i] = &proto.BatchObject{Uuid: uuid.New().String()}
+		added, _ := req.Add(objects[i])
+		require.Truef(t, added, "added object #%d", i)
+	}
+
+	var ms mockStream
+	sad := streamAdapter{stream: &ms}
+	err := sad.Send(&req)
+	assert.NoError(t, err, "send error")
+
+	if assert.IsType(t, ms.sent.Message, (*proto.BatchStreamRequest_Data_)(nil)) {
+		assert.EqualExportedValues(t, objects, ms.sent.GetData().GetObjects().GetValues())
+	}
 }
 
 func TestStream_Recv(t *testing.T) {

@@ -62,7 +62,7 @@ func (r *InsertObjectsRequest) MarshalMessage() (*proto.BatchObjectsRequest, err
 	dev.AssertNotNil(r, "r")
 	batch := make([]*proto.BatchObject, len(r.Objects))
 	for i := range r.Objects {
-		bo, err := marshalBatchObject(&r.Objects[i], r.RequestDefaults)
+		bo, err := MarshalBatchObject(&r.Objects[i], r.RequestDefaults)
 		if err != nil {
 			return nil, err
 		}
@@ -115,20 +115,24 @@ func (r *InsertReferencesRequest) Body() transport.MessageMarshaler[proto.BatchR
 
 func (r *InsertReferencesRequest) MarshalMessage() (*proto.BatchReferencesRequest, error) {
 	references := make([]*proto.BatchReference, len(r.References))
-	for i, ref := range r.References {
-		references[i] = &proto.BatchReference{
-			Name:           ref.Origin.Property,
-			FromCollection: ref.Origin.Collection,
-			FromUuid:       ref.Origin.UUID.String(),
-			ToCollection:   nilZero(ref.Target.Collection),
-			ToUuid:         ref.Target.UUID.String(),
-			Tenant:         r.Tenant,
-		}
+	for i := range r.References {
+		references[i] = MarshalBatchReference(&r.References[i], r.RequestDefaults)
 	}
 	return &proto.BatchReferencesRequest{
 		ConsistencyLevel: r.ConsistencyLevel.proto(),
 		References:       references,
 	}, nil
+}
+
+func MarshalBatchReference(ref *Reference, rd RequestDefaults) *proto.BatchReference {
+	return &proto.BatchReference{
+		Name:           ref.Origin.Property,
+		FromCollection: ref.Origin.Collection,
+		FromUuid:       ref.Origin.UUID.String(),
+		ToCollection:   nilZero(ref.Target.Collection),
+		ToUuid:         ref.Target.UUID.String(),
+		Tenant:         rd.Tenant,
+	}
 }
 
 type InsertReferencesResponse InsertObjectsResponse
@@ -288,7 +292,7 @@ func (r *DeleteObjectRequest) Query() url.Values {
 	return q
 }
 
-func marshalBatchObject(bo *BatchObject, rd RequestDefaults) (*proto.BatchObject, error) {
+func MarshalBatchObject(bo *BatchObject, rd RequestDefaults) (*proto.BatchObject, error) {
 	var vectors []*proto.Vectors
 	for i := range bo.Vectors {
 		v, err := marshalVector(&bo.Vectors[i])

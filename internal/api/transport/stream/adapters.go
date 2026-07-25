@@ -16,44 +16,66 @@ import (
 // Transport supports asynchronous bidirectional streaming.
 type Transport interface {
 	// NewStream opens a new [transport.BatchStream].
-	// The underlying stream messages up to maxSize bytes when marshaled.
-	NewStream(ctx context.Context) (_ transport.BatchStream, maxSize int, _ error)
+	NewStream(context.Context) (transport.BatchStream, error)
+	// The maximum message size in bytes that can be sent via the stream.
+	MaxSize() int
 }
 
-// NewOpenFunc adapts the t streams to [ssb.Stream].
-func NewOpenFunc(t Transport) ssb.OpenFunc {
-	return func(ctx context.Context, rd api.RequestDefaults) (ssb.Stream, error) {
-		stream, maxSize, err := t.NewStream(ctx)
-		if err != nil {
-			return nil, err
-		}
-		dev.AssertNotNil(stream, "client")
-		return &streamAdapter{
-			RequestDefaults: rd,
-			stream:          stream,
-			maxSize:         maxSize,
-		}, nil
+func NewAdapter(t Transport, rd api.RequestDefaults) *TransportAdapter {
+	return &TransportAdapter{
+		transport: t,
+		defaults:  rd,
 	}
+}
+
+type TransportAdapter struct {
+	transport Transport
+	defaults  api.RequestDefaults
+}
+
+func (tad *TransportAdapter) NewStream(ctx context.Context) (ssb.Stream, error) {
+	stream, err := tad.transport.NewStream(ctx)
+	if err != nil {
+		return nil, err
+	}
+	sad := &streamAdapter{stream: stream}
+	if err := sad.send(&api.StartStreamRequest{
+		ConsistencyLevel: tad.defaults.ConsistencyLevel,
+	}); err != nil {
+		return nil, err
+	}
+	return sad, nil
+}
+
+func (tad *TransportAdapter) NewRequest() ssb.BatchRequest {
+	return &api.BatchRequest{
+		MaxSize: tad.transport.MaxSize(),
+	}
+}
+
+func (tad *TransportAdapter) Prepare(d ssb.Data) (v any, err error) {
+	switch {
+	case d.Object != nil:
+		v, err = api.MarshalBatchObject(d.Object, tad.defaults)
+	case d.Reference != nil:
+		v = api.MarshalBatchReference(d.Reference, tad.defaults)
+	default:
+		dev.Unreachable()
+	}
+
+	if err == nil &&
+		protoutil.Size(v.(protoutil.Message)) > tad.transport.MaxSize() {
+		err = ssb.ErrTooLarge
+	}
+	return
 }
 
 // streamAdapter implements [ssb.Stream] on top of [transport.BatchStream].
-type streamAdapter struct {
-	api.RequestDefaults
+type streamAdapter struct{ stream transport.BatchStream }
 
-	stream  transport.BatchStream // Delegate stream transport.
-	maxSize int                   // Maximum size request size in bytes.
-}
-
-// NewBatch cretes a new sized container that accumulates
-// batch data until it reaches [transport.BatchStream]'s maximum request size.
-func (sad *streamAdapter) NewBatch() ssb.Batch {
-	return &batch{
-		stream:  sad.stream,
-		maxSize: sad.maxSize,
-		BatchRequest: api.BatchRequest{
-			RequestDefaults: sad.RequestDefaults,
-		},
-	}
+func (sad *streamAdapter) Send(req ssb.BatchRequest) error {
+	dev.AssertType[*api.BatchRequest](req, "batch request")
+	return sad.send(req.(*api.BatchRequest))
 }
 
 func (sad *streamAdapter) Recv() (ssb.Event, error) {
@@ -114,64 +136,16 @@ func (sad *streamAdapter) Recv() (ssb.Event, error) {
 }
 
 func (sad *streamAdapter) Close() error {
-	return nil
-}
-
-type batch struct {
-	api.BatchRequest
-
-	stream  transport.BatchStream // Delegate stream transport.
-	maxSize int                   // Maximum size request size in bytes.
-	curSize int                   // Current request size in bytes.
-}
-
-func (b *batch) Add(d ssb.Data) error {
-	var pop func()
-
-	switch {
-	case d.Object != nil:
-		if err := b.AddObject(d.Object); err != nil {
-			return err
-		}
-		pop = b.PopObject
+	if err := sad.send(api.StopStreamRequest); err != nil {
+		return err
 	}
+	return sad.stream.CloseSend()
+}
 
-	reqSize, err := b.size()
+func (sad *streamAdapter) send(mm transport.MessageMarshaler[proto.BatchStreamRequest]) error {
+	req, err := mm.MarshalMessage()
 	if err != nil {
 		return err
 	}
-	itemSize := reqSize - b.curSize
-	if reqSize <= b.maxSize {
-		b.curSize = reqSize
-		return nil
-	}
-
-	// The item does not fit in the batch.
-	// Defer its removal, then narrow down the reason.
-	defer pop()
-	if itemSize > b.maxSize {
-		return ssb.ErrTooLarge
-	} else if reqSize > b.maxSize {
-		return ssb.ErrBatchFull
-	}
-
-	dev.Unreachable()
-	return nil
-}
-
-func (b *batch) Send() error {
-	req, err := b.MarshalMessage()
-	if err != nil {
-		return err
-	}
-	return b.stream.Send(req)
-}
-
-// size returns the estimated size of the marshaled message, in bytes.
-func (b *batch) size() (int, error) {
-	m, err := b.MarshalMessage()
-	if err != nil {
-		return 0, err
-	}
-	return protoutil.Size(m), nil
+	return sad.stream.Send(req)
 }
