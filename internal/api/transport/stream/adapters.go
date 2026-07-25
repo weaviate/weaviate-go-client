@@ -17,7 +17,7 @@ import (
 type Transport interface {
 	// NewStream opens a new [transport.BatchStream].
 	NewStream(context.Context) (transport.BatchStream, error)
-	// The maximum message size in bytes that can be sent via the stream.
+	// The maximum request size in bytes that can be sent via the stream.
 	MaxSize() int
 }
 
