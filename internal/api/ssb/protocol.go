@@ -18,29 +18,36 @@ import (
 type ClientConfig struct {
 	Context   context.Context
 	Transport Transport
-	QueueSize int // Queue buffer size.
-	BatchSize int // Initial batch capacity.
-	RetryFunc RetryFunc
+	QueueSize int       // Queue buffer size.
+	BatchSize int       // Initial batch capacity.
+	RetryFunc RetryFunc // Controls if a task will be retried.
+	Reconnect ReconnectPolicy
 }
 
-func NewClient(conf ClientConfig) (*Client, error) {
+type ReconnectPolicy struct {
+	DelayFunc func(n int) time.Duration // Returns delay before the next re-connect.
+	Limit     int                       // Maximum number of re-connect attempts.
+}
+
+func ExponentialDelay(n int) time.Duration { return 1 << n * time.Second }
+
+func NewClient(conf ClientConfig) *Client {
 	ctx, cancel := context.WithCancelCause(conf.Context)
 	c := &Client{
-		ctx:       ctx,
-		cancel:    cancel,
-		transport: conf.Transport,
-		queue:     make(chan *Task, conf.QueueSize),
-		retry:     make(chan []*Task, conf.BatchSize),
-		wip: &cache{
-			m: make(map[string]*Task, conf.BatchSize),
-		},
-		batch: newBatch(conf.Transport.NewRequest, conf.BatchSize),
-		state: newState(notStarted),
+		ctx:         ctx,
+		cancel:      cancel,
+		transport:   conf.Transport,
+		queue:       make(chan *Task, conf.QueueSize),
+		retry:       make(chan []*Task, conf.BatchSize),
+		batch:       newBatch(conf.Transport.NewRequest, conf.BatchSize),
+		wip:         newCache(conf.BatchSize),
+		state:       newState(canPrepare),
+		canRetry:    conf.RetryFunc,
+		delayFunc:   conf.Reconnect.DelayFunc,
+		reconnLimit: conf.Reconnect.Limit,
 	}
-	if err := c.init(); err != nil {
-		return nil, err
-	}
-	return c, nil
+	c.init()
+	return c
 }
 
 func (c *Client) Add(d Data) (*Task, error) {
@@ -52,7 +59,6 @@ func (c *Client) Add(d Data) (*Task, error) {
 	case c.queue <- t:
 		return t, nil
 	case <-c.ctx.Done():
-		// TODO(dyma): should Add have its own context? I feel like yes.
 		return nil, context.Canceled
 	}
 }
@@ -152,16 +158,6 @@ const (
 	canSend
 )
 
-const (
-	inFlight actionFlags = 0
-	reconnecting
-
-	notStarted = canPrepare
-	shuttingDown
-
-	active = canPrepare | canSend
-)
-
 func newState(actions actionFlags) *state {
 	return &state{
 		flags:   actions,
@@ -175,15 +171,15 @@ type state struct {
 	changed chan struct{}
 }
 
-// set state flags to a new value.
-func (s *state) set(af actionFlags) {
+// clear all flags set previously.
+func (s *state) clear() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.flags = af
+	s.flags = 0
 }
 
 // set state flags and notify the awaiting goroutine.
-func (s *state) setNotify(af actionFlags) {
+func (s *state) set(af actionFlags) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -240,49 +236,84 @@ type Client struct {
 	cancel context.CancelCauseFunc // Cancels client context.
 
 	transport Transport    // Transport provides Stream and BatchRequest.
+	state     *state       // Stream state.
 	queue     chan *Task   // Task queue.
 	retry     chan []*Task // Retry queue.
 	batch     *batch       // Batch container.
-	state     *state       // State controls
 	wip       *cache       // Tasks taken off the queue but not yet completed.
 	canRetry  RetryFunc    // Retry decides if a task will be retried.
 
-	// FIXME(dyma): this needs to be protected by mutex
-	cancelSend context.CancelCauseFunc // Cancels the context of the "send" goroutine.
+	// Reconnect policy
+
+	delayFunc   func(int) time.Duration // Delay before the next reconnect.
+	reconn      int                     // Tally of failed reconnect attempts.
+	reconnLimit int                     // Maximum number of failed reconnects.
 }
 
-func (c *Client) init() error {
-	s, err := c.transport.NewStream(c.ctx)
-	if err != nil {
-		return err
+func (c *Client) init() {
+	type span struct {
+		ctx    context.Context
+		stream Stream
 	}
 
-	ctx, cancel := context.WithCancelCause(c.ctx)
-	c.cancelSend = cancel
-	go c.send(ctx, s)
-	go c.recv(s)
+	tick := make(chan span)
+	go func() {
+		for s := range tick {
+			c.send(s.ctx, s.stream)
+		}
+	}()
 
-	return nil
+	go func() {
+		var err error
+
+		defer close(tick)
+		defer c.cancel(err)
+
+		for ; c.reconn < c.reconnLimit; c.reconn++ {
+			if c.reconn > 0 {
+				c.state.clear()
+				select {
+				case <-time.After(c.delayFunc(c.reconn)):
+				case <-c.ctx.Done():
+					return
+				}
+			}
+
+			var s Stream
+			if s, err = c.transport.NewStream(c.ctx); err != nil {
+				continue
+			}
+
+			ctx, cancel := context.WithCancel(c.ctx)
+			tick <- span{ctx: ctx, stream: s}
+			if err := c.recv(s, cancel); err == io.EOF {
+				return
+			}
+		}
+	}()
 }
 
 func (c *Client) send(ctx context.Context, s Stream) {
-	var fatal error
+	defer s.Close() //nolint:errcheck
 
-	maybeSend := func() {
+	// maybeSend returns an error if Stream.Send fails
+	// or the context expires while waiting for canSend.
+	maybeSend := func() (err error) {
 		req := c.batch.prepare()
 		if req != nil {
-			if fatal = c.state.await(ctx, canSend); fatal != nil {
-				return // essentially ctx.Done()
+			if err = c.state.await(ctx, canSend); err != nil {
+				return
 			}
-			if fatal = s.Send(req); fatal != nil {
-				return // TODO(dyma): handle connection error
+			if err = s.Send(req); err != nil {
+				return
 			}
-			c.state.set(inFlight)
+			c.state.clear()
 		}
+		return
 	}
 
-	if fatal = c.state.await(ctx, canPrepare); fatal != nil {
-		goto Exit
+	if err := c.state.await(ctx, canPrepare); err != nil {
+		return
 	}
 
 	for {
@@ -307,64 +338,60 @@ func (c *Client) send(ctx context.Context, s Stream) {
 			}
 
 		case <-ctx.Done():
-			goto Exit
+			return
 		}
 
-		if maybeSend(); fatal != nil {
-			goto Exit
+		if err := maybeSend(); err != nil {
+			return
 		}
 	}
 
 Drain:
 	c.batch.disableGrowth()
-	c.batch.resize(c.wip.size())
 	for {
-		if maybeSend(); fatal != nil {
-			goto Exit
+		wipCount := c.wip.size()
+		if wipCount == 0 {
+			return
+		}
+		c.batch.resize(wipCount)
+
+		if err := maybeSend(); err != nil {
+			return
 		}
 
 		select {
 		case tasks, _ := <-c.retry:
-			// Every time we receive Results, the cache is updated.
-			// Resizing the batch to the current cache size guarantees
-			// that it will eventually fill up.
-			// FIXME(dyma): ensure Backoff messages do not resize the cache back up.
-			c.batch.resize(c.wip.size())
+			// Every time we receive Results, wip is updated.
+			// Resizing the batch to the current wip size guarantees
+			// that the former will eventually fill up.
 			for _, t := range tasks {
 				c.batch.add(t.value())
 			}
 		case <-ctx.Done():
-			goto Exit
+			return
 		}
 	}
-
-Exit:
-	if errors.Is(fatal, context.Cause(ctx)) {
-		// The context got canceled, we just need to exit.
-		return
-	}
-	// TODO(dyma): Send failed. Close the stream?
-	print("bye")
 }
 
-func (c *Client) recv(s Stream) {
+func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
+	defer cancelSend()
+
 	for {
 		event, err := s.Recv()
 		if err != nil {
-			if errors.Is(err, io.EOF) {
-				return
-			}
+			return err
 		}
 
 		switch {
 		case event.Started:
-			c.state.setNotify(active)
+			c.reconn = 0
+			c.state.set(canPrepare | canSend)
 
 		case event.Acks != nil:
 			// NOTE(dyma): the protocol guarantees that Acks message
 			// includes all data from the previous batch. Do we need
 			// to verify that that is the case?
-			c.state.setNotify(active)
+			c.state.set(canPrepare | canSend)
 
 		case event.Results != nil:
 			c.wip.walk(slices.Values(event.Results.OK), func(t *Task) bool {
@@ -396,6 +423,7 @@ func (c *Client) recv(s Stream) {
 					}
 				case <-c.ctx.Done():
 					// TODO(dyma): probably we should fail the entries?
+					// We will do this in Close I think.
 					return
 				}
 			}()
@@ -411,10 +439,20 @@ func (c *Client) recv(s Stream) {
 }
 
 func (c *Client) Close() error {
-	if c.cancelSend != nil {
-		c.cancelSend(nil)
+	defer close(c.retry)
+
+	close(c.queue)
+	<-c.ctx.Done()
+	err := context.Cause(c.ctx)
+	if err == io.EOF {
+		return nil
 	}
-	return c.ctx.Err()
+
+	c.wip.all(func(t *Task) { t.complete(err) })
+	for t := range c.queue {
+		t.complete(err)
+	}
+	return err
 }
 
 func newBatch(newRequest func() BatchRequest, size int) *batch {
@@ -523,6 +561,10 @@ func (b *batch) refillLocked() {
 	b.buf = b.buf[b.len:]
 }
 
+func newCache(size int) *cache {
+	return &cache{m: make(map[string]*Task, size)}
+}
+
 // cache is a synchronized map of in-progress tasks.
 type cache struct {
 	mu sync.Mutex
@@ -555,4 +597,13 @@ func (c *cache) size() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return len(c.m)
+}
+
+// all calls f for all tasks in the cache.
+func (c *cache) all(f func(*Task)) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, t := range c.m {
+		f(t)
+	}
 }
