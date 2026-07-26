@@ -15,19 +15,56 @@ func (t *Task) Wait() error {
 	return t.Err()
 }
 
-func NewClient(ctx context.Context, t stream.Transport, rd api.RequestDefaults) (*Client, error) {
-	tad := stream.NewAdapter(t, rd)
-	c, err := ssb.NewClient(ssb.ClientConfig{
+type (
+	Config ssb.ClientConfig
+	Option func(*ssb.ClientConfig)
+)
+
+func WithRetryFunc(f func(string, int, error) bool) Option {
+	return func(c *ssb.ClientConfig) {
+		c.RetryFunc = ssb.RetryFunc(f)
+	}
+}
+
+func WithRetryTimes(n int) Option {
+	return func(c *ssb.ClientConfig) {
+		c.RetryFunc = func(_ string, retries int, _ error) bool {
+			return n < retries
+		}
+	}
+}
+
+type ReconnectPolicy ssb.ReconnectPolicy
+
+func WithReconnectPolicy(rp ReconnectPolicy) Option {
+	return func(c *ssb.ClientConfig) {
+		c.Reconnect = ssb.ReconnectPolicy(rp)
+	}
+}
+
+const (
+	queueSize   = 1 << 8
+	batchSize   = 1 << 10
+	reconnLimit = 5
+)
+
+func NewClient(ctx context.Context, t stream.Transport, rd api.RequestDefaults, options ...Option) *Client {
+	conf := ssb.ClientConfig{
 		Context:   ctx,
-		Transport: tad,
-		// TODO(dyma): fill out the rest of the config
-	})
-	if err != nil {
-		return nil, err
+		Transport: stream.NewAdapter(t, rd),
+		QueueSize: queueSize,
+		BatchSize: batchSize,
+		Reconnect: ssb.ReconnectPolicy{
+			Limit:     reconnLimit,
+			DelayFunc: ssb.ExponentialDelay,
+		},
+	}
+	for _, opt := range options {
+		opt(&conf)
 	}
 	return &Client{
-		protocol: c,
-	}, nil
+		protocol: ssb.NewClient(conf),
+	}
 }
 
 type Client struct {

@@ -18,7 +18,7 @@ func TestClient(t *testing.T) {
 		// ms := newMockStream(t)
 
 		var started bool
-		c, err := ssb.NewClient(ssb.ClientConfig{
+		c := ssb.NewClient(ssb.ClientConfig{
 			Context: t.Context(),
 			// Start: func(context.Context, api.RequestDefaults) (ssb.Stream, error) {
 			// 	started = true
@@ -26,7 +26,6 @@ func TestClient(t *testing.T) {
 			// },
 			BatchSize: 10,
 		})
-		require.NoError(t, err)
 		assert.True(t, started, "new client started the batch stream")
 
 		// TODO(dyma): find a way to check "as long as" conditions.

@@ -105,12 +105,12 @@ func (h *Handle) Count(ctx context.Context) (int64, error) {
 // Batch opens a new batch stream. The context will be used throughout
 // the whole streaming process and may be used to terminate it abruptly.
 // In a normal course of operation, a batch should be closed explicitly.
-func (h *Handle) Batch(ctx context.Context) (*batch.Client, error) {
+func (h *Handle) Batch(ctx context.Context, options ...batch.Option) (*batch.Client, error) {
 	st, ok := h.transport.(stream.Transport)
 	if !ok {
 		return nil, fmt.Errorf("transport %T does not support streaming", h.transport)
 	}
-	return batch.NewClient(ctx, st, h.defaults)
+	return batch.NewClient(ctx, st, h.defaults, options...), nil
 }
 
 // HandleOption configures request defaults for collection handle.
