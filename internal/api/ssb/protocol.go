@@ -358,7 +358,7 @@ Drain:
 		}
 
 		select {
-		case tasks, _ := <-c.retry:
+		case tasks := <-c.retry:
 			// Every time we receive Results, wip is updated.
 			// Resizing the batch to the current wip size guarantees
 			// that the former will eventually fill up.
