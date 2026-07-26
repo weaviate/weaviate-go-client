@@ -208,17 +208,10 @@ func (s *state) await(ctx context.Context, af actionFlags) error {
 	return nil
 }
 
-var (
-	// ErrBatchFull is a sentinel error returned if [Batch] cannot fit
-	// the latest item in the remaining space. The caller should send
-	// the current batch as-is and retry the same item with a new batch.
-	ErrBatchFull = errors.New("batch is full")
-
-	// ErrTooLarge is a sentinel error returned if the latest item exceeds
-	// the maximum request size supported by the [Batch].
-	// This error is not retried, and surfaced to the user instead.
-	ErrTooLarge = errors.New("batch item exceeds maximum request size")
-)
+// ErrTooLarge is a sentinel error returned if the latest item exceeds
+// the maximum request size supported by the [Batch].
+// This error is not retried, and surfaced to the user instead.
+var ErrTooLarge = errors.New("batch item exceeds maximum request size")
 
 func (t *Task) incrTimesRetried()  { t.retries.Add(1) }
 func (t *Task) setValue(v any) any { return t.val.CompareAndSwap(nil, v) }
