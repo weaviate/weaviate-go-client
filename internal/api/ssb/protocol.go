@@ -38,7 +38,7 @@ func NewClient(conf ClientConfig) *Client {
 		finish:      cancel,
 		transport:   conf.Transport,
 		queue:       make(chan *Task, conf.QueueSize),
-		retry:       make(chan []*Task, conf.BatchSize),
+		retry:       make(chan []*Task),
 		batch:       newBatch(conf.Transport.NewRequest, conf.BatchSize),
 		wip:         newCache(conf.BatchSize),
 		state:       newState(canPrepare),
@@ -213,12 +213,18 @@ func (s *state) await(ctx context.Context, af actionFlags) error {
 // This error is not retried, and surfaced to the user instead.
 var ErrTooLarge = errors.New("batch item exceeds maximum request size")
 
-func (t *Task) incrTimesRetried()  { t.retries.Add(1) }
-func (t *Task) setValue(v any) any { return t.val.CompareAndSwap(nil, v) }
-func (t *Task) value() any         { return t.val.Load() }
-func (t *Task) setErr(err error)   { t.err.Store(err) }
+func (t *Task) setValue(v any) { t.val.CompareAndSwap(nil, v) }
+func (t *Task) value() any     { return t.val.Load() }
+
+// retry sets the error and increments retry count.
+func (t *Task) retry(err error) {
+	t.err.Store(err)
+	t.retries.Add(1)
+}
+
+// complete sets the error and closes the done channel.
 func (t *Task) complete(err error) {
-	t.setErr(err)
+	t.err.Store(err)
 	close(t.done)
 }
 
@@ -236,11 +242,11 @@ type Client struct {
 	wip       *cache       // Tasks taken off the queue but not yet completed.
 	canRetry  RetryFunc    // Retry decides if a task will be retried.
 
-	// Reconnect policy
-
-	delayFunc   func(int) time.Duration // Delay before the next reconnect.
-	reconn      int                     // Tally of failed reconnect attempts.
+	// Tally of failed reconnect attempts. It is only accessed
+	// by the 'recv' goroutine, so it does not need a guard.
+	reconn      int
 	reconnLimit int                     // Maximum number of failed reconnects.
+	delayFunc   func(int) time.Duration // Delay before the next reconnect.
 }
 
 func (c *Client) init() {
@@ -324,7 +330,7 @@ func (c *Client) send(ctx context.Context, s Stream) {
 			c.wip.put(t)
 			c.batch.add(v)
 
-		case tasks, _ := <-c.retry:
+		case tasks := <-c.retry:
 			for _, t := range tasks {
 				c.batch.add(t.value())
 			}
@@ -398,28 +404,31 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 				return true
 			})
 
-			// NOTE(dyma): we _could_ re-use the array between send/recv
-			// but that requires another synchronization channel. Later.
 			failed := event.Results.Failed
-			retry := make([]*Task, 0, len(failed))
-			c.wip.walk(maps.Keys(failed), func(t *Task) (remove bool) {
-				err := errors.New(failed[t.ID()])
-				if c.canRetry.check(t, err) {
-					t.setErr(err)
-					retry = append(retry, t)
-				} else {
-					t.complete(err)
-				}
-				return
-			})
+			if len(failed) == 0 {
+				continue
+			}
 
 			// Adding tasks to c.retry may block, so we kick off a goroutine.
+			// Its lifetime is bounded by [Client.ctx].
 			go func() {
+				// NOTE(dyma): we could share []*Task slice between send and recv.
+				// This requires another synchronization chan, maybe not worth it.
+				retry := make([]*Task, 0, len(failed))
+				c.wip.walk(maps.Keys(failed), func(t *Task) (remove bool) {
+					err := errors.New(failed[t.ID()])
+					if c.canRetry.check(t, err) {
+						t.retry(err)
+						retry = append(retry, t)
+					} else {
+						t.complete(err)
+						remove = true
+					}
+					return
+				})
+
 				select {
 				case c.retry <- retry:
-					for _, t := range retry {
-						t.incrTimesRetried()
-					}
 				case <-c.ctx.Done():
 					return
 				}
