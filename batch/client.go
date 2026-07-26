@@ -3,9 +3,11 @@ package batch
 import (
 	"context"
 
+	"github.com/weaviate/weaviate-go-client/v6/data"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/ssb"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport/stream"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
 
 type Task struct{ *ssb.Task }
@@ -69,4 +71,27 @@ func NewClient(ctx context.Context, t stream.Transport, rd api.RequestDefaults, 
 
 type Client struct {
 	protocol *ssb.Client
+}
+
+func (c *Client) Object(o *data.Object) (*Task, error) {
+	data := o.ToAPI()
+	return c.add(ssb.Data{Object: &data})
+}
+
+func (c *Client) Reference(ref *data.Reference) (*Task, error) {
+	data := ref.ToAPI()
+	return c.add(ssb.Data{Reference: &data})
+}
+
+func (c *Client) add(d ssb.Data) (*Task, error) {
+	t, err := c.protocol.Add(d)
+	if err != nil {
+		return nil, err
+	}
+	return &Task{Task: t}, nil
+}
+
+func (c *Client) Close() error {
+	dev.AssertNotNil(c.protocol, "protocol")
+	return c.protocol.Close()
 }
