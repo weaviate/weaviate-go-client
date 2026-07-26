@@ -35,7 +35,7 @@ func NewClient(conf ClientConfig) *Client {
 	ctx, cancel := context.WithCancelCause(conf.Context)
 	c := &Client{
 		ctx:         ctx,
-		cancel:      cancel,
+		finish:      cancel,
 		transport:   conf.Transport,
 		queue:       make(chan *Task, conf.QueueSize),
 		retry:       make(chan []*Task, conf.BatchSize),
@@ -143,7 +143,7 @@ type Event struct {
 }
 
 type OOM struct {
-	ReconnectAfter time.Duration
+	ExitAfter time.Duration
 }
 
 type Results struct {
@@ -226,7 +226,7 @@ type Client struct {
 	// Parent context. It is derived from [ClientConfig.Context]
 	// and is used internally to halt the client in the event of an error.
 	ctx    context.Context
-	cancel context.CancelCauseFunc // Cancels client context.
+	finish context.CancelCauseFunc // Cancels client context.
 
 	transport Transport    // Transport provides Stream and BatchRequest.
 	state     *state       // Stream state.
@@ -258,28 +258,27 @@ func (c *Client) init() {
 
 	go func() {
 		var err error
-
+		defer c.finish(err)
 		defer close(tick)
-		defer c.cancel(err)
 
 		for ; c.reconn < c.reconnLimit; c.reconn++ {
-			if c.reconn > 0 {
-				c.state.clear()
-				select {
-				case <-time.After(c.delayFunc(c.reconn)):
-				case <-c.ctx.Done():
+			var s Stream
+			if s, err = c.transport.NewStream(c.ctx); err == nil {
+				ctx, cancel := context.WithCancel(c.ctx)
+				tick <- span{ctx: ctx, stream: s}
+				if err = c.recv(s, cancel); err == io.EOF {
 					return
 				}
+				<-ctx.Done()
 			}
 
-			var s Stream
-			if s, err = c.transport.NewStream(c.ctx); err != nil {
-				continue
-			}
+			c.state.clear()
 
-			ctx, cancel := context.WithCancel(c.ctx)
-			tick <- span{ctx: ctx, stream: s}
-			if err := c.recv(s, cancel); err == io.EOF {
+			select {
+			case <-time.After(c.delayFunc(c.reconn)):
+				c.batch.clear()
+				c.wip.all(func(t *Task) { c.batch.add(t.value()) })
+			case <-c.ctx.Done():
 				return
 			}
 		}
@@ -369,9 +368,16 @@ Drain:
 func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 	defer cancelSend()
 
+	var oomTimer *time.Timer // Waiting for OOM to resolve.
+	var shutdown bool        // Server is shutting down.
+
 	for {
 		event, err := s.Recv()
 		if err != nil {
+			if err == io.EOF && shutdown {
+				// The client should reconnect.
+				err = errors.New("server shutdown")
+			}
 			return err
 		}
 
@@ -415,8 +421,6 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 						t.incrTimesRetried()
 					}
 				case <-c.ctx.Done():
-					// TODO(dyma): probably we should fail the entries?
-					// We will do this in Close I think.
 					return
 				}
 			}()
@@ -424,9 +428,24 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 		case event.Backoff != nil:
 			c.batch.resize(*event.Backoff)
 
-		// TODO(dyma): handle
-		case event.ShuttingDown:
 		case event.OOM != nil:
+			oomTimer = time.AfterFunc(event.OOM.ExitAfter, func() {
+				c.finish(errors.New("server OOM"))
+			})
+			c.state.clear()
+
+		case event.ShuttingDown:
+			cancelSend()
+			if oomTimer != nil {
+				// If the timer has already fired, the context would be canceled
+				// and s.Recv() must return an error. The only reason that we got
+				// here is that the message arrived _just_ before oomTimer fired.
+				// This means the server is responsive and we can try to reconnect.
+				oomTimer.Stop()
+				oomTimer = nil
+			}
+			shutdown = true
+			c.state.clear()
 		}
 	}
 }
@@ -487,7 +506,7 @@ func (b *batch) add(v any) {
 	}
 }
 
-// addLocked adds v to request and updates [batch.len] and [batch.full].
+// addLocked adds v to request and updates [batch.len].
 func (b *batch) addLocked(v any) {
 	added, reqFull := b.req.Add(v)
 	if added {
@@ -552,6 +571,17 @@ func (b *batch) refillLocked() {
 		}
 	}
 	b.buf = b.buf[b.len:]
+}
+
+// clear empties the batch, preserving the capacity and noGrow flag, if set.
+func (b *batch) clear() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.req = b.newRequest()
+	b.buf = b.buf[:0]
+	b.len = 0
+	b.flags ^= full
 }
 
 func newCache(size int) *cache {

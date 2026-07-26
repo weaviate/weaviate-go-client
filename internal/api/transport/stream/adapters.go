@@ -99,7 +99,7 @@ func (sad *streamAdapter) Recv() (ssb.Event, error) {
 	case *proto.BatchStreamReply_OutOfMemory_:
 		if msg.OutOfMemory != nil {
 			event.OOM = &ssb.OOM{
-				ReconnectAfter: time.Duration(msg.OutOfMemory.WaitTime) * time.Second,
+				ExitAfter: time.Duration(msg.OutOfMemory.WaitTime) * time.Second,
 			}
 		}
 	case *proto.BatchStreamReply_Acks_:

@@ -149,7 +149,7 @@ func TestStream_Recv(t *testing.T) {
 			},
 			want: ssb.Event{
 				OOM: &ssb.OOM{
-					ReconnectAfter: 92 * time.Second,
+					ExitAfter: 92 * time.Second,
 				},
 			},
 		},
