@@ -411,28 +411,26 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 				return true
 			})
 
-			failed := event.Results.Failed
-			if len(failed) == 0 {
-				continue
-			}
-
 			// Adding tasks to c.retry may block, so we kick off a goroutine.
 			// Its lifetime is bounded by [Client.ctx].
 			go func() {
 				// NOTE(dyma): we could share []*Task slice between send and recv.
 				// This requires another synchronization chan, maybe not worth it.
+				failed := event.Results.Failed
 				retry := make([]*Task, 0, len(failed))
-				c.wip.walk(maps.Keys(failed), func(t *Task) (remove bool) {
-					err := errors.New(failed[t.ID()])
-					if c.canRetry.check(t, err) {
-						t.retry(err)
-						retry = append(retry, t)
-					} else {
-						t.complete(err)
-						remove = true
-					}
-					return
-				})
+				if len(failed) > 0 {
+					c.wip.walk(maps.Keys(failed), func(t *Task) (remove bool) {
+						err := errors.New(failed[t.ID()])
+						if c.canRetry.check(t, err) {
+							t.retry(err)
+							retry = append(retry, t)
+						} else {
+							t.complete(err)
+							remove = true
+						}
+						return
+					})
+				}
 
 				select {
 				case c.retry <- retry:
