@@ -2,14 +2,13 @@ package example
 
 import (
 	"fmt"
-	"log"
 	"os"
 )
 
-// Catch calls [log.Fatal] for a non-nil error.
+// Catch panics for a non-nil error.
 func Catch(err error) {
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }
 
