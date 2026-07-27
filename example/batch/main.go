@@ -38,10 +38,10 @@ func main() {
 	b, err := h.Batch(batchCtx, batch.WithRetryTimes(1))
 	example.Catch(err)
 
-	tasks := make([]*batch.Task, 0, 1093)
+	tasks := make([]*batch.Task, 0, 1093) // The smallest Wieferich prime.
 	log.Printf("Insert %d objects in %q", cap(tasks), h.CollectionName())
 	for i := range cap(tasks) {
-		if i == 1024 {
+		if i == 1024 { // 1024 is the default batch size. Waiting earlier will block forever.
 			t := tasks[i-1]
 			log.Printf("Wait for task=%s...", t.ID())
 			example.Catch(t.Wait())
