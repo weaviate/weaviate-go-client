@@ -78,7 +78,7 @@ func (c *Client) Object(o *data.Object) (*Task, error) {
 	return c.add(ssb.Data{Object: &data})
 }
 
-func (c *Client) Reference(ref *data.Reference) (*Task, error) {
+func (c *Client) Reference(ref data.Reference) (*Task, error) {
 	data := ref.ToAPI()
 	return c.add(ssb.Data{Reference: &data})
 }
