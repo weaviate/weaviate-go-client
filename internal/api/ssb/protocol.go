@@ -271,8 +271,10 @@ func (c *Client) init() {
 
 	go func() {
 		var err error
-		defer c.finish(err)
-		defer close(tick)
+		defer func() {
+			c.finish(err)
+			close(tick)
+		}()
 
 		for ; c.reconn < c.reconnLimit; c.reconn++ {
 			var s Stream
