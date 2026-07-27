@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	"github.com/weaviate/weaviate-go-client/v6"
@@ -19,6 +20,9 @@ func main() {
 	example.Catch(err)
 	defer c.Close()
 
+	log.Print("Queue https://www.youtube.com/watch?v=WmPGZuaOlq4...")
+
+	c.Collections.Delete(ctx, "Vollast")
 	h, err := c.Collections.Create(ctx, collections.Collection{
 		Name: "Vollast",
 	})
@@ -28,28 +32,41 @@ func main() {
 	log.Printf("Created collection %q", h.CollectionName())
 
 	log.Print("Start the batch...")
-	b, err := h.Batch(ctx, batch.WithRetryTimes(1))
+	batchCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	b, err := h.Batch(batchCtx, batch.WithRetryTimes(1))
 	example.Catch(err)
 
-	tasks := make([]*batch.Task, 1000)
-	log.Printf("Insert %d objects in %q", len(tasks), h.CollectionName())
-	for i := range tasks {
+	tasks := make([]*batch.Task, 0, 1093)
+	log.Printf("Insert %d objects in %q", cap(tasks), h.CollectionName())
+	for i := range cap(tasks) {
+		if i == 1024 {
+			t := tasks[i-1]
+			log.Printf("Wait for task=%s...", t.ID())
+			example.Catch(t.Wait())
+			log.Print("... and cancel context hehehe")
+			log.Printf(`Guess we won't see those %d objects ¯\_(ツ)_/¯`, cap(tasks)-i)
+			cancel()
+		}
 		t, err := b.Object(nil)
 		if err == context.Canceled {
-			log.Println("Context canceled after %d objects, exit earlier", i)
+			log.Printf("Context canceled after %d objects, exit earlier", i-1)
 			break
 		}
-		tasks[i] = t
+		tasks = append(tasks, t)
 	}
 
-	log.Print("All objects added to the stream, closing the batch...")
+	log.Printf("%d objects added to the stream, closing the batch...", len(tasks))
 	err = b.Close()
-	example.Catch(err)
+	if err != nil && !errors.Is(err, context.Canceled) {
+		example.Catch(err)
+	}
 
-	log.Print("Streaming done, collect all results")
+	log.Printf("Streaming done, collect all results (expect %d to fail with context.Canceled)", len(tasks)-1024)
 	for _, t := range tasks {
 		if err := t.Wait(); err != nil {
-			log.Printf("%s failed: %v", t.ID(), err)
+			log.Printf("\t- %s failed: %q", t.ID(), err)
 		}
 	}
 
