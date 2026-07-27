@@ -103,6 +103,7 @@ func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 		rest:              rest,
 		gRPC:              gRPC,
 		timeout:           cfg.Timeout,
+		MaxMessageSize:    meta.GRPCMaxMessageSize,
 		cancelTokenSource: cancelTokenSource,
 	}, nil
 }
@@ -329,6 +330,4 @@ func (t *transport) NewStream(ctx context.Context) (BatchStream, error) {
 	return bs, nil
 }
 
-func (t *transport) MaxSize(ctx context.Context) int {
-	return t.MaxMessageSize
-}
+func (t *transport) MaxSize() int { return t.MaxMessageSize }

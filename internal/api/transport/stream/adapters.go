@@ -48,6 +48,8 @@ func (tad *TransportAdapter) NewStream(ctx context.Context) (ssb.Stream, error) 
 }
 
 func (tad *TransportAdapter) NewRequest() ssb.BatchRequest {
+	maxSize := tad.transport.MaxSize()
+	dev.Assert(maxSize > 0, "max grpc request <= 0")
 	return &api.BatchRequest{
 		MaxSize: tad.transport.MaxSize(),
 	}
