@@ -1118,13 +1118,17 @@ components:
                     type: string
                 targetTokenization:
                     type: string
+                taskId:
+                    description: ID of the reindex task driving this index entry. Present on every task-driven entry (`pending`, `indexing`, `failed`, `cancelled`, and the finalize-window override); absent on a plain `ready` entry. A coupled searchable+filterable tokenization migration reports the same `taskId` on both affected entries.
+                    type: string
                 tokenization:
                     type: string
                 type:
+                    description: Canonical inverted-index type. Always one of `filterable`, `searchable`, `rangeFilters` — never the `rangeable` write-path alias.
                     enum:
                         - filterable
                         - searchable
-                        - rangeable
+                        - rangeFilters
                     type: string
             type: object
         IndexStatusResponse:
@@ -1136,39 +1140,6 @@ components:
                         $ref: '#/components/schemas/PropertyIndexStatus'
                     type: array
             type: object
-        IndexUpdateFilterable:
-            properties:
-                cancel:
-                    description: When true, cancels the in-flight reindex task targeting this property's filterable index.
-                    type: boolean
-                enabled:
-                    type: boolean
-                rebuild:
-                    type: boolean
-                tokenization:
-                    description: Change the tokenization used by the filterable index on this text/text[] property. Only valid when the property already has a filterable index. Use this for filterable-only properties; for properties that ALSO have a searchable index, prefer searchable.tokenization since it retokenizes both buckets in a single coordinated migration.
-                    type: string
-            type: object
-        IndexUpdateRangeable:
-            properties:
-                cancel:
-                    description: When true, cancels the in-flight reindex task targeting this property's rangeable index.
-                    type: boolean
-                enabled:
-                    type: boolean
-                rebuild:
-                    description: When true, rebuilds the rangeable index from the existing filterable bucket (same source-of-truth as enable-rangeable).
-                    type: boolean
-            type: object
-        IndexUpdateRequest:
-            properties:
-                filterable:
-                    $ref: '#/components/schemas/IndexUpdateFilterable'
-                rangeable:
-                    $ref: '#/components/schemas/IndexUpdateRangeable'
-                searchable:
-                    $ref: '#/components/schemas/IndexUpdateSearchable'
-            type: object
         IndexUpdateResponse:
             properties:
                 status:
@@ -1176,22 +1147,14 @@ components:
                 taskId:
                     type: string
             type: object
-        IndexUpdateSearchable:
+        IndexUpsertRequest:
+            description: 'Desired index configuration for `PUT /v1/schema/{className}/properties/{propertyName}/index/{indexType}`. The server diffs the body against the current state and either creates the index, migrates its configuration, or returns a NO_OP. Only fields relevant to the target index type are honored: `tokenization` applies to `searchable`/`filterable`, `algorithm` applies to `searchable`. `rangeFilters` takes no config fields. An empty body `{}` is valid and means "ensure the index exists with its current/default config". At most one configuration change may be requested per call (a body implying both a tokenization and an algorithm change is rejected).'
             properties:
                 algorithm:
-                    description: Switch the BM25 algorithm for this property's searchable index. Currently only `blockmax` is accepted. From WAND this triggers the Map → BlockMax migration; on an already-`blockmax` property the request is rejected. WAND is deprecated; downgrade is intentionally not supported.
-                    enum:
-                        - blockmax
+                    description: Target BM25 algorithm for a `searchable` index. Only `blockmax` is a valid target (input aliases `block-max`, `block_max`, `blockmaxwand`, `bmw` are accepted case-insensitively). From WAND this triggers the Map → BlockMax migration; on an already-`blockmax` index it is a NO_OP. `wand` is rejected (deprecated); downgrade is intentionally not supported.
                     type: string
-                cancel:
-                    description: When true, cancels the in-flight reindex task targeting this property's searchable index. The task transitions to CANCELLED; partial state is left on disk for the next-restart finalize.
-                    type: boolean
-                enabled:
-                    type: boolean
-                rebuild:
-                    description: When true, rebuilds the searchable index for this property from the stored objects. Preserves the current tokenization and BM25 algorithm. Only valid when the property's current algorithm is `blockmax`; on a WAND property the request is rejected with guidance to use `algorithm:"blockmax"` first.
-                    type: boolean
                 tokenization:
+                    description: Target tokenization for a `searchable` or `filterable` index. Required when creating a `searchable` index; optional otherwise (omitted = keep the current value). On `filterable` creation it must be omitted or equal the property's current tokenization.
                     type: string
             type: object
         InvertedIndexConfig:
@@ -1299,9 +1262,11 @@ components:
                     description: The unique name of the namespace.
                     type: string
                 state:
-                    description: 'Lifecycle state. "active" namespaces accept all operations. "deleting" namespaces are being removed: new classes, aliases, and users can no longer be created in the namespace, and the namespace itself disappears once removal completes.'
+                    description: 'Lifecycle state. "active" namespaces accept all operations. "suspended" namespaces reject new classes, aliases, users, roles, and role assignments, and their users can no longer authenticate; everything the namespace already owns is retained. "resuming" namespaces are on their way back to "active" and are still restricted the same way. "deleting" namespaces are being removed: new classes, aliases, and users can no longer be created in the namespace, and the namespace itself disappears once removal completes.'
                     enum:
                         - active
+                        - suspended
+                        - resuming
                         - deleting
                     type: string
             type: object
@@ -1840,6 +1805,10 @@ components:
                         $ref: '#/components/schemas/NestedProperty'
                     type: array
                     x-omitempty: true
+                searchableBlockmax:
+                    description: 'Internal RAFT-replicated per-property flag: true iff this property''s searchable (BM25) bucket is on the blockmax (StrategyInverted) index. Stamped at migration cutover. Absent/null means "not stamped" and is resolved against the class-wide UsingBlockMaxWAND flag. Internal use; clients must not set this.'
+                    nullable: true
+                    type: boolean
                 textAnalyzer:
                     $ref: '#/components/schemas/TextAnalyzerConfig'
                 tokenization:
@@ -2414,23 +2383,23 @@ components:
         SearchCommon:
             description: Fields shared by every REST search request (near-text, and — when built — hybrid, bm25, near-object). Unknown fields are ignored (platform parity with the other endpoints). Reserved fields are accepted by the schema but rejected by the server with 422 until the corresponding feature ships.
             properties:
-                auto_limit:
+                autoLimit:
                     description: Cut results off at the first steep drop in score (autocut). The value is the number of score jumps to allow before cutting.
                     format: int64
                     nullable: true
                     type: integer
-                consistency_level:
+                consistencyLevel:
                     description: The consistency level for the read.
                     enum:
                         - ONE
                         - QUORUM
                         - ALL
                     type: string
-                group_by:
+                groupBy:
                     description: Reserved for grouped search. Returns 422 (not yet supported).
                     nullable: true
                     type: string
-                grouped_task:
+                groupedTask:
                     description: Reserved for grouped retrieval-augmented generation. Returns 422 (not yet supported).
                     nullable: true
                     type: string
@@ -2439,12 +2408,12 @@ components:
                     format: int64
                     nullable: true
                     type: integer
-                number_of_groups:
+                numberOfGroups:
                     description: Reserved for grouped search. Returns 422 (not yet supported).
                     format: int64
                     nullable: true
                     type: integer
-                objects_per_group:
+                objectsPerGroup:
                     description: Reserved for grouped search. Returns 422 (not yet supported).
                     format: int64
                     nullable: true
@@ -2454,32 +2423,26 @@ components:
                     format: int64
                     nullable: true
                     type: integer
-                rerank_property:
-                    description: Reserved for reranking. Returns 422 (not yet supported).
-                    nullable: true
-                    type: string
-                rerank_query:
-                    description: Reserved for reranking. Returns 422 (not yet supported).
-                    nullable: true
-                    type: string
-                return_metadata:
+                rerank:
+                    $ref: '#/components/schemas/SearchRerank'
+                returnMetadata:
                     description: The retrieval metadata to return under each result's `metadata` key. The object `id` is always returned as each result's `id` field. Omitted or empty returns no `metadata` block.
                     items:
                         enum:
                             - distance
                             - certainty
                             - score
-                            - explain_score
-                            - creation_time
-                            - last_update_time
+                            - explainScore
+                            - creationTime
+                            - lastUpdateTime
                         type: string
                     type: array
-                return_properties:
+                returnProperties:
                     description: The properties to return. A dot-path selects one hop across a reference (e.g. `hasAuthor.name`). Omitted returns all non-reference, non-blob properties; an empty array returns no properties.
                     items:
                         type: string
                     type: array
-                single_prompt:
+                singlePrompt:
                     description: Reserved for per-object retrieval-augmented generation. Returns 422 (not yet supported).
                     nullable: true
                     type: string
@@ -2508,13 +2471,25 @@ components:
                         items:
                             type: string
                         type: array
-                    target_vector:
+                    targetVector:
                         description: The named vector to search. Required when the collection has more than one named vector.
                         type: string
                   required:
                     - query
                   type: object
-            description: Request body for the near-text search endpoint. The query is vectorized server-side by the collection's vectorizer module and the closest objects are returned. Extends the shared search fields (`SearchCommon`) with the near-text-specific `query`, `certainty`, `distance` and `target_vector`.
+            description: Request body for the near-text search endpoint. The query is vectorized server-side by the collection's vectorizer module and the closest objects are returned. Extends the shared search fields (`SearchCommon`) with the near-text-specific `query`, `certainty`, `distance` and `targetVector`.
+        SearchRerank:
+            description: Reserved for reranking. Returns 422 (not yet supported).
+            properties:
+                property:
+                    description: The property to rerank on.
+                    type: string
+                query:
+                    description: The query to rerank with. Defaults to the search query.
+                    type: string
+            required:
+                - property
+            type: object
         SearchResponse:
             description: 'The result of a REST search: the matched objects as `{id, properties, references, metadata}` envelopes, plus the server-side processing time. Shared by all REST search endpoints.'
             properties:
@@ -2524,24 +2499,24 @@ components:
                         $ref: '#/components/schemas/SearchResultObject'
                     type: array
                     x-omitempty: false
-                took_ms:
+                tookMs:
                     description: Server-side processing time in milliseconds.
                     format: int64
                     type: integer
                     x-omitempty: false
             required:
                 - results
-                - took_ms
+                - tookMs
             type: object
         SearchResultMetadata:
-            description: The retrieval metadata of a single search hit, populated according to `return_metadata`. Every field is optional and only present when it was requested and is computable for the search.
+            description: The retrieval metadata of a single search hit, populated according to `returnMetadata`. Every field is optional and only present when it was requested and is computable for the search.
             properties:
                 certainty:
                     description: The normalized certainty of the hit. Only computable on cosine-distance vector indexes.
                     format: float
                     nullable: true
                     type: number
-                creation_time:
+                creationTime:
                     description: The object's creation time, as epoch milliseconds.
                     format: int64
                     nullable: true
@@ -2551,11 +2526,11 @@ components:
                     format: float
                     nullable: true
                     type: number
-                explain_score:
+                explainScore:
                     description: An explanation of how the score was computed.
                     nullable: true
                     type: string
-                last_update_time:
+                lastUpdateTime:
                     description: The object's last-update time, as epoch milliseconds.
                     format: int64
                     nullable: true
@@ -3074,7 +3049,7 @@ info:
         url: https://github.com/weaviate
     description: '# Introduction<br/> Weaviate is an open source, AI-native vector database that helps developers create intuitive and reliable AI-powered applications. <br/> ### Base Path <br/>The base path for the Weaviate server is structured as `[YOUR-WEAVIATE-HOST]:[PORT]/v1`. As an example, if you wish to access the `schema` endpoint on a local instance, you would navigate to `http://localhost:8080/v1/schema`. Ensure you replace `[YOUR-WEAVIATE-HOST]` and `[PORT]` with your actual server host and port number respectively. <br/> ### Questions? <br/>If you have any comments or questions, please feel free to reach out to us at the community forum [https://forum.weaviate.io/](https://forum.weaviate.io/). <br/>### Issues? <br/>If you find a bug or want to file a feature request, please open an issue on our GitHub repository for [Weaviate](https://github.com/weaviate/weaviate). <br/>### Need more documentation? <br/>For a quickstart, code examples, concepts and more, please visit our [documentation page](https://docs.weaviate.io/weaviate).'
     title: Weaviate REST API
-    version: 1.39.0-dev
+    version: 1.39.0-rc.0
 openapi: 3.0.1
 paths:
     /:
@@ -5673,7 +5648,7 @@ paths:
                 - namespaces
     /namespaces/{namespace_id}:
         delete:
-            description: 'Mark a namespace for deletion. The endpoint is asynchronous: the namespace is flipped to the "deleting" state and its dynamic users are removed synchronously; classes and aliases are torn down by the leader on a periodic cleanup tick. Repeated calls while the namespace is still in the "deleting" state are idempotent and return 202.'
+            description: 'Mark a namespace for deletion. The endpoint is asynchronous: the namespace is flipped to the "deleting" state, which stops its dynamic users from authenticating; their rows, along with classes and aliases, are reclaimed by the leader on a periodic cleanup tick. Repeated calls while the namespace is still in the "deleting" state are idempotent and return 202.'
             operationId: deleteNamespace
             parameters:
                 - description: The name of the namespace.
@@ -5885,6 +5860,120 @@ paths:
             tags:
                 - namespaces
             x-codegen-request-body-name: body
+    /namespaces/{namespace_id}/resume:
+        post:
+            description: Return a suspended namespace to the "active" state, so its dynamic users authenticate again and its resources accept writes. Repeated calls against an already-active namespace are idempotent and return 202.
+            operationId: resumeNamespace
+            parameters:
+                - description: The name of the namespace.
+                  in: path
+                  name: namespace_id
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "202":
+                    content: {}
+                    description: The state change is committed and the namespace is active.
+                "401":
+                    content: {}
+                    description: Unauthorized or invalid credentials.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Not Found - Namespace does not exist, or the namespaces feature is not enabled on this cluster.
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Another state change was applied to this namespace while this request was in flight, so it was not applied. Re-read the namespace and retry if the change is still wanted.
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: The request syntax is correct, but the server couldn't process it due to semantic issues (e.g. invalid name format, reserved name, or a namespace that is being deleted).
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: An error has occurred while trying to fulfill the request. Most likely the ErrorResponse will contain more information about the error.
+                "503":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: No cluster leader was reachable. The state change may or may not have been applied; re-read the namespace before retrying.
+            summary: Resume a namespace
+            tags:
+                - namespaces
+    /namespaces/{namespace_id}/suspend:
+        post:
+            description: Move a namespace to the "suspended" state. Suspending stops the namespace's users from authenticating and blocks the creation of new classes, aliases, users, roles, and role assignments, but retains the namespace and everything it owns. Repeated calls against an already-suspended namespace are idempotent and return 202. Use the resume endpoint to return it to "active".
+            operationId: suspendNamespace
+            parameters:
+                - description: The name of the namespace.
+                  in: path
+                  name: namespace_id
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "202":
+                    content: {}
+                    description: The state change is committed and the namespace is suspended.
+                "401":
+                    content: {}
+                    description: Unauthorized or invalid credentials.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Not Found - Namespace does not exist, or the namespaces feature is not enabled on this cluster.
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Another state change was applied to this namespace while this request was in flight, so it was not applied. Re-read the namespace and retry if the change is still wanted.
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: The request syntax is correct, but the server couldn't process it due to semantic issues (e.g. invalid name format, reserved name, or a namespace that is being deleted).
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: An error has occurred while trying to fulfill the request. Most likely the ErrorResponse will contain more information about the error.
+                "503":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: No cluster leader was reachable. The state change may or may not have been applied; re-read the namespace before retrying.
+            summary: Suspend a namespace
+            tags:
+                - namespaces
     /nodes:
         get:
             description: Retrieves status information about all nodes in the cluster. Use the `output` query parameter to control the level of detail.
@@ -8230,89 +8319,6 @@ paths:
             summary: Get index status for all properties of a collection
             tags:
                 - schema
-    /schema/{className}/indexes/{propertyName}:
-        put:
-            description: Declaratively sets the desired index state for a property. The system computes the diff from the current state and triggers the appropriate reindex task.
-            operationId: schema.objects.indexes.update
-            parameters:
-                - in: path
-                  name: className
-                  required: true
-                  schema:
-                    type: string
-                - in: path
-                  name: propertyName
-                  required: true
-                  schema:
-                    type: string
-                - description: Tenant names to target. Only for non-semantic operations on multi-tenant collections. Omit to target all tenants.
-                  explode: false
-                  in: query
-                  name: tenants
-                  schema:
-                    items:
-                        type: string
-                    type: array
-                  style: form
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/IndexUpdateRequest'
-                    application/yaml:
-                        schema:
-                            $ref: '#/components/schemas/IndexUpdateRequest'
-                required: true
-            responses:
-                "202":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/IndexUpdateResponse'
-                    description: Reindex task submitted.
-                "400":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ErrorResponse'
-                    description: Invalid request.
-                "401":
-                    content: {}
-                    description: Unauthorized or invalid credentials.
-                "403":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ErrorResponse'
-                    description: Forbidden
-                "404":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ErrorResponse'
-                    description: 'Collection or property not found. cancel:true with nothing to cancel returns 202 with Status: NO_OP instead — 404 is reserved for missing collection/property.'
-                "409":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ErrorResponse'
-                    description: Conflicting reindex task already running.
-                "500":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ErrorResponse'
-                    description: An error occurred.
-                "503":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ErrorResponse'
-                    description: Distributed tasks not enabled.
-            summary: Update index configuration for a property (triggers reindex)
-            tags:
-                - schema
-            x-codegen-request-body-name: body
     /schema/{className}/properties:
         post:
             description: Adds a new property definition to an existing collection (`className`) definition.
@@ -8370,7 +8376,7 @@ paths:
                 - weaviate.local.manipulate.meta
     /schema/{className}/properties/{propertyName}/index/{indexName}:
         delete:
-            description: Deletes an inverted index of a specific property within a collection (`className`). The index to delete is identified by `indexName` and must be one of `filterable`, `searchable`, or `rangeFilters`.
+            description: Deletes an inverted index of a specific property within a collection (`className`). The index to delete is identified by `indexName` and must be one of `filterable`, `searchable`, or `rangeFilters` (with `rangeable` accepted as an alias for `rangeFilters`).
             operationId: schema.objects.properties.delete
             parameters:
                 - description: The name of the collection (class) containing the property.
@@ -8385,7 +8391,7 @@ paths:
                   required: true
                   schema:
                     type: string
-                - description: The name of the inverted index to delete from the property.
+                - description: The name of the inverted index to delete from the property. `rangeable` is accepted as a write-path alias for `rangeFilters`.
                   in: path
                   name: indexName
                   required: true
@@ -8394,6 +8400,7 @@ paths:
                         - filterable
                         - searchable
                         - rangeFilters
+                        - rangeable
                     type: string
             responses:
                 "200":
@@ -8421,6 +8428,294 @@ paths:
                                 $ref: '#/components/schemas/ErrorResponse'
                     description: An error occurred while deleting the index. Check the ErrorResponse for details.
             summary: Delete a property's inverted index
+            tags:
+                - schema
+            x-serviceIds:
+                - weaviate.local.manipulate.meta
+        put:
+            description: 'Upserts the inverted index of a property, identified by `indexName`. The body describes the desired index configuration; the server diffs it against the current state and either creates the index, migrates its configuration, or does nothing. Index-mutating work is asynchronous: a `202` with a task ID is returned when a reindex task is submitted, and `200` with `{"status":"NO_OP"}` is returned when the desired configuration is already in place. `indexName` accepts `rangeable` as an alias for `rangeFilters`.'
+            operationId: schema.objects.index.upsert
+            parameters:
+                - description: The name of the collection (class) containing the property.
+                  in: path
+                  name: className
+                  required: true
+                  schema:
+                    type: string
+                - description: The name of the property whose inverted index should be upserted.
+                  in: path
+                  name: propertyName
+                  required: true
+                  schema:
+                    type: string
+                - description: The inverted index type to upsert. `rangeable` is accepted as a write-path alias for `rangeFilters`.
+                  in: path
+                  name: indexName
+                  required: true
+                  schema:
+                    enum:
+                        - filterable
+                        - searchable
+                        - rangeFilters
+                        - rangeable
+                    type: string
+                - description: Tenant names to target. Only valid on multi-tenant collections and only when the resulting operation is format-only (on PUT that is `rangeFilters` creation). Omit to target all tenants.
+                  explode: false
+                  in: query
+                  name: tenants
+                  schema:
+                    items:
+                        type: string
+                    type: array
+                  style: form
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/IndexUpsertRequest'
+                    application/yaml:
+                        schema:
+                            $ref: '#/components/schemas/IndexUpsertRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IndexUpdateResponse'
+                    description: Desired configuration already in place AND no reindex task in flight; no task submitted. Body carries `{"status":"NO_OP"}`.
+                "202":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IndexUpdateResponse'
+                    description: A reindex task is running for the requested configuration; the body carries its `taskId` with `{"status":"STARTED"}`. A request converging on an already-running migration joins it and receives that task's ID.
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Validation failure; the message carries an actionable hint.
+                "401":
+                    content: {}
+                    description: Unauthorized or invalid credentials.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Unknown collection or property.
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Conflicting in-flight reindex task; the message names the offending task ID.
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Invalid `indexName` path value.
+                "429":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Per-collection cap of concurrent active reindex tasks reached.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: An error occurred.
+                "503":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Cluster service unavailable, or an in-flight task's payload cannot be parsed so conflict-freedom cannot be proven.
+            summary: Declaratively create or migrate a property's inverted index
+            tags:
+                - schema
+            x-codegen-request-body-name: body
+            x-serviceIds:
+                - weaviate.local.manipulate.meta
+    /schema/{className}/properties/{propertyName}/index/{indexName}/cancel:
+        post:
+            description: 'Cancels the in-flight reindex task targeting this property''s index. No request body. Idempotent: succeeds whether or not a task was in flight (a `202` with `{"status":"NO_OP"}` is returned when there is nothing to cancel). `indexName` accepts `rangeable` as an alias for `rangeFilters`.'
+            operationId: schema.objects.index.cancel
+            parameters:
+                - description: The name of the collection (class) containing the property.
+                  in: path
+                  name: className
+                  required: true
+                  schema:
+                    type: string
+                - description: The name of the property whose reindex task should be cancelled.
+                  in: path
+                  name: propertyName
+                  required: true
+                  schema:
+                    type: string
+                - description: The inverted index type whose in-flight task should be cancelled. `rangeable` is accepted as a write-path alias for `rangeFilters`.
+                  in: path
+                  name: indexName
+                  required: true
+                  schema:
+                    enum:
+                        - filterable
+                        - searchable
+                        - rangeFilters
+                        - rangeable
+                    type: string
+            responses:
+                "202":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IndexUpdateResponse'
+                    description: Cancellation processed. Body carries `{"status":"CANCELLED","taskId":...}` when a live task was cancelled, or `{"status":"NO_OP"}` when there was nothing to cancel.
+                "401":
+                    content: {}
+                    description: Unauthorized or invalid credentials.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Unknown collection or property. "Nothing to cancel" is NOT a 404 — it returns 202 with status NO_OP.
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Invalid `indexName` path value.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: An error occurred.
+                "503":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Cluster service unavailable.
+            summary: Cancel the in-flight reindex task on a property's inverted index
+            tags:
+                - schema
+            x-serviceIds:
+                - weaviate.local.manipulate.meta
+    /schema/{className}/properties/{propertyName}/index/{indexName}/rebuild:
+        post:
+            description: 'Rebuilds the inverted index from the stored objects with its current configuration (repair / format refresh). No request body. Index-mutating work is asynchronous: a `202` with a task ID is returned. `indexName` accepts `rangeable` as an alias for `rangeFilters`.'
+            operationId: schema.objects.index.rebuild
+            parameters:
+                - description: The name of the collection (class) containing the property.
+                  in: path
+                  name: className
+                  required: true
+                  schema:
+                    type: string
+                - description: The name of the property whose inverted index should be rebuilt.
+                  in: path
+                  name: propertyName
+                  required: true
+                  schema:
+                    type: string
+                - description: The inverted index type to rebuild. `rangeable` is accepted as a write-path alias for `rangeFilters`.
+                  in: path
+                  name: indexName
+                  required: true
+                  schema:
+                    enum:
+                        - filterable
+                        - searchable
+                        - rangeFilters
+                        - rangeable
+                    type: string
+                - description: Tenant names to target. Allowed for all index types on multi-tenant collections (rebuilds are format-only). Omit to target all tenants.
+                  explode: false
+                  in: query
+                  name: tenants
+                  schema:
+                    items:
+                        type: string
+                    type: array
+                  style: form
+            responses:
+                "202":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IndexUpdateResponse'
+                    description: Reindex task submitted.
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Validation failure; the message carries an actionable hint.
+                "401":
+                    content: {}
+                    description: Unauthorized or invalid credentials.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Unknown collection or property.
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Conflicting in-flight reindex task; the message names the offending task ID.
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Invalid `indexName` path value.
+                "429":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Per-collection cap of concurrent active reindex tasks reached.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: An error occurred.
+                "503":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Cluster service unavailable, or an in-flight task's payload cannot be parsed so conflict-freedom cannot be proven.
+            summary: Rebuild a property's inverted index with unchanged configuration
             tags:
                 - schema
             x-serviceIds:
@@ -9045,7 +9340,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
-                    description: 'Either a request-schema violation (a missing required field such as `query`, or an invalid enum value), or a well-formed request that cannot run: no vectorizer module is configured for the collection, target_vector is missing on a multi-named-vector collection, certainty is used on a non-cosine index, a reserved (not yet supported) parameter is present, the tenant usage does not match the collection''s multi-tenancy configuration, a where filter targets a property whose inverted index is disabled, or the experimental REST Search API is not enabled (set EXPERIMENTAL_REST_SEARCH_ENABLED=true).'
+                    description: 'Either a request-schema violation (a missing required field such as `query`, or an invalid enum value), or a well-formed request that cannot run: no vectorizer module is configured for the collection, targetVector is missing on a multi-named-vector collection, certainty is used on a non-cosine index, a reserved (not yet supported) parameter is present, the tenant usage does not match the collection''s multi-tenancy configuration, a where filter targets a property whose inverted index is disabled, or the experimental REST Search API is not enabled (set EXPERIMENTAL_REST_SEARCH_ENABLED=true).'
                 "429":
                     content:
                         application/json:

@@ -441,9 +441,9 @@ func (e IndexStatusTargetAlgorithm) Valid() bool {
 
 // Defines values for IndexStatusType.
 const (
-	IndexStatusTypeFilterable IndexStatusType = "filterable"
-	IndexStatusTypeRangeable  IndexStatusType = "rangeable"
-	IndexStatusTypeSearchable IndexStatusType = "searchable"
+	IndexStatusTypeFilterable   IndexStatusType = "filterable"
+	IndexStatusTypeRangeFilters IndexStatusType = "rangeFilters"
+	IndexStatusTypeSearchable   IndexStatusType = "searchable"
 )
 
 // Valid indicates whether the value is a known member of the IndexStatusType enum.
@@ -451,7 +451,7 @@ func (e IndexStatusType) Valid() bool {
 	switch e {
 	case IndexStatusTypeFilterable:
 		return true
-	case IndexStatusTypeRangeable:
+	case IndexStatusTypeRangeFilters:
 		return true
 	case IndexStatusTypeSearchable:
 		return true
@@ -460,25 +460,12 @@ func (e IndexStatusType) Valid() bool {
 	}
 }
 
-// Defines values for IndexUpdateSearchableAlgorithm.
-const (
-	Blockmax IndexUpdateSearchableAlgorithm = "blockmax"
-)
-
-// Valid indicates whether the value is a known member of the IndexUpdateSearchableAlgorithm enum.
-func (e IndexUpdateSearchableAlgorithm) Valid() bool {
-	switch e {
-	case Blockmax:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for NamespaceState.
 const (
-	Active   NamespaceState = "active"
-	Deleting NamespaceState = "deleting"
+	Active    NamespaceState = "active"
+	Deleting  NamespaceState = "deleting"
+	Resuming  NamespaceState = "resuming"
+	Suspended NamespaceState = "suspended"
 )
 
 // Valid indicates whether the value is a known member of the NamespaceState enum.
@@ -487,6 +474,10 @@ func (e NamespaceState) Valid() bool {
 	case Active:
 		return true
 	case Deleting:
+		return true
+	case Resuming:
+		return true
+	case Suspended:
 		return true
 	default:
 		return false
@@ -982,10 +973,10 @@ func (e SearchCommonConsistencyLevel) Valid() bool {
 // Defines values for SearchCommonReturnMetadata.
 const (
 	SearchCommonReturnMetadataCertainty      SearchCommonReturnMetadata = "certainty"
-	SearchCommonReturnMetadataCreationTime   SearchCommonReturnMetadata = "creation_time"
+	SearchCommonReturnMetadataCreationTime   SearchCommonReturnMetadata = "creationTime"
 	SearchCommonReturnMetadataDistance       SearchCommonReturnMetadata = "distance"
-	SearchCommonReturnMetadataExplainScore   SearchCommonReturnMetadata = "explain_score"
-	SearchCommonReturnMetadataLastUpdateTime SearchCommonReturnMetadata = "last_update_time"
+	SearchCommonReturnMetadataExplainScore   SearchCommonReturnMetadata = "explainScore"
+	SearchCommonReturnMetadataLastUpdateTime SearchCommonReturnMetadata = "lastUpdateTime"
 	SearchCommonReturnMetadataScore          SearchCommonReturnMetadata = "score"
 )
 
@@ -1033,10 +1024,10 @@ func (e SearchNearTextRequestConsistencyLevel) Valid() bool {
 // Defines values for SearchNearTextRequestReturnMetadata.
 const (
 	SearchNearTextRequestReturnMetadataCertainty      SearchNearTextRequestReturnMetadata = "certainty"
-	SearchNearTextRequestReturnMetadataCreationTime   SearchNearTextRequestReturnMetadata = "creation_time"
+	SearchNearTextRequestReturnMetadataCreationTime   SearchNearTextRequestReturnMetadata = "creationTime"
 	SearchNearTextRequestReturnMetadataDistance       SearchNearTextRequestReturnMetadata = "distance"
-	SearchNearTextRequestReturnMetadataExplainScore   SearchNearTextRequestReturnMetadata = "explain_score"
-	SearchNearTextRequestReturnMetadataLastUpdateTime SearchNearTextRequestReturnMetadata = "last_update_time"
+	SearchNearTextRequestReturnMetadataExplainScore   SearchNearTextRequestReturnMetadata = "explainScore"
+	SearchNearTextRequestReturnMetadataLastUpdateTime SearchNearTextRequestReturnMetadata = "lastUpdateTime"
 	SearchNearTextRequestReturnMetadataScore          SearchNearTextRequestReturnMetadata = "score"
 )
 
@@ -1421,6 +1412,7 @@ func (e BatchObjectsCreateJSONBodyFields) Valid() bool {
 const (
 	SchemaObjectsPropertiesDeleteParamsIndexNameFilterable   SchemaObjectsPropertiesDeleteParamsIndexName = "filterable"
 	SchemaObjectsPropertiesDeleteParamsIndexNameRangeFilters SchemaObjectsPropertiesDeleteParamsIndexName = "rangeFilters"
+	SchemaObjectsPropertiesDeleteParamsIndexNameRangeable    SchemaObjectsPropertiesDeleteParamsIndexName = "rangeable"
 	SchemaObjectsPropertiesDeleteParamsIndexNameSearchable   SchemaObjectsPropertiesDeleteParamsIndexName = "searchable"
 )
 
@@ -1431,7 +1423,81 @@ func (e SchemaObjectsPropertiesDeleteParamsIndexName) Valid() bool {
 		return true
 	case SchemaObjectsPropertiesDeleteParamsIndexNameRangeFilters:
 		return true
+	case SchemaObjectsPropertiesDeleteParamsIndexNameRangeable:
+		return true
 	case SchemaObjectsPropertiesDeleteParamsIndexNameSearchable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SchemaObjectsIndexUpsertParamsIndexName.
+const (
+	SchemaObjectsIndexUpsertParamsIndexNameFilterable   SchemaObjectsIndexUpsertParamsIndexName = "filterable"
+	SchemaObjectsIndexUpsertParamsIndexNameRangeFilters SchemaObjectsIndexUpsertParamsIndexName = "rangeFilters"
+	SchemaObjectsIndexUpsertParamsIndexNameRangeable    SchemaObjectsIndexUpsertParamsIndexName = "rangeable"
+	SchemaObjectsIndexUpsertParamsIndexNameSearchable   SchemaObjectsIndexUpsertParamsIndexName = "searchable"
+)
+
+// Valid indicates whether the value is a known member of the SchemaObjectsIndexUpsertParamsIndexName enum.
+func (e SchemaObjectsIndexUpsertParamsIndexName) Valid() bool {
+	switch e {
+	case SchemaObjectsIndexUpsertParamsIndexNameFilterable:
+		return true
+	case SchemaObjectsIndexUpsertParamsIndexNameRangeFilters:
+		return true
+	case SchemaObjectsIndexUpsertParamsIndexNameRangeable:
+		return true
+	case SchemaObjectsIndexUpsertParamsIndexNameSearchable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SchemaObjectsIndexCancelParamsIndexName.
+const (
+	SchemaObjectsIndexCancelParamsIndexNameFilterable   SchemaObjectsIndexCancelParamsIndexName = "filterable"
+	SchemaObjectsIndexCancelParamsIndexNameRangeFilters SchemaObjectsIndexCancelParamsIndexName = "rangeFilters"
+	SchemaObjectsIndexCancelParamsIndexNameRangeable    SchemaObjectsIndexCancelParamsIndexName = "rangeable"
+	SchemaObjectsIndexCancelParamsIndexNameSearchable   SchemaObjectsIndexCancelParamsIndexName = "searchable"
+)
+
+// Valid indicates whether the value is a known member of the SchemaObjectsIndexCancelParamsIndexName enum.
+func (e SchemaObjectsIndexCancelParamsIndexName) Valid() bool {
+	switch e {
+	case SchemaObjectsIndexCancelParamsIndexNameFilterable:
+		return true
+	case SchemaObjectsIndexCancelParamsIndexNameRangeFilters:
+		return true
+	case SchemaObjectsIndexCancelParamsIndexNameRangeable:
+		return true
+	case SchemaObjectsIndexCancelParamsIndexNameSearchable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SchemaObjectsIndexRebuildParamsIndexName.
+const (
+	Filterable   SchemaObjectsIndexRebuildParamsIndexName = "filterable"
+	RangeFilters SchemaObjectsIndexRebuildParamsIndexName = "rangeFilters"
+	Rangeable    SchemaObjectsIndexRebuildParamsIndexName = "rangeable"
+	Searchable   SchemaObjectsIndexRebuildParamsIndexName = "searchable"
+)
+
+// Valid indicates whether the value is a known member of the SchemaObjectsIndexRebuildParamsIndexName enum.
+func (e SchemaObjectsIndexRebuildParamsIndexName) Valid() bool {
+	switch e {
+	case Filterable:
+		return true
+	case RangeFilters:
+		return true
+	case Rangeable:
+		return true
+	case Searchable:
 		return true
 	default:
 		return false
@@ -2153,8 +2219,13 @@ type IndexStatus struct {
 	// TargetAlgorithm BM25 algorithm this searchable index is being rebuilt onto. Populated only while an in-flight rebuild is changing the algorithm; mirrors `targetTokenization` for the change-tokenization verb. Today the only supported transition is wand -> blockmax.
 	TargetAlgorithm    IndexStatusTargetAlgorithm `json:"targetAlgorithm,omitempty"`
 	TargetTokenization string                     `json:"targetTokenization,omitempty"`
-	Tokenization       string                     `json:"tokenization,omitempty"`
-	Type               IndexStatusType            `json:"type,omitempty"`
+
+	// TaskId ID of the reindex task driving this index entry. Present on every task-driven entry (`pending`, `indexing`, `failed`, `cancelled`, and the finalize-window override); absent on a plain `ready` entry. A coupled searchable+filterable tokenization migration reports the same `taskId` on both affected entries.
+	TaskId       string `json:"taskId,omitempty"`
+	Tokenization string `json:"tokenization,omitempty"`
+
+	// Type Canonical inverted-index type. Always one of `filterable`, `searchable`, `rangeFilters` — never the `rangeable` write-path alias.
+	Type IndexStatusType `json:"type,omitempty"`
 }
 
 // IndexStatusAlgorithm BM25 algorithm currently backing this searchable index. 'wand' is the legacy map-based bucket strategy; 'blockmax' is the Block Max WAND inverted strategy. Only populated for `type=searchable` entries. Not populated for filterable or rangeable indexes.
@@ -2166,7 +2237,7 @@ type IndexStatusStatus string
 // IndexStatusTargetAlgorithm BM25 algorithm this searchable index is being rebuilt onto. Populated only while an in-flight rebuild is changing the algorithm; mirrors `targetTokenization` for the change-tokenization verb. Today the only supported transition is wand -> blockmax.
 type IndexStatusTargetAlgorithm string
 
-// IndexStatusType defines model for IndexStatus.Type.
+// IndexStatusType Canonical inverted-index type. Always one of `filterable`, `searchable`, `rangeFilters` — never the `rangeable` write-path alias.
 type IndexStatusType string
 
 // IndexStatusResponse defines model for IndexStatusResponse.
@@ -2175,56 +2246,20 @@ type IndexStatusResponse struct {
 	Properties []PropertyIndexStatus `json:"properties,omitempty"`
 }
 
-// IndexUpdateFilterable defines model for IndexUpdateFilterable.
-type IndexUpdateFilterable struct {
-	// Cancel When true, cancels the in-flight reindex task targeting this property's filterable index.
-	Cancel  bool `json:"cancel,omitempty"`
-	Enabled bool `json:"enabled,omitempty"`
-	Rebuild bool `json:"rebuild,omitempty"`
-
-	// Tokenization Change the tokenization used by the filterable index on this text/text[] property. Only valid when the property already has a filterable index. Use this for filterable-only properties; for properties that ALSO have a searchable index, prefer searchable.tokenization since it retokenizes both buckets in a single coordinated migration.
-	Tokenization string `json:"tokenization,omitempty"`
-}
-
-// IndexUpdateRangeable defines model for IndexUpdateRangeable.
-type IndexUpdateRangeable struct {
-	// Cancel When true, cancels the in-flight reindex task targeting this property's rangeable index.
-	Cancel  bool `json:"cancel,omitempty"`
-	Enabled bool `json:"enabled,omitempty"`
-
-	// Rebuild When true, rebuilds the rangeable index from the existing filterable bucket (same source-of-truth as enable-rangeable).
-	Rebuild bool `json:"rebuild,omitempty"`
-}
-
-// IndexUpdateRequest defines model for IndexUpdateRequest.
-type IndexUpdateRequest struct {
-	Filterable IndexUpdateFilterable `json:"filterable,omitempty"`
-	Rangeable  IndexUpdateRangeable  `json:"rangeable,omitempty"`
-	Searchable IndexUpdateSearchable `json:"searchable,omitempty"`
-}
-
 // IndexUpdateResponse defines model for IndexUpdateResponse.
 type IndexUpdateResponse struct {
 	Status string `json:"status,omitempty"`
 	TaskId string `json:"taskId,omitempty"`
 }
 
-// IndexUpdateSearchable defines model for IndexUpdateSearchable.
-type IndexUpdateSearchable struct {
-	// Algorithm Switch the BM25 algorithm for this property's searchable index. Currently only `blockmax` is accepted. From WAND this triggers the Map → BlockMax migration; on an already-`blockmax` property the request is rejected. WAND is deprecated; downgrade is intentionally not supported.
-	Algorithm IndexUpdateSearchableAlgorithm `json:"algorithm,omitempty"`
+// IndexUpsertRequest Desired index configuration for `PUT /v1/schema/{className}/properties/{propertyName}/index/{indexType}`. The server diffs the body against the current state and either creates the index, migrates its configuration, or returns a NO_OP. Only fields relevant to the target index type are honored: `tokenization` applies to `searchable`/`filterable`, `algorithm` applies to `searchable`. `rangeFilters` takes no config fields. An empty body `{}` is valid and means "ensure the index exists with its current/default config". At most one configuration change may be requested per call (a body implying both a tokenization and an algorithm change is rejected).
+type IndexUpsertRequest struct {
+	// Algorithm Target BM25 algorithm for a `searchable` index. Only `blockmax` is a valid target (input aliases `block-max`, `block_max`, `blockmaxwand`, `bmw` are accepted case-insensitively). From WAND this triggers the Map → BlockMax migration; on an already-`blockmax` index it is a NO_OP. `wand` is rejected (deprecated); downgrade is intentionally not supported.
+	Algorithm string `json:"algorithm,omitempty"`
 
-	// Cancel When true, cancels the in-flight reindex task targeting this property's searchable index. The task transitions to CANCELLED; partial state is left on disk for the next-restart finalize.
-	Cancel  bool `json:"cancel,omitempty"`
-	Enabled bool `json:"enabled,omitempty"`
-
-	// Rebuild When true, rebuilds the searchable index for this property from the stored objects. Preserves the current tokenization and BM25 algorithm. Only valid when the property's current algorithm is `blockmax`; on a WAND property the request is rejected with guidance to use `algorithm:"blockmax"` first.
-	Rebuild      bool   `json:"rebuild,omitempty"`
+	// Tokenization Target tokenization for a `searchable` or `filterable` index. Required when creating a `searchable` index; optional otherwise (omitted = keep the current value). On `filterable` creation it must be omitted or equal the property's current tokenization.
 	Tokenization string `json:"tokenization,omitempty"`
 }
-
-// IndexUpdateSearchableAlgorithm Switch the BM25 algorithm for this property's searchable index. Currently only `blockmax` is accepted. From WAND this triggers the Map → BlockMax migration; on an already-`blockmax` property the request is rejected. WAND is deprecated; downgrade is intentionally not supported.
-type IndexUpdateSearchableAlgorithm string
 
 // InvertedIndexConfig Configure the inverted index built into Weaviate. See [Reference: Inverted index](https://docs.weaviate.io/weaviate/config-refs/indexing/inverted-index#inverted-index-parameters) for details.
 type InvertedIndexConfig struct {
@@ -2312,11 +2347,11 @@ type Namespace struct {
 	// Name The unique name of the namespace.
 	Name string `json:"name,omitempty"`
 
-	// State Lifecycle state. "active" namespaces accept all operations. "deleting" namespaces are being removed: new classes, aliases, and users can no longer be created in the namespace, and the namespace itself disappears once removal completes.
+	// State Lifecycle state. "active" namespaces accept all operations. "suspended" namespaces reject new classes, aliases, users, roles, and role assignments, and their users can no longer authenticate; everything the namespace already owns is retained. "resuming" namespaces are on their way back to "active" and are still restricted the same way. "deleting" namespaces are being removed: new classes, aliases, and users can no longer be created in the namespace, and the namespace itself disappears once removal completes.
 	State NamespaceState `json:"state,omitempty"`
 }
 
-// NamespaceState Lifecycle state. "active" namespaces accept all operations. "deleting" namespaces are being removed: new classes, aliases, and users can no longer be created in the namespace, and the namespace itself disappears once removal completes.
+// NamespaceState Lifecycle state. "active" namespaces accept all operations. "suspended" namespaces reject new classes, aliases, users, roles, and role assignments, and their users can no longer authenticate; everything the namespace already owns is retained. "resuming" namespaces are on their way back to "active" and are still restricted the same way. "deleting" namespaces are being removed: new classes, aliases, and users can no longer be created in the namespace, and the namespace itself disappears once removal completes.
 type NamespaceState string
 
 // NamespaceCreateRequest Optional body for namespace creation. When `home_node` is omitted, the cluster picks one automatically.
@@ -2670,6 +2705,9 @@ type Property struct {
 
 	// NestedProperties The properties of the nested object(s). Applies to object and object[] data types.
 	NestedProperties []NestedProperty `json:"nestedProperties,omitempty"`
+
+	// SearchableBlockmax Internal RAFT-replicated per-property flag: true iff this property's searchable (BM25) bucket is on the blockmax (StrategyInverted) index. Stamped at migration cutover. Absent/null means "not stamped" and is resolved against the class-wide UsingBlockMaxWAND flag. Internal use; clients must not set this.
+	SearchableBlockmax bool `json:"searchableBlockmax,omitempty"`
 
 	// TextAnalyzer Text analysis options for a property. These settings are immutable after the property is created. Applies only to text and text[] data types that use an inverted index (searchable or filterable).
 	TextAnalyzer TextAnalyzerConfig `json:"textAnalyzer,omitempty"`
@@ -3061,43 +3099,40 @@ type Schema struct {
 // SearchCommon Fields shared by every REST search request (near-text, and — when built — hybrid, bm25, near-object). Unknown fields are ignored (platform parity with the other endpoints). Reserved fields are accepted by the schema but rejected by the server with 422 until the corresponding feature ships.
 type SearchCommon struct {
 	// AutoLimit Cut results off at the first steep drop in score (autocut). The value is the number of score jumps to allow before cutting.
-	AutoLimit int64 `json:"auto_limit,omitempty"`
+	AutoLimit int64 `json:"autoLimit,omitempty"`
 
 	// ConsistencyLevel The consistency level for the read.
-	ConsistencyLevel SearchCommonConsistencyLevel `json:"consistency_level,omitempty"`
+	ConsistencyLevel SearchCommonConsistencyLevel `json:"consistencyLevel,omitempty"`
 
 	// GroupBy Reserved for grouped search. Returns 422 (not yet supported).
-	GroupBy string `json:"group_by,omitempty"`
+	GroupBy string `json:"groupBy,omitempty"`
 
 	// GroupedTask Reserved for grouped retrieval-augmented generation. Returns 422 (not yet supported).
-	GroupedTask string `json:"grouped_task,omitempty"`
+	GroupedTask string `json:"groupedTask,omitempty"`
 
 	// Limit The maximum number of objects to return. Omitted or `0` falls back to the server default (`QUERY_DEFAULTS_LIMIT`); a value above `QUERY_MAXIMUM_RESULTS` is rejected.
 	Limit int64 `json:"limit,omitempty"`
 
 	// NumberOfGroups Reserved for grouped search. Returns 422 (not yet supported).
-	NumberOfGroups int64 `json:"number_of_groups,omitempty"`
+	NumberOfGroups int64 `json:"numberOfGroups,omitempty"`
 
 	// ObjectsPerGroup Reserved for grouped search. Returns 422 (not yet supported).
-	ObjectsPerGroup int64 `json:"objects_per_group,omitempty"`
+	ObjectsPerGroup int64 `json:"objectsPerGroup,omitempty"`
 
 	// Offset The number of objects to skip before returning results. Used with `limit` for pagination.
 	Offset int64 `json:"offset,omitempty"`
 
-	// RerankProperty Reserved for reranking. Returns 422 (not yet supported).
-	RerankProperty string `json:"rerank_property,omitempty"`
-
-	// RerankQuery Reserved for reranking. Returns 422 (not yet supported).
-	RerankQuery string `json:"rerank_query,omitempty"`
+	// Rerank Reserved for reranking. Returns 422 (not yet supported).
+	Rerank SearchRerank `json:"rerank,omitempty"`
 
 	// ReturnMetadata The retrieval metadata to return under each result's `metadata` key. The object `id` is always returned as each result's `id` field. Omitted or empty returns no `metadata` block.
-	ReturnMetadata []SearchCommonReturnMetadata `json:"return_metadata,omitempty"`
+	ReturnMetadata []SearchCommonReturnMetadata `json:"returnMetadata,omitempty"`
 
 	// ReturnProperties The properties to return. A dot-path selects one hop across a reference (e.g. `hasAuthor.name`). Omitted returns all non-reference, non-blob properties; an empty array returns no properties.
-	ReturnProperties []string `json:"return_properties,omitempty"`
+	ReturnProperties []string `json:"returnProperties,omitempty"`
 
 	// SinglePrompt Reserved for per-object retrieval-augmented generation. Returns 422 (not yet supported).
-	SinglePrompt string `json:"single_prompt,omitempty"`
+	SinglePrompt string `json:"singlePrompt,omitempty"`
 
 	// Tenant The tenant to search in a multi-tenant collection.
 	Tenant string `json:"tenant,omitempty"`
@@ -3115,31 +3150,31 @@ type SearchCommonReturnMetadata string
 // SearchNearTextRequest defines model for SearchNearTextRequest.
 type SearchNearTextRequest struct {
 	// AutoLimit Cut results off at the first steep drop in score (autocut). The value is the number of score jumps to allow before cutting.
-	AutoLimit int64 `json:"auto_limit,omitempty"`
+	AutoLimit int64 `json:"autoLimit,omitempty"`
 
 	// Certainty Minimum normalized certainty of a match. Only for cosine-distance vector indexes. Mutually exclusive with `distance`.
 	Certainty float32 `json:"certainty,omitempty"`
 
 	// ConsistencyLevel The consistency level for the read.
-	ConsistencyLevel SearchNearTextRequestConsistencyLevel `json:"consistency_level,omitempty"`
+	ConsistencyLevel SearchNearTextRequestConsistencyLevel `json:"consistencyLevel,omitempty"`
 
 	// Distance Maximum vector distance of a match. Mutually exclusive with `certainty`.
 	Distance float32 `json:"distance,omitempty"`
 
 	// GroupBy Reserved for grouped search. Returns 422 (not yet supported).
-	GroupBy string `json:"group_by,omitempty"`
+	GroupBy string `json:"groupBy,omitempty"`
 
 	// GroupedTask Reserved for grouped retrieval-augmented generation. Returns 422 (not yet supported).
-	GroupedTask string `json:"grouped_task,omitempty"`
+	GroupedTask string `json:"groupedTask,omitempty"`
 
 	// Limit The maximum number of objects to return. Omitted or `0` falls back to the server default (`QUERY_DEFAULTS_LIMIT`); a value above `QUERY_MAXIMUM_RESULTS` is rejected.
 	Limit int64 `json:"limit,omitempty"`
 
 	// NumberOfGroups Reserved for grouped search. Returns 422 (not yet supported).
-	NumberOfGroups int64 `json:"number_of_groups,omitempty"`
+	NumberOfGroups int64 `json:"numberOfGroups,omitempty"`
 
 	// ObjectsPerGroup Reserved for grouped search. Returns 422 (not yet supported).
-	ObjectsPerGroup int64 `json:"objects_per_group,omitempty"`
+	ObjectsPerGroup int64 `json:"objectsPerGroup,omitempty"`
 
 	// Offset The number of objects to skip before returning results. Used with `limit` for pagination.
 	Offset int64 `json:"offset,omitempty"`
@@ -3147,23 +3182,20 @@ type SearchNearTextRequest struct {
 	// Query The concept(s) to search for, as an array of strings. Multiple entries perform a multi-concept search. A single concept is a one-element array, e.g. `["space opera"]`.
 	Query []string `json:"query"`
 
-	// RerankProperty Reserved for reranking. Returns 422 (not yet supported).
-	RerankProperty string `json:"rerank_property,omitempty"`
-
-	// RerankQuery Reserved for reranking. Returns 422 (not yet supported).
-	RerankQuery string `json:"rerank_query,omitempty"`
+	// Rerank Reserved for reranking. Returns 422 (not yet supported).
+	Rerank SearchRerank `json:"rerank,omitempty"`
 
 	// ReturnMetadata The retrieval metadata to return under each result's `metadata` key. The object `id` is always returned as each result's `id` field. Omitted or empty returns no `metadata` block.
-	ReturnMetadata []SearchNearTextRequestReturnMetadata `json:"return_metadata,omitempty"`
+	ReturnMetadata []SearchNearTextRequestReturnMetadata `json:"returnMetadata,omitempty"`
 
 	// ReturnProperties The properties to return. A dot-path selects one hop across a reference (e.g. `hasAuthor.name`). Omitted returns all non-reference, non-blob properties; an empty array returns no properties.
-	ReturnProperties []string `json:"return_properties,omitempty"`
+	ReturnProperties []string `json:"returnProperties,omitempty"`
 
 	// SinglePrompt Reserved for per-object retrieval-augmented generation. Returns 422 (not yet supported).
-	SinglePrompt string `json:"single_prompt,omitempty"`
+	SinglePrompt string `json:"singlePrompt,omitempty"`
 
 	// TargetVector The named vector to search. Required when the collection has more than one named vector.
-	TargetVector string `json:"target_vector,omitempty"`
+	TargetVector string `json:"targetVector,omitempty"`
 
 	// Tenant The tenant to search in a multi-tenant collection.
 	Tenant string `json:"tenant,omitempty"`
@@ -3178,31 +3210,40 @@ type SearchNearTextRequestConsistencyLevel string
 // SearchNearTextRequestReturnMetadata defines model for SearchNearTextRequest.ReturnMetadata.
 type SearchNearTextRequestReturnMetadata string
 
+// SearchRerank Reserved for reranking. Returns 422 (not yet supported).
+type SearchRerank struct {
+	// Property The property to rerank on.
+	Property string `json:"property"`
+
+	// Query The query to rerank with. Defaults to the search query.
+	Query string `json:"query,omitempty"`
+}
+
 // SearchResponse The result of a REST search: the matched objects as `{id, properties, references, metadata}` envelopes, plus the server-side processing time. Shared by all REST search endpoints.
 type SearchResponse struct {
 	// Results The matched objects, ordered by relevance.
 	Results []SearchResultObject `json:"results"`
 
 	// TookMs Server-side processing time in milliseconds.
-	TookMs int64 `json:"took_ms"`
+	TookMs int64 `json:"tookMs"`
 }
 
-// SearchResultMetadata The retrieval metadata of a single search hit, populated according to `return_metadata`. Every field is optional and only present when it was requested and is computable for the search.
+// SearchResultMetadata The retrieval metadata of a single search hit, populated according to `returnMetadata`. Every field is optional and only present when it was requested and is computable for the search.
 type SearchResultMetadata struct {
 	// Certainty The normalized certainty of the hit. Only computable on cosine-distance vector indexes.
 	Certainty float32 `json:"certainty,omitempty"`
 
 	// CreationTime The object's creation time, as epoch milliseconds.
-	CreationTime int64 `json:"creation_time,omitempty"`
+	CreationTime int64 `json:"creationTime,omitempty"`
 
 	// Distance The vector distance between the hit and the query.
 	Distance float32 `json:"distance,omitempty"`
 
 	// ExplainScore An explanation of how the score was computed.
-	ExplainScore string `json:"explain_score,omitempty"`
+	ExplainScore string `json:"explainScore,omitempty"`
 
 	// LastUpdateTime The object's last-update time, as epoch milliseconds.
-	LastUpdateTime int64 `json:"last_update_time,omitempty"`
+	LastUpdateTime int64 `json:"lastUpdateTime,omitempty"`
 
 	// Score The relevance score of the hit.
 	Score float32 `json:"score,omitempty"`
@@ -3213,7 +3254,7 @@ type SearchResultObject struct {
 	// Id The object's UUID. Always returned.
 	Id *openapi_types.UUID `json:"id"`
 
-	// Metadata The retrieval metadata of a single search hit, populated according to `return_metadata`. Every field is optional and only present when it was requested and is computable for the search.
+	// Metadata The retrieval metadata of a single search hit, populated according to `returnMetadata`. Every field is optional and only present when it was requested and is computable for the search.
 	Metadata SearchResultMetadata `json:"metadata,omitempty"`
 
 	// Properties The selected non-reference properties of the object; nested (object / object[]) properties are pruned to the selected nested fields. Always present — `{}` when the request selects no properties.
@@ -3892,14 +3933,29 @@ type SchemaObjectsGetParams struct {
 	Consistency bool `json:"consistency,omitempty"`
 }
 
-// SchemaObjectsIndexesUpdateParams defines parameters for SchemaObjectsIndexesUpdate.
-type SchemaObjectsIndexesUpdateParams struct {
-	// Tenants Tenant names to target. Only for non-semantic operations on multi-tenant collections. Omit to target all tenants.
+// SchemaObjectsPropertiesDeleteParamsIndexName defines parameters for SchemaObjectsPropertiesDelete.
+type SchemaObjectsPropertiesDeleteParamsIndexName string
+
+// SchemaObjectsIndexUpsertParams defines parameters for SchemaObjectsIndexUpsert.
+type SchemaObjectsIndexUpsertParams struct {
+	// Tenants Tenant names to target. Only valid on multi-tenant collections and only when the resulting operation is format-only (on PUT that is `rangeFilters` creation). Omit to target all tenants.
 	Tenants []string `form:"tenants,omitempty" json:"tenants,omitempty"`
 }
 
-// SchemaObjectsPropertiesDeleteParamsIndexName defines parameters for SchemaObjectsPropertiesDelete.
-type SchemaObjectsPropertiesDeleteParamsIndexName string
+// SchemaObjectsIndexUpsertParamsIndexName defines parameters for SchemaObjectsIndexUpsert.
+type SchemaObjectsIndexUpsertParamsIndexName string
+
+// SchemaObjectsIndexCancelParamsIndexName defines parameters for SchemaObjectsIndexCancel.
+type SchemaObjectsIndexCancelParamsIndexName string
+
+// SchemaObjectsIndexRebuildParams defines parameters for SchemaObjectsIndexRebuild.
+type SchemaObjectsIndexRebuildParams struct {
+	// Tenants Tenant names to target. Allowed for all index types on multi-tenant collections (rebuilds are format-only). Omit to target all tenants.
+	Tenants []string `form:"tenants,omitempty" json:"tenants,omitempty"`
+}
+
+// SchemaObjectsIndexRebuildParamsIndexName defines parameters for SchemaObjectsIndexRebuild.
+type SchemaObjectsIndexRebuildParamsIndexName string
 
 // SchemaObjectsShardsGetParams defines parameters for SchemaObjectsShardsGet.
 type SchemaObjectsShardsGetParams struct {
@@ -4075,11 +4131,11 @@ type SchemaObjectsCreateJSONRequestBody = Class
 // SchemaObjectsUpdateJSONRequestBody defines body for SchemaObjectsUpdate for application/json ContentType.
 type SchemaObjectsUpdateJSONRequestBody = Class
 
-// SchemaObjectsIndexesUpdateJSONRequestBody defines body for SchemaObjectsIndexesUpdate for application/json ContentType.
-type SchemaObjectsIndexesUpdateJSONRequestBody = IndexUpdateRequest
-
 // SchemaObjectsPropertiesAddJSONRequestBody defines body for SchemaObjectsPropertiesAdd for application/json ContentType.
 type SchemaObjectsPropertiesAddJSONRequestBody = Property
+
+// SchemaObjectsIndexUpsertJSONRequestBody defines body for SchemaObjectsIndexUpsert for application/json ContentType.
+type SchemaObjectsIndexUpsertJSONRequestBody = IndexUpsertRequest
 
 // SchemaObjectsPropertiesTokenizeJSONRequestBody defines body for SchemaObjectsPropertiesTokenize for application/json ContentType.
 type SchemaObjectsPropertiesTokenizeJSONRequestBody = PropertyTokenizeRequest
