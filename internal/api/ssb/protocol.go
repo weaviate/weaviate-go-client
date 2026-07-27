@@ -74,8 +74,13 @@ type Task struct {
 
 func (t *Task) ID() string            { return t.data.ID() }
 func (t *Task) Done() <-chan struct{} { return t.done }
-func (t *Task) Err() error            { return t.err.Load().(error) }
-func (t *Task) TimesRetried() int     { return int(t.retries.Load()) }
+func (t *Task) Err() error {
+	if err := t.err.Load(); err != nil {
+		return err.(error)
+	}
+	return nil
+}
+func (t *Task) TimesRetried() int { return int(t.retries.Load()) }
 
 type Transport interface {
 	// NewStream opens a new streaming client and starts the batch stream.
@@ -224,7 +229,9 @@ func (t *Task) retry(err error) {
 
 // complete sets the error and closes the done channel.
 func (t *Task) complete(err error) {
-	t.err.Store(err)
+	if err != nil {
+		t.err.Store(err)
+	}
 	close(t.done)
 }
 
