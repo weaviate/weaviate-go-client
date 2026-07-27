@@ -196,9 +196,8 @@ func (s *state) set(af actionFlags) {
 // await blocks until flag is set or ctx expires
 // and returns [Context.Err] in the latter case.
 func (s *state) await(ctx context.Context, af actionFlags) error {
+	// TODO(dyma): test+fuzz
 	s.mu.RLock()
-	defer s.mu.RUnlock()
-
 	for s.flags&af != af {
 		changed := s.changed
 		s.mu.RUnlock()
@@ -210,6 +209,7 @@ func (s *state) await(ctx context.Context, af actionFlags) error {
 			return ctx.Err()
 		}
 	}
+	s.mu.RUnlock()
 	return nil
 }
 
