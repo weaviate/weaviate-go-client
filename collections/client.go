@@ -16,13 +16,18 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
-func NewClient(t internal.Transport) *Client {
+type streamingTransport interface {
+	internal.Transport // For HTTP / gRPC requests.
+	stream.Transport   // For server-side batching.
+}
+
+func NewClient(t streamingTransport) *Client {
 	dev.AssertNotNil(t, "transport")
-	return &Client{t: t}
+	return &Client{transport: t}
 }
 
 type Client struct {
-	t internal.Transport
+	transport streamingTransport
 }
 
 // WithConsistencyLevel default consistency level for all read / write requests made with this collection handle.
@@ -46,11 +51,11 @@ func (c *Client) Use(collectionName string, options ...HandleOption) *Handle {
 	for _, opt := range options {
 		opt(&rd)
 	}
-	return newHandle(c.t, rd)
+	return newHandle(c.transport, rd)
 }
 
 type Handle struct {
-	transport internal.Transport
+	transport streamingTransport
 	defaults  api.RequestDefaults
 
 	Aggregate *aggregate.Client
@@ -59,7 +64,7 @@ type Handle struct {
 	Tenants   *tenant.Client
 }
 
-func newHandle(t internal.Transport, rd api.RequestDefaults) *Handle {
+func newHandle(t streamingTransport, rd api.RequestDefaults) *Handle {
 	dev.AssertNotNil(t, "t")
 
 	return &Handle{
@@ -106,11 +111,11 @@ func (h *Handle) Count(ctx context.Context) (int64, error) {
 // the whole streaming process and may be used to terminate it abruptly.
 // In a normal course of operation, a batch should be closed explicitly.
 func (h *Handle) Batch(ctx context.Context, options ...batch.Option) (*batch.Client, error) {
-	st, ok := h.transport.(stream.Transport)
-	if !ok {
-		return nil, fmt.Errorf("transport %T does not support streaming", h.transport)
-	}
-	return batch.NewClient(ctx, st, h.defaults, options...), nil
+	// st, ok := h.transport.(stream.Transport)
+	// if !ok {
+	// 	return nil, fmt.Errorf("transport %T does not support streaming", h.transport)
+	// }
+	return batch.NewClient(ctx, h.transport, h.defaults, options...), nil
 }
 
 // HandleOption configures request defaults for collection handle.
@@ -138,7 +143,7 @@ func (c *Client) Create(ctx context.Context, collection Collection) (*Handle, er
 	req := &api.CreateCollectionRequest{Collection: x}
 
 	// No need to read the result of the request, we only need the name to create a handle.
-	if err := c.t.Do(ctx, req, nil); err != nil {
+	if err := c.transport.Do(ctx, req, nil); err != nil {
 		return nil, fmt.Errorf("create collection: %w", err)
 	}
 	return c.Use(collection.Name), nil
@@ -148,7 +153,7 @@ func (c *Client) Create(ctx context.Context, collection Collection) (*Handle, er
 // Returns nil with nil error if collections does not exist.
 func (c *Client) GetConfig(ctx context.Context, collectionName string) (*Collection, error) {
 	var resp api.Collection
-	if err := c.t.Do(ctx, api.GetCollectionRequest(collectionName), &resp); err != nil {
+	if err := c.transport.Do(ctx, api.GetCollectionRequest(collectionName), &resp); err != nil {
 		return nil, fmt.Errorf("get collection config: %w", err)
 	}
 	collection, err := collectionFromAPI(&resp)
@@ -161,7 +166,7 @@ func (c *Client) GetConfig(ctx context.Context, collectionName string) (*Collect
 // List returns configurations for all collections defined in the schema.
 func (c *Client) List(ctx context.Context) ([]Collection, error) {
 	var resp api.ListCollectionsResponse
-	if err := c.t.Do(ctx, api.ListCollectionsRequest, &resp); err != nil {
+	if err := c.transport.Do(ctx, api.ListCollectionsRequest, &resp); err != nil {
 		return nil, fmt.Errorf("list collections: %w", err)
 	}
 
@@ -185,7 +190,7 @@ func (c *Client) List(ctx context.Context) ([]Collection, error) {
 // errors (request failed en route).
 func (c *Client) Exists(ctx context.Context, collectionName string) (bool, error) {
 	var exists api.ResourceExistsResponse
-	if err := c.t.Do(ctx, api.GetCollectionRequest(collectionName), &exists); err != nil {
+	if err := c.transport.Do(ctx, api.GetCollectionRequest(collectionName), &exists); err != nil {
 		return false, fmt.Errorf("check collection exists: %w", err)
 	}
 	return exists.Bool(), nil
@@ -193,7 +198,7 @@ func (c *Client) Exists(ctx context.Context, collectionName string) (bool, error
 
 // Delete collection by name. Returns an error if no collection with this name exist.
 func (c *Client) Delete(ctx context.Context, collectionName string) error {
-	if err := c.t.Do(ctx, api.DeleteCollectionRequest(collectionName), nil); err != nil {
+	if err := c.transport.Do(ctx, api.DeleteCollectionRequest(collectionName), nil); err != nil {
 		return fmt.Errorf("delete collection: %w", err)
 	}
 	return nil
