@@ -176,8 +176,8 @@ const (
 	canSend                            // Client can send the next batch.
 )
 
-func newState(actions actionFlags) *state {
-	return &state{
+func newState(actions actionFlags) state {
+	return state{
 		flags:   actions,
 		changed: make(chan struct{}),
 	}
@@ -251,11 +251,11 @@ type Client struct {
 	finish context.CancelCauseFunc // Cancels client context.
 
 	transport Transport    // Transport provides Stream and BatchRequest.
-	state     *state       // Stream state.
+	state     state        // Stream state.
 	queue     chan *Task   // Task queue.
 	retry     chan []*Task // Retry queue.
-	batch     *batch       // Batch container.
-	wip       *cache       // Tasks taken off the queue but not yet completed.
+	batch     batch        // Batch container.
+	wip       cache        // Tasks taken off the queue but not yet completed.
 	canRetry  RetryFunc    // Retry decides if a task will be retried.
 
 	// Tally of failed reconnect attempts. It is only accessed
@@ -491,8 +491,8 @@ func (c *Client) Close() error {
 	return err
 }
 
-func newBatch(newRequest func() BatchRequest, size int) *batch {
-	return &batch{
+func newBatch(newRequest func() BatchRequest, size int) batch {
+	return batch{
 		newRequest: newRequest,
 		req:        newRequest(),
 		cap:        size,
@@ -608,8 +608,8 @@ func (b *batch) clear() {
 	b.flags ^= full
 }
 
-func newCache(size int) *cache {
-	return &cache{m: make(map[string]*Task, size)}
+func newCache(size int) cache {
+	return cache{m: make(map[string]*Task, size)}
 }
 
 // cache is a synchronized map of in-progress tasks.
