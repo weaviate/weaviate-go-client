@@ -31,6 +31,10 @@ type ReconnectPolicy struct {
 
 func ExponentialDelay(n int) time.Duration { return 1 << n * time.Second }
 
+// Maximum number of Result events the client will accept
+// before it starts putting backpressure on the Recv.
+const retryBuffer = 1 << 4
+
 func NewClient(conf ClientConfig) *Client {
 	ctx, cancel := context.WithCancelCause(conf.Context)
 	c := &Client{
@@ -38,7 +42,7 @@ func NewClient(conf ClientConfig) *Client {
 		finish:      cancel,
 		transport:   conf.Transport,
 		queue:       make(chan *Task, conf.QueueSize),
-		retry:       make(chan []*Task),
+		retry:       make(chan []*Task, retryBuffer),
 		batch:       newBatch(conf.Transport.NewRequest, conf.BatchSize),
 		wip:         newCache(conf.BatchSize),
 		state:       newState(canPrepare),
@@ -413,33 +417,29 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 				return true
 			})
 
-			// Adding tasks to c.retry may block, so we kick off a goroutine.
-			// Its lifetime is bounded by [Client.ctx].
-			go func() {
-				// NOTE(dyma): we could share []*Task slice between send and recv.
-				// This requires another synchronization chan, maybe not worth it.
-				failed := event.Results.Failed
-				retry := make([]*Task, 0, len(failed))
-				if len(failed) > 0 {
-					c.wip.walk(maps.Keys(failed), func(t *Task) (remove bool) {
-						err := errors.New(failed[t.ID()])
-						if c.canRetry.check(t, err) {
-							t.retry(err)
-							retry = append(retry, t)
-						} else {
-							t.complete(err)
-							remove = true
-						}
-						return
-					})
-				}
-
-				select {
-				case c.retry <- retry:
-				case <-c.ctx.Done():
+			// NOTE(dyma): we could share []*Task slice between send and recv.
+			// This requires another synchronization chan, maybe not worth it.
+			failed := event.Results.Failed
+			retry := make([]*Task, 0, len(failed))
+			if len(failed) > 0 {
+				c.wip.walk(maps.Keys(failed), func(t *Task) (remove bool) {
+					err := errors.New(failed[t.ID()])
+					if c.canRetry.check(t, err) {
+						t.retry(err)
+						retry = append(retry, t)
+					} else {
+						t.complete(err)
+						remove = true
+					}
 					return
-				}
-			}()
+				})
+			}
+
+			select {
+			case c.retry <- retry:
+			case <-c.ctx.Done():
+				continue
+			}
 
 		case event.Backoff != nil:
 			c.batch.resize(*event.Backoff)
