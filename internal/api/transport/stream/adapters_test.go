@@ -110,9 +110,7 @@ func TestStream_Recv(t *testing.T) {
 					Started: &proto.BatchStreamReply_Started{},
 				},
 			},
-			want: ssb.Event{
-				Started: true,
-			},
+			want: ssb.Event{Started: true},
 		},
 		{
 			name: "shutting down",
@@ -121,9 +119,7 @@ func TestStream_Recv(t *testing.T) {
 					ShuttingDown: &proto.BatchStreamReply_ShuttingDown{},
 				},
 			},
-			want: ssb.Event{
-				ShuttingDown: true,
-			},
+			want: ssb.Event{ShuttingDown: true},
 		},
 		{
 			name: "backoff",
@@ -134,9 +130,7 @@ func TestStream_Recv(t *testing.T) {
 					},
 				},
 			},
-			want: ssb.Event{
-				Backoff: testkit.Ptr(92),
-			},
+			want: ssb.Event{Backoff: testkit.Ptr(92)},
 		},
 		{
 			name: "oom",
@@ -147,11 +141,7 @@ func TestStream_Recv(t *testing.T) {
 					},
 				},
 			},
-			want: ssb.Event{
-				OOM: &ssb.OOM{
-					ExitAfter: 92 * time.Second,
-				},
-			},
+			want: ssb.Event{OOM: &ssb.OOM{ExitAfter: 92 * time.Second}},
 		},
 		{
 			name: "acks",
@@ -163,9 +153,7 @@ func TestStream_Recv(t *testing.T) {
 					},
 				},
 			},
-			want: ssb.Event{
-				Acks: []string{"uuid-0", "uuid-1", "ref-0", "ref-1"},
-			},
+			want: ssb.Event{Ack: true},
 		},
 		{
 			name: "results",

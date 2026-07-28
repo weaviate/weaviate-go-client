@@ -155,7 +155,7 @@ type Event struct {
 	Started      bool     // Server is ready to accept data.
 	ShuttingDown bool     // Server is shutting down.
 	Backoff      *int     // Limit the number of objects in the future batch.
-	Acks         []string // The previous batch is ack'ed.
+	Ack          bool     // The previous batch is ack'ed.
 	OOM          *OOM     // Server is OOM and will be shutting down.
 	Results      *Results // Results for a previously-acked batch.
 }
@@ -414,10 +414,7 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 			c.reconn = 0
 			c.state.set(canPrepare | canSend)
 
-		case event.Acks != nil:
-			// NOTE(dyma): the protocol guarantees that Acks message
-			// includes all data from the previous batch. Do we need
-			// to verify that that is the case?
+		case event.Ack:
 			c.state.set(canPrepare | canSend)
 
 		case event.Results != nil:

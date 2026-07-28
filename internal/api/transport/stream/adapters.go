@@ -106,8 +106,7 @@ func (sad *streamAdapter) Recv() (ssb.Event, error) {
 		}
 	case *proto.BatchStreamReply_Acks_:
 		if msg.Acks != nil {
-			event.Acks = append(event.Acks, msg.Acks.Uuids...)
-			event.Acks = append(event.Acks, msg.Acks.Beacons...)
+			event.Ack = true
 		}
 
 	case *proto.BatchStreamReply_Results_:
