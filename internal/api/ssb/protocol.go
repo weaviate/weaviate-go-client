@@ -307,7 +307,7 @@ func (c *Client) init() {
 				// If connection drops, we assume that any in-progress tasks
 				// have failed on the server and we have to redo them all.
 				c.batch.clear()
-				c.wip.all(func(t *Task) { c.batch.add(t.value()) })
+				c.wip.all(func(t *Task) { c.batch.add(t) })
 			case <-c.ctx.Done():
 				return
 			}
@@ -352,12 +352,10 @@ func (c *Client) send(ctx context.Context, s Stream) {
 
 			t.setValue(v)
 			c.wip.put(t)
-			c.batch.add(v)
+			c.batch.add(t)
 
 		case tasks := <-c.retry:
-			for _, t := range tasks {
-				c.batch.add(t.value())
-			}
+			c.batch.add(tasks...)
 
 		case <-ctx.Done():
 			return
@@ -384,9 +382,7 @@ Drain:
 		}
 		select {
 		case tasks := <-c.retry:
-			for _, t := range tasks {
-				c.batch.add(t.value())
-			}
+			c.batch.add(tasks...)
 		case <-ctx.Done():
 			return
 		}
@@ -520,13 +516,17 @@ type batch struct {
 	newRequest func() BatchRequest
 }
 
-func (b *batch) add(v any) {
+// add all [Task.value] to the batch.
+func (b *batch) add(tasks ...*Task) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	b.buf = append(b.buf, v)
-	if b.flags&full != full {
-		b.addLocked(v)
+	for _, t := range tasks {
+		v := t.value()
+		b.buf = append(b.buf, v)
+		if b.flags&full != full {
+			b.addLocked(v)
+		}
 	}
 }
 
