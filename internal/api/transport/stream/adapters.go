@@ -137,7 +137,7 @@ func (sad *streamAdapter) Recv() (ssb.Event, error) {
 }
 
 func (sad *streamAdapter) Close() (err error) {
-	defer sad.stream.CloseSend()
+	defer sad.stream.CloseSend() // nolint:errcheck
 	return sad.send(api.StopStreamRequest)
 }
 
