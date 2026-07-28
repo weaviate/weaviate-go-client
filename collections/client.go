@@ -111,10 +111,6 @@ func (h *Handle) Count(ctx context.Context) (int64, error) {
 // the whole streaming process and may be used to terminate it abruptly.
 // In a normal course of operation, a batch should be closed explicitly.
 func (h *Handle) Batch(ctx context.Context, options ...batch.Option) (*batch.Client, error) {
-	// st, ok := h.transport.(stream.Transport)
-	// if !ok {
-	// 	return nil, fmt.Errorf("transport %T does not support streaming", h.transport)
-	// }
 	return batch.NewClient(ctx, h.transport, h.defaults, options...), nil
 }
 
