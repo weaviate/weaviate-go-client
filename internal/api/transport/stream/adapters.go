@@ -136,11 +136,9 @@ func (sad *streamAdapter) Recv() (ssb.Event, error) {
 	return event, nil
 }
 
-func (sad *streamAdapter) Close() error {
-	if err := sad.send(api.StopStreamRequest); err != nil {
-		return err
-	}
-	return sad.stream.CloseSend()
+func (sad *streamAdapter) Close() (err error) {
+	defer sad.stream.CloseSend()
+	return sad.send(api.StopStreamRequest)
 }
 
 func (sad *streamAdapter) send(mm transport.MessageMarshaler[proto.BatchStreamRequest]) error {
