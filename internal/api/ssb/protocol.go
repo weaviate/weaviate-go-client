@@ -185,7 +185,7 @@ func newState(actions actionFlags) state {
 
 // state stores actions the client is currently allowed to take.
 type state struct {
-	mu      sync.RWMutex
+	mu      sync.Mutex
 	flags   actionFlags
 	changed chan struct{}
 }
@@ -211,19 +211,19 @@ func (s *state) set(af actionFlags) {
 // and returns [Context.Err] in the latter case.
 func (s *state) await(ctx context.Context, af actionFlags) error {
 	// TODO(dyma): test+fuzz
-	s.mu.RLock()
+	s.mu.Lock()
 	for s.flags&af != af {
 		changed := s.changed
-		s.mu.RUnlock()
+		s.mu.Unlock()
 
 		select {
 		case <-changed:
-			s.mu.RLock()
+			s.mu.Lock()
 		case <-ctx.Done():
 			return ctx.Err()
 		}
 	}
-	s.mu.RUnlock()
+	s.mu.Unlock()
 	return nil
 }
 
