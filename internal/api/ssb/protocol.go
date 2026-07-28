@@ -54,6 +54,9 @@ func NewClient(conf ClientConfig) *Client {
 	return c
 }
 
+// Add puts creates a new tasks and puts it on the work queue.
+// If [Client.Context] expires, Add returns [context.Canceled],
+// otherwise the error is nil. Calling Add after closing the batch panics.
 func (c *Client) Add(d Data) (*Task, error) {
 	t := &Task{
 		data: d,
@@ -97,6 +100,11 @@ type Transport interface {
 	// Prepare marshals the data to a value accepted by [BatchRequest.Add].
 	Prepare(Data) (any, error)
 }
+
+// ErrTooLarge is an error [Transport] must return if the latest item
+// exceeds the maximum request size supported by the transport.
+// This error is not retried, and surfaced to the user instead.
+var ErrTooLarge = errors.New("batch item exceeds maximum request size")
 
 type Stream interface {
 	// Send marshaled batch request. The batch is guaranteed to be
@@ -142,29 +150,30 @@ func (d *Data) ID() (id string) {
 	return
 }
 
+// Event is a union of expected server-side messages.
 type Event struct {
-	Started      bool
-	ShuttingDown bool
-	Backoff      *int
-	Acks         []string
-	OOM          *OOM
-	Results      *Results
+	Started      bool     // Server is ready to accept data.
+	ShuttingDown bool     // Server is shutting down.
+	Backoff      *int     // Limit the number of objects in the future batch.
+	Acks         []string // The previous batch is ack'ed.
+	OOM          *OOM     // Server is OOM and will be shutting down.
+	Results      *Results // Results for a previously-acked batch.
 }
 
 type OOM struct {
-	ExitAfter time.Duration
+	ExitAfter time.Duration // Grace period for the server to send a ShuttingDown event.
 }
 
 type Results struct {
-	OK     []string
-	Failed map[string]string
+	OK     []string          // IDs of tasks that completed successfully.
+	Failed map[string]string // Batch insertion errors keyed by task ID.
 }
 
 type actionFlags uint8
 
 const (
-	canPrepare actionFlags = 1 << iota
-	canSend
+	canPrepare actionFlags = 1 << iota // Client can prepare the next batch.
+	canSend                            // Client can send the next batch.
 )
 
 func newState(actions actionFlags) *state {
@@ -174,6 +183,7 @@ func newState(actions actionFlags) *state {
 	}
 }
 
+// state stores actions the client is currently allowed to take.
 type state struct {
 	mu      sync.RWMutex
 	flags   actionFlags
@@ -217,11 +227,6 @@ func (s *state) await(ctx context.Context, af actionFlags) error {
 	return nil
 }
 
-// ErrTooLarge is a sentinel error returned if the latest item exceeds
-// the maximum request size supported by the [Batch].
-// This error is not retried, and surfaced to the user instead.
-var ErrTooLarge = errors.New("batch item exceeds maximum request size")
-
 func (t *Task) setValue(v any) { t.val.CompareAndSwap(nil, v) }
 func (t *Task) value() any     { return t.val.Load() }
 
@@ -260,6 +265,7 @@ type Client struct {
 	delayFunc   func(int) time.Duration // Delay before the next reconnect.
 }
 
+// init kicks off the 'send' and 'recv' routines.
 func (c *Client) init() {
 	type span struct {
 		ctx    context.Context
@@ -280,7 +286,10 @@ func (c *Client) init() {
 			close(tick)
 		}()
 
+		// Start a stream, unblock the 'send' goroutine, and continue reconnecting
+		// until batch completes, the server is deemed unresponsive, or context expires.
 		for ; c.reconn < c.reconnLimit; c.reconn++ {
+
 			var s Stream
 			if s, err = c.transport.NewStream(c.ctx); err == nil {
 				ctx, cancel := context.WithCancel(c.ctx)
@@ -295,6 +304,8 @@ func (c *Client) init() {
 
 			select {
 			case <-time.After(c.delayFunc(c.reconn)):
+				// If connection drops, we assume that any in-progress tasks
+				// have failed on the server and we have to redo them all.
 				c.batch.clear()
 				c.wip.all(func(t *Task) { c.batch.add(t.value()) })
 			case <-c.ctx.Done():
@@ -304,11 +315,11 @@ func (c *Client) init() {
 	}()
 }
 
+// send consumes queue and retry channels, prepares and sends the batch.
 func (c *Client) send(ctx context.Context, s Stream) {
 	defer s.Close() //nolint:errcheck
 
-	// maybeSend returns an error if Stream.Send fails
-	// or the context expires while waiting for canSend.
+	// The caller should exit if maybeSend returns a non-nil error.
 	maybeSend := func() (err error) {
 		req := c.batch.prepare()
 		if req != nil {
@@ -318,7 +329,7 @@ func (c *Client) send(ctx context.Context, s Stream) {
 			if err = s.Send(req); err != nil {
 				return
 			}
-			c.state.clear()
+			c.state.clear() // Do not send / prepare until this one is Ack'ed.
 		}
 		return
 	}
@@ -358,6 +369,9 @@ func (c *Client) send(ctx context.Context, s Stream) {
 	}
 
 Drain:
+	// Every time we receive Results, the wip shrinks and the batch's capacity
+	// is reduced to the wip's size. This guarantees the batch will eventually
+	// fill up. Disable growth to prevent Backoff from increasing the capacity.
 	c.batch.disableGrowth()
 	for {
 		wipCount := c.wip.size()
@@ -365,16 +379,11 @@ Drain:
 			return
 		}
 		c.batch.resize(wipCount)
-
 		if err := maybeSend(); err != nil {
 			return
 		}
-
 		select {
 		case tasks := <-c.retry:
-			// Every time we receive Results, wip is updated.
-			// Resizing the batch to the current wip size guarantees
-			// that the former will eventually fill up.
 			for _, t := range tasks {
 				c.batch.add(t.value())
 			}
@@ -453,10 +462,9 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 		case event.ShuttingDown:
 			cancelSend()
 			if oomTimer != nil {
-				// If the timer has already fired, the context would be canceled
-				// and s.Recv() must return an error. The only reason that we got
-				// here is that the message arrived _just_ before oomTimer fired.
-				// This means the server is responsive and we can try to reconnect.
+				// The only reason that we got here is because the message
+				// had arrived before oomTimer fired. Server is responsive
+				// and we can try to reconnect.
 				oomTimer.Stop()
 				oomTimer = nil
 			}
@@ -466,6 +474,9 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 	}
 }
 
+// Close closes the work queue, drains the batch, and blocks until either
+// all accepted tasks have been processed. If the context expires, Close
+// fails all pending tasks and returns the cause of the context's expiry.
 func (c *Client) Close() error {
 	defer close(c.retry)
 
