@@ -2,6 +2,7 @@ package transport
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -48,10 +49,10 @@ func TestTokenKeepalive(t *testing.T) {
 		cancel()
 
 		// Assert
-		assert.GreaterOrEqual(t, src.used, 1, "expect src.Token() to be used in the background")
+		assert.GreaterOrEqual(t, src.used.Load(), uint32(1), "expect src.Token() to be used in the background")
 
-		src.used = 0
-		assert.Zero(t, src.used, "no src.Token() after context is canceled")
+		src.used.Store(0)
+		assert.Zero(t, src.used.Load(), "no src.Token() after context is canceled")
 	})
 }
 
@@ -59,10 +60,10 @@ func TestTokenKeepalive(t *testing.T) {
 // Similar to [oauth2.StaticTokenSource], but with configurable [Token.ExpiresIn].
 type tokenSource struct {
 	tok  oauth2.Token
-	used int
+	used atomic.Uint32
 }
 
 func (src *tokenSource) Token() (*oauth2.Token, error) {
-	src.used++
+	src.used.Add(1)
 	return (*oauth2.Token)(&src.tok), nil
 }
