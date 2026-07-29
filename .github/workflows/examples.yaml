@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - v6
+  pull_request:
+    paths:
+      - "example/**"
 
 jobs:
   examples:
