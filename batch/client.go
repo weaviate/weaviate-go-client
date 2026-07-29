@@ -24,13 +24,13 @@ type (
 
 func WithRetryFunc(f func(string, int, error) bool) Option {
 	return func(c *ssb.ClientConfig) {
-		c.RetryFunc = ssb.RetryFunc(f)
+		c.CanRetry = ssb.CanRetryFunc(f)
 	}
 }
 
 func WithRetryTimes(n int) Option {
 	return func(c *ssb.ClientConfig) {
-		c.RetryFunc = func(_ string, retries int, _ error) bool {
+		c.CanRetry = func(_ string, retries int, _ error) bool {
 			return n < retries
 		}
 	}

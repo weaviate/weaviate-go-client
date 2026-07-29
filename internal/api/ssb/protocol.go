@@ -18,10 +18,10 @@ import (
 type ClientConfig struct {
 	Context   context.Context
 	Transport Transport
-	QueueSize int       // Queue buffer size.
-	BatchSize int       // Initial batch capacity.
-	RetryFunc RetryFunc // Controls if a task will be retried.
-	Reconnect ReconnectPolicy
+	QueueSize int             // Queue buffer size.
+	BatchSize int             // Initial batch capacity.
+	Reconnect ReconnectPolicy // Policy for dealing with dropped connections.
+	CanRetry  CanRetryFunc    // Determines if a task will be retried.
 }
 
 type ReconnectPolicy struct {
@@ -46,7 +46,7 @@ func NewClient(conf ClientConfig) *Client {
 		batch:       newBatch(conf.Transport.NewRequest, conf.BatchSize),
 		wip:         newCache(conf.BatchSize),
 		state:       newState(canPrepare),
-		canRetry:    conf.RetryFunc,
+		canRetry:    conf.CanRetry,
 		delayFunc:   conf.Reconnect.DelayFunc,
 		reconnLimit: conf.Reconnect.Limit,
 	}
@@ -125,12 +125,12 @@ type BatchRequest interface {
 	Add(v any) (added, full bool)
 }
 
-// RetryFunc determines if a task should be retried after the following error.
-type RetryFunc func(id string, retries int, err error) bool
+// CanRetryFunc determines if a task should be retried after the following error.
+type CanRetryFunc func(id string, retries int, err error) bool
 
 // check is safe to call on a nil RetryFunc.
-func (rf RetryFunc) check(t *Task, err error) bool {
-	return rf != nil && rf(t.ID(), t.TimesRetried(), err)
+func (can CanRetryFunc) check(t *Task, err error) bool {
+	return can != nil && can(t.ID(), t.TimesRetried(), err)
 }
 
 type Data struct {
@@ -256,7 +256,7 @@ type Client struct {
 	retry     chan []*Task // Retry queue.
 	batch     batch        // Batch container.
 	wip       cache        // Tasks taken off the queue but not yet completed.
-	canRetry  RetryFunc    // Retry decides if a task will be retried.
+	canRetry  CanRetryFunc // Retry decides if a task will be retried.
 
 	// Tally of failed reconnect attempts. It is only accessed
 	// by the 'recv' goroutine, so it does not need a guard.
