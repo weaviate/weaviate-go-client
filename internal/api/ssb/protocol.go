@@ -108,8 +108,8 @@ type Transport interface {
 var ErrTooLarge = errors.New("batch item exceeds maximum request size")
 
 type Stream interface {
-	// Send marshaled batch request. The batch is guaranteed to be
-	// of the same type as returned by [Transport.NewRequest].
+	// Send marshaled batch request. The batch must be
+	// the value returned by [Transport.NewRequest].
 	Send(any) error
 
 	// Recv receives the next server-side event.
