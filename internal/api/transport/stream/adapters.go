@@ -75,7 +75,7 @@ func (tad *TransportAdapter) Prepare(d ssb.Data) (v any, err error) {
 // streamAdapter implements [ssb.Stream] on top of [transport.BatchStream].
 type streamAdapter struct{ stream transport.BatchStream }
 
-func (sad *streamAdapter) Send(req ssb.BatchRequest) error {
+func (sad *streamAdapter) Send(req any) error {
 	dev.AssertType[*api.BatchRequest](req, "batch request")
 	return sad.send(req.(*api.BatchRequest))
 }

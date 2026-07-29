@@ -110,7 +110,7 @@ var ErrTooLarge = errors.New("batch item exceeds maximum request size")
 type Stream interface {
 	// Send marshaled batch request. The batch is guaranteed to be
 	// of the same type as returned by [Transport.NewRequest].
-	Send(BatchRequest) error
+	Send(any) error
 
 	// Recv receives the next server-side event.
 	// An [io.EOF] indicates the stream has terminated successfully.
