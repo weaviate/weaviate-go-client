@@ -31,7 +31,7 @@ func WithRetryFunc(f func(string, int, error) bool) Option {
 func WithRetryTimes(n int) Option {
 	return func(c *ssb.ClientConfig) {
 		c.CanRetry = func(_ string, retries int, _ error) bool {
-			return n < retries
+			return retries < n
 		}
 	}
 }
