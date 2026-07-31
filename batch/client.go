@@ -12,6 +12,12 @@ import (
 
 type Task struct{ t *ssb.Task }
 
+// ID returns object ID, if the task adds an object,
+// and a beacon if it adds a reference.
+func (t *Task) ID() string {
+	return t.t.ID()
+}
+
 // Wait blocks until the task completes. If it fails, Wait return a non-nil error.
 //
 // Every task is guaranteed to complete before [Client.Close] returns;
