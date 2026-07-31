@@ -57,7 +57,7 @@ func NewClient(conf ClientConfig) *Client {
 // Add puts creates a new tasks and puts it on the work queue.
 // If [Client.Context] expires, Add returns [context.Canceled],
 // otherwise the error is nil. Calling Add after closing the batch panics.
-func (c *Client) Add(d Data) (*Task, error) {
+func (c *Client) Add(ctx context.Context, d Data) (*Task, error) {
 	t := &Task{
 		data: d,
 		done: make(chan struct{}),
@@ -65,9 +65,10 @@ func (c *Client) Add(d Data) (*Task, error) {
 	select {
 	case c.queue <- t:
 		return t, nil
+	case <-ctx.Done():
 	case <-c.ctx.Done():
-		return nil, context.Canceled
 	}
+	return nil, context.Canceled
 }
 
 type Task struct {

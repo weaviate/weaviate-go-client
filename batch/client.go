@@ -80,18 +80,18 @@ type Client struct {
 	protocol *ssb.Client
 }
 
-func (c *Client) Object(o *data.Object) (*Task, error) {
+func (c *Client) Object(ctx context.Context, o *data.Object) (*Task, error) {
 	data := o.ToAPI()
-	return c.add(ssb.Data{Object: &data})
+	return c.add(ctx, ssb.Data{Object: &data})
 }
 
-func (c *Client) Reference(ref data.Reference) (*Task, error) {
+func (c *Client) Reference(ctx context.Context, ref data.Reference) (*Task, error) {
 	data := ref.ToAPI()
-	return c.add(ssb.Data{Reference: &data})
+	return c.add(ctx, ssb.Data{Reference: &data})
 }
 
-func (c *Client) add(d ssb.Data) (*Task, error) {
-	t, err := c.protocol.Add(d)
+func (c *Client) add(ctx context.Context, d ssb.Data) (*Task, error) {
+	t, err := c.protocol.Add(ctx, d)
 	if err != nil {
 		return nil, err
 	}
