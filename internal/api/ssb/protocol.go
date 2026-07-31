@@ -169,50 +169,57 @@ type Results struct {
 	Failed map[string]string // Batch insertion errors keyed by task ID.
 }
 
-type actionFlags uint8
+type permissionFlags uint8
 
 const (
-	canPrepare actionFlags = 1 << iota // Client can prepare the next batch.
-	canSend                            // Client can send the next batch.
+	canPrepare permissionFlags = 1 << iota // Client can prepare the next batch.
+	canSend                                // Client can send the next batch.
 )
 
-func newState(actions actionFlags) state {
+func newState(permissions permissionFlags) state {
 	return state{
-		flags:   actions,
-		changed: make(chan struct{}),
+		permissions: permissions,
+		changed:     make(chan struct{}),
 	}
 }
 
 // state stores actions the client is currently allowed to take.
 type state struct {
-	mu      sync.Mutex
-	flags   actionFlags
-	changed chan struct{}
+	mu          sync.Mutex
+	permissions permissionFlags
+	changed     chan struct{}
 }
 
 // clear all flags set previously.
 func (s *state) clear() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.flags = 0
+	s.permissions = 0
 }
 
 // set state flags and notify the awaiting goroutine.
-func (s *state) set(af actionFlags) {
+func (s *state) set(permissions permissionFlags) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.flags = af
+	s.permissions = permissions
 	close(s.changed)
 	s.changed = make(chan struct{})
 }
 
 // await blocks until flag is set or ctx expires
 // and returns [Context.Err] in the latter case.
-func (s *state) await(ctx context.Context, af actionFlags) error {
+func (s *state) await(ctx context.Context, permissions permissionFlags) error {
 	// TODO(dyma): test+fuzz
+
+	// await works like a context-aware [sync.Cond.Wait].
+	// We check if [s.permissions] contain the permissions we need
+	// while holding the lock. If the check fails, we release the lock
+	// and wait until new permissions are set.
 	s.mu.Lock()
-	for s.flags&af != af {
+	for s.permissions&permissions != permissions {
+		// s.changed is closed and re-created on set, so we must copy
+		// the current channel to avoid accessing s.changed concurrently.
 		changed := s.changed
 		s.mu.Unlock()
 
@@ -295,6 +302,10 @@ func (c *Client) init() {
 				ctx, cancel := context.WithCancel(c.ctx)
 				tick <- span{ctx: ctx, stream: s}
 				if err = c.recv(s, cancel); err == io.EOF {
+					// io.EOF means the stream ended successfully,
+					// and everything else means "try to reconnect".
+					// IF the server OOMs and stops responding, the
+					// canceled c.ctx will prevent us from reconnecting.
 					return
 				}
 				<-ctx.Done()
@@ -348,6 +359,7 @@ func (c *Client) send(ctx context.Context, s Stream) {
 			v, err := c.transport.Prepare(t.data)
 			if err != nil {
 				t.complete(err)
+				continue
 			}
 
 			t.setValue(v)

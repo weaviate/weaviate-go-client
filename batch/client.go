@@ -10,11 +10,17 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
 
-type Task struct{ *ssb.Task }
+type Task struct{ t *ssb.Task }
 
+// Wait blocks until the task completes. If it fails, Wait return a non-nil error.
+//
+// Every task is guaranteed to complete before [Client.Close] returns;
+// until then it may take an arbitrary amount of retries or reconnects
+// for the data to be successfully written to the server. Most of the time
+// you will call Wait to collect task results after the stream is closed.
 func (t *Task) Wait() error {
-	<-t.Done()
-	return t.Err()
+	<-t.t.Done()
+	return t.t.Err()
 }
 
 type (
@@ -28,6 +34,7 @@ func WithRetryFunc(f func(string, int, error) bool) Option {
 	}
 }
 
+// Retry each task up to n times.
 func WithRetryTimes(n int) Option {
 	return func(c *ssb.ClientConfig) {
 		c.CanRetry = func(_ string, retries int, _ error) bool {
@@ -88,7 +95,7 @@ func (c *Client) add(d ssb.Data) (*Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Task{Task: t}, nil
+	return &Task{t: t}, nil
 }
 
 func (c *Client) Close() error {
