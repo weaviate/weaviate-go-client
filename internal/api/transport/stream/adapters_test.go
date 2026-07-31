@@ -173,7 +173,7 @@ func TestStream_Recv(t *testing.T) {
 								Detail: &proto.BatchStreamReply_Results_Error_Beacon{
 									Beacon: "ref-1",
 								},
-								Error: "Whaam!",
+								Error: testkit.ErrWhaam.Error(),
 							},
 						},
 					},
@@ -182,8 +182,8 @@ func TestStream_Recv(t *testing.T) {
 			want: ssb.Event{
 				Results: &ssb.Results{
 					OK: []string{"uuid-0", "ref-0"},
-					Failed: map[string]string{
-						"ref-1": "Whaam!",
+					Failed: map[string]error{
+						"ref-1": testkit.ErrWhaam,
 					},
 				},
 			},

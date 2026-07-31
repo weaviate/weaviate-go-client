@@ -2,6 +2,7 @@ package stream
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
@@ -112,7 +113,7 @@ func (sad *streamAdapter) Recv() (ssb.Event, error) {
 	case *proto.BatchStreamReply_Results_:
 		event.Results = &ssb.Results{
 			OK:     make([]string, len(msg.Results.Successes)),
-			Failed: internal.MakeMap[string, string](len(msg.Results.Errors)),
+			Failed: internal.MakeMap[string, error](len(msg.Results.Errors)),
 		}
 		for i, ok := range msg.Results.Successes {
 			switch d := ok.Detail.(type) {
@@ -126,9 +127,9 @@ func (sad *streamAdapter) Recv() (ssb.Event, error) {
 		for _, e := range msg.Results.Errors {
 			switch d := e.Detail.(type) {
 			case *proto.BatchStreamReply_Results_Error_Uuid:
-				event.Results.Failed[d.Uuid] = e.Error
+				event.Results.Failed[d.Uuid] = errors.New(e.Error)
 			case *proto.BatchStreamReply_Results_Error_Beacon:
-				event.Results.Failed[d.Beacon] = e.Error
+				event.Results.Failed[d.Beacon] = errors.New(e.Error)
 			}
 		}
 	}

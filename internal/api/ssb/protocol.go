@@ -166,8 +166,8 @@ type OOM struct {
 }
 
 type Results struct {
-	OK     []string          // IDs of tasks that completed successfully.
-	Failed map[string]string // Batch insertion errors keyed by task ID.
+	OK     []string         // IDs of tasks that completed successfully.
+	Failed map[string]error // Batch insertion errors keyed by task ID.
 }
 
 type permissionFlags uint8
@@ -438,7 +438,7 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 			retry := make([]*Task, 0, len(failed))
 			if len(failed) > 0 {
 				c.wip.walk(maps.Keys(failed), func(t *Task) (remove bool) {
-					err := errors.New(failed[t.ID()])
+					err := failed[t.ID()]
 					if c.canRetry.check(t, err) {
 						t.retry(err)
 						retry = append(retry, t)
