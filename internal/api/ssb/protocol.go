@@ -296,8 +296,7 @@ func (c *Client) init() {
 
 		// Start a stream, unblock the 'send' goroutine, and continue reconnecting
 		// until batch completes, the server is deemed unresponsive, or context expires.
-		for ; c.reconnCount < c.reconnLimit; c.reconnCount++ {
-
+		for err = io.EOF; c.reconnCount < c.reconnLimit; c.reconnCount++ {
 			var s Stream
 			if s, err = c.transport.NewStream(c.ctx); err == nil {
 				ctx, cancel := context.WithCancel(c.ctx)
