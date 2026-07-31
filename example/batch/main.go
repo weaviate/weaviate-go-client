@@ -49,7 +49,7 @@ func main() {
 			log.Printf(`Guess we won't see those %d objects ¯\_(ツ)_/¯`, cap(tasks)-i)
 			cancel()
 		}
-		t, err := b.Object(nil)
+		t, err := b.Object(ctx, nil)
 		if err == context.Canceled {
 			log.Printf("Context canceled after %d objects, exit earlier", i-1)
 			break
