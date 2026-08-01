@@ -268,7 +268,7 @@ type Client struct {
 
 	// Tally of failed reconnect attempts. It is only accessed
 	// by the 'recv' goroutine, so it does not need a guard.
-	reconn      int
+	reconnCount int                     // Count of consecutive reconnects.
 	reconnLimit int                     // Maximum number of failed reconnects.
 	delayFunc   func(int) time.Duration // Delay before the next reconnect.
 }
@@ -296,7 +296,7 @@ func (c *Client) init() {
 
 		// Start a stream, unblock the 'send' goroutine, and continue reconnecting
 		// until batch completes, the server is deemed unresponsive, or context expires.
-		for ; c.reconn < c.reconnLimit; c.reconn++ {
+		for ; c.reconnCount < c.reconnLimit; c.reconnCount++ {
 
 			var s Stream
 			if s, err = c.transport.NewStream(c.ctx); err == nil {
@@ -315,7 +315,7 @@ func (c *Client) init() {
 			c.state.clear()
 
 			select {
-			case <-time.After(c.delayFunc(c.reconn)):
+			case <-time.After(c.delayFunc(c.reconnCount)):
 				// If connection drops, we assume that any in-progress tasks
 				// have failed on the server and we have to redo them all.
 				c.batch.clear()
@@ -420,7 +420,7 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 
 		switch {
 		case event.Started:
-			c.reconn = 0
+			c.reconnCount = 0
 			c.state.set(canPrepare | canSend)
 
 		case event.Ack:
