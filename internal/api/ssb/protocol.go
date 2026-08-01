@@ -545,6 +545,7 @@ func (b *batch) add(tasks ...*Task) {
 // addLocked adds v to request and updates [batch.len].
 func (b *batch) addLocked(v any) {
 	added, reqFull := b.req.Add(v)
+
 	if added {
 		b.len++
 	}
@@ -599,14 +600,13 @@ func (b *batch) disableGrowth() {
 func (b *batch) refillLocked() {
 	b.req = b.newRequest()
 	b.len = 0
-	b.flags ^= full
+	b.flags &^= full
 	for _, v := range b.buf {
 		b.addLocked(v)
 		if b.flags&full == full {
 			break
 		}
 	}
-	b.buf = b.buf[b.len:]
 }
 
 // clear empties the batch, preserving the capacity and noGrow flag, if set.
@@ -615,9 +615,9 @@ func (b *batch) clear() {
 	defer b.mu.Unlock()
 
 	b.req = b.newRequest()
-	b.buf = b.buf[:0]
 	b.len = 0
-	b.flags ^= full
+	b.buf = b.buf[:0]
+	b.flags &^= full
 }
 
 func newCache(size int) cache {
