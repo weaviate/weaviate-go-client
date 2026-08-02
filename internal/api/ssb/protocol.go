@@ -281,9 +281,11 @@ func (c *Client) init() {
 	}
 
 	tick := make(chan span)
+	tock := make(chan struct{})
 	go func() {
 		for s := range tick {
 			c.send(s.ctx, s.stream)
+			tock <- struct{}{}
 		}
 	}()
 
@@ -308,7 +310,8 @@ func (c *Client) init() {
 					// canceled c.ctx will prevent us from reconnecting.
 					return
 				}
-				<-ctx.Done()
+				<-ctx.Done() // Ensure recv canceled the context on exit.
+				<-tock       // Wait until current 'send' routine returns.
 			}
 
 			c.state.clear()
