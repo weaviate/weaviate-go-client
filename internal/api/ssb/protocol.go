@@ -218,8 +218,8 @@ func (s *state) set(permissions permissionFlags) {
 	s.changed = make(chan struct{})
 }
 
-// await blocks until flag is set or ctx expires
-// and returns [Context.Err] in the latter case.
+// await blocks until permission is set and atomically consumes it.
+// If ctx expires await exits early with [Context.Err].
 func (s *state) await(ctx context.Context, permissions permissionFlags) error {
 	// TODO(dyma): test+fuzz
 
@@ -241,6 +241,7 @@ func (s *state) await(ctx context.Context, permissions permissionFlags) error {
 			return ctx.Err()
 		}
 	}
+	s.permissions &^= permissions
 	s.mu.Unlock()
 	return nil
 }
@@ -353,7 +354,6 @@ func (c *Client) send(ctx context.Context, s Stream) {
 			if err = s.Send(req); err != nil {
 				return
 			}
-			c.state.clear() // Do not send / prepare until this one is Ack'ed.
 		}
 		return
 	}
