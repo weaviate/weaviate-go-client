@@ -3,6 +3,7 @@ package ssb
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"iter"
 	"maps"
@@ -189,6 +190,15 @@ type state struct {
 	mu          sync.Mutex
 	permissions permissionFlags
 	changed     chan struct{}
+}
+
+func (s *state) String() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return fmt.Sprintf(
+		"[state: canPrepare=%t, canSend=%t",
+		s.permissions&canPrepare == canPrepare, s.permissions&canSend == canSend,
+	)
 }
 
 // clear all flags set previously.
@@ -531,6 +541,15 @@ type batch struct {
 	newRequest func() BatchRequest
 }
 
+func (b *batch) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return fmt.Sprintf(
+		"[batch: b.len=%d b.cap=%d len(b.buf)=%d full=%t noGrow=%t",
+		b.len, b.cap, len(b.buf), b.flags&full == full, b.flags&noGrow == noGrow,
+	)
+}
+
 // add all [Task.value] to the batch.
 func (b *batch) add(tasks ...*Task) {
 	b.mu.Lock()
@@ -631,6 +650,10 @@ func newCache(size int) cache {
 type cache struct {
 	mu sync.Mutex
 	m  map[string]*Task
+}
+
+func (c *cache) String() string {
+	return fmt.Sprintf("[wip: size=%d]", c.size())
 }
 
 // put a task in the cache.
