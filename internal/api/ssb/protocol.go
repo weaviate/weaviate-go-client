@@ -449,6 +449,14 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 	var oomTimer *time.Timer // Waiting for OOM to resolve.
 	var shutdown bool        // Server is shutting down.
 
+	defer func() {
+		// Stop the timer unconditionally, even if the stream hangs up
+		// while waiting for ShuttingDown after seeing an OOM.
+		if oomTimer != nil {
+			oomTimer.Stop()
+		}
+	}()
+
 	for {
 		event, err := s.Recv()
 		if err != nil {
