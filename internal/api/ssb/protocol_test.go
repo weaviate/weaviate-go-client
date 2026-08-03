@@ -210,7 +210,9 @@ func (srv *Server) processBatch(b *Batch) *ssb.Results {
 			t = taskStat{Retries: -1}
 		}
 		t.Retries++
-		if id := id.String(); srv.prng.Chance(0, srv.RetryLimit-t.Retries+4) {
+
+		// On it's last retry the task fails with a 1/4 chance.
+		if id := id.String(); srv.prng.Chance(1, srv.RetryLimit-t.Retries+4) {
 			results.Failed[id] = testkit.ErrWhaam
 			failed++
 		} else {
