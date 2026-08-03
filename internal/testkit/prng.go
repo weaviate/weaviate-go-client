@@ -1,8 +1,10 @@
 package testkit
 
 import (
+	cryptorand "crypto/rand"
 	"log"
 	"math"
+	"math/big"
 	"math/rand"
 	"os"
 	"strconv"
@@ -31,7 +33,11 @@ func init() {
 		}
 		seed = i
 	} else {
-		seed = Now.UnixNano()
+		i, err := cryptorand.Int(cryptorand.Reader, big.NewInt(math.MaxInt64))
+		if err != nil {
+			log.Fatal("testkit:", err)
+		}
+		seed = i.Int64()
 	}
 }
 
@@ -46,7 +52,7 @@ type PRNG struct {
 }
 
 // NewPRNG returns a new pseudo-random number generator.
-// By default PRNG is seeded to the current unix timestamp.
+// By default PRNG is seeded to the cryptographically random number.
 // The seed is constant during a single test run.
 // Set a custom seed via an envvar before running the tests:
 //
