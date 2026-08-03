@@ -142,7 +142,6 @@ func (srv *Server) run() {
 			select {
 			case batch, ok := <-stream.srvRecv():
 				if !ok {
-					// srv.Logf("client closed the stream, process remaining %d batches", len(srv.work))
 					for len(srv.work) > 0 {
 						results := srv.processBatch(<-srv.work)
 						if err := stream.srvSend(Event{Results: results}); err != nil {
@@ -155,16 +154,21 @@ func (srv *Server) run() {
 				srv.Logf("[server]: Received batch (%d)", len(batch.values))
 				require.NotEmpty(srv.T, batch.values)
 
-				// if srv.prng.Chance(1, 20) {
-				// 	srv.Logf("[server]: Out Of Memory")
-				// 	oom = true
-				// 	if srv.prng.Bool() {
-				// 		stream.srvSend() <- Event{OOM: new(ssb.OOM)}
-				// 	} else {
-				// 		stream.srvSend() <- Event{OOM: &ssb.OOM{ExitAfter: 5 * time.Second}}
-				// 	}
-				// 	continue
-				// }
+				if srv.prng.Chance(1, 20) {
+					oom = true
+					if srv.prng.Bool() {
+						srv.Logf("[server]: Out Of Memory -> shutdown right away")
+						if err := stream.srvSend(Event{OOM: new(ssb.OOM)}); err != nil {
+							break Conn
+						}
+					} else {
+						srv.Logf("[server]: Out Of Memory -> starve the client")
+						if err := stream.srvSend(Event{OOM: &ssb.OOM{ExitAfter: 5 * time.Second}}); err != nil {
+							break Conn
+						}
+					}
+					continue
+				}
 
 				srv.work <- batch
 				srv.Log("[server]: Ack batch")

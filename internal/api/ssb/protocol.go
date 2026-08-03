@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"log"
 	"maps"
 	"slices"
 	"sync"
@@ -472,17 +473,21 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 			c.batch.resize(*event.Backoff)
 
 		case event.OOM != nil:
+			log.Println("{{{{{OOM}}}}}}}")
 			oomTimer = time.AfterFunc(event.OOM.ExitAfter, func() {
+				log.Println("{{{{{OOM -- Server unresponsive}}}}}}}")
 				c.finish(errors.New("server OOM"))
 			})
 			c.state.clear()
 
 		case event.ShuttingDown:
+			log.Println("SHUTTING DOWN =-=======-=0-0-0-00-0-00-00-0-0-0-0")
 			cancelSend()
 			if oomTimer != nil {
 				// The only reason that we got here is because the message
 				// had arrived before oomTimer fired. Server is responsive
 				// and we can try to reconnect.
+				log.Println("|} SHUTTING DOWN AFTER OOM {|")
 				oomTimer.Stop()
 				oomTimer = nil
 			}
