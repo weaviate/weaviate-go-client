@@ -126,22 +126,19 @@ func (srv *Server) run() {
 	srv.Helper()
 	defer close(srv.work)
 
-	// srv.Log("[server]: Run")
-
 	for stream := range srv.conn {
 		if err := stream.srvSend(Event{Started: true}); err != nil {
 			continue
 		}
-		// srv.Log("[server]: Stream started")
 
-		// var oom bool
+		var oom bool
 	Conn:
 		for {
-			// if srv.prng.Chance(1, 30) || oom {
-			// 	srv.Logf("[server]: Shutting down (OOM=%t)", oom)
-			// 	stream.srvSend() <- Event{ShuttingDown: true}
-			// 	break Conn
-			// }
+			if srv.prng.Chance(1, 30) || oom {
+				srv.Logf("[server]: Shutting down (OOM=%t)", oom)
+				stream.srvSend(Event{ShuttingDown: true})
+				break Conn
+			}
 			select {
 			case batch, ok := <-stream.srvRecv():
 				if !ok {
