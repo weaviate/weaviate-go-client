@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -21,10 +23,12 @@ type Simulation struct {
 	prng *testkit.PRNG
 
 	TaskCount   int
+	BatchSize   int
 	RetryLimit  int
 	ReconnCount int
 	ReconnLimit int
 	TooLarge    sync.Map
+	CanOOM      bool
 }
 
 // What I want to test:
@@ -54,8 +58,10 @@ func TestClient(t *testing.T) {
 		T:           t,
 		prng:        testkit.NewPRNG(t),
 		TaskCount:   32,
+		BatchSize:   16,
 		RetryLimit:  3,
 		ReconnLimit: 5,
+		CanOOM:      true,
 	}
 
 	conn := make(chan *Stream)
@@ -75,7 +81,7 @@ func TestClient(t *testing.T) {
 			conn:       conn,
 		},
 		QueueSize: 32,
-		BatchSize: 16,
+		BatchSize: sim.BatchSize,
 		Reconnect: ssb.ReconnectPolicy{
 			Limit:     sim.ReconnLimit,
 			DelayFunc: func(int) time.Duration { return 0 },
@@ -85,7 +91,7 @@ func TestClient(t *testing.T) {
 		},
 	})
 
-	tasks := make([]*ssb.Task, sim.TaskCount)
+	tasks := make([]*ssb.Task, 0, sim.TaskCount)
 	for i := 0; i < sim.TaskCount; i++ {
 		id := uuid.New()
 		if sim.prng.Chance(1, 50) {
@@ -95,16 +101,30 @@ func TestClient(t *testing.T) {
 			t.Context(),
 			ssb.Data{Object: &api.BatchObject{UUID: id}},
 		)
-		// TODO(dyma): expect error after OOM
-		assert.NoError(t, err, "add error")
-		assert.NotNil(t, task, "nil task")
-		tasks[i] = task
+
+		// If the test server can OOM, then we won't try and guess
+		// whether the error was expected, as OOM happens randomly.
+		if !sim.CanOOM {
+			assert.NoError(t, err, "add error")
+		}
+		if err != nil {
+			if assert.NotNil(t, task, "nil task") {
+				tasks = append(tasks, task)
+			}
+		}
 	}
 
-	t.Log("added all data -> close client")
-	assert.NoError(t, c.Close(), "close client")
+	log.Println("added all data -> close client")
+	err := c.Close()
+	if sim.CanOOM && err != nil {
+		assert.ErrorContains(t, err, "OOM", "close error, CanOOM=%t", sim.CanOOM)
+	} else {
+		assert.NoError(t, err, "close error")
+	}
+
 	close(conn)
-	srv.close()
+	<-srv.done
+	t.Log("FINISH TEST")
 }
 
 type Batch struct {
@@ -119,6 +139,8 @@ type Server struct {
 	work chan *Batch
 	seen map[uuid.UUID]taskStat
 	done chan struct{}
+
+	oom atomic.Bool
 }
 
 type taskStat struct {
@@ -137,14 +159,23 @@ func (srv *Server) run() {
 			continue
 		}
 
-		var oom bool
+		srv.oom.Store(false)
 	Conn:
 		for {
-			if srv.prng.Chance(1, 30) || oom {
-				srv.Logf("[server]: Shutting down (OOM=%t)", oom)
+			if srv.prng.Chance(1, 30) || srv.oom.Load() {
+				srv.Logf("[server]: Shutting down (OOM=%t)", srv.oom.Load())
 				stream.srvSend(Event{ShuttingDown: true})
 				break Conn
 			}
+
+			if srv.prng.Chance(1, 3) {
+				srv.Logf("[server]: Backoff")
+				backoff := srv.prng.RangeInclusive(srv.BatchSize/2, srv.BatchSize*2)
+				if err := stream.srvSend(Event{Backoff: &backoff}); err != nil {
+					break Conn
+				}
+			}
+
 			select {
 			case batch, ok := <-stream.srvRecv():
 				if !ok {
@@ -156,27 +187,22 @@ func (srv *Server) run() {
 					}
 					break Conn
 				}
-				require.NotNil(srv.T, batch)
+				assert.NotNil(srv.T, batch)
+				assert.NotEmpty(srv.T, batch.values)
 				srv.Logf("[server]: Received batch (%d) %p", len(batch.values), batch)
-				require.NotEmpty(srv.T, batch.values)
 
 				if srv.prng.Chance(1, 20) {
-					oom = true
-					if srv.prng.Bool() {
-						srv.Logf("[server]: Out Of Memory -> shutdown right away")
-						if err := stream.srvSend(Event{OOM: new(ssb.OOM)}); err != nil {
-							break Conn
-						}
-					} else {
-						srv.Logf("[server]: Out Of Memory -> starve the client")
-						if err := stream.srvSend(Event{OOM: &ssb.OOM{ExitAfter: 5 * time.Second}}); err != nil {
-							break Conn
-						}
+					srv.oom.Store(true)
+					var exitAfter time.Duration
+					// if srv.prng.Bool() {
+					exitAfter = 5 * time.Second
+					// }
+					if err := stream.srvSend(Event{OOM: &ssb.OOM{ExitAfter: exitAfter}}); err != nil {
+						break Conn
 					}
-					srv.Logf("[server]: OOM'ed")
 					continue
 				}
-
+				//
 				srv.work <- batch
 				srv.Log("[server]: Ack batch")
 				if err := stream.srvSend(Event{Ack: true}); err != nil {
@@ -234,12 +260,6 @@ func (srv *Server) processBatch(b *Batch) *ssb.Results {
 	return results
 }
 
-func (srv *Server) close() {
-	srv.Log("[server:close] wait <-srv.done")
-	<-srv.done
-	srv.Log("[server:close] closed!")
-}
-
 type Transport struct {
 	*Simulation
 	conn chan<- *Stream
@@ -251,8 +271,6 @@ func (t *Transport) NewStream(ctx context.Context) (ssb.Stream, error) {
 	t.Helper()
 	assert.NotNil(t.T, ctx, "nil stream context")
 
-	t.Log("[transport]: New stream")
-
 	ctx, cancel := context.WithCancelCause(ctx)
 	s := &Stream{
 		Simulation: t.Simulation,
@@ -263,7 +281,7 @@ func (t *Transport) NewStream(ctx context.Context) (ssb.Stream, error) {
 	}
 
 	t.conn <- s
-	return s, nil // TODO(dyma): sometimes error for reconnects?
+	return s, nil
 }
 
 type Stream struct {
@@ -276,8 +294,8 @@ type Stream struct {
 
 func (s *Stream) Send(req any) error {
 	s.Helper()
-	require.NotNil(s.T, req, "nil request")
-	require.IsType(s.T, (*Batch)(nil), req, "bad request")
+	assert.NotNil(s.T, req, "nil request")
+	assert.IsType(s.T, (*Batch)(nil), req, "bad request")
 
 	if s.prng.Chance(1, 25) {
 		s.cancel(errors.New("bad network"))
@@ -332,11 +350,10 @@ func (t *Transport) NewRequest() ssb.BatchRequest {
 
 func (t *Transport) Prepare(data ssb.Data) (any, error) {
 	t.Helper()
-	require.NotNil(t.T, data.Object, "nil batch object")
+	assert.NotNil(t.T, data.Object, "nil batch object")
 
 	id := data.Object.UUID
 	if _, ok := t.TooLarge.Load(id); ok {
-		t.Log("TOO LARGE ", id)
 		return nil, ssb.ErrTooLarge
 	}
 	return id, nil
@@ -346,7 +363,7 @@ func (b *Batch) Add(v any) (added, full bool) {
 	b.Helper()
 	defer require.LessOrEqual(b.T, len(b.values), cap(b.values))
 
-	require.IsType(b.T, *new(uuid.UUID), v, "bad value in Add")
+	assert.IsType(b.T, *new(uuid.UUID), v, "bad value in Add")
 	if len(b.values) == cap(b.values) {
 		return false, true
 	}

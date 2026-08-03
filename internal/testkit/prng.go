@@ -71,8 +71,24 @@ func (prng *PRNG) Chance(numerator, denominator int) bool {
 
 	require.GreaterOrEqual(prng.t, numerator, 0, "numerator")
 	require.Greater(prng.t, denominator, 0, "denominator")
-	require.Less(prng.t, denominator, math.MaxInt, "denominator")
-	return prng.rand.Intn(denominator+1) < numerator
+	return prng.intInclLocked(denominator) < numerator
 }
 
 func (prng *PRNG) Bool() bool { return prng.Chance(1, 2) }
+
+func (prng *PRNG) IntInclusive(upper int) int {
+	prng.mu.Lock()
+	defer prng.mu.Unlock()
+	return prng.intInclLocked(upper)
+}
+
+func (prng *PRNG) RangeInclusive(lower, upper int) int {
+	prng.mu.Lock()
+	defer prng.mu.Unlock()
+	return lower + prng.intInclLocked(upper-lower)
+}
+
+func (prng *PRNG) intInclLocked(upper int) int {
+	require.Less(prng.t, upper, math.MaxInt, "upper boundary")
+	return prng.rand.Intn(upper + 1)
+}
