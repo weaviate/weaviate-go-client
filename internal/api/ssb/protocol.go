@@ -320,15 +320,16 @@ func (c *Client) init() {
 			if s, err = c.transport.NewStream(c.ctx); err == nil {
 				ctx, cancel := context.WithCancel(c.ctx)
 				tick <- span{ctx: ctx, stream: s}
-				if err = c.recv(s, cancel); err == io.EOF {
+				err = c.recv(s, cancel)
+				<-tock       // Wait until current 'send' span completes.
+				<-ctx.Done() // Make sure recv canceled the context on exit
+				if err == io.EOF {
 					// io.EOF means the stream ended successfully,
 					// and everything else means "try to reconnect".
 					// IF the server OOMs and stops responding, the
 					// canceled c.ctx will prevent us from reconnecting.
 					return
 				}
-				<-ctx.Done() // Ensure recv canceled the context on exit.
-				<-tock       // Wait until current 'send' routine returns.
 			}
 
 			c.state.clear()
