@@ -197,8 +197,8 @@ func (s *state) String() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return fmt.Sprintf(
-		"[state: canPrepare=%t, canSend=%t",
-		s.permissions&canPrepare == canPrepare, s.permissions&canSend == canSend,
+		"[state: changed=%p canPrepare=%t, canSend=%t]",
+		s.changed, s.permissions&canPrepare == canPrepare, s.permissions&canSend == canSend,
 	)
 }
 
@@ -206,6 +206,7 @@ func (s *state) String() string {
 func (s *state) clear() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	log.Printf("{state:clear} changed=%p", s.changed)
 	s.permissions = 0
 }
 
@@ -215,6 +216,7 @@ func (s *state) set(permissions permissionFlags) {
 	defer s.mu.Unlock()
 
 	s.permissions = permissions
+	log.Printf("{state:set}: canSend=%t, NOTIFY close(%p)", s.permissions&canSend == canSend, s.changed)
 	close(s.changed)
 	s.changed = make(chan struct{})
 }
@@ -233,10 +235,12 @@ func (s *state) await(ctx context.Context, permissions permissionFlags) error {
 		// s.changed is closed and re-created on set, so we must copy
 		// the current channel to avoid accessing s.changed concurrently.
 		changed := s.changed
+		log.Printf("{state:await}: canSend=%t, listen for changed=%p ", s.permissions&canSend == canSend, changed)
 		s.mu.Unlock()
 
 		select {
 		case <-changed:
+			log.Printf("<-changed unblocked by=%p", changed)
 			s.mu.Lock()
 		case <-ctx.Done():
 			return ctx.Err()
@@ -341,27 +345,45 @@ func (c *Client) init() {
 	}()
 }
 
+func (c *Client) String() string {
+	return fmt.Sprintf(
+		"\t%s\n\t%s\n\t%s\n\tlen(queue)=%d\n\tlen(retry)=%d",
+		&c.state, &c.wip, &c.batch, len(c.queue), len(c.retry),
+	)
+}
+
 // send consumes queue and retry channels, prepares and sends the batch.
 func (c *Client) send(ctx context.Context, s Stream) {
 	defer s.Close() //nolint:errcheck
+
+	log.Printf("{send(%p)}: === begin ===", ctx)
+	defer func() {
+		log.Printf("{send(%p)}: === end ===", ctx)
+	}()
 
 	// The caller should exit if maybeSend returns a non-nil error.
 	maybeSend := func() (err error) {
 		req := c.batch.prepare()
 		if req != nil {
+			log.Printf("{send(%p)}: await canSend req=%p\n%s", ctx, req, c)
 			if err = c.state.await(ctx, canSend); err != nil {
+				log.Printf("{send(%p)}: failed to await", ctx)
 				return
 			}
 			if err = s.Send(req); err != nil {
+				log.Printf("{send(%p)}: failed to send req=%p", ctx, req)
 				return
 			}
+			log.Printf("{send(%p)}: SEND req=%p", ctx, req)
 		}
 		return
 	}
 
+	log.Printf("{send(%p)}: await canPrepare", ctx)
 	if err := c.state.await(ctx, canPrepare); err != nil {
 		return
 	}
+	log.Printf("{send(%p)}: Started!\n%s", ctx, c)
 
 	for {
 		select {
@@ -381,6 +403,7 @@ func (c *Client) send(ctx context.Context, s Stream) {
 			c.batch.add(t)
 
 		case tasks := <-c.retry:
+			// log.Printf("{send(%p)}: (%d items) <-c.retry \n%s", ctx, len(tasks), c)
 			c.batch.add(tasks...)
 
 		case <-ctx.Done():
@@ -393,6 +416,7 @@ func (c *Client) send(ctx context.Context, s Stream) {
 	}
 
 Drain:
+	log.Printf("{send:DRAIN(%p)}: begin \n%s", ctx, c)
 	// Every time we receive Results, the wip shrinks and the batch's capacity
 	// is reduced to the wip's size. This guarantees the batch will eventually
 	// fill up. Disable growth to prevent Backoff from increasing the capacity.
@@ -402,12 +426,14 @@ Drain:
 		if wipCount == 0 {
 			return
 		}
+		log.Println("{send:DRAIN}: resize batch to wip=", wipCount)
 		c.batch.resize(wipCount)
 		if err := maybeSend(); err != nil {
 			return
 		}
 		select {
 		case tasks := <-c.retry:
+			log.Printf("{send:DRAIN}: got %d retry items, wip=%d", len(tasks), c.wip.size())
 			c.batch.add(tasks...)
 		case <-ctx.Done():
 			return
@@ -433,13 +459,16 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 
 		switch {
 		case event.Started:
+			log.Print("STARTED")
 			c.reconnCount = 0
 			c.state.set(canPrepare | canSend)
 
 		case event.Ack:
+			log.Printf("ACK [V]\n%s", c)
 			c.state.set(canPrepare | canSend)
 
 		case event.Results != nil:
+			log.Print("RESULTS")
 			c.wip.walk(slices.Values(event.Results.OK), func(t *Task) bool {
 				t.complete(nil)
 				return true
@@ -468,6 +497,7 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 			case <-c.ctx.Done():
 				continue
 			}
+			log.Println("c.retry<-retry done => ", len(retry))
 
 		case event.Backoff != nil:
 			c.batch.resize(*event.Backoff)
@@ -550,8 +580,8 @@ func (b *batch) String() string {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	return fmt.Sprintf(
-		"[batch: b.len=%d b.cap=%d len(b.buf)=%d full=%t noGrow=%t",
-		b.len, b.cap, len(b.buf), b.flags&full == full, b.flags&noGrow == noGrow,
+		"[batch: req=%p b.len=%d b.cap=%d len(b.buf)=%d full=%t noGrow=%t]",
+		b.req, b.len, b.cap, len(b.buf), b.flags&full == full, b.flags&noGrow == noGrow,
 	)
 }
 

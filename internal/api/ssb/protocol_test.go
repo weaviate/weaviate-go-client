@@ -47,7 +47,8 @@ type Simulation struct {
 // I can fuzz the smaller components (like batch or cache) and PBT the client.
 // protocol_fuzz_test.go (package ssb) + protocol_test.go (package ssb_test)
 //
-// Assertion guideline: `assert` for Client-stuff, `require` for test logic.
+// Assertion guideline: During the simulation, use `require` only for testing logic,
+// as it may interrupt the test and cause a panic. Use `require` for final checks.
 func TestClient(t *testing.T) {
 	sim := Simulation{
 		T:           t,
@@ -58,13 +59,12 @@ func TestClient(t *testing.T) {
 	}
 
 	conn := make(chan *Stream)
-	t.Cleanup(func() { close(conn) })
-
 	srv := Server{
 		Simulation: &sim,
 		conn:       conn,
 		work:       make(chan *Batch, 8),
 		seen:       make(map[uuid.UUID]taskStat, sim.TaskCount),
+		done:       make(chan struct{}),
 	}
 	go srv.run()
 
@@ -95,13 +95,16 @@ func TestClient(t *testing.T) {
 			t.Context(),
 			ssb.Data{Object: &api.BatchObject{UUID: id}},
 		)
+		// TODO(dyma): expect error after OOM
 		assert.NoError(t, err, "add error")
-		require.NotNil(t, task, "nil task")
+		assert.NotNil(t, task, "nil task")
 		tasks[i] = task
 	}
 
 	t.Log("added all data -> close client")
 	assert.NoError(t, c.Close(), "close client")
+	close(conn)
+	srv.close()
 }
 
 type Batch struct {
@@ -115,6 +118,7 @@ type Server struct {
 	conn <-chan *Stream
 	work chan *Batch
 	seen map[uuid.UUID]taskStat
+	done chan struct{}
 }
 
 type taskStat struct {
@@ -124,7 +128,9 @@ type taskStat struct {
 
 func (srv *Server) run() {
 	srv.Helper()
+
 	defer close(srv.work)
+	defer close(srv.done)
 
 	for stream := range srv.conn {
 		if err := stream.srvSend(Event{Started: true}); err != nil {
@@ -151,7 +157,7 @@ func (srv *Server) run() {
 					break Conn
 				}
 				require.NotNil(srv.T, batch)
-				srv.Logf("[server]: Received batch (%d)", len(batch.values))
+				srv.Logf("[server]: Received batch (%d) %p", len(batch.values), batch)
 				require.NotEmpty(srv.T, batch.values)
 
 				if srv.prng.Chance(1, 20) {
@@ -167,6 +173,7 @@ func (srv *Server) run() {
 							break Conn
 						}
 					}
+					srv.Logf("[server]: OOM'ed")
 					continue
 				}
 
@@ -191,10 +198,11 @@ func (srv *Server) run() {
 			}
 		}
 
-		srv.Log("[server]: Close stream + discard any remaining work")
+		srv.Logf("[server]: Discard any remaining work (%d)", len(srv.work))
 		for len(srv.work) > 0 {
 			<-srv.work
 		}
+		srv.Logf("[server]: Close stream")
 		stream.srvClose()
 	}
 }
@@ -224,6 +232,12 @@ func (srv *Server) processBatch(b *Batch) *ssb.Results {
 	}
 	srv.Logf("[server]: Send results: ok=%d, failed=%d", OK, failed)
 	return results
+}
+
+func (srv *Server) close() {
+	srv.Log("[server:close] wait <-srv.done")
+	<-srv.done
+	srv.Log("[server:close] closed!")
 }
 
 type Transport struct {
@@ -279,11 +293,14 @@ func (s *Stream) Send(req any) error {
 }
 
 func (s *Stream) Recv() (ssb.Event, error) {
+	if s.prng.Chance(1, 25) {
+		s.cancel(errors.New("bad network"))
+	}
+
 	select {
 	case ev := <-s.eventc:
 		return ssb.Event(ev), nil
 	case <-s.ctx.Done():
-		// s.Logf("[stream.Recv]:  context canceled: %v", context.Cause(s.ctx))
 		return ssb.Event{}, context.Cause(s.ctx)
 	}
 }
@@ -295,8 +312,6 @@ func (s *Stream) Close() error {
 }
 
 func (s *Stream) srvSend(ev Event) error {
-	// s.Log("[server::srvSend] start")
-	// defer s.Log("[server::srvSend] done")
 	select {
 	case s.eventc <- ev:
 		return nil
