@@ -299,6 +299,7 @@ func (c *Client) init() {
 	tick := make(chan span)
 	tock := make(chan struct{})
 	go func() {
+		defer close(tock)
 		for s := range tick {
 			c.send(s.ctx, s.stream)
 			tock <- struct{}{}
