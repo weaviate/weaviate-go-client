@@ -75,8 +75,4 @@ func (prng *PRNG) Chance(numerator, denominator int) bool {
 	return prng.rand.Intn(denominator+1) < numerator
 }
 
-func (prng *PRNG) Bool() bool {
-	prng.mu.Lock()
-	defer prng.mu.Unlock()
-	return prng.Chance(1, 2)
-}
+func (prng *PRNG) Bool() bool { return prng.Chance(1, 2) }
