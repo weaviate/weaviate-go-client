@@ -206,7 +206,6 @@ func (s *state) String() string {
 func (s *state) clear() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	log.Printf("{state:clear} changed=%p", s.changed)
 	s.permissions = 0
 }
 
@@ -216,7 +215,6 @@ func (s *state) set(permissions permissionFlags) {
 	defer s.mu.Unlock()
 
 	s.permissions = permissions
-	log.Printf("{state:set}: canSend=%t, NOTIFY close(%p)", s.permissions&canSend == canSend, s.changed)
 	close(s.changed)
 	s.changed = make(chan struct{})
 }
@@ -235,12 +233,10 @@ func (s *state) await(ctx context.Context, permissions permissionFlags) error {
 		// s.changed is closed and re-created on set, so we must copy
 		// the current channel to avoid accessing s.changed concurrently.
 		changed := s.changed
-		log.Printf("{state:await}: canSend=%t, listen for changed=%p ", s.permissions&canSend == canSend, changed)
 		s.mu.Unlock()
 
 		select {
 		case <-changed:
-			log.Printf("<-changed unblocked by=%p", changed)
 			s.mu.Lock()
 		case <-ctx.Done():
 			return ctx.Err()
@@ -367,25 +363,19 @@ func (c *Client) send(ctx context.Context, s Stream) {
 	maybeSend := func() (err error) {
 		req := c.batch.prepare()
 		if req != nil {
-			log.Printf("{send(%p)}: await canSend req=%p\n%s", ctx, req, c)
 			if err = c.state.await(ctx, canSend); err != nil {
-				log.Printf("{send(%p)}: failed to await", ctx)
 				return
 			}
 			if err = s.Send(req); err != nil {
-				log.Printf("{send(%p)}: failed to send req=%p", ctx, req)
 				return
 			}
-			log.Printf("{send(%p)}: SEND req=%p", ctx, req)
 		}
 		return
 	}
 
-	log.Printf("{send(%p)}: await canPrepare", ctx)
 	if err := c.state.await(ctx, canPrepare); err != nil {
 		return
 	}
-	log.Printf("{send(%p)}: Started!\n%s", ctx, c)
 
 	for {
 		select {
@@ -405,7 +395,6 @@ func (c *Client) send(ctx context.Context, s Stream) {
 			c.batch.add(t)
 
 		case tasks := <-c.retry:
-			// log.Printf("{send(%p)}: (%d items) <-c.retry \n%s", ctx, len(tasks), c)
 			c.batch.add(tasks...)
 
 		case <-ctx.Done():
@@ -469,7 +458,6 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 
 		switch {
 		case event.Started:
-			log.Print("STARTED")
 			c.reconnCount = 0
 			c.state.set(canPrepare | canSend)
 
@@ -507,27 +495,22 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 			case <-c.ctx.Done():
 				continue
 			}
-			log.Println("c.retry<-retry done => ", len(retry))
 
 		case event.Backoff != nil:
 			c.batch.resize(*event.Backoff)
 
 		case event.OOM != nil:
-			log.Println("{{{{{OOM}}}}}}}")
 			oomTimer = time.AfterFunc(event.OOM.ExitAfter, func() {
-				log.Println("{{{{{OOM -- Server unresponsive}}}}}}}")
 				c.finish(errors.New("server OOM"))
 			})
 			c.state.clear()
 
 		case event.ShuttingDown:
-			log.Println("SHUTTING DOWN =-=======-=0-0-0-00-0-00-00-0-0-0-0")
 			cancelSend()
 			if oomTimer != nil {
 				// The only reason that we got here is because the message
 				// had arrived before oomTimer fired. Server is responsive
 				// and we can try to reconnect.
-				log.Println("|} SHUTTING DOWN AFTER OOM {|")
 				oomTimer.Stop()
 				oomTimer = nil
 			}
@@ -602,6 +585,9 @@ func (b *batch) add(tasks ...*Task) {
 
 	for _, t := range tasks {
 		v := t.value()
+		if slices.Contains(b.buf, v) {
+			panic("batch.add=" + v.(string))
+		}
 		b.buf = append(b.buf, v)
 		if b.flags&full != full {
 			b.addLocked(v)

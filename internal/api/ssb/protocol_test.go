@@ -3,10 +3,11 @@ package ssb_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log"
+	"slices"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -57,8 +58,8 @@ func TestClient(t *testing.T) {
 	sim := Simulation{
 		T:           t,
 		prng:        testkit.NewPRNG(t),
-		TaskCount:   32,
-		BatchSize:   16,
+		TaskCount:   124512,
+		BatchSize:   53,
 		RetryLimit:  3,
 		ReconnLimit: 5,
 		CanOOM:      true,
@@ -69,7 +70,7 @@ func TestClient(t *testing.T) {
 		Simulation: &sim,
 		conn:       conn,
 		work:       make(chan *Batch, 8),
-		seen:       make(map[uuid.UUID]taskStat, sim.TaskCount),
+		seen:       make(map[string]taskStat, sim.TaskCount),
 		done:       make(chan struct{}),
 	}
 	go srv.run()
@@ -86,11 +87,12 @@ func TestClient(t *testing.T) {
 			Limit:     sim.ReconnLimit,
 			DelayFunc: func(int) time.Duration { return 0 },
 		},
-		CanRetry: func(_ string, retries int, _ error) bool {
+		CanRetry: func(id string, retries int, _ error) bool {
 			return retries < sim.RetryLimit
 		},
 	})
 
+	// Add all data to the client.
 	tasks := make([]*ssb.Task, 0, sim.TaskCount)
 	for i := 0; i < sim.TaskCount; i++ {
 		id := uuid.New()
@@ -115,6 +117,8 @@ func TestClient(t *testing.T) {
 	}
 
 	log.Println("added all data -> close client")
+
+	// Close the client.
 	err := c.Close()
 	if sim.CanOOM && err != nil {
 		assert.ErrorContains(t, err, "OOM", "close error, CanOOM=%t", sim.CanOOM)
@@ -122,14 +126,29 @@ func TestClient(t *testing.T) {
 		assert.NoError(t, err, "close error")
 	}
 
+	// Shutdown the server.
 	close(conn)
 	<-srv.done
+
+	for _, task := range tasks {
+		<-task.Done()
+		id, err := task.ID(), task.Err()
+		if _, tooLarge := sim.TooLarge.Load(id); tooLarge {
+			require.ErrorIs(t, err, ssb.ErrTooLarge, "%s is too large", id)
+			continue
+		}
+		stat, ok := srv.seen[task.ID()]
+		if ok {
+			require.Equal(t, stat.Err, err, "task %s error", id)
+			require.Equal(t, stat.Retries, task.TimesRetried(), "task %s error", id)
+		}
+	}
 	t.Log("FINISH TEST")
 }
 
 type Batch struct {
 	*Simulation
-	values []uuid.UUID
+	values []string
 }
 type Event ssb.Event
 
@@ -137,15 +156,13 @@ type Server struct {
 	*Simulation
 	conn <-chan *Stream
 	work chan *Batch
-	seen map[uuid.UUID]taskStat
+	seen map[string]taskStat
 	done chan struct{}
-
-	oom atomic.Bool
 }
 
 type taskStat struct {
 	Retries int
-	Err     int
+	Err     error
 }
 
 func (srv *Server) run() {
@@ -159,11 +176,11 @@ func (srv *Server) run() {
 			continue
 		}
 
-		srv.oom.Store(false)
+		var oom bool
 	Conn:
 		for {
-			if srv.prng.Chance(1, 30) || srv.oom.Load() {
-				srv.Logf("[server]: Shutting down (OOM=%t)", srv.oom.Load())
+			if srv.prng.Chance(1, 30) || oom {
+				srv.Logf("[server]: Shutting down (OOM=%t)", oom)
 				stream.srvSend(Event{ShuttingDown: true})
 				break Conn
 			}
@@ -191,8 +208,8 @@ func (srv *Server) run() {
 				assert.NotEmpty(srv.T, batch.values)
 				srv.Logf("[server]: Received batch (%d) %p", len(batch.values), batch)
 
-				if srv.prng.Chance(1, 20) {
-					srv.oom.Store(true)
+				if srv.CanOOM && srv.prng.Chance(1, 20) {
+					oom = true
 					var exitAfter time.Duration
 					// if srv.prng.Bool() {
 					exitAfter = 5 * time.Second
@@ -202,7 +219,6 @@ func (srv *Server) run() {
 					}
 					continue
 				}
-				//
 				srv.work <- batch
 				srv.Log("[server]: Ack batch")
 				if err := stream.srvSend(Event{Ack: true}); err != nil {
@@ -212,11 +228,11 @@ func (srv *Server) run() {
 				srv.Log("[server]: Ack-ed batch")
 
 			case batch := <-srv.work:
-				if srv.prng.Chance(1, 10) {
-					srv.Log("[server]: Busy, return batch to queue")
-					srv.work <- batch
-					continue
-				}
+				// if srv.prng.Chance(1, 10) {
+				// 	srv.Log("[server]: Busy, return batch to queue")
+				// 	srv.work <- batch
+				// 	continue
+				// }
 				results := srv.processBatch(batch)
 				if err := stream.srvSend(Event{Results: results}); err != nil {
 					break Conn
@@ -247,11 +263,13 @@ func (srv *Server) processBatch(b *Batch) *ssb.Results {
 		t.Retries++
 
 		// On it's last retry the task fails with a 1/4 chance.
-		if id := id.String(); srv.prng.Chance(1, srv.RetryLimit-t.Retries+4) {
+		if srv.prng.Chance(1, srv.RetryLimit-t.Retries+4) {
 			results.Failed[id] = testkit.ErrWhaam
+			t.Err = testkit.ErrWhaam
 			failed++
 		} else {
 			results.OK = append(results.OK, id)
+			t.Err = nil
 			OK++
 		}
 		srv.seen[id] = t
@@ -341,18 +359,17 @@ func (s *Stream) srvRecv() <-chan *Batch { return s.batchc }
 func (s *Stream) srvClose()              { s.cancel(io.EOF) }
 
 func (t *Transport) NewRequest() ssb.BatchRequest {
-	b := &Batch{
+	return &Batch{
 		Simulation: t.Simulation,
-		values:     make([]uuid.UUID, 0, 92), // FIXME: random cap, not 92
+		values:     make([]string, 0, 92), // FIXME: random cap, not 92
 	}
-	return b
 }
 
 func (t *Transport) Prepare(data ssb.Data) (any, error) {
 	t.Helper()
 	assert.NotNil(t.T, data.Object, "nil batch object")
 
-	id := data.Object.UUID
+	id := data.Object.UUID.String()
 	if _, ok := t.TooLarge.Load(id); ok {
 		return nil, ssb.ErrTooLarge
 	}
@@ -363,10 +380,15 @@ func (b *Batch) Add(v any) (added, full bool) {
 	b.Helper()
 	defer require.LessOrEqual(b.T, len(b.values), cap(b.values))
 
-	assert.IsType(b.T, *new(uuid.UUID), v, "bad value in Add")
+	assert.IsType(b.T, *new(string), v, "bad value in Add")
 	if len(b.values) == cap(b.values) {
 		return false, true
 	}
-	b.values = append(b.values, v.(uuid.UUID))
+	if slices.Contains(b.values, v.(string)) {
+		panic(v)
+	}
+	b.values = append(b.values, v.(string))
 	return true, len(b.values) == cap(b.values)
 }
+
+func (b *Batch) String() string { return fmt.Sprint(b.values) }
