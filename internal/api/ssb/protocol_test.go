@@ -60,9 +60,9 @@ func (sim *Simulation) newServer(conn chan *Stream) *Server {
 }
 
 func (sim *Simulation) Backoff() bool      { return sim.prng.Chance(1, 3) }
-func (sim *Simulation) OOM() bool          { return sim.CanOOM && sim.prng.Chance(1, 20) }
-func (sim *Simulation) ShuttingDown() bool { return sim.prng.Chance(1, 30) }
-func (sim *Simulation) BadNetwork() bool   { return sim.prng.Chance(1, 25) }
+func (sim *Simulation) BadNetwork() bool   { return sim.prng.Chance(1, 30) }
+func (sim *Simulation) ShuttingDown() bool { return sim.prng.Chance(1, 50) }
+func (sim *Simulation) OOM() bool          { return sim.CanOOM && sim.prng.Chance(1, 50) }
 
 // CheckSize stores the ID of this task if it is "too large".
 func (sim *Simulation) CheckSize(id string) {
@@ -77,20 +77,32 @@ func (sim *Simulation) TooLarge(id string) bool {
 	return ok
 }
 
-const retryLimit = 3
-
 func TestClient(t *testing.T) {
 	prng := testkit.NewPRNG(t)
-	for range 10 {
+
+	const (
+		N            = 10
+		retryLimit   = 3
+		maxTaskCount = 1000
+	)
+
+	var (
+		added int // Added to batch stream.
+		seen  int // Arrived to the server.
+		ok    int // Succeeded.
+		fail  int // Failed.
+	)
+
+	for range N {
 		t.Run("ssb client fuzz", func(t *testing.T) {
 			sim := Simulation{
 				T:    t,
 				prng: prng,
 
-				TaskCount:   prng.IntInclusive(500),
+				TaskCount:   prng.IntInclusive(maxTaskCount),
+				RetryLimit:  retryLimit,
 				BatchSize:   prng.RangeInclusive(16, 64),
 				MessageCap:  prng.RangeInclusive(32, 128),
-				RetryLimit:  retryLimit,
 				ReconnLimit: prng.RangeInclusive(3, 5),
 				CanOOM:      prng.Bool(),
 			}
@@ -136,9 +148,23 @@ func TestClient(t *testing.T) {
 			for _, task := range tasks {
 				<-task.Done()
 				require.LessOrEqual(t, task.TimesRetried(), retryLimit, "task %s retries", task.ID())
+
+				switch task.Err() {
+				case nil:
+					ok++
+				default:
+					fail++
+				}
 			}
+
+			added += sim.TaskCount
+			seen += len(srv.seen)
 		})
 	}
+
+	require.GreaterOrEqual(t, seen, int(float64(added)*.9), "over 90% of all data arrive at the server")
+	require.GreaterOrEqual(t, ok, int(float64(seen)*.75), "over 75% of submitted tasks succeed")
+	require.LessOrEqual(t, fail, int(float64(seen)*.25), "under 25% of submitted tasks fail")
 }
 
 type (
