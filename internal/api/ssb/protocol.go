@@ -108,9 +108,9 @@ type Transport interface {
 var ErrTooLarge = errors.New("batch item exceeds maximum request size")
 
 type Stream interface {
-	// Send marshaled batch request. The batch is guaranteed to be
-	// of the same type as returned by [Transport.NewRequest].
-	Send(BatchRequest) error
+	// Send marshaled batch request. The batch must be
+	// the value returned by [Transport.NewRequest].
+	Send(any) error
 
 	// Recv receives the next server-side event.
 	// An [io.EOF] indicates the stream has terminated successfully.
@@ -166,8 +166,8 @@ type OOM struct {
 }
 
 type Results struct {
-	OK     []string          // IDs of tasks that completed successfully.
-	Failed map[string]string // Batch insertion errors keyed by task ID.
+	OK     []string         // IDs of tasks that completed successfully.
+	Failed map[string]error // Batch insertion errors keyed by task ID.
 }
 
 type permissionFlags uint8
@@ -208,11 +208,9 @@ func (s *state) set(permissions permissionFlags) {
 	s.changed = make(chan struct{})
 }
 
-// await blocks until flag is set or ctx expires
-// and returns [Context.Err] in the latter case.
+// await blocks until permission is set and atomically consumes it.
+// If ctx expires await exits early with [Context.Err].
 func (s *state) await(ctx context.Context, permissions permissionFlags) error {
-	// TODO(dyma): test+fuzz
-
 	// await works like a context-aware [sync.Cond.Wait].
 	// We check if [s.permissions] contain the permissions we need
 	// while holding the lock. If the check fails, we release the lock
@@ -231,6 +229,7 @@ func (s *state) await(ctx context.Context, permissions permissionFlags) error {
 			return ctx.Err()
 		}
 	}
+	s.permissions &^= permissions
 	s.mu.Unlock()
 	return nil
 }
@@ -281,9 +280,12 @@ func (c *Client) init() {
 	}
 
 	tick := make(chan span)
+	tock := make(chan struct{})
 	go func() {
+		defer close(tock)
 		for s := range tick {
 			c.send(s.ctx, s.stream)
+			tock <- struct{}{}
 		}
 	}()
 
@@ -292,34 +294,37 @@ func (c *Client) init() {
 		defer func() {
 			c.finish(err)
 			close(tick)
+			close(c.retry)
 		}()
 
 		// Start a stream, unblock the 'send' goroutine, and continue reconnecting
 		// until batch completes, the server is deemed unresponsive, or context expires.
-		for ; c.reconnCount < c.reconnLimit; c.reconnCount++ {
-
+		for err = io.EOF; c.reconnCount < c.reconnLimit; c.reconnCount++ {
 			var s Stream
 			if s, err = c.transport.NewStream(c.ctx); err == nil {
 				ctx, cancel := context.WithCancel(c.ctx)
 				tick <- span{ctx: ctx, stream: s}
-				if err = c.recv(s, cancel); err == io.EOF {
+				err = c.recv(s, cancel)
+				<-tock       // Wait until current 'send' span completes.
+				<-ctx.Done() // Make sure recv canceled the context on exit
+				if err == io.EOF {
 					// io.EOF means the stream ended successfully,
 					// and everything else means "try to reconnect".
 					// IF the server OOMs and stops responding, the
 					// canceled c.ctx will prevent us from reconnecting.
 					return
 				}
-				<-ctx.Done()
 			}
 
 			c.state.clear()
+			// If connection drops, we assume that any in-progress tasks
+			// have failed on the server and we have to redo them all.
+			c.batch.clear()
+			c.wip.all(func(t *Task) { c.batch.add(t) })
+			c.retry = make(chan []*Task, retryBuffer)
 
 			select {
 			case <-time.After(c.delayFunc(c.reconnCount)):
-				// If connection drops, we assume that any in-progress tasks
-				// have failed on the server and we have to redo them all.
-				c.batch.clear()
-				c.wip.all(func(t *Task) { c.batch.add(t) })
 			case <-c.ctx.Done():
 				return
 			}
@@ -341,7 +346,6 @@ func (c *Client) send(ctx context.Context, s Stream) {
 			if err = s.Send(req); err != nil {
 				return
 			}
-			c.state.clear() // Do not send / prepare until this one is Ack'ed.
 		}
 		return
 	}
@@ -408,6 +412,14 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 	var oomTimer *time.Timer // Waiting for OOM to resolve.
 	var shutdown bool        // Server is shutting down.
 
+	defer func() {
+		// Stop the timer unconditionally, even if the stream hangs up
+		// while waiting for ShuttingDown after seeing an OOM.
+		if oomTimer != nil {
+			oomTimer.Stop()
+		}
+	}()
+
 	for {
 		event, err := s.Recv()
 		if err != nil {
@@ -438,7 +450,7 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 			retry := make([]*Task, 0, len(failed))
 			if len(failed) > 0 {
 				c.wip.walk(maps.Keys(failed), func(t *Task) (remove bool) {
-					err := errors.New(failed[t.ID()])
+					err := failed[t.ID()]
 					if c.canRetry.check(t, err) {
 						t.retry(err)
 						retry = append(retry, t)
@@ -484,8 +496,6 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 // all accepted tasks have been processed. If the context expires, Close
 // fails all pending tasks and returns the cause of the context's expiry.
 func (c *Client) Close() error {
-	defer close(c.retry)
-
 	close(c.queue)
 	<-c.ctx.Done()
 	err := context.Cause(c.ctx)
@@ -600,14 +610,13 @@ func (b *batch) disableGrowth() {
 func (b *batch) refillLocked() {
 	b.req = b.newRequest()
 	b.len = 0
-	b.flags ^= full
+	b.flags &^= full
 	for _, v := range b.buf {
 		b.addLocked(v)
 		if b.flags&full == full {
 			break
 		}
 	}
-	b.buf = b.buf[b.len:]
 }
 
 // clear empties the batch, preserving the capacity and noGrow flag, if set.
@@ -616,9 +625,9 @@ func (b *batch) clear() {
 	defer b.mu.Unlock()
 
 	b.req = b.newRequest()
-	b.buf = b.buf[:0]
 	b.len = 0
-	b.flags ^= full
+	b.buf = b.buf[:0]
+	b.flags &^= full
 }
 
 func newCache(size int) cache {
