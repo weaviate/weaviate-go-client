@@ -43,13 +43,27 @@ type Timeout struct {
 	Batch time.Duration // Timeout for batch insert requests.
 }
 
-// NewFunc returns an [internal.Transport] instance for [transport.Config].
-type NewFunc func(context.Context, Config) (internal.Transport, error)
+// Streaming supports asynchronous bidirectional streaming.
+type Streaming interface {
+	// NewStream opens a new [BatchStream].
+	NewStream(context.Context) (BatchStream, error)
+	// The maximum request size in bytes that can be sent via the stream.
+	MaxSize() int
+}
+
+// StreamingTransport supports REST, unary gRPC, and bidirectional gRPC requests.
+type StreamingTransport interface {
+	internal.Transport
+	Streaming
+}
+
+// NewFunc returns an [StreamingTransport] instance for [Config].
+type NewFunc func(context.Context, Config) (StreamingTransport, error)
 
 // New creates a new [transport] instance with [transports.REST] and [transports.GRPC] handles.
 var New NewFunc = newTransport
 
-func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
+func newTransport(ctx context.Context, cfg Config) (StreamingTransport, error) {
 	restConf := transports.RESTConfig{
 		Scheme:  cfg.Scheme,
 		Host:    cfg.RESTHost,

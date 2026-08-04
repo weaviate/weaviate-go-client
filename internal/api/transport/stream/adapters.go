@@ -13,15 +13,7 @@ import (
 	protoutil "google.golang.org/protobuf/proto"
 )
 
-// Transport supports asynchronous bidirectional streaming.
-type Transport interface {
-	// NewStream opens a new [transport.BatchStream].
-	NewStream(context.Context) (transport.BatchStream, error)
-	// The maximum request size in bytes that can be sent via the stream.
-	MaxSize() int
-}
-
-func NewAdapter(t Transport, rd api.RequestDefaults) *TransportAdapter {
+func NewAdapter(t transport.Streaming, rd api.RequestDefaults) *TransportAdapter {
 	return &TransportAdapter{
 		transport: t,
 		defaults:  rd,
@@ -29,7 +21,7 @@ func NewAdapter(t Transport, rd api.RequestDefaults) *TransportAdapter {
 }
 
 type TransportAdapter struct {
-	transport Transport
+	transport transport.Streaming
 	defaults  api.RequestDefaults
 }
 

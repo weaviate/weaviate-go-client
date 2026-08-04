@@ -14,12 +14,9 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/backup"
 	"github.com/weaviate/weaviate-go-client/v6/cluster"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
-	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
-	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport/stream"
 	"github.com/weaviate/weaviate-go-client/v6/internal/auth"
-	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 	"github.com/weaviate/weaviate-go-client/v6/rbac"
 	"github.com/weaviate/weaviate-go-client/v6/replication"
@@ -329,15 +326,12 @@ func (err *HTTPError) Error() string {
 
 // hybridTransport supports HTTP as well as unary and bidi-streaming gRPC requests.
 // It also maps errors returned by the underlying transport to their public variants.
-type hybridTransport struct{ transport internal.Transport }
+type hybridTransport struct{ transport.StreamingTransport }
 
-var (
-	_ internal.Transport = (*hybridTransport)(nil)
-	_ stream.Transport   = (*hybridTransport)(nil)
-)
+var _ transport.StreamingTransport = (*hybridTransport)(nil)
 
 func (ht *hybridTransport) Do(ctx context.Context, req, dest any) error {
-	err := ht.transport.Do(ctx, req, dest)
+	err := ht.StreamingTransport.Do(ctx, req, dest)
 	if err == nil {
 		return nil
 	}
@@ -354,18 +348,8 @@ func (ht *hybridTransport) Do(ctx context.Context, req, dest any) error {
 	return err
 }
 
-func (ht *hybridTransport) NewStream(ctx context.Context) (transport.BatchStream, error) {
-	dev.AssertType[stream.Transport](ht.transport, "transport")
-	return ht.transport.(stream.Transport).NewStream(ctx)
-}
-
-func (ht *hybridTransport) MaxSize() int {
-	dev.AssertType[stream.Transport](ht.transport, "transport")
-	return ht.transport.(stream.Transport).MaxSize()
-}
-
 func (ht *hybridTransport) Close() error {
-	if cl, ok := ht.transport.(io.Closer); ok {
+	if cl, ok := ht.StreamingTransport.(io.Closer); ok {
 		return cl.Close()
 	}
 	return nil

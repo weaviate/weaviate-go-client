@@ -6,6 +6,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/data"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/ssb"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport/stream"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
@@ -64,7 +65,7 @@ const (
 	reconnLimit = 5
 )
 
-func NewClient(ctx context.Context, t stream.Transport, rd api.RequestDefaults, options ...Option) *Client {
+func NewClient(ctx context.Context, t transport.Streaming, rd api.RequestDefaults, options ...Option) *Client {
 	conf := ssb.ClientConfig{
 		Context:   ctx,
 		Transport: stream.NewAdapter(t, rd),

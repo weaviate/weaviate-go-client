@@ -7,27 +7,21 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/aggregate"
 	"github.com/weaviate/weaviate-go-client/v6/batch"
 	"github.com/weaviate/weaviate-go-client/v6/data"
-	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
-	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport/stream"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/query"
 	"github.com/weaviate/weaviate-go-client/v6/tenant"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
-type streamingTransport interface {
-	internal.Transport // For HTTP / gRPC requests.
-	stream.Transport   // For server-side batching.
-}
-
-func NewClient(t streamingTransport) *Client {
+func NewClient(t transport.StreamingTransport) *Client {
 	dev.AssertNotNil(t, "transport")
 	return &Client{transport: t}
 }
 
 type Client struct {
-	transport streamingTransport
+	transport transport.StreamingTransport
 }
 
 // WithConsistencyLevel default consistency level for all read / write requests made with this collection handle.
@@ -55,7 +49,7 @@ func (c *Client) Use(collectionName string, options ...HandleOption) *Handle {
 }
 
 type Handle struct {
-	transport streamingTransport
+	transport transport.StreamingTransport
 	defaults  api.RequestDefaults
 
 	Aggregate *aggregate.Client
@@ -64,7 +58,7 @@ type Handle struct {
 	Tenants   *tenant.Client
 }
 
-func newHandle(t streamingTransport, rd api.RequestDefaults) *Handle {
+func newHandle(t transport.StreamingTransport, rd api.RequestDefaults) *Handle {
 	dev.AssertNotNil(t, "t")
 
 	return &Handle{
