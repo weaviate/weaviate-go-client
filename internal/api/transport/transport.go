@@ -13,6 +13,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 	"golang.org/x/oauth2"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -42,14 +43,28 @@ type Timeout struct {
 	Batch time.Duration // Timeout for batch insert requests.
 }
 
-// NewFunc returns an [internal.Transport] instance for [transport.Config].
-type NewFunc func(context.Context, Config) (internal.Transport, error)
+// Streaming supports asynchronous bidirectional streaming.
+type Streaming interface {
+	// NewStream opens a new [BatchStream].
+	NewStream(context.Context) (BatchStream, error)
+	// The maximum request size in bytes that can be sent via the stream.
+	MaxSize() int
+}
+
+// StreamingTransport supports REST, unary gRPC, and bidirectional gRPC requests.
+type StreamingTransport interface {
+	internal.Transport
+	Streaming
+}
+
+// NewFunc returns an [StreamingTransport] instance for [Config].
+type NewFunc func(context.Context, Config) (StreamingTransport, error)
 
 // New creates a new [transport] instance with [transports.REST] and [transports.GRPC] handles.
 var New NewFunc = newTransport
 
-func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
-	restConfig := transports.RESTConfig{
+func newTransport(ctx context.Context, cfg Config) (StreamingTransport, error) {
+	restConf := transports.RESTConfig{
 		Scheme:  cfg.Scheme,
 		Host:    cfg.RESTHost,
 		Port:    cfg.RESTPort,
@@ -57,7 +72,7 @@ func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 		Version: cfg.Version,
 	}
 
-	gRPCConfig := transports.GRPCConfig[proto.WeaviateClient]{
+	gRPCConf := transports.GRPCConfig[proto.WeaviateClient]{
 		Host:   cfg.GRPCHost,
 		Port:   cfg.GRPCPort,
 		TLS:    cfg.Scheme == "https",
@@ -67,17 +82,17 @@ func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 	}
 
 	// unwrapTokenSource handles nil cfg.Auth correctly and returns a nil TokenSource.
-	src, err := unwrapTokenSource(ctx, cfg.Auth, transports.NewREST(restConfig))
+	src, err := unwrapTokenSource(ctx, cfg.Auth, transports.NewREST(restConf))
 	if err != nil {
 		return nil, fmt.Errorf("new transport: %w", err)
 	}
 	if src, err = expireEarly(src); err != nil {
 		return nil, fmt.Errorf("new transport: %w", err)
 	}
-	restConfig.TokenSource = src
-	gRPCConfig.TokenSource = src
+	restConf.TokenSource = src
+	gRPCConf.TokenSource = src
 
-	rest := transports.NewREST(restConfig)
+	rest := transports.NewREST(restConf)
 
 	// Other client libraries ping the server at /live before requesting /meta.
 	// Since retry-on-error is meant to be implemented by the user, we can rely
@@ -87,8 +102,8 @@ func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 		return nil, fmt.Errorf("get instance metadata: %w", err)
 	}
 
-	gRPCConfig.MaxMessageSize = meta.GRPCMaxMessageSize
-	gRPC, err := transports.NewGRPC(gRPCConfig)
+	gRPCConf.MaxMessageSize = meta.GRPCMaxMessageSize
+	gRPC, err := transports.NewGRPC(gRPCConf)
 	if err != nil {
 		return nil, fmt.Errorf("new transport: %w", err)
 	}
@@ -102,6 +117,7 @@ func newTransport(ctx context.Context, cfg Config) (internal.Transport, error) {
 		rest:              rest,
 		gRPC:              gRPC,
 		timeout:           cfg.Timeout,
+		MaxMessageSize:    meta.GRPCMaxMessageSize,
 		cancelTokenSource: cancelTokenSource,
 	}, nil
 }
@@ -208,8 +224,13 @@ type transport struct {
 	rest interface {
 		Do(context.Context, transports.Endpoint, any) error
 	}
+
+	// Maximum message size that can be sent via gRPC transport.
+	MaxMessageSize int
+
 	// Transport for servicing gRPC requests.
 	gRPC interface {
+		Client() proto.WeaviateClient
 		Do(context.Context, transports.RPC[proto.WeaviateClient]) error
 	}
 
@@ -308,3 +329,19 @@ func tokenKeepalive(ctx context.Context, src oauth2.TokenSource, tickFunc func(t
 		}
 	}
 }
+
+type BatchStream grpc.BidiStreamingClient[proto.BatchStreamRequest, proto.BatchStreamReply]
+
+// NewStream opens a new batch streaming client.
+func (t *transport) NewStream(ctx context.Context) (BatchStream, error) {
+	c := t.gRPC.Client()
+	dev.AssertNotNil(c, "gRPC client")
+
+	bs, err := c.BatchStream(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return bs, nil
+}
+
+func (t *transport) MaxSize() int { return t.MaxMessageSize }

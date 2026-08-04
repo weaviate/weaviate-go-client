@@ -64,22 +64,7 @@ type InsertResult struct {
 func (c *Client) Insert(ctx context.Context, objects ...*Object) (*InsertResult, error) {
 	batch := slices.Grow([]api.BatchObject(nil), len(objects))
 	for _, o := range objects {
-		if o == nil {
-			o = new(Object)
-		}
-
-		var id uuid.UUID
-		if o.UUID != nil {
-			id = *o.UUID
-		} else {
-			id = uuid.New()
-		}
-		batch = append(batch, api.BatchObject{
-			UUID:       id,
-			Properties: o.Properties,
-			Vectors:    apiVectors(o.Vectors),
-			References: apiReferences(o.References),
-		})
+		batch = append(batch, o.ToAPI())
 	}
 
 	req := &api.InsertObjectsRequest{
@@ -149,13 +134,7 @@ func (c *Client) AddReferences(ctx context.Context, references ...Reference) (*A
 	batch := slices.Grow([]api.Reference(nil), len(references))
 
 	for _, ref := range references {
-		batch = append(batch, api.Reference{
-			Origin: api.ObjectPath(ref.Origin),
-			Target: api.ObjectPath{
-				Collection: ref.Collection,
-				UUID:       ref.UUID,
-			},
-		})
+		batch = append(batch, ref.ToAPI())
 	}
 
 	req := &api.InsertReferencesRequest{
@@ -244,4 +223,34 @@ func apiReferences(rs References) api.References {
 		out[name] = refs
 	}
 	return out
+}
+
+func (o *Object) ToAPI() api.BatchObject {
+	if o == nil {
+		return api.BatchObject{UUID: uuid.New()}
+	}
+
+	var id uuid.UUID
+	if o.UUID != nil {
+		id = *o.UUID
+	} else {
+		id = uuid.New()
+	}
+
+	return api.BatchObject{
+		UUID:       id,
+		Properties: o.Properties,
+		Vectors:    apiVectors(o.Vectors),
+		References: apiReferences(o.References),
+	}
+}
+
+func (ref *Reference) ToAPI() api.Reference {
+	return api.Reference{
+		Origin: api.ObjectPath(ref.Origin),
+		Target: api.ObjectPath{
+			Collection: ref.Collection,
+			UUID:       ref.UUID,
+		},
+	}
 }

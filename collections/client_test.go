@@ -9,7 +9,9 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/collections/compression"
 	"github.com/weaviate/weaviate-go-client/v6/collections/vectorindex"
+	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
@@ -20,8 +22,16 @@ func TestNewClient(t *testing.T) {
 	}, "nil transport")
 }
 
+// withStreaming adds a nil-[transport.Streaming] to [internal.Transport].
+func withStreaming(t internal.Transport) transport.StreamingTransport {
+	return struct {
+		transport.Streaming
+		testkit.TransportFunc
+	}{TransportFunc: t.Do}
+}
+
 func TestClient_Use(t *testing.T) {
-	c := collections.NewClient(testkit.NopTransport)
+	c := collections.NewClient(withStreaming(testkit.NopTransport))
 	require.NotNil(t, c, "nil client")
 
 	checkNamespaces := func(t *testing.T, h *collections.Handle) {
@@ -74,7 +84,7 @@ func TestHandle_Count(t *testing.T) {
 		Response: api.CountObjectsResponse(92),
 	}})
 
-	c := collections.NewClient(transport)
+	c := collections.NewClient(withStreaming(transport))
 	require.NotNil(t, c, "nil client")
 
 	h := c.Use("Songs", collections.WithTenant("john_doe"))
@@ -343,7 +353,7 @@ func TestClient_Create(t *testing.T) {
 			}
 
 			transport := testkit.NewTransport(t, tt.stubs)
-			c := collections.NewClient(transport)
+			c := collections.NewClient(withStreaming(transport))
 			require.NotNil(t, c, "nil client")
 
 			handle, err := c.Create(t.Context(), tt.collection)
@@ -592,7 +602,7 @@ func TestClient_GetConfig(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			transport := testkit.NewTransport(t, tt.stubs)
-			c := collections.NewClient(transport)
+			c := collections.NewClient(withStreaming(transport))
 			require.NotNil(t, c, "nil client")
 
 			got, err := c.GetConfig(t.Context(), tt.collection)
@@ -646,7 +656,7 @@ func TestClient_List(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			transport := testkit.NewTransport(t, tt.stubs)
-			c := collections.NewClient(transport)
+			c := collections.NewClient(withStreaming(transport))
 			require.NotNil(t, c, "nil client")
 
 			got, err := c.List(t.Context())
@@ -661,7 +671,7 @@ func TestClient_Delete(t *testing.T) {
 	transport := testkit.NewTransport(t, []testkit.Stub[any, any]{
 		{Request: testkit.Ptr(api.DeleteCollectionRequest("Songs"))},
 	})
-	c := collections.NewClient(transport)
+	c := collections.NewClient(withStreaming(transport))
 	require.NotNil(t, c, "nil client")
 
 	err := c.Delete(t.Context(), "Songs")
@@ -682,7 +692,7 @@ func TestClient_DeleteAll(t *testing.T) {
 		{Request: testkit.Ptr(api.DeleteCollectionRequest("Artists"))},
 		{Request: testkit.Ptr(api.DeleteCollectionRequest("Albums"))},
 	})
-	c := collections.NewClient(transport)
+	c := collections.NewClient(withStreaming(transport))
 	require.NotNil(t, c, "nil client")
 
 	err := c.DeleteAll(t.Context())
@@ -726,7 +736,7 @@ func TestClient_Exists(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			transport := testkit.NewTransport(t, tt.stubs)
-			c := collections.NewClient(transport)
+			c := collections.NewClient(withStreaming(transport))
 			require.NotNil(t, c, "nil client")
 
 			got, err := c.Exists(t.Context(), "Songs")

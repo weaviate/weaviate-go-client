@@ -20,6 +20,16 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// withStreaming adds a nil-[transport.Streaming] to [internal.Transport].
+func withStreaming(t internal.Transport) transport.StreamingTransport {
+	return struct {
+		transport.Streaming
+		testkit.TransportFunc
+	}{TransportFunc: t.Do}
+}
+
+var nopTransport = withStreaming(testkit.NopTransport)
+
 // DO NOT enable t.Parallel() for this test as it modifies the global state.
 func TestNewLocal(t *testing.T) {
 	newFunc := transport.New
@@ -27,9 +37,9 @@ func TestNewLocal(t *testing.T) {
 
 	t.Run("default", func(t *testing.T) {
 		var got transport.Config
-		transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
+		transport.New = func(_ context.Context, cfg transport.Config) (transport.StreamingTransport, error) {
 			got = cfg
-			return testkit.NopTransport, nil
+			return nopTransport, nil
 		}
 
 		c, err := weaviate.NewLocal(t.Context())
@@ -55,9 +65,9 @@ func TestNewLocal(t *testing.T) {
 
 	t.Run("with options", func(t *testing.T) {
 		var got transport.Config
-		transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
+		transport.New = func(_ context.Context, cfg transport.Config) (transport.StreamingTransport, error) {
 			got = cfg
-			return testkit.NopTransport, nil
+			return nopTransport, nil
 		}
 
 		tokenSource := oauth2.StaticTokenSource(&oauth2.Token{
@@ -110,9 +120,9 @@ func TestNewWeaviateCloud(t *testing.T) {
 
 	t.Run("default", func(t *testing.T) {
 		var got transport.Config
-		transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
+		transport.New = func(_ context.Context, cfg transport.Config) (transport.StreamingTransport, error) {
 			got = cfg
-			return testkit.NopTransport, nil
+			return nopTransport, nil
 		}
 
 		c, err := weaviate.NewWeaviateCloud(t.Context(), "example.com", "api-key")
@@ -147,9 +157,9 @@ func TestNewWeaviateCloud(t *testing.T) {
 		} {
 			t.Run(domain, func(t *testing.T) {
 				var got transport.Config
-				transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
+				transport.New = func(_ context.Context, cfg transport.Config) (transport.StreamingTransport, error) {
 					got = cfg
-					return testkit.NopTransport, nil
+					return nopTransport, nil
 				}
 
 				c, err := weaviate.NewWeaviateCloud(t.Context(), "my."+domain, "api-key")
@@ -166,9 +176,9 @@ func TestNewWeaviateCloud(t *testing.T) {
 
 	t.Run("with options", func(t *testing.T) {
 		var got transport.Config
-		transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
+		transport.New = func(_ context.Context, cfg transport.Config) (transport.StreamingTransport, error) {
 			got = cfg
-			return testkit.NopTransport, nil
+			return nopTransport, nil
 		}
 
 		c, err := weaviate.NewWeaviateCloud(t.Context(), "example.com", "api-key",
@@ -206,8 +216,8 @@ func TestNewWeaviateCloud(t *testing.T) {
 	})
 
 	t.Run("namespaces", func(t *testing.T) {
-		transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
-			return testkit.NopTransport, nil
+		transport.New = func(_ context.Context, cfg transport.Config) (transport.StreamingTransport, error) {
+			return nopTransport, nil
 		}
 
 		c, err := weaviate.NewClient(t.Context())
@@ -231,9 +241,9 @@ func TestWithAPIKey(t *testing.T) {
 	t.Cleanup(func() { transport.New = newFunc })
 
 	var got transport.Config
-	transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
+	transport.New = func(_ context.Context, cfg transport.Config) (transport.StreamingTransport, error) {
 		got = cfg
-		return testkit.NopTransport, nil
+		return nopTransport, nil
 	}
 
 	c, err := weaviate.NewClient(t.Context(), weaviate.WithAPIKey("api-key"))
@@ -289,9 +299,9 @@ func TestOIDCAuthentication(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			var got transport.Config
-			transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
+			transport.New = func(_ context.Context, cfg transport.Config) (transport.StreamingTransport, error) {
 				got = cfg
-				return testkit.NopTransport, nil
+				return nopTransport, nil
 			}
 
 			c, err := weaviate.NewClient(t.Context(), tt.opt)
@@ -344,8 +354,8 @@ func TestLiveReady(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
-				return tt.transport, nil
+			transport.New = func(_ context.Context, cfg transport.Config) (transport.StreamingTransport, error) {
+				return withStreaming(tt.transport), nil
 			}
 
 			c, err := weaviate.NewClient(t.Context())
@@ -375,8 +385,8 @@ func TestMetadata(t *testing.T) {
 			GRPCMaxMessageSize: 4096,
 		},
 	}})
-	transport.New = func(_ context.Context, cfg transport.Config) (internal.Transport, error) {
-		return tport, nil
+	transport.New = func(_ context.Context, cfg transport.Config) (transport.StreamingTransport, error) {
+		return withStreaming(tport), nil
 	}
 
 	c, err := weaviate.NewClient(t.Context())
@@ -401,13 +411,13 @@ func TestClient_Close(t *testing.T) {
 	t.Cleanup(func() { transport.New = newFunc })
 
 	var closed spyCloser
-	transport.New = func(context.Context, transport.Config) (internal.Transport, error) {
+	transport.New = func(context.Context, transport.Config) (transport.StreamingTransport, error) {
 		return struct {
-			internal.Transport
+			transport.StreamingTransport
 			io.Closer
 		}{
-			Transport: testkit.NopTransport,
-			Closer:    &closed,
+			StreamingTransport: nopTransport,
+			Closer:             &closed,
 		}, nil
 	}
 
@@ -463,10 +473,10 @@ func TestClientHTTPError(t *testing.T) {
 		},
 	} {
 		t.Run(fmt.Sprintf("%T=%t", tt.err, tt.want == nil), func(t *testing.T) {
-			transport.New = func(context.Context, transport.Config) (internal.Transport, error) {
-				return testkit.TransportFunc(func(context.Context, any, any) error {
+			transport.New = func(context.Context, transport.Config) (transport.StreamingTransport, error) {
+				return withStreaming(testkit.TransportFunc(func(context.Context, any, any) error {
 					return tt.err
-				}), nil
+				})), nil
 			}
 
 			c, err := weaviate.NewClient(t.Context())

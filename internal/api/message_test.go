@@ -1563,6 +1563,109 @@ func TestGetTenantsRequest_MarshalMessage(t *testing.T) {
 	})
 }
 
+func TestBatchStreamRequest_MarshalMessage(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		req  transport.MessageMarshaler[proto.BatchStreamRequest]
+		want *proto.BatchStreamRequest
+	}{
+		{
+			name: "start stream",
+			req: &api.StartStreamRequest{
+				ConsistencyLevel: api.ConsistencyLevelQuorum,
+			},
+			want: &proto.BatchStreamRequest{
+				Message: &proto.BatchStreamRequest_Start_{
+					Start: &proto.BatchStreamRequest_Start{
+						ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_QUORUM),
+					},
+				},
+			},
+		},
+		{
+			name: "stop stream",
+			req:  api.StopStreamRequest,
+			want: &proto.BatchStreamRequest{
+				Message: &proto.BatchStreamRequest_Stop_{
+					Stop: new(proto.BatchStreamRequest_Stop),
+				},
+			},
+		},
+		{
+			name: "batch data",
+			req: func() *api.BatchRequest {
+				br := &api.BatchRequest{MaxSize: 1 << 10}
+				var added bool
+
+				// It's OK to use the top-level t here, as this step
+				// MUST succeed for a test to make sense.
+				added, _ = br.Add(&proto.BatchObject{
+					Uuid:       testkit.UUID.String(),
+					Collection: "Songs",
+					Tenant:     "john_doe",
+					Properties: &proto.BatchObject_Properties{
+						NonRefProperties: mustNewStruct(map[string]any{
+							"artist": "Angine de Poitrine",
+							"title":  "Mata Zyklek",
+						}),
+					},
+				})
+				require.True(t, added, "added object")
+
+				added, _ = br.Add(&proto.BatchReference{
+					Name:           "performedBy",
+					FromCollection: "Songs",
+					FromUuid:       testkit.UUID.String(),
+					ToCollection:   testkit.Ptr("Drummers"),
+					ToUuid:         testkit.UUID.String(),
+					Tenant:         "john_doe",
+				})
+				require.True(t, added, "added reference")
+				return br
+			}(),
+			want: &proto.BatchStreamRequest{
+				Message: &proto.BatchStreamRequest_Data_{
+					Data: &proto.BatchStreamRequest_Data{
+						Objects: &proto.BatchStreamRequest_Data_Objects{
+							Values: []*proto.BatchObject{
+								{
+									Uuid:       testkit.UUID.String(),
+									Collection: "Songs",
+									Tenant:     "john_doe",
+									Properties: &proto.BatchObject_Properties{
+										NonRefProperties: mustNewStruct(map[string]any{
+											"artist": "Angine de Poitrine",
+											"title":  "Mata Zyklek",
+										}),
+									},
+								},
+							},
+						},
+						References: &proto.BatchStreamRequest_Data_References{
+							Values: []*proto.BatchReference{
+								{
+									Name:           "performedBy",
+									FromCollection: "Songs",
+									FromUuid:       testkit.UUID.String(),
+									ToCollection:   testkit.Ptr("Drummers"),
+									ToUuid:         testkit.UUID.String(),
+									Tenant:         "john_doe",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.req.MarshalMessage()
+			require.NoError(t, err, "marshal error")
+			require.EqualExportedValues(t, tt.want, got)
+		})
+	}
+}
+
 // ----------------------------------------------------------------------------
 
 type MessageUnmarshalerTest[Out transport.ReplyMessage] struct {

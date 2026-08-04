@@ -100,6 +100,11 @@ func NewGRPC[Client any](cfg GRPCConfig[Client]) (*GRPC[Client], error) {
 	}, nil
 }
 
+// Client returns the underlying client instance.
+func (c *GRPC[Client]) Client() Client {
+	return c.client
+}
+
 var _ io.Closer = (*GRPC[any])(nil)
 
 func (c *GRPC[Client]) Close() error {

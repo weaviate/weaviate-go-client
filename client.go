@@ -14,7 +14,6 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/backup"
 	"github.com/weaviate/weaviate-go-client/v6/cluster"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
-	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/auth"
@@ -25,7 +24,7 @@ import (
 )
 
 type Client struct {
-	transport internal.Transport
+	transport *hybridTransport
 
 	Alias       *alias.Client
 	Backup      *backup.Client
@@ -310,10 +309,7 @@ func (c *Client) Metadata(ctx context.Context) (*InstanceMetadata, error) {
 }
 
 func (c *Client) Close() error {
-	if cl, ok := c.transport.(io.Closer); ok {
-		return cl.Close()
-	}
-	return nil
+	return c.transport.Close()
 }
 
 // HTTPError is returned if the underlying REST request returns an unexpected error code.
@@ -328,11 +324,14 @@ func (err *HTTPError) Error() string {
 	return err.httpErr.Error()
 }
 
-// errorTransport maps errors returned by the underlying transport to their public variants.
-type errorTransport struct{ t internal.Transport }
+// hybridTransport supports HTTP as well as unary and bidi-streaming gRPC requests.
+// It also maps errors returned by the underlying transport to their public variants.
+type hybridTransport struct{ transport.StreamingTransport }
 
-func (et *errorTransport) Do(ctx context.Context, req, dest any) error {
-	err := et.t.Do(ctx, req, dest)
+var _ transport.StreamingTransport = (*hybridTransport)(nil)
+
+func (ht *hybridTransport) Do(ctx context.Context, req, dest any) error {
+	err := ht.StreamingTransport.Do(ctx, req, dest)
 	if err == nil {
 		return nil
 	}
@@ -349,15 +348,15 @@ func (et *errorTransport) Do(ctx context.Context, req, dest any) error {
 	return err
 }
 
-func (et *errorTransport) Close() error {
-	if cl, ok := et.t.(io.Closer); ok {
+func (ht *hybridTransport) Close() error {
+	if cl, ok := ht.StreamingTransport.(io.Closer); ok {
 		return cl.Close()
 	}
 	return nil
 }
 
 // newTransport returns an [internal.Transport] for REST and gRPC requests.
-func newTransport(ctx context.Context, c config) (internal.Transport, error) {
+func newTransport(ctx context.Context, c config) (*hybridTransport, error) {
 	t, err := transport.New(ctx, transport.Config{
 		Scheme:   c.Scheme,
 		RESTHost: c.RESTHost,
@@ -373,5 +372,5 @@ func newTransport(ctx context.Context, c config) (internal.Transport, error) {
 		return nil, err
 	}
 
-	return &errorTransport{t}, nil
+	return &hybridTransport{t}, nil
 }

@@ -282,8 +282,11 @@ func (e *endpoint) Path() string      { return e.path }
 func (e *endpoint) Query() url.Values { return e.query }
 func (e *endpoint) Body() any         { return e.body }
 
+// gRPCFunc delegates Do execution to a function.
+// It should not be used for cases which access Client(), because it returns nil.
 type gRPCFunc func(ctx context.Context, rpc transports.RPC[proto.WeaviateClient]) error
 
+func (gRPCFunc) Client() proto.WeaviateClient { return nil }
 func (f gRPCFunc) Do(ctx context.Context, rpc transports.RPC[proto.WeaviateClient]) error {
 	return f(ctx, rpc)
 }
