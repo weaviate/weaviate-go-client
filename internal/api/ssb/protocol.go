@@ -329,13 +329,18 @@ func (c *Client) init() {
 			}
 
 			c.state.clear()
+			// If connection drops, we assume that any in-progress tasks
+			// have failed on the server and we have to redo them all.
+			c.batch.clear()
+			log.Println("BATCH CLEAR")
+			c.wip.all(func(t *Task) {
+				log.Printf("batch.add %s after clear", t.value())
+				c.batch.add(t)
+			})
+			c.retry = make(chan []*Task, retryBuffer)
 
 			select {
 			case <-time.After(c.delayFunc(c.reconnCount)):
-				// If connection drops, we assume that any in-progress tasks
-				// have failed on the server and we have to redo them all.
-				c.batch.clear()
-				c.wip.all(func(t *Task) { c.batch.add(t) })
 			case <-c.ctx.Done():
 				return
 			}
@@ -392,9 +397,13 @@ func (c *Client) send(ctx context.Context, s Stream) {
 
 			t.setValue(v)
 			c.wip.put(t)
+			log.Printf("batch.add %s after <-c.queue", t.value())
 			c.batch.add(t)
 
 		case tasks := <-c.retry:
+			for _, t := range tasks {
+				log.Printf("batch.add %s after <-c.retry", t.value())
+			}
 			c.batch.add(tasks...)
 
 		case <-ctx.Done():
@@ -424,7 +433,9 @@ Drain:
 		}
 		select {
 		case tasks := <-c.retry:
-			log.Printf("{send:DRAIN}: got %d retry items, wip=%d", len(tasks), c.wip.size())
+			for _, t := range tasks {
+				log.Printf("batch.add %s after <-c.retry (DRAIN)", t.value())
+			}
 			c.batch.add(tasks...)
 		case <-ctx.Done():
 			return
@@ -490,6 +501,12 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 				})
 			}
 
+			for _, t := range retry {
+				log.Println("retry " + t.value().(string))
+				if v := t.value(); c.batch.contains(v) {
+					panic("retry " + v.(string) + " still in batch!")
+				}
+			}
 			select {
 			case c.retry <- retry:
 			case <-c.ctx.Done():
@@ -593,6 +610,14 @@ func (b *batch) add(tasks ...*Task) {
 			b.addLocked(v)
 		}
 	}
+}
+
+// Debug
+func (b *batch) contains(v any) bool {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	return slices.Contains(b.buf, v)
 }
 
 // addLocked adds v to request and updates [batch.len].
