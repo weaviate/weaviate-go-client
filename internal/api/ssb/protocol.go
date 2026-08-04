@@ -54,7 +54,7 @@ func NewClient(conf ClientConfig) *Client {
 	return c
 }
 
-// Add puts creates a new tasks and puts it on the work queue.
+// Add creates a new task and puts it on the work queue.
 // If [Client.Context] expires, Add returns [context.Canceled],
 // otherwise the error is nil. Calling Add after closing the batch panics.
 func (c *Client) Add(ctx context.Context, d Data) (*Task, error) {

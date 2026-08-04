@@ -34,7 +34,8 @@ type (
 	Option func(*ssb.ClientConfig)
 )
 
-func WithRetryFunc(f func(string, int, error) bool) Option {
+// WithCanRetryFunc sets a predicate to control if a task can be retried.
+func WithCanRetryFunc(f func(string, int, error) bool) Option {
 	return func(c *ssb.ClientConfig) {
 		c.CanRetry = ssb.CanRetryFunc(f)
 	}
