@@ -81,9 +81,9 @@ func TestClient(t *testing.T) {
 	prng := testkit.NewPRNG(t)
 
 	const (
-		N            = 10
+		N            = 50
 		retryLimit   = 3
-		maxTaskCount = 1000
+		maxTaskCount = 500
 	)
 
 	var (
