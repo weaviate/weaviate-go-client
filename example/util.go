@@ -2,14 +2,16 @@ package example
 
 import (
 	"fmt"
-	"log"
 	"os"
 )
 
-// Catch calls [log.Fatal] for a non-nil error.
-func Catch(err error) {
-	if err != nil {
-		log.Fatal(err)
+// Catch panics for a non-nil error.
+func Catch(err error) { Assert(err == nil, err) }
+
+// Assert panics with message if check is false.
+func Assert(check bool, a ...any) {
+	if !check {
+		panic(fmt.Sprint(a...))
 	}
 }
 
