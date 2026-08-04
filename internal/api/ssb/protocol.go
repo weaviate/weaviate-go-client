@@ -557,7 +557,6 @@ func (b *batch) add(tasks ...*Task) {
 // addLocked adds v to request and updates [batch.len].
 func (b *batch) addLocked(v any) {
 	added, reqFull := b.req.Add(v)
-
 	if added {
 		b.len++
 	}
