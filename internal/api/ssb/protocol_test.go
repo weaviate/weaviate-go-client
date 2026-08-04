@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -72,6 +71,8 @@ func TestClient(t *testing.T) {
 		work:       make(chan *Batch, 8),
 		seen:       make(map[string]taskStat, sim.TaskCount),
 		done:       make(chan struct{}),
+
+		wip: make(map[string]struct{}),
 	}
 	go srv.run()
 
@@ -158,6 +159,8 @@ type Server struct {
 	work chan *Batch
 	seen map[string]taskStat
 	done chan struct{}
+
+	wip map[string]struct{}
 }
 
 type taskStat struct {
@@ -197,13 +200,30 @@ func (srv *Server) run() {
 			case batch, ok := <-stream.srvRecv():
 				if !ok {
 					for len(srv.work) > 0 {
-						results := srv.processBatch(<-srv.work)
+						batch := <-srv.work
+						results := srv.processBatch(batch)
 						if err := stream.srvSend(Event{Results: results}); err != nil {
 							break Conn
+						}
+						for _, id := range batch.values {
+							t := srv.seen[id]
+							t.Retries++
+							srv.seen[id] = t
 						}
 					}
 					break Conn
 				}
+
+				// Debug: record all data that can be sent in the results
+				for _, v := range batch.values {
+					srv.Logf("received %s, add to wip", v)
+					if _, ok := srv.wip[v]; ok {
+						panic("sent duplicate value " + v)
+					}
+
+					srv.wip[v] = struct{}{}
+				}
+
 				assert.NotNil(srv.T, batch)
 				assert.NotEmpty(srv.T, batch.values)
 				srv.Logf("[server]: Received batch (%d) %p", len(batch.values), batch)
@@ -240,10 +260,9 @@ func (srv *Server) run() {
 			}
 		}
 
-		srv.Logf("[server]: Discard any remaining work (%d)", len(srv.work))
-		for len(srv.work) > 0 {
-			<-srv.work
-		}
+		srv.Logf("[server]: Discard any remaining work=%d, wip=%d", len(srv.work), len(srv.wip))
+		clear(srv.wip)
+		srv.work = make(chan *Batch, 8)
 		srv.Logf("[server]: Close stream")
 		stream.srvClose()
 	}
@@ -260,9 +279,10 @@ func (srv *Server) processBatch(b *Batch) *ssb.Results {
 		if !ok {
 			t = taskStat{Retries: -1}
 		}
-		t.Retries++
 
 		// On it's last retry the task fails with a 1/4 chance.
+		var succ bool
+		srv.Logf("[processbatch: %s.retries=%d", id, t.Retries)
 		if srv.prng.Chance(1, srv.RetryLimit-t.Retries+4) {
 			results.Failed[id] = testkit.ErrWhaam
 			t.Err = testkit.ErrWhaam
@@ -270,9 +290,13 @@ func (srv *Server) processBatch(b *Batch) *ssb.Results {
 		} else {
 			results.OK = append(results.OK, id)
 			t.Err = nil
+			succ = true
 			OK++
 		}
 		srv.seen[id] = t
+
+		srv.Logf("processed %s, delete from wip, ok=%t", id, succ)
+		delete(srv.wip, id)
 	}
 	srv.Logf("[server]: Send results: ok=%d, failed=%d", OK, failed)
 	return results
@@ -381,11 +405,10 @@ func (b *Batch) Add(v any) (added, full bool) {
 	defer require.LessOrEqual(b.T, len(b.values), cap(b.values))
 
 	assert.IsType(b.T, *new(string), v, "bad value in Add")
+	require.NotContains(b.T, b.values, v, "duplicate value in batch %s", v)
+
 	if len(b.values) == cap(b.values) {
 		return false, true
-	}
-	if slices.Contains(b.values, v.(string)) {
-		panic(v)
 	}
 	b.values = append(b.values, v.(string))
 	return true, len(b.values) == cap(b.values)
