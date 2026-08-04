@@ -3,10 +3,8 @@ package ssb
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"iter"
-	"log"
 	"maps"
 	"slices"
 	"sync"
@@ -193,15 +191,6 @@ type state struct {
 	changed     chan struct{}
 }
 
-func (s *state) String() string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return fmt.Sprintf(
-		"[state: changed=%p canPrepare=%t, canSend=%t]",
-		s.changed, s.permissions&canPrepare == canPrepare, s.permissions&canSend == canSend,
-	)
-}
-
 // clear all flags set previously.
 func (s *state) clear() {
 	s.mu.Lock()
@@ -222,8 +211,6 @@ func (s *state) set(permissions permissionFlags) {
 // await blocks until permission is set and atomically consumes it.
 // If ctx expires await exits early with [Context.Err].
 func (s *state) await(ctx context.Context, permissions permissionFlags) error {
-	// TODO(dyma): test+fuzz
-
 	// await works like a context-aware [sync.Cond.Wait].
 	// We check if [s.permissions] contain the permissions we need
 	// while holding the lock. If the check fails, we release the lock
@@ -332,11 +319,7 @@ func (c *Client) init() {
 			// If connection drops, we assume that any in-progress tasks
 			// have failed on the server and we have to redo them all.
 			c.batch.clear()
-			log.Println("BATCH CLEAR")
-			c.wip.all(func(t *Task) {
-				log.Printf("batch.add %s after clear", t.value())
-				c.batch.add(t)
-			})
+			c.wip.all(func(t *Task) { c.batch.add(t) })
 			c.retry = make(chan []*Task, retryBuffer)
 
 			select {
@@ -348,21 +331,9 @@ func (c *Client) init() {
 	}()
 }
 
-func (c *Client) String() string {
-	return fmt.Sprintf(
-		"\t%s\n\t%s\n\t%s\n\tlen(queue)=%d\n\tlen(retry)=%d",
-		&c.state, &c.wip, &c.batch, len(c.queue), len(c.retry),
-	)
-}
-
 // send consumes queue and retry channels, prepares and sends the batch.
 func (c *Client) send(ctx context.Context, s Stream) {
 	defer s.Close() //nolint:errcheck
-
-	log.Printf("{send(%p)}: === begin ===", ctx)
-	defer func() {
-		log.Printf("{send(%p)}: === end ===", ctx)
-	}()
 
 	// The caller should exit if maybeSend returns a non-nil error.
 	maybeSend := func() (err error) {
@@ -397,13 +368,9 @@ func (c *Client) send(ctx context.Context, s Stream) {
 
 			t.setValue(v)
 			c.wip.put(t)
-			log.Printf("batch.add %s after <-c.queue", t.value())
 			c.batch.add(t)
 
 		case tasks := <-c.retry:
-			for _, t := range tasks {
-				log.Printf("batch.add %s after <-c.retry", t.value())
-			}
 			c.batch.add(tasks...)
 
 		case <-ctx.Done():
@@ -416,7 +383,6 @@ func (c *Client) send(ctx context.Context, s Stream) {
 	}
 
 Drain:
-	log.Printf("{send:DRAIN(%p)}: begin \n%s", ctx, c)
 	// Every time we receive Results, the wip shrinks and the batch's capacity
 	// is reduced to the wip's size. This guarantees the batch will eventually
 	// fill up. Disable growth to prevent Backoff from increasing the capacity.
@@ -426,16 +392,12 @@ Drain:
 		if wipCount == 0 {
 			return
 		}
-		log.Println("{send:DRAIN}: resize batch to wip=", wipCount)
 		c.batch.resize(wipCount)
 		if err := maybeSend(); err != nil {
 			return
 		}
 		select {
 		case tasks := <-c.retry:
-			for _, t := range tasks {
-				log.Printf("batch.add %s after <-c.retry (DRAIN)", t.value())
-			}
 			c.batch.add(tasks...)
 		case <-ctx.Done():
 			return
@@ -473,11 +435,9 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 			c.state.set(canPrepare | canSend)
 
 		case event.Ack:
-			log.Printf("ACK [V]\n%s", c)
 			c.state.set(canPrepare | canSend)
 
 		case event.Results != nil:
-			log.Print("RESULTS")
 			c.wip.walk(slices.Values(event.Results.OK), func(t *Task) bool {
 				t.complete(nil)
 				return true
@@ -501,12 +461,6 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 				})
 			}
 
-			for _, t := range retry {
-				log.Println("retry " + t.value().(string))
-				if v := t.value(); c.batch.contains(v) {
-					panic("retry " + v.(string) + " still in batch!")
-				}
-			}
 			select {
 			case c.retry <- retry:
 			case <-c.ctx.Done():
@@ -586,15 +540,6 @@ type batch struct {
 	newRequest func() BatchRequest
 }
 
-func (b *batch) String() string {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	return fmt.Sprintf(
-		"[batch: req=%p b.len=%d b.cap=%d len(b.buf)=%d full=%t noGrow=%t]",
-		b.req, b.len, b.cap, len(b.buf), b.flags&full == full, b.flags&noGrow == noGrow,
-	)
-}
-
 // add all [Task.value] to the batch.
 func (b *batch) add(tasks ...*Task) {
 	b.mu.Lock()
@@ -602,22 +547,11 @@ func (b *batch) add(tasks ...*Task) {
 
 	for _, t := range tasks {
 		v := t.value()
-		if slices.Contains(b.buf, v) {
-			panic("batch.add=" + v.(string))
-		}
 		b.buf = append(b.buf, v)
 		if b.flags&full != full {
 			b.addLocked(v)
 		}
 	}
-}
-
-// Debug
-func (b *batch) contains(v any) bool {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	return slices.Contains(b.buf, v)
 }
 
 // addLocked adds v to request and updates [batch.len].
@@ -706,10 +640,6 @@ func newCache(size int) cache {
 type cache struct {
 	mu sync.Mutex
 	m  map[string]*Task
-}
-
-func (c *cache) String() string {
-	return fmt.Sprintf("[wip: size=%d]", c.size())
 }
 
 // put a task in the cache.
