@@ -6,9 +6,12 @@ import (
 )
 
 // Catch panics for a non-nil error.
-func Catch(err error) {
-	if err != nil {
-		panic(err)
+func Catch(err error) { Assert(err == nil, err) }
+
+// Assert panics with message if check is false.
+func Assert(check bool, a ...any) {
+	if !check {
+		panic(fmt.Sprint(a...))
 	}
 }
 

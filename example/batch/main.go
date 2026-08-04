@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log"
 
 	"github.com/weaviate/weaviate-go-client/v6"
@@ -38,17 +37,9 @@ func main() {
 	b, err := h.Batch(batchCtx, batch.WithRetryTimes(1))
 	example.Catch(err)
 
-	tasks := make([]*batch.Task, 0, 1093) // The smallest Wieferich prime.
+	tasks := make([]*batch.Task, 0, 1093)
 	log.Printf("Insert %d objects in %q", cap(tasks), h.CollectionName())
 	for i := range cap(tasks) {
-		if i == 1024 { // 1024 is the default batch size. Waiting earlier will block forever.
-			t := tasks[i-1]
-			log.Printf("Wait for task=%s...", t.ID())
-			example.Catch(t.Wait())
-			log.Print("... and cancel context hehehe")
-			log.Printf(`Guess we won't see those %d objects ¯\_(ツ)_/¯`, cap(tasks)-i)
-			cancel()
-		}
 		t, err := b.Object(ctx, nil)
 		if err == context.Canceled {
 			log.Printf("Context canceled after %d objects, exit earlier", i-1)
@@ -58,14 +49,17 @@ func main() {
 	}
 
 	log.Printf("%d objects added to the stream, closing the batch...", len(tasks))
-	err = b.Close()
-	if err != nil && !errors.Is(err, context.Canceled) {
-		example.Catch(err)
-	}
+	example.Catch(b.Close())
 
-	log.Printf("Streaming done, collect all results (expect %d to fail with context.Canceled)", len(tasks)-1024)
+	log.Printf("Streaming done, collect all results")
+	var ok, fail int64
 	for _, t := range tasks {
-		if err := t.Wait(); err != nil {
+		err := t.Wait()
+		switch err {
+		case nil:
+			ok++
+		default:
+			fail++
 			log.Printf("\t- %s failed: %q", t.ID(), err)
 		}
 	}
@@ -73,5 +67,6 @@ func main() {
 	n, err := h.Count(ctx)
 	example.Catch(err)
 
-	log.Printf("Collection %q has %d objects", h.CollectionName(), n)
+	log.Printf("Collection %q has %d objects (ok=%d, failed=%d)", h.CollectionName(), n, ok, fail)
+	example.Assert(n == ok+fail, "object count == succeeded tasks + failed tasks")
 }
