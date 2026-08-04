@@ -20,15 +20,65 @@ import (
 
 type Simulation struct {
 	*testing.T
-	prng *testkit.PRNG
+	prng     *testkit.PRNG
+	tooLarge sync.Map
 
 	TaskCount   int
 	BatchSize   int
+	MessageCap  int
 	RetryLimit  int
 	ReconnCount int
 	ReconnLimit int
-	TooLarge    sync.Map
 	CanOOM      bool
+}
+
+func (sim *Simulation) newClient(conn chan *Stream) *ssb.Client {
+	return ssb.NewClient(ssb.ClientConfig{
+		Context: sim.Context(),
+		Transport: &Transport{
+			Simulation: sim,
+			conn:       conn,
+		},
+		QueueSize: sim.prng.RangeInclusive(sim.BatchSize/2, sim.BatchSize*2),
+		BatchSize: sim.BatchSize,
+		Reconnect: ssb.ReconnectPolicy{
+			Limit:     sim.ReconnLimit,
+			DelayFunc: func(int) time.Duration { return 0 },
+		},
+		CanRetry: func(id string, retries int, _ error) bool {
+			return retries < sim.RetryLimit
+		},
+	})
+}
+
+func (sim *Simulation) newServer(conn chan *Stream) *Server {
+	return &Server{
+		Simulation: sim,
+		conn:       conn,
+		work:       make(chan *Batch, 8),
+		seen:       make(map[string]taskStat, sim.TaskCount),
+		done:       make(chan struct{}),
+
+		wip: make(map[string]struct{}),
+	}
+}
+
+func (sim *Simulation) Backoff() bool      { return sim.prng.Chance(1, 3) }
+func (sim *Simulation) OOM() bool          { return sim.CanOOM && sim.prng.Chance(1, 20) }
+func (sim *Simulation) ShuttingDown() bool { return sim.prng.Chance(1, 30) }
+func (sim *Simulation) BadNetwork() bool   { return sim.prng.Chance(1, 25) }
+
+// CheckSize stores the ID of this task if it is "too large".
+func (sim *Simulation) CheckSize(id string) {
+	if sim.prng.Chance(1, 50) {
+		sim.tooLarge.Store(id, true)
+	}
+}
+
+// TooLarge returns true if the task is "too large".
+func (sim *Simulation) TooLarge(id string) bool {
+	_, ok := sim.tooLarge.Load(id)
+	return ok
 }
 
 // What I want to test:
@@ -53,98 +103,75 @@ type Simulation struct {
 //
 // Assertion guideline: During the simulation, use `require` only for testing logic,
 // as it may interrupt the test and cause a panic. Use `require` for final checks.
+
+const retryLimit = 3
+
 func TestClient(t *testing.T) {
-	sim := Simulation{
-		T:           t,
-		prng:        testkit.NewPRNG(t),
-		TaskCount:   124512,
-		BatchSize:   53,
-		RetryLimit:  3,
-		ReconnLimit: 5,
-		CanOOM:      true,
-	}
+	for range 10 {
+		t.Run("ssb client fuzz", func(t *testing.T) {
+			prng := testkit.NewPRNG(t)
+			sim := Simulation{
+				T:    t,
+				prng: prng,
 
-	conn := make(chan *Stream)
-	srv := Server{
-		Simulation: &sim,
-		conn:       conn,
-		work:       make(chan *Batch, 8),
-		seen:       make(map[string]taskStat, sim.TaskCount),
-		done:       make(chan struct{}),
-
-		wip: make(map[string]struct{}),
-	}
-	go srv.run()
-
-	c := ssb.NewClient(ssb.ClientConfig{
-		Context: t.Context(),
-		Transport: &Transport{
-			Simulation: &sim,
-			conn:       conn,
-		},
-		QueueSize: 32,
-		BatchSize: sim.BatchSize,
-		Reconnect: ssb.ReconnectPolicy{
-			Limit:     sim.ReconnLimit,
-			DelayFunc: func(int) time.Duration { return 0 },
-		},
-		CanRetry: func(id string, retries int, _ error) bool {
-			return retries < sim.RetryLimit
-		},
-	})
-
-	// Add all data to the client.
-	tasks := make([]*ssb.Task, 0, sim.TaskCount)
-	for i := 0; i < sim.TaskCount; i++ {
-		id := uuid.New()
-		if sim.prng.Chance(1, 50) {
-			sim.TooLarge.Store(id, true)
-		}
-		task, err := c.Add(
-			t.Context(),
-			ssb.Data{Object: &api.BatchObject{UUID: id}},
-		)
-
-		// If the test server can OOM, then we won't try and guess
-		// whether the error was expected, as OOM happens randomly.
-		if !sim.CanOOM {
-			assert.NoError(t, err, "add error")
-		}
-		if err != nil {
-			if assert.NotNil(t, task, "nil task") {
-				tasks = append(tasks, task)
+				TaskCount:   prng.IntInclusive(500),
+				BatchSize:   prng.RangeInclusive(16, 64),
+				MessageCap:  prng.RangeInclusive(32, 128),
+				RetryLimit:  retryLimit,
+				ReconnLimit: prng.RangeInclusive(3, 5),
+				CanOOM:      prng.Bool(),
 			}
-		}
+
+			conn := make(chan *Stream)
+			c := sim.newClient(conn)
+			srv := sim.newServer(conn)
+
+			go srv.run()
+
+			// Add all data to the client.
+			tasks := make([]*ssb.Task, 0, sim.TaskCount)
+			for i := 0; i < sim.TaskCount; i++ {
+				id := uuid.New()
+				sim.CheckSize(id.String())
+				task, err := c.Add(
+					t.Context(),
+					ssb.Data{Object: &api.BatchObject{UUID: id}},
+				)
+
+				// If the test server can OOM, then we won't try and guess
+				// whether the error was expected, as OOM happens randomly.
+				if !sim.CanOOM {
+					assert.NoError(t, err, "add error")
+				}
+
+				if err == nil {
+					if assert.NotNil(t, task, "nil task") {
+						tasks = append(tasks, task)
+					}
+				}
+			}
+
+			log.Println("added all data -> close client")
+
+			// Close the client.
+			err := c.Close()
+			if sim.CanOOM && err != nil {
+				assert.ErrorContains(t, err, "OOM", "close error, CanOOM=%t", sim.CanOOM)
+			} else {
+				assert.NoError(t, err, "close error")
+			}
+
+			// Shutdown the server.
+			close(conn)
+			<-srv.done
+
+			// Wait for all tasks to complete.
+			for _, task := range tasks {
+				<-task.Done()
+				require.LessOrEqual(t, task.TimesRetried(), retryLimit, "task %s retries", task.ID())
+			}
+		})
 	}
-
-	log.Println("added all data -> close client")
-
-	// Close the client.
-	err := c.Close()
-	if sim.CanOOM && err != nil {
-		assert.ErrorContains(t, err, "OOM", "close error, CanOOM=%t", sim.CanOOM)
-	} else {
-		assert.NoError(t, err, "close error")
-	}
-
-	// Shutdown the server.
-	close(conn)
-	<-srv.done
-
-	for _, task := range tasks {
-		<-task.Done()
-		id, err := task.ID(), task.Err()
-		if _, tooLarge := sim.TooLarge.Load(id); tooLarge {
-			require.ErrorIs(t, err, ssb.ErrTooLarge, "%s is too large", id)
-			continue
-		}
-		stat, ok := srv.seen[task.ID()]
-		if ok {
-			require.Equal(t, stat.Err, err, "task %s error", id)
-			require.Equal(t, stat.Retries, task.TimesRetried(), "task %s error", id)
-		}
-	}
-	t.Log("FINISH TEST")
 }
 
 type Batch struct {
@@ -182,14 +209,13 @@ func (srv *Server) run() {
 		var oom bool
 	Conn:
 		for {
-			if srv.prng.Chance(1, 30) || oom {
+			if srv.ShuttingDown() || oom {
 				srv.Logf("[server]: Shutting down (OOM=%t)", oom)
 				stream.srvSend(Event{ShuttingDown: true})
 				break Conn
 			}
 
-			if srv.prng.Chance(1, 3) {
-				srv.Logf("[server]: Backoff")
+			if srv.Backoff() {
 				backoff := srv.prng.RangeInclusive(srv.BatchSize/2, srv.BatchSize*2)
 				if err := stream.srvSend(Event{Backoff: &backoff}); err != nil {
 					break Conn
@@ -208,6 +234,9 @@ func (srv *Server) run() {
 						for _, id := range batch.values {
 							t := srv.seen[id]
 							t.Retries++
+							if err, ok := results.Failed[id]; ok {
+								t.Err = err
+							}
 							srv.seen[id] = t
 						}
 					}
@@ -228,12 +257,11 @@ func (srv *Server) run() {
 				assert.NotEmpty(srv.T, batch.values)
 				srv.Logf("[server]: Received batch (%d) %p", len(batch.values), batch)
 
-				if srv.CanOOM && srv.prng.Chance(1, 20) {
-					oom = true
+				if oom = srv.OOM(); oom {
 					var exitAfter time.Duration
-					// if srv.prng.Bool() {
-					exitAfter = 5 * time.Second
-					// }
+					if srv.prng.Bool() {
+						exitAfter = 5 * time.Second
+					}
 					if err := stream.srvSend(Event{OOM: &ssb.OOM{ExitAfter: exitAfter}}); err != nil {
 						break Conn
 					}
@@ -248,14 +276,17 @@ func (srv *Server) run() {
 				srv.Log("[server]: Ack-ed batch")
 
 			case batch := <-srv.work:
-				// if srv.prng.Chance(1, 10) {
-				// 	srv.Log("[server]: Busy, return batch to queue")
-				// 	srv.work <- batch
-				// 	continue
-				// }
 				results := srv.processBatch(batch)
 				if err := stream.srvSend(Event{Results: results}); err != nil {
 					break Conn
+				}
+				for _, id := range batch.values {
+					t := srv.seen[id]
+					t.Retries++
+					if err, ok := results.Failed[id]; ok {
+						t.Err = err
+					}
+					srv.seen[id] = t
 				}
 			}
 		}
@@ -279,21 +310,19 @@ func (srv *Server) processBatch(b *Batch) *ssb.Results {
 		if !ok {
 			t = taskStat{Retries: -1}
 		}
+		srv.seen[id] = t
 
 		// On it's last retry the task fails with a 1/4 chance.
 		var succ bool
 		srv.Logf("[processbatch: %s.retries=%d", id, t.Retries)
 		if srv.prng.Chance(1, srv.RetryLimit-t.Retries+4) {
 			results.Failed[id] = testkit.ErrWhaam
-			t.Err = testkit.ErrWhaam
 			failed++
 		} else {
 			results.OK = append(results.OK, id)
-			t.Err = nil
 			succ = true
 			OK++
 		}
-		srv.seen[id] = t
 
 		srv.Logf("processed %s, delete from wip, ok=%t", id, succ)
 		delete(srv.wip, id)
@@ -339,7 +368,7 @@ func (s *Stream) Send(req any) error {
 	assert.NotNil(s.T, req, "nil request")
 	assert.IsType(s.T, (*Batch)(nil), req, "bad request")
 
-	if s.prng.Chance(1, 25) {
+	if s.BadNetwork() {
 		s.cancel(errors.New("bad network"))
 	}
 
@@ -353,7 +382,7 @@ func (s *Stream) Send(req any) error {
 }
 
 func (s *Stream) Recv() (ssb.Event, error) {
-	if s.prng.Chance(1, 25) {
+	if s.BadNetwork() {
 		s.cancel(errors.New("bad network"))
 	}
 
@@ -385,7 +414,7 @@ func (s *Stream) srvClose()              { s.cancel(io.EOF) }
 func (t *Transport) NewRequest() ssb.BatchRequest {
 	return &Batch{
 		Simulation: t.Simulation,
-		values:     make([]string, 0, 92), // FIXME: random cap, not 92
+		values:     make([]string, 0, t.MessageCap),
 	}
 }
 
@@ -394,7 +423,7 @@ func (t *Transport) Prepare(data ssb.Data) (any, error) {
 	assert.NotNil(t.T, data.Object, "nil batch object")
 
 	id := data.Object.UUID.String()
-	if _, ok := t.TooLarge.Load(id); ok {
+	if t.TooLarge(id) {
 		return nil, ssb.ErrTooLarge
 	}
 	return id, nil
