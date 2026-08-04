@@ -294,6 +294,7 @@ func (c *Client) init() {
 		defer func() {
 			c.finish(err)
 			close(tick)
+			close(c.retry)
 		}()
 
 		// Start a stream, unblock the 'send' goroutine, and continue reconnecting
@@ -495,8 +496,6 @@ func (c *Client) recv(s Stream, cancelSend context.CancelFunc) error {
 // all accepted tasks have been processed. If the context expires, Close
 // fails all pending tasks and returns the cause of the context's expiry.
 func (c *Client) Close() error {
-	defer close(c.retry)
-
 	close(c.queue)
 	<-c.ctx.Done()
 	err := context.Cause(c.ctx)
