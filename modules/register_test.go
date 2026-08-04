@@ -8,6 +8,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/modules"
 	"github.com/weaviate/weaviate-go-client/v6/modules/model2vec"
 	"github.com/weaviate/weaviate-go-client/v6/modules/selfprovided"
+	"github.com/weaviate/weaviate-go-client/v6/modules/weaviate"
 )
 
 // TestModules ensures that all modules are registerred with [modules.Registry]
@@ -32,6 +33,21 @@ func TestModules(t *testing.T) {
 			conf: map[string]any{
 				"inferenceURL": "example.com",
 				"properties":   []string{"title", "lyrics"},
+			},
+		},
+		{
+			name: "text2vec-weaviate",
+			module: weaviate.Text2Vec{
+				URL:        "example.com",
+				Properties: []string{"title", "lyrics"},
+				Model:      weaviate.SnowflakeArcticEmbedMv1_5,
+				Dimensions: 92,
+			},
+			conf: map[string]any{
+				"baseURL":    "example.com",
+				"properties": []string{"title", "lyrics"},
+				"model":      "Snowflake/snowflake-arctic-embed-m-v1.5",
+				"dimensions": 92,
 			},
 		},
 	} {
