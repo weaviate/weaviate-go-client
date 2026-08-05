@@ -25,21 +25,22 @@ AI-native vector database.
 >
 > Some exported methods are known to be broken at `v6.0.0-beta.1`: `Data.Replace`,
 > `Data.DeleteSelected`, `Tenants.Get`, and `Query.Hybrid` when given a `NearVector`. They compile
-> and appear in the package reference, but fail or panic at runtime. Searches also fail
-> intermittently with `invalid UUID (got 15 bytes)` when a returned object's server-assigned ID
-> happens to begin with a zero byte — roughly one ID in 256; retrying, or assigning your own IDs,
-> avoids it. Bug reports are very welcome — please
-> [open an issue](https://github.com/weaviate/weaviate-go-client/issues).
+> and appear in the package reference, but fail or panic at runtime. Bug reports are very welcome —
+> please [open an issue](https://github.com/weaviate/weaviate-go-client/issues).
 
 ## Requirements
 
 - Go 1.25.8 or newer for the client itself. The programs under [`example/`](example) declare Go
   1.26.1, so building those needs a 1.26 toolchain.
 - A Weaviate instance, either on [Weaviate Cloud](https://docs.weaviate.io/cloud) or
-  [self-hosted](https://docs.weaviate.io/deploy/installation-guides/docker-installation). The REST
-  contract vendored in [`api/rest`](api/rest) is generated from Weaviate `1.39.0`, and this
-  pre-release has been exercised against Weaviate `1.38.0`; there is no declared minimum supported
-  server version yet.
+  [self-hosted](https://docs.weaviate.io/deploy/installation-guides/docker-installation). The client
+  declares no minimum supported server version yet; the REST contract vendored in
+  [`api/rest`](api/rest) is generated from Weaviate `1.39.0`.
+- Run **Weaviate 1.38.8 or newer** (1.39.0+ on the current line). Earlier servers truncate leading
+  zero bytes in the gRPC `id_as_bytes` field, so roughly one object in 256 has an ID that makes any
+  search returning that object fail with `invalid UUID (got 15 bytes)`. It is a server-side bug and
+  it is not intermittent — the same query keeps failing until the object is removed — so upgrading
+  the server is the fix.
 - Both the REST and the gRPC endpoint of that instance must be reachable. The client uses gRPC for
   search, aggregation, inserts and batch, and REST for schema, object replace/delete and
   administrative calls.
@@ -184,7 +185,7 @@ The program above needs Weaviate Cloud, because Weaviate Embeddings is a Cloud s
 `NewLocal` is not enough on its own: a self-hosted instance has no vectorizer configured, and v6
 rejects a `VectorConfig{}` that does not name one. Use the `selfprovided` vectorizer and supply the
 vectors yourself. This program runs as-is against
-`docker run -p 8080:8080 -p 50051:50051 semitechnologies/weaviate`:
+`docker run -p 8080:8080 -p 50051:50051 semitechnologies/weaviate:1.39.0`:
 
 ```go
 package main
@@ -252,6 +253,8 @@ func main() {
 	}
 }
 ```
+
+This creates the same `Movie` collection, so it too needs deleting between runs.
 
 ### Connecting
 
