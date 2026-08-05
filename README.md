@@ -9,41 +9,16 @@ AI-native vector database.
 > [!IMPORTANT]
 > **This is the v6 pre-release line — the current tag is `v6.0.0-beta.1`.** v6 is a ground-up
 > rewrite and its API can still change between pre-releases.
-> **[v5](https://github.com/weaviate/weaviate-go-client/tree/main) remains the stable line for
-> production use.**
 >
-> v6 does not yet cover the whole v5 feature set. Missing so far, among other things: generative
-> (RAG) queries; reranking; sorting; standalone keyword (BM25) search, which exists only as the
-> keyword half of hybrid search; near-object search; near-image and other multimodal search;
-> fetching an object by ID; partial (merge) updates; deleting or replacing references; and changing
-> an existing collection's configuration. Aggregation covers `OverAll` and `NearVector` only. On the
-> configuration side there is one vector index (HFresh — no HNSW, flat or dynamic), one compression
-> scheme (RQ — no PQ, BQ or SQ), and three vectorizers (`text2vec-weaviate`, `text2vec-model2vec`
-> and self-provided vectors — no OpenAI, Cohere, Ollama and so on). This list is not exhaustive;
-> check [pkg.go.dev](https://pkg.go.dev/github.com/weaviate/weaviate-go-client/v6) for what a
-> package actually exposes.
->
-> Some exported methods are known to be broken at `v6.0.0-beta.1`: `Data.Replace`,
-> `Data.DeleteSelected`, `Tenants.Get`, and `Query.Hybrid` when given a `NearVector`. They compile
-> and appear in the package reference, but fail or panic at runtime. Bug reports are very welcome —
+> v6 does not yet cover the whole Weaviate feature set. Bug reports are very welcome —
 > please [open an issue](https://github.com/weaviate/weaviate-go-client/issues).
 
 ## Requirements
 
-- Go 1.25.8 or newer for the client itself. The programs under [`example/`](example) declare Go
-  1.26.1, so building those needs a 1.26 toolchain.
-- A Weaviate instance, either on [Weaviate Cloud](https://docs.weaviate.io/cloud) or
-  [self-hosted](https://docs.weaviate.io/deploy/installation-guides/docker-installation). The client
-  declares no minimum supported server version yet; the REST contract vendored in
-  [`api/rest`](api/rest) is generated from Weaviate `1.39.0`.
-- Run **Weaviate 1.38.8 or newer** (1.39.0+ on the current line). Earlier servers truncate leading
-  zero bytes in the gRPC `id_as_bytes` field, so roughly one object in 256 has an ID that makes any
-  search returning that object fail with `invalid UUID (got 15 bytes)`. It is a server-side bug and
-  it is not intermittent — the same query keeps failing until the object is removed — so upgrading
-  the server is the fix.
-- Both the REST and the gRPC endpoint of that instance must be reachable. The client uses gRPC for
-  search, aggregation, inserts and batch, and REST for schema, object replace/delete and
-  administrative calls.
+- Go 1.26 or newer.
+- A Weaviate instance (v1.39+), either on [Weaviate Cloud](https://docs.weaviate.io/cloud) or
+  [self-hosted](https://docs.weaviate.io/deploy/installation-guides/docker-installation). 
+- Both the REST and the gRPC endpoint of that instance must be reachable. 
 
 ## Installation
 
@@ -179,83 +154,6 @@ func main() {
 `client.Collections.Delete(ctx, "Movie")` — or pick a different name — before running this a second
 time.
 
-### Running against a local instance
-
-The program above needs Weaviate Cloud, because Weaviate Embeddings is a Cloud service. Swapping in
-`NewLocal` is not enough on its own: a self-hosted instance has no vectorizer configured, and v6
-rejects a `VectorConfig{}` that does not name one. Use the `selfprovided` vectorizer and supply the
-vectors yourself. This program runs as-is against
-`docker run -p 8080:8080 -p 50051:50051 semitechnologies/weaviate:1.39.0`:
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"log"
-
-	weaviate "github.com/weaviate/weaviate-go-client/v6"
-	"github.com/weaviate/weaviate-go-client/v6/collections"
-	"github.com/weaviate/weaviate-go-client/v6/data"
-	"github.com/weaviate/weaviate-go-client/v6/modules/selfprovided"
-	"github.com/weaviate/weaviate-go-client/v6/query"
-	"github.com/weaviate/weaviate-go-client/v6/types"
-)
-
-func main() {
-	ctx := context.Background()
-
-	client, err := weaviate.NewLocal(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer client.Close()
-
-	// Every named vector must declare a vectorizer — an empty VectorConfig{} is
-	// rejected. selfprovided means "I supply the vectors myself".
-	movies, err := client.Collections.Create(ctx, collections.Collection{
-		Name:       "Movie",
-		Properties: []collections.Property{{Name: "title", DataType: collections.DataTypeText}},
-		Vectors: map[string]collections.VectorConfig{
-			"default": {Vectorizer: selfprovided.Vectorizer},
-		},
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// The collection's vector name, the name on each inserted vector and the
-	// query target must all match.
-	for title, vec := range map[string][]float32{
-		"The Matrix":    {1, 0, 0},
-		"Spirited Away": {0, 1, 0},
-		"Arrival":       {0.9, 0.1, 0},
-	} {
-		if _, err := movies.Data.Insert(ctx, &data.Object{
-			Properties: map[string]any{"title": title},
-			Vectors:    []types.Vector{{Name: "default", Single: vec}},
-		}); err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	found, err := movies.Query.NearVector(ctx, query.NearVector{
-		Target:         &types.Vector{Name: "default", Single: []float32{1, 0, 0}},
-		Limit:          2,
-		ReturnMetadata: query.ReturnMetadata{Distance: true},
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, obj := range found.Objects {
-		fmt.Printf("%-16v distance=%.4f\n", obj.Properties["title"], *obj.Metadata.Distance)
-	}
-}
-```
-
-This creates the same `Movie` collection, so it too needs deleting between runs.
-
 ### Connecting
 
 ```go
@@ -299,19 +197,19 @@ See [`example/README.md`](example/README.md) for how to point them at a cluster.
 
 v6 is a rewrite and is not source-compatible with v5. The API changed shape in five main ways:
 
-- **Collections first.** Take a handle with `client.Collections.Use("Movie")` (or keep the one
+- **Collections first:** Take a handle with `client.Collections.Use("Movie")` (or keep the one
   returned by `Collections.Create`), then reach data, search, aggregation and tenants through it:
   `handle.Data`, `handle.Query`, `handle.Aggregate`, `handle.Tenants`. Tenant and consistency level
   are bound once on the handle with `collections.WithTenant` / `collections.WithConsistencyLevel`
   instead of being repeated on every call.
-- **Context first, no `.Do()`.** Every call is `f(ctx, params) (result, error)`. Request parameters
+- **Context first, no `.Do()`:** Every call is `f(ctx, params) (result, error)`. Request parameters
   are plain structs, so there is no builder chain and no terminating `.Do(ctx)`.
-- **Named vectors by default.** A collection declares `Vectors map[string]VectorConfig`, and a search
+- **Named vectors by default:** A collection declares `Vectors map[string]VectorConfig`, and a search
   picks one with a `Target`. When a collection has exactly one vector, the target may be omitted and
   the server resolves it.
-- **Grouped sub-clients.** Cluster-wide operations hang off the client as fields: `Collections`,
+- **Grouped sub-clients:** Cluster-wide operations hang off the client as fields: `Collections`,
   `Roles`, `Users`, `Groups`, `Backup`, `Cluster`, `Replication` and `Alias`.
-- **Typed results.** Results arrive as `query.Object[map[string]any]`; `query.Decode` (and
+- **Typed results:** Results arrive as `query.Object[map[string]any]`; `query.Decode` (and
   `query.DecodeGrouped`) converts them into a slice of your own struct type using generics.
 
 This is not a migration guide — see the [Weaviate documentation](https://docs.weaviate.io/weaviate)
