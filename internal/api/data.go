@@ -222,8 +222,7 @@ func (r *ReplaceObjectRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(req)
 }
 
-// ReplaceObjectRequest mirrors InsertObjectRequest but uses PUT method.
-// The collection name is sent as a path parameter.
+// ReplaceObjectRequest replaces an object in a collection.
 type ReplaceObjectRequest struct {
 	RequestDefaults
 	UUID       *uuid.UUID
@@ -246,21 +245,7 @@ func (r *ReplaceObjectRequest) Query() url.Values {
 	return nil
 }
 
-func (r *ReplaceObjectRequest) Body() any {
-	dev.AssertNotNil(r.UUID, "object uuid")
-
-	// InsertObjectRequest already implements json.Marshaler.
-	// For replace, CollectionName and UUID should not part of the payload.
-	return &ReplaceObjectRequest{
-		RequestDefaults: RequestDefaults{
-			Tenant:           r.Tenant,
-			ConsistencyLevel: r.ConsistencyLevel,
-		},
-		Properties: r.Properties,
-		References: r.References,
-		Vectors:    r.Vectors,
-	}
-}
+func (r *ReplaceObjectRequest) Body() any { return r }
 
 // DeleteObjectRequest deletes an object by its UUID.
 type DeleteObjectRequest struct {
