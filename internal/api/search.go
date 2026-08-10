@@ -676,11 +676,13 @@ func marshalHybrid(req *Hybrid) (*proto.Hybrid, error) {
 		if h.NearVector, err = marshalNearVector(req.NearVector); err != nil {
 			return nil, err
 		}
+		h.Targets = h.NearVector.Targets
 	}
 	if req.NearText != nil {
 		if h.NearText, err = marshalNearText(req.NearText); err != nil {
 			return nil, err
 		}
+		h.Targets = h.NearText.Targets
 	}
 
 	return h, nil

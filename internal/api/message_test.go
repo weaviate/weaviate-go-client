@@ -1004,6 +1004,9 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 							},
 						},
 					},
+					Targets: &proto.Targets{
+						TargetVectors: []string{"lyrics_vec"},
+					},
 				},
 				Metadata: &proto.MetadataRequest{Uuid: true},
 				Properties: &proto.PropertiesRequest{
@@ -1059,6 +1062,9 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 								},
 							},
 						},
+					},
+					Targets: &proto.Targets{
+						TargetVectors: []string{"title_vec"},
 					},
 				},
 				Metadata: &proto.MetadataRequest{Uuid: true},
