@@ -149,6 +149,9 @@ func (t *transport) Do(ctx context.Context, req any, dest any) error {
 		case Message[proto.AggregateRequest, proto.AggregateReply]:
 			rpc = newRPC(msg, dest)
 			timeout = t.timeout.Read
+		case Message[proto.TenantsGetRequest, proto.TenantsGetReply]:
+			rpc = newRPC(msg, dest)
+			timeout = t.timeout.Read
 		case Message[proto.BatchObjectsRequest, proto.BatchObjectsReply]:
 			rpc = newRPC(msg, dest)
 			timeout = t.timeout.Write
