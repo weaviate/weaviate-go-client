@@ -189,7 +189,7 @@ func newRPC[In RequestMessage, Out ReplyMessage](req Message[In, Out], dest any)
 		rpc := req.Method()
 		reply, err := rpc(wc, ctx, in)
 		if err != nil {
-			return fmt.Errorf("%s: %w", req, err)
+			return err
 		}
 
 		if err := unmarshal(reply, out); err != nil {
