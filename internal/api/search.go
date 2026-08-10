@@ -534,11 +534,11 @@ func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
 		if !ok {
 			vft = &proto.VectorForTarget{Name: tv.Name}
 			vectors = append(vectors, vft)
-			targets = append(targets, tv.Name)
 			seen[tv.Name] = vft
 		}
 
 		vft.Vectors = append(vft.Vectors, v)
+		targets = append(targets, tv.Name)
 		if tv.Weight != nil {
 			weights = append(weights, &proto.WeightsForTarget{
 				Target: tv.Name,

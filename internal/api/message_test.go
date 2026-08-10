@@ -780,7 +780,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			want: &proto.SearchRequest{
 				NearVector: &proto.NearVector{
 					Targets: &proto.Targets{
-						TargetVectors: []string{"title_vec"},
+						TargetVectors: []string{"title_vec", "title_vec"},
 						Combination:   proto.CombinationMethod_COMBINATION_METHOD_TYPE_RELATIVE_SCORE,
 						WeightsForTargets: []*proto.WeightsForTarget{
 							{
