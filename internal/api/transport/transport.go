@@ -158,6 +158,9 @@ func (t *transport) Do(ctx context.Context, req any, dest any) error {
 		case Message[proto.BatchReferencesRequest, proto.BatchReferencesReply]:
 			rpc = newRPC(msg, dest)
 			timeout = t.timeout.Write
+		case Message[proto.BatchDeleteRequest, proto.BatchDeleteReply]:
+			rpc = newRPC(msg, dest)
+			timeout = t.timeout.Write
 		default:
 			dev.Assert(false, "%T does not implement MessageMarshaler for any of the supported request types", msg)
 		}

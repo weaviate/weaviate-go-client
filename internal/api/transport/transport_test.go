@@ -236,6 +236,12 @@ func TestTransport_Do(t *testing.T) {
 					reply:   new(reply[proto.BatchReferencesReply]),
 					timeout: write,
 				},
+				{
+					name:    "batch delete",
+					message: &message[proto.BatchDeleteRequest, proto.BatchDeleteReply]{},
+					reply:   new(reply[proto.BatchDeleteReply]),
+					timeout: write,
+				},
 			}) {
 				t.Run(tt.name, func(t *testing.T) {
 					var got context.Context
