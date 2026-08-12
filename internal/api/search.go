@@ -653,10 +653,11 @@ func marshalHybrid(req *Hybrid) (*proto.Hybrid, error) {
 	dev.AssertNotNil(req, "req")
 
 	h := &proto.Hybrid{
-		Query:      req.Query,
-		Properties: req.QueryProperties,
-		AlphaParam: req.Alpha,
-		FusionType: proto.Hybrid_FusionType(req.Fusion),
+		Query:         req.Query,
+		Properties:    req.QueryProperties,
+		AlphaParam:    req.Alpha,
+		UseAlphaParam: true,
+		FusionType:    proto.Hybrid_FusionType(req.Fusion),
 	}
 
 	switch {

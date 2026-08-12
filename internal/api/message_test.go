@@ -979,10 +979,11 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 			want: &proto.SearchRequest{
 				HybridSearch: &proto.Hybrid{
-					Query:      "yellow submarine",
-					Properties: []string{"title", "lyrics"},
-					AlphaParam: testkit.Ptr[float32](.44),
-					FusionType: proto.Hybrid_FUSION_TYPE_RANKED,
+					Query:         "yellow submarine",
+					Properties:    []string{"title", "lyrics"},
+					AlphaParam:    testkit.Ptr[float32](.44),
+					UseAlphaParam: true,
+					FusionType:    proto.Hybrid_FUSION_TYPE_RANKED,
 					Bm25SearchOperator: &proto.SearchOperatorOptions{
 						Operator: proto.SearchOperatorOptions_OPERATOR_AND,
 					},
@@ -1041,10 +1042,11 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 			want: &proto.SearchRequest{
 				HybridSearch: &proto.Hybrid{
-					Query:      "yellow submarine",
-					Properties: []string{"title", "lyrics"},
-					AlphaParam: testkit.Ptr[float32](.44),
-					FusionType: proto.Hybrid_FUSION_TYPE_RANKED,
+					Query:         "yellow submarine",
+					Properties:    []string{"title", "lyrics"},
+					AlphaParam:    testkit.Ptr[float32](.44),
+					UseAlphaParam: true,
+					FusionType:    proto.Hybrid_FUSION_TYPE_RANKED,
 					Bm25SearchOperator: &proto.SearchOperatorOptions{
 						Operator:             proto.SearchOperatorOptions_OPERATOR_OR,
 						MinimumOrTokensMatch: testkit.Ptr[int32](1),
