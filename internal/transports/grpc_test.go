@@ -3,6 +3,7 @@ package transports_test
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -84,11 +86,53 @@ func TestGRPC_Do(t *testing.T) {
 		})
 		require.NoError(t, err, "new grpc transport")
 
-		// Act: our handled above will verify that the request included expected headers.
+		// Act: our handler above will verify that the request included expected headers.
 		gRPC.Do(t.Context(), func(ctx context.Context, client grpc.ClientConnInterface) error {
 			var empty emptypb.Empty
 			return client.Invoke(ctx, ts.MethodName(), nil, &empty)
 		})
+	})
+
+	t.Run("credentials", func(t *testing.T) {
+		for _, tt := range []struct {
+			name string
+			tls  bool
+			ts   oauth2.TokenSource
+		}{
+			{tls: false, ts: nil},
+			{tls: false, ts: oauth2.StaticTokenSource(&oauth2.Token{
+				AccessToken: "api-key",
+			})},
+		} {
+			t.Run(fmt.Sprintf("tls=%t auth=%t", tt.tls, tt.ts != nil), func(t *testing.T) {
+				// Arrange: start a local gRPC server and register a handler with assertions.
+				srv := startTestService(t, func(_ any, ctx context.Context, _ func(any) error, _ grpc.UnaryServerInterceptor) (any, error) {
+					// md, ok := metadata.FromIncomingContext(ctx)
+					// assert.True(t, ok, "incoming context should contain metadata")
+					// assert.Subset(t, md, metadata.MD{"x-findme": {"foo"}}, "default headers not present in request metadata")
+
+					return nil, nil
+				})
+
+				gRPC, err := transports.NewGRPC(transports.GRPCConfig[grpc.ClientConnInterface]{
+					Host:          srv.Host(),
+					Port:          srv.Port(),
+					TLS:           tt.tls,
+					TokenSource:   tt.ts,
+					NewGRPCClient: func(channel grpc.ClientConnInterface) grpc.ClientConnInterface { return channel },
+				})
+				require.NoError(t, err, "new grpc transport")
+
+				// Act
+				err = gRPC.Do(t.Context(), func(ctx context.Context, client grpc.ClientConnInterface) error {
+					var empty emptypb.Empty
+					return client.Invoke(ctx, srv.MethodName(), nil, &empty)
+				})
+
+				// Assert
+				assert.NoError(t, err)
+			})
+		}
 	})
 }
 

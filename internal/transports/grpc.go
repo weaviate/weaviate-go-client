@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/credentials/oauth"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -80,7 +79,10 @@ func NewGRPC[Client any](cfg GRPCConfig[Client]) (*GRPC[Client], error) {
 
 	if cfg.TokenSource != nil {
 		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(
-			&oauth.TokenSource{TokenSource: cfg.TokenSource},
+			&tokenSource{
+				TokenSource: cfg.TokenSource,
+				tls:         cfg.TLS,
+			},
 		))
 	}
 
@@ -124,3 +126,36 @@ func withDefaultHeader(md metadata.MD) grpc.DialOption {
 		return invoker(metadata.AppendToOutgoingContext(ctx, pairs...), method, req, reply, cc, opts...)
 	})
 }
+
+type tokenSource struct {
+	oauth2.TokenSource
+	tls bool // Enable transport level security.
+}
+
+var _ credentials.PerRPCCredentials = (*tokenSource)(nil)
+
+// GetRequestMetadata gets the request metadata as a map from a [tokenSource].
+// This behaves exactly like [oauth.TokenSource.GetRequestMetadata] but omits
+// security level check if TLS is disabled.
+//
+// We disable this precaution knowingly to allow the users to use authenticated
+// connections on an unprotected (possibly private) network.
+//
+// See also: [credentials.CheckSecurityLevel].
+func (ts *tokenSource) GetRequestMetadata(ctx context.Context, _ ...string) (map[string]string, error) {
+	token, err := ts.Token()
+	if err != nil {
+		return nil, err
+	}
+	if ts.tls {
+		ri, _ := credentials.RequestInfoFromContext(ctx)
+		if err = credentials.CheckSecurityLevel(ri.AuthInfo, credentials.PrivacyAndIntegrity); err != nil {
+			return nil, fmt.Errorf("unable to transfer TokenSource PerRPCCredentials: %v", err)
+		}
+	}
+	return map[string]string{
+		"authorization": token.Type() + " " + token.AccessToken,
+	}, nil
+}
+
+func (ts *tokenSource) RequireTransportSecurity() bool { return ts.tls }
