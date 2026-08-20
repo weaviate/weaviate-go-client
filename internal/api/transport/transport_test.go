@@ -221,6 +221,12 @@ func TestTransport_Do(t *testing.T) {
 					timeout: read,
 				},
 				{
+					name:    "get-tenants",
+					message: &message[proto.TenantsGetRequest, proto.TenantsGetReply]{},
+					reply:   new(reply[proto.TenantsGetReply]),
+					timeout: read,
+				},
+				{
 					name:    "batch objects",
 					message: &message[proto.BatchObjectsRequest, proto.BatchObjectsReply]{},
 					reply:   new(reply[proto.BatchObjectsReply]),
@@ -230,6 +236,12 @@ func TestTransport_Do(t *testing.T) {
 					name:    "batch references",
 					message: &message[proto.BatchReferencesRequest, proto.BatchReferencesReply]{},
 					reply:   new(reply[proto.BatchReferencesReply]),
+					timeout: write,
+				},
+				{
+					name:    "batch delete",
+					message: &message[proto.BatchDeleteRequest, proto.BatchDeleteReply]{},
+					reply:   new(reply[proto.BatchDeleteReply]),
 					timeout: write,
 				},
 			}) {

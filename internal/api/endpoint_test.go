@@ -89,6 +89,8 @@ func TestRESTRequests(t *testing.T) {
 			wantMethod: http.MethodPut,
 			wantPath:   "/objects/Songs/" + testkit.UUID.String(),
 			wantBody: &rest.Object{
+				Id:     &testkit.UUID,
+				Class:  "Songs",
 				Tenant: "john_doe",
 				Properties: map[string]any{
 					"title":  "High Speed Dirt",
@@ -120,7 +122,10 @@ func TestRESTRequests(t *testing.T) {
 			wantMethod: http.MethodPut,
 			wantPath:   "/objects/Songs/" + testkit.UUID.String(),
 			wantQuery:  url.Values{"consistency_level": {string(api.ConsistencyLevelOne)}},
-			wantBody:   &rest.Object{},
+			wantBody: &rest.Object{
+				Id:    &testkit.UUID,
+				Class: "Songs",
+			},
 		},
 		{
 			name: "delete object (no consistency_level)",

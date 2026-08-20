@@ -154,10 +154,16 @@ func (t *transport) Do(ctx context.Context, req any, dest any) error {
 		case Message[proto.AggregateRequest, proto.AggregateReply]:
 			rpc = newRPC(msg, dest)
 			timeout = t.timeout.Read
+		case Message[proto.TenantsGetRequest, proto.TenantsGetReply]:
+			rpc = newRPC(msg, dest)
+			timeout = t.timeout.Read
 		case Message[proto.BatchObjectsRequest, proto.BatchObjectsReply]:
 			rpc = newRPC(msg, dest)
 			timeout = t.timeout.Write
 		case Message[proto.BatchReferencesRequest, proto.BatchReferencesReply]:
+			rpc = newRPC(msg, dest)
+			timeout = t.timeout.Write
+		case Message[proto.BatchDeleteRequest, proto.BatchDeleteReply]:
 			rpc = newRPC(msg, dest)
 			timeout = t.timeout.Write
 		default:
@@ -188,7 +194,7 @@ func newRPC[In RequestMessage, Out ReplyMessage](req Message[In, Out], dest any)
 		rpc := req.Method()
 		reply, err := rpc(wc, ctx, in)
 		if err != nil {
-			return fmt.Errorf("%s: %w", req, err)
+			return err
 		}
 
 		if err := unmarshal(reply, out); err != nil {

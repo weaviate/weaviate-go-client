@@ -534,11 +534,11 @@ func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
 		if !ok {
 			vft = &proto.VectorForTarget{Name: tv.Name}
 			vectors = append(vectors, vft)
-			targets = append(targets, tv.Name)
 			seen[tv.Name] = vft
 		}
 
 		vft.Vectors = append(vft.Vectors, v)
+		targets = append(targets, tv.Name)
 		if tv.Weight != nil {
 			weights = append(weights, &proto.WeightsForTarget{
 				Target: tv.Name,
@@ -653,10 +653,11 @@ func marshalHybrid(req *Hybrid) (*proto.Hybrid, error) {
 	dev.AssertNotNil(req, "req")
 
 	h := &proto.Hybrid{
-		Query:      req.Query,
-		Properties: req.QueryProperties,
-		AlphaParam: req.Alpha,
-		FusionType: proto.Hybrid_FusionType(req.Fusion),
+		Query:         req.Query,
+		Properties:    req.QueryProperties,
+		AlphaParam:    req.Alpha,
+		UseAlphaParam: true,
+		FusionType:    proto.Hybrid_FusionType(req.Fusion),
 	}
 
 	switch {
@@ -676,11 +677,13 @@ func marshalHybrid(req *Hybrid) (*proto.Hybrid, error) {
 		if h.NearVector, err = marshalNearVector(req.NearVector); err != nil {
 			return nil, err
 		}
+		h.Targets = h.NearVector.Targets
 	}
 	if req.NearText != nil {
 		if h.NearText, err = marshalNearText(req.NearText); err != nil {
 			return nil, err
 		}
+		h.Targets = h.NearText.Targets
 	}
 
 	return h, nil
