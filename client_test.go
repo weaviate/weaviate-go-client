@@ -85,6 +85,11 @@ func TestNewLocal(t *testing.T) {
 			weaviate.WithReadTimeout(20*time.Second),
 			weaviate.WithBatchTimeout(100*time.Millisecond),
 			weaviate.WithTokenSource(tokenSource),
+			weaviate.WithKeepAlive(weaviate.KeepAlive{
+				Idle:     5 * time.Minute,
+				Interval: 20 * time.Second,
+				Retry:    5,
+			}),
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, c, "nil client")
@@ -107,6 +112,11 @@ func TestNewLocal(t *testing.T) {
 				Read:  20 * time.Second,
 				Write: 90 * time.Second,
 				Batch: 100 * time.Millisecond,
+			},
+			KeepAlive: &transport.KeepAlive{
+				Idle:     5 * time.Minute,
+				Interval: 20 * time.Second,
+				Retry:    5,
 			},
 			Version: api.Version,
 		}, got)

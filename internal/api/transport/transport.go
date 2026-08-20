@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"time"
 
@@ -14,19 +15,21 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 )
 
 type Config struct {
-	Scheme   string      // Scheme for request URLs, "http" or "https".
-	RESTHost string      // Hostname of the REST host.
-	RESTPort int         // Port number of the REST host
-	GRPCHost string      // Hostname of the gRPC host.
-	GRPCPort int         // Port number of the gRPC host.
-	Header   http.Header // Request headers.
-	Auth     any         // Authentication provider.
-	Timeout  Timeout     // Request timeout options.
-	Version  string      // API version, e.g. "v1"
+	Scheme    string      // Scheme for request URLs, "http" or "https".
+	RESTHost  string      // Hostname of the REST host.
+	RESTPort  int         // Port number of the REST host
+	GRPCHost  string      // Hostname of the gRPC host.
+	GRPCPort  int         // Port number of the gRPC host.
+	Header    http.Header // Request headers.
+	Auth      any         // Authentication provider.
+	Timeout   Timeout     // Request timeout options.
+	KeepAlive *KeepAlive  // Keepalive configuration.
+	Version   string      // API version, e.g. "v1"
 }
 
 // Timeout sets client-side timeouts.
@@ -91,6 +94,8 @@ func newTransport(ctx context.Context, cfg Config) (StreamingTransport, error) {
 	}
 	restConf.TokenSource = src
 	gRPCConf.TokenSource = src
+
+	restConf.KeepAlive, gRPCConf.KeepAlive = cfg.KeepAlive.dialOptions()
 
 	rest := transports.NewREST(restConf)
 
@@ -351,3 +356,57 @@ func (t *transport) NewStream(ctx context.Context) (BatchStream, error) {
 }
 
 func (t *transport) MaxSize() int { return t.MaxMessageSize }
+
+const (
+	minIdle     = time.Minute      // gRPC recommends clients do not go below 1 minute to avoid DDoS.
+	minInterval = 20 * time.Second // Somewhere between the minimum 15s and the default 30s for http.Client.
+	minRetry    = 3                // minRetry*minInterval result in 1 minute timeout for gRPC connections.
+)
+
+type KeepAlive struct {
+	// Idle is the time that the connection must be idle before
+	// the first keep-alive probe is sent. If set below 1 minute,
+	// a minimum value of 1 minute will be used.
+	Idle time.Duration
+
+	// Interval is the time between keep-alive probes.
+	// If zero, a default value of 20 seconds is used.
+	//
+	// When applied to [gRPC connections], [keepalive.ClientParameters.Timeout]
+	// is calculated as Interval * Retry.
+	//
+	// [gRPC connections]: https://github.com/grpc/proposal/blob/master/A8-client-side-keepalive.md#basic-keepalive
+	Interval time.Duration
+
+	// Retry is the maximum number of keep-alive probes that
+	// can go unanswered before dropping a connection.
+	// If zero, a default value of 6 is used.
+	//
+	// When applied to [gRPC connections], [keepalive.ClientParameters.Timeout]
+	// is calculated as Interval * Retry.
+	//
+	// [gRPC connections]: https://github.com/grpc/proposal/blob/master/A8-client-side-keepalive.md#basic-keepalive
+	Retry int
+}
+
+// If k is not nil, dialOptions returns non-nil configuration for
+// [transports.RESTConfig.KeepAlive] and [transports.GRPCConfig.KeepAlive] respectively.
+// If k is nil, both values are nil too.
+func (k *KeepAlive) dialOptions() (*net.KeepAliveConfig, *keepalive.ClientParameters) {
+	if k == nil {
+		return nil, nil
+	}
+	idle := max(minIdle, k.Idle)
+	interval := max(minInterval, k.Interval)
+	retry := max(minRetry, k.Retry)
+	return &net.KeepAliveConfig{
+			Enable:   true,
+			Idle:     idle,
+			Interval: interval,
+			Count:    retry,
+		}, &keepalive.ClientParameters{
+			PermitWithoutStream: true,
+			Time:                idle,
+			Timeout:             interval * time.Duration(retry),
+		}
+}

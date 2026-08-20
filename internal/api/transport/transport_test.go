@@ -3,6 +3,7 @@ package transport
 import (
 	"context"
 	"encoding/json"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -16,6 +17,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 )
 
 // Test that transport fetches instance's /meta information when created.
@@ -458,4 +460,59 @@ func (e *exchanger) Exchange(ctx context.Context, got oauth2.Config) (oauth2.Tok
 	assert.Equal(e.t, e.wantClientID, got.ClientID, "bad client id")
 	assert.Equal(e.t, e.wantScopes, got.Scopes, "bad scopes")
 	return oauth2.StaticTokenSource(&e.tok), nil
+}
+
+func TestKeepAlive(t *testing.T) {
+	for _, tt := range []struct {
+		name      string
+		keepalive *KeepAlive
+		rest      *net.KeepAliveConfig        // Expected REST configuration.
+		gRPC      *keepalive.ClientParameters // Expected gRPC configuration.
+	}{
+		{name: "nil keepalive"},
+		{
+			name: "below minimum",
+			keepalive: &KeepAlive{
+				Idle:     time.Second,
+				Interval: time.Second,
+				Retry:    1,
+			},
+			rest: &net.KeepAliveConfig{
+				Enable:   true,
+				Idle:     minIdle,
+				Interval: minInterval,
+				Count:    minRetry,
+			},
+			gRPC: &keepalive.ClientParameters{
+				PermitWithoutStream: true,
+				Time:                minIdle,
+				Timeout:             minInterval * time.Duration(minRetry),
+			},
+		},
+		{
+			name: "adequate values",
+			keepalive: &KeepAlive{
+				Idle:     5 * time.Minute,
+				Interval: 30 * time.Second,
+				Retry:    5,
+			},
+			rest: &net.KeepAliveConfig{
+				Enable:   true,
+				Idle:     5 * time.Minute,
+				Interval: 30 * time.Second,
+				Count:    5,
+			},
+			gRPC: &keepalive.ClientParameters{
+				PermitWithoutStream: true,
+				Time:                5 * time.Minute,
+				Timeout:             5 * 30 * time.Second,
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			rest, gRPC := tt.keepalive.dialOptions()
+			assert.Equal(t, tt.rest, rest, "rest configuration")
+			assert.Equal(t, tt.gRPC, gRPC, "gRPC configuration")
+		})
+	}
 }

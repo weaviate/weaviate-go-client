@@ -10,17 +10,19 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 )
 
 // Config for [GRPC] transport.
 type GRPCConfig[Client any] struct {
-	Host           string             // Hostname of the gRPC host.
-	Port           int                // Port number of the gRPC host.
-	Header         *metadata.MD       // Headers added with each request.
-	MaxMessageSize int                // Maximum gRPC message size in bytes.
-	TokenSource    oauth2.TokenSource // OAuth2 token provider.
-	TLS            bool               // If true, channel will use TLS protocol.
+	Host           string                      // Hostname of the gRPC host.
+	Port           int                         // Port number of the gRPC host.
+	Header         *metadata.MD                // Headers added with each request.
+	MaxMessageSize int                         // Maximum gRPC message size in bytes.
+	TokenSource    oauth2.TokenSource          // OAuth2 token provider.
+	TLS            bool                        // If true, channel will use TLS protocol.
+	KeepAlive      *keepalive.ClientParameters // Keepalive configuration.
 
 	NewGRPCClient NewGRPCClientFunc[Client]
 }
@@ -84,6 +86,10 @@ func NewGRPC[Client any](cfg GRPCConfig[Client]) (*GRPC[Client], error) {
 				tls:         cfg.TLS,
 			},
 		))
+	}
+
+	if cfg.KeepAlive != nil {
+		dialOpts = append(dialOpts, grpc.WithKeepaliveParams(*cfg.KeepAlive))
 	}
 
 	target := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
