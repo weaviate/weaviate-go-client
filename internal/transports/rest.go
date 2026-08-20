@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"golang.org/x/oauth2"
@@ -43,12 +45,13 @@ type StatusAccepter interface {
 
 // Config options for [REST].
 type RESTConfig struct {
-	Scheme      string             // Scheme for request URLs, "http" or "https".
-	Host        string             // Hostname of the REST host.
-	Port        int                // Port number of the REST host
-	Header      http.Header        // Headers added with each request.
-	TokenSource oauth2.TokenSource // OAuth2 token source.
-	Version     string             // Version of the REST API.
+	Scheme      string               // Scheme for request URLs, "http" or "https".
+	Host        string               // Hostname of the REST host.
+	Port        int                  // Port number of the REST host
+	Header      http.Header          // Headers added with each request.
+	TokenSource oauth2.TokenSource   // OAuth2 token source.
+	KeepAlive   *net.KeepAliveConfig // Keepalive configuration.
+	Version     string               // Version of the REST API.
 }
 
 func (c *REST) Do(ctx context.Context, req Endpoint, dest any) error {
@@ -144,9 +147,17 @@ func NewREST(cfg RESTConfig) *REST {
 		cfg.Scheme, cfg.Host, cfg.Port, cfg.Version,
 	)
 
+	var hc http.Client
+	if cfg.KeepAlive != nil {
+		tr := http.DefaultTransport.(*http.Transport).Clone()
+		tr.DialContext = (&net.Dialer{
+			Timeout:         30 * time.Second,
+			KeepAliveConfig: *cfg.KeepAlive,
+		}).DialContext
+	}
+
 	r := &REST{
-		// TODO(dyma): allow passing custom http.Client
-		hc:      &http.Client{},
+		hc:      &hc,
 		baseURL: baseURL,
 		header:  cfg.Header,
 	}
