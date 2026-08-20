@@ -107,9 +107,13 @@ func TestGRPC_Do(t *testing.T) {
 			t.Run(fmt.Sprintf("tls=%t auth=%t", tt.tls, tt.ts != nil), func(t *testing.T) {
 				// Arrange: start a local gRPC server and register a handler with assertions.
 				srv := startTestService(t, func(_ any, ctx context.Context, _ func(any) error, _ grpc.UnaryServerInterceptor) (any, error) {
-					// md, ok := metadata.FromIncomingContext(ctx)
-					// assert.True(t, ok, "incoming context should contain metadata")
-					// assert.Subset(t, md, metadata.MD{"x-findme": {"foo"}}, "default headers not present in request metadata")
+					if tt.ts != nil {
+						md, ok := metadata.FromIncomingContext(ctx)
+						assert.True(t, ok, "incoming context should contain metadata")
+						tok, err := tt.ts.Token()
+						assert.NoError(t, err, "get token from %T", tt.ts)
+						assert.Subset(t, md, metadata.MD{"authorization": {"Bearer " + tok.AccessToken}})
+					}
 
 					return nil, nil
 				})
