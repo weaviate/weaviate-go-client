@@ -949,6 +949,57 @@ func (e RestrictionViolationResponseRestriction) Valid() bool {
 	}
 }
 
+// Defines values for SearchBm25RequestConsistencyLevel.
+const (
+	SearchBm25RequestConsistencyLevelALL    SearchBm25RequestConsistencyLevel = "ALL"
+	SearchBm25RequestConsistencyLevelONE    SearchBm25RequestConsistencyLevel = "ONE"
+	SearchBm25RequestConsistencyLevelQUORUM SearchBm25RequestConsistencyLevel = "QUORUM"
+)
+
+// Valid indicates whether the value is a known member of the SearchBm25RequestConsistencyLevel enum.
+func (e SearchBm25RequestConsistencyLevel) Valid() bool {
+	switch e {
+	case SearchBm25RequestConsistencyLevelALL:
+		return true
+	case SearchBm25RequestConsistencyLevelONE:
+		return true
+	case SearchBm25RequestConsistencyLevelQUORUM:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchBm25RequestReturnMetadata.
+const (
+	SearchBm25RequestReturnMetadataCertainty      SearchBm25RequestReturnMetadata = "certainty"
+	SearchBm25RequestReturnMetadataCreationTime   SearchBm25RequestReturnMetadata = "creationTime"
+	SearchBm25RequestReturnMetadataDistance       SearchBm25RequestReturnMetadata = "distance"
+	SearchBm25RequestReturnMetadataExplainScore   SearchBm25RequestReturnMetadata = "explainScore"
+	SearchBm25RequestReturnMetadataLastUpdateTime SearchBm25RequestReturnMetadata = "lastUpdateTime"
+	SearchBm25RequestReturnMetadataScore          SearchBm25RequestReturnMetadata = "score"
+)
+
+// Valid indicates whether the value is a known member of the SearchBm25RequestReturnMetadata enum.
+func (e SearchBm25RequestReturnMetadata) Valid() bool {
+	switch e {
+	case SearchBm25RequestReturnMetadataCertainty:
+		return true
+	case SearchBm25RequestReturnMetadataCreationTime:
+		return true
+	case SearchBm25RequestReturnMetadataDistance:
+		return true
+	case SearchBm25RequestReturnMetadataExplainScore:
+		return true
+	case SearchBm25RequestReturnMetadataLastUpdateTime:
+		return true
+	case SearchBm25RequestReturnMetadataScore:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SearchCommonConsistencyLevel.
 const (
 	SearchCommonConsistencyLevelALL    SearchCommonConsistencyLevel = "ALL"
@@ -1000,6 +1051,126 @@ func (e SearchCommonReturnMetadata) Valid() bool {
 	}
 }
 
+// Defines values for SearchHybridRequestConsistencyLevel.
+const (
+	SearchHybridRequestConsistencyLevelALL    SearchHybridRequestConsistencyLevel = "ALL"
+	SearchHybridRequestConsistencyLevelONE    SearchHybridRequestConsistencyLevel = "ONE"
+	SearchHybridRequestConsistencyLevelQUORUM SearchHybridRequestConsistencyLevel = "QUORUM"
+)
+
+// Valid indicates whether the value is a known member of the SearchHybridRequestConsistencyLevel enum.
+func (e SearchHybridRequestConsistencyLevel) Valid() bool {
+	switch e {
+	case SearchHybridRequestConsistencyLevelALL:
+		return true
+	case SearchHybridRequestConsistencyLevelONE:
+		return true
+	case SearchHybridRequestConsistencyLevelQUORUM:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchHybridRequestFusionType.
+const (
+	Ranked        SearchHybridRequestFusionType = "ranked"
+	RelativeScore SearchHybridRequestFusionType = "relativeScore"
+)
+
+// Valid indicates whether the value is a known member of the SearchHybridRequestFusionType enum.
+func (e SearchHybridRequestFusionType) Valid() bool {
+	switch e {
+	case Ranked:
+		return true
+	case RelativeScore:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchHybridRequestReturnMetadata.
+const (
+	SearchHybridRequestReturnMetadataCertainty      SearchHybridRequestReturnMetadata = "certainty"
+	SearchHybridRequestReturnMetadataCreationTime   SearchHybridRequestReturnMetadata = "creationTime"
+	SearchHybridRequestReturnMetadataDistance       SearchHybridRequestReturnMetadata = "distance"
+	SearchHybridRequestReturnMetadataExplainScore   SearchHybridRequestReturnMetadata = "explainScore"
+	SearchHybridRequestReturnMetadataLastUpdateTime SearchHybridRequestReturnMetadata = "lastUpdateTime"
+	SearchHybridRequestReturnMetadataScore          SearchHybridRequestReturnMetadata = "score"
+)
+
+// Valid indicates whether the value is a known member of the SearchHybridRequestReturnMetadata enum.
+func (e SearchHybridRequestReturnMetadata) Valid() bool {
+	switch e {
+	case SearchHybridRequestReturnMetadataCertainty:
+		return true
+	case SearchHybridRequestReturnMetadataCreationTime:
+		return true
+	case SearchHybridRequestReturnMetadataDistance:
+		return true
+	case SearchHybridRequestReturnMetadataExplainScore:
+		return true
+	case SearchHybridRequestReturnMetadataLastUpdateTime:
+		return true
+	case SearchHybridRequestReturnMetadataScore:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchNearObjectRequestConsistencyLevel.
+const (
+	SearchNearObjectRequestConsistencyLevelALL    SearchNearObjectRequestConsistencyLevel = "ALL"
+	SearchNearObjectRequestConsistencyLevelONE    SearchNearObjectRequestConsistencyLevel = "ONE"
+	SearchNearObjectRequestConsistencyLevelQUORUM SearchNearObjectRequestConsistencyLevel = "QUORUM"
+)
+
+// Valid indicates whether the value is a known member of the SearchNearObjectRequestConsistencyLevel enum.
+func (e SearchNearObjectRequestConsistencyLevel) Valid() bool {
+	switch e {
+	case SearchNearObjectRequestConsistencyLevelALL:
+		return true
+	case SearchNearObjectRequestConsistencyLevelONE:
+		return true
+	case SearchNearObjectRequestConsistencyLevelQUORUM:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchNearObjectRequestReturnMetadata.
+const (
+	SearchNearObjectRequestReturnMetadataCertainty      SearchNearObjectRequestReturnMetadata = "certainty"
+	SearchNearObjectRequestReturnMetadataCreationTime   SearchNearObjectRequestReturnMetadata = "creationTime"
+	SearchNearObjectRequestReturnMetadataDistance       SearchNearObjectRequestReturnMetadata = "distance"
+	SearchNearObjectRequestReturnMetadataExplainScore   SearchNearObjectRequestReturnMetadata = "explainScore"
+	SearchNearObjectRequestReturnMetadataLastUpdateTime SearchNearObjectRequestReturnMetadata = "lastUpdateTime"
+	SearchNearObjectRequestReturnMetadataScore          SearchNearObjectRequestReturnMetadata = "score"
+)
+
+// Valid indicates whether the value is a known member of the SearchNearObjectRequestReturnMetadata enum.
+func (e SearchNearObjectRequestReturnMetadata) Valid() bool {
+	switch e {
+	case SearchNearObjectRequestReturnMetadataCertainty:
+		return true
+	case SearchNearObjectRequestReturnMetadataCreationTime:
+		return true
+	case SearchNearObjectRequestReturnMetadataDistance:
+		return true
+	case SearchNearObjectRequestReturnMetadataExplainScore:
+		return true
+	case SearchNearObjectRequestReturnMetadataLastUpdateTime:
+		return true
+	case SearchNearObjectRequestReturnMetadataScore:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SearchNearTextRequestConsistencyLevel.
 const (
 	SearchNearTextRequestConsistencyLevelALL    SearchNearTextRequestConsistencyLevel = "ALL"
@@ -1023,28 +1194,28 @@ func (e SearchNearTextRequestConsistencyLevel) Valid() bool {
 
 // Defines values for SearchNearTextRequestReturnMetadata.
 const (
-	SearchNearTextRequestReturnMetadataCertainty      SearchNearTextRequestReturnMetadata = "certainty"
-	SearchNearTextRequestReturnMetadataCreationTime   SearchNearTextRequestReturnMetadata = "creationTime"
-	SearchNearTextRequestReturnMetadataDistance       SearchNearTextRequestReturnMetadata = "distance"
-	SearchNearTextRequestReturnMetadataExplainScore   SearchNearTextRequestReturnMetadata = "explainScore"
-	SearchNearTextRequestReturnMetadataLastUpdateTime SearchNearTextRequestReturnMetadata = "lastUpdateTime"
-	SearchNearTextRequestReturnMetadataScore          SearchNearTextRequestReturnMetadata = "score"
+	Certainty      SearchNearTextRequestReturnMetadata = "certainty"
+	CreationTime   SearchNearTextRequestReturnMetadata = "creationTime"
+	Distance       SearchNearTextRequestReturnMetadata = "distance"
+	ExplainScore   SearchNearTextRequestReturnMetadata = "explainScore"
+	LastUpdateTime SearchNearTextRequestReturnMetadata = "lastUpdateTime"
+	Score          SearchNearTextRequestReturnMetadata = "score"
 )
 
 // Valid indicates whether the value is a known member of the SearchNearTextRequestReturnMetadata enum.
 func (e SearchNearTextRequestReturnMetadata) Valid() bool {
 	switch e {
-	case SearchNearTextRequestReturnMetadataCertainty:
+	case Certainty:
 		return true
-	case SearchNearTextRequestReturnMetadataCreationTime:
+	case CreationTime:
 		return true
-	case SearchNearTextRequestReturnMetadataDistance:
+	case Distance:
 		return true
-	case SearchNearTextRequestReturnMetadataExplainScore:
+	case ExplainScore:
 		return true
-	case SearchNearTextRequestReturnMetadataLastUpdateTime:
+	case LastUpdateTime:
 		return true
-	case SearchNearTextRequestReturnMetadataScore:
+	case Score:
 		return true
 	default:
 		return false
@@ -1507,6 +1678,60 @@ func (e SchemaObjectsIndexRebuildParamsIndexName) Valid() bool {
 // AdditionalProperties (Response only) Additional meta information about a single object.
 type AdditionalProperties map[string]map[string]interface{}
 
+// AggregateGroup One group of a grouped aggregation: the group's identity under `groupedBy` and its aggregated metrics (phase 1: `count`).
+type AggregateGroup struct {
+	// Count The number of objects in the group.
+	Count int64 `json:"count"`
+
+	// GroupedBy The identity of one group: the `groupBy` property (as a one-element path) and the property value that formed the group.
+	GroupedBy AggregateGroupedBy `json:"groupedBy"`
+}
+
+// AggregateGroupedBy The identity of one group: the `groupBy` property (as a one-element path) and the property value that formed the group.
+type AggregateGroupedBy struct {
+	// Path The grouped property, as a one-element path.
+	Path []string `json:"path"`
+
+	// Value The property value that formed the group. Typed as the property is: text values are strings, numeric values numbers, boolean values booleans; grouping by a reference property yields the reference's beacon URI as a string.
+	Value map[string]interface{} `json:"value"`
+}
+
+// AggregateRequest Request body for the aggregate endpoint. Phase 1 supports counts: the number of matching objects, in total or per group. Unknown fields are ignored (platform parity with the other endpoints). Reserved fields are accepted by the schema but rejected by the server with 422 until the corresponding feature ships. An empty body `{}` returns the collection's total object count.
+type AggregateRequest struct {
+	// GroupBy The property to group by, as a bare property name. Each distinct value of the property forms one group (an object whose property holds several values counts toward each of them). Omitted or empty aggregates over all matching objects without grouping.
+	GroupBy string `json:"groupBy,omitempty"`
+
+	// Limit The maximum number of groups to return, largest first. Must be positive and requires `groupBy`; omitted falls back to the server default (100 groups).
+	Limit int64 `json:"limit,omitempty"`
+
+	// ObjectLimit Reserved for aggregate-over-search (the maximum number of search results to aggregate). Returns 422 (not yet supported).
+	ObjectLimit int64 `json:"objectLimit,omitempty"`
+
+	// Over Reserved for aggregate-over-search (aggregating the results of a vector, keyword or hybrid search). Returns 422 (not yet supported).
+	Over map[string]interface{} `json:"over,omitempty"`
+
+	// ReturnMetrics The aggregation metrics to return. Phase 1 supports only `count` (the number of matching objects, per group when `groupBy` is set); omitted or empty is equivalent to `["count"]`. The property-scoped `property:statistic` grammar (e.g. `price:mean`) is reserved and returns 422 (not yet supported).
+	ReturnMetrics []string `json:"returnMetrics,omitempty"`
+
+	// Tenant The tenant to aggregate in a multi-tenant collection.
+	Tenant string `json:"tenant,omitempty"`
+
+	// Where Filter search results using a where filter.
+	Where WhereFilter `json:"where,omitempty"`
+}
+
+// AggregateResponse The result of an aggregation. An ungrouped aggregation returns the flat form (`count` plus `tookMs`); a grouped aggregation returns `groups` plus `tookMs`. Exactly one of `count`/`groups` is present, except that a grouped aggregation which produced no groups (nothing matched, or no matching object carries the property) omits `groups` entirely.
+type AggregateResponse struct {
+	// Count The number of matching objects. Present only for ungrouped aggregations.
+	Count int64 `json:"count,omitempty"`
+
+	// Groups The groups, ordered by descending count. Present only for grouped aggregations.
+	Groups []AggregateGroup `json:"groups,omitempty"`
+
+	// TookMs Server-side processing time in milliseconds.
+	TookMs int64 `json:"tookMs"`
+}
+
 // Alias Represents the mapping between an alias name and a collection. An alias provides an alternative name for accessing a collection.
 type Alias struct {
 	// Alias The unique name of the alias that serves as an alternative identifier for the collection.
@@ -1537,10 +1762,10 @@ type AsyncReplicationStatus struct {
 // BM25Config Tuning parameters for the BM25 algorithm.
 type BM25Config struct {
 	// B Calibrates term-weight scaling based on the document length (default: 0.75).
-	B float32 `json:"b,omitempty"`
+	B float32 `json:"b"`
 
 	// K1 Calibrates term-weight scaling based on the term frequency within a document (default: 1.2).
-	K1 float32 `json:"k1,omitempty"`
+	K1 float32 `json:"k1"`
 }
 
 // BackupConfig Backup custom configuration.
@@ -1580,6 +1805,9 @@ type BackupCreateRequest struct {
 
 	// Include List of collections to include in the backup creation process. If not set, all collections are included. Cannot be used together with `exclude`. Permits wildcards, e.g. `*` or `prefix*`.
 	Include []string `json:"include,omitempty"`
+
+	// IncludeRoles List of RBAC roles to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted, the whole RBAC state is captured as part of the cluster snapshot; when set, the RBAC blob is filtered to the matching roles. Built-in roles are rejected and are never selected by wildcards (they are re-applied automatically on restore). No per-role permission check is applied.
+	IncludeRoles []string `json:"includeRoles,omitempty"`
 
 	// IncludeUsers List of dynamic DB users to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted, the whole dynamic-user store is captured as part of the cluster snapshot and no per-user permission check is applied; when set, only matching users are captured and each is authorized individually.
 	IncludeUsers []string `json:"includeUsers,omitempty"`
@@ -2248,6 +2476,7 @@ type IndexStatusResponse struct {
 
 // IndexUpdateResponse defines model for IndexUpdateResponse.
 type IndexUpdateResponse struct {
+	// Status What the server did. `STARTED`: a reindex task was submitted and `taskId` names it. `CANCELLED`: a cancel stopped the in-flight task named by `taskId`. `NO_OP`: a cancel found nothing in flight, and `taskId` is absent. Not a closed set: a newer server may answer with a value this client does not know, so report an unrecognized status rather than rejecting the response.
 	Status string `json:"status,omitempty"`
 	TaskId string `json:"taskId,omitempty"`
 }
@@ -3096,7 +3325,64 @@ type Schema struct {
 	Name string `json:"name,omitempty"`
 }
 
-// SearchCommon Fields shared by every REST search request (near-text, and — when built — hybrid, bm25, near-object). Unknown fields are ignored (platform parity with the other endpoints). Reserved fields are accepted by the schema but rejected by the server with 422 until the corresponding feature ships.
+// SearchBm25Request defines model for SearchBm25Request.
+type SearchBm25Request struct {
+	// AutoLimit Cut results off at the first steep drop in score (autocut). The value is the number of score jumps to allow before cutting.
+	AutoLimit int64 `json:"autoLimit,omitempty"`
+
+	// ConsistencyLevel The consistency level for the read.
+	ConsistencyLevel SearchBm25RequestConsistencyLevel `json:"consistencyLevel,omitempty"`
+
+	// GroupBy Reserved for grouped search. Returns 422 (not yet supported).
+	GroupBy string `json:"groupBy,omitempty"`
+
+	// GroupedTask Reserved for grouped retrieval-augmented generation. Returns 422 (not yet supported).
+	GroupedTask string `json:"groupedTask,omitempty"`
+
+	// Limit The maximum number of objects to return. Omitted or `0` falls back to the server default (`QUERY_DEFAULTS_LIMIT`); a value above `QUERY_MAXIMUM_RESULTS` is rejected.
+	Limit int64 `json:"limit,omitempty"`
+
+	// NumberOfGroups Reserved for grouped search. Returns 422 (not yet supported).
+	NumberOfGroups int64 `json:"numberOfGroups,omitempty"`
+
+	// ObjectsPerGroup Reserved for grouped search. Returns 422 (not yet supported).
+	ObjectsPerGroup int64 `json:"objectsPerGroup,omitempty"`
+
+	// Offset The number of objects to skip before returning results. Used with `limit` for pagination.
+	Offset int64 `json:"offset,omitempty"`
+
+	// Query The keyword query to score objects against, as a plain string. Must not be empty.
+	Query string `json:"query"`
+
+	// QueryProperties The properties to keyword-search, each optionally weighted with a `^boost` suffix (e.g. `title^2`). Omitted or empty searches every searchable text property. A property without a searchable index is rejected with 422.
+	QueryProperties []string `json:"queryProperties,omitempty"`
+
+	// Rerank Reserved for reranking. Returns 422 (not yet supported).
+	Rerank SearchRerank `json:"rerank,omitempty"`
+
+	// ReturnMetadata The retrieval metadata to return under each result's `metadata` key. The object `id` is always returned as each result's `id` field. Omitted or empty returns no `metadata` block.
+	ReturnMetadata []SearchBm25RequestReturnMetadata `json:"returnMetadata,omitempty"`
+
+	// ReturnProperties The properties to return. A dot-path selects one hop across a reference (e.g. `hasAuthor.name`). Omitted returns all non-reference, non-blob properties; an empty array returns no properties.
+	ReturnProperties []string `json:"returnProperties,omitempty"`
+
+	// SinglePrompt Reserved for per-object retrieval-augmented generation. Returns 422 (not yet supported).
+	SinglePrompt string `json:"singlePrompt,omitempty"`
+
+	// Tenant The tenant to search in a multi-tenant collection.
+	Tenant string `json:"tenant,omitempty"`
+
+	// Where Filter search results using a where filter.
+	Where WhereFilter `json:"where,omitempty"`
+}
+
+// SearchBm25RequestConsistencyLevel The consistency level for the read.
+type SearchBm25RequestConsistencyLevel string
+
+// SearchBm25RequestReturnMetadata defines model for SearchBm25Request.ReturnMetadata.
+type SearchBm25RequestReturnMetadata string
+
+// SearchCommon Fields shared by every REST search request (near-text, bm25, hybrid, near-object). Unknown fields are ignored (platform parity with the other endpoints). Reserved fields are accepted by the schema but rejected by the server with 422 until the corresponding feature ships.
 type SearchCommon struct {
 	// AutoLimit Cut results off at the first steep drop in score (autocut). The value is the number of score jumps to allow before cutting.
 	AutoLimit int64 `json:"autoLimit,omitempty"`
@@ -3146,6 +3432,141 @@ type SearchCommonConsistencyLevel string
 
 // SearchCommonReturnMetadata defines model for SearchCommon.ReturnMetadata.
 type SearchCommonReturnMetadata string
+
+// SearchHybridRequest defines model for SearchHybridRequest.
+type SearchHybridRequest struct {
+	// Alpha The weight of the vector part of the search, between 0 and 1. `0` is a pure keyword search, `1` a pure vector search. Omitted defaults to `0.75`. With `0` the query is never vectorized, so a collection without a vectorizer module is searchable.
+	Alpha float32 `json:"alpha,omitempty"`
+
+	// AutoLimit Cut results off at the first steep drop in score (autocut). The value is the number of score jumps to allow before cutting.
+	AutoLimit int64 `json:"autoLimit,omitempty"`
+
+	// ConsistencyLevel The consistency level for the read.
+	ConsistencyLevel SearchHybridRequestConsistencyLevel `json:"consistencyLevel,omitempty"`
+
+	// FusionType The algorithm that fuses the keyword and vector rankings: `ranked` (reciprocal-rank fusion) or `relativeScore` (normalized-score fusion). Omitted defaults to `relativeScore`.
+	FusionType SearchHybridRequestFusionType `json:"fusionType,omitempty"`
+
+	// GroupBy Reserved for grouped search. Returns 422 (not yet supported).
+	GroupBy string `json:"groupBy,omitempty"`
+
+	// GroupedTask Reserved for grouped retrieval-augmented generation. Returns 422 (not yet supported).
+	GroupedTask string `json:"groupedTask,omitempty"`
+
+	// Limit The maximum number of objects to return. Omitted or `0` falls back to the server default (`QUERY_DEFAULTS_LIMIT`); a value above `QUERY_MAXIMUM_RESULTS` is rejected.
+	Limit int64 `json:"limit,omitempty"`
+
+	// MaxVectorDistance The maximum vector distance of a match: objects farther than this from the query vector are excluded, from the keyword ranking too.
+	MaxVectorDistance float32 `json:"maxVectorDistance,omitempty"`
+
+	// NumberOfGroups Reserved for grouped search. Returns 422 (not yet supported).
+	NumberOfGroups int64 `json:"numberOfGroups,omitempty"`
+
+	// ObjectsPerGroup Reserved for grouped search. Returns 422 (not yet supported).
+	ObjectsPerGroup int64 `json:"objectsPerGroup,omitempty"`
+
+	// Offset The number of objects to skip before returning results. Used with `limit` for pagination.
+	Offset int64 `json:"offset,omitempty"`
+
+	// Query The query, as a plain string. It is scored with BM25F for the keyword part of the search and vectorized server-side for the vector part. Must not be empty.
+	Query string `json:"query"`
+
+	// QueryProperties The properties the keyword part of the search scores against, each optionally weighted with a `^boost` suffix (e.g. `title^2`). Omitted or empty searches every searchable text property. A property without a searchable index is rejected with 422.
+	QueryProperties []string `json:"queryProperties,omitempty"`
+
+	// Rerank Reserved for reranking. Returns 422 (not yet supported).
+	Rerank SearchRerank `json:"rerank,omitempty"`
+
+	// ReturnMetadata The retrieval metadata to return under each result's `metadata` key. The object `id` is always returned as each result's `id` field. Omitted or empty returns no `metadata` block.
+	ReturnMetadata []SearchHybridRequestReturnMetadata `json:"returnMetadata,omitempty"`
+
+	// ReturnProperties The properties to return. A dot-path selects one hop across a reference (e.g. `hasAuthor.name`). Omitted returns all non-reference, non-blob properties; an empty array returns no properties.
+	ReturnProperties []string `json:"returnProperties,omitempty"`
+
+	// SinglePrompt Reserved for per-object retrieval-augmented generation. Returns 422 (not yet supported).
+	SinglePrompt string `json:"singlePrompt,omitempty"`
+
+	// TargetVector The named vector to search. Required when the collection has more than one named vector.
+	TargetVector string `json:"targetVector,omitempty"`
+
+	// Tenant The tenant to search in a multi-tenant collection.
+	Tenant string `json:"tenant,omitempty"`
+
+	// Where Filter search results using a where filter.
+	Where WhereFilter `json:"where,omitempty"`
+}
+
+// SearchHybridRequestConsistencyLevel The consistency level for the read.
+type SearchHybridRequestConsistencyLevel string
+
+// SearchHybridRequestFusionType The algorithm that fuses the keyword and vector rankings: `ranked` (reciprocal-rank fusion) or `relativeScore` (normalized-score fusion). Omitted defaults to `relativeScore`.
+type SearchHybridRequestFusionType string
+
+// SearchHybridRequestReturnMetadata defines model for SearchHybridRequest.ReturnMetadata.
+type SearchHybridRequestReturnMetadata string
+
+// SearchNearObjectRequest defines model for SearchNearObjectRequest.
+type SearchNearObjectRequest struct {
+	// AutoLimit Cut results off at the first steep drop in score (autocut). The value is the number of score jumps to allow before cutting.
+	AutoLimit int64 `json:"autoLimit,omitempty"`
+
+	// Certainty Minimum normalized certainty of a match. Only for cosine-distance vector indexes. Mutually exclusive with `distance`.
+	Certainty float32 `json:"certainty,omitempty"`
+
+	// ConsistencyLevel The consistency level for the read.
+	ConsistencyLevel SearchNearObjectRequestConsistencyLevel `json:"consistencyLevel,omitempty"`
+
+	// Distance Maximum vector distance of a match. Mutually exclusive with `certainty`.
+	Distance float32 `json:"distance,omitempty"`
+
+	// GroupBy Reserved for grouped search. Returns 422 (not yet supported).
+	GroupBy string `json:"groupBy,omitempty"`
+
+	// GroupedTask Reserved for grouped retrieval-augmented generation. Returns 422 (not yet supported).
+	GroupedTask string `json:"groupedTask,omitempty"`
+
+	// Id The UUID of the source object whose stored vector anchors the search. A structurally invalid UUID is rejected at request validation; a well-formed UUID that matches no object in the collection is rejected with 400.
+	Id openapi_types.UUID `json:"id"`
+
+	// Limit The maximum number of objects to return. Omitted or `0` falls back to the server default (`QUERY_DEFAULTS_LIMIT`); a value above `QUERY_MAXIMUM_RESULTS` is rejected.
+	Limit int64 `json:"limit,omitempty"`
+
+	// NumberOfGroups Reserved for grouped search. Returns 422 (not yet supported).
+	NumberOfGroups int64 `json:"numberOfGroups,omitempty"`
+
+	// ObjectsPerGroup Reserved for grouped search. Returns 422 (not yet supported).
+	ObjectsPerGroup int64 `json:"objectsPerGroup,omitempty"`
+
+	// Offset The number of objects to skip before returning results. Used with `limit` for pagination.
+	Offset int64 `json:"offset,omitempty"`
+
+	// Rerank Reserved for reranking. Returns 422 (not yet supported).
+	Rerank SearchRerank `json:"rerank,omitempty"`
+
+	// ReturnMetadata The retrieval metadata to return under each result's `metadata` key. The object `id` is always returned as each result's `id` field. Omitted or empty returns no `metadata` block.
+	ReturnMetadata []SearchNearObjectRequestReturnMetadata `json:"returnMetadata,omitempty"`
+
+	// ReturnProperties The properties to return. A dot-path selects one hop across a reference (e.g. `hasAuthor.name`). Omitted returns all non-reference, non-blob properties; an empty array returns no properties.
+	ReturnProperties []string `json:"returnProperties,omitempty"`
+
+	// SinglePrompt Reserved for per-object retrieval-augmented generation. Returns 422 (not yet supported).
+	SinglePrompt string `json:"singlePrompt,omitempty"`
+
+	// TargetVector The named vector to search (the source object's vector for this name anchors the search). Required when the collection has more than one named vector.
+	TargetVector string `json:"targetVector,omitempty"`
+
+	// Tenant The tenant to search in a multi-tenant collection.
+	Tenant string `json:"tenant,omitempty"`
+
+	// Where Filter search results using a where filter.
+	Where WhereFilter `json:"where,omitempty"`
+}
+
+// SearchNearObjectRequestConsistencyLevel The consistency level for the read.
+type SearchNearObjectRequestConsistencyLevel string
+
+// SearchNearObjectRequestReturnMetadata defines model for SearchNearObjectRequest.ReturnMetadata.
+type SearchNearObjectRequestReturnMetadata string
 
 // SearchNearTextRequest defines model for SearchNearTextRequest.
 type SearchNearTextRequest struct {
@@ -3293,10 +3714,13 @@ type ShardStatusGetResponse struct {
 	// Name Name of the shard
 	Name string `json:"name,omitempty"`
 
-	// Status Status of the shard
+	// PerNodeStatus Status of the shard on each of its replicas
+	PerNodeStatus map[string]string `json:"per_node_status,omitempty"`
+
+	// Status Deprecated: value is not consistent in replicated clusters.
 	Status string `json:"status,omitempty"`
 
-	// VectorQueueSize Size of the vector queue of the shard
+	// VectorQueueSize Deprecated: value is not consistent in replicated clusters.
 	VectorQueueSize int `json:"vectorQueueSize"`
 }
 
@@ -4017,6 +4441,9 @@ type DeactivateUserJSONBody struct {
 	RevokeKey bool `json:"revoke_key,omitempty"`
 }
 
+// AggregateJSONRequestBody defines body for Aggregate for application/json ContentType.
+type AggregateJSONRequestBody = AggregateRequest
+
 // AliasesCreateJSONRequestBody defines body for AliasesCreate for application/json ContentType.
 type AliasesCreateJSONRequestBody = Alias
 
@@ -4151,6 +4578,15 @@ type TenantsCreateJSONRequestBody = TenantsCreateJSONBody
 
 // TenantsUpdateJSONRequestBody defines body for TenantsUpdate for application/json ContentType.
 type TenantsUpdateJSONRequestBody = TenantsUpdateJSONBody
+
+// SearchBm25JSONRequestBody defines body for SearchBm25 for application/json ContentType.
+type SearchBm25JSONRequestBody = SearchBm25Request
+
+// SearchHybridJSONRequestBody defines body for SearchHybrid for application/json ContentType.
+type SearchHybridJSONRequestBody = SearchHybridRequest
+
+// SearchNearObjectJSONRequestBody defines body for SearchNearObject for application/json ContentType.
+type SearchNearObjectJSONRequestBody = SearchNearObjectRequest
 
 // SearchNearTextJSONRequestBody defines body for SearchNearText for application/json ContentType.
 type SearchNearTextJSONRequestBody = SearchNearTextRequest
