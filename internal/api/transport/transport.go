@@ -383,6 +383,9 @@ type KeepAlive struct {
 	Retry int
 }
 
+// If k is not nil, dialOptions returns non-nil configuration for
+// [transports.RESTConfig.KeepAlive] and [transports.GRPCConfig.KeepAlive] respectively.
+// If k is nil, both values are nil too.
 func (k *KeepAlive) dialOptions() (*net.KeepAliveConfig, *keepalive.ClientParameters) {
 	if k == nil {
 		return nil, nil
