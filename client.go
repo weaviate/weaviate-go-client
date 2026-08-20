@@ -276,6 +276,18 @@ func WithTokenSource(src oauth2.TokenSource) Option {
 	}
 }
 
+type KeepAlive transport.KeepAlive
+
+// Set custom keepalive parameters.
+//
+// The REST transport inherits the settings from [http.DefaultTransport].
+// By default, keepalive is disabled for the gRPC transport.
+func WithKeepAlive(keepalive KeepAlive) Option {
+	return func(c *config) {
+		c.KeepAlive = (*transport.KeepAlive)(&keepalive)
+	}
+}
+
 // IsLive reports instance / cluster liveness.
 func (c *Client) IsLive(ctx context.Context) (bool, error) {
 	if err := c.transport.Do(ctx, api.IsLiveRequest, nil); err != nil {
@@ -358,15 +370,16 @@ func (ht *hybridTransport) Close() error {
 // newTransport returns an [internal.Transport] for REST and gRPC requests.
 func newTransport(ctx context.Context, c config) (*hybridTransport, error) {
 	t, err := transport.New(ctx, transport.Config{
-		Scheme:   c.Scheme,
-		RESTHost: c.RESTHost,
-		RESTPort: c.RESTPort,
-		GRPCHost: c.GRPCHost,
-		GRPCPort: c.GRPCPort,
-		Header:   c.Header,
-		Auth:     c.Auth,
-		Timeout:  c.Timeout,
-		Version:  api.Version,
+		Scheme:    c.Scheme,
+		RESTHost:  c.RESTHost,
+		RESTPort:  c.RESTPort,
+		GRPCHost:  c.GRPCHost,
+		GRPCPort:  c.GRPCPort,
+		Header:    c.Header,
+		Auth:      c.Auth,
+		Timeout:   c.Timeout,
+		KeepAlive: c.KeepAlive,
+		Version:   api.Version,
 	})
 	if err != nil {
 		return nil, err
