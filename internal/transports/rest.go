@@ -147,7 +147,7 @@ func NewREST(cfg RESTConfig) *REST {
 		cfg.Scheme, cfg.Host, cfg.Port, cfg.Version,
 	)
 
-	var hc http.Client
+	hc := &http.Client{}
 	if cfg.KeepAlive != nil {
 		tr := http.DefaultTransport.(*http.Transport).Clone()
 		tr.DialContext = (&net.Dialer{
@@ -157,23 +157,23 @@ func NewREST(cfg RESTConfig) *REST {
 		hc.Transport = tr
 	}
 
-	r := &REST{
-		hc:      &hc,
-		baseURL: baseURL,
-		header:  cfg.Header,
-	}
-
+	// Handle TokenSource config last. [oauth2.NewClient] will wrap around
+	// the current hc.Transport, which must be fully configured at that point.
 	if cfg.TokenSource != nil {
 		// Here [oauth2.NewClient] uses context exclusively as a value store,
 		// where it looks for the HTTPClient key before falling back to
 		// [http.DefaultClient]. We could get away with passing a nil context,
 		// which we won't do in case our http.Client has some configurations
 		// we want to propagate to the oauth2 client.
-		ctx := context.WithValue(context.Background(), oauth2.HTTPClient, r.hc)
-		r.hc = oauth2.NewClient(ctx, cfg.TokenSource)
+		ctx := context.WithValue(context.Background(), oauth2.HTTPClient, hc)
+		hc = oauth2.NewClient(ctx, cfg.TokenSource)
 	}
 
-	return r
+	return &REST{
+		hc:      hc,
+		baseURL: baseURL,
+		header:  cfg.Header,
+	}
 }
 
 // HTTPError is returned if the response has an error HTTP status code.

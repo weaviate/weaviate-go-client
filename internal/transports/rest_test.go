@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -28,9 +29,10 @@ func TestREST_Do(t *testing.T) {
 	for _, tt := range testkit.WithOnly(t, []struct {
 		testkit.Only
 
-		name string
-		req  transports.Endpoint
-		src  oauth2.TokenSource
+		name      string
+		req       transports.Endpoint
+		src       oauth2.TokenSource
+		keepalive *net.KeepAliveConfig
 
 		respBody string // Set response body to return.
 		respCode int    // Override returned status code (default: HTTP 200).
@@ -105,6 +107,19 @@ func TestREST_Do(t *testing.T) {
 			src: oauth2.StaticTokenSource(&oauth2.Token{
 				AccessToken: "my-token",
 			}),
+		},
+		{
+			// Make sure additional parameters like keepalive
+			// do not overwrite TokenSource configuration.
+			name: "bearer token authorization with keepalive",
+			req: &endpoint{
+				method: http.MethodGet,
+				path:   "/test",
+			},
+			src: oauth2.StaticTokenSource(&oauth2.Token{
+				AccessToken: "my-token",
+			}),
+			keepalive: &net.KeepAliveConfig{Enable: true},
 		},
 		{
 			name: "basic token authorization",
