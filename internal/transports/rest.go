@@ -154,6 +154,7 @@ func NewREST(cfg RESTConfig) *REST {
 			Timeout:         30 * time.Second,
 			KeepAliveConfig: *cfg.KeepAlive,
 		}).DialContext
+		hc.Transport = tr
 	}
 
 	r := &REST{
