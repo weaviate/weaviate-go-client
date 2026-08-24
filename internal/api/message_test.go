@@ -275,6 +275,171 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "boost",
+			req: &api.SearchRequest{
+				Boost: api.BoostExpr{
+					Weight: 1,
+					Depth:  2,
+					Conds: []api.BoostCond{
+						{
+							Weight: 3,
+							Func: api.BoostFunc{
+								TimeDecay: &api.TimeDecay{
+									Property: "time_decay_optional",
+									Origin:   testkit.Now,
+									Scale:    120 * time.Hour,
+									Offset:   testkit.Ptr(10 * time.Minute),
+									Curve:    api.BoostCurveGauss,
+									Decay:    testkit.Ptr[float32](92),
+								},
+							},
+						},
+						{
+							Func: api.BoostFunc{
+								TimeDecay: &api.TimeDecay{
+									Property: "time_decay_required",
+									Origin:   testkit.Now,
+									Scale:    120 * time.Hour,
+								},
+							},
+						},
+						{
+							Weight: 3,
+							Func: api.BoostFunc{
+								NumericDecay: &api.NumericDecay{
+									Property: "numeric_decay_optional",
+									Origin:   1,
+									Scale:    2,
+									Offset:   testkit.Ptr[float64](3),
+									Curve:    api.BoostCurveGauss,
+									Decay:    testkit.Ptr[float32](92),
+								},
+							},
+						},
+						{
+							Func: api.BoostFunc{
+								NumericDecay: &api.NumericDecay{
+									Property: "numeric_decay_required",
+									Origin:   1,
+									Scale:    2,
+								},
+							},
+						},
+						{
+							Weight: 3,
+							Func: api.BoostFunc{
+								PropertyValue: &api.PropertyValue{
+									Property: "title_optional",
+									Modifier: api.BoostModifierLOG1P,
+								},
+							},
+						},
+						{
+							Func: api.BoostFunc{
+								PropertyValue: &api.PropertyValue{
+									Property: "title_required",
+									Modifier: api.BoostModifierLOG1P,
+								},
+							},
+						},
+						{
+							Weight: 3,
+							Func: api.BoostFunc{
+								Filter: &api.FilterExpr{
+									Target:   []string{"duration_sec"},
+									Operator: api.FilterOperatorGreaterThan,
+									Value:    92,
+								},
+							},
+						},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+				Boost: &proto.Boost{
+					Weight: testkit.Ptr[float32](1),
+					Depth:  testkit.Ptr[uint32](2),
+					Conditions: []*proto.Boost_Condition{
+						{
+							Weight: testkit.Ptr[float32](3),
+							Condition: &proto.Boost_Condition_TimeDecay{
+								TimeDecay: &proto.Boost_TimeDecayFunction{
+									Property:   "time_decay_optional",
+									Origin:     testkit.Now.Format(api.TimeLayout),
+									Scale:      "432000s",
+									Offset:     testkit.Ptr("600s"),
+									Curve:      testkit.Ptr(proto.Boost_DECAY_CURVE_GAUSS),
+									DecayValue: testkit.Ptr[float32](92),
+								},
+							},
+						},
+						{
+							Condition: &proto.Boost_Condition_TimeDecay{
+								TimeDecay: &proto.Boost_TimeDecayFunction{
+									Property: "time_decay_required",
+									Origin:   testkit.Now.Format(api.TimeLayout),
+									Scale:    "432000s",
+								},
+							},
+						},
+						{
+							Weight: testkit.Ptr[float32](3),
+							Condition: &proto.Boost_Condition_NumericDecay{
+								NumericDecay: &proto.Boost_NumericDecayFunction{
+									Property:   "numeric_decay_optional",
+									Origin:     1,
+									Scale:      2,
+									Offset:     testkit.Ptr[float64](3),
+									Curve:      testkit.Ptr(proto.Boost_DECAY_CURVE_GAUSS),
+									DecayValue: testkit.Ptr[float32](92),
+								},
+							},
+						},
+						{
+							Condition: &proto.Boost_Condition_NumericDecay{
+								NumericDecay: &proto.Boost_NumericDecayFunction{
+									Property: "numeric_decay_required",
+									Origin:   1,
+									Scale:    2,
+								},
+							},
+						},
+						{
+							Weight: testkit.Ptr[float32](3),
+							Condition: &proto.Boost_Condition_PropertyValue{
+								PropertyValue: &proto.Boost_PropertyValueFunction{
+									Property: "title_optional",
+									Modifier: testkit.Ptr(proto.Boost_PROPERTY_VALUE_MODIFIER_LOG1P),
+								},
+							},
+						},
+						{
+							Condition: &proto.Boost_Condition_PropertyValue{
+								PropertyValue: &proto.Boost_PropertyValueFunction{
+									Property: "title_required",
+									Modifier: testkit.Ptr(proto.Boost_PROPERTY_VALUE_MODIFIER_LOG1P),
+								},
+							},
+						},
+						{
+							Weight: testkit.Ptr[float32](3),
+							Condition: &proto.Boost_Condition_Filter{
+								Filter: &proto.Filters{
+									Target:    propertyTarget("duration_sec"),
+									Operator:  proto.Filters_OPERATOR_GREATER_THAN,
+									TestValue: &proto.Filters_ValueInt{ValueInt: 92},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "return metadata",
 			req: &api.SearchRequest{
 				ReturnMetadata: api.ReturnMetadata{

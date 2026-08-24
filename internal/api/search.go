@@ -22,6 +22,7 @@ type SearchRequest struct {
 	AutoLimit        int32
 	After            uuid.UUID
 	Filter           FilterExpr
+	Boost            BoostExpr
 	ReturnProperties []ReturnProperty
 	ReturnReferences []ReturnReference
 	ReturnVectors    []string
@@ -137,6 +138,119 @@ type (
 	}
 )
 
+type (
+	BoostExpr struct {
+		Weight float32
+		Depth  int
+		Conds  []BoostCond
+	}
+	BoostCond struct {
+		Weight float32
+		Func   BoostFunc
+	}
+	BoostFunc struct {
+		TimeDecay     *TimeDecay
+		NumericDecay  *NumericDecay
+		PropertyValue *PropertyValue
+		Filter        *FilterExpr
+	}
+
+	TimeDecay struct {
+		Property string        // Required parameter.
+		Origin   time.Time     // Required parameter.
+		Scale    time.Duration // Required parameter.
+		Offset   *time.Duration
+		Curve    BoostCurve
+		Decay    *float32
+	}
+	NumericDecay struct {
+		Property string  // Required parameter.
+		Origin   float64 // Required parameter.
+		Scale    float64 // Required parameter.
+		Offset   *float64
+		Curve    BoostCurve
+		Decay    *float32
+	}
+	PropertyValue struct {
+		Property string
+		Modifier BoostModifier
+	}
+)
+
+type BoostCurve proto.Boost_DecayCurve
+
+const (
+	BoostCurveGauss       = BoostCurve(proto.Boost_DECAY_CURVE_GAUSS)
+	BoostCurveLinear      = BoostCurve(proto.Boost_DECAY_CURVE_LINEAR)
+	BoostCurveExponential = BoostCurve(proto.Boost_DECAY_CURVE_EXPONENTIAL)
+)
+
+type BoostModifier proto.Boost_PropertyValueModifier
+
+const (
+	BoostModifierLOG1P = BoostModifier(proto.Boost_PROPERTY_VALUE_MODIFIER_LOG1P)
+	BoostModifierSQRT  = BoostModifier(proto.Boost_PROPERTY_VALUE_MODIFIER_SQRT)
+)
+
+func marshalBoost(b BoostExpr) *proto.Boost {
+	if len(b.Conds) == 0 {
+		return nil
+	}
+	conds := make([]*proto.Boost_Condition, len(b.Conds))
+	for i, c := range b.Conds {
+		cond := &proto.Boost_Condition{
+			Weight: nilZero(c.Weight),
+		}
+		switch {
+		case c.Func.TimeDecay != nil:
+			var offset string
+			if o := c.Func.TimeDecay.Offset; o != nil {
+				offset = fmt.Sprintf("%.0fs", c.Func.TimeDecay.Offset.Seconds())
+			}
+
+			cond.Condition = &proto.Boost_Condition_TimeDecay{
+				TimeDecay: &proto.Boost_TimeDecayFunction{
+					Property:   c.Func.TimeDecay.Property,
+					Origin:     c.Func.TimeDecay.Origin.Format(TimeLayout),
+					Scale:      fmt.Sprintf("%.0fs", c.Func.TimeDecay.Scale.Seconds()),
+					Offset:     nilZero(offset),
+					Curve:      nilZero(proto.Boost_DecayCurve(c.Func.TimeDecay.Curve)),
+					DecayValue: c.Func.TimeDecay.Decay,
+				},
+			}
+		case c.Func.NumericDecay != nil:
+			cond.Condition = &proto.Boost_Condition_NumericDecay{
+				NumericDecay: &proto.Boost_NumericDecayFunction{
+					Property:   c.Func.NumericDecay.Property,
+					Scale:      c.Func.NumericDecay.Scale,
+					Origin:     c.Func.NumericDecay.Origin,
+					Offset:     c.Func.NumericDecay.Offset,
+					Curve:      nilZero(proto.Boost_DecayCurve(c.Func.NumericDecay.Curve)),
+					DecayValue: c.Func.NumericDecay.Decay,
+				},
+			}
+		case c.Func.PropertyValue != nil:
+			cond.Condition = &proto.Boost_Condition_PropertyValue{
+				PropertyValue: &proto.Boost_PropertyValueFunction{
+					Property: c.Func.PropertyValue.Property,
+					Modifier: nilZero(proto.Boost_PropertyValueModifier(c.Func.PropertyValue.Modifier)),
+				},
+			}
+		case c.Func.Filter != nil:
+			cond.Condition = &proto.Boost_Condition_Filter{
+				Filter: marshalFilter(*c.Func.Filter),
+			}
+		}
+
+		conds[i] = cond
+	}
+	return &proto.Boost{
+		Weight:     nilZero(b.Weight),
+		Depth:      nilZero(uint32(b.Depth)),
+		Conditions: conds,
+	}
+}
+
 type HybridFusion proto.Hybrid_FusionType
 
 const (
@@ -160,6 +274,7 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 		Autocut:          uint32(r.AutoLimit),
 		After:            after,
 		Filters:          marshalFilter(r.Filter),
+		Boost:            marshalBoost(r.Boost),
 		Metadata: &proto.MetadataRequest{
 			Uuid:               true,
 			Distance:           r.ReturnMetadata.Distance,
