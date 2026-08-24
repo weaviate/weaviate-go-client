@@ -818,19 +818,73 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
-			name: "near text implicit target",
+			name: "near text move concepts",
 			req: &api.SearchRequest{
 				NearText: &api.NearText{
-					Concepts:   []string{"apples", "oranges"},
-					Similarity: api.VectorSimilarity{Distance: testkit.Ptr(.92)},
 					MoveTo: &api.Move{
 						Force:    0.58,
 						Concepts: []string{"computers"},
 					},
 					MoveAway: &api.Move{
-						Force:   0.22,
+						Force:    0.22,
+						Concepts: []string{"meatloaf"},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				NearText: &proto.NearTextSearch{
+					MoveTo: &proto.NearTextSearch_Move{
+						Force:    0.58,
+						Concepts: []string{"computers"},
+					},
+					MoveAway: &proto.NearTextSearch_Move{
+						Force:    0.22,
+						Concepts: []string{"meatloaf"},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "near text move objects",
+			req: &api.SearchRequest{
+				NearText: &api.NearText{
+					MoveTo: &api.Move{
+						Force:   0.58,
 						Objects: []uuid.UUID{uuid.Nil, uuid.Max},
 					},
+					MoveAway: &api.Move{
+						Force:   0.22,
+						Objects: []uuid.UUID{testkit.UUID},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				NearText: &proto.NearTextSearch{
+					MoveTo: &proto.NearTextSearch_Move{
+						Force: 0.58,
+						Uuids: []string{uuid.Nil.String(), uuid.Max.String()},
+					},
+					MoveAway: &proto.NearTextSearch_Move{
+						Force: 0.22,
+						Uuids: []string{testkit.UUID.String()},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "near text implicit target",
+			req: &api.SearchRequest{
+				NearText: &api.NearText{
+					Concepts:   []string{"apples", "oranges"},
+					Similarity: api.VectorSimilarity{Distance: testkit.Ptr(.92)},
 					Selection: api.Selection{
 						MMR: &api.SelectionMMR{Limit: int32(3)},
 					},
@@ -840,14 +894,6 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				NearText: &proto.NearTextSearch{
 					Query:    []string{"apples", "oranges"},
 					Distance: testkit.Ptr(.92),
-					MoveTo: &proto.NearTextSearch_Move{
-						Force:    0.58,
-						Concepts: []string{"computers"},
-					},
-					MoveAway: &proto.NearTextSearch_Move{
-						Force: 0.22,
-						Uuids: []string{uuid.Nil.String(), uuid.Max.String()},
-					},
 					Selection: &proto.Selection{
 						Selection: &proto.Selection_Mmr{
 							Mmr: &proto.Selection_MMR{
