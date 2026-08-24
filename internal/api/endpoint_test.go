@@ -855,31 +855,31 @@ func TestRESTRequests(t *testing.T) {
 					{
 						"action": "create_users",
 						"users": map[string]any{
-							"user": "john_doe",
+							"users": "john_doe",
 						},
 					},
 					{
 						"action": "read_users",
 						"users": map[string]any{
-							"user": "john_doe",
+							"users": "john_doe",
 						},
 					},
 					{
 						"action": "update_users",
 						"users": map[string]any{
-							"user": "jane_doe",
+							"users": "jane_doe",
 						},
 					},
 					{
 						"action": "delete_users",
 						"users": map[string]any{
-							"user": "jane_doe",
+							"users": "jane_doe",
 						},
 					},
 					{
 						"action": "assign_and_revoke_users",
 						"users": map[string]any{
-							"user": "jim_beam",
+							"users": "jim_beam",
 						},
 					},
 				},
@@ -1915,31 +1915,31 @@ func TestRESTResponses(t *testing.T) {
 					{
 						"action": "create_users",
 						"users": map[string]any{
-							"user": "john_doe",
+							"users": "john_doe",
 						},
 					},
 					{
 						"action": "read_users",
 						"users": map[string]any{
-							"user": "john_doe",
+							"users": "john_doe",
 						},
 					},
 					{
 						"action": "update_users",
 						"users": map[string]any{
-							"user": "jane_doe",
+							"users": "jane_doe",
 						},
 					},
 					{
 						"action": "delete_users",
 						"users": map[string]any{
-							"user": "jane_doe",
+							"users": "jane_doe",
 						},
 					},
 					{
 						"action": "assign_and_revoke_users",
 						"users": map[string]any{
-							"user": "jim_beam",
+							"users": "jim_beam",
 						},
 					},
 				},
