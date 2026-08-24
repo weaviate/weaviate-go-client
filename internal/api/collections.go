@@ -111,10 +111,10 @@ const (
 	DataTypeGeoCoordinates DataType = "geoCoordinates"
 	DataTypeTextArray      DataType = "text[]"
 	DataTypeBoolArray      DataType = "boolean[]"
-	DataTypeIntArray       DataType = "number[]"
-	DataTypeNumberArray    DataType = "date[]"
-	DataTypeDateArray      DataType = "object[]"
-	DataTypeObjectArray    DataType = "geoCoordinates[]"
+	DataTypeIntArray       DataType = "int[]"
+	DataTypeNumberArray    DataType = "number[]"
+	DataTypeDateArray      DataType = "date[]"
+	DataTypeObjectArray    DataType = "object[]"
 )
 
 // knownDataTypes are a set of all data types defined in the Weaviate server.
