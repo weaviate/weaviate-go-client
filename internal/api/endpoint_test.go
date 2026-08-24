@@ -360,7 +360,7 @@ func TestRESTRequests(t *testing.T) {
 					IndexTimestamps:        true,
 					UsingBlockMaxWAND:      true,
 					CleanupIntervalSeconds: 92,
-					Bm25: rest.BM25Config{
+					Bm25: &rest.BM25Config{
 						B:  25,
 						K1: 1,
 					},
@@ -1439,7 +1439,7 @@ func TestRESTResponses(t *testing.T) {
 					IndexTimestamps:        true,
 					UsingBlockMaxWAND:      true,
 					CleanupIntervalSeconds: 92,
-					Bm25: rest.BM25Config{
+					Bm25: &rest.BM25Config{
 						B:  25,
 						K1: 1,
 					},

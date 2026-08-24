@@ -307,7 +307,7 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 		}
 
 		if c.InvertedIndex.BM25 != nil {
-			out.InvertedIndexConfig.Bm25 = rest.BM25Config{
+			out.InvertedIndexConfig.Bm25 = &rest.BM25Config{
 				B:  c.InvertedIndex.BM25.B,
 				K1: c.InvertedIndex.BM25.K1,
 			}

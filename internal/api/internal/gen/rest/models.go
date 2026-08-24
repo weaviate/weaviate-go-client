@@ -2493,7 +2493,7 @@ type IndexUpsertRequest struct {
 // InvertedIndexConfig Configure the inverted index built into Weaviate. See [Reference: Inverted index](https://docs.weaviate.io/weaviate/config-refs/indexing/inverted-index#inverted-index-parameters) for details.
 type InvertedIndexConfig struct {
 	// Bm25 Tuning parameters for the BM25 algorithm.
-	Bm25 BM25Config `json:"bm25,omitempty"`
+	Bm25 *BM25Config `json:"bm25,omitempty"`
 
 	// CleanupIntervalSeconds Asynchronous index clean up happens every n seconds (default: 60).
 	CleanupIntervalSeconds int32 `json:"cleanupIntervalSeconds,omitempty"`
