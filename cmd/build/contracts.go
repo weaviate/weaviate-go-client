@@ -369,10 +369,13 @@ func convertToV3(ctx context.Context, r io.Reader) (map[string]any, error) {
 			// x-nullable is Swagger v2, nullable is Swagger v3
 			delete(m, "nullable")
 			return
+		case "bm25":
+			m["x-go-type-skip-optional-pointer"] = false
 		case "id":
 			if format, ok := m["format"]; ok && format == "uuid" {
 				m["x-go-type"] = "*openapi_types.UUID"
 			}
+			return
 		}
 
 		if format, ok := m["format"]; ok {
@@ -389,10 +392,6 @@ func convertToV3(ctx context.Context, r io.Reader) (map[string]any, error) {
 		if t, ok := m["type"]; ok && t == "number" {
 			m["format"] = "float"
 		}
-
-		// if _, ok := m["$ref"]; ok {
-		// 	m["x-go-type-skip-optional-pointer"] = false
-		// }
 	})
 
 	return schema, nil

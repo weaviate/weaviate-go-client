@@ -111,10 +111,10 @@ const (
 	DataTypeGeoCoordinates DataType = "geoCoordinates"
 	DataTypeTextArray      DataType = "text[]"
 	DataTypeBoolArray      DataType = "boolean[]"
-	DataTypeIntArray       DataType = "number[]"
-	DataTypeNumberArray    DataType = "date[]"
-	DataTypeDateArray      DataType = "object[]"
-	DataTypeObjectArray    DataType = "geoCoordinates[]"
+	DataTypeIntArray       DataType = "int[]"
+	DataTypeNumberArray    DataType = "number[]"
+	DataTypeDateArray      DataType = "date[]"
+	DataTypeObjectArray    DataType = "object[]"
 )
 
 // knownDataTypes are a set of all data types defined in the Weaviate server.
@@ -307,7 +307,7 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 		}
 
 		if c.InvertedIndex.BM25 != nil {
-			out.InvertedIndexConfig.Bm25 = rest.BM25Config{
+			out.InvertedIndexConfig.Bm25 = &rest.BM25Config{
 				B:  c.InvertedIndex.BM25.B,
 				K1: c.InvertedIndex.BM25.K1,
 			}

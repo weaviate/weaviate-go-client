@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"slices"
 	"strings"
 	"time"
 
@@ -319,9 +318,6 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 		// Marshaling it would've been as simple as [structpb.NewValue].
 		switch v := f.Value.(type) {
 		case nil:
-			if f.Operator != FilterOperatorIsNull {
-				return nil // Null-ness should be checked via IsNull operator.
-			}
 		case string:
 			pf.TestValue = &proto.Filters_ValueText{ValueText: v}
 		case []string:
@@ -594,12 +590,8 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 		Certainty: req.Similarity.Certainty,
 	}
 
-	// We keep MoveTo and MoveAway marshaling inline to
-	// 1) avoid breeding functions; these params are only needed here
-	// 2) re-use the uuids slice if possible (minor benefit, but still).
-	var uuids []string
 	if m := req.MoveTo; m != nil {
-		uuids = slices.Grow(uuids, len(m.Objects))
+		var uuids []string
 		for _, u := range m.Objects {
 			uuids = append(uuids, u.String())
 		}
@@ -611,7 +603,7 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 	}
 
 	if m := req.MoveAway; m != nil {
-		uuids = slices.Grow(uuids[:0], len(m.Objects))
+		var uuids []string
 		for _, u := range m.Objects {
 			uuids = append(uuids, u.String())
 		}

@@ -126,7 +126,7 @@ type (
 		Delete bool `json:"-"`
 	}
 	UserPermission struct {
-		UserID string `json:"user,omitempty"`
+		UserID string `json:"users,omitempty"`
 
 		Create          bool `json:"-"`
 		Read            bool `json:"-"`

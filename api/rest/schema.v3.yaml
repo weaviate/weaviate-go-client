@@ -1255,6 +1255,7 @@ components:
             properties:
                 bm25:
                     $ref: '#/components/schemas/BM25Config'
+                    x-go-type-skip-optional-pointer: false
                 cleanupIntervalSeconds:
                     description: 'Asynchronous index clean up happens every n seconds (default: 60).'
                     format: int32

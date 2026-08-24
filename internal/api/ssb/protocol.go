@@ -3,6 +3,7 @@ package ssb
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"iter"
 	"maps"
@@ -55,9 +56,15 @@ func NewClient(conf ClientConfig) *Client {
 }
 
 // Add creates a new task and puts it on the work queue.
+// A stream can only have a single task in progress for each object or reference,
+// and an error is returned if the task with the same ID hasn't completed yet.
 // If [Client.Context] expires, Add returns [context.Canceled],
 // otherwise the error is nil. Calling Add after closing the batch panics.
 func (c *Client) Add(ctx context.Context, d Data) (*Task, error) {
+	if id := d.ID(); c.wip.contains(id) {
+		return nil, fmt.Errorf("task for %q is still in progress", id)
+	}
+
 	t := &Task{
 		data: d,
 		done: make(chan struct{}),
@@ -645,6 +652,13 @@ func (c *cache) put(t *Task) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.m[t.ID()] = t
+}
+
+func (c *cache) contains(k string) (ok bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	_, ok = c.m[k]
+	return
 }
 
 // walk calls f for every cache entry in keys.
