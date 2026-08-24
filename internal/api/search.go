@@ -31,6 +31,7 @@ type SearchRequest struct {
 
 	NearVector *NearVector
 	NearText   *NearText
+	BM25       *BM25
 	Hybrid     *Hybrid
 }
 
@@ -99,6 +100,11 @@ type (
 
 		Selection Selection
 	}
+	BM25 struct {
+		Query             string
+		QueryProperties   []string
+		KeywordSimilarity KeywordSimilarity
+	}
 	Hybrid struct {
 		Query             string
 		QueryProperties   []string
@@ -127,6 +133,7 @@ type (
 	}
 	KeywordSimilarity struct {
 		AllTokensMatch     bool
+		CrossProperty      bool
 		MinimumTokensMatch *int32
 	}
 )
@@ -184,6 +191,8 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 		req.NearVector, err = marshalNearVector(r.NearVector)
 	case r.NearText != nil:
 		req.NearText, err = marshalNearText(r.NearText)
+	case r.BM25 != nil:
+		req.Bm25Search, err = marshalBM25(r.BM25)
 	case r.Hybrid != nil:
 		req.HybridSearch, err = marshalHybrid(r.Hybrid)
 	}
@@ -649,27 +658,46 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 	return nt, nil
 }
 
+func marshalBM25(req *BM25) (*proto.BM25, error) {
+	dev.AssertNotNil(req, "req")
+	return &proto.BM25{
+		Query:          req.Query,
+		Properties:     req.QueryProperties,
+		SearchOperator: marshalKeywordSimilarity(req.KeywordSimilarity),
+	}, nil
+}
+
+func marshalKeywordSimilarity(kw KeywordSimilarity) *proto.SearchOperatorOptions {
+	switch {
+	case kw.AllTokensMatch:
+		if kw.CrossProperty {
+			return &proto.SearchOperatorOptions{
+				Operator: proto.SearchOperatorOptions_OPERATOR_AND_CROSS,
+			}
+		} else {
+			return &proto.SearchOperatorOptions{
+				Operator: proto.SearchOperatorOptions_OPERATOR_AND,
+			}
+		}
+	case kw.MinimumTokensMatch != nil:
+		return &proto.SearchOperatorOptions{
+			Operator:             proto.SearchOperatorOptions_OPERATOR_OR,
+			MinimumOrTokensMatch: kw.MinimumTokensMatch,
+		}
+	}
+	return nil
+}
+
 func marshalHybrid(req *Hybrid) (*proto.Hybrid, error) {
 	dev.AssertNotNil(req, "req")
 
 	h := &proto.Hybrid{
-		Query:         req.Query,
-		Properties:    req.QueryProperties,
-		AlphaParam:    req.Alpha,
-		UseAlphaParam: true,
-		FusionType:    proto.Hybrid_FusionType(req.Fusion),
-	}
-
-	switch {
-	case req.KeywordSimilarity.AllTokensMatch:
-		h.Bm25SearchOperator = &proto.SearchOperatorOptions{
-			Operator: proto.SearchOperatorOptions_OPERATOR_AND,
-		}
-	case req.KeywordSimilarity.MinimumTokensMatch != nil:
-		h.Bm25SearchOperator = &proto.SearchOperatorOptions{
-			Operator:             proto.SearchOperatorOptions_OPERATOR_OR,
-			MinimumOrTokensMatch: req.KeywordSimilarity.MinimumTokensMatch,
-		}
+		Query:              req.Query,
+		Properties:         req.QueryProperties,
+		AlphaParam:         req.Alpha,
+		UseAlphaParam:      true,
+		FusionType:         proto.Hybrid_FusionType(req.Fusion),
+		Bm25SearchOperator: marshalKeywordSimilarity(req.KeywordSimilarity),
 	}
 
 	var err error

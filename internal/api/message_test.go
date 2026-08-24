@@ -954,6 +954,32 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "bm25 with keyword similarity",
+			req: &api.SearchRequest{
+				BM25: &api.BM25{
+					Query:           "she sells seashells",
+					QueryProperties: []string{"sentence"},
+					KeywordSimilarity: api.KeywordSimilarity{
+						AllTokensMatch: true,
+						CrossProperty:  true,
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				Bm25Search: &proto.BM25{
+					Query:      "she sells seashells",
+					Properties: []string{"sentence"},
+					SearchOperator: &proto.SearchOperatorOptions{
+						Operator: proto.SearchOperatorOptions_OPERATOR_AND_CROSS,
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
 			name: "hybrid with near vector",
 			req: &api.SearchRequest{
 				Hybrid: &api.Hybrid{

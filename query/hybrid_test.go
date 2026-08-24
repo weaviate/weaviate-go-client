@@ -174,7 +174,7 @@ func TestHybrid(t *testing.T) {
 			require.NotNil(t, c, "client")
 
 			got, err := c.Hybrid(t.Context(), tt.nt)
-			tt.err.Require(t, err, "near vector query")
+			tt.err.Require(t, err, "hybrid query")
 			require.EqualExportedValues(t, tt.want, got, "query result")
 		})
 	}
