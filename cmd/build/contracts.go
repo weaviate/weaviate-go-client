@@ -389,6 +389,10 @@ func convertToV3(ctx context.Context, r io.Reader) (map[string]any, error) {
 		if t, ok := m["type"]; ok && t == "number" {
 			m["format"] = "float"
 		}
+
+		// if _, ok := m["$ref"]; ok {
+		// 	m["x-go-type-skip-optional-pointer"] = false
+		// }
 	})
 
 	return schema, nil

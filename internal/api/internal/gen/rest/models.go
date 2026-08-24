@@ -2251,7 +2251,7 @@ type DistributedTask struct {
 	// Error The high level reason why the task failed.
 	Error string `json:"error,omitempty"`
 
-	// FinishedAt The time when the task was finished.
+	// FinishedAt The time when the task reached a terminal status. Absent while the task is still running.
 	FinishedAt time.Time `json:"finishedAt,omitempty"`
 
 	// FinishedNodes The nodes that finished the task.
@@ -2281,7 +2281,7 @@ type DistributedTaskUnit struct {
 	// Error The error message if the unit failed.
 	Error string `json:"error,omitempty"`
 
-	// FinishedAt The time when the unit finished.
+	// FinishedAt The time when the unit reached a terminal status. Absent while the unit is still running.
 	FinishedAt time.Time `json:"finishedAt,omitempty"`
 
 	// Id The ID of the unit.
@@ -2296,7 +2296,7 @@ type DistributedTaskUnit struct {
 	// Status The status of the unit.
 	Status string `json:"status,omitempty"`
 
-	// UpdatedAt The time when the unit was last updated.
+	// UpdatedAt The time when the unit was last updated, including its transition to a terminal status. Absent for a unit that has not started yet.
 	UpdatedAt time.Time `json:"updatedAt,omitempty"`
 }
 
@@ -2448,7 +2448,7 @@ type IndexStatus struct {
 	TargetAlgorithm    IndexStatusTargetAlgorithm `json:"targetAlgorithm,omitempty"`
 	TargetTokenization string                     `json:"targetTokenization,omitempty"`
 
-	// TaskId ID of the reindex task driving this index entry. Present on every task-driven entry (`pending`, `indexing`, `failed`, `cancelled`, and the finalize-window override); absent on a plain `ready` entry. A coupled searchable+filterable tokenization migration reports the same `taskId` on both affected entries.
+	// TaskId ID of the reindex task driving this index entry. Present on every task-driven entry (`pending`, `indexing`, `failed`, `cancelled`); absent on a plain `ready` entry. A coupled searchable+filterable tokenization migration reports the same `taskId` on both affected entries.
 	TaskId       string `json:"taskId,omitempty"`
 	Tokenization string `json:"tokenization,omitempty"`
 
