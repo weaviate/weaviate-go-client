@@ -200,10 +200,14 @@ func (c *DBUsersClient) UserInfo(ctx context.Context, options UserInfoOptions) (
 		return nil, fmt.Errorf("get db user info: %w", err)
 	}
 	return &UserInfo{
-		ID:     resp.ID,
-		Type:   resp.Type,
-		Active: resp.Active,
-		Roles:  resp.Roles,
+		ID:                 resp.ID,
+		Type:               resp.Type,
+		Active:             resp.Active,
+		Roles:              resp.Roles,
+		Namespace:          resp.Namespace,
+		APIKeyFirstLetters: resp.APIKeyFirstLetters,
+		CreatedAt:          resp.CreatedAt,
+		LastUsedAt:         resp.LastUsedAt,
 	}, nil
 }
 
@@ -224,10 +228,14 @@ func (c *DBUsersClient) List(ctx context.Context, options ListUsersOptions) ([]U
 	out := make([]UserInfo, len(resp))
 	for i, ui := range resp {
 		out[i] = UserInfo{
-			ID:     ui.ID,
-			Type:   ui.Type,
-			Active: ui.Active,
-			Roles:  ui.Roles,
+			ID:                 ui.ID,
+			Type:               ui.Type,
+			Active:             ui.Active,
+			Roles:              ui.Roles,
+			Namespace:          ui.Namespace,
+			APIKeyFirstLetters: ui.APIKeyFirstLetters,
+			CreatedAt:          ui.CreatedAt,
+			LastUsedAt:         ui.LastUsedAt,
 		}
 	}
 	return out, nil

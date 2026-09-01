@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
@@ -878,6 +879,20 @@ type UserInfo struct {
 	Type   string   // [UserTypeDB] or [UserTypeDBEnv]
 	Active bool     // Is the user activated?
 	Roles  []string // Roles assigned to this user.
+
+	// Namespace the user is bound to. Only populated for callers
+	// with global-operator privileges.
+	Namespace string
+
+	// APIKeyFirstLetters holds the first 3 letters of the user's API key.
+	APIKeyFirstLetters string
+
+	// CreatedAt is the time the user was created.
+	CreatedAt *time.Time
+
+	// LastUsedAt is the last time the user's API key was used. It is only
+	// populated if the request was made with IncludeLastUsedAt set to true.
+	LastUsedAt *time.Time
 }
 
 var _ json.Unmarshaler = (*UserInfo)(nil)
@@ -886,6 +901,13 @@ func (ui *UserInfo) UnmarshalJSON(data []byte) error {
 	var resp struct {
 		rest.DBUserInfo
 		UserType string `json:"userType"`
+
+		// The server returns these fields as a nullable type,
+		// e.g. "type": ["string", "null"], which the Swagger -> OpenAPI v3
+		// conversion drops, so they are missing from [rest.DBUserInfo].
+		APIKeyFirstLetters string     `json:"apiKeyFirstLetters,omitempty"`
+		CreatedAt          *time.Time `json:"createdAt,omitempty"`
+		LastUsedAt         *time.Time `json:"lastUsedAt,omitempty"`
 	}
 	if err := json.Unmarshal(data, &resp); err != nil {
 		return err
@@ -897,10 +919,14 @@ func (ui *UserInfo) UnmarshalJSON(data []byte) error {
 	}
 
 	*ui = UserInfo{
-		ID:     resp.UserId,
-		Type:   userType,
-		Active: resp.Active,
-		Roles:  resp.Roles,
+		ID:                 resp.UserId,
+		Type:               userType,
+		Active:             resp.Active,
+		Roles:              resp.Roles,
+		Namespace:          resp.Namespace,
+		APIKeyFirstLetters: resp.APIKeyFirstLetters,
+		CreatedAt:          resp.CreatedAt,
+		LastUsedAt:         resp.LastUsedAt,
 	}
 	return nil
 }
