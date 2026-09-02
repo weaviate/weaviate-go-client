@@ -4,7 +4,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 
-	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
+	proto "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 	protoutil "google.golang.org/protobuf/proto"
 )
 
