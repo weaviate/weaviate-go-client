@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
@@ -874,10 +875,14 @@ const (
 )
 
 type UserInfo struct {
-	ID     string   // User ID.
-	Type   string   // [UserTypeDB] or [UserTypeDBEnv]
-	Active bool     // Is the user activated?
-	Roles  []string // Roles assigned to this user.
+	ID                 string    // User ID.
+	Type               string    // [UserTypeDB] or [UserTypeDBEnv]
+	Active             bool      // Is the user activated?
+	CreatedAt          time.Time // Creation timestamp.
+	LastUsedAt         time.Time // Latest activity timestamp.
+	APIKeyFirstLetters string    // First letters of the user's API key.
+	Namespace          string    // Namespace this user belongs to, if any.
+	Roles              []string  // Roles assigned to this user.
 }
 
 var _ json.Unmarshaler = (*UserInfo)(nil)
@@ -897,10 +902,14 @@ func (ui *UserInfo) UnmarshalJSON(data []byte) error {
 	}
 
 	*ui = UserInfo{
-		ID:     resp.UserId,
-		Type:   userType,
-		Active: resp.Active,
-		Roles:  resp.Roles,
+		ID:                 resp.UserId,
+		Type:               userType,
+		Active:             resp.Active,
+		CreatedAt:          resp.CreatedAt,
+		LastUsedAt:         resp.LastUsedAt,
+		APIKeyFirstLetters: resp.ApiKeyFirstLetters,
+		Namespace:          resp.Namespace,
+		Roles:              resp.Roles,
 	}
 	return nil
 }
