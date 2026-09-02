@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
-	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
+	proto "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
