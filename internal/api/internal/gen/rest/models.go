@@ -2269,6 +2269,9 @@ type DBUserCredential struct {
 	// Namespace The namespace the user was bound to on the source. Informational on export; import binds the user to the request's target namespace.
 	Namespace string `json:"namespace,omitempty"`
 
+	// SecureHash The argon2id PHC hash of the user's API key. Null when the key cannot be migrated (see status).
+	SecureHash string `json:"secureHash,omitempty"`
+
 	// Status Export classification. Only 'exported' carries a usable secureHash; the others report why the user was not carried.
 	Status DBUserCredentialStatus `json:"status,omitempty"`
 
@@ -2287,8 +2290,17 @@ type DBUserInfo struct {
 	// Active Activity status of the returned user.
 	Active bool `json:"active"`
 
+	// ApiKeyFirstLetters First 3 letters of the associated API key.
+	ApiKeyFirstLetters string `json:"apiKeyFirstLetters,omitempty"`
+
+	// CreatedAt Date and time in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.
+	CreatedAt time.Time `json:"createdAt,omitempty"`
+
 	// DbUserType Type of the returned user.
 	DbUserType DBUserInfoDbUserType `json:"dbUserType"`
+
+	// LastUsedAt Date and time in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.
+	LastUsedAt time.Time `json:"lastUsedAt,omitempty"`
 
 	// Namespace The namespace this user is bound to. Only populated for callers with global-operator privileges; omitted otherwise.
 	Namespace string `json:"namespace,omitempty"`
@@ -2728,8 +2740,14 @@ type NodeShardStatus struct {
 	// Name The name of the shard.
 	Name string `json:"name"`
 
+	// NumberOfReplicas Number of replicas for the shard.
+	NumberOfReplicas int64 `json:"numberOfReplicas,omitempty"`
+
 	// ObjectCount The number of objects in shard.
 	ObjectCount int64 `json:"objectCount"`
+
+	// ReplicationFactor Minimum number of replicas for the shard.
+	ReplicationFactor int64 `json:"replicationFactor,omitempty"`
 
 	// VectorIndexingStatus The status of the vector indexing process.
 	VectorIndexingStatus string `json:"vectorIndexingStatus"`
@@ -3312,7 +3330,7 @@ type ReplicationScalePlan struct {
 	// ShardScaleActions A mapping of shard names to their corresponding scaling actions. Each key corresponds to a shard name, and its value defines which nodes should be removed and which should be added for that shard. If a source node listed for an addition is also in 'removeNodes' for the same shard, that addition is treated as a move operation. Such a node can appear only once as a source in that shard. Otherwise, if the source node is not being removed, it represents a copy operation and can be referenced multiple times as a source for additions.
 	ShardScaleActions map[string]struct {
 		// AddNodes A mapping of target node identifiers to their addition configuration. Each key represents a target node where a new replica will be added. The value may be null, which means an empty replica will be created, or a string specifying the source node from which shard data will be copied. If the source node is also marked for removal in the same shard, this addition is treated as a move operation, and that source node can only appear once as a source node for that shard. If the source node is not being removed, it can be used as the source for multiple additions (copy operations).
-		AddNodes map[string]interface{} `json:"addNodes,omitempty"`
+		AddNodes map[string]string `json:"addNodes,omitempty"`
 
 		// RemoveNodes List of node identifiers from which replicas of this shard should be removed. Nodes listed here must not appear in 'addNodes' for the same shard, and cannot be used as a source node for any addition in this shard except in the implicit move case, where they appear as both a source and a node to remove.
 		RemoveNodes []string `json:"removeNodes,omitempty"`
