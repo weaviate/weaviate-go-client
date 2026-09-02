@@ -24,12 +24,10 @@ import (
 const (
 	EnvGithubToken = "GITHUB_TOKEN"
 
-	WeaviateRoot        = "https://api.github.com/repos/weaviate/weaviate/contents"
-	WeaviateProtobufDir = "grpc/proto/v1"
-	WeaviateOpenAPIDir  = "openapi-specs/schema.json"
+	WeaviateRoot       = "https://api.github.com/repos/weaviate/weaviate/contents"
+	WeaviateOpenAPIDir = "openapi-specs/schema.json"
 
-	LocalOpenAPIDir  = "./api/rest"
-	LocalProtobufDir = "./api/proto/v1"
+	LocalOpenAPIDir = "./api/rest"
 
 	SchemaCheck         = "schema.check.json"
 	SchemaV3            = "schema.v3.yaml"
@@ -61,7 +59,7 @@ Environment variables:
 // oapi-codegen does not support. After an update, Contracts will
 // generate a v3 schema from the one we pull from the main repo.
 //
-// Models and protobuf stubs are not re-generated automatically.
+// Models are not re-generated automatically.
 func Contracts(ctx context.Context, args []string) error {
 	var opt struct {
 		Help  bool
@@ -86,55 +84,32 @@ func Contracts(ctx context.Context, args []string) error {
 		return err
 	}
 
-	log.Printf("Fetching metadata for %s/*.proto", WeaviateProtobufDir)
-	protobufs, err := headProtobufs(ctx)
+	c, err := newContract(ctx, LocalOpenAPIDir, SchemaCheck, *openapi)
 	if err != nil {
 		return err
 	}
 
-	var contracts []contract
-	{
-		c, err := newContract(ctx, LocalOpenAPIDir, SchemaCheck, *openapi)
-		if err != nil {
-			return err
-		}
-		contracts = append(contracts, *c)
-	}
-
-	for _, file := range protobufs {
-		c, err := newContract(ctx, LocalProtobufDir, file.Name, file)
-		if err != nil {
-			return err
-		}
-		contracts = append(contracts, *c)
-	}
-
-	if len(contracts) == 0 {
-		return errors.New("no specs in weaviate/weaviate")
-	}
-
 	ok := true
 	updated := false
-	for _, file := range contracts {
-		if file.SHA == file.Upstream.SHA {
-			log.Printf("check %s: ok", file.Path)
-			continue
-		}
-
-		log.Printf("check %s:\n\twant:\t%s\n\tgot:\t%s", file.Path, file.Upstream.SHA, file.SHA)
-		if opt.Check {
-			ok = false
-			continue
-		}
-
-		log.Print("Downloading latest ", file.Upstream.DownloadURL)
-		if err := updateContract(ctx, file); err != nil {
-			printError(err)
-			ok = false
-		}
-		updated = true
+	if c.SHA == c.Upstream.SHA {
+		log.Printf("check %s: ok", c.Path)
+		goto Finish
 	}
 
+	log.Printf("check %s:\n\twant:\t%s\n\tgot:\t%s", c.Path, c.Upstream.SHA, c.SHA)
+	if opt.Check {
+		ok = false
+		goto Finish
+	}
+
+	log.Print("Downloading latest ", c.Upstream.DownloadURL)
+	if err := updateContract(ctx, c); err != nil {
+		printError(err)
+		ok = false
+	}
+	updated = true
+
+Finish:
 	// Regenerate schema.v3.json if files were updated successfully.
 	if !opt.Check && ok {
 		log.Printf("Converting %s to OpenAPI v3", SchemaCheck)
@@ -143,14 +118,9 @@ func Contracts(ctx context.Context, args []string) error {
 		}
 	}
 
-	// Prune api/proto and api/rest directories from stale files.
+	// Prune api/rest directory from stale files.
 	log.Printf("Pruning local contracts")
-	if err := pruneDir(LocalOpenAPIDir, contracts, opt.Check); err != nil {
-		printError(err)
-		ok = false
-	}
-
-	if err := pruneDir(LocalProtobufDir, contracts, opt.Check); err != nil {
+	if err := pruneDir(LocalOpenAPIDir, []contract{*c}, opt.Check); err != nil {
 		printError(err)
 		ok = false
 	}
@@ -168,7 +138,7 @@ Update them to the latest version by running this command:
 Contracts were successfully updated, run:
 	go generate ./...
 
-to re-generate REST and gRPC stubs.
+to re-generate REST models.
 `)
 	}
 	log.Print("Done")
@@ -188,7 +158,7 @@ type githubFile struct {
 	DownloadURL string `json:"download_url"`
 }
 
-// headProtobufs fetches metadata for schema.json.
+// headOpenAPISpecs fetches metadata for schema.json.
 func headOpenAPISpecs(ctx context.Context) (*githubFile, error) {
 	dir, basename := filepath.Split(WeaviateOpenAPIDir)
 	specs, err := ghFiles(ctx, dir)
@@ -203,14 +173,9 @@ func headOpenAPISpecs(ctx context.Context) (*githubFile, error) {
 	return nil, fmt.Errorf("%s/%s not found", WeaviateRoot, WeaviateOpenAPIDir)
 }
 
-// headProtobufs fetches metadata for protobuf files.
-func headProtobufs(ctx context.Context) ([]githubFile, error) {
-	return ghFiles(ctx, WeaviateProtobufDir)
-}
-
 // updateContract fetches the latest version of the [c.Upstream] and writes it to [c.Path].
 // If w is not nil, it will receive the file's contents via an io.TeeReader.
-func updateContract(ctx context.Context, c contract) error {
+func updateContract(ctx context.Context, c *contract) error {
 	rc, err := ghGet(ctx, c.Upstream.DownloadURL)
 	if err != nil {
 		return err
@@ -501,7 +466,7 @@ func writeAtomic(file string, r io.Reader, silent bool) (int64, error) {
 func pruneDir(root string, contracts []contract, check bool) error {
 	// keep returns a boolean indicating if a contract file should be kept.
 	keep := func(de fs.DirEntry) bool {
-		// Both api/rest and api/proto/v1 should only contain files.
+		// api/rest should only contain files.
 		if de.IsDir() {
 			return false
 		}
