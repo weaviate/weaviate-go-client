@@ -861,6 +861,9 @@ components:
                 namespace:
                     description: The namespace the user was bound to on the source. Informational on export; import binds the user to the request's target namespace.
                     type: string
+                secureHash:
+                    description: The argon2id PHC hash of the user's API key. Null when the key cannot be migrated (see status).
+                    type: string
                 status:
                     description: Export classification. Only 'exported' carries a usable secureHash; the others report why the user was not carried.
                     enum:
@@ -882,11 +885,23 @@ components:
                 active:
                     description: Activity status of the returned user.
                     type: boolean
+                apiKeyFirstLetters:
+                    description: First 3 letters of the associated API key.
+                    maxLength: 3
+                    type: string
+                createdAt:
+                    description: 'Date and time in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.'
+                    format: date-time
+                    type: string
                 dbUserType:
                     description: Type of the returned user.
                     enum:
                         - db_user
                         - db_env_user
+                    type: string
+                lastUsedAt:
+                    description: 'Date and time in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.'
+                    format: date-time
                     type: string
                 namespace:
                     description: The namespace this user is bound to. Only populated for callers with global-operator privileges; omitted otherwise.
@@ -1482,11 +1497,21 @@ components:
                     description: The name of the shard.
                     type: string
                     x-omitempty: false
+                numberOfReplicas:
+                    description: Number of replicas for the shard.
+                    format: int64
+                    type: integer
+                    x-omitempty: true
                 objectCount:
                     description: The number of objects in shard.
                     format: int64
                     type: integer
                     x-omitempty: false
+                replicationFactor:
+                    description: Minimum number of replicas for the shard.
+                    format: int64
+                    type: integer
+                    x-omitempty: true
                 vectorIndexingStatus:
                     description: The status of the vector indexing process.
                     type: string
@@ -2363,6 +2388,9 @@ components:
                         description: Scaling actions for a single shard, including which nodes to remove and which to add. Nodes listed in 'removeNodes' cannot appear as targets in 'addNodes' for the same shard. If a source node is also marked for removal, it is treated as a move operation and can only appear once as a source node in that shard. A source node that is not being removed can appear multiple times as a source node for additions in that shard (copy operations).
                         properties:
                             addNodes:
+                                additionalProperties:
+                                    description: Defines how the new replica should be created. If null, an empty shard is created. If a string, it specifies the source node from which data for this shard should be replicated.
+                                    type: string
                                 description: A mapping of target node identifiers to their addition configuration. Each key represents a target node where a new replica will be added. The value may be null, which means an empty replica will be created, or a string specifying the source node from which shard data will be copied. If the source node is also marked for removal in the same shard, this addition is treated as a move operation, and that source node can only appear once as a source node for that shard. If the source node is not being removed, it can be used as the source for multiple additions (copy operations).
                                 type: object
                             removeNodes:
