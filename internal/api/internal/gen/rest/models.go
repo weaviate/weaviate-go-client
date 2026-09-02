@@ -286,6 +286,27 @@ func (e ClassificationStatus) Valid() bool {
 	}
 }
 
+// Defines values for DBUserCredentialStatus.
+const (
+	Exported    DBUserCredentialStatus = "exported"
+	ImportedKey DBUserCredentialStatus = "imported_key"
+	Revoked     DBUserCredentialStatus = "revoked"
+)
+
+// Valid indicates whether the value is a known member of the DBUserCredentialStatus enum.
+func (e DBUserCredentialStatus) Valid() bool {
+	switch e {
+	case Exported:
+		return true
+	case ImportedKey:
+		return true
+	case Revoked:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DBUserInfoDbUserType.
 const (
 	DBUserInfoDbUserTypeDbEnvUser DBUserInfoDbUserType = "db_env_user"
@@ -1194,28 +1215,49 @@ func (e SearchNearTextRequestConsistencyLevel) Valid() bool {
 
 // Defines values for SearchNearTextRequestReturnMetadata.
 const (
-	Certainty      SearchNearTextRequestReturnMetadata = "certainty"
-	CreationTime   SearchNearTextRequestReturnMetadata = "creationTime"
-	Distance       SearchNearTextRequestReturnMetadata = "distance"
-	ExplainScore   SearchNearTextRequestReturnMetadata = "explainScore"
-	LastUpdateTime SearchNearTextRequestReturnMetadata = "lastUpdateTime"
-	Score          SearchNearTextRequestReturnMetadata = "score"
+	SearchNearTextRequestReturnMetadataCertainty      SearchNearTextRequestReturnMetadata = "certainty"
+	SearchNearTextRequestReturnMetadataCreationTime   SearchNearTextRequestReturnMetadata = "creationTime"
+	SearchNearTextRequestReturnMetadataDistance       SearchNearTextRequestReturnMetadata = "distance"
+	SearchNearTextRequestReturnMetadataExplainScore   SearchNearTextRequestReturnMetadata = "explainScore"
+	SearchNearTextRequestReturnMetadataLastUpdateTime SearchNearTextRequestReturnMetadata = "lastUpdateTime"
+	SearchNearTextRequestReturnMetadataScore          SearchNearTextRequestReturnMetadata = "score"
 )
 
 // Valid indicates whether the value is a known member of the SearchNearTextRequestReturnMetadata enum.
 func (e SearchNearTextRequestReturnMetadata) Valid() bool {
 	switch e {
-	case Certainty:
+	case SearchNearTextRequestReturnMetadataCertainty:
 		return true
-	case CreationTime:
+	case SearchNearTextRequestReturnMetadataCreationTime:
 		return true
-	case Distance:
+	case SearchNearTextRequestReturnMetadataDistance:
 		return true
-	case ExplainScore:
+	case SearchNearTextRequestReturnMetadataExplainScore:
 		return true
-	case LastUpdateTime:
+	case SearchNearTextRequestReturnMetadataLastUpdateTime:
 		return true
-	case Score:
+	case SearchNearTextRequestReturnMetadataScore:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchReferenceSelectorReturnMetadata.
+const (
+	SearchReferenceSelectorReturnMetadataCreationTime   SearchReferenceSelectorReturnMetadata = "creationTime"
+	SearchReferenceSelectorReturnMetadataId             SearchReferenceSelectorReturnMetadata = "id"
+	SearchReferenceSelectorReturnMetadataLastUpdateTime SearchReferenceSelectorReturnMetadata = "lastUpdateTime"
+)
+
+// Valid indicates whether the value is a known member of the SearchReferenceSelectorReturnMetadata enum.
+func (e SearchReferenceSelectorReturnMetadata) Valid() bool {
+	switch e {
+	case SearchReferenceSelectorReturnMetadataCreationTime:
+		return true
+	case SearchReferenceSelectorReturnMetadataId:
+		return true
+	case SearchReferenceSelectorReturnMetadataLastUpdateTime:
 		return true
 	default:
 		return false
@@ -1384,6 +1426,30 @@ func (e UsageLimitExceededResponseLimit) Valid() bool {
 	case Shards:
 		return true
 	case Tenants:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UserImportResultStatus.
+const (
+	Created       UserImportResultStatus = "created"
+	Error         UserImportResultStatus = "error"
+	Reconciled    UserImportResultStatus = "reconciled"
+	SkippedExists UserImportResultStatus = "skipped_exists"
+)
+
+// Valid indicates whether the value is a known member of the UserImportResultStatus enum.
+func (e UserImportResultStatus) Valid() bool {
+	switch e {
+	case Created:
+		return true
+	case Error:
+		return true
+	case Reconciled:
+		return true
+	case SkippedExists:
 		return true
 	default:
 		return false
@@ -2188,6 +2254,33 @@ type ClusterStatisticsResponse struct {
 	Statistics   []Statistics `json:"statistics,omitempty"`
 	Synchronized bool         `json:"synchronized"`
 }
+
+// DBUserCredential A single database user's exportable API-key credential. Carries the argon2id key hash for strong-key users; for users whose key cannot be migrated (imported/weak, revoked, or missing a hash) secureHash is null and status names the reason.
+type DBUserCredential struct {
+	// Active Whether the user is active. A deactivated (not revoked) user is carried with active=false and reproduced on import.
+	Active bool `json:"active,omitempty"`
+
+	// ApiKeyFirstLetters First 3 letters of the associated API key.
+	ApiKeyFirstLetters string `json:"apiKeyFirstLetters,omitempty"`
+
+	// CreatedAt Date and time in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.
+	CreatedAt time.Time `json:"createdAt,omitempty"`
+
+	// Namespace The namespace the user was bound to on the source. Informational on export; import binds the user to the request's target namespace.
+	Namespace string `json:"namespace,omitempty"`
+
+	// Status Export classification. Only 'exported' carries a usable secureHash; the others report why the user was not carried.
+	Status DBUserCredentialStatus `json:"status,omitempty"`
+
+	// UserId The name (ID) of the user, without any namespace prefix.
+	UserId string `json:"userId"`
+
+	// UserIdentifier The random identifier embedded in the user's API key, used to resolve the key hash. Exactly 16 characters for an importable record; empty when the export reports a user whose key is not carried.
+	UserIdentifier string `json:"userIdentifier,omitempty"`
+}
+
+// DBUserCredentialStatus Export classification. Only 'exported' carries a usable secureHash; the others report why the user was not carried.
+type DBUserCredentialStatus string
 
 // DBUserInfo defines model for DBUserInfo.
 type DBUserInfo struct {
@@ -3363,8 +3456,11 @@ type SearchBm25Request struct {
 	// ReturnMetadata The retrieval metadata to return under each result's `metadata` key. The object `id` is always returned as each result's `id` field. Omitted or empty returns no `metadata` block.
 	ReturnMetadata []SearchBm25RequestReturnMetadata `json:"returnMetadata,omitempty"`
 
-	// ReturnProperties The properties to return. A dot-path selects one hop across a reference (e.g. `hasAuthor.name`). Omitted returns all non-reference, non-blob properties; an empty array returns no properties.
+	// ReturnProperties The non-reference properties to return. Omitted returns all non-reference, non-blob properties; an empty array returns no properties. References are selected with `returnReferences`.
 	ReturnProperties []string `json:"returnProperties,omitempty"`
+
+	// ReturnReferences The cross-references to return under each result's `references` key. Each entry selects one reference property and what to return from the referenced objects. Omitted or empty returns no references.
+	ReturnReferences []SearchReferenceSelector `json:"returnReferences,omitempty"`
 
 	// SinglePrompt Reserved for per-object retrieval-augmented generation. Returns 422 (not yet supported).
 	SinglePrompt string `json:"singlePrompt,omitempty"`
@@ -3414,8 +3510,11 @@ type SearchCommon struct {
 	// ReturnMetadata The retrieval metadata to return under each result's `metadata` key. The object `id` is always returned as each result's `id` field. Omitted or empty returns no `metadata` block.
 	ReturnMetadata []SearchCommonReturnMetadata `json:"returnMetadata,omitempty"`
 
-	// ReturnProperties The properties to return. A dot-path selects one hop across a reference (e.g. `hasAuthor.name`). Omitted returns all non-reference, non-blob properties; an empty array returns no properties.
+	// ReturnProperties The non-reference properties to return. Omitted returns all non-reference, non-blob properties; an empty array returns no properties. References are selected with `returnReferences`.
 	ReturnProperties []string `json:"returnProperties,omitempty"`
+
+	// ReturnReferences The cross-references to return under each result's `references` key. Each entry selects one reference property and what to return from the referenced objects. Omitted or empty returns no references.
+	ReturnReferences []SearchReferenceSelector `json:"returnReferences,omitempty"`
 
 	// SinglePrompt Reserved for per-object retrieval-augmented generation. Returns 422 (not yet supported).
 	SinglePrompt string `json:"singlePrompt,omitempty"`
@@ -3480,8 +3579,11 @@ type SearchHybridRequest struct {
 	// ReturnMetadata The retrieval metadata to return under each result's `metadata` key. The object `id` is always returned as each result's `id` field. Omitted or empty returns no `metadata` block.
 	ReturnMetadata []SearchHybridRequestReturnMetadata `json:"returnMetadata,omitempty"`
 
-	// ReturnProperties The properties to return. A dot-path selects one hop across a reference (e.g. `hasAuthor.name`). Omitted returns all non-reference, non-blob properties; an empty array returns no properties.
+	// ReturnProperties The non-reference properties to return. Omitted returns all non-reference, non-blob properties; an empty array returns no properties. References are selected with `returnReferences`.
 	ReturnProperties []string `json:"returnProperties,omitempty"`
+
+	// ReturnReferences The cross-references to return under each result's `references` key. Each entry selects one reference property and what to return from the referenced objects. Omitted or empty returns no references.
+	ReturnReferences []SearchReferenceSelector `json:"returnReferences,omitempty"`
 
 	// SinglePrompt Reserved for per-object retrieval-augmented generation. Returns 422 (not yet supported).
 	SinglePrompt string `json:"singlePrompt,omitempty"`
@@ -3546,8 +3648,11 @@ type SearchNearObjectRequest struct {
 	// ReturnMetadata The retrieval metadata to return under each result's `metadata` key. The object `id` is always returned as each result's `id` field. Omitted or empty returns no `metadata` block.
 	ReturnMetadata []SearchNearObjectRequestReturnMetadata `json:"returnMetadata,omitempty"`
 
-	// ReturnProperties The properties to return. A dot-path selects one hop across a reference (e.g. `hasAuthor.name`). Omitted returns all non-reference, non-blob properties; an empty array returns no properties.
+	// ReturnProperties The non-reference properties to return. Omitted returns all non-reference, non-blob properties; an empty array returns no properties. References are selected with `returnReferences`.
 	ReturnProperties []string `json:"returnProperties,omitempty"`
+
+	// ReturnReferences The cross-references to return under each result's `references` key. Each entry selects one reference property and what to return from the referenced objects. Omitted or empty returns no references.
+	ReturnReferences []SearchReferenceSelector `json:"returnReferences,omitempty"`
 
 	// SinglePrompt Reserved for per-object retrieval-augmented generation. Returns 422 (not yet supported).
 	SinglePrompt string `json:"singlePrompt,omitempty"`
@@ -3609,8 +3714,11 @@ type SearchNearTextRequest struct {
 	// ReturnMetadata The retrieval metadata to return under each result's `metadata` key. The object `id` is always returned as each result's `id` field. Omitted or empty returns no `metadata` block.
 	ReturnMetadata []SearchNearTextRequestReturnMetadata `json:"returnMetadata,omitempty"`
 
-	// ReturnProperties The properties to return. A dot-path selects one hop across a reference (e.g. `hasAuthor.name`). Omitted returns all non-reference, non-blob properties; an empty array returns no properties.
+	// ReturnProperties The non-reference properties to return. Omitted returns all non-reference, non-blob properties; an empty array returns no properties. References are selected with `returnReferences`.
 	ReturnProperties []string `json:"returnProperties,omitempty"`
+
+	// ReturnReferences The cross-references to return under each result's `references` key. Each entry selects one reference property and what to return from the referenced objects. Omitted or empty returns no references.
+	ReturnReferences []SearchReferenceSelector `json:"returnReferences,omitempty"`
 
 	// SinglePrompt Reserved for per-object retrieval-augmented generation. Returns 422 (not yet supported).
 	SinglePrompt string `json:"singlePrompt,omitempty"`
@@ -3630,6 +3738,27 @@ type SearchNearTextRequestConsistencyLevel string
 
 // SearchNearTextRequestReturnMetadata defines model for SearchNearTextRequest.ReturnMetadata.
 type SearchNearTextRequestReturnMetadata string
+
+// SearchReferenceSelector Selects one cross-reference to return, and what to return from each referenced object.
+type SearchReferenceSelector struct {
+	// LinkOn The reference property to follow.
+	LinkOn string `json:"linkOn"`
+
+	// ReturnMetadata The metadata to return under each referenced object's `metadata` key. Omitted or empty returns no `metadata` block.
+	ReturnMetadata []SearchReferenceSelectorReturnMetadata `json:"returnMetadata,omitempty"`
+
+	// ReturnProperties The non-reference properties to return from each referenced object. Omitted returns all non-reference, non-blob properties of the referenced collection; an empty array returns no properties.
+	ReturnProperties []string `json:"returnProperties,omitempty"`
+
+	// ReturnReferences The cross-references to return from each referenced object. Nesting deeper than `QUERY_CROSS_REFERENCE_DEPTH_LIMIT` is rejected.
+	ReturnReferences []SearchReferenceSelector `json:"returnReferences,omitempty"`
+
+	// TargetCollection The referenced collection to select. Required when `linkOn` is a multi-target reference.
+	TargetCollection string `json:"targetCollection,omitempty"`
+}
+
+// SearchReferenceSelectorReturnMetadata defines model for SearchReferenceSelector.ReturnMetadata.
+type SearchReferenceSelectorReturnMetadata string
 
 // SearchRerank Reserved for reranking. Returns 422 (not yet supported).
 type SearchRerank struct {
@@ -3681,8 +3810,35 @@ type SearchResultObject struct {
 	// Properties The selected non-reference properties of the object; nested (object / object[]) properties are pruned to the selected nested fields. Always present — `{}` when the request selects no properties.
 	Properties map[string]JsonObject `json:"properties"`
 
-	// References The selected cross-references: reference name to the array of referenced objects, each carrying the selected one-hop properties. Omitted when the request selects no references.
-	References map[string][]JsonObject `json:"references,omitempty"`
+	// References The selected cross-references: reference property name to the array of referenced objects. Omitted when the request selects no references, or when the hit has no entry for any of the selected references.
+	References map[string][]SearchResultReference `json:"references,omitempty"`
+}
+
+// SearchResultReference One referenced object: the selected non-reference properties under `properties`, deeper cross-references under `references`, and the requested metadata under `metadata`.
+type SearchResultReference struct {
+	// Collection The collection the referenced object belongs to. Returned for multi-target references.
+	Collection string `json:"collection,omitempty"`
+
+	// Metadata The metadata of a referenced object, populated according to the selector's `returnMetadata`. Every field is optional and only present when it was requested.
+	Metadata SearchResultReferenceMetadata `json:"metadata,omitempty"`
+
+	// Properties The selected non-reference properties of the referenced object; nested (object / object[]) properties are pruned to the selected nested fields. Always present — `{}` when the selector selects no properties.
+	Properties map[string]JsonObject `json:"properties"`
+
+	// References The cross-references selected one hop deeper. Omitted when the selector selects none, or when the referenced object has no entry for any of them.
+	References map[string][]SearchResultReference `json:"references,omitempty"`
+}
+
+// SearchResultReferenceMetadata The metadata of a referenced object, populated according to the selector's `returnMetadata`. Every field is optional and only present when it was requested.
+type SearchResultReferenceMetadata struct {
+	// CreationTime The referenced object's creation time, as epoch milliseconds.
+	CreationTime int64 `json:"creationTime,omitempty"`
+
+	// Id The referenced object's UUID.
+	Id *openapi_types.UUID `json:"id,omitempty"`
+
+	// LastUpdateTime The referenced object's last-update time, as epoch milliseconds.
+	LastUpdateTime int64 `json:"lastUpdateTime,omitempty"`
 }
 
 // ShardProgress Progress information for exporting a single shard
@@ -3877,6 +4033,40 @@ type UserApiKey struct {
 	// Apikey The API key associated with the user.
 	Apikey string `json:"apikey"`
 }
+
+// UserExportResponse The full set of database-user credential records on the source, one per user.
+type UserExportResponse struct {
+	Users []DBUserCredential `json:"users"`
+}
+
+// UserImportRequest A batch of database-user credentials to recreate on the target, bound to a single target namespace.
+type UserImportRequest struct {
+	// Namespace The target namespace every user in this request is created under. Required on namespace-enabled clusters.
+	Namespace string `json:"namespace,omitempty"`
+
+	// Users The credential records to import. Only records with a strong (argon2id) secureHash are importable.
+	Users []DBUserCredential `json:"users"`
+}
+
+// UserImportResponse The per-user outcome of an import batch.
+type UserImportResponse struct {
+	Results []UserImportResult `json:"results"`
+}
+
+// UserImportResult The outcome of importing a single database-user credential.
+type UserImportResult struct {
+	// Error The reason, present only when status is 'error'.
+	Error string `json:"error,omitempty"`
+
+	// Status The outcome for this user.
+	Status UserImportResultStatus `json:"status"`
+
+	// UserId The name (ID) of the user, without any namespace prefix.
+	UserId string `json:"userId"`
+}
+
+// UserImportResultStatus The outcome for this user.
+type UserImportResultStatus string
 
 // UserOwnInfo defines model for UserOwnInfo.
 type UserOwnInfo struct {
@@ -4491,6 +4681,9 @@ type BatchReferencesCreateJSONRequestBody = BatchReferencesCreateJSONBody
 
 // ClassificationsPostJSONRequestBody defines body for ClassificationsPost for application/json ContentType.
 type ClassificationsPostJSONRequestBody = Classification
+
+// ImportUsersJSONRequestBody defines body for ImportUsers for application/json ContentType.
+type ImportUsersJSONRequestBody = UserImportRequest
 
 // ExportCreateJSONRequestBody defines body for ExportCreate for application/json ContentType.
 type ExportCreateJSONRequestBody = ExportCreateRequest

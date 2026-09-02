@@ -844,6 +844,39 @@ components:
                     type: boolean
                     x-omitempty: false
             type: object
+        DBUserCredential:
+            description: A single database user's exportable API-key credential. Carries the argon2id key hash for strong-key users; for users whose key cannot be migrated (imported/weak, revoked, or missing a hash) secureHash is null and status names the reason.
+            properties:
+                active:
+                    description: Whether the user is active. A deactivated (not revoked) user is carried with active=false and reproduced on import.
+                    type: boolean
+                apiKeyFirstLetters:
+                    description: First 3 letters of the associated API key.
+                    maxLength: 3
+                    type: string
+                createdAt:
+                    description: 'Date and time in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.'
+                    format: date-time
+                    type: string
+                namespace:
+                    description: The namespace the user was bound to on the source. Informational on export; import binds the user to the request's target namespace.
+                    type: string
+                status:
+                    description: Export classification. Only 'exported' carries a usable secureHash; the others report why the user was not carried.
+                    enum:
+                        - exported
+                        - imported_key
+                        - revoked
+                    type: string
+                userId:
+                    description: The name (ID) of the user, without any namespace prefix.
+                    type: string
+                userIdentifier:
+                    description: The random identifier embedded in the user's API key, used to resolve the key hash. Exactly 16 characters for an importable record; empty when the export reports a user whose key is not carried.
+                    type: string
+            required:
+                - userId
+            type: object
         DBUserInfo:
             properties:
                 active:
@@ -2548,9 +2581,14 @@ components:
                         type: string
                     type: array
                 returnProperties:
-                    description: The properties to return. A dot-path selects one hop across a reference (e.g. `hasAuthor.name`). Omitted returns all non-reference, non-blob properties; an empty array returns no properties.
+                    description: The non-reference properties to return. Omitted returns all non-reference, non-blob properties; an empty array returns no properties. References are selected with `returnReferences`.
                     items:
                         type: string
+                    type: array
+                returnReferences:
+                    description: The cross-references to return under each result's `references` key. Each entry selects one reference property and what to return from the referenced objects. Omitted or empty returns no references.
+                    items:
+                        $ref: '#/components/schemas/SearchReferenceSelector'
                     type: array
                 singlePrompt:
                     description: Reserved for per-object retrieval-augmented generation. Returns 422 (not yet supported).
@@ -2648,6 +2686,37 @@ components:
                     - query
                   type: object
             description: Request body for the near-text search endpoint. The query is vectorized server-side by the collection's vectorizer module and the closest objects are returned. Extends the shared search fields (`SearchCommon`) with the near-text-specific `query`, `certainty`, `distance` and `targetVector`.
+        SearchReferenceSelector:
+            description: Selects one cross-reference to return, and what to return from each referenced object.
+            properties:
+                linkOn:
+                    description: The reference property to follow.
+                    type: string
+                returnMetadata:
+                    description: The metadata to return under each referenced object's `metadata` key. Omitted or empty returns no `metadata` block.
+                    items:
+                        enum:
+                            - id
+                            - creationTime
+                            - lastUpdateTime
+                        type: string
+                    type: array
+                returnProperties:
+                    description: The non-reference properties to return from each referenced object. Omitted returns all non-reference, non-blob properties of the referenced collection; an empty array returns no properties.
+                    items:
+                        type: string
+                    type: array
+                returnReferences:
+                    description: The cross-references to return from each referenced object. Nesting deeper than `QUERY_CROSS_REFERENCE_DEPTH_LIMIT` is rejected.
+                    items:
+                        $ref: '#/components/schemas/SearchReferenceSelector'
+                    type: array
+                targetCollection:
+                    description: The referenced collection to select. Required when `linkOn` is a multi-target reference.
+                    type: string
+            required:
+                - linkOn
+            type: object
         SearchRerank:
             description: Reserved for reranking. Returns 422 (not yet supported).
             properties:
@@ -2730,13 +2799,57 @@ components:
                 references:
                     additionalProperties:
                         items:
-                            $ref: '#/components/schemas/JsonObject'
+                            $ref: '#/components/schemas/SearchResultReference'
                         type: array
-                    description: 'The selected cross-references: reference name to the array of referenced objects, each carrying the selected one-hop properties. Omitted when the request selects no references.'
+                    description: 'The selected cross-references: reference property name to the array of referenced objects. Omitted when the request selects no references, or when the hit has no entry for any of the selected references.'
                     type: object
             required:
                 - id
                 - properties
+            type: object
+        SearchResultReference:
+            description: 'One referenced object: the selected non-reference properties under `properties`, deeper cross-references under `references`, and the requested metadata under `metadata`.'
+            properties:
+                collection:
+                    description: The collection the referenced object belongs to. Returned for multi-target references.
+                    type: string
+                metadata:
+                    $ref: '#/components/schemas/SearchResultReferenceMetadata'
+                properties:
+                    additionalProperties:
+                        $ref: '#/components/schemas/JsonObject'
+                    description: The selected non-reference properties of the referenced object; nested (object / object[]) properties are pruned to the selected nested fields. Always present — `{}` when the selector selects no properties.
+                    type: object
+                    x-omitempty: false
+                references:
+                    additionalProperties:
+                        items:
+                            $ref: '#/components/schemas/SearchResultReference'
+                        type: array
+                    description: The cross-references selected one hop deeper. Omitted when the selector selects none, or when the referenced object has no entry for any of them.
+                    type: object
+            required:
+                - properties
+            type: object
+        SearchResultReferenceMetadata:
+            description: The metadata of a referenced object, populated according to the selector's `returnMetadata`. Every field is optional and only present when it was requested.
+            properties:
+                creationTime:
+                    description: The referenced object's creation time, as epoch milliseconds.
+                    format: int64
+                    nullable: true
+                    type: integer
+                id:
+                    description: The referenced object's UUID.
+                    format: uuid
+                    nullable: true
+                    type: string
+                    x-go-type: '*openapi_types.UUID'
+                lastUpdateTime:
+                    description: The referenced object's last-update time, as epoch milliseconds.
+                    format: int64
+                    nullable: true
+                    type: integer
             type: object
         ShardProgress:
             description: Progress information for exporting a single shard
@@ -3011,6 +3124,61 @@ components:
                     type: string
             required:
                 - apikey
+            type: object
+        UserExportResponse:
+            description: The full set of database-user credential records on the source, one per user.
+            properties:
+                users:
+                    items:
+                        $ref: '#/components/schemas/DBUserCredential'
+                    type: array
+            required:
+                - users
+            type: object
+        UserImportRequest:
+            description: A batch of database-user credentials to recreate on the target, bound to a single target namespace.
+            properties:
+                namespace:
+                    description: The target namespace every user in this request is created under. Required on namespace-enabled clusters.
+                    type: string
+                users:
+                    description: The credential records to import. Only records with a strong (argon2id) secureHash are importable.
+                    items:
+                        $ref: '#/components/schemas/DBUserCredential'
+                    type: array
+            required:
+                - users
+            type: object
+        UserImportResponse:
+            description: The per-user outcome of an import batch.
+            properties:
+                results:
+                    items:
+                        $ref: '#/components/schemas/UserImportResult'
+                    type: array
+            required:
+                - results
+            type: object
+        UserImportResult:
+            description: The outcome of importing a single database-user credential.
+            properties:
+                error:
+                    description: The reason, present only when status is 'error'.
+                    type: string
+                status:
+                    description: The outcome for this user.
+                    enum:
+                        - created
+                        - reconciled
+                        - skipped_exists
+                        - error
+                    type: string
+                userId:
+                    description: The name (ID) of the user, without any namespace prefix.
+                    type: string
+            required:
+                - status
+                - userId
             type: object
         UserOwnInfo:
             properties:
@@ -5504,6 +5672,96 @@ paths:
                 - cluster
             x-serviceIds:
                 - weaviate.cluster.statistics.get
+    /experimental/export-db-users:
+        post:
+            description: 'Experimental: this endpoint may change or be removed without notice. Export every database (`db` user type) user''s API-key credential for migration to another cluster. Strong-key users carry their argon2id key hash; imported/weak and revoked users are reported with a null hash and a status naming why they cannot be migrated. Root users only.'
+            operationId: exportUsers
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UserExportResponse'
+                    description: The exported user credentials.
+                "401":
+                    content: {}
+                    description: Unauthorized or invalid credentials.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Forbidden
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: The request syntax is correct, but the server couldn't process it due to semantic issues. Please check the values in your request.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: An error has occurred while trying to fulfill the request. Most likely the ErrorResponse will contain more information about the error.
+            summary: Export all database-user credentials
+            tags:
+                - experimental
+            x-serviceIds:
+                - weaviate.experimental.export-db-users
+    /experimental/import-db-users:
+        post:
+            description: 'Experimental: this endpoint may change or be removed without notice. Recreate exported database (`db` user type) user credentials on this cluster under a target namespace. Each user is created with its original key hash so the source key keeps working. Returns a per-user result. Only strong-key records are importable. Root users only.'
+            operationId: importUsers
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UserImportRequest'
+                    application/yaml:
+                        schema:
+                            $ref: '#/components/schemas/UserImportRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UserImportResponse'
+                    description: The per-user import results.
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Malformed request.
+                "401":
+                    content: {}
+                    description: Unauthorized or invalid credentials.
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: Forbidden
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: The request syntax is correct, but the server couldn't process it due to semantic issues. Please check the values in your request.
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                    description: An error has occurred while trying to fulfill the request. Most likely the ErrorResponse will contain more information about the error.
+            summary: Import database-user credentials
+            tags:
+                - experimental
+            x-codegen-request-body-name: body
+            x-serviceIds:
+                - weaviate.experimental.import-db-users
     /export/{backend}:
         post:
             description: Initiates an export operation on the specified backend storage (S3, GCS, Azure, or filesystem). The output format is controlled by the required 'file_format' field in the request body (currently only 'parquet' is supported). Each collection is exported to a separate file.
@@ -5798,30 +6056,45 @@ paths:
                 - weaviate.network.query.meta
     /mcp:
         delete:
-            description: Terminates an MCP session.
+            description: Accepted so clients that end their session explicitly keep working. The server keeps no session state, so there is nothing to terminate.
             operationId: mcp.delete
             responses:
                 "200":
                     content: {}
-                    description: Session terminated
-            tags:
-                - mcp
-        get:
-            description: Opens an SSE stream for receiving MCP server-sent events.
-            operationId: mcp.get
-            responses:
-                "200":
-                    content: {}
-                    description: SSE event stream
+                    description: Accepted; there is no session state to terminate
+                "503":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    error:
+                                        type: string
+                                type: object
+                    description: MCP server is disabled
             tags:
                 - mcp
         post:
-            description: MCP Streamable HTTP endpoint. Handles JSON-RPC requests for tool discovery and invocation.
+            description: MCP Streamable HTTP endpoint. Handles JSON-RPC requests for tool discovery and invocation. Every request is authenticated on its own; no Mcp-Session-Id is issued or required.
             operationId: mcp.post
             responses:
                 "200":
                     content: {}
                     description: JSON-RPC response or SSE stream
+                "503":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    error:
+                                        type: string
+                                type: object
+                        text/event-stream:
+                            schema:
+                                properties:
+                                    error:
+                                        type: string
+                                type: object
+                    description: MCP server is disabled
             tags:
                 - mcp
     /meta:
@@ -9683,13 +9956,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
-                    description: An error has occurred while trying to fulfill the request. Most likely the ErrorResponse will contain more information about the error.
-                "502":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ErrorResponse'
-                    description: The embedding provider failed to vectorize the query for the vector part of the search; the search cannot run.
+                    description: An error has occurred while trying to fulfill the request, including a failure of the embedding provider to vectorize the query for the vector part of the search. Most likely the ErrorResponse will contain more information about the error.
                 "503":
                     content:
                         application/json:
@@ -9843,13 +10110,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
-                    description: An error has occurred while trying to fulfill the request. Most likely the ErrorResponse will contain more information about the error.
-                "502":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ErrorResponse'
-                    description: The embedding provider failed to vectorize the query; the search cannot run.
+                    description: An error has occurred while trying to fulfill the request, including a failure of the embedding provider to vectorize the query. Most likely the ErrorResponse will contain more information about the error.
                 "503":
                     content:
                         application/json:
