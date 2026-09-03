@@ -31,6 +31,7 @@ type SearchRequest struct {
 
 	NearVector *NearVector
 	NearText   *NearText
+	NearMedia  *NearMedia
 	BM25       *BM25
 	Hybrid     *Hybrid
 }
@@ -89,6 +90,12 @@ type (
 		Weight *float32
 	}
 	NearVector struct {
+		Target     SearchTarget
+		Similarity VectorSimilarity
+	}
+	NearMedia struct {
+		Media      string
+		Kind       MediaKind
 		Target     SearchTarget
 		Similarity VectorSimilarity
 	}
@@ -258,6 +265,17 @@ const (
 	HybridFusionRelativeScore = HybridFusion(proto.Hybrid_FUSION_TYPE_UNSPECIFIED)
 )
 
+type MediaKind int
+
+const (
+	MediaImage = iota
+	MediaVideo
+	MediaAudio
+	MediaDepth
+	MediaThermal
+	MediaIMU
+)
+
 func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	dev.AssertNotNil(r, "r")
 
@@ -305,6 +323,24 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 		req.NearVector, err = marshalNearVector(r.NearVector)
 	case r.NearText != nil:
 		req.NearText, err = marshalNearText(r.NearText)
+	case r.NearMedia != nil:
+		var media any
+		media, err = marshalNearMedia(r.NearMedia)
+		switch media := media.(type) {
+		case nil:
+		case *proto.NearImageSearch:
+			req.NearImage = media
+		case *proto.NearAudioSearch:
+			req.NearAudio = media
+		case *proto.NearVideoSearch:
+			req.NearVideo = media
+		case *proto.NearDepthSearch:
+			req.NearDepth = media
+		case *proto.NearThermalSearch:
+			req.NearThermal = media
+		case *proto.NearIMUSearch:
+			req.NearImu = media
+		}
 	case r.BM25 != nil:
 		req.Bm25Search, err = marshalBM25(r.BM25)
 	case r.Hybrid != nil:
@@ -703,6 +739,7 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 		Query:     req.Concepts,
 		Distance:  req.Similarity.Distance,
 		Certainty: req.Similarity.Certainty,
+		Targets:   marshalSearchTarget(req.Target),
 	}
 
 	if m := req.MoveTo; m != nil {
@@ -729,26 +766,6 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 		}
 	}
 
-	if len(req.Target.Vectors) > 0 {
-		// Pre-allocate slices for targets. Do not allocate WeightsForTarget,
-		// as targets may have no weights.
-		nt.Targets = &proto.Targets{
-			TargetVectors: make([]string, len(req.Target.Vectors)),
-			Combination:   proto.CombinationMethod(req.Target.CombinationMethod),
-		}
-
-		for i, tv := range req.Target.Vectors {
-			nt.Targets.TargetVectors[i] = tv.Name
-			if tv.Weight != nil {
-				nt.Targets.WeightsForTargets = append(nt.Targets.WeightsForTargets,
-					&proto.WeightsForTarget{
-						Target: tv.Name,
-						Weight: *tv.Weight,
-					})
-			}
-		}
-	}
-
 	switch {
 	case req.Selection.MMR != nil:
 		mmr := req.Selection.MMR
@@ -763,6 +780,80 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 	}
 
 	return nt, nil
+}
+
+func marshalSearchTarget(st SearchTarget) *proto.Targets {
+	if len(st.Vectors) == 0 {
+		return nil
+	}
+
+	// Pre-allocate slices for targets. Do not allocate WeightsForTarget,
+	// as targets may have no weights.
+	ts := &proto.Targets{
+		TargetVectors: make([]string, len(st.Vectors)),
+		Combination:   proto.CombinationMethod(st.CombinationMethod),
+	}
+
+	for i, tv := range st.Vectors {
+		ts.TargetVectors[i] = tv.Name
+		if tv.Weight != nil {
+			ts.WeightsForTargets = append(ts.WeightsForTargets,
+				&proto.WeightsForTarget{
+					Target: tv.Name,
+					Weight: *tv.Weight,
+				})
+		}
+	}
+	return ts
+}
+
+func marshalNearMedia(req *NearMedia) (any, error) {
+	dev.AssertNotNil(req, "req")
+	switch req.Kind {
+	case MediaImage:
+		return &proto.NearImageSearch{
+			Certainty: req.Similarity.Certainty,
+			Distance:  req.Similarity.Distance,
+			Targets:   marshalSearchTarget(req.Target),
+			Image:     req.Media,
+		}, nil
+	case MediaVideo:
+		return &proto.NearVideoSearch{
+			Certainty: req.Similarity.Certainty,
+			Distance:  req.Similarity.Distance,
+			Targets:   marshalSearchTarget(req.Target),
+			Video:     req.Media,
+		}, nil
+	case MediaAudio:
+		return &proto.NearAudioSearch{
+			Certainty: req.Similarity.Certainty,
+			Distance:  req.Similarity.Distance,
+			Targets:   marshalSearchTarget(req.Target),
+			Audio:     req.Media,
+		}, nil
+	case MediaDepth:
+		return &proto.NearDepthSearch{
+			Certainty: req.Similarity.Certainty,
+			Distance:  req.Similarity.Distance,
+			Targets:   marshalSearchTarget(req.Target),
+			Depth:     req.Media,
+		}, nil
+	case MediaThermal:
+		return &proto.NearThermalSearch{
+			Certainty: req.Similarity.Certainty,
+			Distance:  req.Similarity.Distance,
+			Targets:   marshalSearchTarget(req.Target),
+			Thermal:   req.Media,
+		}, nil
+	case MediaIMU:
+		return &proto.NearIMUSearch{
+			Certainty: req.Similarity.Certainty,
+			Distance:  req.Similarity.Distance,
+			Targets:   marshalSearchTarget(req.Target),
+			Imu:       req.Media,
+		}, nil
+	}
+	return nil, nil
 }
 
 func marshalBM25(req *BM25) (*proto.BM25, error) {
