@@ -12,24 +12,30 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
-func TestKeywordSimilarity(t *testing.T) {
-	t.Run("all tokens match", func(t *testing.T) {
-		assert.True(t, query.AllTokensMatch.AllTokensMatch(), "all tokens match")
-		assert.Nil(t, query.AllTokensMatch.MinimumTokensMatch(), "minimum tokens match")
-	})
-	t.Run("all tokens match cross property", func(t *testing.T) {
-		assert.True(t, query.AllTokensMatchCross.AllTokensMatch(), "all tokens match")
-		assert.True(t, query.AllTokensMatchCross.CrossProperty(), "cross property")
-		assert.Nil(t, query.AllTokensMatchCross.MinimumTokensMatch(), "minimum tokens match")
-	})
-	t.Run("minimum tokens match", func(t *testing.T) {
-		similarity := query.MinimumTokensMatch(5)
-		assert.False(t, similarity.AllTokensMatch(), "all tokens match")
-		assert.NotNil(t, similarity.MinimumTokensMatch(), "minimum tokens match")
-	})
+func TestMedia(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		make func(string) query.Media
+		kind api.MediaKind
+	}{
+		{name: "image", make: query.Image, kind: api.MediaImage},
+		{name: "audio", make: query.Audio, kind: api.MediaAudio},
+		{name: "video", make: query.Video, kind: api.MediaVideo},
+		{name: "depth", make: query.Depth, kind: api.MediaDepth},
+		{name: "thermal", make: query.Thermal, kind: api.MediaThermal},
+		{name: "imu", make: query.IMU, kind: api.MediaIMU},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			require.NotNil(t, tt.make, "bad test: no make function")
+
+			media := tt.make("abc")
+			assert.Equal(t, tt.kind, media.Kind(), "media kind")
+			assert.Equal(t, "abc", media.Data(), "media data")
+		})
+	}
 }
 
-func TestBM25(t *testing.T) {
+func TestNearMedia(t *testing.T) {
 	rd := api.RequestDefaults{
 		CollectionName:   "Songs",
 		Tenant:           "john_doe",
@@ -40,28 +46,27 @@ func TestBM25(t *testing.T) {
 		testkit.Only
 
 		name  string
-		bm25  query.BM25
+		nm    query.NearMedia
 		stubs []testkit.Stub[api.SearchRequest, api.SearchResponse]
 		want  *query.Result // Expected return value.
 		err   testkit.Error
 	}{
 		{
 			name: "ok",
-			bm25: query.BM25{
-				Query:             "yellow submarine",
-				QueryProperties:   []string{"title", "lyrics"},
-				KeywordSimilarity: query.MinimumTokensMatch(3),
+			nm: query.NearMedia{
+				Media:  query.Image("hounds-mid-race=="),
+				Target: query.VectorName("album_cover_vec"),
 			},
 			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
 				{
 					Request: &api.SearchRequest{
 						RequestDefaults: rd,
-						BM25: &api.BM25{
-							Query:           "yellow submarine",
-							QueryProperties: []string{"title", "lyrics"},
-							KeywordSimilarity: api.KeywordSimilarity{
-								MinimumTokensMatch: testkit.Ptr[int32](3),
-							},
+						NearMedia: &api.NearMedia{
+							Kind:  api.MediaImage,
+							Media: "hounds-mid-race==",
+							Target: api.SearchTarget{Vectors: []api.TargetVector{
+								{Vector: api.Vector{Name: "album_cover_vec"}},
+							}},
 						},
 					},
 					Response: api.SearchResponse{
@@ -71,10 +76,6 @@ func TestBM25(t *testing.T) {
 								Collection: "Songs",
 								Metadata: api.ObjectMetadata{
 									UUID: testkit.UUID,
-								},
-								Properties: map[string]any{
-									"title":        "Yellow Submarine",
-									"duration_sec": 160,
 								},
 							},
 						},
@@ -88,10 +89,6 @@ func TestBM25(t *testing.T) {
 						Object: types.Object[map[string]any]{
 							Collection: "Songs",
 							UUID:       testkit.UUID,
-							Properties: map[string]any{
-								"title":        "Yellow Submarine",
-								"duration_sec": 160,
-							},
 						},
 					},
 				},
@@ -111,8 +108,8 @@ func TestBM25(t *testing.T) {
 			c := query.NewClient(transport, rd)
 			require.NotNil(t, c, "client")
 
-			got, err := c.BM25(t.Context(), tt.bm25)
-			tt.err.Require(t, err, "bm25 query")
+			got, err := c.NearMedia(t.Context(), tt.nm)
+			tt.err.Require(t, err, "near media query")
 			require.EqualExportedValues(t, tt.want, got, "query result")
 		})
 	}

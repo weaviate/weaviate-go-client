@@ -268,7 +268,8 @@ const (
 type MediaKind int
 
 const (
-	MediaImage = iota
+	_ = iota // none selected, to avoid confusing zero value with MediaImage
+	MediaImage
 	MediaVideo
 	MediaAudio
 	MediaDepth
