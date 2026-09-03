@@ -8,6 +8,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/query"
+	"github.com/weaviate/weaviate-go-client/v6/query/boost"
 	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
@@ -42,6 +43,7 @@ func TestOverAll(t *testing.T) {
 						Value:    ".*Blood",
 					},
 				},
+				Boost: boost.PropertyValue{Property: "lyrics"},
 				ReturnMetadata: query.ReturnMetadata{
 					CreatedAt:    true,
 					LastUpdateAt: true,
@@ -63,6 +65,15 @@ func TestOverAll(t *testing.T) {
 								Target:   []string{"album"},
 								Value:    ".*Blood",
 							}},
+						},
+						Boost: api.BoostExpr{
+							Conds: []api.BoostCond{
+								{Func: api.BoostFunc{
+									PropertyValue: &api.PropertyValue{
+										Property: "lyrics",
+									},
+								}},
+							},
 						},
 						ReturnMetadata: api.ReturnMetadata{
 							CreatedAt:    true,

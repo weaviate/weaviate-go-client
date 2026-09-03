@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
@@ -186,7 +187,7 @@ func TestCond(t *testing.T) {
 			cond: boost.Cond{
 				Weight: 3,
 				Func: boost.Filter{
-					Expr: &filter.Cond{
+					Filter: &filter.Cond{
 						Target:   "duration_sec",
 						Operator: filter.GreaterThan,
 						Value:    92,
@@ -211,8 +212,17 @@ func TestCond(t *testing.T) {
 		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
-			expr := tt.cond.Expr()
-			require.Equal(t, tt.expr, expr)
+			condExpr := tt.cond.Expr()
+			require.Equal(t, tt.expr, condExpr, "condition expression")
+
+			if assert.Implementsf(t, (*boost.Expr)(nil), tt.cond.Func, "functions are expressions") {
+				funcExpr := tt.cond.Func.(boost.Expr).Expr()
+
+				noWeight := tt.expr
+				noWeight.Weight = 0
+				noWeight.Conds[0].Weight = 0
+				require.Equal(t, noWeight, funcExpr, "function expression")
+			}
 		})
 	}
 }

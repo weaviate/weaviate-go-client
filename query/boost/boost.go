@@ -88,6 +88,14 @@ func (td TimeDecay) Func() api.BoostFunc {
 	}
 }
 
+var _ Expr = (*TimeDecay)(nil)
+
+func (td TimeDecay) Expr() api.BoostExpr {
+	return api.BoostExpr{
+		Conds: []api.BoostCond{{Func: td.Func()}},
+	}
+}
+
 type NumericDecay struct {
 	Property string  // Required parameter.
 	Origin   float64 // Required parameter.
@@ -109,6 +117,14 @@ func (nd NumericDecay) Func() api.BoostFunc {
 			Curve:    api.BoostCurve(nd.Curve),
 			Decay:    nd.Decay,
 		},
+	}
+}
+
+var _ Expr = (*NumericDecay)(nil)
+
+func (nd NumericDecay) Expr() api.BoostExpr {
+	return api.BoostExpr{
+		Conds: []api.BoostCond{{Func: nd.Func()}},
 	}
 }
 
@@ -136,6 +152,14 @@ func (pv PropertyValue) Func() api.BoostFunc {
 	}
 }
 
+var _ Expr = (*PropertyValue)(nil)
+
+func (pv PropertyValue) Expr() api.BoostExpr {
+	return api.BoostExpr{
+		Conds: []api.BoostCond{{Func: pv.Func()}},
+	}
+}
+
 type Modifier api.BoostModifier
 
 const (
@@ -143,12 +167,20 @@ const (
 	SQRT  = Modifier(api.BoostModifierSQRT)
 )
 
-type Filter struct{ filter.Expr }
+type Filter struct{ Filter filter.Expr }
 
 var _ Func = (*Filter)(nil)
 
 func (f Filter) Func() api.BoostFunc {
 	return api.BoostFunc{
-		Filter: f.Expr.Expr(),
+		Filter: f.Filter.Expr(),
+	}
+}
+
+var _ Expr = (*Filter)(nil)
+
+func (f Filter) Expr() api.BoostExpr {
+	return api.BoostExpr{
+		Conds: []api.BoostCond{{Func: f.Func()}},
 	}
 }
