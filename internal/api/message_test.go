@@ -1091,6 +1091,23 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "near object",
+			req: &api.SearchRequest{
+				NearObject: &api.NearObject{
+					UUID: testkit.UUID,
+				},
+			},
+			want: &proto.SearchRequest{
+				NearObject: &proto.NearObject{
+					Id: testkit.UUID.String(),
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
 			name: "near text move concepts",
 			req: &api.SearchRequest{
 				NearText: &api.NearText{
