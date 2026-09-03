@@ -330,7 +330,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 							Func: api.BoostFunc{
 								PropertyValue: &api.PropertyValue{
 									Property: "title_optional",
-									Modifier: api.BoostModifierLOG1P,
+									Modifier: api.BoostModifierLog1P,
 								},
 							},
 						},
@@ -338,7 +338,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 							Func: api.BoostFunc{
 								PropertyValue: &api.PropertyValue{
 									Property: "title_required",
-									Modifier: api.BoostModifierLOG1P,
+									Modifier: api.BoostModifierLog1P,
 								},
 							},
 						},

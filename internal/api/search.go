@@ -188,7 +188,7 @@ const (
 type BoostModifier proto.Boost_PropertyValueModifier
 
 const (
-	BoostModifierLOG1P = BoostModifier(proto.Boost_PROPERTY_VALUE_MODIFIER_LOG1P)
+	BoostModifierLog1P = BoostModifier(proto.Boost_PROPERTY_VALUE_MODIFIER_LOG1P)
 	BoostModifierSQRT  = BoostModifier(proto.Boost_PROPERTY_VALUE_MODIFIER_SQRT)
 )
 

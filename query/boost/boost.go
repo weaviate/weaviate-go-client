@@ -43,7 +43,8 @@ func (b Blend) Expr() api.BoostExpr {
 	conds := make([]api.BoostCond, len(b.Conds))
 	for i, c := range b.Conds {
 		cond := api.BoostCond{
-			Func: c.Func.Func(),
+			Func:   c.Func.Func(),
+			Weight: c.Weight,
 		}
 		if c.Weight == 0 {
 			cond.Weight = b.Weight
@@ -57,6 +58,9 @@ func (b Blend) Expr() api.BoostExpr {
 	}
 }
 
+func Decay(d float32) *float32                 { return &d }
+func Offset[T time.Duration | float64](o T) *T { return &o }
+
 // Day is a [time.Duration] of 24h.
 const Day = 24 * time.Hour
 
@@ -64,9 +68,9 @@ type TimeDecay struct {
 	Property string        // Required parameter.
 	Origin   time.Time     // Required parameter.
 	Scale    time.Duration // Required parameter.
-	Offset   time.Duration
+	Offset   *time.Duration
+	Decay    *float32
 	Curve    Curve
-	Decay    float32
 }
 
 var _ Func = (*TimeDecay)(nil)
@@ -88,9 +92,9 @@ type NumericDecay struct {
 	Property string  // Required parameter.
 	Origin   float64 // Required parameter.
 	Scale    float64 // Required parameter.
-	Offset   float64
+	Offset   *float64
+	Decay    *float32
 	Curve    Curve
-	Decay    float32
 }
 
 var _ Func = (*NumericDecay)(nil)
@@ -135,8 +139,8 @@ func (pv PropertyValue) Func() api.BoostFunc {
 type Modifier api.BoostModifier
 
 const (
-	BoostModifierLOG1P = Modifier(api.BoostModifierLOG1P)
-	BoostModifierSQRT  = Modifier(api.BoostModifierSQRT)
+	Log1P = Modifier(api.BoostModifierLog1P)
+	SQRT  = Modifier(api.BoostModifierSQRT)
 )
 
 type Filter struct{ filter.Expr }
