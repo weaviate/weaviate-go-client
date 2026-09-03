@@ -95,19 +95,24 @@ func nearMediaFunc(t internal.Transport, rd api.RequestDefaults) NearMediaFunc {
 
 // nearMedia convers [NearMedia] to [api.NearMedia].
 func nearMedia(nm *NearMedia) *api.NearMedia {
-	if nm == nil || nm.Target == nil {
+	if nm == nil {
 		return nil
 	}
 
-	return &api.NearMedia{
-		Kind:   nm.Media.Kind(),
-		Media:  nm.Media.Data(),
-		Target: marshalSearchTarget(nm.Target),
+	out := &api.NearMedia{
+		Kind:  nm.Media.Kind(),
+		Media: nm.Media.Data(),
 		Similarity: api.VectorSimilarity{
 			Distance:  nm.Similarity.Distance(),
 			Certainty: nm.Similarity.Certainty(),
 		},
 	}
+
+	if nm.Target != nil {
+		out.Target = marshalSearchTarget(nm.Target)
+	}
+
+	return out
 }
 
 // GroupBy runs near vector search with a GroupBy clause.

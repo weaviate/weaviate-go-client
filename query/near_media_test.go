@@ -52,7 +52,46 @@ func TestNearMedia(t *testing.T) {
 		err   testkit.Error
 	}{
 		{
-			name: "ok",
+			name: "default target",
+			nm: query.NearMedia{
+				Media: query.Image("hounds-mid-race=="),
+			},
+			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
+				{
+					Request: &api.SearchRequest{
+						RequestDefaults: rd,
+						NearMedia: &api.NearMedia{
+							Kind:  api.MediaImage,
+							Media: "hounds-mid-race==",
+						},
+					},
+					Response: api.SearchResponse{
+						Took: 92 * time.Second,
+						Results: []api.Object{
+							{
+								Collection: "Songs",
+								Metadata: api.ObjectMetadata{
+									UUID: testkit.UUID,
+								},
+							},
+						},
+					},
+				},
+			},
+			want: &query.Result{
+				Took: 92 * time.Second,
+				Objects: []query.Object[map[string]any]{
+					{
+						Object: types.Object[map[string]any]{
+							Collection: "Songs",
+							UUID:       testkit.UUID,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "explicit target",
 			nm: query.NearMedia{
 				Media:  query.Image("hounds-mid-race=="),
 				Target: query.VectorName("album_cover_vec"),
