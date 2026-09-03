@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/query/boost"
 	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 )
 
@@ -15,6 +16,7 @@ type NearMedia struct {
 	AutoLimit              int              // Return objects in the first N similarity clusters.
 	After                  uuid.UUID        // Skip all objects before the one with this ID.
 	Filter                 filter.Expr      // Filter results based on their properties.
+	Boost                  boost.Expr       // Rerank search results using a decay function.
 	ReturnMetadata         ReturnMetadata   // Select query and object metadata to return for each object.
 	ReturnVectors          []string         // List vectors to return for each object in the result set.
 	ReturnReferences       []Reference      // Select reference properties to return.
@@ -80,6 +82,7 @@ func nearMediaFunc(t internal.Transport, rd api.RequestDefaults) NearMediaFunc {
 			Offset:                 int32(nm.Offset),
 			After:                  nm.After,
 			Filter:                 nm.Filter,
+			Boost:                  nm.Boost,
 			ReturnVectors:          nm.ReturnVectors,
 			ReturnMetadata:         nm.ReturnMetadata,
 			ReturnProperties:       nm.ReturnProperties,
