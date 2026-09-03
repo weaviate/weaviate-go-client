@@ -40,14 +40,14 @@ func TestBM25(t *testing.T) {
 		testkit.Only
 
 		name  string
-		nt    query.BM25
+		bm25  query.BM25
 		stubs []testkit.Stub[api.SearchRequest, api.SearchResponse]
 		want  *query.Result // Expected return value.
 		err   testkit.Error
 	}{
 		{
 			name: "ok",
-			nt: query.BM25{
+			bm25: query.BM25{
 				Query:             "yellow submarine",
 				QueryProperties:   []string{"title", "lyrics"},
 				KeywordSimilarity: query.MinimumTokensMatch(3),
@@ -111,7 +111,7 @@ func TestBM25(t *testing.T) {
 			c := query.NewClient(transport, rd)
 			require.NotNil(t, c, "client")
 
-			got, err := c.BM25(t.Context(), tt.nt)
+			got, err := c.BM25(t.Context(), tt.bm25)
 			tt.err.Require(t, err, "bm25 query")
 			require.EqualExportedValues(t, tt.want, got, "query result")
 		})

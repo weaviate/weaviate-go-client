@@ -983,6 +983,114 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "near image",
+			req: &api.SearchRequest{
+				NearMedia: &api.NearMedia{
+					Kind:  api.MediaImage,
+					Media: "base64-media",
+				},
+			},
+			want: &proto.SearchRequest{
+				NearImage: &proto.NearImageSearch{
+					Image: "base64-media",
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "near audio",
+			req: &api.SearchRequest{
+				NearMedia: &api.NearMedia{
+					Kind:  api.MediaAudio,
+					Media: "base64-media",
+				},
+			},
+			want: &proto.SearchRequest{
+				NearAudio: &proto.NearAudioSearch{
+					Audio: "base64-media",
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "near video",
+			req: &api.SearchRequest{
+				NearMedia: &api.NearMedia{
+					Kind:  api.MediaVideo,
+					Media: "base64-media",
+				},
+			},
+			want: &proto.SearchRequest{
+				NearVideo: &proto.NearVideoSearch{
+					Video: "base64-media",
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "near depth",
+			req: &api.SearchRequest{
+				NearMedia: &api.NearMedia{
+					Kind:  api.MediaDepth,
+					Media: "base64-media",
+				},
+			},
+			want: &proto.SearchRequest{
+				NearDepth: &proto.NearDepthSearch{
+					Depth: "base64-media",
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "near thermal",
+			req: &api.SearchRequest{
+				NearMedia: &api.NearMedia{
+					Kind:  api.MediaThermal,
+					Media: "base64-media",
+				},
+			},
+			want: &proto.SearchRequest{
+				NearThermal: &proto.NearThermalSearch{
+					Thermal: "base64-media",
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "near imu",
+			req: &api.SearchRequest{
+				NearMedia: &api.NearMedia{
+					Kind:  api.MediaIMU,
+					Media: "base64-media",
+				},
+			},
+			want: &proto.SearchRequest{
+				NearImu: &proto.NearIMUSearch{
+					Imu: "base64-media",
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
 			name: "near text move concepts",
 			req: &api.SearchRequest{
 				NearText: &api.NearText{
