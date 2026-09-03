@@ -23,6 +23,7 @@ func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
 		defaults:   rd,
 		OverAll:    overAllFunc(t, rd),
 		NearVector: nearVectorFunc(t, rd),
+		NearObject: nearObjectFunc(t, rd),
 		NearMedia:  nearMediaFunc(t, rd),
 		NearText:   nearTextFunc(t, rd),
 		Hybrid:     hybridFunc(t, rd),
@@ -36,6 +37,7 @@ type Client struct {
 
 	OverAll    OverAllFunc
 	NearVector NearVectorFunc
+	NearObject NearObjectFunc
 	NearMedia  NearMediaFunc
 	NearText   NearTextFunc
 	Hybrid     HybridFunc
@@ -199,9 +201,9 @@ func query(ctx context.Context, t internal.Transport, r request, f func(*api.Sea
 		return nil, nil
 	}
 
-	objects := make([]Object[map[string]any], len(resp.Results))
-	for i, obj := range resp.Results {
-		objects[i] = unmarshalObject(&obj)
+	objects := slices.Grow([]Object[map[string]any](nil), len(resp.Results))
+	for _, obj := range resp.Results {
+		objects = append(objects, unmarshalObject(&obj))
 	}
 	return &Result{Took: resp.Took, Objects: objects}, nil
 }
