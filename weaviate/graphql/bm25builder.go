@@ -40,7 +40,7 @@ func (b *BM25ArgumentBuilder) build() string {
 	if len(b.properties) > 0 {
 		propStr, err := json.Marshal(b.properties)
 		if err != nil {
-			panic(fmt.Errorf("failed to unmarshal bm25 properties: %s", err))
+			panic(fmt.Errorf("failed to marshal bm25 properties: %s", err))
 		}
 		clause = append(clause, fmt.Sprintf("properties: %v", string(propStr)))
 	}
