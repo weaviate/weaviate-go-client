@@ -102,7 +102,7 @@ func (b *NearVectorArgumentBuilder) build() string {
 	if !b.isVectorEmpty(b.vector) && len(b.vectorsPerTarget) == 0 {
 		vectorB, err := json.Marshal(b.vector)
 		if err != nil {
-			panic(fmt.Errorf("failed to unmarshal nearVector search vector: %s", err))
+			panic(fmt.Errorf("failed to marshal nearVector search vector: %s", err))
 		}
 		clause = append(clause, fmt.Sprintf("vector: %s", string(vectorB)))
 	}
