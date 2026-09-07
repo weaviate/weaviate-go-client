@@ -53,8 +53,15 @@ type Object struct {
 }
 
 type InsertResult struct {
-	Took   time.Duration
+	Took time.Duration
+}
+
+type InsertError struct {
 	Errors map[uuid.UUID]string
+}
+
+func (ie InsertError) Error() string {
+	return fmt.Sprintf("insert failed for %d objects", len(ie.Errors))
 }
 
 // Insert new objects into the collection.
@@ -77,18 +84,20 @@ func (c *Client) Insert(ctx context.Context, objects ...*Object) (*InsertResult,
 		return nil, fmt.Errorf("insert objects: %w", err)
 	}
 
-	dev.Assert(len(resp.Positions) == len(resp.Errors), "indices and errors not aligned")
+	r := &InsertResult{Took: resp.Took}
+	if len(resp.Errors) == 0 {
+		return r, nil
+	}
 
-	r := &InsertResult{
-		Took:   resp.Took,
+	dev.Assert(len(resp.Positions) == len(resp.Errors), "indices and errors not aligned")
+	err := InsertError{
 		Errors: internal.MakeMap[uuid.UUID, string](len(resp.Positions)),
 	}
-
 	for i, pos := range resp.Positions {
-		r.Errors[batch[pos].UUID] = resp.Errors[i]
+		err.Errors[batch[pos].UUID] = resp.Errors[i]
 	}
 
-	return r, nil
+	return r, err
 }
 
 // Replace object in the collection. The [Object.UUID] must be non-nil,

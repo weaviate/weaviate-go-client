@@ -106,9 +106,13 @@ func TestClient_Insert(t *testing.T) {
 			}},
 			want: &data.InsertResult{
 				Took: 92 * time.Second,
-				Errors: map[uuid.UUID]string{
-					testkit.UUID: "Whaam!",
-				},
+			},
+			err: func(tt assert.TestingT, err error, a ...any) bool {
+				var got data.InsertError
+				return assert.ErrorAs(t, err, &got) &&
+					assert.Equal(t, map[uuid.UUID]string{
+						testkit.UUID: "Whaam!",
+					}, got.Errors)
 			},
 		},
 		{
