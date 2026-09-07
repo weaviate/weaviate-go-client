@@ -25,14 +25,14 @@ type (
 		MultiTenancy  *MultiTenancyConfig
 	}
 	Property struct {
-		Name              string
-		Description       string
-		DataType          DataType
-		NestedProperties  []Property
-		Tokenization      Tokenization
-		IndexFilterable   bool
-		IndexRangeFilters bool
-		IndexSearchable   bool
+		Name             string
+		Description      string
+		DataType         DataType
+		NestedProperties []Property
+		Tokenization     Tokenization
+		IndexFilterable  bool
+		IndexRangeable   bool
+		IndexSearchable  bool
 	}
 	Reference struct {
 		Name        string
@@ -138,14 +138,14 @@ func collectionToAPI(c *Collection) (api.Collection, error) {
 		properties = make([]api.Property, len(c.Properties))
 		for i, p := range c.Properties {
 			properties[i] = api.Property{
-				Name:              p.Name,
-				Description:       p.Description,
-				DataType:          api.DataType(p.DataType),
-				NestedProperties:  nestedPropertiesToAPI(p.NestedProperties),
-				Tokenization:      api.Tokenization(p.Tokenization),
-				IndexFilterable:   p.IndexFilterable,
-				IndexRangeFilters: p.IndexRangeFilters,
-				IndexSearchable:   p.IndexSearchable,
+				Name:             p.Name,
+				Description:      p.Description,
+				DataType:         api.DataType(p.DataType),
+				NestedProperties: nestedPropertiesToAPI(p.NestedProperties),
+				Tokenization:     api.Tokenization(p.Tokenization),
+				IndexFilterable:  p.IndexFilterable,
+				IndexRangeable:   p.IndexRangeable,
+				IndexSearchable:  p.IndexSearchable,
 			}
 		}
 	}
@@ -251,14 +251,14 @@ func collectionFromAPI(c *api.Collection) (Collection, error) {
 		properties = make([]Property, len(c.Properties))
 		for i, p := range c.Properties {
 			properties[i] = Property{
-				Name:              p.Name,
-				Description:       p.Description,
-				DataType:          DataType(p.DataType),
-				NestedProperties:  nestedPropertiesFromAPI(p.NestedProperties),
-				Tokenization:      Tokenization(p.Tokenization),
-				IndexFilterable:   p.IndexFilterable,
-				IndexRangeFilters: p.IndexRangeFilters,
-				IndexSearchable:   p.IndexSearchable,
+				Name:             p.Name,
+				Description:      p.Description,
+				DataType:         DataType(p.DataType),
+				NestedProperties: nestedPropertiesFromAPI(p.NestedProperties),
+				Tokenization:     Tokenization(p.Tokenization),
+				IndexFilterable:  p.IndexFilterable,
+				IndexRangeable:   p.IndexRangeable,
+				IndexSearchable:  p.IndexSearchable,
 			}
 		}
 	}
@@ -357,14 +357,14 @@ func nestedPropertiesFromAPI(nested []api.Property) []Property {
 	out := make([]Property, len(nested))
 	for i, np := range nested {
 		out[i] = Property{
-			Name:              np.Name,
-			Description:       np.Description,
-			DataType:          DataType(np.DataType),
-			NestedProperties:  nestedPropertiesFromAPI(np.NestedProperties),
-			Tokenization:      Tokenization(np.Tokenization),
-			IndexFilterable:   np.IndexFilterable,
-			IndexRangeFilters: np.IndexRangeFilters,
-			IndexSearchable:   np.IndexSearchable,
+			Name:             np.Name,
+			Description:      np.Description,
+			DataType:         DataType(np.DataType),
+			NestedProperties: nestedPropertiesFromAPI(np.NestedProperties),
+			Tokenization:     Tokenization(np.Tokenization),
+			IndexFilterable:  np.IndexFilterable,
+			IndexRangeable:   np.IndexRangeable,
+			IndexSearchable:  np.IndexSearchable,
 		}
 	}
 	return out
@@ -378,14 +378,14 @@ func nestedPropertiesToAPI(nested []Property) []api.Property {
 	out := make([]api.Property, len(nested))
 	for i, p := range nested {
 		out[i] = api.Property{
-			Name:              p.Name,
-			Description:       p.Description,
-			DataType:          api.DataType(p.DataType),
-			NestedProperties:  nestedPropertiesToAPI(p.NestedProperties),
-			Tokenization:      api.Tokenization(p.Tokenization),
-			IndexFilterable:   p.IndexFilterable,
-			IndexRangeFilters: p.IndexRangeFilters,
-			IndexSearchable:   p.IndexSearchable,
+			Name:             p.Name,
+			Description:      p.Description,
+			DataType:         api.DataType(p.DataType),
+			NestedProperties: nestedPropertiesToAPI(p.NestedProperties),
+			Tokenization:     api.Tokenization(p.Tokenization),
+			IndexFilterable:  p.IndexFilterable,
+			IndexRangeable:   p.IndexRangeable,
+			IndexSearchable:  p.IndexSearchable,
 		}
 	}
 	return out
