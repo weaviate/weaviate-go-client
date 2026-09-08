@@ -1790,6 +1790,129 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "bool array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"flags":  []bool{true, false, false},
+							"checks": []bool{false, true},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							BooleanArrayProperties: []*proto.BooleanArrayProperties{
+								{
+									PropName: "flags",
+									Values:   []bool{true, false, false},
+								},
+								{
+									PropName: "checks",
+									Values:   []bool{false, true},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "text array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"tags":   []string{"#trending", "#explicit"},
+							"genres": []string{"punk", "sludge"},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							TextArrayProperties: []*proto.TextArrayProperties{
+								{
+									PropName: "tags",
+									Values:   []string{"#trending", "#explicit"},
+								},
+								{
+									PropName: "genres",
+									Values:   []string{"punk", "sludge"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "int array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"123": []uint16{1, 2, 3},
+							"567": []uint16{5, 6, 7},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							IntArrayProperties: []*proto.IntArrayProperties{
+								{
+									PropName: "123",
+									Values:   []int64{1, 2, 3},
+								},
+								{
+									PropName: "567",
+									Values:   []int64{5, 6, 7},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	})
 }
 
