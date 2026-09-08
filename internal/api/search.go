@@ -503,20 +503,12 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 		case int64:
 			pf.TestValue = &proto.Filters_ValueInt{ValueInt: v}
 		case []int:
-			values := make([]int64, len(v))
-			for i := range v {
-				values[i] = int64(v[i])
-			}
 			pf.TestValue = &proto.Filters_ValueIntArray{
-				ValueIntArray: &proto.IntArray{Values: values},
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
 			}
 		case []int32:
-			values := make([]int64, len(v))
-			for i := range v {
-				values[i] = int64(v[i])
-			}
 			pf.TestValue = &proto.Filters_ValueIntArray{
-				ValueIntArray: &proto.IntArray{Values: values},
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
 			}
 		case []int64:
 			pf.TestValue = &proto.Filters_ValueIntArray{
@@ -525,33 +517,23 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 
 		case uint:
 			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case uint16:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
 		case uint32:
 			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
 		case uint64:
 			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
 		case []uint:
-			values := make([]int64, len(v))
-			for i := range v {
-				values[i] = int64(v[i])
-			}
 			pf.TestValue = &proto.Filters_ValueIntArray{
-				ValueIntArray: &proto.IntArray{Values: values},
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
 			}
 		case []uint32:
-			values := make([]int64, len(v))
-			for i := range v {
-				values[i] = int64(v[i])
-			}
 			pf.TestValue = &proto.Filters_ValueIntArray{
-				ValueIntArray: &proto.IntArray{Values: values},
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
 			}
 		case []uint64:
-			values := make([]int64, len(v))
-			for i := range v {
-				values[i] = int64(v[i])
-			}
 			pf.TestValue = &proto.Filters_ValueIntArray{
-				ValueIntArray: &proto.IntArray{Values: values},
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
 			}
 
 		// Float values must be cast to float64 before marshaling.
@@ -561,12 +543,8 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 			pf.TestValue = &proto.Filters_ValueNumber{ValueNumber: v}
 
 		case []float32:
-			values := make([]float64, len(v))
-			for i := range v {
-				values[i] = float64(v[i])
-			}
 			pf.TestValue = &proto.Filters_ValueNumberArray{
-				ValueNumberArray: &proto.NumberArray{Values: values},
+				ValueNumberArray: &proto.NumberArray{Values: floatArray(v)},
 			}
 		case []float64:
 			pf.TestValue = &proto.Filters_ValueNumberArray{
