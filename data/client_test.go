@@ -108,7 +108,7 @@ func TestClient_Insert(t *testing.T) {
 				Took: 92 * time.Second,
 			},
 			err: func(tt assert.TestingT, err error, a ...any) bool {
-				var got data.InsertError[uuid.UUID]
+				var got data.InsertError
 				return assert.ErrorAs(t, err, &got) &&
 					assert.Equal(t, map[uuid.UUID]string{
 						testkit.UUID: "Whaam!",
@@ -384,7 +384,7 @@ func TestClient_AddReferences(t *testing.T) {
 				Took: 92 * time.Second,
 			},
 			err: func(tt assert.TestingT, err error, a ...any) bool {
-				var got data.InsertError[data.Reference]
+				var got data.AddReferencesError
 				return assert.ErrorAs(t, err, &got) &&
 					assert.Equal(t, map[data.Reference]string{
 						{UUID: testkit.UUID}: "Whaam!",
