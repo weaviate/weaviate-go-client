@@ -108,7 +108,7 @@ func TestClient_Insert(t *testing.T) {
 				Took: 92 * time.Second,
 			},
 			err: func(tt assert.TestingT, err error, a ...any) bool {
-				var got data.InsertError
+				var got data.InsertError[uuid.UUID]
 				return assert.ErrorAs(t, err, &got) &&
 					assert.Equal(t, map[uuid.UUID]string{
 						testkit.UUID: "Whaam!",
@@ -363,7 +363,7 @@ func TestClient_AddReferences(t *testing.T) {
 			want: &data.AddReferencesResult{Took: 92 * time.Second},
 		},
 		{
-			// The refernce added in this tests case {UUID: testkit.UUID} is not
+			// The reference added in this tests case {UUID: testkit.UUID} is not
 			// technically valid, because it does not specify the Origin. That's
 			// not important, because all we want to verify is that the error map
 			// in the result contains the same reference value as its only key.
@@ -382,9 +382,13 @@ func TestClient_AddReferences(t *testing.T) {
 			}},
 			want: &data.AddReferencesResult{
 				Took: 92 * time.Second,
-				Errors: map[data.Reference]string{
-					{UUID: testkit.UUID}: "Whaam!",
-				},
+			},
+			err: func(tt assert.TestingT, err error, a ...any) bool {
+				var got data.InsertError[data.Reference]
+				return assert.ErrorAs(t, err, &got) &&
+					assert.Equal(t, map[data.Reference]string{
+						{UUID: testkit.UUID}: "Whaam!",
+					}, got.Errors)
 			},
 		},
 		{

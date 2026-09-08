@@ -56,11 +56,11 @@ type InsertResult struct {
 	Took time.Duration
 }
 
-type InsertError struct {
-	Errors map[uuid.UUID]string
+type InsertError[K comparable] struct {
+	Errors map[K]string
 }
 
-func (ie InsertError) Error() string {
+func (ie InsertError[K]) Error() string {
 	return fmt.Sprintf("insert failed for %d objects", len(ie.Errors))
 }
 
@@ -90,7 +90,7 @@ func (c *Client) Insert(ctx context.Context, objects ...*Object) (*InsertResult,
 	}
 
 	dev.Assert(len(resp.Positions) == len(resp.Errors), "indices and errors not aligned")
-	err := InsertError{
+	err := InsertError[uuid.UUID]{
 		Errors: internal.MakeMap[uuid.UUID, string](len(resp.Positions)),
 	}
 	for i, pos := range resp.Positions {
@@ -157,8 +157,7 @@ func (c *Client) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 type AddReferencesResult struct {
-	Took   time.Duration
-	Errors map[Reference]string
+	Took time.Duration
 }
 
 func (c *Client) AddReferences(ctx context.Context, references ...Reference) (*AddReferencesResult, error) {
@@ -178,18 +177,20 @@ func (c *Client) AddReferences(ctx context.Context, references ...Reference) (*A
 		return nil, fmt.Errorf("add references: %w", err)
 	}
 
-	dev.Assert(len(resp.Positions) == len(resp.Errors), "indices and errors not aligned")
+	r := &AddReferencesResult{Took: resp.Took}
+	if len(resp.Errors) == 0 {
+		return r, nil
+	}
 
-	r := &AddReferencesResult{
-		Took:   resp.Took,
+	dev.Assert(len(resp.Positions) == len(resp.Errors), "indices and errors not aligned")
+	err := InsertError[Reference]{
 		Errors: internal.MakeMap[Reference, string](len(resp.Positions)),
 	}
-
 	for i, pos := range resp.Positions {
-		r.Errors[references[pos]] = resp.Errors[i]
+		err.Errors[references[pos]] = resp.Errors[i]
 	}
 
-	return r, nil
+	return r, err
 }
 
 type DeleteSelected struct {
