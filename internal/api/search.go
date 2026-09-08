@@ -478,6 +478,8 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 		// Marshaling it would've been as simple as [structpb.NewValue].
 		switch v := f.Value.(type) {
 		case nil:
+		case uuid.UUID:
+			pf.TestValue = &proto.Filters_ValueText{ValueText: v.String()}
 		case string:
 			pf.TestValue = &proto.Filters_ValueText{ValueText: v}
 		case []string:
@@ -572,7 +574,7 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 			}
 		default:
 			// TODO(dyma): add GeoCoordinates property
-			panic(fmt.Sprintf("%T are not supported", v))
+			panic(fmt.Sprintf("%T is not supported", v))
 		}
 	}
 

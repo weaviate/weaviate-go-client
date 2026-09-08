@@ -184,6 +184,27 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "filter by uuid",
+			req: &api.SearchRequest{
+				Filter: api.FilterExpr{
+					Target:   []string{api.FieldUUID},
+					Operator: api.FilterOperatorEqual,
+					Value:    testkit.UUID,
+				},
+			},
+			want: &proto.SearchRequest{
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+				Filters: &proto.Filters{
+					Target:    propertyTarget(api.FieldUUID),
+					Operator:  proto.Filters_OPERATOR_EQUAL,
+					TestValue: &proto.Filters_ValueText{ValueText: testkit.UUID.String()},
+				},
+			},
+		},
+		{
 			name: "filter by reference count",
 			req: &api.SearchRequest{
 				Filter: api.FilterExpr{
