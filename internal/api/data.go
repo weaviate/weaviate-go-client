@@ -193,8 +193,16 @@ func (r *Reference) String() string {
 	return string(b)
 }
 
-// MarshalJSON implements json.Marshaler via [rest.Object].
-func (r *ReplaceObjectRequest) MarshalJSON() ([]byte, error) {
+// restObject implements json.Marshaler via [rest.Object].
+type restObject struct {
+	RequestDefaults
+	UUID       *uuid.UUID
+	Properties map[string]any
+	References References
+	Vectors    []Vector
+}
+
+func (r *restObject) MarshalJSON() ([]byte, error) {
 	vectors := make(map[string]any, len(r.Vectors))
 	for _, v := range r.Vectors {
 		if v.Single != nil {
@@ -222,14 +230,18 @@ func (r *ReplaceObjectRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(req)
 }
 
-// ReplaceObjectRequest replaces an object in a collection.
-type ReplaceObjectRequest struct {
-	RequestDefaults
-	UUID       *uuid.UUID
-	Properties map[string]any
-	References References
-	Vectors    []Vector
+func (r *ReplaceObjectRequest) MarshalJSON() ([]byte, error) {
+	return (*restObject)(r).MarshalJSON()
 }
+
+func (r *UpdateObjectRequest) MarshalJSON() ([]byte, error) {
+	body := *r
+	body.UUID = nil
+	return (*restObject)(&body).MarshalJSON()
+}
+
+// ReplaceObjectRequest replaces an object in a collection.
+type ReplaceObjectRequest restObject
 
 var _ transports.Endpoint = (*ReplaceObjectRequest)(nil)
 
@@ -246,6 +258,25 @@ func (r *ReplaceObjectRequest) Query() url.Values {
 }
 
 func (r *ReplaceObjectRequest) Body() any { return r }
+
+// UpdateObjectRequest partially updates an object in collection.
+type UpdateObjectRequest restObject
+
+var _ transports.Endpoint = (*UpdateObjectRequest)(nil)
+
+func (*UpdateObjectRequest) Method() string { return http.MethodPatch }
+func (r *UpdateObjectRequest) Path() string {
+	return "/objects/" + r.CollectionName + "/" + r.UUID.String()
+}
+
+func (r *UpdateObjectRequest) Query() url.Values {
+	if r.ConsistencyLevel != consistencyLevelUndefined {
+		return url.Values{"consistency_level": {string(r.ConsistencyLevel)}}
+	}
+	return nil
+}
+
+func (r *UpdateObjectRequest) Body() any { return r }
 
 // DeleteObjectRequest deletes an object by its UUID.
 type DeleteObjectRequest struct {

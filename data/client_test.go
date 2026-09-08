@@ -205,6 +205,76 @@ func TestClient_Replace(t *testing.T) {
 	}
 }
 
+func TestClient_Update(t *testing.T) {
+	rd := api.RequestDefaults{
+		CollectionName:   "Update",
+		ConsistencyLevel: api.ConsistencyLevelOne,
+		Tenant:           "john_doe",
+	}
+
+	for _, tt := range []struct {
+		name   string
+		object data.Object                   // Object to be replaced.
+		want   *types.Object[map[string]any] // Expected return value.
+		stubs  []testkit.Stub[api.UpdateObjectRequest, any]
+		err    testkit.Error
+	}{
+		{
+			name: "with data",
+			object: data.Object{
+				UUID: &testkit.UUID,
+				Vectors: []types.Vector{
+					{Name: "single", Single: []float32{1, 2, 3}},
+				},
+				Properties: map[string]any{"foo": "bar"},
+				References: data.References{
+					"ref": []data.Reference{
+						{Collection: "Foo", UUID: testkit.UUID},
+						{Collection: "Bar", UUID: testkit.UUID},
+					},
+				},
+			},
+			stubs: []testkit.Stub[api.UpdateObjectRequest, any]{{
+				Request: &api.UpdateObjectRequest{
+					RequestDefaults: rd,
+					UUID:            &testkit.UUID,
+					Vectors: []api.Vector{
+						{Name: "single", Single: []float32{1, 2, 3}},
+					},
+					Properties: map[string]any{"foo": "bar"},
+					References: api.References{
+						"ref": []api.Reference{
+							{Target: api.ObjectPath{Collection: "Foo", UUID: testkit.UUID}},
+							{Target: api.ObjectPath{Collection: "Bar", UUID: testkit.UUID}},
+						},
+					},
+				},
+			}},
+		},
+		{
+			name: "error on nil uuid",
+			err:  testkit.ExpectError,
+		},
+		{
+			name:   "with error",
+			object: data.Object{UUID: &uuid.Nil},
+			stubs: []testkit.Stub[api.UpdateObjectRequest, any]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+			c := data.NewClient(transport, rd)
+			require.NotNil(t, c, "nil client")
+
+			err := c.Update(t.Context(), tt.object)
+			tt.err.Require(t, err, "update error")
+		})
+	}
+}
+
 func TestClient_Delete(t *testing.T) {
 	rd := api.RequestDefaults{
 		CollectionName:   "Delete",

@@ -122,6 +122,28 @@ func (c *Client) Replace(ctx context.Context, o Object) error {
 	return nil
 }
 
+// Update object in the collection. The [Object.UUID] must be non-nil,
+// but can be a [uuid.Nil] if that is the object's ID in the database.
+func (c *Client) Update(ctx context.Context, o Object) error {
+	if o.UUID == nil {
+		return errors.New("uuid is nil")
+	}
+
+	req := &api.UpdateObjectRequest{
+		RequestDefaults: c.defaults,
+		UUID:            o.UUID,
+		Properties:      o.Properties,
+		Vectors:         apiVectors(o.Vectors),
+		References:      apiReferences(o.References),
+	}
+
+	if err := c.transport.Do(ctx, req, nil); err != nil {
+		return fmt.Errorf("update object: %w", err)
+	}
+
+	return nil
+}
+
 // Delete an object from the collection.
 func (c *Client) Delete(ctx context.Context, id uuid.UUID) error {
 	req := api.DeleteObjectRequest{

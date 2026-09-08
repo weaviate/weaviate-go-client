@@ -128,6 +128,42 @@ func TestRESTRequests(t *testing.T) {
 			},
 		},
 		{
+			name: "update object",
+			req: &api.UpdateObjectRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+					Tenant:         "john_doe",
+				},
+				UUID: &testkit.UUID,
+				Properties: map[string]any{
+					"title": "DAISIES",
+				},
+				References: api.References{
+					"label": {
+						{Target: api.ObjectPath{UUID: testkit.UUID}},
+					},
+				},
+				Vectors: []api.Vector{
+					{Name: "lyrics", Single: []float32{1, 2, 3}},
+				},
+			},
+			wantMethod: http.MethodPatch,
+			wantPath:   "/objects/Songs/" + testkit.UUID.String(),
+			wantBody: &rest.Object{
+				Class:  "Songs",
+				Tenant: "john_doe",
+				Properties: map[string]any{
+					"title": "DAISIES",
+					"label": []string{
+						"weaviate://localhost/" + testkit.UUID.String(),
+					},
+				},
+				Vectors: map[string]any{
+					"lyrics": []float32{1, 2, 3},
+				},
+			},
+		},
+		{
 			name: "delete object (no consistency_level)",
 			req: &api.DeleteObjectRequest{
 				RequestDefaults: api.RequestDefaults{
