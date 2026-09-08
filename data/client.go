@@ -56,11 +56,11 @@ type InsertResult struct {
 	Took time.Duration
 }
 
-type InsertError[K comparable] struct {
-	Errors map[K]string
+type InsertError struct {
+	Errors map[uuid.UUID]string
 }
 
-func (ie InsertError[K]) Error() string {
+func (ie InsertError) Error() string {
 	return fmt.Sprintf("insert failed for %d objects", len(ie.Errors))
 }
 
@@ -90,7 +90,7 @@ func (c *Client) Insert(ctx context.Context, objects ...*Object) (*InsertResult,
 	}
 
 	dev.Assert(len(resp.Positions) == len(resp.Errors), "indices and errors not aligned")
-	err := InsertError[uuid.UUID]{
+	err := InsertError{
 		Errors: internal.MakeMap[uuid.UUID, string](len(resp.Positions)),
 	}
 	for i, pos := range resp.Positions {
@@ -160,6 +160,14 @@ type AddReferencesResult struct {
 	Took time.Duration
 }
 
+type AddReferencesError struct {
+	Errors map[Reference]string
+}
+
+func (are AddReferencesError) Error() string {
+	return fmt.Sprintf("insert failed for %d objects", len(are.Errors))
+}
+
 func (c *Client) AddReferences(ctx context.Context, references ...Reference) (*AddReferencesResult, error) {
 	batch := slices.Grow([]api.Reference(nil), len(references))
 
@@ -183,7 +191,7 @@ func (c *Client) AddReferences(ctx context.Context, references ...Reference) (*A
 	}
 
 	dev.Assert(len(resp.Positions) == len(resp.Errors), "indices and errors not aligned")
-	err := InsertError[Reference]{
+	err := AddReferencesError{
 		Errors: internal.MakeMap[Reference, string](len(resp.Positions)),
 	}
 	for i, pos := range resp.Positions {
