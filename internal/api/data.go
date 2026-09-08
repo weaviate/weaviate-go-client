@@ -342,14 +342,117 @@ func marshalObjectProperties(properties map[string]any, dest *proto.BatchObject_
 	if len(properties) == 0 {
 		return nil
 	}
-	nonRef, err := structpb.NewStruct(properties)
-	if err != nil {
-		return err
+
+	// TODO(dyma): check if we can just convert every array to []any
+	// and let structpb handle that. IDK if the server will be able to decode it.
+	for name, p := range properties {
+		switch arr := p.(type) {
+		default:
+			continue
+		case []bool:
+			dest.BooleanArrayProperties = append(dest.BooleanArrayProperties, &proto.BooleanArrayProperties{
+				PropName: name,
+				Values:   arr,
+			})
+		case []string:
+			dest.TextArrayProperties = append(dest.TextArrayProperties, &proto.TextArrayProperties{
+				PropName: name,
+				Values:   arr,
+			})
+		case []int:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(arr),
+			})
+		case []int8:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(arr),
+			})
+		case []int16:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(arr),
+			})
+		case []int32:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(arr),
+			})
+		case []int64:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   arr,
+			})
+		case []uint:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(arr),
+			})
+		case []uint8:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(arr),
+			})
+		case []uint16:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(arr),
+			})
+		case []uint32:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(arr),
+			})
+		case []uint64:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(arr),
+			})
+
+		case []float32:
+			dest.NumberArrayProperties = append(dest.NumberArrayProperties, &proto.NumberArrayProperties{
+				PropName: name,
+				Values:   floatArray(arr),
+			})
+
+		case []float64:
+			dest.NumberArrayProperties = append(dest.NumberArrayProperties, &proto.NumberArrayProperties{
+				PropName: name,
+				Values:   arr,
+			})
+		}
+		delete(properties, name)
 	}
 
-	// TODO(dyma): move object / array properties out of nonRef
-	dest.NonRefProperties = nonRef
+	if len(properties) > 0 {
+		nonRef, err := structpb.NewStruct(properties)
+		if err != nil {
+			return err
+		}
+
+		// TODO(dyma): move object properties out of nonRef
+		dest.NonRefProperties = nonRef
+	}
 	return nil
+}
+
+func intArray[
+	T int | int8 | int16 | int32 |
+		uint | uint8 | uint16 | uint32 | uint64](arr []T) []int64 {
+	out := make([]int64, len(arr))
+	for i := range arr {
+		out[i] = int64(arr[i])
+	}
+	return out
+}
+
+func floatArray(arr []float32) []float64 {
+	out := make([]float64, len(arr))
+	for i := range arr {
+		out[i] = float64(arr[i])
+	}
+	return out
 }
 
 func marshalReferenceProperties(references References, dest *proto.BatchObject_Properties) error {
