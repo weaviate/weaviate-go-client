@@ -1872,8 +1872,8 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 					{
 						UUID: testkit.UUID,
 						Properties: map[string]any{
-							"flags":  []bool{true, false, false},
 							"checks": []bool{false, true},
+							"flags":  []bool{true, false, false},
 						},
 					},
 				},
@@ -1888,12 +1888,12 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 						Properties: &proto.BatchObject_Properties{
 							BooleanArrayProperties: []*proto.BooleanArrayProperties{
 								{
-									PropName: "flags",
-									Values:   []bool{true, false, false},
-								},
-								{
 									PropName: "checks",
 									Values:   []bool{false, true},
+								},
+								{
+									PropName: "flags",
+									Values:   []bool{true, false, false},
 								},
 							},
 						},
@@ -1913,8 +1913,8 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 					{
 						UUID: testkit.UUID,
 						Properties: map[string]any{
-							"tags":   []string{"#trending", "#explicit"},
 							"genres": []string{"punk", "sludge"},
+							"tags":   []string{"#trending", "#explicit"},
 						},
 					},
 				},
@@ -1929,12 +1929,12 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 						Properties: &proto.BatchObject_Properties{
 							TextArrayProperties: []*proto.TextArrayProperties{
 								{
-									PropName: "tags",
-									Values:   []string{"#trending", "#explicit"},
-								},
-								{
 									PropName: "genres",
 									Values:   []string{"punk", "sludge"},
+								},
+								{
+									PropName: "tags",
+									Values:   []string{"#trending", "#explicit"},
 								},
 							},
 						},
