@@ -80,14 +80,11 @@ func main() {
 			Duration: 376,
 		},
 	} {
-		res, err := songs.Data.Insert(ctx, &data.Object{
+		_, err := songs.Data.Insert(ctx, &data.Object{
 			Properties: data.MustEncode(&s),
 		})
 		if err != nil {
 			log.Fatal(err)
-		}
-		for id, msg := range res.Errors {
-			fmt.Printf("\tinsert song %q (id=%s) failed with error %q\n", s.Title, id, msg)
 		}
 	}
 
