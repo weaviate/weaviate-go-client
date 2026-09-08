@@ -7,6 +7,7 @@ import (
 	"maps"
 	"net/http"
 	"net/url"
+	"slices"
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
@@ -345,8 +346,8 @@ func marshalObjectProperties(properties map[string]any, dest *proto.BatchObject_
 
 	// TODO(dyma): check if we can just convert every array to []any
 	// and let structpb handle that. IDK if the server will be able to decode it.
-	for name, p := range properties {
-		switch arr := p.(type) {
+	for _, name := range slices.Sorted(maps.Keys(properties)) {
+		switch arr := properties[name].(type) {
 		default:
 			continue
 		case []bool:
