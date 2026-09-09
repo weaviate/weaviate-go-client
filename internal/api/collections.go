@@ -115,6 +115,7 @@ const (
 	DataTypeIntArray       DataType = "int[]"
 	DataTypeNumberArray    DataType = "number[]"
 	DataTypeDateArray      DataType = "date[]"
+	DataTypeUUIDArray      DataType = "uuid[]"
 	DataTypeObjectArray    DataType = "object[]"
 )
 
@@ -134,6 +135,7 @@ var knownDataTypes = newSet([]DataType{
 	DataTypeIntArray,
 	DataTypeNumberArray,
 	DataTypeDateArray,
+	DataTypeUUIDArray,
 	DataTypeObjectArray,
 })
 
