@@ -50,8 +50,8 @@ func TestNewLocal(t *testing.T) {
 			Scheme:   "http",
 			RESTHost: "localhost",
 			GRPCHost: "localhost",
-			RESTPort: 8080,
-			GRPCPort: 50051,
+			RESTPort: "8080",
+			GRPCPort: "50051",
 			Header: http.Header{
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
 			},
@@ -77,8 +77,8 @@ func TestNewLocal(t *testing.T) {
 
 		c, err := weaviate.NewLocal(t.Context(),
 			weaviate.WithScheme("https"),
-			weaviate.WithHTTPPort(7070),
-			weaviate.WithGRPCPort(54321),
+			weaviate.WithHTTPPort("7070"),
+			weaviate.WithGRPCPort("54321"),
 			weaviate.WithHeader(http.Header{
 				"X-Test": {"heads", "up"},
 			}),
@@ -101,8 +101,8 @@ func TestNewLocal(t *testing.T) {
 
 			// Custom
 			Scheme:   "https",
-			RESTPort: 7070,
-			GRPCPort: 54321,
+			RESTPort: "7070",
+			GRPCPort: "54321",
 			Header: http.Header{
 				"X-Test":            {"heads", "up"},
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
@@ -143,8 +143,8 @@ func TestNewWeaviateCloud(t *testing.T) {
 			Scheme:   "https",
 			RESTHost: "example.com",
 			GRPCHost: "grpc-example.com",
-			RESTPort: 443,
-			GRPCPort: 443,
+			RESTPort: "443",
+			GRPCPort: "443",
 			Header: http.Header{
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
 			},
@@ -192,8 +192,8 @@ func TestNewWeaviateCloud(t *testing.T) {
 		}
 
 		c, err := weaviate.NewWeaviateCloud(t.Context(), "example.com", "api-key",
-			weaviate.WithHTTPPort(7070),
-			weaviate.WithGRPCPort(54321),
+			weaviate.WithHTTPPort("7070"),
+			weaviate.WithGRPCPort("54321"),
 			weaviate.WithHeader(http.Header{
 				"X-Test": {"heads", "up"},
 			}),
@@ -207,8 +207,8 @@ func TestNewWeaviateCloud(t *testing.T) {
 			Scheme:   "https",
 			RESTHost: "example.com",
 			GRPCHost: "grpc-example.com",
-			RESTPort: 7070,
-			GRPCPort: 54321,
+			RESTPort: "7070",
+			GRPCPort: "54321",
 			Header: http.Header{
 				"X-Test":            {"heads", "up"},
 				"X-Weaviate-Client": {"weaviate-client-go" + "/" + weaviate.Version()},
