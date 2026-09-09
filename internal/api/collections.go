@@ -107,6 +107,7 @@ const (
 	DataTypeInt            DataType = "int"
 	DataTypeNumber         DataType = "number"
 	DataTypeDate           DataType = "date"
+	DataTypeUUID           DataType = "uuid"
 	DataTypeObject         DataType = "object"
 	DataTypeGeoCoordinates DataType = "geoCoordinates"
 	DataTypeTextArray      DataType = "text[]"
@@ -125,6 +126,7 @@ var knownDataTypes = newSet([]DataType{
 	DataTypeInt,
 	DataTypeNumber,
 	DataTypeDate,
+	DataTypeUUID,
 	DataTypeObject,
 	DataTypeGeoCoordinates,
 	DataTypeTextArray,
