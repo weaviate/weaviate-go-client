@@ -108,6 +108,7 @@ const (
 	DataTypeIntArray       DataType = DataType(api.DataTypeIntArray)
 	DataTypeNumberArray    DataType = DataType(api.DataTypeNumberArray)
 	DataTypeDateArray      DataType = DataType(api.DataTypeDateArray)
+	DataTypeUUIDArray      DataType = DataType(api.DataTypeUUIDArray)
 	DataTypeObjectArray    DataType = DataType(api.DataTypeObjectArray)
 )
 
