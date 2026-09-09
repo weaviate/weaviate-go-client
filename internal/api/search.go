@@ -481,12 +481,8 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 		case uuid.UUID:
 			pf.TestValue = &proto.Filters_ValueText{ValueText: v.String()}
 		case []uuid.UUID:
-			arr := make([]string, len(v))
-			for i := range v {
-				arr[i] = v[i].String()
-			}
 			pf.TestValue = &proto.Filters_ValueTextArray{
-				ValueTextArray: &proto.TextArray{Values: arr},
+				ValueTextArray: &proto.TextArray{Values: uuidArray(v)},
 			}
 		case string:
 			pf.TestValue = &proto.Filters_ValueText{ValueText: v}
@@ -498,12 +494,8 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 			// Date values are passed as formatted date strings.
 			pf.TestValue = &proto.Filters_ValueText{ValueText: v.Format(TimeLayout)}
 		case []time.Time:
-			arr := make([]string, len(v))
-			for i := range v {
-				arr[i] = v[i].Format(TimeLayout)
-			}
 			pf.TestValue = &proto.Filters_ValueTextArray{
-				ValueTextArray: &proto.TextArray{Values: arr},
+				ValueTextArray: &proto.TextArray{Values: timeArray(v)},
 			}
 		case bool:
 			pf.TestValue = &proto.Filters_ValueBoolean{ValueBoolean: v}

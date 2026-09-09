@@ -1775,8 +1775,10 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 					{
 						UUID: testkit.UUID,
 						Properties: map[string]any{
-							"artist": "Angine de Poitrine",
-							"title":  "Mata Zyklek",
+							"artist":       "Angine de Poitrine",
+							"title":        "Mata Zyklek",
+							"spotify":      testkit.UUID,
+							"release_date": testkit.Now,
 						},
 					},
 				},
@@ -1790,8 +1792,10 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 						Tenant:     "john_doe",
 						Properties: &proto.BatchObject_Properties{
 							NonRefProperties: mustNewStruct(map[string]any{
-								"artist": "Angine de Poitrine",
-								"title":  "Mata Zyklek",
+								"artist":       "Angine de Poitrine",
+								"title":        "Mata Zyklek",
+								"spotify":      testkit.UUID.String(),
+								"release_date": testkit.Now.Format(api.TimeLayout),
 							}),
 						},
 					},
@@ -1993,6 +1997,78 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 								{
 									PropName: "567",
 									Values:   []int64{5, 6, 7},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "uuid array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"related": []uuid.UUID{testkit.UUID},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							TextArrayProperties: []*proto.TextArrayProperties{
+								{
+									PropName: "related",
+									Values:   []string{testkit.UUID.String()},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "time array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"release_date": []time.Time{testkit.Now},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							TextArrayProperties: []*proto.TextArrayProperties{
+								{
+									PropName: "release_date",
+									Values:   []string{testkit.Now.Format(api.TimeLayout)},
 								},
 							},
 						},
