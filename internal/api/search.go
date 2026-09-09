@@ -480,6 +480,14 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 		case nil:
 		case uuid.UUID:
 			pf.TestValue = &proto.Filters_ValueText{ValueText: v.String()}
+		case []uuid.UUID:
+			arr := make([]string, len(v))
+			for i := range v {
+				arr[i] = v[i].String()
+			}
+			pf.TestValue = &proto.Filters_ValueTextArray{
+				ValueTextArray: &proto.TextArray{Values: arr},
+			}
 		case string:
 			pf.TestValue = &proto.Filters_ValueText{ValueText: v}
 		case []string:

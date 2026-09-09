@@ -110,6 +110,11 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 							Value:    testkit.Now,
 						},
 						{
+							Target:   []string{"recommended"},
+							Operator: api.FilterOperatorContainsAny,
+							Value:    []uuid.UUID{testkit.UUID, testkit.UUID},
+						},
+						{
 							Operator: api.FilterOperatorOr,
 							Exprs: []api.FilterExpr{
 								{
@@ -153,6 +158,18 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 							Target:    propertyTarget("release_date"),
 							Operator:  proto.Filters_OPERATOR_LESS_THAN_EQUAL,
 							TestValue: &proto.Filters_ValueText{ValueText: testkit.Now.Format(api.TimeLayout)},
+						},
+						{
+							Target:   propertyTarget("recommended"),
+							Operator: proto.Filters_OPERATOR_CONTAINS_ANY,
+							TestValue: &proto.Filters_ValueTextArray{
+								ValueTextArray: &proto.TextArray{
+									Values: []string{
+										testkit.UUID.String(),
+										testkit.UUID.String(),
+									},
+								},
+							},
 						},
 						{
 							Operator: proto.Filters_OPERATOR_OR,
