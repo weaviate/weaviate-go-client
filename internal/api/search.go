@@ -497,6 +497,14 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 		case time.Time:
 			// Date values are passed as formatted date strings.
 			pf.TestValue = &proto.Filters_ValueText{ValueText: v.Format(TimeLayout)}
+		case []time.Time:
+			arr := make([]string, len(v))
+			for i := range v {
+				arr[i] = v[i].Format(TimeLayout)
+			}
+			pf.TestValue = &proto.Filters_ValueTextArray{
+				ValueTextArray: &proto.TextArray{Values: arr},
+			}
 		case bool:
 			pf.TestValue = &proto.Filters_ValueBoolean{ValueBoolean: v}
 		case []bool:
