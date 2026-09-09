@@ -347,80 +347,96 @@ func marshalObjectProperties(properties map[string]any, dest *proto.BatchObject_
 	// TODO(dyma): check if we can just convert every array to []any
 	// and let structpb handle that. IDK if the server will be able to decode it.
 	for _, name := range slices.Sorted(maps.Keys(properties)) {
-		switch arr := properties[name].(type) {
+		switch v := properties[name].(type) {
 		default:
+			continue
+		case uuid.UUID:
+			properties[name] = v.String()
+			continue
+		case time.Time:
+			properties[name] = v.Format(TimeLayout)
 			continue
 		case []bool:
 			dest.BooleanArrayProperties = append(dest.BooleanArrayProperties, &proto.BooleanArrayProperties{
 				PropName: name,
-				Values:   arr,
+				Values:   v,
 			})
 		case []string:
 			dest.TextArrayProperties = append(dest.TextArrayProperties, &proto.TextArrayProperties{
 				PropName: name,
-				Values:   arr,
+				Values:   v,
+			})
+		case []uuid.UUID:
+			dest.TextArrayProperties = append(dest.TextArrayProperties, &proto.TextArrayProperties{
+				PropName: name,
+				Values:   uuidArray(v),
+			})
+		case []time.Time:
+			dest.TextArrayProperties = append(dest.TextArrayProperties, &proto.TextArrayProperties{
+				PropName: name,
+				Values:   timeArray(v),
 			})
 		case []int:
 			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
 				PropName: name,
-				Values:   intArray(arr),
+				Values:   intArray(v),
 			})
 		case []int8:
 			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
 				PropName: name,
-				Values:   intArray(arr),
+				Values:   intArray(v),
 			})
 		case []int16:
 			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
 				PropName: name,
-				Values:   intArray(arr),
+				Values:   intArray(v),
 			})
 		case []int32:
 			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
 				PropName: name,
-				Values:   intArray(arr),
+				Values:   intArray(v),
 			})
 		case []int64:
 			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
 				PropName: name,
-				Values:   arr,
+				Values:   v,
 			})
 		case []uint:
 			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
 				PropName: name,
-				Values:   intArray(arr),
+				Values:   intArray(v),
 			})
 		case []uint8:
 			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
 				PropName: name,
-				Values:   intArray(arr),
+				Values:   intArray(v),
 			})
 		case []uint16:
 			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
 				PropName: name,
-				Values:   intArray(arr),
+				Values:   intArray(v),
 			})
 		case []uint32:
 			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
 				PropName: name,
-				Values:   intArray(arr),
+				Values:   intArray(v),
 			})
 		case []uint64:
 			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
 				PropName: name,
-				Values:   intArray(arr),
+				Values:   intArray(v),
 			})
 
 		case []float32:
 			dest.NumberArrayProperties = append(dest.NumberArrayProperties, &proto.NumberArrayProperties{
 				PropName: name,
-				Values:   floatArray(arr),
+				Values:   floatArray(v),
 			})
 
 		case []float64:
 			dest.NumberArrayProperties = append(dest.NumberArrayProperties, &proto.NumberArrayProperties{
 				PropName: name,
-				Values:   arr,
+				Values:   v,
 			})
 		}
 		delete(properties, name)
@@ -452,6 +468,22 @@ func floatArray(arr []float32) []float64 {
 	out := make([]float64, len(arr))
 	for i := range arr {
 		out[i] = float64(arr[i])
+	}
+	return out
+}
+
+func uuidArray(arr []uuid.UUID) []string {
+	out := make([]string, len(arr))
+	for i := range arr {
+		out[i] = arr[i].String()
+	}
+	return out
+}
+
+func timeArray(arr []time.Time) []string {
+	out := make([]string, len(arr))
+	for i := range arr {
+		out[i] = arr[i].Format(TimeLayout)
 	}
 	return out
 }
