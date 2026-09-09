@@ -100,6 +100,7 @@ const (
 	DataTypeInt            DataType = DataType(api.DataTypeInt)
 	DataTypeNumber         DataType = DataType(api.DataTypeNumber)
 	DataTypeDate           DataType = DataType(api.DataTypeDate)
+	DataTypeUUID           DataType = DataType(api.DataTypeUUID)
 	DataTypeObject         DataType = DataType(api.DataTypeObject)
 	DataTypeGeoCoordinates DataType = DataType(api.DataTypeGeoCoordinates)
 	DataTypeTextArray      DataType = DataType(api.DataTypeTextArray)
