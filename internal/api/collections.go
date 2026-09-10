@@ -29,9 +29,9 @@ type (
 		DataType         DataType
 		NestedProperties []Property
 		Tokenization     Tokenization
-		IndexFilterable  bool
-		IndexRangeable   bool
-		IndexSearchable  bool
+		IndexFilterable  *bool
+		IndexRangeable   *bool
+		IndexSearchable  *bool
 	}
 	ReferenceProperty struct {
 		Name        string
