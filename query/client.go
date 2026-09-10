@@ -10,6 +10,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"github.com/weaviate/weaviate-go-client/v6/query/boost"
 	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
@@ -116,6 +117,7 @@ type request struct {
 	AutoLimit              int32
 	After                  uuid.UUID
 	Filter                 filter.Expr
+	Boost                  boost.Expr
 	ReturnMetadata         ReturnMetadata
 	ReturnVectors          []string
 	ReturnReferences       []Reference
@@ -141,6 +143,10 @@ func query(ctx context.Context, t internal.Transport, r request, f func(*api.Sea
 		if expr := r.Filter.Expr(); expr != nil {
 			req.Filter = *expr
 		}
+	}
+
+	if r.Boost != nil {
+		req.Boost = r.Boost.Expr()
 	}
 
 	f(req)

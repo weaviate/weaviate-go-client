@@ -17,7 +17,7 @@ import (
 // packages, which do not [compare time] correctly.
 //
 // [compare time]: https://github.com/stretchr/testify/issues/502
-var Now = time.Date(6, time.Month(5), 4, 3, 2, 1, 0, time.Local)
+var Now = time.Date(2006, time.Month(5), 4, 3, 2, 1, 0, time.Local)
 
 // UUID is a stub UUID tests can use to verify the correct UUID is used.
 var UUID = uuid.New()
