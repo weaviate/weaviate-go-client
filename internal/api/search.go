@@ -30,8 +30,9 @@ type SearchRequest struct {
 	GroupBy          *GroupBy
 
 	NearVector *NearVector
-	NearText   *NearText
+	NearObject *NearObject
 	NearMedia  *NearMedia
+	NearText   *NearText
 	BM25       *BM25
 	Hybrid     *Hybrid
 }
@@ -90,6 +91,11 @@ type (
 		Weight *float32
 	}
 	NearVector struct {
+		Target     SearchTarget
+		Similarity VectorSimilarity
+	}
+	NearObject struct {
+		UUID       uuid.UUID
 		Target     SearchTarget
 		Similarity VectorSimilarity
 	}
@@ -322,6 +328,8 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	switch {
 	case r.NearVector != nil:
 		req.NearVector, err = marshalNearVector(r.NearVector)
+	case r.NearObject != nil:
+		req.NearObject, err = marshalNearObject(r.NearObject)
 	case r.NearText != nil:
 		req.NearText, err = marshalNearText(r.NearText)
 	case r.NearMedia != nil:
@@ -781,6 +789,17 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 	}
 
 	return nt, nil
+}
+
+func marshalNearObject(req *NearObject) (*proto.NearObject, error) {
+	dev.AssertNotNil(req, "req")
+
+	return &proto.NearObject{
+		Id:        req.UUID.String(),
+		Distance:  req.Similarity.Distance,
+		Certainty: req.Similarity.Certainty,
+		Targets:   marshalSearchTarget(req.Target),
+	}, nil
 }
 
 func marshalSearchTarget(st SearchTarget) *proto.Targets {
