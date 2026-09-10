@@ -3195,10 +3195,10 @@ func TestDeleteObjectsResponse_UnmarshalMessage(t *testing.T) {
 			},
 			dest: new(api.DeleteObjectsResponse),
 			want: &api.DeleteObjectsResponse{
-				Took: 92 * time.Second,
+				Took:    92 * time.Second,
+				Matches: 2,
 				Errors: map[uuid.UUID]error{
 					testkit.UUID: testkit.ErrWhaam,
-					uuid.Nil:     nil,
 				},
 			},
 		},
