@@ -551,8 +551,9 @@ func (r *DeleteObjectsRequest) MarshalMessage() (*proto.BatchDeleteRequest, erro
 }
 
 type DeleteObjectsResponse struct {
-	Took   time.Duration
-	Errors map[uuid.UUID]error
+	Took    time.Duration
+	Matches int64
+	Errors  map[uuid.UUID]error
 }
 
 var _ transport.MessageUnmarshaler[proto.BatchDeleteReply] = (*DeleteObjectsResponse)(nil)
@@ -567,17 +568,16 @@ func (r *DeleteObjectsResponse) UnmarshalMessage(reply *proto.BatchDeleteReply) 
 			return err
 		}
 
-		var respErr error
 		if !object.Successful && object.Error != nil {
-			respErr = errors.New(*object.Error)
+			errs[id] = errors.New(*object.Error)
 		}
 
-		errs[id] = respErr
 	}
 
 	*r = DeleteObjectsResponse{
-		Took:   time.Duration(reply.Took) * time.Second,
-		Errors: errs,
+		Took:    time.Duration(reply.Took) * time.Second,
+		Matches: reply.GetMatches(),
+		Errors:  errs,
 	}
 	return nil
 }

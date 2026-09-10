@@ -213,7 +213,8 @@ type DeleteSelected struct {
 }
 
 type DeleteSelectedResult struct {
-	Took time.Duration
+	Took    time.Duration
+	Matches int64
 }
 
 type DeleteError struct {
@@ -242,7 +243,10 @@ func (c *Client) DeleteSelected(ctx context.Context, options DeleteSelected) (*D
 		return nil, fmt.Errorf("delete selected objects: %w", err)
 	}
 
-	r := &DeleteSelectedResult{Took: resp.Took}
+	r := &DeleteSelectedResult{
+		Took:    resp.Took,
+		Matches: resp.Matches,
+	}
 	if len(resp.Errors) == 0 {
 		return r, nil
 	}

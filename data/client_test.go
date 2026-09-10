@@ -447,23 +447,23 @@ func TestClient_DeleteSelected(t *testing.T) {
 						Verbose: true,
 					},
 					Response: api.DeleteObjectsResponse{
-						Took: 92 * time.Second,
+						Took:    92 * time.Second,
+						Matches: 5,
 						Errors: map[uuid.UUID]error{
 							testkit.UUID: testkit.ErrWhaam,
-							uuid.Nil:     nil,
 						},
 					},
 				},
 			},
 			want: &data.DeleteSelectedResult{
-				Took: 92 * time.Second,
+				Took:    92 * time.Second,
+				Matches: 5,
 			},
 			err: func(tt assert.TestingT, err error, a ...any) bool {
 				var partial data.DeleteError
 				if assert.ErrorAs(tt, err, &partial) {
 					return assert.Equal(tt, map[uuid.UUID]error{
 						testkit.UUID: testkit.ErrWhaam,
-						uuid.Nil:     nil,
 					}, partial.Errors)
 				}
 				return false
