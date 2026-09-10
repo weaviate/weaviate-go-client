@@ -1,6 +1,6 @@
 module github.com/weaviate/weaviate-go-client/v6
 
-go 1.26
+go 1.26.0
 
 require (
 	github.com/go-viper/mapstructure/v2 v2.5.0
@@ -9,7 +9,7 @@ require (
 	github.com/oapi-codegen/runtime v1.4.1
 	github.com/oasdiff/yaml v0.1.0
 	github.com/stretchr/testify v1.11.1
-	github.com/weaviate/weaviate/grpc/generated/protocol v0.0.0-20260902145956-fe39ae4193e4
+	github.com/weaviate/weaviate/grpc/generated/protocol v0.0.0-20260910114322-ea6fe86ddafd
 	golang.org/x/oauth2 v0.36.0
 	google.golang.org/api v0.282.0
 	google.golang.org/grpc v1.83.2
@@ -34,12 +34,12 @@ require (
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
 	github.com/woodsbury/decimal128 v1.4.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/mod v0.38.0 // indirect
-	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
-	golang.org/x/tools v0.48.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260831171406-18b4a7587f8a // indirect
+	golang.org/x/mod v0.41.0 // indirect
+	golang.org/x/net v0.59.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
+	golang.org/x/tools v0.49.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260908043556-f8649ddbbfe6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
