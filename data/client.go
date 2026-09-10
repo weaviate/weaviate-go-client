@@ -212,7 +212,17 @@ type DeleteSelected struct {
 	Verbose bool
 }
 
-type DeleteSelectedResult api.DeleteObjectsResponse
+type DeleteSelectedResult struct {
+	Took time.Duration
+}
+
+type DeleteError struct {
+	Errors map[uuid.UUID]error
+}
+
+func (de DeleteError) Error() string {
+	return fmt.Sprintf("delete failed for %d objects", len(de.Errors))
+}
 
 func (c *Client) DeleteSelected(ctx context.Context, options DeleteSelected) (*DeleteSelectedResult, error) {
 	req := &api.DeleteObjectsRequest{
@@ -232,7 +242,14 @@ func (c *Client) DeleteSelected(ctx context.Context, options DeleteSelected) (*D
 		return nil, fmt.Errorf("delete selected objects: %w", err)
 	}
 
-	return (*DeleteSelectedResult)(&resp), nil
+	r := &DeleteSelectedResult{Took: resp.Took}
+	if len(resp.Errors) == 0 {
+		return r, nil
+	}
+
+	return r, DeleteError{
+		Errors: resp.Errors,
+	}
 }
 
 func apiVectors(vectors []types.Vector) []api.Vector {
