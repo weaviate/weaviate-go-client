@@ -21,7 +21,6 @@ var _ Expr = (*Cond)(nil)
 
 func (c Cond) Expr() api.BoostExpr {
 	return api.BoostExpr{
-		Weight: c.Weight,
 		Conds: []api.BoostCond{
 			{
 				Func:   c.Func.Func(),

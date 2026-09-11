@@ -34,7 +34,6 @@ func TestCond(t *testing.T) {
 				},
 			},
 			expr: api.BoostExpr{
-				Weight: 3,
 				Conds: []api.BoostCond{
 					{
 						Weight: 3,
@@ -66,7 +65,6 @@ func TestCond(t *testing.T) {
 				},
 			},
 			expr: api.BoostExpr{
-				Weight: 3,
 				Conds: []api.BoostCond{
 					{
 						Weight: 3,
@@ -94,7 +92,6 @@ func TestCond(t *testing.T) {
 				},
 			},
 			expr: api.BoostExpr{
-				Weight: 3,
 				Conds: []api.BoostCond{
 					{
 						Weight: 3,
@@ -121,7 +118,6 @@ func TestCond(t *testing.T) {
 				},
 			},
 			expr: api.BoostExpr{
-				Weight: 3,
 				Conds: []api.BoostCond{
 					{
 						Weight: 3,
