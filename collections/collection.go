@@ -97,6 +97,7 @@ type DataType api.DataType
 const (
 	DataTypeText           DataType = DataType(api.DataTypeText)
 	DataTypeBool           DataType = DataType(api.DataTypeBool)
+	DataTypeBlob           DataType = DataType(api.DataTypeBlob)
 	DataTypeInt            DataType = DataType(api.DataTypeInt)
 	DataTypeNumber         DataType = DataType(api.DataTypeNumber)
 	DataTypeDate           DataType = DataType(api.DataTypeDate)
