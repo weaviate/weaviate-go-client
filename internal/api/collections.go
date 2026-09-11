@@ -104,6 +104,7 @@ type DataType string
 const (
 	DataTypeText           DataType = "text"
 	DataTypeBool           DataType = "boolean"
+	DataTypeBlob           DataType = "blob"
 	DataTypeInt            DataType = "int"
 	DataTypeNumber         DataType = "number"
 	DataTypeDate           DataType = "date"
@@ -124,6 +125,7 @@ const (
 var knownDataTypes = newSet([]DataType{
 	DataTypeText,
 	DataTypeBool,
+	DataTypeBlob,
 	DataTypeInt,
 	DataTypeNumber,
 	DataTypeDate,
