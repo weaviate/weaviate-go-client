@@ -35,7 +35,7 @@ func TestClient_Insert(t *testing.T) {
 		err     testkit.Error // Expected error.
 	}{
 		{
-			name: "nil object",
+			name: "no objects",
 			stubs: []testkit.Stub[api.InsertObjectsRequest, api.InsertObjectsResponse]{{
 				Request:  &api.InsertObjectsRequest{RequestDefaults: rd},
 				Response: api.InsertObjectsResponse{Took: 92 * time.Second},
@@ -52,7 +52,10 @@ func TestClient_Insert(t *testing.T) {
 				},
 				Response: api.InsertObjectsResponse{Took: 92 * time.Second},
 			}},
-			want: &data.InsertResult{Took: 92 * time.Second},
+			want: &data.InsertResult{
+				Took:  92 * time.Second,
+				UUIDs: map[int]uuid.UUID{0: uuid.Nil},
+			},
 		},
 		{
 			name: "with data",
@@ -86,32 +89,51 @@ func TestClient_Insert(t *testing.T) {
 						},
 					}},
 				},
-				Response: api.InsertObjectsResponse{Took: 92 * time.Second},
+				Response: api.InsertObjectsResponse{
+					Took: 92 * time.Second,
+				},
 			}},
-			want: &data.InsertResult{Took: 92 * time.Second},
+			want: &data.InsertResult{
+				Took:  92 * time.Second,
+				UUIDs: map[int]uuid.UUID{0: testkit.UUID},
+			},
 		},
 		{
-			name:    "internal server error",
-			objects: []*data.Object{{UUID: testkit.Ptr(testkit.UUID)}},
+			name: "internal server error",
+			objects: []*data.Object{
+				{UUID: testkit.Ptr(testkit.UUID)},
+				{UUID: testkit.Ptr(testkit.UUID)},
+				{UUID: testkit.Ptr(testkit.UUID)},
+			},
 			stubs: []testkit.Stub[api.InsertObjectsRequest, api.InsertObjectsResponse]{{
 				Request: &api.InsertObjectsRequest{
 					RequestDefaults: rd,
-					Objects:         []api.BatchObject{{UUID: testkit.UUID}},
+					Objects: []api.BatchObject{
+						{UUID: testkit.UUID},
+						{UUID: testkit.UUID},
+						{UUID: testkit.UUID},
+					},
 				},
 				Response: api.InsertObjectsResponse{
 					Took:      92 * time.Second,
-					Positions: []int32{0},
-					Errors:    []string{"Whaam!"},
+					Positions: []int{0, 2},
+					Errors:    []string{"Whaam!", "Whaam!"},
 				},
 			}},
 			want: &data.InsertResult{
 				Took: 92 * time.Second,
+				UUIDs: map[int]uuid.UUID{
+					0: testkit.UUID,
+					1: testkit.UUID,
+					2: testkit.UUID,
+				},
 			},
 			err: func(tt assert.TestingT, err error, a ...any) bool {
 				var got data.InsertError
 				return assert.ErrorAs(t, err, &got) &&
-					assert.Equal(t, map[uuid.UUID]string{
-						testkit.UUID: "Whaam!",
+					assert.Equal(t, map[int]string{
+						0: "Whaam!",
+						2: "Whaam!",
 					}, got.Errors)
 			},
 		},
@@ -187,7 +209,7 @@ func TestClient_Replace(t *testing.T) {
 		},
 		{
 			name:   "with error",
-			object: data.Object{UUID: &uuid.Nil},
+			object: data.Object{UUID: &testkit.UUID},
 			stubs: []testkit.Stub[api.ReplaceObjectRequest, any]{
 				{Err: testkit.ErrWhaam},
 			},
@@ -257,7 +279,7 @@ func TestClient_Update(t *testing.T) {
 		},
 		{
 			name:   "with error",
-			object: data.Object{UUID: &uuid.Nil},
+			object: data.Object{UUID: &testkit.UUID},
 			stubs: []testkit.Stub[api.UpdateObjectRequest, any]{
 				{Err: testkit.ErrWhaam},
 			},
@@ -376,7 +398,7 @@ func TestClient_AddReferences(t *testing.T) {
 				},
 				Response: api.InsertReferencesResponse{
 					Took:      92 * time.Second,
-					Positions: []int32{0},
+					Positions: []int{0},
 					Errors:    []string{"Whaam!"},
 				},
 			}},

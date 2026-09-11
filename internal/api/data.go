@@ -78,7 +78,7 @@ func (r *InsertObjectsRequest) MarshalMessage() (*proto.BatchObjectsRequest, err
 
 type InsertObjectsResponse struct {
 	Took      time.Duration
-	Positions []int32  // Positional indices of the failed objects. Aligned with Errors.
+	Positions []int    // Positional indices of the failed objects. Aligned with Errors.
 	Errors    []string // Error messages for failed objects. Aligned with Indices.
 }
 
@@ -90,7 +90,7 @@ func (r *InsertObjectsResponse) UnmarshalMessage(reply *proto.BatchObjectsReply)
 		Took: time.Duration(reply.Took) * time.Second,
 	}
 	for _, e := range reply.GetErrors() {
-		r.Positions = append(r.Positions, e.Index)
+		r.Positions = append(r.Positions, int(e.Index))
 		r.Errors = append(r.Errors, e.Error)
 	}
 	return nil
@@ -147,7 +147,7 @@ func (r *InsertReferencesResponse) UnmarshalMessage(reply *proto.BatchReferences
 	}
 
 	for _, e := range reply.GetErrors() {
-		r.Positions = append(r.Positions, e.Index)
+		r.Positions = append(r.Positions, int(e.Index))
 		r.Errors = append(r.Errors, e.Error)
 	}
 	return nil
