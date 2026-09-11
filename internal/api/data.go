@@ -540,13 +540,17 @@ func (r *DeleteObjectsRequest) Body() transport.MessageMarshaler[proto.BatchDele
 }
 
 func (r *DeleteObjectsRequest) MarshalMessage() (*proto.BatchDeleteRequest, error) {
+	f, err := marshalFilter(r.Filter)
+	if err != nil {
+		return nil, err
+	}
 	return &proto.BatchDeleteRequest{
 		Collection:       r.CollectionName,
 		Tenant:           nilZero(r.Tenant),
 		ConsistencyLevel: r.ConsistencyLevel.proto(),
 		Verbose:          r.Verbose,
 		DryRun:           r.DryRun,
-		Filters:          marshalFilter(r.Filter),
+		Filters:          f,
 	}, nil
 }
 
