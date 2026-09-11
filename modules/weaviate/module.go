@@ -9,10 +9,10 @@ func init() {
 // Text2Vec is a vectorizer for text properties
 // based on the text2vec-weaviate module.
 type Text2Vec struct {
-	URL        string   `json:"baseURL"`
-	Properties []string `json:"properties"`
-	Model      string   `json:"model"`
-	Dimensions int      `json:"dimensions"`
+	URL        string   `json:"baseURL,omitempty"`
+	Properties []string `json:"properties,omitempty"`
+	Model      string   `json:"model,omitempty"`
+	Dimensions int      `json:"dimensions,omitempty"`
 }
 
 func (Text2Vec) Name() string { return "text2vec-weaviate" }

@@ -157,6 +157,9 @@ func TestClient_Create(t *testing.T) {
 						},
 					},
 					"audio_vec": {SkipDefaultCompression: true},
+					"cover_vec": {
+						Index: vectorindex.HFresh{},
+					},
 				},
 				Sharding: &collections.ShardingConfig{
 					DesiredCount:        3,
@@ -268,6 +271,12 @@ func TestClient_Create(t *testing.T) {
 									},
 								},
 								"audio_vec": {SkipDefaultCompression: true},
+								"cover_vec": {
+									Index: &api.Module{
+										Name: "hfresh",
+										Conf: map[string]any{},
+									},
+								},
 							},
 							Sharding: &api.ShardingConfig{
 								DesiredCount:        3,
