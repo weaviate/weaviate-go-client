@@ -330,9 +330,10 @@ func tokenKeepalive(ctx context.Context, src oauth2.TokenSource, tickFunc func(t
 		return
 	}
 
-	// When Expiry is zero, oauth2 will never refresh the token,
-	// so pre-empting it like this is not useful.
-	for t, err := src.Token(); err == nil && t != nil && !t.Expiry.IsZero(); t, err = src.Token() {
+	// When ExpiresIn is zero, oauth2 will never refresh the token,
+	// so pre-empting it like this is not useful. Expiry is an optional value
+	// and might not always be populated.
+	for t, err := src.Token(); err == nil && t != nil && t.ExpiresIn > 0; t, err = src.Token() {
 		select {
 		case <-ctx.Done():
 			return
