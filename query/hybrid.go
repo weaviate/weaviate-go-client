@@ -54,9 +54,6 @@ type Hybrid struct {
 	groupBy *GroupBy
 }
 
-// Alpha is a helper for setting optional [Hybrid.Alpha].
-func Alpha(a float32) *float32 { return &a }
-
 const (
 	// RANKED fusion algorithm.
 	HybridFusionRanked = api.HybridFusionRanked
