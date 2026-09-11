@@ -110,6 +110,11 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 							Value:    testkit.Now,
 						},
 						{
+							Target:   []string{"recommended"},
+							Operator: api.FilterOperatorContainsAny,
+							Value:    []uuid.UUID{testkit.UUID, testkit.UUID},
+						},
+						{
 							Operator: api.FilterOperatorOr,
 							Exprs: []api.FilterExpr{
 								{
@@ -155,6 +160,18 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 							TestValue: &proto.Filters_ValueText{ValueText: testkit.Now.Format(api.TimeLayout)},
 						},
 						{
+							Target:   propertyTarget("recommended"),
+							Operator: proto.Filters_OPERATOR_CONTAINS_ANY,
+							TestValue: &proto.Filters_ValueTextArray{
+								ValueTextArray: &proto.TextArray{
+									Values: []string{
+										testkit.UUID.String(),
+										testkit.UUID.String(),
+									},
+								},
+							},
+						},
+						{
 							Operator: proto.Filters_OPERATOR_OR,
 							Filters: []*proto.Filters{
 								{
@@ -180,6 +197,27 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 							}},
 						},
 					},
+				},
+			},
+		},
+		{
+			name: "filter by uuid",
+			req: &api.SearchRequest{
+				Filter: api.FilterExpr{
+					Target:   []string{api.FieldUUID},
+					Operator: api.FilterOperatorEqual,
+					Value:    testkit.UUID,
+				},
+			},
+			want: &proto.SearchRequest{
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+				Filters: &proto.Filters{
+					Target:    propertyTarget(api.FieldUUID),
+					Operator:  proto.Filters_OPERATOR_EQUAL,
+					TestValue: &proto.Filters_ValueText{ValueText: testkit.UUID.String()},
 				},
 			},
 		},
@@ -1688,8 +1726,10 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 					{
 						UUID: testkit.UUID,
 						Properties: map[string]any{
-							"artist": "Angine de Poitrine",
-							"title":  "Mata Zyklek",
+							"artist":       "Angine de Poitrine",
+							"title":        "Mata Zyklek",
+							"spotify":      testkit.UUID,
+							"release_date": testkit.Now,
 						},
 					},
 				},
@@ -1703,8 +1743,10 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 						Tenant:     "john_doe",
 						Properties: &proto.BatchObject_Properties{
 							NonRefProperties: mustNewStruct(map[string]any{
-								"artist": "Angine de Poitrine",
-								"title":  "Mata Zyklek",
+								"artist":       "Angine de Poitrine",
+								"title":        "Mata Zyklek",
+								"spotify":      testkit.UUID.String(),
+								"release_date": testkit.Now.Format(api.TimeLayout),
 							}),
 						},
 					},
@@ -1786,6 +1828,201 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 							Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
 							VectorBytes: singleVectorBytes,
 						}},
+					},
+				},
+			},
+		},
+		{
+			name: "bool array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"checks": []bool{false, true},
+							"flags":  []bool{true, false, false},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							BooleanArrayProperties: []*proto.BooleanArrayProperties{
+								{
+									PropName: "checks",
+									Values:   []bool{false, true},
+								},
+								{
+									PropName: "flags",
+									Values:   []bool{true, false, false},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "text array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"genres": []string{"punk", "sludge"},
+							"tags":   []string{"#trending", "#explicit"},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							TextArrayProperties: []*proto.TextArrayProperties{
+								{
+									PropName: "genres",
+									Values:   []string{"punk", "sludge"},
+								},
+								{
+									PropName: "tags",
+									Values:   []string{"#trending", "#explicit"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "int array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"123": []uint16{1, 2, 3},
+							"567": []uint16{5, 6, 7},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							IntArrayProperties: []*proto.IntArrayProperties{
+								{
+									PropName: "123",
+									Values:   []int64{1, 2, 3},
+								},
+								{
+									PropName: "567",
+									Values:   []int64{5, 6, 7},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "uuid array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"related": []uuid.UUID{testkit.UUID},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							TextArrayProperties: []*proto.TextArrayProperties{
+								{
+									PropName: "related",
+									Values:   []string{testkit.UUID.String()},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "time array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"release_date": []time.Time{testkit.Now},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							TextArrayProperties: []*proto.TextArrayProperties{
+								{
+									PropName: "release_date",
+									Values:   []string{testkit.Now.Format(api.TimeLayout)},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -2958,10 +3195,10 @@ func TestDeleteObjectsResponse_UnmarshalMessage(t *testing.T) {
 			},
 			dest: new(api.DeleteObjectsResponse),
 			want: &api.DeleteObjectsResponse{
-				Took: 92 * time.Second,
+				Took:    92 * time.Second,
+				Matches: 2,
 				Errors: map[uuid.UUID]error{
 					testkit.UUID: testkit.ErrWhaam,
-					uuid.Nil:     nil,
 				},
 			},
 		},

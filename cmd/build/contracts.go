@@ -382,8 +382,13 @@ func convertToV3(ctx context.Context, r io.Reader) (map[string]any, error) {
 		}
 
 		if t, ok := m["type"]; ok {
-			if t == "number" {
+			switch t {
+			case "number":
 				m["format"] = "float"
+			case "boolean":
+				if null, ok := m["nullable"]; ok && null.(bool) {
+					m["x-go-type"] = "*bool"
+				}
 			}
 		}
 	})

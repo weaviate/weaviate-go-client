@@ -66,10 +66,7 @@ type Cond struct {
 	Value any
 }
 
-func (c *Cond) Expr() *api.FilterExpr {
-	if c == nil {
-		return nil
-	}
+func (c Cond) Expr() *api.FilterExpr {
 	return &api.FilterExpr{
 		Operator: api.FilterOperator(c.Operator),
 		Target:   split(c.Target),

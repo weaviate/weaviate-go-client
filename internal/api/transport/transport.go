@@ -22,9 +22,9 @@ import (
 type Config struct {
 	Scheme    string      // Scheme for request URLs, "http" or "https".
 	RESTHost  string      // Hostname of the REST host.
-	RESTPort  int         // Port number of the REST host
+	RESTPort  string      // Port number of the REST host
 	GRPCHost  string      // Hostname of the gRPC host.
-	GRPCPort  int         // Port number of the gRPC host.
+	GRPCPort  string      // Port number of the gRPC host.
 	Header    http.Header // Request headers.
 	Auth      any         // Authentication provider.
 	Timeout   Timeout     // Request timeout options.

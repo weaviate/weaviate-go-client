@@ -24,14 +24,14 @@ type (
 		MultiTenancy  *MultiTenancyConfig
 	}
 	Property struct {
-		Name              string
-		Description       string
-		DataType          DataType
-		NestedProperties  []Property
-		Tokenization      Tokenization
-		IndexFilterable   bool
-		IndexRangeFilters bool
-		IndexSearchable   bool
+		Name             string
+		Description      string
+		DataType         DataType
+		NestedProperties []Property
+		Tokenization     Tokenization
+		IndexFilterable  *bool
+		IndexRangeable   *bool
+		IndexSearchable  *bool
 	}
 	ReferenceProperty struct {
 		Name        string
@@ -104,9 +104,11 @@ type DataType string
 const (
 	DataTypeText           DataType = "text"
 	DataTypeBool           DataType = "boolean"
+	DataTypeBlob           DataType = "blob"
 	DataTypeInt            DataType = "int"
 	DataTypeNumber         DataType = "number"
 	DataTypeDate           DataType = "date"
+	DataTypeUUID           DataType = "uuid"
 	DataTypeObject         DataType = "object"
 	DataTypeGeoCoordinates DataType = "geoCoordinates"
 	DataTypeTextArray      DataType = "text[]"
@@ -114,6 +116,7 @@ const (
 	DataTypeIntArray       DataType = "int[]"
 	DataTypeNumberArray    DataType = "number[]"
 	DataTypeDateArray      DataType = "date[]"
+	DataTypeUUIDArray      DataType = "uuid[]"
 	DataTypeObjectArray    DataType = "object[]"
 )
 
@@ -122,9 +125,11 @@ const (
 var knownDataTypes = newSet([]DataType{
 	DataTypeText,
 	DataTypeBool,
+	DataTypeBlob,
 	DataTypeInt,
 	DataTypeNumber,
 	DataTypeDate,
+	DataTypeUUID,
 	DataTypeObject,
 	DataTypeGeoCoordinates,
 	DataTypeTextArray,
@@ -132,6 +137,7 @@ var knownDataTypes = newSet([]DataType{
 	DataTypeIntArray,
 	DataTypeNumberArray,
 	DataTypeDateArray,
+	DataTypeUUIDArray,
 	DataTypeObjectArray,
 })
 
@@ -211,7 +217,7 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 			NestedProperties:  nestedPropertiesToREST(p.NestedProperties),
 			Tokenization:      rest.PropertyTokenization(p.Tokenization),
 			IndexFilterable:   p.IndexFilterable,
-			IndexRangeFilters: p.IndexRangeFilters,
+			IndexRangeFilters: p.IndexRangeable,
 			IndexSearchable:   p.IndexSearchable,
 		}
 	}
@@ -335,7 +341,7 @@ func nestedPropertiesToREST(nps []Property) []rest.NestedProperty {
 			NestedProperties:  nestedPropertiesToREST(p.NestedProperties),
 			Tokenization:      rest.NestedPropertyTokenization(p.Tokenization),
 			IndexFilterable:   p.IndexFilterable,
-			IndexRangeFilters: p.IndexRangeFilters,
+			IndexRangeFilters: p.IndexRangeable,
 			IndexSearchable:   p.IndexSearchable,
 		}
 	}
@@ -355,14 +361,14 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 		notReference := len(p.DataType) == 1 && knownDataTypes.Contains(DataType(p.DataType[0]))
 		if notReference {
 			properties = append(properties, Property{
-				Name:              p.Name,
-				Description:       p.Description,
-				DataType:          DataType(p.DataType[0]),
-				NestedProperties:  nestedPropertiesFromREST(p.NestedProperties),
-				Tokenization:      Tokenization(p.Tokenization),
-				IndexFilterable:   p.IndexFilterable,
-				IndexRangeFilters: p.IndexRangeFilters,
-				IndexSearchable:   p.IndexSearchable,
+				Name:             p.Name,
+				Description:      p.Description,
+				DataType:         DataType(p.DataType[0]),
+				NestedProperties: nestedPropertiesFromREST(p.NestedProperties),
+				Tokenization:     Tokenization(p.Tokenization),
+				IndexFilterable:  p.IndexFilterable,
+				IndexRangeable:   p.IndexRangeFilters,
+				IndexSearchable:  p.IndexSearchable,
 			})
 		} else {
 			references = append(references, ReferenceProperty{
@@ -486,14 +492,14 @@ func nestedPropertiesFromREST(nested []rest.NestedProperty) []Property {
 		}
 
 		nps = append(nps, Property{
-			Name:              np.Name,
-			Description:       np.Description,
-			DataType:          DataType(np.DataType[0]),
-			NestedProperties:  nestedPropertiesFromREST(np.NestedProperties),
-			Tokenization:      Tokenization(np.Tokenization),
-			IndexFilterable:   np.IndexFilterable,
-			IndexRangeFilters: np.IndexRangeFilters,
-			IndexSearchable:   np.IndexSearchable,
+			Name:             np.Name,
+			Description:      np.Description,
+			DataType:         DataType(np.DataType[0]),
+			NestedProperties: nestedPropertiesFromREST(np.NestedProperties),
+			Tokenization:     Tokenization(np.Tokenization),
+			IndexFilterable:  np.IndexFilterable,
+			IndexRangeable:   np.IndexRangeFilters,
+			IndexSearchable:  np.IndexSearchable,
 		})
 	}
 	return nps

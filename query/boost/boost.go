@@ -58,9 +58,6 @@ func (b Blend) Expr() api.BoostExpr {
 	}
 }
 
-func Decay(d float32) *float32                 { return &d }
-func Offset[T time.Duration | float64](o T) *T { return &o }
-
 // Day is a [time.Duration] of 24h.
 const Day = 24 * time.Hour
 

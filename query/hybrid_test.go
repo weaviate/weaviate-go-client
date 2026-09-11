@@ -33,7 +33,7 @@ func TestHybrid(t *testing.T) {
 				Query:             "yellow submarine",
 				QueryProperties:   []string{"title", "lyrics"},
 				KeywordSimilarity: query.AllTokensMatch,
-				Alpha:             query.Alpha(0.44),
+				Alpha:             new(float32(0.44)),
 				Fusion:            query.HybridFusionRelativeScore,
 				NearText: &query.NearText{
 					Concepts: []string{"sea"},
