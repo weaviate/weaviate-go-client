@@ -28,9 +28,9 @@ func TestCond(t *testing.T) {
 					Property: "created_at",
 					Origin:   testkit.Now,
 					Scale:    120 * time.Hour,
-					Offset:   boost.Offset(10 * time.Minute),
+					Offset:   new(10 * time.Minute),
 					Curve:    boost.Gauss,
-					Decay:    boost.Decay(92),
+					Decay:    new(float32(92)),
 				},
 			},
 			expr: api.BoostExpr{

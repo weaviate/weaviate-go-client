@@ -47,7 +47,7 @@ type StatusAccepter interface {
 type RESTConfig struct {
 	Scheme      string               // Scheme for request URLs, "http" or "https".
 	Host        string               // Hostname of the REST host.
-	Port        int                  // Port number of the REST host
+	Port        string               // Port number of the REST host
 	Header      http.Header          // Headers added with each request.
 	TokenSource oauth2.TokenSource   // OAuth2 token source.
 	KeepAlive   *net.KeepAliveConfig // Keepalive configuration.
@@ -143,7 +143,7 @@ type REST struct {
 
 func NewREST(cfg RESTConfig) *REST {
 	baseURL := fmt.Sprintf(
-		"%s://%s:%d/%s/",
+		"%s://%s:%s/%s/",
 		cfg.Scheme, cfg.Host, cfg.Port, cfg.Version,
 	)
 
