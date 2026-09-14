@@ -26,9 +26,9 @@ func TestCompression(t *testing.T) {
 				Cache:        true,
 			},
 			conf: map[string]any{
-				"bits":          1,
-				"rescore_limit": 2,
-				"cache":         true,
+				"bits":         1,
+				"rescoreLimit": 2,
+				"cache":        true,
 			},
 		},
 		{
@@ -43,8 +43,8 @@ func TestCompression(t *testing.T) {
 				Cache:        true,
 			},
 			conf: map[string]any{
-				"rescore_limit": 1,
-				"cache":         true,
+				"rescoreLimit": 1,
+				"cache":        true,
 			},
 		},
 		{
@@ -55,20 +55,24 @@ func TestCompression(t *testing.T) {
 		{
 			name: "pq",
 			module: compression.PQ{
-				Centroids:           1,
-				Segments:            2,
-				TrainingLimit:       3,
-				Encoder:             compression.PQEncoderKmeans,
-				EncoderDistribution: compression.PQDistributionLogNormal,
-				BitCompression:      true,
+				Centroids:     1,
+				Segments:      2,
+				TrainingLimit: 3,
+				Encoder: compression.PQEncoder{
+					Type:         compression.PQEncoderTypeKmeans,
+					Distribution: compression.PQDistributionLogNormal,
+				},
+				BitCompression: true,
 			},
 			conf: map[string]any{
-				"centroids":            1,
-				"segments":             2,
-				"training_limit":       3,
-				"encoder_type":         compression.PQEncoderKmeans,
-				"encoder_distribution": compression.PQDistributionLogNormal,
-				"bit_compression":      true,
+				"centroids":      1,
+				"segments":       2,
+				"trainingLimit":  3,
+				"bitCompression": true,
+				"encoder": map[string]any{
+					"type":         compression.PQEncoderTypeKmeans,
+					"distribution": compression.PQDistributionLogNormal,
+				},
 			},
 		},
 		{
@@ -84,9 +88,9 @@ func TestCompression(t *testing.T) {
 				Cache:         true,
 			},
 			conf: map[string]any{
-				"rescore_limit":  1,
-				"training_limit": 2,
-				"cache":          true,
+				"rescoreLimit":  1,
+				"trainingLimit": 2,
+				"cache":         true,
 			},
 		},
 		{

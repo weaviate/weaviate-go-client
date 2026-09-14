@@ -255,9 +255,9 @@ func TestClient_Create(t *testing.T) {
 									Compression: &api.Module{
 										Name: "rq",
 										Conf: map[string]any{
-											"cache":         true,
-											"bits":          1,
-											"rescore_limit": 16,
+											"cache":        true,
+											"bits":         1,
+											"rescoreLimit": 16,
 										},
 									},
 									Vectorizer: &api.Module{
@@ -431,9 +431,9 @@ func TestClient_GetConfig(t *testing.T) {
 								Compression: &api.Module{
 									Name: "rq",
 									Conf: map[string]any{
-										"cache":         true,
-										"bits":          1,
-										"rescore_limit": 16,
+										"cache":        true,
+										"bits":         1,
+										"rescoreLimit": 16,
 									},
 								},
 								Vectorizer: &api.Module{
