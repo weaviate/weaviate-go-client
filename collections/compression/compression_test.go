@@ -52,6 +52,30 @@ func TestCompression(t *testing.T) {
 			module: compression.BQ{},
 			conf:   make(map[string]any),
 		},
+		{
+			name: "pq",
+			module: compression.PQ{
+				Centroids:           1,
+				Segments:            2,
+				TrainingLimit:       3,
+				Encoder:             compression.PQEncoderKmeans,
+				EncoderDistribution: compression.PQDistributionLogNormal,
+				BitCompression:      true,
+			},
+			conf: map[string]any{
+				"centroids":            1,
+				"segments":             2,
+				"training_limit":       3,
+				"encoder_type":         compression.PQEncoderKmeans,
+				"encoder_distribution": compression.PQDistributionLogNormal,
+				"bit_compression":      true,
+			},
+		},
+		{
+			name:   "pq default",
+			module: compression.PQ{},
+			conf:   make(map[string]any),
+		},
 	} {
 		t.Run(string(tt.name), func(t *testing.T) {
 			name := strings.Split(string(tt.name), " ")[0]
