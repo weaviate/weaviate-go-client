@@ -16,10 +16,10 @@ type Type string
 var _ internal.Module[Type] = (*HFresh)(nil)
 
 type HFresh struct {
-	Distance         Distance `json:"distance"`
-	MaxPostingSizeKB int      `json:"maxPostingSizeKB"`
-	ReplicaCount     int      `json:"replicas"`
-	SearchProbe      int      `json:"searchProbe"`
+	Distance         Distance `json:"distance,omitempty"`
+	MaxPostingSizeKB int      `json:"maxPostingSizeKB,omitempty"`
+	ReplicaCount     int      `json:"replicas,omitempty"`
+	SearchProbe      int      `json:"searchProbe,omitempty"`
 }
 
 func (HFresh) Name() Type { return "hfresh" }

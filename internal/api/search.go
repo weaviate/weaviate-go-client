@@ -873,7 +873,7 @@ func marshalNearMedia(req *NearMedia) (any, error) {
 			Imu:       req.Media,
 		}, nil
 	}
-	return nil, nil
+	return nil, errors.New("missing media")
 }
 
 func marshalBM25(req *BM25) (*proto.BM25, error) {

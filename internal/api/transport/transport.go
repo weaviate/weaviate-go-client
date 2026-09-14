@@ -330,9 +330,10 @@ func tokenKeepalive(ctx context.Context, src oauth2.TokenSource, tickFunc func(t
 		return
 	}
 
-	// When Expiry is zero, oauth2 will never refresh the token,
-	// so pre-empting it like this is not useful.
-	for t, err := src.Token(); err == nil && t != nil && !t.Expiry.IsZero(); t, err = src.Token() {
+	// When ExpiresIn is zero, oauth2 will never refresh the token,
+	// so pre-empting it like this is not useful. Expiry is an optional value
+	// and might not always be populated.
+	for t, err := src.Token(); err == nil && t != nil && t.ExpiresIn > 0; t, err = src.Token() {
 		select {
 		case <-ctx.Done():
 			return
@@ -387,6 +388,15 @@ type KeepAlive struct {
 	//
 	// [gRPC connections]: https://github.com/grpc/proposal/blob/master/A8-client-side-keepalive.md#basic-keepalive
 	Retry int
+
+	// If true, client sends keepalive pings even with no active RPCs. If false,
+	// when there are no active RPCs, Retry and Interval will be ignored and no
+	// keepalive pings will be sent.
+	//
+	// This setting is only relevant to gRPC connections and must be coordinated with the server.
+	// Unless it too has [keepalive.EnforcementPolicy.PermitWithoutStream] enabled, setting it to true
+	// in the client will result in server breaking the connection with GOAWAY via.
+	PermitWithoutStream bool
 }
 
 // If k is not nil, dialOptions returns non-nil configuration for
@@ -405,7 +415,7 @@ func (k *KeepAlive) dialOptions() (*net.KeepAliveConfig, *keepalive.ClientParame
 			Interval: interval,
 			Count:    retry,
 		}, &keepalive.ClientParameters{
-			PermitWithoutStream: true,
+			PermitWithoutStream: k.PermitWithoutStream,
 			Time:                idle,
 			Timeout:             interval * time.Duration(retry),
 		}
