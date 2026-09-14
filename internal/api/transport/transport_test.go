@@ -484,7 +484,7 @@ func TestKeepAlive(t *testing.T) {
 				Count:    minRetry,
 			},
 			gRPC: &keepalive.ClientParameters{
-				PermitWithoutStream: true,
+				PermitWithoutStream: false,
 				Time:                minIdle,
 				Timeout:             minInterval * time.Duration(minRetry),
 			},
@@ -503,7 +503,7 @@ func TestKeepAlive(t *testing.T) {
 				Count:    5,
 			},
 			gRPC: &keepalive.ClientParameters{
-				PermitWithoutStream: true,
+				PermitWithoutStream: false,
 				Time:                5 * time.Minute,
 				Timeout:             5 * 30 * time.Second,
 			},

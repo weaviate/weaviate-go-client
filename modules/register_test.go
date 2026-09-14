@@ -36,6 +36,11 @@ func TestModules(t *testing.T) {
 			},
 		},
 		{
+			name:   "text2vec-model2vec",
+			module: model2vec.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
 			name: "text2vec-weaviate",
 			module: weaviate.Text2Vec{
 				URL:        "example.com",
@@ -49,6 +54,11 @@ func TestModules(t *testing.T) {
 				"model":      "Snowflake/snowflake-arctic-embed-m-v1.5",
 				"dimensions": 92,
 			},
+		},
+		{
+			name:   "text2vec-weaviate",
+			module: weaviate.Text2Vec{},
+			conf:   map[string]any{},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

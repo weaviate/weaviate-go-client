@@ -1091,6 +1091,17 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "near media missing",
+			req: &api.SearchRequest{
+				NearMedia: &api.NearMedia{
+					Similarity: api.VectorSimilarity{
+						Distance: testkit.Ptr(.245),
+					},
+				},
+			},
+			err: testkit.ExpectError,
+		},
+		{
 			name: "near object",
 			req: &api.SearchRequest{
 				NearObject: &api.NearObject{

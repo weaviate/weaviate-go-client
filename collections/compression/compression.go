@@ -15,7 +15,7 @@ var _ internal.Module[Type] = (*RQ)(nil)
 
 type RQ struct {
 	Bits         int  `json:"bits"`
-	RescoreLimit int  `json:"rescore_limit"`
+	RescoreLimit int  `json:"rescoreLimit"`
 	Cache        bool `json:"cache"`
 }
 
