@@ -1,22 +1,80 @@
 package compression
 
-import "github.com/weaviate/weaviate-go-client/v6/internal"
+import (
+	"github.com/weaviate/weaviate-go-client/v6/internal"
+)
 
 // Registry stores all compression algorithms defined by this package.
 var Registry internal.Modules[Type]
 
 func init() {
+	Registry.Register(*new(BQ))
+	Registry.Register(*new(PQ))
 	Registry.Register(*new(RQ))
+	Registry.Register(*new(SQ))
 }
 
 type Type string
 
-var _ internal.Module[Type] = (*RQ)(nil)
+var (
+	_ internal.Module[Type] = (*BQ)(nil)
+	_ internal.Module[Type] = (*PQ)(nil)
+	_ internal.Module[Type] = (*RQ)(nil)
+	_ internal.Module[Type] = (*SQ)(nil)
+)
 
+// Rotational quantization.
 type RQ struct {
-	Bits         int  `json:"bits"`
-	RescoreLimit int  `json:"rescoreLimit"`
-	Cache        bool `json:"cache"`
+	Bits         int  `json:"bits,omitempty"`
+	RescoreLimit int  `json:"rescoreLimit,omitempty"`
+	Cache        bool `json:"cache,omitempty"`
 }
 
 func (RQ) Name() Type { return "rq" }
+
+// Binary quantization.
+type BQ struct {
+	RescoreLimit int  `json:"rescoreLimit,omitempty"`
+	Cache        bool `json:"cache,omitempty"`
+}
+
+func (BQ) Name() Type { return "bq" }
+
+// Product quantization.
+type PQ struct {
+	Centroids      int       `json:"centroids,omitempty"`
+	Segments       int       `json:"segments,omitempty"`
+	TrainingLimit  int       `json:"trainingLimit,omitempty"`
+	Encoder        PQEncoder `json:"encoder,omitzero"`
+	BitCompression bool      `json:"bitCompression,omitempty"`
+}
+
+type PQEncoder struct {
+	Type         PQEncoderType         `json:"type,omitempty"`
+	Distribution PQEncoderDistribution `json:"distribution,omitempty"`
+}
+
+func (PQ) Name() Type { return "pq" }
+
+type PQEncoderType string
+
+const (
+	PQEncoderTypeKmeans PQEncoderType = "kmeans"
+	PQEncoderTypeTile   PQEncoderType = "tile"
+)
+
+type PQEncoderDistribution string
+
+const (
+	PQDistributionNormal    PQEncoderDistribution = "normal"
+	PQDistributionLogNormal PQEncoderDistribution = "log-normal"
+)
+
+// Scalar quantization.
+type SQ struct {
+	RescoreLimit  int  `json:"rescoreLimit,omitempty"`
+	TrainingLimit int  `json:"trainingLimit,omitempty"`
+	Cache         bool `json:"cache,omitempty"`
+}
+
+func (SQ) Name() Type { return "sq" }
