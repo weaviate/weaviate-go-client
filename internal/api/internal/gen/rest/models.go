@@ -1869,13 +1869,13 @@ type BackupCreateRequest struct {
 	// Id The ID of the backup (required). Must be URL-safe and work as a filesystem path, only lowercase, numbers, underscore, minus characters allowed.
 	Id string `json:"id,omitempty"`
 
-	// Include List of collections to include in the backup creation process. If not set, all collections are included. Cannot be used together with `exclude`. Permits wildcards, e.g. `*` or `prefix*`.
+	// Include List of collections to include in the backup creation process. If not set, all collections are included. Cannot be used together with `exclude`. Permits wildcards, e.g. `*` or `prefix*`. A list made only of wildcards that match no collection is rejected.
 	Include []string `json:"include,omitempty"`
 
-	// IncludeRoles List of RBAC roles to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted, the whole RBAC state is captured as part of the cluster snapshot; when set, the RBAC blob is filtered to the matching roles. Built-in roles are rejected and are never selected by wildcards (they are re-applied automatically on restore). No per-role permission check is applied.
+	// IncludeRoles List of RBAC roles to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted, the whole RBAC state is captured as part of the cluster snapshot; when set, the RBAC blob is filtered to the matching roles. An exact role name that does not exist is rejected; wildcards that match nothing back up no roles. Built-in roles are rejected and are never selected by wildcards (they are re-applied automatically on restore). No per-role permission check is applied.
 	IncludeRoles []string `json:"includeRoles,omitempty"`
 
-	// IncludeUsers List of dynamic DB users to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted, the whole dynamic-user store is captured as part of the cluster snapshot and no per-user permission check is applied; when set, only matching users are captured and each is authorized individually.
+	// IncludeUsers List of dynamic DB users to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted, the whole dynamic-user store is captured as part of the cluster snapshot and no per-user permission check is applied; when set, only matching users are captured. An exact user name that does not exist is rejected; wildcards that match nothing back up no users.
 	IncludeUsers []string `json:"includeUsers,omitempty"`
 
 	// IncrementalBaseBackupId The ID of an existing backup to use as the base for a file-based incremental backup. If set, only files that have changed since the base backup will be included in the new backup.
@@ -1977,7 +1977,7 @@ type BackupRestoreRequest struct {
 	// Exclude List of collections (classes) to exclude from the backup restoration process.
 	Exclude []string `json:"exclude,omitempty"`
 
-	// Include List of collections (classes) to include in the backup restoration process.
+	// Include List of collections (classes) to include in the backup restoration process. Permits wildcards, e.g. `*` or `prefix*`. A list made only of wildcards that match no collection in the backup is rejected.
 	Include []string `json:"include,omitempty"`
 
 	// NodeMapping Allows overriding the node names stored in the backup with different ones. Useful when restoring backups to a different environment.
@@ -4570,7 +4570,7 @@ type SchemaObjectsPropertiesDeleteParamsIndexName string
 
 // SchemaObjectsIndexUpsertParams defines parameters for SchemaObjectsIndexUpsert.
 type SchemaObjectsIndexUpsertParams struct {
-	// Tenants Tenant names to target. Only valid on multi-tenant collections and only when the resulting operation is format-only (on PUT that is `rangeFilters` creation). Omit to target all tenants.
+	// Tenants Tenant names to target. Never valid on PUT: every migration this endpoint can submit is semantic, and semantic migrations are always cluster-wide, so passing tenants is rejected with a `400`. Tenant scoping remains available on the `/rebuild` variant.
 	Tenants []string `form:"tenants,omitempty" json:"tenants,omitempty"`
 }
 
