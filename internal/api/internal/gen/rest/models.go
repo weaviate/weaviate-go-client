@@ -2707,9 +2707,9 @@ type NamespaceUpdateRequest struct {
 type NestedProperty struct {
 	DataType          []string `json:"dataType,omitempty"`
 	Description       string   `json:"description,omitempty"`
-	IndexFilterable   bool     `json:"indexFilterable,omitempty"`
-	IndexRangeFilters bool     `json:"indexRangeFilters,omitempty"`
-	IndexSearchable   bool     `json:"indexSearchable,omitempty"`
+	IndexFilterable   *bool    `json:"indexFilterable,omitempty"`
+	IndexRangeFilters *bool    `json:"indexRangeFilters,omitempty"`
+	IndexSearchable   *bool    `json:"indexSearchable,omitempty"`
 	Name              string   `json:"name,omitempty"`
 
 	// NestedProperties The properties of the nested object(s). Applies to object and object[] data types.
@@ -3023,19 +3023,19 @@ type Property struct {
 	Description string `json:"description,omitempty"`
 
 	// DisableDuplicatedReferences If set to false, allows multiple references to the same target object within this property. Setting it to true will enforce uniqueness of references within this property. By default, this is set to true.
-	DisableDuplicatedReferences bool `json:"disableDuplicatedReferences,omitempty"`
+	DisableDuplicatedReferences *bool `json:"disableDuplicatedReferences,omitempty"`
 
 	// IndexFilterable Whether to include this property in the filterable, Roaring Bitmap index. If `false`, this property cannot be used in `where` filters. <br/><br/>Note: Unrelated to vectorization behavior.
-	IndexFilterable bool `json:"indexFilterable,omitempty"`
+	IndexFilterable *bool `json:"indexFilterable,omitempty"`
 
 	// IndexInverted (Deprecated). Whether to include this property in the inverted index. If `false`, this property cannot be used in `where` filters, `bm25` or `hybrid` search. <br/><br/>Unrelated to vectorization behavior (deprecated as of v1.19; use indexFilterable or/and indexSearchable instead)
 	IndexInverted bool `json:"indexInverted,omitempty"`
 
 	// IndexRangeFilters Whether to include this property in the filterable, range-based Roaring Bitmap index. Provides better performance for range queries compared to filterable index in large datasets. Applicable only to properties of data type int, number, date.
-	IndexRangeFilters bool `json:"indexRangeFilters,omitempty"`
+	IndexRangeFilters *bool `json:"indexRangeFilters,omitempty"`
 
 	// IndexSearchable Optional. Should this property be indexed in the inverted index. Defaults to true. Applicable only to properties of data type text and text[]. If you choose false, you will not be able to use this property in bm25 or hybrid search. This property has no affect on vectorization decisions done by modules
-	IndexSearchable bool `json:"indexSearchable,omitempty"`
+	IndexSearchable *bool `json:"indexSearchable,omitempty"`
 
 	// ModuleConfig Configuration specific to modules in a collection context.
 	ModuleConfig map[string]interface{} `json:"moduleConfig,omitempty"`
@@ -3047,7 +3047,7 @@ type Property struct {
 	NestedProperties []NestedProperty `json:"nestedProperties,omitempty"`
 
 	// SearchableBlockmax Internal RAFT-replicated per-property flag: true iff this property's searchable (BM25) bucket is on the blockmax (StrategyInverted) index. Stamped at migration cutover. Absent/null means "not stamped" and is resolved against the class-wide UsingBlockMaxWAND flag. Internal use; clients must not set this.
-	SearchableBlockmax bool `json:"searchableBlockmax,omitempty"`
+	SearchableBlockmax *bool `json:"searchableBlockmax,omitempty"`
 
 	// TextAnalyzer Text analysis options for a property. These settings are immutable after the property is created. Applies only to text and text[] data types that use an inverted index (searchable or filterable).
 	TextAnalyzer TextAnalyzerConfig `json:"textAnalyzer,omitempty"`
@@ -4135,7 +4135,7 @@ type WhereFilter struct {
 	Path []string `json:"path,omitempty"`
 
 	// ValueBoolean value as boolean
-	ValueBoolean bool `json:"valueBoolean,omitempty"`
+	ValueBoolean *bool `json:"valueBoolean,omitempty"`
 
 	// ValueBooleanArray value as boolean
 	ValueBooleanArray []bool `json:"valueBooleanArray,omitempty"`
@@ -4570,7 +4570,7 @@ type SchemaObjectsPropertiesDeleteParamsIndexName string
 
 // SchemaObjectsIndexUpsertParams defines parameters for SchemaObjectsIndexUpsert.
 type SchemaObjectsIndexUpsertParams struct {
-	// Tenants Tenant names to target. Only valid on multi-tenant collections and only when the resulting operation is format-only (on PUT that is `rangeFilters` creation). Omit to target all tenants.
+	// Tenants Tenant names to target. Never valid on PUT: every migration this endpoint can submit is semantic, and semantic migrations are always cluster-wide, so passing tenants is rejected with a `400`. Tenant scoping remains available on the `/rebuild` variant.
 	Tenants []string `form:"tenants,omitempty" json:"tenants,omitempty"`
 }
 
