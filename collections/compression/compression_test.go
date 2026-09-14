@@ -76,6 +76,24 @@ func TestCompression(t *testing.T) {
 			module: compression.PQ{},
 			conf:   make(map[string]any),
 		},
+		{
+			name: "sq",
+			module: compression.SQ{
+				RescoreLimit:  1,
+				TrainingLimit: 2,
+				Cache:         true,
+			},
+			conf: map[string]any{
+				"rescore_limit":  1,
+				"training_limit": 2,
+				"cache":          true,
+			},
+		},
+		{
+			name:   "sq default",
+			module: compression.SQ{},
+			conf:   make(map[string]any),
+		},
 	} {
 		t.Run(string(tt.name), func(t *testing.T) {
 			name := strings.Split(string(tt.name), " ")[0]

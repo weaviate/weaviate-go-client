@@ -9,6 +9,7 @@ func init() {
 	Registry.Register(*new(BQ))
 	Registry.Register(*new(PQ))
 	Registry.Register(*new(RQ))
+	Registry.Register(*new(SQ))
 }
 
 type Type string
@@ -17,6 +18,7 @@ var (
 	_ internal.Module[Type] = (*BQ)(nil)
 	_ internal.Module[Type] = (*PQ)(nil)
 	_ internal.Module[Type] = (*RQ)(nil)
+	_ internal.Module[Type] = (*SQ)(nil)
 )
 
 // Rotational quantization.
@@ -61,3 +63,12 @@ const (
 	PQDistributionNormal    PQEncoderDistribution = "normal"
 	PQDistributionLogNormal PQEncoderDistribution = "log-normal"
 )
+
+// Scalar quantization.
+type SQ struct {
+	RescoreLimit  int  `json:"rescore_limit,omitempty"`
+	TrainingLimit int  `json:"training_limit,omitempty"`
+	Cache         bool `json:"cache,omitempty"`
+}
+
+func (SQ) Name() Type { return "sq" }
