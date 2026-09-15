@@ -260,7 +260,7 @@ func (gb *GetBuilder) createFilterClause() string {
 		gb.withNearThermal, gb.withNearImu, gb.withGroupFilter, gb.withSort, gb.withGroupBy,
 	} {
 		bVal := reflect.ValueOf(b)
-		if bVal.Kind() == reflect.Ptr && !bVal.IsNil() {
+		if bVal.Kind() == reflect.Pointer && !bVal.IsNil() {
 			filters = append(filters, b.build())
 		}
 	}
