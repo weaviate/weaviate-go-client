@@ -130,7 +130,7 @@ func (e *Explore) createFilterClause() string {
 			e.withNearAudio, e.withNearVideo, e.withNearDepth, e.withNearThermal, e.withNearImu,
 		} {
 			bVal := reflect.ValueOf(b)
-			if bVal.Kind() == reflect.Ptr && !bVal.IsNil() {
+			if bVal.Kind() == reflect.Pointer && !bVal.IsNil() {
 				filters = append(filters, b.build())
 			}
 		}

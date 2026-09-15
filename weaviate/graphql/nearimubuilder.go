@@ -74,7 +74,7 @@ func (b *NearImuArgumentBuilder) build() string {
 	if len(b.targetVectors) > 0 {
 		builder.withTargetVectors(b.targetVectors...)
 	}
-	builder.withTargets((b.targets))
+	builder.withTargets(b.targets)
 	return builder.build()
 }
 
