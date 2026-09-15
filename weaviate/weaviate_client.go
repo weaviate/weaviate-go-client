@@ -15,7 +15,6 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/classifications"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/cluster"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
-	"github.com/weaviate/weaviate-go-client/v5/weaviate/contextionary"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/data"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/db"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
@@ -110,7 +109,6 @@ type Client struct {
 	alias           *alias.API
 	data            *data.API
 	batch           *batch.API
-	c11y            *contextionary.API
 	classifications *classifications.API
 	backup          *backup.API
 	graphQL         *graphql.API
@@ -195,7 +193,6 @@ func NewClient(config Config) (*Client, error) {
 		misc:            misc.New(con, dbVersionProvider),
 		schema:          schema.New(con, dbVersionProvider),
 		alias:           alias.New(con),
-		c11y:            contextionary.New(con),
 		classifications: classifications.New(con),
 		graphQL:         graphql.New(con),
 		data:            data.New(con, dbVersionSupport),
@@ -245,7 +242,6 @@ func New(config Config) *Client {
 		grpcClient:      grpcClient,
 		misc:            misc.New(con, dbVersionProvider),
 		schema:          schema.New(con, dbVersionProvider),
-		c11y:            contextionary.New(con),
 		classifications: classifications.New(con),
 		graphQL:         graphql.New(con),
 		data:            data.New(con, dbVersionSupport),
@@ -296,11 +292,6 @@ func (c *Client) Data() *data.API {
 // Batch loading API group
 func (c *Client) Batch() *batch.API {
 	return c.batch
-}
-
-// C11y (contextionary) API group
-func (c *Client) C11y() *contextionary.API {
-	return c.c11y
 }
 
 // Classifications API group
