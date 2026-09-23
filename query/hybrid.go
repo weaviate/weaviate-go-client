@@ -95,7 +95,7 @@ func hybridFunc(t internal.Transport, rd api.RequestDefaults) HybridFunc {
 					CrossProperty:      h.KeywordSimilarity.CrossProperty(),
 					MinimumTokensMatch: h.KeywordSimilarity.MinimumTokensMatch(),
 				},
-				NearVector: nearVector(h.NearVector),
+				NearVector: h.NearVector.Search(),
 				NearText:   nearText(h.NearText),
 			}
 		})

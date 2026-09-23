@@ -64,12 +64,13 @@ func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc
 			ReturnNestedProperties: nv.ReturnNestedProperties,
 			ReturnReferences:       nv.ReturnReferences,
 			GroupBy:                nv.groupBy,
-		}, func(req *api.SearchRequest) { req.NearVector = nearVector(&nv) })
+		}, func(req *api.SearchRequest) { req.NearVector = nv.Search() })
 	}
 }
 
-// nearVector convers [NearVector] to [api.NearVector].
-func nearVector(nv *NearVector) *api.NearVector {
+// Search convers [NearVector] to [api.NearVector].
+func (nv *NearVector) Search() *api.NearVector {
+	// This may be called from hybridFunc, where NearVector is not set.
 	if nv == nil || nv.Target == nil {
 		return nil
 	}
@@ -88,8 +89,6 @@ func (nvf NearVectorFunc) GroupBy(ctx context.Context, nv NearVector, groupBy Gr
 	nv.groupBy = &groupBy
 	return queryGroupBy(ctx, nvf, nv)
 }
-
-func (nv NearVector) Search() *api.NearVector { return nearVector(&nv) }
 
 // VectorSimilarity is a cutoff point for query results.
 // [Distance] sets absolute vector distance, while

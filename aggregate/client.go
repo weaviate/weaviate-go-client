@@ -17,6 +17,7 @@ func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
 		defaults:   rd,
 		OverAll:    overAllFunc(t, rd),
 		NearVector: nearVectorFunc(t, rd),
+		BM25:       bm25Func(t, rd),
 	}
 }
 
@@ -26,6 +27,7 @@ type Client struct {
 
 	OverAll    OverAllFunc
 	NearVector NearVectorFunc
+	BM25       BM25Func
 }
 
 // Request contains common aggregation parameters.
