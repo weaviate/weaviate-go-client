@@ -184,7 +184,7 @@ func (ab *AggregateBuilder) createFilterClause() string {
 			ab.withNearAudio, ab.withNearVideo, ab.withNearDepth, ab.withNearThermal, ab.withNearImu, ab.withHybrid,
 		} {
 			bVal := reflect.ValueOf(b)
-			if bVal.Kind() == reflect.Ptr && !bVal.IsNil() {
+			if bVal.Kind() == reflect.Pointer && !bVal.IsNil() {
 				filters = append(filters, b.build())
 			}
 		}
