@@ -1645,7 +1645,6 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 			name string
 			req  transport.Message[proto.AggregateRequest, proto.AggregateReply]
 			get  func(*proto.AggregateRequest) any
-			want any
 		}{
 			{
 				name: "near vector",
@@ -1661,6 +1660,45 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 				},
 				get: returnAny((*proto.AggregateRequest).GetNearVector),
 			},
+			{
+				name: "near media",
+				req: &api.AggregateRequest{
+					NearMedia: &api.NearMedia{
+						Kind:  api.MediaImage,
+						Media: "base64.img",
+					},
+				},
+				get: returnAny((*proto.AggregateRequest).GetNearImage),
+			},
+			{
+				name: "near text",
+				req: &api.AggregateRequest{
+					NearText: &api.NearText{
+						Concepts: []string{"a", "b", "c"},
+					},
+				},
+				get: returnAny((*proto.AggregateRequest).GetNearText),
+			},
+			{
+				name: "near object",
+				req: &api.AggregateRequest{
+					NearObject: &api.NearObject{
+						UUID: testkit.UUID,
+					},
+				},
+				get: returnAny((*proto.AggregateRequest).GetNearObject),
+			},
+			{
+				name: "hybrid",
+				req: &api.AggregateRequest{
+					Hybrid: &api.Hybrid{
+						NearText: &api.NearText{
+							Concepts: []string{"a", "b", "c"},
+						},
+					},
+				},
+				get: returnAny((*proto.AggregateRequest).GetHybrid),
+			},
 		} {
 			t.Run(tt.name, func(t *testing.T) {
 				require.NotNil(t, tt.req, "invalid test: nil req")
@@ -1671,7 +1709,7 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 				message, err := body.MarshalMessage()
 				require.Nil(t, err, "marshal error")
 
-				require.NotNil(t, tt.get(message))
+				require.NotNil(t, tt.get(message), "query filter")
 			})
 		}
 	})

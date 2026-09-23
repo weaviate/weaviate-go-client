@@ -21,7 +21,6 @@ func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
 		NearMedia:  nearMediaFunc(t, rd),
 		NearText:   nearTextFunc(t, rd),
 		Hybrid:     hybridFunc(t, rd),
-		BM25:       bm25Func(t, rd),
 	}
 }
 
@@ -35,7 +34,6 @@ type Client struct {
 	NearMedia  NearMediaFunc
 	NearText   NearTextFunc
 	Hybrid     HybridFunc
-	BM25       BM25Func
 }
 
 // Request contains common aggregation parameters.
@@ -127,11 +125,18 @@ func aggregate[Query any](ctx context.Context, t internal.Transport, rd api.Requ
 		req.Date = append(req.Date, api.AggregateDateRequest(date))
 	}
 
-	if search != nil {
-		switch q := search.(type) {
-		case *api.NearVector:
-			req.NearVector = q
-		}
+	switch q := search.(type) {
+	case nil:
+	case *api.NearVector:
+		req.NearVector = q
+	case *api.NearMedia:
+		req.NearMedia = q
+	case *api.NearText:
+		req.NearText = q
+	case *api.NearObject:
+		req.NearObject = q
+	case *api.Hybrid:
+		req.Hybrid = q
 	}
 
 	if r.groupBy != nil {
