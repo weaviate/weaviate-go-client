@@ -90,6 +90,7 @@ func nearTextFunc(t internal.Transport, rd api.RequestDefaults) NearTextFunc {
 
 // Search converts [NearText] to [api.NearText]
 func (nt *NearText) Search() *api.NearText {
+	// This is called from hybridFunc, where NearText may not be set.
 	if nt == nil {
 		return nil
 	}

@@ -70,7 +70,7 @@ func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc
 
 // Search convers [NearVector] to [api.NearVector].
 func (nv *NearVector) Search() *api.NearVector {
-	// This may be called from hybridFunc, where NearVector is not set.
+	// This is called from hybridFunc, where NearVector may not be set.
 	if nv == nil || nv.Target == nil {
 		return nil
 	}
