@@ -82,12 +82,12 @@ func nearObjectFunc(t internal.Transport, rd api.RequestDefaults) NearObjectFunc
 			ReturnNestedProperties: no.ReturnNestedProperties,
 			ReturnReferences:       no.ReturnReferences,
 			GroupBy:                no.groupBy,
-		}, func(req *api.SearchRequest) { req.NearObject = nearObject(&no) })
+		}, func(req *api.SearchRequest) { req.NearObject = no.Search() })
 	}
 }
 
 // nearObject convers [NearObject] to [api.NearObject].
-func nearObject(no *NearObject) *api.NearObject {
+func (no *NearObject) Search() *api.NearObject {
 	if no == nil {
 		return nil
 	}
@@ -112,5 +112,3 @@ func (nof NearObjectFunc) GroupBy(ctx context.Context, no NearObject, groupBy Gr
 	no.groupBy = &groupBy
 	return queryGroupBy(ctx, nof, no)
 }
-
-func (no NearObject) Search() *api.NearObject { return nearObject(&no) }
