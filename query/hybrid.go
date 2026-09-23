@@ -84,21 +84,24 @@ func hybridFunc(t internal.Transport, rd api.RequestDefaults) HybridFunc {
 			ReturnNestedProperties: h.ReturnNestedProperties,
 			ReturnReferences:       h.ReturnReferences,
 			GroupBy:                h.groupBy,
-		}, func(req *api.SearchRequest) {
-			req.Hybrid = &api.Hybrid{
-				Query:           h.Query,
-				QueryProperties: h.QueryProperties,
-				Alpha:           h.Alpha,
-				Fusion:          h.Fusion,
-				KeywordSimilarity: api.KeywordSimilarity{
-					AllTokensMatch:     h.KeywordSimilarity.AllTokensMatch(),
-					CrossProperty:      h.KeywordSimilarity.CrossProperty(),
-					MinimumTokensMatch: h.KeywordSimilarity.MinimumTokensMatch(),
-				},
-				NearVector: h.NearVector.Search(),
-				NearText:   nearText(h.NearText),
-			}
-		})
+		}, func(req *api.SearchRequest) { req.Hybrid = h.Search() })
+	}
+}
+
+// Search convers [Hybrid] to [api.Hybrid].
+func (h *Hybrid) Search() *api.Hybrid {
+	return &api.Hybrid{
+		Query:           h.Query,
+		QueryProperties: h.QueryProperties,
+		Alpha:           h.Alpha,
+		Fusion:          h.Fusion,
+		KeywordSimilarity: api.KeywordSimilarity{
+			AllTokensMatch:     h.KeywordSimilarity.AllTokensMatch(),
+			CrossProperty:      h.KeywordSimilarity.CrossProperty(),
+			MinimumTokensMatch: h.KeywordSimilarity.MinimumTokensMatch(),
+		},
+		NearVector: h.NearVector.Search(),
+		NearText:   nearText(h.NearText),
 	}
 }
 

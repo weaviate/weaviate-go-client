@@ -17,6 +17,7 @@ func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
 		defaults:   rd,
 		OverAll:    overAllFunc(t, rd),
 		NearVector: nearVectorFunc(t, rd),
+		Hybrid:     hybridFunc(t, rd),
 		BM25:       bm25Func(t, rd),
 	}
 }
@@ -27,6 +28,7 @@ type Client struct {
 
 	OverAll    OverAllFunc
 	NearVector NearVectorFunc
+	Hybrid     HybridFunc
 	BM25       BM25Func
 }
 
