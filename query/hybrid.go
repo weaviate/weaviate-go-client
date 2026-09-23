@@ -101,7 +101,7 @@ func (h *Hybrid) Search() *api.Hybrid {
 			MinimumTokensMatch: h.KeywordSimilarity.MinimumTokensMatch(),
 		},
 		NearVector: h.NearVector.Search(),
-		NearText:   nearText(h.NearText),
+		NearText:   h.NearText.Search(),
 	}
 }
 

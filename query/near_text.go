@@ -84,12 +84,12 @@ func nearTextFunc(t internal.Transport, rd api.RequestDefaults) NearTextFunc {
 			ReturnNestedProperties: nt.ReturnNestedProperties,
 			ReturnReferences:       nt.ReturnReferences,
 			GroupBy:                nt.groupBy,
-		}, func(req *api.SearchRequest) { req.NearText = nearText(&nt) })
+		}, func(req *api.SearchRequest) { req.NearText = nt.Search() })
 	}
 }
 
-// nearText converts [NearText] to [api.NearText]
-func nearText(nt *NearText) *api.NearText {
+// Search converts [NearText] to [api.NearText]
+func (nt *NearText) Search() *api.NearText {
 	if nt == nil {
 		return nil
 	}
