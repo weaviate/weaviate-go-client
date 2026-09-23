@@ -104,7 +104,7 @@ func (h *HybridArgumentBuilder) build() string {
 	if !h.isVectorEmpty(h.vector) {
 		vectorB, err := json.Marshal(h.vector)
 		if err != nil {
-			panic(fmt.Errorf("failed to unmarshal hybrid search vector: %s", err))
+			panic(fmt.Errorf("failed to marshal hybrid search vector: %s", err))
 		}
 		clause = append(clause, fmt.Sprintf("vector: %s", string(vectorB)))
 	}
@@ -118,7 +118,7 @@ func (h *HybridArgumentBuilder) build() string {
 	if len(h.properties) > 0 {
 		props, err := json.Marshal(h.properties)
 		if err != nil {
-			panic(fmt.Errorf("failed to unmarshal hybrid properties: %s", err))
+			panic(fmt.Errorf("failed to marshal hybrid properties: %s", err))
 		}
 		clause = append(clause, fmt.Sprintf("properties: %v", string(props)))
 	}
