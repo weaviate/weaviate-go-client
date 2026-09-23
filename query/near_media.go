@@ -89,12 +89,12 @@ func nearMediaFunc(t internal.Transport, rd api.RequestDefaults) NearMediaFunc {
 			ReturnNestedProperties: nm.ReturnNestedProperties,
 			ReturnReferences:       nm.ReturnReferences,
 			GroupBy:                nm.groupBy,
-		}, func(req *api.SearchRequest) { req.NearMedia = nearMedia(&nm) })
+		}, func(req *api.SearchRequest) { req.NearMedia = nm.Search() })
 	}
 }
 
-// nearMedia convers [NearMedia] to [api.NearMedia].
-func nearMedia(nm *NearMedia) *api.NearMedia {
+// Search convers [NearMedia] to [api.NearMedia].
+func (nm *NearMedia) Search() *api.NearMedia {
 	if nm == nil {
 		return nil
 	}
@@ -120,5 +120,3 @@ func (nmf NearMediaFunc) GroupBy(ctx context.Context, nv NearMedia, groupBy Grou
 	nv.groupBy = &groupBy
 	return queryGroupBy(ctx, nmf, nv)
 }
-
-func (nm NearMedia) Search() *api.NearMedia { return nearMedia(&nm) }

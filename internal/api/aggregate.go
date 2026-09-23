@@ -23,6 +23,11 @@ type AggregateRequest struct {
 	GroupBy     *GroupBy
 
 	NearVector *NearVector
+	NearObject *NearObject
+	NearMedia  *NearMedia
+	NearText   *NearText
+	BM25       *BM25
+	Hybrid     *Hybrid
 }
 
 var (
@@ -188,6 +193,45 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 			return nil, err
 		}
 		req.Search = &proto.AggregateRequest_NearVector{NearVector: nv}
+	case r.NearText != nil:
+		nt, err := marshalNearText(r.NearText)
+		if err != nil {
+			return nil, err
+		}
+		req.Search = &proto.AggregateRequest_NearText{NearText: nt}
+	case r.NearObject != nil:
+		no, err := marshalNearObject(r.NearObject)
+		if err != nil {
+			return nil, err
+		}
+		req.Search = &proto.AggregateRequest_NearObject{NearObject: no}
+	case r.NearMedia != nil:
+		var media any
+		media, err := marshalNearMedia(r.NearMedia)
+		if err != nil {
+			return nil, err
+		}
+		switch media := media.(type) {
+		case nil:
+		case *proto.NearImageSearch:
+			req.Search = &proto.AggregateRequest_NearImage{NearImage: media}
+		case *proto.NearAudioSearch:
+			req.Search = &proto.AggregateRequest_NearAudio{NearAudio: media}
+		case *proto.NearVideoSearch:
+			req.Search = &proto.AggregateRequest_NearVideo{NearVideo: media}
+		case *proto.NearDepthSearch:
+			req.Search = &proto.AggregateRequest_NearDepth{NearDepth: media}
+		case *proto.NearThermalSearch:
+			req.Search = &proto.AggregateRequest_NearThermal{NearThermal: media}
+		case *proto.NearIMUSearch:
+			req.Search = &proto.AggregateRequest_NearImu{NearImu: media}
+		}
+	case r.Hybrid != nil:
+		h, err := marshalHybrid(r.Hybrid)
+		if err != nil {
+			return nil, err
+		}
+		req.Search = &proto.AggregateRequest_Hybrid{Hybrid: h}
 	default:
 		// It is not a mistake to leave search method unset.
 		// This would be the case when fetch objects with a conventional filter.

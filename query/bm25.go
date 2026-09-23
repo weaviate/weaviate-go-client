@@ -94,17 +94,20 @@ func bm25Func(t internal.Transport, rd api.RequestDefaults) BM25Func {
 			ReturnNestedProperties: bm25.ReturnNestedProperties,
 			ReturnReferences:       bm25.ReturnReferences,
 			GroupBy:                bm25.groupBy,
-		}, func(req *api.SearchRequest) {
-			req.BM25 = &api.BM25{
-				Query:           bm25.Query,
-				QueryProperties: bm25.QueryProperties,
-				KeywordSimilarity: api.KeywordSimilarity{
-					AllTokensMatch:     bm25.KeywordSimilarity.AllTokensMatch(),
-					CrossProperty:      bm25.KeywordSimilarity.CrossProperty(),
-					MinimumTokensMatch: bm25.KeywordSimilarity.MinimumTokensMatch(),
-				},
-			}
-		})
+		}, func(req *api.SearchRequest) { req.BM25 = bm25.Search() })
+	}
+}
+
+// Search convers [BM25] to [api.BM25].
+func (bm25 *BM25) Search() *api.BM25 {
+	return &api.BM25{
+		Query:           bm25.Query,
+		QueryProperties: bm25.QueryProperties,
+		KeywordSimilarity: api.KeywordSimilarity{
+			AllTokensMatch:     bm25.KeywordSimilarity.AllTokensMatch(),
+			CrossProperty:      bm25.KeywordSimilarity.CrossProperty(),
+			MinimumTokensMatch: bm25.KeywordSimilarity.MinimumTokensMatch(),
+		},
 	}
 }
 

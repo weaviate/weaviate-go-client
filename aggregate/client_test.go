@@ -591,6 +591,83 @@ func TestClient_Query(t *testing.T) {
 				}},
 			},
 		},
+		{
+			name: "near media",
+			query: func(ctx context.Context, c *aggregate.Client) {
+				c.NearMedia(ctx, aggregate.NearMedia{
+					Query: query.NearMedia{
+						Media: query.Image("base64.img"),
+					},
+				})
+			},
+			stubs: []testkit.Stub[api.AggregateRequest, any]{
+				{Request: &api.AggregateRequest{
+					RequestDefaults: rd,
+					NearMedia: &api.NearMedia{
+						Kind:  api.MediaImage,
+						Media: "base64.img",
+					},
+				}},
+			},
+		},
+		{
+			name: "near text",
+			query: func(ctx context.Context, c *aggregate.Client) {
+				c.NearText(ctx, aggregate.NearText{
+					Query: query.NearText{
+						Concepts: []string{"a", "b", "c"},
+					},
+				})
+			},
+			stubs: []testkit.Stub[api.AggregateRequest, any]{
+				{Request: &api.AggregateRequest{
+					RequestDefaults: rd,
+					NearText: &api.NearText{
+						Concepts: []string{"a", "b", "c"},
+					},
+				}},
+			},
+		},
+		{
+			name: "near object",
+			query: func(ctx context.Context, c *aggregate.Client) {
+				c.NearObject(ctx, aggregate.NearObject{
+					Query: query.NearObject{
+						UUID: testkit.UUID,
+					},
+				})
+			},
+			stubs: []testkit.Stub[api.AggregateRequest, any]{
+				{Request: &api.AggregateRequest{
+					RequestDefaults: rd,
+					NearObject: &api.NearObject{
+						UUID: testkit.UUID,
+					},
+				}},
+			},
+		},
+		{
+			name: "hybrid",
+			query: func(ctx context.Context, c *aggregate.Client) {
+				c.Hybrid(ctx, aggregate.Hybrid{
+					Query: query.Hybrid{
+						NearText: &query.NearText{
+							Concepts: []string{"a", "b", "c"},
+						},
+					},
+				})
+			},
+			stubs: []testkit.Stub[api.AggregateRequest, any]{
+				{Request: &api.AggregateRequest{
+					RequestDefaults: rd,
+					Hybrid: &api.Hybrid{
+						NearText: &api.NearText{
+							Concepts: []string{"a", "b", "c"},
+						},
+					},
+				}},
+			},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			transport := testkit.NewTransport(t, tt.stubs)
