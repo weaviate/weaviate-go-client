@@ -22,6 +22,7 @@ func TestModules(t *testing.T) {
 		name   string         // Module name.
 		module modules.Module // Module configuration.
 		conf   map[string]any // Expected configuration.
+		server map[string]any // Server-shaped configuration that must decode to module (optional).
 	}{
 		{
 			name:   "none",
@@ -132,22 +133,41 @@ func TestModules(t *testing.T) {
 			module: huggingface.Text2Vec{
 				PassageModel: "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
 				EndpointURL:  "https://my-endpoint.huggingface.cloud",
-				Options: &huggingface.Options{
-					WaitForModel: true,
-					UseGPU:       true,
-					UseCache:     testkit.Ptr(false),
-				},
-				Properties: []string{"title", "lyrics"},
+				WaitForModel: testkit.Ptr(true),
+				UseGPU:       testkit.Ptr(true),
+				UseCache:     testkit.Ptr(false),
+				Properties:   []string{"title", "lyrics"},
 			},
 			conf: map[string]any{
 				"passageModel": "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
 				"endpointURL":  "https://my-endpoint.huggingface.cloud",
 				"options": map[string]any{
-					"waitForModel": true,
-					"useGPU":       true,
+					"waitForModel": testkit.Ptr(true),
+					"useGPU":       testkit.Ptr(true),
 					"useCache":     testkit.Ptr(false),
 				},
 				"properties": []string{"title", "lyrics"},
+			},
+			server: map[string]any{
+				"passageModel": "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
+				"endpointURL":  "https://my-endpoint.huggingface.cloud",
+				"options": map[string]any{
+					"waitForModel": true,
+					"useGPU":       true,
+					"useCache":     false,
+					"unknownKey":   "ignored",
+				},
+				"properties": []any{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-huggingface",
+			module: huggingface.Text2Vec{UseCache: testkit.Ptr(false)},
+			conf: map[string]any{
+				"options": map[string]any{"useCache": testkit.Ptr(false)},
+			},
+			server: map[string]any{
+				"options": map[string]any{"useCache": false},
 			},
 		},
 		{
@@ -166,6 +186,12 @@ func TestModules(t *testing.T) {
 			module, err := modules.Registry.Decode(tt.name, conf)
 			require.NoError(t, err, "decode")
 			assert.EqualExportedValues(t, tt.module, module, "decoded module")
+
+			if tt.server != nil {
+				module, err := modules.Registry.Decode(tt.name, tt.server)
+				require.NoError(t, err, "decode server configuration")
+				assert.EqualExportedValues(t, tt.module, module, "decoded server configuration")
+			}
 		})
 	}
 }

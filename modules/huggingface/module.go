@@ -20,21 +20,15 @@ type Text2Vec struct {
 	PassageModel string `json:"passageModel,omitempty"`
 	// EndpointURL points to a dedicated inference endpoint; when set, the server skips model checks.
 	EndpointURL string `json:"endpointURL,omitempty"`
-	// Options control the Hugging Face Inference API behavior.
-	Options *Options `json:"options,omitempty"`
+	// WaitForModel waits for the model to be loaded. Defaults to false.
+	WaitForModel *bool `json:"waitForModel,omitempty" nest:"options"`
+	// UseGPU runs inference on a GPU. Defaults to false.
+	UseGPU *bool `json:"useGPU,omitempty" nest:"options"`
+	// UseCache enables the Inference API cache. Defaults to true.
+	UseCache *bool `json:"useCache,omitempty" nest:"options"`
 	// Properties limits vectorization to these properties.
 	// By default, all text properties are vectorized.
 	Properties []string `json:"properties,omitempty"`
 }
 
 func (Text2Vec) Name() string { return "text2vec-huggingface" }
-
-// Options control the Hugging Face Inference API behavior.
-type Options struct {
-	// WaitForModel waits for the model to be loaded. Defaults to false.
-	WaitForModel bool `json:"waitForModel,omitzero"`
-	// UseGPU runs inference on a GPU. Defaults to false.
-	UseGPU bool `json:"useGPU,omitzero"`
-	// UseCache enables the Inference API cache. It is a pointer because the server defaults to true.
-	UseCache *bool `json:"useCache,omitempty"`
-}
