@@ -6,21 +6,18 @@ func init() {
 	modules.Register(*new(Text2Vec))
 }
 
-// Text2Vec is a vectorizer for text properties
-// based on the text2vec-openai module.
+// Text2Vec is a vectorizer for text properties based on the text2vec-openai module.
 // Unset fields inherit the server defaults.
 //
-// To use Azure OpenAI, set ResourceName and DeploymentID together:
-// the server detects Azure from the presence of both.
+// To use Azure OpenAI, set ResourceName and DeploymentID together: the server detects Azure from the
+// presence of both.
 //
-// See https://docs.weaviate.io/weaviate/model-providers/openai/embeddings
-// and https://docs.weaviate.io/weaviate/model-providers/openai-azure/embeddings.
+// See https://docs.weaviate.io/weaviate/model-providers/openai/embeddings and
+// https://docs.weaviate.io/weaviate/model-providers/openai-azure/embeddings.
 type Text2Vec struct {
-	// Model defaults to text-embedding-3-small on the server,
-	// which validates the name.
+	// Model defaults to text-embedding-3-small on the server, which validates the name.
 	Model string `json:"model,omitempty"`
-	// Dimensions is the size of the output vectors.
-	// Only the v3 models (text-embedding-3-*) support it.
+	// Dimensions is the size of the output vectors. Only the v3 models (text-embedding-3-*) support it.
 	Dimensions int `json:"dimensions,omitzero"`
 	// ModelType selects the model family.
 	ModelType ModelType `json:"type,omitempty"`
