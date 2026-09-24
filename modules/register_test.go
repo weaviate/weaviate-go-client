@@ -131,7 +131,6 @@ func TestModules(t *testing.T) {
 			name: "text2vec-huggingface",
 			module: huggingface.Text2Vec{
 				PassageModel: "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
-				QueryModel:   "sentence-transformers/facebook-dpr-question_encoder-single-nq-base",
 				EndpointURL:  "https://my-endpoint.huggingface.cloud",
 				Options: &huggingface.Options{
 					WaitForModel: true,
@@ -142,7 +141,6 @@ func TestModules(t *testing.T) {
 			},
 			conf: map[string]any{
 				"passageModel": "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
-				"queryModel":   "sentence-transformers/facebook-dpr-question_encoder-single-nq-base",
 				"endpointURL":  "https://my-endpoint.huggingface.cloud",
 				"options": map[string]any{
 					"waitForModel": true,

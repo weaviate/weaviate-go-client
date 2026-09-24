@@ -10,17 +10,16 @@ func init() {
 // based on the text2vec-huggingface module.
 // Unset fields inherit the server defaults.
 //
-// Set either Model, or PassageModel and QueryModel as a pair;
-// the server rejects Model combined with the other two.
+// Model and PassageModel are mutually exclusive;
+// the server rejects a config that sets both.
 //
 // See https://docs.weaviate.io/weaviate/model-providers/huggingface/embeddings.
 type Text2Vec struct {
 	// Model defaults to sentence-transformers/msmarco-bert-base-dot-v5.
 	Model string `json:"model,omitempty"`
-	// PassageModel vectorizes objects at import; pair it with QueryModel.
+	// PassageModel is an alias the server reads when Model is unset.
+	// Prefer Model; this field keeps configs created by other clients intact.
 	PassageModel string `json:"passageModel,omitempty"`
-	// QueryModel vectorizes search queries; pair it with PassageModel.
-	QueryModel string `json:"queryModel,omitempty"`
 	// EndpointURL points to a dedicated inference endpoint;
 	// when set, the server skips model checks.
 	EndpointURL string `json:"endpointURL,omitempty"`
