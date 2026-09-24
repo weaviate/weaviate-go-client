@@ -2,7 +2,9 @@ package internal
 
 import (
 	"fmt"
+	"maps"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
@@ -67,6 +69,18 @@ func (ms *Modules[T]) Decode(name string, raw map[string]any) (Module[T], error)
 
 	dev.AssertType[Module[T]](m, "module")
 
+	// Lift nested fields to the top level so mapstructure can match them.
+	if nest := nestedFields(m); len(nest) > 0 {
+		raw = maps.Clone(raw)
+		for key, parent := range nest {
+			if sub, ok := raw[parent].(map[string]any); ok {
+				if v, ok := sub[key]; ok {
+					raw[key] = v
+				}
+			}
+		}
+	}
+
 	// Decode using our mapstructure wrapper.
 	if err := Decode(raw, &m); err != nil {
 		return nil, err
@@ -80,7 +94,44 @@ func (*Modules[T]) Encode(m Module[T]) (map[string]any, error) {
 	if err := Encode(m, v); err != nil {
 		return nil, err
 	}
+	for key, parent := range nestedFields(m) {
+		if val, ok := v[key]; ok {
+			delete(v, key)
+			sub, _ := v[parent].(map[string]any)
+			if sub == nil {
+				sub = make(map[string]any)
+				v[parent] = sub
+			}
+			sub[key] = val
+		}
+	}
 	return v, nil
+}
+
+// nestTag moves a field under a nested object on the wire, e.g. a field tagged
+// `json:"useGPU,omitempty" nest:"options"` is sent as {"options":{"useGPU":...}}.
+const nestTag = "nest"
+
+// nestedFields maps the key of each field tagged with [nestTag] to its parent key.
+func nestedFields(m any) map[string]string {
+	t := reflect.TypeOf(m)
+	if t == nil || t.Kind() != reflect.Struct {
+		return nil
+	}
+	var nest map[string]string
+	for i := range t.NumField() {
+		f := t.Field(i)
+		parent := f.Tag.Get(nestTag)
+		if parent == "" {
+			continue
+		}
+		key, _, _ := strings.Cut(f.Tag.Get(tagName), ",")
+		if nest == nil {
+			nest = make(map[string]string)
+		}
+		nest[key] = parent
+	}
+	return nest
 }
 
 // Find returns the first key from map m for which a module
