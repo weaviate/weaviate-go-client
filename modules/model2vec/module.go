@@ -9,7 +9,7 @@ func init() {
 // Text2Vec is a vectorizer for text properties
 // based on the text2vec-model2vec module.
 type Text2Vec struct {
-	URL        string   `json:"inferenceURL,omitempty"`
+	URL        string   `json:"inferenceUrl,omitempty"`
 	Properties []string `json:"properties,omitempty"`
 }
 
