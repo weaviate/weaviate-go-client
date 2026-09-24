@@ -66,6 +66,10 @@ func TestModules_EncodeDecode(t *testing.T) {
 		assert.NoError(t, err, "decode")
 		assert.Equal(t, five, decoded, "decoded value")
 	})
+
+	t.Run("custom decode hook", func(t *testing.T) {
+		// var ms intenal.Modules[string]
+	})
 }
 
 func TestModules_Find(t *testing.T) {

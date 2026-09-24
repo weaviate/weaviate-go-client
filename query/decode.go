@@ -64,7 +64,7 @@ func DecodeGrouped[P any](r *GroupByResult, dest *[]GroupObject[P]) (map[string]
 // decode map[string]any properties into [query.Object.Properties] of arbitrary type P.
 // The dest object will have the same UUID, CreatedAt, LastUpdatedAt, and Metadata as src.
 func decode[P any](src *Object[map[string]any], dest *Object[P]) error {
-	err := internal.Decode(src.Properties, &dest.Properties)
+	err := internal.Decode(src.Properties, &dest.Properties, nil)
 	if err != nil {
 		return fmt.Errorf("decode: %w", err)
 	}
