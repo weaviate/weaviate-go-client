@@ -9,11 +9,15 @@ var Registry internal.Modules[Type]
 
 func init() {
 	Registry.Register(*new(HFresh))
+	Registry.Register(*new(Flat))
 }
 
 type Type string
 
-var _ internal.Module[Type] = (*HFresh)(nil)
+var (
+	_ internal.Module[Type] = (*HFresh)(nil)
+	_ internal.Module[Type] = (*Flat)(nil)
+)
 
 type HFresh struct {
 	Distance         Distance `json:"distance,omitempty"`
@@ -34,3 +38,9 @@ const (
 	DistanceHamming   = Distance("hamming")
 	DistanceManhattan = Distance("manhattan")
 )
+
+type Flat struct {
+	VectorCacheMaxObjects int64 `json:"vectorCacheMaxObjects,omitempty"`
+}
+
+func (Flat) Name() Type { return "flat" }
