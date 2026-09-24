@@ -70,7 +70,7 @@ func NewGRPC[Client any](cfg GRPCConfig[Client]) (*GRPC[Client], error) {
 	}
 
 	if cfg.Header != nil {
-		dialOpts = append(dialOpts, withDefaultHeader(*cfg.Header))
+		dialOpts = append(dialOpts, withDefaultHeader(*cfg.Header)...)
 	}
 
 	transportCreds := insecure.NewCredentials()
@@ -119,9 +119,9 @@ func (c *GRPC[Client]) Close() error {
 	return c.channel.Close()
 }
 
-// withDefaultHeader creates an interceptor that adds md headers to the request context.
-func withDefaultHeader(md metadata.MD) grpc.DialOption {
-	return grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+// withDefaultHeader creates interceptors that add md headers to the request context.
+func withDefaultHeader(md metadata.MD) []grpc.DialOption {
+	appendHeader := func(ctx context.Context) context.Context {
 		var pairs []string
 		for k, v := range md {
 			if len(v) == 0 {
@@ -129,8 +129,16 @@ func withDefaultHeader(md metadata.MD) grpc.DialOption {
 			}
 			pairs = append(pairs, k, v[0])
 		}
-		return invoker(metadata.AppendToOutgoingContext(ctx, pairs...), method, req, reply, cc, opts...)
-	})
+		return metadata.AppendToOutgoingContext(ctx, pairs...)
+	}
+	return []grpc.DialOption{
+		grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+			return invoker(appendHeader(ctx), method, req, reply, cc, opts...)
+		}),
+		grpc.WithStreamInterceptor(func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+			return streamer(appendHeader(ctx), desc, cc, method, opts...)
+		}),
+	}
 }
 
 type tokenSource struct {

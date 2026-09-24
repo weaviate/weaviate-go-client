@@ -91,6 +91,14 @@ func TestGRPC_Do(t *testing.T) {
 			var empty emptypb.Empty
 			return client.Invoke(ctx, ts.MethodName(), nil, &empty)
 		})
+
+		// Streaming RPCs (e.g. batch) must carry the same headers.
+		gRPC.Do(t.Context(), func(ctx context.Context, client grpc.ClientConnInterface) error {
+			stream, err := client.NewStream(ctx, &grpc.StreamDesc{ClientStreams: true, ServerStreams: true}, ts.StreamName())
+			require.NoError(t, err, "open stream")
+			stream.CloseSend()
+			return stream.RecvMsg(&emptypb.Empty{}) // wait for the handler to finish
+		})
 	})
 
 	t.Run("credentials", func(t *testing.T) {
@@ -166,6 +174,15 @@ func startTestService(t *testing.T, mh grpc.MethodHandler) *testService {
 		Methods: []grpc.MethodDesc{
 			{MethodName: "Test", Handler: mh},
 		},
+		Streams: []grpc.StreamDesc{{
+			StreamName:    "TestStream",
+			ClientStreams: true,
+			ServerStreams: true,
+			Handler: func(srv any, ss grpc.ServerStream) error {
+				_, err := mh(srv, ss.Context(), ss.RecvMsg, nil)
+				return err
+			},
+		}},
 	}, nil)
 
 	go srv.Serve(lis)
@@ -182,3 +199,4 @@ func startTestService(t *testing.T, mh grpc.MethodHandler) *testService {
 func (ts *testService) Host() string       { return ts.host }
 func (ts *testService) Port() int          { return ts.port }
 func (ts *testService) MethodName() string { return "/testService/Test" }
+func (ts *testService) StreamName() string { return "/testService/TestStream" }
