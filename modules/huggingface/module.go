@@ -6,12 +6,10 @@ func init() {
 	modules.Register(*new(Text2Vec))
 }
 
-// Text2Vec is a vectorizer for text properties
-// based on the text2vec-huggingface module.
+// Text2Vec is a vectorizer for text properties based on the text2vec-huggingface module.
 // Unset fields inherit the server defaults.
 //
-// Model and PassageModel are mutually exclusive;
-// the server rejects a config that sets both.
+// Model and PassageModel are mutually exclusive; the server rejects a config that sets both.
 //
 // See https://docs.weaviate.io/weaviate/model-providers/huggingface/embeddings.
 type Text2Vec struct {
@@ -20,8 +18,7 @@ type Text2Vec struct {
 	// PassageModel is an alias the server reads when Model is unset.
 	// Prefer Model; this field keeps configs created by other clients intact.
 	PassageModel string `json:"passageModel,omitempty"`
-	// EndpointURL points to a dedicated inference endpoint;
-	// when set, the server skips model checks.
+	// EndpointURL points to a dedicated inference endpoint; when set, the server skips model checks.
 	EndpointURL string `json:"endpointURL,omitempty"`
 	// Options control the Hugging Face Inference API behavior.
 	Options *Options `json:"options,omitempty"`
@@ -38,7 +35,6 @@ type Options struct {
 	WaitForModel bool `json:"waitForModel,omitzero"`
 	// UseGPU runs inference on a GPU. Defaults to false.
 	UseGPU bool `json:"useGPU,omitzero"`
-	// UseCache enables the Inference API cache. It is a pointer
-	// because the server defaults to true.
+	// UseCache enables the Inference API cache. It is a pointer because the server defaults to true.
 	UseCache *bool `json:"useCache,omitempty"`
 }
