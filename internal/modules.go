@@ -68,7 +68,7 @@ func (ms *Modules[T]) Decode(name string, raw map[string]any) (Module[T], error)
 	dev.AssertType[Module[T]](m, "module")
 
 	// Decode using our mapstructure wrapper.
-	if err := Decode(raw, &m, nil); err != nil {
+	if err := Decode(raw, &m); err != nil {
 		return nil, err
 	}
 
@@ -77,7 +77,7 @@ func (ms *Modules[T]) Decode(name string, raw map[string]any) (Module[T], error)
 
 func (*Modules[T]) Encode(m Module[T]) (map[string]any, error) {
 	v := make(map[string]any)
-	if err := Encode(m, v, nil); err != nil {
+	if err := Encode(m, v); err != nil {
 		return nil, err
 	}
 	return v, nil

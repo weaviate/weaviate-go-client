@@ -22,7 +22,7 @@ func TestDecodeEncode(t *testing.T) {
 		}
 
 		var s Song
-		err := internal.Decode(song, &s, nil)
+		err := internal.Decode(song, &s)
 		require.NoError(t, err, "decode error")
 
 		require.Equal(t, Song{
@@ -32,43 +32,26 @@ func TestDecodeEncode(t *testing.T) {
 		}, s, "bad decode result")
 
 		m := make(map[string]any)
-		err = internal.Encode(&s, m, nil)
+		err = internal.Encode(&s, m)
 		require.NoError(t, err, "encode err")
 
 		require.Equal(t, song, m, "bad encode result")
 	})
 
 	t.Run("decode hook", func(t *testing.T) {
-		type Song struct {
-			Title  string
-			hooked bool // Can only be set/read through custom hooks
-		}
-
 		song := map[string]any{"title": "Poison"}
 
-		var s Song
-		err := internal.Decode(song, &s, func(from map[string]any) (any, error) {
-			require.IsType(t, (map[string]any)(nil), from, "decode source data")
-			return Song{
-				Title:  from["title"].(string),
-				hooked: true,
-			}, nil
-		})
+		var s SpecialSong
+		err := internal.Decode(song, &s)
 		require.NoError(t, err, "decode error")
 
-		require.Equal(t, Song{
+		require.Equal(t, SpecialSong{
 			Title:  "Poison",
 			hooked: true,
 		}, s, "bad decode result")
 
 		m := make(map[string]any)
-		err = internal.Encode(&s, m, func(from any) (map[string]any, error) {
-			require.IsType(t, (*Song)(nil), from, "encode source data")
-			return map[string]any{
-				"title":  from.(*Song).Title,
-				"hooked": "yes",
-			}, nil
-		})
+		err = internal.Encode(&s, m)
 		require.NoError(t, err, "encode err")
 
 		require.Equal(t, map[string]any{
@@ -76,4 +59,29 @@ func TestDecodeEncode(t *testing.T) {
 			"hooked": "yes",
 		}, m, "bad encode result")
 	})
+}
+
+type SpecialSong struct {
+	Title  string
+	hooked bool // Can only be set/read through custom hooks
+}
+
+var (
+	_ internal.MapDecoder = (*SpecialSong)(nil)
+	_ internal.MapEncoder = (*SpecialSong)(nil)
+)
+
+func (ss *SpecialSong) DecodeMap(m map[string]any) error {
+	*ss = SpecialSong{
+		Title:  m["title"].(string),
+		hooked: true,
+	}
+	return nil
+}
+
+func (ss *SpecialSong) EncodeMap() (map[string]any, error) {
+	return map[string]any{
+		"title":  ss.Title,
+		"hooked": "yes",
+	}, nil
 }

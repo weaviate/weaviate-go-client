@@ -15,19 +15,14 @@ const tagName = "json"
 // that decodes map[string]any into a Go struct.
 // It uses "json" tags instead of the default "mapstructure".
 //
-// Passing an optional [DecodeHookFunc] lets the caller control
-// how the map is decoded into T. Leave as nil to use default logic.
-func Decode[T any](m map[string]any, dest *T, h DecodeHookFunc) error {
-	conf := &mapstructure.DecoderConfig{
-		TagName: tagName,
-		Result:  dest,
-	}
-	if h != nil {
-		// We cannot assign the output directly to DecodeHook, because that
-		// turns nil into a typed nil, that mapstructure cannot check with ==.
-		conf.DecodeHook = h.hook(reflect.TypeFor[T]())
-	}
-	d, err := mapstructure.NewDecoder(conf)
+// The caller can control how the map is decoded into T
+// by implementing [MapDecoder] for T.
+func Decode[T any](m map[string]any, dest *T) error {
+	d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		TagName:    tagName,
+		Result:     dest,
+		DecodeHook: decodeHook(reflect.TypeFor[T](), dest),
+	})
 	if err != nil {
 		return err
 	}
@@ -41,19 +36,14 @@ func Decode[T any](m map[string]any, dest *T, h DecodeHookFunc) error {
 // that encodes a Go struct into a map[string]any.
 // It uses "json" tags instead of the default "mapstructure".
 //
-// Passing an optional [EncodeHookFunc] lets the caller control
-// how the value is encoded into a map. Leave as nil to use default logic.
-func Encode(v any, dest map[string]any, h EncodeHookFunc) error {
-	conf := &mapstructure.DecoderConfig{
-		TagName: tagName,
-		Result:  &dest,
-	}
-	if h != nil {
-		// We cannot assign the output directly to DecodeHook, because that
-		// turns nil into a typed nil, that mapstructure cannot check with ==.
-		conf.DecodeHook = h.hook(reflect.TypeOf(v))
-	}
-	d, err := mapstructure.NewDecoder(conf)
+// The caller can control how v is incoded into a map
+// by implementing [MapEncoder] for the type of v.
+func Encode(v any, dest map[string]any) error {
+	d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		TagName:    tagName,
+		Result:     &dest,
+		DecodeHook: encodeHook(reflect.TypeOf(v)),
+	})
 	if err != nil {
 		return err
 	}
@@ -63,24 +53,26 @@ func Encode(v any, dest map[string]any, h EncodeHookFunc) error {
 	return nil
 }
 
-// Hook enable custom encoding and decoding.
-type Hook struct {
-	Encode EncodeHookFunc
-	Decode DecodeHookFunc
+type MapDecoder interface {
+	DecodeMap(map[string]any) error
 }
 
-type (
-	EncodeHookFunc func(from any) (map[string]any, error)
-	DecodeHookFunc func(from map[string]any) (any, error)
-)
+type MapEncoder interface {
+	EncodeMap() (map[string]any, error)
+}
 
 var mapStringAnyType = reflect.TypeFor[map[string]any]()
 
-// hook wraps [EncodeHookFunc] in [mapstructure.DecodeHookFuncType].
-// so that f is only called with an appropriate source type.
-func (f EncodeHookFunc) hook(t reflect.Type) mapstructure.DecodeHookFuncType {
+// encodeHook wraps [MapEncoder] in [mapstructure.DecodeHookFuncType].
+// so that EncodeMap is only called with an appropriate source type.
+func encodeHook(t reflect.Type) mapstructure.DecodeHookFuncType {
 	return func(from, to reflect.Type, data any) (any, error) {
 		if from != t {
+			return data, nil
+		}
+
+		me, ok := data.(MapEncoder)
+		if !ok {
 			return data, nil
 		}
 
@@ -92,13 +84,19 @@ func (f EncodeHookFunc) hook(t reflect.Type) mapstructure.DecodeHookFuncType {
 			mapStringAnyType.Name(), to.Name(),
 		)
 
-		return f(data)
+		return me.EncodeMap()
 	}
 }
 
-// hook wraps [DecodeHookFunc] in [mapstructure.DecodeHookFuncType],
-// so that f is only called with map[string]any data.
-func (f DecodeHookFunc) hook(t reflect.Type) mapstructure.DecodeHookFuncType {
+// decodeHook wraps [MapDecoder] in [mapstructure.DecodeHookFuncType],
+// so that DecodeMap is only called with map[string]any data.
+func decodeHook(t reflect.Type, dest any) mapstructure.DecodeHookFuncType {
+	md, ok := dest.(MapDecoder)
+	if !ok {
+		return func(_, _ reflect.Type, data any) (any, error) {
+			return data, nil
+		}
+	}
 	return func(from, to reflect.Type, data any) (any, error) {
 		if to != t {
 			return data, nil
@@ -117,6 +115,10 @@ func (f DecodeHookFunc) hook(t reflect.Type) mapstructure.DecodeHookFuncType {
 			dev.Unreachable() // This would mean a bug in mapstructure package.
 			return data, fmt.Errorf("expected data (%T) to be map[string]any", data)
 		}
-		return f(m)
+
+		if err := md.DecodeMap(m); err != nil {
+			return data, err
+		}
+		return md, nil
 	}
 }
