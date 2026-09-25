@@ -21,7 +21,7 @@ func Decode[T any](m map[string]any, dest *T) error {
 	d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		TagName:    tagName,
 		Result:     dest,
-		DecodeHook: decodeHook(reflect.TypeFor[T](), dest),
+		DecodeHook: decodeHook(dest),
 	})
 	if err != nil {
 		return err
@@ -90,15 +90,27 @@ func encodeHook(t reflect.Type) mapstructure.DecodeHookFuncType {
 
 // decodeHook wraps [MapDecoder] in [mapstructure.DecodeHookFuncType],
 // so that DecodeMap is only called with map[string]any data.
-func decodeHook(t reflect.Type, dest any) mapstructure.DecodeHookFuncType {
-	md, ok := dest.(MapDecoder)
-	if !ok {
-		return func(_, _ reflect.Type, data any) (any, error) {
-			return data, nil
+func decodeHook[T any](dest *T) mapstructure.DecodeHookFuncType {
+	vdest := reflect.ValueOf(*dest)
+
+	var decoder MapDecoder
+	if md, ok := any(dest).(MapDecoder); ok {
+		decoder = md
+	} else {
+		pdest := reflect.New(vdest.Type())
+		pdest.Elem().Set(vdest)
+
+		md, ok := pdest.Interface().(MapDecoder)
+		if !ok {
+			return func(_, _ reflect.Type, data any) (any, error) {
+				return data, nil
+			}
 		}
+		decoder = md
 	}
+
 	return func(from, to reflect.Type, data any) (any, error) {
-		if to != t {
+		if to != vdest.Type() {
 			return data, nil
 		}
 
@@ -116,9 +128,9 @@ func decodeHook(t reflect.Type, dest any) mapstructure.DecodeHookFuncType {
 			return data, fmt.Errorf("expected data (%T) to be map[string]any", data)
 		}
 
-		if err := md.DecodeMap(m); err != nil {
+		if err := decoder.DecodeMap(m); err != nil {
 			return data, err
 		}
-		return md, nil
+		return decoder, nil
 	}
 }

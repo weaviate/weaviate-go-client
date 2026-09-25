@@ -38,7 +38,7 @@ func TestDecodeEncode(t *testing.T) {
 		require.Equal(t, song, m, "bad encode result")
 	})
 
-	t.Run("decode hook", func(t *testing.T) {
+	t.Run("decode/encode hooks direct", func(t *testing.T) {
 		song := map[string]any{"title": "Poison"}
 
 		var s SpecialSong
@@ -58,6 +58,19 @@ func TestDecodeEncode(t *testing.T) {
 			"title":  "Poison",
 			"hooked": "yes",
 		}, m, "bad encode result")
+	})
+
+	t.Run("decode hook indirect", func(t *testing.T) {
+		song := map[string]any{"title": "Poison"}
+
+		var s any = SpecialSong{}
+		err := internal.Decode(song, &s)
+		require.NoError(t, err, "decode error")
+
+		require.Equal(t, SpecialSong{
+			Title:  "Poison",
+			hooked: true,
+		}, s, "bad decode result")
 	})
 }
 
