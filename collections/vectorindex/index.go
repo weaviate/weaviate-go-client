@@ -184,6 +184,17 @@ func (d *Dynamic) DecodeMap(m map[string]any) error {
 		dev.AssertType[Flat](flat, "flat module")
 		decoded.Flat = flat.(Flat)
 
+		// TODO(dyma): maybe we can apply this approach to how compression config
+		// is decoded for "normal" modules, where api/ layer extracts it and
+		// the public layer decodes it.
+		// The key idea is that presenting Compression as a separate field and
+		// not as part of the Index configuration is a DX requirement (!!).
+		// Whereas api/ is meant to only handle Weaviate API's quirks.
+		//
+		// collection/compression should expose something like:
+		// - compression.Encode(m Module, conf map[string]any)
+		// - compression.Decode(conf map[string]any) Module
+		// to handle this. The api/ layer should not need to care.
 		if key, ok := compression.Registry.Find(m); ok {
 			if m, ok := m[key].(map[string]any); ok {
 				c, err := compression.Registry.Decode(key, m)
