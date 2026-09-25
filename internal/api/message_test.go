@@ -3188,7 +3188,7 @@ func TestInsertObjectsResponse_UnmarshalMessage(t *testing.T) {
 			dest: new(api.InsertObjectsResponse),
 			want: &api.InsertObjectsResponse{
 				Took:      92 * time.Second,
-				Positions: []int32{6, 22},
+				Positions: []int{6, 22},
 				Errors:    []string{"Whaam!", "Whoops!"},
 			},
 		},
@@ -3215,7 +3215,7 @@ func TestInsertReferencesResponse_UnmarshalMessage(t *testing.T) {
 			dest: new(api.InsertReferencesResponse),
 			want: &api.InsertReferencesResponse{
 				Took:      92 * time.Second,
-				Positions: []int32{6, 22},
+				Positions: []int{6, 22},
 				Errors:    []string{"Whaam!", "Whoops!"},
 			},
 		},
