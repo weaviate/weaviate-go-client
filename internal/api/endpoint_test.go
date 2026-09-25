@@ -128,6 +128,42 @@ func TestRESTRequests(t *testing.T) {
 			},
 		},
 		{
+			name: "update object",
+			req: &api.UpdateObjectRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+					Tenant:         "john_doe",
+				},
+				UUID: &testkit.UUID,
+				Properties: map[string]any{
+					"title": "DAISIES",
+				},
+				References: api.References{
+					"label": {
+						{Target: api.ObjectPath{UUID: testkit.UUID}},
+					},
+				},
+				Vectors: []api.Vector{
+					{Name: "lyrics", Single: []float32{1, 2, 3}},
+				},
+			},
+			wantMethod: http.MethodPatch,
+			wantPath:   "/objects/Songs/" + testkit.UUID.String(),
+			wantBody: &rest.Object{
+				Class:  "Songs",
+				Tenant: "john_doe",
+				Properties: map[string]any{
+					"title": "DAISIES",
+					"label": []string{
+						"weaviate://localhost/" + testkit.UUID.String(),
+					},
+				},
+				Vectors: map[string]any{
+					"lyrics": []float32{1, 2, 3},
+				},
+			},
+		},
+		{
 			name: "delete object (no consistency_level)",
 			req: &api.DeleteObjectRequest{
 				RequestDefaults: api.RequestDefaults{
@@ -174,12 +210,12 @@ func TestRESTRequests(t *testing.T) {
 						{Name: "single", DataType: api.DataTypeBool},
 						{Name: "year", DataType: api.DataTypeInt},
 						{
-							Name:              "lyrics",
-							DataType:          api.DataTypeInt,
-							Tokenization:      api.TokenizationTrigram,
-							IndexFilterable:   true,
-							IndexRangeFilters: true,
-							IndexSearchable:   true,
+							Name:            "lyrics",
+							DataType:        api.DataTypeInt,
+							Tokenization:    api.TokenizationTrigram,
+							IndexFilterable: new(true),
+							IndexRangeable:  new(true),
+							IndexSearchable: new(true),
 						},
 						{
 							Name: "metadata", DataType: api.DataTypeObject,
@@ -187,10 +223,10 @@ func TestRESTRequests(t *testing.T) {
 								{Name: "duration", DataType: api.DataTypeNumber},
 								{Name: "uploadedTime", DataType: api.DataTypeDate},
 							},
-							Tokenization:      api.TokenizationWhitespace,
-							IndexFilterable:   true,
-							IndexRangeFilters: true,
-							IndexSearchable:   true,
+							Tokenization:    api.TokenizationWhitespace,
+							IndexFilterable: new(true),
+							IndexRangeable:  new(true),
+							IndexSearchable: new(true),
 						},
 					},
 					References: []api.ReferenceProperty{
@@ -286,9 +322,9 @@ func TestRESTRequests(t *testing.T) {
 						Name:              "lyrics",
 						DataType:          []string{string(api.DataTypeInt)},
 						Tokenization:      rest.PropertyTokenizationTrigram,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						IndexFilterable:   new(true),
+						IndexRangeFilters: new(true),
+						IndexSearchable:   new(true),
 					},
 					{
 						Name: "metadata", DataType: []string{string(api.DataTypeObject)},
@@ -297,9 +333,9 @@ func TestRESTRequests(t *testing.T) {
 							{Name: "uploadedTime", DataType: []string{string(api.DataTypeDate)}},
 						},
 						Tokenization:      rest.PropertyTokenizationWhitespace,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						IndexFilterable:   new(true),
+						IndexRangeFilters: new(true),
+						IndexSearchable:   new(true),
 					},
 					{
 						Name:     "artist",
@@ -1363,9 +1399,9 @@ func TestRESTResponses(t *testing.T) {
 						Name:              "lyrics",
 						DataType:          []string{string(api.DataTypeInt)},
 						Tokenization:      rest.PropertyTokenizationTrigram,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						IndexFilterable:   new(true),
+						IndexRangeFilters: new(true),
+						IndexSearchable:   new(true),
 					},
 					{
 						Name: "metadata", DataType: []string{string(api.DataTypeObject)},
@@ -1374,9 +1410,9 @@ func TestRESTResponses(t *testing.T) {
 							{Name: "uploadedTime", DataType: []string{string(api.DataTypeDate)}},
 						},
 						Tokenization:      rest.PropertyTokenizationWhitespace,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						IndexFilterable:   new(true),
+						IndexRangeFilters: new(true),
+						IndexSearchable:   new(true),
 					},
 					{
 						Name:     "artist",
@@ -1465,12 +1501,12 @@ func TestRESTResponses(t *testing.T) {
 					{Name: "single", DataType: api.DataTypeBool},
 					{Name: "year", DataType: api.DataTypeInt},
 					{
-						Name:              "lyrics",
-						DataType:          api.DataTypeInt,
-						Tokenization:      api.TokenizationTrigram,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						Name:            "lyrics",
+						DataType:        api.DataTypeInt,
+						Tokenization:    api.TokenizationTrigram,
+						IndexFilterable: new(true),
+						IndexRangeable:  new(true),
+						IndexSearchable: new(true),
 					},
 					{
 						Name: "metadata", DataType: api.DataTypeObject,
@@ -1478,10 +1514,10 @@ func TestRESTResponses(t *testing.T) {
 							{Name: "duration", DataType: api.DataTypeNumber},
 							{Name: "uploadedTime", DataType: api.DataTypeDate},
 						},
-						Tokenization:      api.TokenizationWhitespace,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						Tokenization:    api.TokenizationWhitespace,
+						IndexFilterable: new(true),
+						IndexRangeable:  new(true),
+						IndexSearchable: new(true),
 					},
 				},
 				References: []api.ReferenceProperty{

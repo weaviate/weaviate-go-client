@@ -34,8 +34,7 @@ func main() {
 	batchCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	b, err := h.Batch(batchCtx, batch.WithRetryTimes(1))
-	example.Catch(err)
+	b := h.Batch(batchCtx, batch.WithRetryTimes(1))
 
 	tasks := make([]*batch.Task, 0, 1093)
 	log.Printf("Insert %d objects in %q", cap(tasks), h.CollectionName())
