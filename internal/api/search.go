@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 	"time"
@@ -1153,7 +1152,6 @@ func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
 			case *proto.ListValue_TextValues:
 				v = list.GetTextValues().GetValues()
 			case *proto.ListValue_IntValues:
-				log.Println(list.GetIntValues().GetValues())
 				v = unmarshalIntegerArray(list.GetIntValues().GetValues())
 			case *proto.ListValue_NumberValues:
 				v = unmarshalNumberArray(list.GetNumberValues().GetValues())
