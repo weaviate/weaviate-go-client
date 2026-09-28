@@ -22,16 +22,11 @@ var _ json.Marshaler = (*Tenant)(nil)
 type TenantStatus rest.TenantActivityStatus
 
 const (
-	TenantStatusActive     = TenantStatus(rest.ACTIVE)
-	TenantStatusCold       = TenantStatus(rest.COLD)
-	TenantStatusFreezing   = TenantStatus(rest.FREEZING)
-	TenantStatusFrozen     = TenantStatus(rest.FROZEN)
-	TenantStatusHot        = TenantStatus(rest.HOT)
-	TenantStatusInactive   = TenantStatus(rest.INACTIVE)
-	TenantStatusOffloaded  = TenantStatus(rest.OFFLOADED)
-	TenantStatusOffloading = TenantStatus(rest.OFFLOADING)
-	TenantStatusOnloading  = TenantStatus(rest.ONLOADING)
-	TenantStatusUnfreezing = TenantStatus(rest.UNFREEZING)
+	TenantStatusActive     = TenantStatus(rest.ACTIVE)     // deprecated: HOT
+	TenantStatusInactive   = TenantStatus(rest.INACTIVE)   // deprecated: COLD
+	TenantStatusOffloaded  = TenantStatus(rest.OFFLOADED)  // deprecated: FROZEN
+	TenantStatusOffloading = TenantStatus(rest.OFFLOADING) // deprecated: FREEZING
+	TenantStatusOnloading  = TenantStatus(rest.ONLOADING)  // deprecated: UNFREEZING
 )
 
 // CreateTenantsRequest creates new tenants in the collection.
@@ -133,25 +128,20 @@ func (r *GetTenantsResponse) UnmarshalMessage(reply *proto.TenantsGetReply) erro
 	for i, t := range reply.Tenants {
 		var status TenantStatus
 		switch t.ActivityStatus {
-		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_HOT:
-			status = TenantStatusHot
-		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_COLD:
-			status = TenantStatusCold
-		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_FROZEN:
-			status = TenantStatusFrozen
-		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_UNFREEZING:
-			status = TenantStatusUnfreezing
-		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_FREEZING:
-			status = TenantStatusFreezing
-		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_ACTIVE:
+		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_ACTIVE,
+			proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_HOT:
 			status = TenantStatusActive
-		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_INACTIVE:
+		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_INACTIVE,
+			proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_COLD:
 			status = TenantStatusInactive
-		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_OFFLOADED:
-			status = TenantStatusOffloaded
-		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_OFFLOADING:
+		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_OFFLOADING,
+			proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_FREEZING:
 			status = TenantStatusOffloading
-		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_ONLOADING:
+		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_OFFLOADED,
+			proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_FROZEN:
+			status = TenantStatusOffloaded
+		case proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_ONLOADING,
+			proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_UNFREEZING:
 			status = TenantStatusOnloading
 		}
 

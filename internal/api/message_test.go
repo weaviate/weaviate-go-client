@@ -3268,12 +3268,18 @@ func TestGetTenantsResponse_UnmarshalMessage(t *testing.T) {
 				Tenants: []*proto.Tenant{
 					{Name: "john_doe", ActivityStatus: proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_COLD},
 					{Name: "jane_doe", ActivityStatus: proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_FROZEN},
+					{Name: "jeff_doe", ActivityStatus: proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_HOT},
+					{Name: "jina_doe", ActivityStatus: proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_FREEZING},
+					{Name: "joss_doe", ActivityStatus: proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_UNFREEZING},
 				},
 			},
 			dest: new(api.GetTenantsResponse),
 			want: &api.GetTenantsResponse{
-				{Name: "john_doe", Status: api.TenantStatusCold},
-				{Name: "jane_doe", Status: api.TenantStatusFrozen},
+				{Name: "john_doe", Status: api.TenantStatusInactive},
+				{Name: "jane_doe", Status: api.TenantStatusOffloaded},
+				{Name: "jeff_doe", Status: api.TenantStatusActive},
+				{Name: "jina_doe", Status: api.TenantStatusOffloading},
+				{Name: "joss_doe", Status: api.TenantStatusOnloading},
 			},
 		},
 	})
