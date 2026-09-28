@@ -44,9 +44,7 @@ type HNSW struct {
 	MaxConnections        int
 	VectorCacheMaxObjects int64
 	CleanupInterval       time.Duration
-
-	// TODO(dyma): support multi-vector
-	// MultiVector            MultiVector
+	MultiVector           *MultiVector
 
 	DynamicEfMin      int
 	DynamicEfMax      int
@@ -76,6 +74,18 @@ const (
 	DistanceManhattan = Distance("manhattan")
 )
 
+type MultiVector struct {
+	Aggregation Aggregation `json:"aggregation,omitempty"`
+	Encoder     Encoder     `json:"-"`
+}
+
+// Similarity aggregation method.
+type Aggregation string
+
+const (
+	AggregationMaxSim = Aggregation("maxSim")
+)
+
 type hnswJSON struct {
 	Distance              Distance       `json:"distance,omitempty"`
 	FilterStrategy        FilterStrategy `json:"filterStrategy,omitempty"`
@@ -84,9 +94,7 @@ type hnswJSON struct {
 	MaxConnections        int            `json:"maxConnections,omitempty"`
 	VectorCacheMaxObjects int64          `json:"vectorCacheMaxObjects,omitempty"`
 	CleanupInterval       int            `json:"cleanupIntervalSeconds,omitempty"`
-
-	// TODO(dyma): support multi-vector
-	// MultiVector            MultiVector    `json:"multivector,omitmepty"`
+	MultiVector           map[string]any `json:"multivector,omitempty"`
 
 	DynamicEfMin      int  `json:"dynamicEfMin,omitempty"`
 	DynamicEfMax      int  `json:"dynamicEfMax,omitempty"`
@@ -96,6 +104,22 @@ type hnswJSON struct {
 }
 
 func (hnsw HNSW) EncodeMap() (map[string]any, error) {
+	var multivector map[string]any
+	if mv := hnsw.MultiVector; mv != nil {
+		multivector = make(map[string]any)
+		if err := internal.Encode(mv, multivector); err != nil {
+			return nil, err
+		}
+		if enc := mv.Encoder; enc != nil {
+			conf, err := encoderRegistry.Encode(enc)
+			if err != nil {
+				return nil, err
+			}
+			multivector[string(enc.Name())] = conf
+		}
+		multivector["enabled"] = true
+	}
+
 	dest := make(map[string]any)
 	if err := internal.Encode(hnswJSON{
 		Distance:              hnsw.Distance,
@@ -105,15 +129,12 @@ func (hnsw HNSW) EncodeMap() (map[string]any, error) {
 		MaxConnections:        hnsw.MaxConnections,
 		VectorCacheMaxObjects: hnsw.VectorCacheMaxObjects,
 		CleanupInterval:       int(hnsw.CleanupInterval.Seconds()),
-
-		// TODO(dyma): support multi-vector
-		// MultiVector            MultiVector    `json:"multivector,omitmepty"`
-
-		DynamicEfMin:      hnsw.DynamicEfMin,
-		DynamicEfMax:      hnsw.DynamicEfMax,
-		DynamicEfFactor:   hnsw.DynamicEfFactor,
-		FlatSearchCutoff:  hnsw.FlatSearchCutoff,
-		SkipVectorization: hnsw.SkipVectorization,
+		MultiVector:           multivector,
+		DynamicEfMin:          hnsw.DynamicEfMin,
+		DynamicEfMax:          hnsw.DynamicEfMax,
+		DynamicEfFactor:       hnsw.DynamicEfFactor,
+		FlatSearchCutoff:      hnsw.FlatSearchCutoff,
+		SkipVectorization:     hnsw.SkipVectorization,
 	}, dest); err != nil {
 		return nil, err
 	}
@@ -125,6 +146,30 @@ func (hnsw *HNSW) DecodeMap(m map[string]any) error {
 	if err := internal.Decode(m, &dest); err != nil {
 		return nil
 	}
+
+	var multivector *MultiVector
+	if mv := dest.MultiVector; mv != nil {
+		multivector = &MultiVector{}
+		if aggregation, ok := mv["aggregation"]; ok {
+			switch aggregation := aggregation.(type) {
+			case string:
+				multivector.Aggregation = Aggregation(aggregation)
+			case Aggregation:
+				multivector.Aggregation = aggregation
+			}
+		}
+
+		if key, ok := encoderRegistry.Find(mv); ok {
+			if conf, ok := mv[key].(map[string]any); ok {
+				enc, err := encoderRegistry.Decode(key, conf)
+				if err != nil {
+					return err
+				}
+				multivector.Encoder = enc
+			}
+		}
+	}
+
 	*hnsw = HNSW{
 		Distance:              dest.Distance,
 		FilterStrategy:        dest.FilterStrategy,
@@ -133,9 +178,7 @@ func (hnsw *HNSW) DecodeMap(m map[string]any) error {
 		MaxConnections:        dest.MaxConnections,
 		VectorCacheMaxObjects: dest.VectorCacheMaxObjects,
 		CleanupInterval:       time.Duration(dest.CleanupInterval) * time.Second,
-
-		// TODO(dyma): support multi-vector
-		// MultiVector            MultiVector    `json:"multivector,omitmepty"`
+		MultiVector:           multivector,
 
 		DynamicEfMin:      dest.DynamicEfMin,
 		DynamicEfMax:      dest.DynamicEfMax,

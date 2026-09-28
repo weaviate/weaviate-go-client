@@ -58,6 +58,14 @@ func TestIndex(t *testing.T) {
 				DynamicEfFactor:       7,
 				FlatSearchCutoff:      8,
 				SkipVectorization:     true,
+				MultiVector: &vectorindex.MultiVector{
+					Aggregation: vectorindex.AggregationMaxSim,
+					Encoder: vectorindex.Muvera{
+						KSim:         11,
+						DProjections: 12,
+						Repetitions:  13,
+					},
+				},
 			},
 			conf: map[string]any{
 				"distance":               vectorindex.DistanceHamming,
@@ -72,6 +80,15 @@ func TestIndex(t *testing.T) {
 				"dynamicEfFactor":        7,
 				"flatSearchCutoff":       8,
 				"skip":                   true,
+				"multivector": map[string]any{
+					"enabled":     true,
+					"aggregation": vectorindex.AggregationMaxSim,
+					"muvera": map[string]any{
+						"ksim":         11,
+						"dprojections": 12,
+						"repetitions":  13,
+					},
+				},
 			},
 		},
 		{
