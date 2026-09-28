@@ -176,28 +176,28 @@ var (
 func (d Dynamic) EncodeMap() (map[string]any, error) {
 	dev.AssertNotNil(d, "dynamic")
 
-	hnsw, err := Registry.Encode(d.HNSW)
-	if err != nil {
+	hnsw := make(map[string]any)
+	if err := internal.Encode(d.HNSW, hnsw); err != nil {
 		return nil, err
 	}
-	if d.HNSWCompression != nil {
-		c, err := compression.Registry.Encode(d.HNSWCompression)
+	if c := d.HNSWCompression; c != nil {
+		conf, err := compression.Registry.Encode(c)
 		if err != nil {
 			return nil, err
 		}
-		hnsw[string(d.HNSWCompression.Name())] = c
+		hnsw[string(c.Name())] = conf
 	}
 
-	flat, err := Registry.Encode(d.Flat)
-	if err != nil {
+	flat := make(map[string]any)
+	if err := internal.Encode(d.Flat, flat); err != nil {
 		return nil, err
 	}
-	if d.FlatCompression != nil {
-		c, err := compression.Registry.Encode(d.FlatCompression)
+	if c := d.FlatCompression; c != nil {
+		conf, err := compression.Registry.Encode(c)
 		if err != nil {
 			return nil, err
 		}
-		hnsw[string(d.FlatCompression.Name())] = c
+		hnsw[string(c.Name())] = conf
 	}
 
 	return map[string]any{
