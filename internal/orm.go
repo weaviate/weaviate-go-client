@@ -15,9 +15,9 @@ const tagName = "json"
 // that decodes map[string]any into a Go struct.
 // It uses "json" tags instead of the default "mapstructure".
 //
-// The caller can control how the map is decoded into T
-// by implementing [MapDecoder] for T.
-func Decode[T any](m map[string]any, dest *T) error {
+// The caller can control how the map is decoded into dest
+// by implementing [MapDecoder] for the target type.
+func Decode(m map[string]any, dest any) error {
 	d, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		TagName:    tagName,
 		Result:     dest,
@@ -90,16 +90,23 @@ func encodeHook(t reflect.Type) mapstructure.DecodeHookFuncType {
 
 // decodeHook wraps [MapDecoder] in [mapstructure.DecodeHookFuncType],
 // so that DecodeMap is only called with map[string]any data.
-func decodeHook[T any](dest *T) mapstructure.DecodeHookFuncType {
-	vdest := reflect.ValueOf(*dest)
+func decodeHook(dest any) mapstructure.DecodeHookFuncType {
+	// The caller must pass dest by reference, but the object
+	// may be wrapped in an any and another layer of indirection,
+	// which we will need to unwrap first.
+	vdest := reflect.ValueOf(dest)
+	for k := vdest.Kind(); k == reflect.Pointer || k == reflect.Interface; k = vdest.Kind() {
+		vdest = vdest.Elem()
+	}
 
 	var decoder MapDecoder
-	if md, ok := any(dest).(MapDecoder); ok {
+	if md, ok := dest.(MapDecoder); ok {
 		decoder = md
 	} else {
 		pdest := reflect.New(vdest.Type())
 		pdest.Elem().Set(vdest)
 
+		// MapDecoder must be implemented on a pointer receiver.
 		md, ok := pdest.Interface().(MapDecoder)
 		if !ok {
 			return func(_, _ reflect.Type, data any) (any, error) {
