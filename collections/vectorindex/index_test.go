@@ -3,6 +3,7 @@ package vectorindex_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,18 +46,18 @@ func TestIndex(t *testing.T) {
 		{
 			name: "hnsw",
 			module: vectorindex.HNSW{
-				Distance:               vectorindex.DistanceHamming,
-				FilterStrategy:         vectorindex.FilterStrategyACORN,
-				Ef:                     1,
-				EfConstruction:         2,
-				MaxConnections:         3,
-				VectorCacheMaxObjects:  80085,
-				CleanupIntervalSeconds: 4,
-				DynamicEfMin:           5,
-				DynamicEfMax:           6,
-				DynamicEfFactor:        7,
-				FlatSearchCutoff:       8,
-				SkipVectorization:      true,
+				Distance:              vectorindex.DistanceHamming,
+				FilterStrategy:        vectorindex.FilterStrategyACORN,
+				Ef:                    1,
+				EfConstruction:        2,
+				MaxConnections:        3,
+				VectorCacheMaxObjects: 80085,
+				CleanupInterval:       4 * time.Second,
+				DynamicEfMin:          5,
+				DynamicEfMax:          6,
+				DynamicEfFactor:       7,
+				FlatSearchCutoff:      8,
+				SkipVectorization:     true,
 			},
 			conf: map[string]any{
 				"distance":               vectorindex.DistanceHamming,
@@ -98,18 +99,18 @@ func TestIndex(t *testing.T) {
 				Distance:  vectorindex.DistanceDot,
 				Threshold: 92,
 				HNSW: vectorindex.HNSW{
-					Distance:               vectorindex.DistanceHamming,
-					FilterStrategy:         vectorindex.FilterStrategyACORN,
-					Ef:                     1,
-					EfConstruction:         2,
-					MaxConnections:         3,
-					VectorCacheMaxObjects:  80085,
-					CleanupIntervalSeconds: 4,
-					DynamicEfMin:           5,
-					DynamicEfMax:           6,
-					DynamicEfFactor:        7,
-					FlatSearchCutoff:       8,
-					SkipVectorization:      true,
+					Distance:              vectorindex.DistanceHamming,
+					FilterStrategy:        vectorindex.FilterStrategyACORN,
+					Ef:                    1,
+					EfConstruction:        2,
+					MaxConnections:        3,
+					VectorCacheMaxObjects: 80085,
+					CleanupInterval:       4 * time.Second,
+					DynamicEfMin:          5,
+					DynamicEfMax:          6,
+					DynamicEfFactor:       7,
+					FlatSearchCutoff:      8,
+					SkipVectorization:     true,
 				},
 				HNSWCompression: compression.BQ{
 					RescoreLimit: 666,

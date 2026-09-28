@@ -1,6 +1,8 @@
 package vectorindex
 
 import (
+	"time"
+
 	"github.com/weaviate/weaviate-go-client/v6/collections/compression"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
@@ -35,23 +37,22 @@ type HFresh struct {
 func (HFresh) Name() Type { return "hfresh" }
 
 type HNSW struct {
-	Distance              Distance       `json:"distance,omitempty"`
-	FilterStrategy        FilterStrategy `json:"filterStrategy,omitempty"`
-	Ef                    int            `json:"ef,omitempty"`
-	EfConstruction        int            `json:"efConstruction,omitempty"`
-	MaxConnections        int            `json:"maxConnections,omitempty"`
-	VectorCacheMaxObjects int64          `json:"vectorCacheMaxObjects,omitempty"`
-	// TODO(dyma): use time.Duration now that we can do custom Decode/EncodeMap
-	CleanupIntervalSeconds int `json:"cleanupIntervalSeconds,omitempty"`
+	Distance              Distance
+	FilterStrategy        FilterStrategy
+	Ef                    int
+	EfConstruction        int
+	MaxConnections        int
+	VectorCacheMaxObjects int64
+	CleanupInterval       time.Duration
 
 	// TODO(dyma): support multi-vector
-	// MultiVector            MultiVector    `json:"multivector,omitmepty"`
+	// MultiVector            MultiVector
 
-	DynamicEfMin      int  `json:"dynamicEfMin,omitempty"`
-	DynamicEfMax      int  `json:"dynamicEfMax,omitempty"`
-	DynamicEfFactor   int  `json:"dynamicEfFactor,omitempty"`
-	FlatSearchCutoff  int  `json:"flatSearchCutoff,omitempty"`
-	SkipVectorization bool `json:"skip,omitempty"`
+	DynamicEfMin      int
+	DynamicEfMax      int
+	DynamicEfFactor   int
+	FlatSearchCutoff  int
+	SkipVectorization bool
 }
 
 func (HNSW) Name() Type { return "hnsw" }
@@ -74,6 +75,76 @@ const (
 	DistanceHamming   = Distance("hamming")
 	DistanceManhattan = Distance("manhattan")
 )
+
+type hnswJSON struct {
+	Distance              Distance       `json:"distance,omitempty"`
+	FilterStrategy        FilterStrategy `json:"filterStrategy,omitempty"`
+	Ef                    int            `json:"ef,omitempty"`
+	EfConstruction        int            `json:"efConstruction,omitempty"`
+	MaxConnections        int            `json:"maxConnections,omitempty"`
+	VectorCacheMaxObjects int64          `json:"vectorCacheMaxObjects,omitempty"`
+	CleanupInterval       int            `json:"cleanupIntervalSeconds,omitempty"`
+
+	// TODO(dyma): support multi-vector
+	// MultiVector            MultiVector    `json:"multivector,omitmepty"`
+
+	DynamicEfMin      int  `json:"dynamicEfMin,omitempty"`
+	DynamicEfMax      int  `json:"dynamicEfMax,omitempty"`
+	DynamicEfFactor   int  `json:"dynamicEfFactor,omitempty"`
+	FlatSearchCutoff  int  `json:"flatSearchCutoff,omitempty"`
+	SkipVectorization bool `json:"skip,omitempty"`
+}
+
+func (hnsw HNSW) EncodeMap() (map[string]any, error) {
+	dest := make(map[string]any)
+	if err := internal.Encode(hnswJSON{
+		Distance:              hnsw.Distance,
+		FilterStrategy:        hnsw.FilterStrategy,
+		Ef:                    hnsw.Ef,
+		EfConstruction:        hnsw.EfConstruction,
+		MaxConnections:        hnsw.MaxConnections,
+		VectorCacheMaxObjects: hnsw.VectorCacheMaxObjects,
+		CleanupInterval:       int(hnsw.CleanupInterval.Seconds()),
+
+		// TODO(dyma): support multi-vector
+		// MultiVector            MultiVector    `json:"multivector,omitmepty"`
+
+		DynamicEfMin:      hnsw.DynamicEfMin,
+		DynamicEfMax:      hnsw.DynamicEfMax,
+		DynamicEfFactor:   hnsw.DynamicEfFactor,
+		FlatSearchCutoff:  hnsw.FlatSearchCutoff,
+		SkipVectorization: hnsw.SkipVectorization,
+	}, dest); err != nil {
+		return nil, err
+	}
+	return dest, nil
+}
+
+func (hnsw *HNSW) DecodeMap(m map[string]any) error {
+	var dest hnswJSON
+	if err := internal.Decode(m, &dest); err != nil {
+		return nil
+	}
+	*hnsw = HNSW{
+		Distance:              dest.Distance,
+		FilterStrategy:        dest.FilterStrategy,
+		Ef:                    dest.Ef,
+		EfConstruction:        dest.EfConstruction,
+		MaxConnections:        dest.MaxConnections,
+		VectorCacheMaxObjects: dest.VectorCacheMaxObjects,
+		CleanupInterval:       time.Duration(dest.CleanupInterval) * time.Second,
+
+		// TODO(dyma): support multi-vector
+		// MultiVector            MultiVector    `json:"multivector,omitmepty"`
+
+		DynamicEfMin:      dest.DynamicEfMin,
+		DynamicEfMax:      dest.DynamicEfMax,
+		DynamicEfFactor:   dest.DynamicEfFactor,
+		FlatSearchCutoff:  dest.FlatSearchCutoff,
+		SkipVectorization: dest.SkipVectorization,
+	}
+	return nil
+}
 
 type Flat struct {
 	VectorCacheMaxObjects int64 `json:"vectorCacheMaxObjects,omitempty"`
