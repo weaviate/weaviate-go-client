@@ -62,6 +62,7 @@ func (vs *Vectors) UnmarshalJSON(data []byte) error {
 const (
 	sizeof_fp32   = 4 // float32 size in bytes
 	sizeof_uint16 = 2 // uint16 size in bytes
+	sizeof_uint64 = 8 // uint16 size in bytes
 )
 
 // Weaviate uses little-endian byte order.
@@ -77,7 +78,7 @@ func marshalSingle(v []float32) []byte {
 func putSingle(b []byte, v []float32) {
 	for i, f := range v {
 		bits := math.Float32bits(f)
-		order.PutUint32(b[i*sizeof_fp32:(i+1)*sizeof_fp32], bits)
+		order.PutUint32(b[i*sizeof_fp32:], bits)
 	}
 }
 
@@ -89,7 +90,7 @@ func unmarshalSingle(b []byte) []float32 {
 	}
 	v := make([]float32, len(b)/sizeof_fp32)
 	for i := range v {
-		bits := order.Uint32(b[i*sizeof_fp32 : (i+1)*sizeof_fp32])
+		bits := order.Uint32(b[i*sizeof_fp32:])
 		v[i] = math.Float32frombits(bits)
 	}
 	return v
@@ -107,7 +108,7 @@ func marshalMulti(vv [][]float32) []byte {
 	b_dim, b_vec := b[:sizeof_uint16], b[sizeof_uint16:]
 	order.PutUint16(b_dim, uint16(dim))
 	for i, v := range vv {
-		putSingle(b_vec[i*size_v:(i+1)*size_v], v)
+		putSingle(b_vec[i*size_v:], v)
 	}
 	return b
 }
@@ -126,4 +127,34 @@ func unmarshalMulti(b []byte) [][]float32 {
 		vv[i] = unmarshalSingle(b_vec[i*size_v : (i+1)*size_v])
 	}
 	return vv
+}
+
+// unmarshalIntegerArray decodes the values of an int[] property
+// from a byte-slice, assuming each value is encoded as a uint64.
+// If len(b) is not a multiple of 8 the result is an empty slice.
+func unmarshalIntegerArray(b []byte) []int64 {
+	if len(b) == 0 || len(b)%sizeof_uint64 != 0 {
+		return nil
+	}
+	arr := make([]int64, len(b)/sizeof_uint64)
+	for i := range arr {
+		bits := order.Uint64(b[i*sizeof_uint64:])
+		arr[i] = int64(bits)
+	}
+	return arr
+}
+
+// unmarshalNumberArray decodes the values of an number[] property
+// from a byte-slice, assuming each value is encoded as a uint64.
+// If len(b) is not a multiple of 8 the result is an empty slice.
+func unmarshalNumberArray(b []byte) []float64 {
+	if len(b) == 0 || len(b)%sizeof_uint64 != 0 {
+		return nil
+	}
+	arr := make([]float64, len(b)/sizeof_uint64)
+	for i := range arr {
+		bits := order.Uint64(b[i*sizeof_uint64:])
+		arr[i] = math.Float64frombits(bits)
+	}
+	return arr
 }
