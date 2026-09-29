@@ -97,12 +97,12 @@ func TestRESTRequests(t *testing.T) {
 					"genres": []string{"thrash metal", "blues"},
 					"single": false,
 					"year":   1992,
-					"band": []string{
-						"weaviate://localhost/Drummers/" + testkit.UUID.String(),
-						"weaviate://localhost/Basists/" + testkit.UUID.String(),
+					"band": []map[string]any{
+						{"beacon": "weaviate://localhost/Drummers/" + testkit.UUID.String()},
+						{"beacon": "weaviate://localhost/Basists/" + testkit.UUID.String()},
 					},
-					"label": []string{
-						"weaviate://localhost/" + testkit.UUID.String(),
+					"label": []map[string]any{
+						{"beacon": "weaviate://localhost/" + testkit.UUID.String()},
 					},
 				},
 				Vectors: map[string]any{
@@ -154,8 +154,8 @@ func TestRESTRequests(t *testing.T) {
 				Tenant: "john_doe",
 				Properties: map[string]any{
 					"title": "DAISIES",
-					"label": []string{
-						"weaviate://localhost/" + testkit.UUID.String(),
+					"label": []map[string]any{
+						{"beacon": "weaviate://localhost/" + testkit.UUID.String()},
 					},
 				},
 				Vectors: map[string]any{
