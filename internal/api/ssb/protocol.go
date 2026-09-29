@@ -3,7 +3,6 @@ package ssb
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"iter"
 	"maps"
@@ -61,14 +60,22 @@ func NewClient(conf ClientConfig) *Client {
 // If [Client.Context] expires, Add returns [context.Canceled],
 // otherwise the error is nil. Calling Add after closing the batch panics.
 func (c *Client) Add(ctx context.Context, d Data) (*Task, error) {
-	if id := d.ID(); c.wip.contains(id) {
-		return nil, fmt.Errorf("task for %q is still in progress", id)
-	}
-
 	t := &Task{
-		data: d,
+		id:   d.ID(),
 		done: make(chan struct{}),
 	}
+
+	if existing := c.wip.put(t); existing != nil {
+		return existing, ErrDuplicatedTask
+	}
+
+	v, err := c.transport.Prepare(d)
+	if err != nil {
+		c.wip.remove(t)
+		return nil, err
+	}
+	t.value = v
+
 	select {
 	case c.queue <- t:
 		return t, nil
@@ -79,15 +86,17 @@ func (c *Client) Add(ctx context.Context, d Data) (*Task, error) {
 }
 
 type Task struct {
-	data Data
+	id    string
+	value any
 
-	val     atomic.Value
 	retries atomic.Uint32
 	err     atomic.Value
-	done    chan struct{}
+
+	live atomic.Bool
+	done chan struct{}
 }
 
-func (t *Task) ID() string            { return t.data.ID() }
+func (t *Task) ID() string            { return t.id }
 func (t *Task) Done() <-chan struct{} { return t.done }
 func (t *Task) Err() error {
 	if err := t.err.Load(); err != nil {
@@ -113,6 +122,10 @@ type Transport interface {
 // exceeds the maximum request size supported by the transport.
 // This error is not retried, and surfaced to the user instead.
 var ErrTooLarge = errors.New("batch item exceeds maximum request size")
+
+// ErrDuplicatedTask is returned if an object/reference is added to the batch
+// while another task for the same data is in progress.
+var ErrDuplicatedTask = errors.New("task is still in progress")
 
 type Stream interface {
 	// Send marshaled batch request. The batch must be
@@ -241,9 +254,6 @@ func (s *state) await(ctx context.Context, permissions permissionFlags) error {
 	return nil
 }
 
-func (t *Task) setValue(v any) { t.val.CompareAndSwap(nil, v) }
-func (t *Task) value() any     { return t.val.Load() }
-
 // retry sets the error and increments retry count.
 func (t *Task) retry(err error) {
 	t.err.Store(err)
@@ -368,14 +378,7 @@ func (c *Client) send(ctx context.Context, s Stream) {
 				goto Drain
 			}
 
-			v, err := c.transport.Prepare(t.data)
-			if err != nil {
-				t.complete(err)
-				continue
-			}
-
-			t.setValue(v)
-			c.wip.put(t)
+			t.live.Store(true)
 			c.batch.add(t)
 
 		case tasks := <-c.retry:
@@ -552,10 +555,9 @@ func (b *batch) add(tasks ...*Task) {
 	defer b.mu.Unlock()
 
 	for _, t := range tasks {
-		v := t.value()
-		b.buf = append(b.buf, v)
+		b.buf = append(b.buf, t.value)
 		if b.flags&full != full {
-			b.addLocked(v)
+			b.addLocked(t.value)
 		}
 	}
 }
@@ -647,18 +649,32 @@ type cache struct {
 	m  map[string]*Task
 }
 
-// put a task in the cache.
-func (c *cache) put(t *Task) {
+// put a task in the cache. If the cache contains another task
+// with the same ID, the new task is not added and the existing
+// one is returned.
+func (c *cache) put(t *Task) *Task {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.m[t.ID()] = t
+
+	k := t.ID()
+	if existing, ok := c.m[k]; ok {
+		return existing
+	}
+	c.m[k] = t
+	return nil
 }
 
-func (c *cache) contains(k string) (ok bool) {
+// Remove task from the cache. It is only appropriate to call remove
+// for a task that has not been put on the work queue yet.
+func (c *cache) remove(t *Task) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	_, ok = c.m[k]
-	return
+
+	k := t.ID()
+	_, ok := c.m[k]
+	dev.Assert(ok, "cache does not contain task %s", k)
+	dev.Assert(!t.live.Load(), "remove called on live task %s", k)
+	delete(c.m, k)
 }
 
 // walk calls f for every cache entry in keys.
@@ -669,7 +685,7 @@ func (c *cache) walk(keys iter.Seq[string], f func(*Task) bool) {
 
 	for k := range keys {
 		t, ok := c.m[k]
-		if ok && f(t) {
+		if ok && t.live.Load() && f(t) {
 			delete(c.m, k)
 		}
 	}
@@ -687,6 +703,8 @@ func (c *cache) all(f func(*Task)) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	for _, t := range c.m {
-		f(t)
+		if t.live.Load() {
+			f(t)
+		}
 	}
 }
