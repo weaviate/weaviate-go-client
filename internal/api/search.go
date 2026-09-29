@@ -678,11 +678,26 @@ func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
 		return nil, nil
 	}
 
-	// Pre-allocate slices for vectors and targets.
-	// Do not allocate WeightsForTarget, as targets may have no weights.
 	nv := &proto.NearVector{
 		Distance:  req.Similarity.Distance,
 		Certainty: req.Similarity.Certainty,
+	}
+
+	// Searching with a single anonymous vector should have the semantics
+	// of using "the only" vector in the collection.
+	// Unfortunately, Weaviate server does not do this check itself,
+	// so we need to marshal the vector into top-level Vectors instead
+	// of using VectorsForTargets for all target combinations (below).
+	//
+	// TODO(dyma): remove when the latest supported server version
+	// contains this logic.
+	if tvs := req.Target.Vectors; len(tvs) == 1 && tvs[0].Name == "" {
+		v, err := marshalVector(&tvs[0].Vector)
+		if err != nil {
+			return nil, fmt.Errorf("near vector: %w", err)
+		}
+		nv.Vectors = []*proto.Vectors{v}
+		return nv, nil
 	}
 
 	seen := make(map[string]*proto.VectorForTarget)

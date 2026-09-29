@@ -789,7 +789,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
-			name: "near vector single target anonymous",
+			name: "near vector single target anonymous (the only vector)",
 			req: &api.SearchRequest{
 				NearVector: &api.NearVector{
 					Similarity: api.VectorSimilarity{Distance: testkit.Ptr(.123)},
@@ -807,17 +807,10 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			want: &proto.SearchRequest{
 				NearVector: &proto.NearVector{
 					Distance: testkit.Ptr(.123),
-					Targets: &proto.Targets{
-						TargetVectors: []string{""},
-					},
-					VectorForTargets: []*proto.VectorForTarget{
+					Vectors: []*proto.Vectors{
 						{
-							Vectors: []*proto.Vectors{
-								{
-									VectorBytes: singleVectorBytes,
-									Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
-								},
-							},
+							VectorBytes: singleVectorBytes,
+							Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
 						},
 					},
 				},
