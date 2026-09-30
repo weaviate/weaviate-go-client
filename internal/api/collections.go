@@ -3,11 +3,13 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/collections/compression"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 )
 
@@ -111,6 +113,7 @@ const (
 	DataTypeUUID           DataType = "uuid"
 	DataTypeObject         DataType = "object"
 	DataTypeGeoCoordinates DataType = "geoCoordinates"
+	DataTypePhoneNumber    DataType = "phoneNumber"
 	DataTypeTextArray      DataType = "text[]"
 	DataTypeBoolArray      DataType = "boolean[]"
 	DataTypeIntArray       DataType = "int[]"
@@ -132,6 +135,7 @@ var knownDataTypes = newSet([]DataType{
 	DataTypeUUID,
 	DataTypeObject,
 	DataTypeGeoCoordinates,
+	DataTypePhoneNumber,
 	DataTypeTextArray,
 	DataTypeBoolArray,
 	DataTypeIntArray,
@@ -204,7 +208,171 @@ var (
 	_ json.Unmarshaler = (*Collection)(nil)
 )
 
+// UpdateCollectionConfigRequest replaces collection config.
+type UpdateCollectionConfigRequest struct {
+	transports.BaseEndpoint
+	Collection
+}
+
+var _ transports.Endpoint = (*UpdateCollectionConfigRequest)(nil)
+
+func (*UpdateCollectionConfigRequest) Method() string { return http.MethodPut }
+func (r *UpdateCollectionConfigRequest) Path() string { return "/schema/" + r.Collection.Name }
+func (r *UpdateCollectionConfigRequest) Body() any    { return &r.Collection }
+
+// ListCollectionShardsRequest fetches statuses of all requests in the collection.
+type ListCollectionShardsRequest struct {
+	transports.BaseEndpoint
+	RequestDefaults
+}
+
+var _ transports.Endpoint = (*ListCollectionShardsRequest)(nil)
+
+func (*ListCollectionShardsRequest) Method() string { return http.MethodGet }
+func (r *ListCollectionShardsRequest) Path() string { return "/schema/" + r.CollectionName + "/shards" }
+func (r *ListCollectionShardsRequest) Query() url.Values {
+	if r.Tenant == "" {
+		return nil
+	}
+	return url.Values{"tenant": {r.Tenant}}
+}
+
+// ListCollectionShardsResponse reads the response of [ListCollectionsRequest].
+type ListCollectionShardsResponse []Shard
+
+func (r *ListCollectionShardsResponse) UnmarshalJSON(data []byte) error {
+	var resp rest.ShardStatusList
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil
+	}
+	shards := make(ListCollectionShardsResponse, len(resp))
+	for i, shard := range resp {
+		shards[i] = Shard{
+			Name:          shard.Name,
+			PerNodeStatus: shard.PerNodeStatus,
+		}
+	}
+	*r = shards
+	return nil
+}
+
+// UpdateShardStatusRequest in a collection.
+type UpdateShardStatusRequest struct {
+	transports.BaseEndpoint
+	RequestDefaults
+	ShardName   string
+	ShardStatus string
+}
+
+const (
+	ShardStatusReady    = "READY"
+	ShardStatusReadOnly = "READONLY"
+)
+
+var _ transports.Endpoint = (*UpdateShardStatusRequest)(nil)
+
+func (*UpdateShardStatusRequest) Method() string { return http.MethodPut }
+func (r *UpdateShardStatusRequest) Path() string {
+	return "/schema/" + r.CollectionName + "/shards/" + r.ShardName
+}
+
+func (r *UpdateShardStatusRequest) Body() any {
+	return rest.ShardStatus{Status: r.ShardStatus}
+}
+
+// AddPropertyRequest creates new property in the collection.
+type AddPropertyRequest struct {
+	transports.BaseEndpoint
+	RequestDefaults
+
+	Property  *Property
+	Reference *ReferenceProperty
+}
+
+var _ transports.Endpoint = (*AddPropertyRequest)(nil)
+
+func (*AddPropertyRequest) Method() string { return http.MethodPost }
+func (r *AddPropertyRequest) Path() string {
+	return "/schema/" + r.CollectionName + "/properties"
+}
+
+func (r *AddPropertyRequest) Body() any {
+	switch {
+	case r.Property != nil:
+		return r.Property
+	case r.Reference != nil:
+		return r.Reference
+	}
+	dev.Unreachable()
+	return nil
+}
+
+// DropPropertyIndexRequest drops a property's inverted vector index.
+type DropPropertyIndexRequest struct {
+	transports.BaseEndpoint
+	RequestDefaults
+	PropertyName string
+	IndexType    PropertyIndexType
+}
+
+var _ transports.Endpoint = (*DropPropertyIndexRequest)(nil)
+
+func (*DropPropertyIndexRequest) Method() string { return http.MethodDelete }
+func (r *DropPropertyIndexRequest) Path() string {
+	return "/schema/" + r.CollectionName +
+		"/properties/" + r.PropertyName +
+		"/index/" + string(r.IndexType)
+}
+
+type PropertyIndexType string
+
+const (
+	PropertyIndexFilterable = PropertyIndexType("filterable")
+	PropertyIndexSearchable = PropertyIndexType("searchable")
+	PropertyIndexRangeable  = PropertyIndexType("rangeFilters")
+)
+
+// DropVectorIndexRequest removes vector index from the schema
+// without removing the associated data.
+type DropVectorIndexRequest struct {
+	transports.BaseEndpoint
+	RequestDefaults
+	VectorName string
+}
+
+var _ transports.Endpoint = (*DropVectorIndexRequest)(nil)
+
+func (*DropVectorIndexRequest) Method() string { return http.MethodDelete }
+func (r *DropVectorIndexRequest) Path() string {
+	return "/schema/" + r.CollectionName +
+		"/vectors/" + r.VectorName + "/index"
+}
+
+// -----------------------------------------------------------------------------
+
 const skipDefaultCompressionKey = "skipDefaultQuantization"
+
+// MarshalJSON marshals Property via [rest.Property].
+func (p *Property) MarshalJSON() ([]byte, error) {
+	return json.Marshal(rest.Property{
+		Name:              p.Name,
+		Description:       p.Description,
+		DataType:          []string{string(p.DataType)},
+		NestedProperties:  nestedPropertiesToREST(p.NestedProperties),
+		Tokenization:      rest.PropertyTokenization(p.Tokenization),
+		IndexFilterable:   p.IndexFilterable,
+		IndexRangeFilters: p.IndexRangeable,
+		IndexSearchable:   p.IndexSearchable,
+	})
+}
+
+// MarshalJSON marshals ReferenceProperty via [rest.Property].
+func (ref *ReferenceProperty) MarshalJSON() ([]byte, error) {
+	return json.Marshal(rest.Property{
+		Name:     ref.Name,
+		DataType: ref.Collections,
+	})
+}
 
 // MarshalJSON marshals Collection via [rest.Class].
 func (c *Collection) MarshalJSON() ([]byte, error) {
