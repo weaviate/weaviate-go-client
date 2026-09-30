@@ -217,7 +217,7 @@ type UpdateCollectionConfigRequest struct {
 var _ transports.Endpoint = (*UpdateCollectionConfigRequest)(nil)
 
 func (*UpdateCollectionConfigRequest) Method() string { return http.MethodPut }
-func (r *UpdateCollectionConfigRequest) Path() string { return "/schema/" + r.Collection.Name }
+func (r *UpdateCollectionConfigRequest) Path() string { return "/schema/" + r.Name }
 func (r *UpdateCollectionConfigRequest) Body() any    { return &r.Collection }
 
 // ListCollectionShardsRequest fetches statuses of all requests in the collection.
