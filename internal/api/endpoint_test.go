@@ -459,6 +459,131 @@ func TestRESTRequests(t *testing.T) {
 			wantPath:   "/schema/Songs",
 		},
 		{
+			name: "update collection config",
+			req: &api.UpdateCollectionConfigRequest{
+				Collection: api.Collection{
+					Name:        "Songs",
+					Description: "My favorite songs",
+					Properties: []api.Property{
+						{Name: "title", DataType: api.DataTypeText},
+						{Name: "genres", DataType: api.DataTypeTextArray},
+						{Name: "single", DataType: api.DataTypeBool},
+						{Name: "year", DataType: api.DataTypeInt},
+					},
+				},
+			},
+			wantMethod: http.MethodPut,
+			wantPath:   "/schema/Songs",
+			wantBody: &rest.Class{
+				Class:       "Songs",
+				Description: "My favorite songs",
+				Properties: []rest.Property{
+					{Name: "title", DataType: []string{string(api.DataTypeText)}},
+					{Name: "genres", DataType: []string{string(api.DataTypeTextArray)}},
+					{Name: "single", DataType: []string{string(api.DataTypeBool)}},
+					{Name: "year", DataType: []string{string(api.DataTypeInt)}},
+				},
+			},
+		},
+		{
+			name: "list collection shards (without tenant)",
+			req: &api.ListCollectionShardsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/schema/Songs/shards",
+		},
+		{
+			name: "list collection shards (with tenant)",
+			req: &api.ListCollectionShardsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+					Tenant:         "john_doe",
+				},
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/schema/Songs/shards",
+			wantQuery: url.Values{
+				"tenant": {"john_doe"},
+			},
+		},
+		{
+			name: "update shard status",
+			req: &api.UpdateShardStatusRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+				ShardName:   "xyz",
+				ShardStatus: api.ShardStatusReady,
+			},
+			wantMethod: http.MethodPut,
+			wantPath:   "/schema/Songs/shards/xyz",
+			wantBody: &rest.ShardStatus{
+				Status: api.ShardStatusReady,
+			},
+		},
+		{
+			name: "add property",
+			req: &api.AddPropertyRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+				Property: &api.Property{
+					Name:     "label",
+					DataType: api.DataTypeText,
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/schema/Songs/properties",
+			wantBody: &rest.Property{
+				Name:     "label",
+				DataType: []string{"text"},
+			},
+		},
+		{
+			name: "add reference",
+			req: &api.AddPropertyRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+				Reference: &api.ReferenceProperty{
+					Name:        "writtenBy",
+					Collections: []string{"Artists"},
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/schema/Songs/properties",
+			wantBody: &rest.Property{
+				Name:     "writtenBy",
+				DataType: []string{"Artists"},
+			},
+		},
+		{
+			name: "drop property index",
+			req: &api.DropPropertyIndexRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+				PropertyName: "scale",
+				IndexType:    api.PropertyIndexRangeable,
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/schema/Songs/properties/scale/index/rangeFilters",
+		},
+		{
+			name: "drop vector index",
+			req: &api.DropVectorIndexRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+				VectorName: "lyrics_vec",
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/schema/Songs/vectors/lyrics_vec/index",
+		},
+		{
 			name: "create backup request",
 			req: &api.CreateBackupRequest{
 				Backend:            "filesystem",
