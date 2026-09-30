@@ -170,3 +170,52 @@ func (c *ConfigClient) SetShardStatus(ctx context.Context, options ShardStatusOp
 	}
 	return nil
 }
+
+func (c *ConfigClient) SetPropertyDescription(ctx context.Context, propertyName, description string) error {
+	collection, err := c.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("set property description: %w", err)
+	}
+
+	var ok bool
+	for i := range collection.Properties {
+		p := &collection.Properties[i]
+		if p.Name == propertyName {
+			p.Description = description
+			ok = true
+		}
+	}
+	if !ok {
+		return fmt.Errorf("set property description: no such property %q", propertyName)
+	}
+	return c.updateCollection(ctx, *collection)
+}
+
+func (c *ConfigClient) UpdateVectorConfig(ctx context.Context, vectorName string, f func(vc *VectorConfig)) error {
+	collection, err := c.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("update vector config: %w", err)
+	}
+
+	vc, ok := collection.Vectors[vectorName]
+	if !ok {
+		return fmt.Errorf("update vector config: no such vector %q", vectorName)
+	}
+	f(&vc)
+	collection.Vectors[vectorName] = vc
+	return c.updateCollection(ctx, *collection)
+}
+
+func (c *ConfigClient) updateCollection(ctx context.Context, collection Collection) error {
+	x, err := collectionToAPI(&collection)
+	if err != nil {
+		return fmt.Errorf("update collection config: %w", err)
+	}
+
+	req := &api.UpdateCollectionConfigRequest{Collection: x}
+
+	if err := c.transport.Do(ctx, req, nil); err != nil {
+		return fmt.Errorf("update collection config: %w", err)
+	}
+	return nil
+}
