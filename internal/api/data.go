@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding"
 	"encoding/json"
 	"errors"
 	"maps"
@@ -166,32 +165,28 @@ type (
 	References map[string][]Reference
 )
 
-var _ encoding.TextMarshaler = (*Reference)(nil)
+var _ json.Marshaler = (*Reference)(nil)
 
-var (
-	beaconPrefix = []byte("weaviate://localhost/")
-	beaconSep    = []byte("/")
+const (
+	beaconJSONKey = "beacon"
+	beaconPrefix  = "weaviate://localhost/"
+	beaconSep     = "/"
 )
 
-// MarshalText formats the object reference as a beacon.
-// json.Marshal will call this method and encode the result as a JSON string.
-func (r *Reference) MarshalText() ([]byte, error) {
-	id, err := r.Target.UUID.MarshalText()
-	if err != nil {
-		return nil, err
-	}
-	b := append([]byte(nil), beaconPrefix...)
+// String formats the object reference as a beacon.
+func (r Reference) String() string {
+	b := beaconPrefix
 	if r.Target.Collection != "" {
-		b = append(b, r.Target.Collection...)
-		b = append(b, beaconSep...)
+		b += (r.Target.Collection + beaconSep)
 	}
-	return append(b, id...), nil
+	b += r.Target.UUID.String()
+	return b
 }
 
-// String formats the object reference as a beacon.
-func (r *Reference) String() string {
-	b, _ := r.MarshalText()
-	return string(b)
+func (r Reference) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]string{
+		beaconJSONKey: r.String(),
+	})
 }
 
 // restObject implements json.Marshaler via [rest.Object].
