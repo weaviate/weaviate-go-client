@@ -67,6 +67,7 @@ type Shard struct {
 	VectorIndexingStatus string
 	VectorQueueLength    int64
 	OngoingReplications  []ReplicationStatus
+	PerNodeStatus        map[string]string
 }
 
 type ReplicationStatus struct {

@@ -55,6 +55,7 @@ type Handle struct {
 	Aggregate *aggregate.Client
 	Data      *data.Client
 	Query     *query.Client
+	Config    *ConfigClient
 	Tenants   *tenant.Client
 }
 
@@ -68,6 +69,7 @@ func newHandle(t transport.StreamingTransport, rd api.RequestDefaults) *Handle {
 		Aggregate: aggregate.NewClient(t, rd),
 		Data:      data.NewClient(t, rd),
 		Query:     query.NewClient(t, rd),
+		Config:    NewConfigClient(t, rd),
 		Tenants:   tenant.NewClient(t, rd.CollectionName),
 	}
 }
