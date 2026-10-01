@@ -59,6 +59,7 @@ func (sim *Simulation) newServer(conn chan *Stream) *Server {
 	}
 }
 
+func (sim *Simulation) Duplicate() bool    { return sim.prng.Chance(1, 100) }
 func (sim *Simulation) Backoff() bool      { return sim.prng.Chance(1, 3) }
 func (sim *Simulation) BadNetwork() bool   { return sim.prng.Chance(1, 30) }
 func (sim *Simulation) ShuttingDown() bool { return sim.prng.Chance(1, 50) }
@@ -87,10 +88,12 @@ func TestClient(t *testing.T) {
 	)
 
 	var (
+		total int // Total TaskCount across all runs.
 		added int // Added to batch stream.
 		seen  int // Arrived to the server.
 		ok    int // Succeeded.
 		fail  int // Failed.
+		dupl  int // Duplicated.
 	)
 
 	for range N {
@@ -126,14 +129,27 @@ func TestClient(t *testing.T) {
 
 				// If the test server can OOM, then we won't try and guess
 				// whether the error was expected, as OOM happens randomly.
-				if !sim.CanOOM && err != context.Canceled {
+				if !sim.CanOOM && err != context.Canceled && err != ssb.ErrTooLarge {
 					assert.NoError(t, err, "add error")
 				}
 
-				if err == nil {
-					if assert.NotNil(t, task, "nil task") {
-						tasks = append(tasks, task)
-					}
+				if err != nil {
+					continue
+				}
+
+				if assert.NotNil(t, task, "nil task") {
+					tasks = append(tasks, task)
+					added++
+				}
+
+				if sim.Duplicate() {
+					dupl++
+					duplicate, err := c.Add(
+						t.Context(),
+						ssb.Data{Object: &api.BatchObject{UUID: id}},
+					)
+					assert.Error(t, err, "%s is duplicated")
+					assert.Equal(t, task, duplicate, "expected original task")
 				}
 			}
 
@@ -157,14 +173,15 @@ func TestClient(t *testing.T) {
 				}
 			}
 
-			added += sim.TaskCount
+			total += sim.TaskCount
 			seen += len(srv.seen)
 		})
 	}
 
-	require.GreaterOrEqual(t, seen, int(float64(added)*.9), "over 90% of all data arrive at the server")
+	require.GreaterOrEqual(t, seen, int(float64(total)*.9), "over 90% of all data arrive at the server")
 	require.GreaterOrEqual(t, ok, int(float64(seen)*.75), "over 75% of submitted tasks succeed")
 	require.LessOrEqual(t, fail, int(float64(seen)*.25), "under 25% of submitted tasks fail")
+	require.GreaterOrEqual(t, dupl, int(float64(added)*.005), "at least 1% of added tasks were duplicated")
 }
 
 type (

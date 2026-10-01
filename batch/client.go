@@ -2,6 +2,7 @@ package batch
 
 import (
 	"context"
+	"errors"
 
 	"github.com/weaviate/weaviate-go-client/v6/data"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
@@ -10,6 +11,10 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport/stream"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
+
+// ErrDuplicatedTask is returned if an object/reference is added to the batch
+// while another task for the same data is in progress.
+var ErrDuplicatedTask = ssb.ErrDuplicatedTask
 
 type Task struct{ t *ssb.Task }
 
@@ -101,6 +106,9 @@ func (c *Client) Reference(ctx context.Context, ref data.Reference) (*Task, erro
 func (c *Client) add(ctx context.Context, d ssb.Data) (*Task, error) {
 	t, err := c.protocol.Add(ctx, d)
 	if err != nil {
+		if errors.Is(err, ssb.ErrDuplicatedTask) {
+			err = ErrDuplicatedTask
+		}
 		return nil, err
 	}
 	return &Task{t: t}, nil
