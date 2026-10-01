@@ -14,20 +14,22 @@ func init() {
 //
 // Model and PassageModel are mutually exclusive; the server rejects a config that sets both.
 //
-// See https://docs.weaviate.io/weaviate/model-providers/huggingface/embeddings.
+// See [Weaviate Docs - text2vec-huggingface].
+//
+// [Weaviate Docs - text2vec-huggingface]: https://docs.weaviate.io/weaviate/model-providers/huggingface/embeddings
 type Text2Vec struct {
-	// Model defaults to sentence-transformers/msmarco-bert-base-dot-v5.
+	// Model is the Hugging Face model ID.
 	Model string
 	// PassageModel is an alias the server reads when Model is unset.
 	// Prefer Model; this field keeps configs created by other clients intact.
 	PassageModel string
 	// EndpointURL points to a dedicated inference endpoint; when set, the server skips model checks.
 	EndpointURL string
-	// WaitForModel waits for the model to be loaded. Defaults to false.
+	// WaitForModel waits for the model to be loaded.
 	WaitForModel *bool
-	// UseGPU runs inference on a GPU. Defaults to false.
+	// UseGPU runs inference on a GPU.
 	UseGPU *bool
-	// UseCache enables the Inference API cache. Defaults to true.
+	// UseCache enables the Inference API cache.
 	UseCache *bool
 	// Properties limits vectorization to these properties.
 	// By default, all text properties are vectorized.

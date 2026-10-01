@@ -12,10 +12,12 @@ func init() {
 // To use Azure OpenAI, set ResourceName and DeploymentID together: the server detects Azure from the
 // presence of both.
 //
-// See https://docs.weaviate.io/weaviate/model-providers/openai/embeddings and
-// https://docs.weaviate.io/weaviate/model-providers/openai-azure/embeddings.
+// See [Weaviate Docs - text2vec-openai] and [Weaviate Docs - text2vec-openai (Azure)].
+//
+// [Weaviate Docs - text2vec-openai]: https://docs.weaviate.io/weaviate/model-providers/openai/embeddings
+// [Weaviate Docs - text2vec-openai (Azure)]: https://docs.weaviate.io/weaviate/model-providers/openai-azure/embeddings
 type Text2Vec struct {
-	// Model defaults to text-embedding-3-small on the server, which validates the name.
+	// Model is the embedding model name; the server validates it.
 	Model string `json:"model,omitempty"`
 	// Dimensions is the size of the output vectors. Only the v3 models (text-embedding-3-*) support it.
 	Dimensions int `json:"dimensions,omitzero"`
