@@ -1,6 +1,7 @@
 package internal_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -65,6 +66,24 @@ func TestModules_EncodeDecode(t *testing.T) {
 		decoded, err := ms.Decode("str-module", encoded)
 		assert.NoError(t, err, "decode")
 		assert.Equal(t, five, decoded, "decoded value")
+	})
+
+	t.Run("custom decode hook", func(t *testing.T) {
+		var ms internal.Modules[string]
+		ms.Register(*new(codec))
+
+		m := codec{__x__: "92"}
+		raw := map[string]any{"x": "92"}
+
+		encoded, err := ms.Encode(m)
+		require.NoError(t, err, "encode")
+		require.Equal(t, raw, encoded, "encoded value")
+
+		decoded, err := ms.Decode("codec-module", encoded)
+
+		require.NoError(t, err, "decode")
+		require.Equal(t, "codec-module", decoded.Name(), "module name")
+		require.Equal(t, m, decoded, "decoded value")
 	})
 }
 
@@ -131,3 +150,26 @@ type (
 var _ internal.Module[str] = (*custom)(nil)
 
 func (custom) Name() str { return "str-module" }
+
+type codec struct{ __x__ string }
+
+var (
+	_ internal.Module[string] = (*codec)(nil)
+	_ internal.MapEncoder     = (*codec)(nil)
+	_ internal.MapDecoder     = (*codec)(nil)
+)
+
+func (codec) Name() string { return "codec-module" }
+
+func (c codec) EncodeMap() (map[string]any, error) {
+	return map[string]any{"x": c.__x__}, nil
+}
+
+func (c *codec) DecodeMap(m map[string]any) error {
+	x, ok := m["x"].(string)
+	if !ok {
+		return errors.New("m[x] is not a string")
+	}
+	*c = codec{__x__: x}
+	return nil
+}
