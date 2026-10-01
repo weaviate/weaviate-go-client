@@ -1209,14 +1209,14 @@ func TestRESTRequests(t *testing.T) {
 				Collection: "Songs",
 				Tenants: []api.Tenant{
 					{Name: "john_doe", Status: api.TenantStatusActive},
-					{Name: "jane_doe", Status: api.TenantStatusFrozen},
+					{Name: "jane_doe", Status: api.TenantStatusOffloaded},
 				},
 			},
 			wantMethod: http.MethodPost,
 			wantPath:   "/schema/Songs/tenants",
 			wantBody: rest.TenantsCreateJSONRequestBody{
 				{Name: "john_doe", ActivityStatus: rest.ACTIVE},
-				{Name: "jane_doe", ActivityStatus: rest.FROZEN},
+				{Name: "jane_doe", ActivityStatus: rest.OFFLOADED},
 			},
 		},
 		{
@@ -1225,14 +1225,14 @@ func TestRESTRequests(t *testing.T) {
 				Collection: "Songs",
 				Tenants: []api.Tenant{
 					{Name: "john_doe", Status: api.TenantStatusActive},
-					{Name: "jane_doe", Status: api.TenantStatusFrozen},
+					{Name: "jane_doe", Status: api.TenantStatusOffloaded},
 				},
 			},
 			wantMethod: http.MethodPut,
 			wantPath:   "/schema/Songs/tenants",
 			wantBody: rest.TenantsUpdateJSONRequestBody{
 				{Name: "john_doe", ActivityStatus: rest.ACTIVE},
-				{Name: "jane_doe", ActivityStatus: rest.FROZEN},
+				{Name: "jane_doe", ActivityStatus: rest.OFFLOADED},
 			},
 		},
 		{
