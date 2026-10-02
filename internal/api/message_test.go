@@ -2069,6 +2069,66 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "object array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"topics": []map[string]any{
+								{"chair": "pink"},
+								{"lucky_number": 13},
+								{
+									"digits": []int{1, 2, 3},
+									"flags":  []bool{true, false, false},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							ObjectArrayProperties: []*proto.ObjectArrayProperties{{
+								PropName: "topics",
+								Values: []*proto.ObjectPropertiesValue{
+									{
+										NonRefProperties: mustNewStruct(map[string]any{
+											"chair": "pink",
+										}),
+									},
+									{
+										NonRefProperties: mustNewStruct(map[string]any{
+											"lucky_number": 13,
+										}),
+									},
+									{
+										IntArrayProperties: []*proto.IntArrayProperties{
+											{PropName: "digits", Values: []int64{1, 2, 3}},
+										},
+										BooleanArrayProperties: []*proto.BooleanArrayProperties{
+											{PropName: "flags", Values: []bool{true, false, false}},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
 	})
 }
 
