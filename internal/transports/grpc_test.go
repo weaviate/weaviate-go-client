@@ -93,9 +93,9 @@ func TestGRPC_Do(t *testing.T) {
 
 		// Streaming RPCs (e.g. batch) must carry the same headers.
 		gRPC.Do(t.Context(), func(ctx context.Context, client grpc.ClientConnInterface) error {
-			stream, err := client.NewStream(ctx, &grpc.StreamDesc{ClientStreams: true, ServerStreams: true}, ts.StreamName())
+			stream, err := client.NewStream(ctx, ts.StreamDesc(), ts.StreamName())
 			require.NoError(t, err, "open stream")
-			stream.CloseSend()
+			require.NoError(t, stream.CloseSend(), "close stream")
 			return stream.RecvMsg(&emptypb.Empty{}) // wait for the handler to finish
 		})
 	})
@@ -197,3 +197,7 @@ func (ts *testService) Host() string       { return ts.host }
 func (ts *testService) Port() string       { return ts.port }
 func (ts *testService) MethodName() string { return "/testService/Test" }
 func (ts *testService) StreamName() string { return "/testService/TestStream" }
+
+func (ts *testService) StreamDesc() *grpc.StreamDesc {
+	return &grpc.StreamDesc{ClientStreams: true, ServerStreams: true}
+}
