@@ -248,6 +248,20 @@ func (c *ConfigClient) UpdateObjectTTLConfig(ctx context.Context, f func(ttl *Ob
 	return nil
 }
 
+func (c *ConfigClient) UpdateMultiTenancyConfig(ctx context.Context, f func(mt *MultiTenancyConfig)) error {
+	if err := c.updateCollection(ctx, func(collection *Collection) (err error) {
+		mt := collection.MultiTenancy
+		if mt == nil {
+			mt = new(MultiTenancyConfig)
+		}
+		f(mt)
+		return
+	}); err != nil {
+		return fmt.Errorf("update multi-tenancy config: %w", err)
+	}
+	return nil
+}
+
 func (c *ConfigClient) updateCollection(ctx context.Context, f func(*Collection) error) error {
 	collection, err := c.Get(ctx)
 	if err != nil {

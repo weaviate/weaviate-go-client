@@ -195,6 +195,32 @@ func TestConfigClient_update(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "update multi-tenancy config",
+			current: api.Collection{
+				Name: rd.CollectionName,
+				MultiTenancy: &api.MultiTenancyConfig{
+					Enabled:              true,
+					AutoTenantCreation:   false,
+					AutoTenantActivation: false,
+				},
+			},
+			update: func(ctx context.Context, c *collections.ConfigClient) error {
+				return c.UpdateMultiTenancyConfig(t.Context(), func(mt *collections.MultiTenancyConfig) {
+					require.NotNil(t, mt, "multi-tenancy config")
+					mt.AutoTenantCreation = true
+					mt.AutoTenantActivation = true
+				})
+			},
+			want: api.Collection{
+				Name: rd.CollectionName,
+				MultiTenancy: &api.MultiTenancyConfig{
+					Enabled:              true,
+					AutoTenantCreation:   true,
+					AutoTenantActivation: true,
+				},
+			},
+		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Expect the client to fetch the current collection config first,
