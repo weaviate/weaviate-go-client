@@ -23,13 +23,6 @@ func TestNewConfigClient(t *testing.T) {
 }
 
 func TestConfigClient_update(t *testing.T) {
-	returnCollection := func(c api.Collection) testkit.Stub[any, any] {
-		return testkit.Stub[any, any]{
-			Request:  new(api.GetCollectionRequest("Songs")),
-			Response: c,
-		}
-	}
-
 	rd := api.RequestDefaults{
 		CollectionName: "Songs",
 	}
@@ -37,45 +30,53 @@ func TestConfigClient_update(t *testing.T) {
 	for _, tt := range testkit.WithOnly(t, []struct {
 		testkit.Only
 
-		name   string
-		update func(ctx context.Context, c *collections.ConfigClient) error
-		stubs  []testkit.Stub[any, any]
+		name          string
+		current, want api.Collection
+		update        func(ctx context.Context, c *collections.ConfigClient) error
 	}{
 		{
 			name: "update property description",
+			current: api.Collection{
+				Name: rd.CollectionName,
+				Properties: []api.Property{
+					{Name: "album", DataType: api.DataTypeText},
+					{Name: "artist", DataType: api.DataTypeText},
+				},
+			},
 			update: func(ctx context.Context, c *collections.ConfigClient) error {
 				return c.SetPropertyDescription(
 					ctx, "album",
 					"Songs released together",
 				)
 			},
-			stubs: []testkit.Stub[any, any]{
-				returnCollection(api.Collection{
-					Name: rd.CollectionName,
-					Properties: []api.Property{
-						{Name: "album", DataType: api.DataTypeText},
-						{Name: "artist", DataType: api.DataTypeText},
+			want: api.Collection{
+				Name: rd.CollectionName,
+				Properties: []api.Property{
+					{
+						Name:        "album",
+						DataType:    api.DataTypeText,
+						Description: "Songs released together",
 					},
-				}),
-				{
-					Request: testkit.Ptr[any](&api.UpdateCollectionConfigRequest{
-						Collection: api.Collection{
-							Name: rd.CollectionName,
-							Properties: []api.Property{
-								{
-									Name:        "album",
-									DataType:    api.DataTypeText,
-									Description: "Songs released together",
-								},
-								{Name: "artist", DataType: api.DataTypeText},
-							},
-						},
-					}),
+					{Name: "artist", DataType: api.DataTypeText},
 				},
 			},
 		},
 		{
 			name: "update vector index",
+			current: api.Collection{
+				Name: rd.CollectionName,
+				Vectors: map[string]api.VectorConfig{
+					"title_vec": {},
+					"lyrics_vec": {
+						Index: &api.Module{
+							Name: "hfresh",
+							Conf: map[string]any{
+								"searchProbe": 123,
+							},
+						},
+					},
+				},
+			},
 			update: func(ctx context.Context, c *collections.ConfigClient) error {
 				return c.UpdateVectorConfig(ctx, "lyrics_vec", func(vc *collections.VectorConfig) {
 					vc.Compression = compression.BQ{
@@ -88,49 +89,39 @@ func TestConfigClient_update(t *testing.T) {
 					}
 				})
 			},
-			stubs: []testkit.Stub[any, any]{
-				returnCollection(api.Collection{
-					Name: rd.CollectionName,
-					Vectors: map[string]api.VectorConfig{
-						"title_vec": {},
-						"lyrics_vec": {
-							Index: &api.Module{
-								Name: "hfresh",
-								Conf: map[string]any{
-									"searchProbe": 123,
-								},
+			want: api.Collection{
+				Name: rd.CollectionName,
+				Vectors: map[string]api.VectorConfig{
+					"title_vec": {},
+					"lyrics_vec": {
+						Compression: &api.Module{
+							Name: "bq",
+							Conf: map[string]any{
+								"rescoreLimit": 92,
+							},
+						},
+						Index: &api.Module{
+							Name: "hfresh",
+							Conf: map[string]any{
+								"searchProbe": 666,
 							},
 						},
 					},
-				}),
-				{
-					Request: testkit.Ptr[any](&api.UpdateCollectionConfigRequest{
-						Collection: api.Collection{
-							Name: rd.CollectionName,
-							Vectors: map[string]api.VectorConfig{
-								"title_vec": {},
-								"lyrics_vec": {
-									Compression: &api.Module{
-										Name: "bq",
-										Conf: map[string]any{
-											"rescoreLimit": 92,
-										},
-									},
-									Index: &api.Module{
-										Name: "hfresh",
-										Conf: map[string]any{
-											"searchProbe": 666,
-										},
-									},
-								},
-							},
-						},
-					}),
 				},
 			},
 		},
 		{
 			name: "update replication config",
+			current: api.Collection{
+				Name: rd.CollectionName,
+				Replication: &api.ReplicationConfig{
+					DeletionStrategy: api.NoAutomatedResolution,
+					AsyncReplication: &api.AsyncReplicationConfig{
+						PropagationTimeout: time.Hour,
+						DiffBatchSize:      92,
+					},
+				},
+			},
 			update: func(ctx context.Context, c *collections.ConfigClient) error {
 				return c.UpdateReplicationConfig(t.Context(), func(rc *collections.ReplicationConfig) {
 					rc.DeletionStrategy = collections.DeleteOnConflict
@@ -139,36 +130,33 @@ func TestConfigClient_update(t *testing.T) {
 					}
 				})
 			},
-			stubs: []testkit.Stub[any, any]{
-				returnCollection(api.Collection{
-					Name: rd.CollectionName,
-					Replication: &api.ReplicationConfig{
-						DeletionStrategy: api.NoAutomatedResolution,
-						AsyncReplication: &api.AsyncReplicationConfig{
-							PropagationTimeout: time.Hour,
-							DiffBatchSize:      92,
-						},
+			want: api.Collection{
+				Name: rd.CollectionName,
+				Replication: &api.ReplicationConfig{
+					DeletionStrategy: api.DeleteOnConflict,
+					AsyncReplication: &api.AsyncReplicationConfig{
+						PropagationTimeout: 19 * time.Second,
+						DiffBatchSize:      92,
 					},
-				}),
-				{
-					Request: testkit.Ptr[any](&api.UpdateCollectionConfigRequest{
-						Collection: api.Collection{
-							Name: rd.CollectionName,
-							Replication: &api.ReplicationConfig{
-								DeletionStrategy: api.DeleteOnConflict,
-								AsyncReplication: &api.AsyncReplicationConfig{
-									PropagationTimeout: 19 * time.Second,
-									DiffBatchSize:      92,
-								},
-							},
-						},
-					}),
 				},
 			},
 		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
-			transport := testkit.NewTransport(t, tt.stubs)
+			// Expect the client to fetch the current collection config first,
+			// and then send the expected update in the next request.
+			transport := testkit.NewTransport(t, []testkit.Stub[any, any]{
+				{
+					Request:  new(api.GetCollectionRequest("Songs")),
+					Response: tt.current,
+				},
+				{
+					Request: testkit.Ptr[any](&api.UpdateCollectionConfigRequest{
+						Collection: tt.want,
+					}),
+					Response: tt.current,
+				},
+			})
 			c := collections.NewConfigClient(transport, rd)
 			require.NotNil(t, c, "nil client")
 
