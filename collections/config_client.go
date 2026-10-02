@@ -10,13 +10,6 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 )
 
-/*
-Supported operations (instead of an umbrella UPDATE):
-	- Enable compression
-	- Update vector index
-	- Update property description
-*/
-
 func NewConfigClient(t internal.Transport, rd api.RequestDefaults) *ConfigClient {
 	dev.AssertNotNil(t, "transport")
 	return &ConfigClient{
