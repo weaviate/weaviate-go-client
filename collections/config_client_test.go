@@ -141,6 +141,28 @@ func TestConfigClient_update(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "update inverted index config",
+			current: api.Collection{
+				Name: rd.CollectionName,
+				InvertedIndex: &api.InvertedIndexConfig{
+					IndexTimestamps:     true,
+					IndexPropertyLength: false,
+				},
+			},
+			update: func(ctx context.Context, c *collections.ConfigClient) error {
+				return c.UpdateInvertedIndexConfig(t.Context(), func(rc *collections.InvertedIndexConfig) {
+					rc.IndexPropertyLength = true
+				})
+			},
+			want: api.Collection{
+				Name: rd.CollectionName,
+				InvertedIndex: &api.InvertedIndexConfig{
+					IndexTimestamps:     true,
+					IndexPropertyLength: true,
+				},
+			},
+		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Expect the client to fetch the current collection config first,

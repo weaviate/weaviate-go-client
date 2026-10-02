@@ -220,6 +220,20 @@ func (c *ConfigClient) UpdateReplicationConfig(ctx context.Context, f func(rc *R
 	return nil
 }
 
+func (c *ConfigClient) UpdateInvertedIndexConfig(ctx context.Context, f func(iic *InvertedIndexConfig)) error {
+	if err := c.updateCollection(ctx, func(collection *Collection) (err error) {
+		rc := collection.InvertedIndex
+		if rc == nil {
+			rc = new(InvertedIndexConfig)
+		}
+		f(rc)
+		return
+	}); err != nil {
+		return fmt.Errorf("update inverted index config: %w", err)
+	}
+	return nil
+}
+
 func (c *ConfigClient) updateCollection(ctx context.Context, f func(*Collection) error) error {
 	collection, err := c.Get(ctx)
 	if err != nil {
