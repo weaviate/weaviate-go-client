@@ -433,6 +433,27 @@ func marshalObjectProperties(properties map[string]any, dest *proto.BatchObject_
 				PropName: name,
 				Values:   v,
 			})
+		case []map[string]any:
+			objects := make([]*proto.ObjectPropertiesValue, len(v))
+			for i := range objects {
+				var dest proto.BatchObject_Properties
+				if err := marshalObjectProperties(v[i], &dest); err != nil {
+					return err
+				}
+				objects[i] = &proto.ObjectPropertiesValue{
+					NonRefProperties:       dest.NonRefProperties,
+					NumberArrayProperties:  dest.NumberArrayProperties,
+					IntArrayProperties:     dest.IntArrayProperties,
+					TextArrayProperties:    dest.TextArrayProperties,
+					BooleanArrayProperties: dest.BooleanArrayProperties,
+					ObjectProperties:       dest.ObjectProperties,
+					ObjectArrayProperties:  dest.ObjectArrayProperties,
+				}
+			}
+			dest.ObjectArrayProperties = append(dest.ObjectArrayProperties, &proto.ObjectArrayProperties{
+				PropName: name,
+				Values:   objects,
+			})
 		}
 		delete(properties, name)
 	}
