@@ -64,7 +64,7 @@ func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc
 			ReturnNestedProperties: nv.ReturnNestedProperties,
 			ReturnReferences:       nv.ReturnReferences,
 			GroupBy:                nv.groupBy,
-		}, func(req *api.SearchRequest) { req.NearVector = nv.Search() })
+		}, func(req *api.SearchRequest) { req.NearVector = nv.Search() }, "near vector")
 	}
 }
 

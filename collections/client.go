@@ -32,7 +32,7 @@ func WithConsistencyLevel(cl types.ConsistencyLevel) HandleOption {
 	}
 }
 
-// WithConsistencyLevel default tenant for all read / write requests made with this collection handle.
+// WithTenant default tenant for all read / write requests made with this collection handle.
 func WithTenant(tenant string) HandleOption {
 	return func(rd *api.RequestDefaults) {
 		dev.AssertNotNil(rd, "rd")

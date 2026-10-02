@@ -61,7 +61,7 @@ const (
 	HybridFusionRelativeScore = api.HybridFusionRelativeScore
 )
 
-// HybridFunc runs plain near text search.
+// HybridFunc runs plain hybrid search.
 type HybridFunc func(context.Context, Hybrid) (*Result, error)
 
 // hybridFunc makes internal.Transport available to [query] via a closure.
@@ -81,7 +81,7 @@ func hybridFunc(t internal.Transport, rd api.RequestDefaults) HybridFunc {
 			ReturnNestedProperties: h.ReturnNestedProperties,
 			ReturnReferences:       h.ReturnReferences,
 			GroupBy:                h.groupBy,
-		}, func(req *api.SearchRequest) { req.Hybrid = h.Search() })
+		}, func(req *api.SearchRequest) { req.Hybrid = h.Search() }, "hybrid")
 	}
 }
 
@@ -102,7 +102,7 @@ func (h *Hybrid) Search() *api.Hybrid {
 	}
 }
 
-// GroupBy runs near text search with a GroupBy clause.
+// GroupBy runs hybrid search with a GroupBy clause.
 func (hf HybridFunc) GroupBy(ctx context.Context, h Hybrid, groupBy GroupBy) (*GroupByResult, error) {
 	h.groupBy = &groupBy
 	return queryGroupBy(ctx, hf, h)

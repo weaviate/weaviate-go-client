@@ -30,7 +30,7 @@ type OverAll struct {
 	groupBy *GroupBy
 }
 
-// OverAllFunc runs plain near text search.
+// OverAllFunc runs plain OverAll search.
 type OverAllFunc func(context.Context, OverAll) (*Result, error)
 
 // overAllFunc makes internal.Transport available to [query] via a closure.
@@ -50,7 +50,7 @@ func overAllFunc(t internal.Transport, rd api.RequestDefaults) OverAllFunc {
 			ReturnNestedProperties: oaf.ReturnNestedProperties,
 			ReturnReferences:       oaf.ReturnReferences,
 			GroupBy:                oaf.groupBy,
-		}, func(req *api.SearchRequest) {})
+		}, func(req *api.SearchRequest) {}, "over all")
 	}
 }
 
