@@ -148,7 +148,7 @@ func TestClient(t *testing.T) {
 						t.Context(),
 						ssb.Data{Object: &api.BatchObject{UUID: id}},
 					)
-					assert.Error(t, err, "%s is duplicated")
+					assert.Errorf(t, err, "%s is duplicated", id)
 					assert.Equal(t, task, duplicate, "expected original task")
 				}
 			}
@@ -163,7 +163,7 @@ func TestClient(t *testing.T) {
 			// Wait for all tasks to complete.
 			for _, task := range tasks {
 				<-task.Done()
-				require.LessOrEqual(t, task.TimesRetried(), retryLimit, "task %s retries", task.ID())
+				require.LessOrEqualf(t, task.TimesRetried(), retryLimit, "task %s retries", task.ID())
 
 				switch task.Err() {
 				case nil:
@@ -242,7 +242,7 @@ func (b *Batch) Add(v any) (added, full bool) {
 	defer require.LessOrEqual(b.T, cap(b.values), b.MessageCap, "batch grew beyond MessageCap")
 
 	assert.IsType(b.T, *new(string), v, "bad value in Add")
-	assert.NotContains(b.T, b.values, v, "duplicate value in batch %s", v)
+	assert.NotContainsf(b.T, b.values, v, "duplicate value in batch %s", v)
 
 	if len(b.values) == cap(b.values) {
 		return false, true
