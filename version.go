@@ -1,6 +1,6 @@
 package weaviate
 
-var version = "v6.0.0-beta.3"
+var version = "v6.0.0-rc.0"
 
 // Version reports the version of the package.
 // This is sent in the X-Weaviate-Client header for telemetry.
