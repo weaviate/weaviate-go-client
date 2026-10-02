@@ -427,10 +427,10 @@ func unmarshalAggregations(aggregations []*proto.AggregateReply_Aggregations_Agg
 			out.Date = append(out.Date, AggregateDateResult{
 				Property: property,
 				Count:    date.Count,
-				Min:      minimum,
-				Max:      maximum,
-				Mode:     mode,
-				Median:   median,
+				Min:      nilZero(minimum),
+				Max:      nilZero(maximum),
+				Mode:     nilZero(mode),
+				Median:   nilZero(median),
 			})
 		case agg.GetInt() != nil:
 			int := agg.GetInt()

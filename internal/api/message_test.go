@@ -2516,6 +2516,115 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "array properties",
+			reply: &proto.SearchReply{
+				Results: []*proto.SearchResult{
+					{
+						Properties: &proto.PropertiesResult{
+							TargetCollection: "Arrays",
+							NonRefProps: &proto.Properties{
+								Fields: map[string]*proto.Value{
+									"boolmask": array(&proto.ListValue{
+										Kind: &proto.ListValue_BoolValues{
+											BoolValues: &proto.BoolValues{
+												Values: []bool{true, false, true},
+											},
+										},
+									}),
+									"alphabet": array(&proto.ListValue{
+										Kind: &proto.ListValue_TextValues{
+											TextValues: &proto.TextValues{
+												Values: []string{"a", "b", "c"},
+											},
+										},
+									}),
+									"primes": array(&proto.ListValue{
+										Kind: &proto.ListValue_IntValues{
+											IntValues: &proto.IntValues{
+												Values: []byte{ // [1, 2, 3]
+													1, 0, 0, 0, 0, 0, 0, 0,
+													2, 0, 0, 0, 0, 0, 0, 0,
+													3, 0, 0, 0, 0, 0, 0, 0,
+												},
+											},
+										},
+									}),
+									"pies": array(&proto.ListValue{
+										Kind: &proto.ListValue_NumberValues{
+											NumberValues: &proto.NumberValues{
+												Values: []byte{ // [3.14, 3.1415]
+													31, 133, 235, 81, 184, 30, 9, 64,
+													111, 18, 131, 192, 202, 33, 9, 64,
+												},
+											},
+										},
+									}),
+									"users": array(&proto.ListValue{
+										Kind: &proto.ListValue_UuidValues{
+											UuidValues: &proto.UuidValues{
+												Values: []string{
+													testkit.UUID.String(),
+													testkit.UUID.String(),
+												},
+											},
+										},
+									}),
+									"calendar": array(&proto.ListValue{
+										Kind: &proto.ListValue_DateValues{
+											DateValues: &proto.DateValues{
+												Values: []string{
+													testkit.Now.Format(api.TimeLayout),
+												},
+											},
+										},
+									}),
+									"things": array(&proto.ListValue{
+										Kind: &proto.ListValue_ObjectValues{
+											ObjectValues: &proto.ObjectValues{
+												Values: []*proto.Properties{
+													{
+														Fields: map[string]*proto.Value{
+															"name": text("foo"),
+														},
+													},
+													{
+														Fields: map[string]*proto.Value{
+															"name": text("bar"),
+														},
+													},
+												},
+											},
+										},
+									}),
+								},
+							},
+						},
+					},
+				},
+			},
+			dest: new(api.SearchResponse),
+			want: &api.SearchResponse{
+				Results: []api.Object{
+					{
+						Collection: "Arrays",
+						Properties: map[string]any{
+							"boolmask": []bool{true, false, true},
+							"alphabet": []string{"a", "b", "c"},
+							"primes":   []int64{1, 2, 3},
+							"pies":     []float64{3.14, 3.1415},
+							"users":    []uuid.UUID{testkit.UUID, testkit.UUID},
+							"calendar": []time.Time{testkit.Now},
+							"things": []map[string]any{
+								{"name": "foo"},
+								{"name": "bar"},
+							},
+						},
+					},
+				},
+				GroupByResults: make([]api.Group, 0),
+			},
+		},
+		{
 			name: "references",
 			reply: &proto.SearchReply{
 				Results: []*proto.SearchResult{
@@ -2825,6 +2934,10 @@ func object(m map[string]*proto.Value) *proto.Value {
 	return &proto.Value{Kind: &proto.Value_ObjectValue{ObjectValue: &proto.Properties{
 		Fields: m,
 	}}}
+}
+
+func array(lv *proto.ListValue) *proto.Value {
+	return &proto.Value{Kind: &proto.Value_ListValue{ListValue: lv}}
 }
 
 // TestAggregateResponse_UnmarshalMessage tests that api.AggregateResponse reads

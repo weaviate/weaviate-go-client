@@ -1145,8 +1145,7 @@ func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
 			if err != nil {
 				return nil, err
 			}
-			dev.AssertNotNil(t, "time from string")
-			v = *t
+			v = t
 		case *proto.Value_UuidValue:
 			id, err := uuid.Parse(f.GetUuidValue())
 			if err != nil {
@@ -1160,10 +1159,52 @@ func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
 			}
 			dev.AssertNotNil(properties, "properties")
 			v = properties
+		case *proto.Value_ListValue:
+			list := f.GetListValue()
+			switch list.GetKind().(type) {
+			case *proto.ListValue_BoolValues:
+				v = list.GetBoolValues().GetValues()
+			case *proto.ListValue_TextValues:
+				v = list.GetTextValues().GetValues()
+			case *proto.ListValue_IntValues:
+				v = unmarshalIntegerArray(list.GetIntValues().GetValues())
+			case *proto.ListValue_NumberValues:
+				v = unmarshalNumberArray(list.GetNumberValues().GetValues())
+			case *proto.ListValue_UuidValues:
+				arr, err := convertArray(list.GetUuidValues().GetValues(), uuid.Parse)
+				if err != nil {
+					return nil, err
+				}
+				v = arr
+			case *proto.ListValue_DateValues:
+				arr, err := convertArray(list.GetDateValues().GetValues(), timeFromString)
+				if err != nil {
+					return nil, err
+				}
+				v = arr
+			case *proto.ListValue_ObjectValues:
+				arr, err := convertArray(list.GetObjectValues().GetValues(), unmarshalProperties)
+				if err != nil {
+					return nil, err
+				}
+				v = arr
+			}
 		default:
-			// TODO(dyma): support array types
+			return nil, fmt.Errorf("unsupported property type %T", f.GetKind())
 		}
 		out[name] = v
+	}
+	return out, nil
+}
+
+func convertArray[T any, U any](arr []T, f func(T) (U, error)) ([]U, error) {
+	out := make([]U, len(arr))
+	for i := range arr {
+		v, err := f(arr[i])
+		if err != nil {
+			return nil, err
+		}
+		out[i] = v
 	}
 	return out, nil
 }
