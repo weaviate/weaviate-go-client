@@ -81,7 +81,7 @@ func hybridFunc(t internal.Transport, rd api.RequestDefaults) HybridFunc {
 			ReturnNestedProperties: h.ReturnNestedProperties,
 			ReturnReferences:       h.ReturnReferences,
 			GroupBy:                h.groupBy,
-		}, func(req *api.SearchRequest) { req.Hybrid = h.Search() })
+		}, func(req *api.SearchRequest) { req.Hybrid = h.Search() }, "hybrid")
 	}
 }
 

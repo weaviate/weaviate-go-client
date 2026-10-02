@@ -94,7 +94,7 @@ func bm25Func(t internal.Transport, rd api.RequestDefaults) BM25Func {
 			ReturnNestedProperties: bm25.ReturnNestedProperties,
 			ReturnReferences:       bm25.ReturnReferences,
 			GroupBy:                bm25.groupBy,
-		}, func(req *api.SearchRequest) { req.BM25 = bm25.Search() })
+		}, func(req *api.SearchRequest) { req.BM25 = bm25.Search() }, "bm25")
 	}
 }
 

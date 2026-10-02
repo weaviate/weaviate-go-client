@@ -82,7 +82,7 @@ func nearObjectFunc(t internal.Transport, rd api.RequestDefaults) NearObjectFunc
 			ReturnNestedProperties: no.ReturnNestedProperties,
 			ReturnReferences:       no.ReturnReferences,
 			GroupBy:                no.groupBy,
-		}, func(req *api.SearchRequest) { req.NearObject = no.Search() })
+		}, func(req *api.SearchRequest) { req.NearObject = no.Search() }, "near object")
 	}
 }
 

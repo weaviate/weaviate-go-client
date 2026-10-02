@@ -50,7 +50,7 @@ func overAllFunc(t internal.Transport, rd api.RequestDefaults) OverAllFunc {
 			ReturnNestedProperties: oaf.ReturnNestedProperties,
 			ReturnReferences:       oaf.ReturnReferences,
 			GroupBy:                oaf.groupBy,
-		}, func(req *api.SearchRequest) {})
+		}, func(req *api.SearchRequest) {}, "over all")
 	}
 }
 

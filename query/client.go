@@ -130,7 +130,7 @@ type request struct {
 	GroupBy                *GroupBy
 }
 
-func query(ctx context.Context, t internal.Transport, r request, f func(*api.SearchRequest)) (*Result, error) {
+func query(ctx context.Context, t internal.Transport, r request, f func(*api.SearchRequest), label string) (*Result, error) {
 	req := &api.SearchRequest{
 		RequestDefaults:  r.RequestDefaults,
 		Limit:            r.Limit,
@@ -165,7 +165,7 @@ func query(ctx context.Context, t internal.Transport, r request, f func(*api.Sea
 
 	var resp api.SearchResponse
 	if err := t.Do(ctx, req, &resp); err != nil {
-		return nil, fmt.Errorf("near vector: %w", err)
+		return nil, fmt.Errorf("%s: %w", label, err)
 	}
 
 	// query was called from the GroupBy() method. This means we should put

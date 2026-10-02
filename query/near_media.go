@@ -89,7 +89,7 @@ func nearMediaFunc(t internal.Transport, rd api.RequestDefaults) NearMediaFunc {
 			ReturnNestedProperties: nm.ReturnNestedProperties,
 			ReturnReferences:       nm.ReturnReferences,
 			GroupBy:                nm.groupBy,
-		}, func(req *api.SearchRequest) { req.NearMedia = nm.Search() })
+		}, func(req *api.SearchRequest) { req.NearMedia = nm.Search() }, "near media")
 	}
 }
 
