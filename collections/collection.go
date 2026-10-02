@@ -23,6 +23,7 @@ type (
 		Replication   *ReplicationConfig
 		InvertedIndex *InvertedIndexConfig
 		MultiTenancy  *MultiTenancyConfig
+		ObjectTTL     *ObjectTTLConfig
 	}
 	Property struct {
 		Name             string
@@ -61,6 +62,7 @@ type (
 	BM25Config         api.BM25Config
 	StopwordConfig     api.StopwordConfig
 	MultiTenancyConfig api.MultiTenancyConfig
+	ObjectTTLConfig    api.ObjectTTLConfig
 )
 
 type (
@@ -212,6 +214,7 @@ func collectionToAPI(c *Collection) (api.Collection, error) {
 		References:   references,
 		Vectors:      vectors,
 		MultiTenancy: (*api.MultiTenancyConfig)(c.MultiTenancy),
+		ObjectTTL:    (*api.ObjectTTLConfig)(c.ObjectTTL),
 	}
 
 	if c.Sharding != nil {
@@ -349,6 +352,7 @@ func collectionFromAPI(c *api.Collection) (Collection, error) {
 		Replication:   replication,
 		InvertedIndex: invertedIndex,
 		MultiTenancy:  (*MultiTenancyConfig)(c.MultiTenancy),
+		ObjectTTL:     (*ObjectTTLConfig)(c.ObjectTTL),
 	}, nil
 }
 

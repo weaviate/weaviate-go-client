@@ -24,6 +24,7 @@ type (
 		Replication   *ReplicationConfig
 		InvertedIndex *InvertedIndexConfig
 		MultiTenancy  *MultiTenancyConfig
+		ObjectTTL     *ObjectTTLConfig
 	}
 	Property struct {
 		Name             string
@@ -75,6 +76,12 @@ type (
 	BM25Config         rest.BM25Config
 	StopwordConfig     rest.StopwordConfig
 	MultiTenancyConfig rest.MultiTenancyConfig
+	ObjectTTLConfig    struct {
+		Enabled              bool
+		PropertyName         string
+		DefaultTTL           time.Duration
+		FilterExpiredObjects bool
+	}
 )
 
 type VectorConfig struct {
@@ -492,6 +499,15 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 		out.MultiTenancyConfig = rest.MultiTenancyConfig(*c.MultiTenancy)
 	}
 
+	if c.ObjectTTL != nil {
+		out.ObjectTtlConfig = rest.ObjectTtlConfig{
+			Enabled:              c.ObjectTTL.Enabled,
+			DeleteOn:             c.ObjectTTL.PropertyName,
+			DefaultTtl:           int(c.ObjectTTL.DefaultTTL.Seconds()),
+			FilterExpiredObjects: c.ObjectTTL.FilterExpiredObjects,
+		}
+	}
+
 	return json.Marshal(&out)
 }
 
@@ -641,6 +657,12 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 			Enabled:              class.MultiTenancyConfig.Enabled,
 			AutoTenantCreation:   class.MultiTenancyConfig.AutoTenantCreation,
 			AutoTenantActivation: class.MultiTenancyConfig.AutoTenantActivation,
+		},
+		ObjectTTL: &ObjectTTLConfig{
+			Enabled:              class.ObjectTtlConfig.Enabled,
+			PropertyName:         class.ObjectTtlConfig.DeleteOn,
+			DefaultTTL:           time.Duration(class.ObjectTtlConfig.DefaultTtl) * time.Second,
+			FilterExpiredObjects: class.ObjectTtlConfig.FilterExpiredObjects,
 		},
 	}
 
