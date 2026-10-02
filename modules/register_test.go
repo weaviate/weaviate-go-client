@@ -5,8 +5,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/modules"
+	"github.com/weaviate/weaviate-go-client/v6/modules/google"
+	"github.com/weaviate/weaviate-go-client/v6/modules/huggingface"
 	"github.com/weaviate/weaviate-go-client/v6/modules/model2vec"
+	"github.com/weaviate/weaviate-go-client/v6/modules/openai"
 	"github.com/weaviate/weaviate-go-client/v6/modules/selfprovided"
 	"github.com/weaviate/weaviate-go-client/v6/modules/weaviate"
 )
@@ -31,7 +35,7 @@ func TestModules(t *testing.T) {
 				Properties: []string{"title", "lyrics"},
 			},
 			conf: map[string]any{
-				"inferenceURL": "example.com",
+				"inferenceUrl": "example.com",
 				"properties":   []string{"title", "lyrics"},
 			},
 		},
@@ -58,6 +62,102 @@ func TestModules(t *testing.T) {
 		{
 			name:   "text2vec-weaviate",
 			module: weaviate.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "text2vec-openai",
+			module: openai.Text2Vec{
+				Model:        "text-embedding-3-large",
+				Dimensions:   1024,
+				ModelType:    openai.TextModel,
+				ModelVersion: "3",
+				BaseURL:      "https://proxy.example.com",
+				Endpoint:     "/v2/embeddings",
+				ResourceName: "my-resource",
+				DeploymentID: "my-deployment",
+				Properties:   []string{"title", "lyrics"},
+			},
+			conf: map[string]any{
+				"model":        "text-embedding-3-large",
+				"dimensions":   1024,
+				"type":         openai.TextModel,
+				"modelVersion": "3",
+				"baseURL":      "https://proxy.example.com",
+				"endpoint":     "/v2/embeddings",
+				"resourceName": "my-resource",
+				"deploymentId": "my-deployment",
+				"properties":   []string{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-openai",
+			module: openai.Text2Vec{Dimensions: 256},
+			conf:   map[string]any{"dimensions": 256},
+		},
+		{
+			name:   "text2vec-openai",
+			module: openai.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "text2vec-google",
+			module: google.Text2Vec{
+				APIEndpoint:   "us-east1-aiplatform.googleapis.com",
+				ProjectID:     "my-project",
+				Model:         "gemini-embedding-001",
+				Location:      "us-east1",
+				Dimensions:    1536,
+				TaskType:      google.SemanticSimilarity,
+				TitleProperty: "title",
+				Properties:    []string{"title", "lyrics"},
+			},
+			conf: map[string]any{
+				"apiEndpoint":   "us-east1-aiplatform.googleapis.com",
+				"projectId":     "my-project",
+				"model":         "gemini-embedding-001",
+				"location":      "us-east1",
+				"dimensions":    1536,
+				"taskType":      google.SemanticSimilarity,
+				"titleProperty": "title",
+				"properties":    []string{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-google",
+			module: google.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "text2vec-huggingface",
+			module: huggingface.Text2Vec{
+				Model:        "sentence-transformers/all-MiniLM-L6-v2",
+				EndpointURL:  "https://my-endpoint.huggingface.cloud",
+				WaitForModel: testkit.Ptr(true),
+				UseGPU:       testkit.Ptr(true),
+				UseCache:     testkit.Ptr(false),
+				Properties:   []string{"title", "lyrics"},
+			},
+			conf: map[string]any{
+				"model":       "sentence-transformers/all-MiniLM-L6-v2",
+				"endpointURL": "https://my-endpoint.huggingface.cloud",
+				"options": map[string]any{
+					"waitForModel": testkit.Ptr(true),
+					"useGPU":       testkit.Ptr(true),
+					"useCache":     testkit.Ptr(false),
+				},
+				"properties": []string{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-huggingface",
+			module: huggingface.Text2Vec{UseCache: testkit.Ptr(false)},
+			conf: map[string]any{
+				"options": map[string]any{"useCache": testkit.Ptr(false)},
+			},
+		},
+		{
+			name:   "text2vec-huggingface",
+			module: huggingface.Text2Vec{},
 			conf:   map[string]any{},
 		},
 	} {

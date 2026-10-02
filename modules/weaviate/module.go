@@ -6,13 +6,12 @@ func init() {
 	modules.Register(*new(Text2Vec))
 }
 
-// Text2Vec is a vectorizer for text properties
-// based on the text2vec-weaviate module.
+// Text2Vec is a vectorizer for text properties based on the text2vec-weaviate module.
 type Text2Vec struct {
 	URL        string   `json:"baseURL,omitempty"`
 	Properties []string `json:"properties,omitempty"`
 	Model      string   `json:"model,omitempty"`
-	Dimensions int      `json:"dimensions,omitempty"`
+	Dimensions int      `json:"dimensions,omitzero"`
 }
 
 func (Text2Vec) Name() string { return "text2vec-weaviate" }
