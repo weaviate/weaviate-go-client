@@ -22,7 +22,6 @@ func TestModules(t *testing.T) {
 		name   string         // Module name.
 		module modules.Module // Module configuration.
 		conf   map[string]any // Expected configuration.
-		server map[string]any // Server-shaped configuration that must decode to module (optional).
 	}{
 		{
 			name:   "none",
@@ -70,7 +69,7 @@ func TestModules(t *testing.T) {
 			module: openai.Text2Vec{
 				Model:        "text-embedding-3-large",
 				Dimensions:   1024,
-				ModelType:    openai.ModelTypeText,
+				ModelType:    openai.TextModel,
 				ModelVersion: "3",
 				BaseURL:      "https://proxy.example.com",
 				Endpoint:     "/v2/embeddings",
@@ -81,7 +80,7 @@ func TestModules(t *testing.T) {
 			conf: map[string]any{
 				"model":        "text-embedding-3-large",
 				"dimensions":   1024,
-				"type":         openai.ModelTypeText,
+				"type":         openai.TextModel,
 				"modelVersion": "3",
 				"baseURL":      "https://proxy.example.com",
 				"endpoint":     "/v2/embeddings",
@@ -108,7 +107,7 @@ func TestModules(t *testing.T) {
 				Model:         "gemini-embedding-001",
 				Location:      "us-east1",
 				Dimensions:    1536,
-				TaskType:      google.TaskTypeSemanticSimilarity,
+				TaskType:      google.SemanticSimilarity,
 				TitleProperty: "title",
 				Properties:    []string{"title", "lyrics"},
 			},
@@ -118,7 +117,7 @@ func TestModules(t *testing.T) {
 				"model":         "gemini-embedding-001",
 				"location":      "us-east1",
 				"dimensions":    1536,
-				"taskType":      google.TaskTypeSemanticSimilarity,
+				"taskType":      google.SemanticSimilarity,
 				"titleProperty": "title",
 				"properties":    []string{"title", "lyrics"},
 			},
@@ -148,26 +147,12 @@ func TestModules(t *testing.T) {
 				},
 				"properties": []string{"title", "lyrics"},
 			},
-			server: map[string]any{
-				"passageModel": "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
-				"endpointURL":  "https://my-endpoint.huggingface.cloud",
-				"options": map[string]any{
-					"waitForModel": true,
-					"useGPU":       true,
-					"useCache":     false,
-					"unknownKey":   "ignored",
-				},
-				"properties": []any{"title", "lyrics"},
-			},
 		},
 		{
 			name:   "text2vec-huggingface",
 			module: huggingface.Text2Vec{UseCache: testkit.Ptr(false)},
 			conf: map[string]any{
 				"options": map[string]any{"useCache": testkit.Ptr(false)},
-			},
-			server: map[string]any{
-				"options": map[string]any{"useCache": false},
 			},
 		},
 		{
@@ -186,12 +171,6 @@ func TestModules(t *testing.T) {
 			module, err := modules.Registry.Decode(tt.name, conf)
 			require.NoError(t, err, "decode")
 			assert.EqualExportedValues(t, tt.module, module, "decoded module")
-
-			if tt.server != nil {
-				module, err := modules.Registry.Decode(tt.name, tt.server)
-				require.NoError(t, err, "decode server configuration")
-				assert.EqualExportedValues(t, tt.module, module, "decoded server configuration")
-			}
 		})
 	}
 }

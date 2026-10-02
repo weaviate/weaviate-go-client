@@ -12,28 +12,25 @@ func init() {
 // Text2Vec is a vectorizer for text properties based on the text2vec-huggingface module.
 // Unset fields inherit the server defaults.
 //
-// Model and PassageModel are mutually exclusive; the server rejects a config that sets both.
-//
 // See [Weaviate Docs - text2vec-huggingface].
 //
 // [Weaviate Docs - text2vec-huggingface]: https://docs.weaviate.io/weaviate/model-providers/huggingface/embeddings
 type Text2Vec struct {
+	// EndpointURL points to a dedicated inference endpoint.
+	EndpointURL string
 	// Model is the Hugging Face model ID.
 	Model string
-	// PassageModel is an alias the server reads when Model is unset.
-	// Prefer Model; this field keeps configs created by other clients intact.
+	// Properties limits vectorization to these properties.
+	// By default, all text properties are vectorized.
+	Properties []string
+	// PassageModel keeps configs created by other clients intact. Prefer Model.
 	PassageModel string
-	// EndpointURL points to a dedicated inference endpoint; when set, the server skips model checks.
-	EndpointURL string
 	// WaitForModel waits for the model to be loaded.
 	WaitForModel *bool
 	// UseGPU runs inference on a GPU.
 	UseGPU *bool
 	// UseCache enables the Inference API cache.
 	UseCache *bool
-	// Properties limits vectorization to these properties.
-	// By default, all text properties are vectorized.
-	Properties []string
 }
 
 func (Text2Vec) Name() string { return "text2vec-huggingface" }
@@ -43,8 +40,7 @@ var (
 	_ internal.MapDecoder = (*Text2Vec)(nil)
 )
 
-// text2VecJSON is the wire shape of [Text2Vec]: the inference flags are nested under "options".
-type text2VecJSON struct {
+type text2vecJSON struct {
 	Model        string       `json:"model,omitempty"`
 	PassageModel string       `json:"passageModel,omitempty"`
 	EndpointURL  string       `json:"endpointURL,omitempty"`
@@ -69,7 +65,7 @@ func (t2v Text2Vec) EncodeMap() (map[string]any, error) {
 	}
 
 	dest := make(map[string]any)
-	if err := internal.Encode(text2VecJSON{
+	if err := internal.Encode(text2vecJSON{
 		Model:        t2v.Model,
 		PassageModel: t2v.PassageModel,
 		EndpointURL:  t2v.EndpointURL,
@@ -82,7 +78,7 @@ func (t2v Text2Vec) EncodeMap() (map[string]any, error) {
 }
 
 func (t2v *Text2Vec) DecodeMap(m map[string]any) error {
-	var dest text2VecJSON
+	var dest text2vecJSON
 	if err := internal.Decode(m, &dest); err != nil {
 		return err
 	}
