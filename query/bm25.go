@@ -74,7 +74,7 @@ func MinimumTokensMatch(n int32) KeywordSimilarity {
 	return KeywordSimilarity{mininumTokensMatch: &n}
 }
 
-// BM25Func runs plain near text search.
+// BM25Func runs plain BM25 search.
 type BM25Func func(context.Context, BM25) (*Result, error)
 
 // bm25Func makes internal.Transport available to [query] via a closure.
@@ -111,7 +111,7 @@ func (bm25 *BM25) Search() *api.BM25 {
 	}
 }
 
-// GroupBy runs near text search with a GroupBy clause.
+// GroupBy runs BM25 search with a GroupBy clause.
 func (bf BM25Func) GroupBy(ctx context.Context, bm25 BM25, groupBy GroupBy) (*GroupByResult, error) {
 	bm25.groupBy = &groupBy
 	return queryGroupBy(ctx, bf, bm25)

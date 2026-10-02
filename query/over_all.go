@@ -30,7 +30,7 @@ type OverAll struct {
 	groupBy *GroupBy
 }
 
-// OverAllFunc runs plain near text search.
+// OverAllFunc runs plain OverAll search.
 type OverAllFunc func(context.Context, OverAll) (*Result, error)
 
 // overAllFunc makes internal.Transport available to [query] via a closure.
