@@ -59,7 +59,6 @@ func (sim *Simulation) newServer(conn chan *Stream) *Server {
 	}
 }
 
-func (sim *Simulation) Duplicate() bool    { return sim.prng.Chance(1, 100) }
 func (sim *Simulation) Backoff() bool      { return sim.prng.Chance(1, 3) }
 func (sim *Simulation) BadNetwork() bool   { return sim.prng.Chance(1, 30) }
 func (sim *Simulation) ShuttingDown() bool { return sim.prng.Chance(1, 50) }
@@ -89,11 +88,9 @@ func TestClient(t *testing.T) {
 
 	var (
 		total int // Total TaskCount across all runs.
-		added int // Added to batch stream.
 		seen  int // Arrived to the server.
 		ok    int // Succeeded.
 		fail  int // Failed.
-		dupl  int // Duplicated.
 	)
 
 	for range N {
@@ -139,16 +136,18 @@ func TestClient(t *testing.T) {
 
 				if assert.NotNil(t, task, "nil task") {
 					tasks = append(tasks, task)
-					added++
 				}
 
-				if sim.Duplicate() {
-					dupl++
+				if i < (sim.BatchSize / 2) {
+					// The first batch will not be flushed until sim.BatchSize
+					// objects are added to it. This way we can guarantee that
+					// task #i is not finished and check that its duplicate is
+					// rejected.
 					duplicate, err := c.Add(
 						t.Context(),
 						ssb.Data{Object: &api.BatchObject{UUID: id}},
 					)
-					assert.Error(t, err, "%s is duplicated")
+					assert.Errorf(t, err, "%s is duplicated", id)
 					assert.Equal(t, task, duplicate, "expected original task")
 				}
 			}
@@ -163,7 +162,7 @@ func TestClient(t *testing.T) {
 			// Wait for all tasks to complete.
 			for _, task := range tasks {
 				<-task.Done()
-				require.LessOrEqual(t, task.TimesRetried(), retryLimit, "task %s retries", task.ID())
+				require.LessOrEqualf(t, task.TimesRetried(), retryLimit, "task %s retries", task.ID())
 
 				switch task.Err() {
 				case nil:
@@ -181,7 +180,6 @@ func TestClient(t *testing.T) {
 	require.GreaterOrEqual(t, seen, int(float64(total)*.9), "over 90% of all data arrive at the server")
 	require.GreaterOrEqual(t, ok, int(float64(seen)*.75), "over 75% of submitted tasks succeed")
 	require.LessOrEqual(t, fail, int(float64(seen)*.25), "under 25% of submitted tasks fail")
-	require.GreaterOrEqual(t, dupl, int(float64(added)*.005), "at least 1% of added tasks were duplicated")
 }
 
 type (
@@ -242,7 +240,7 @@ func (b *Batch) Add(v any) (added, full bool) {
 	defer require.LessOrEqual(b.T, cap(b.values), b.MessageCap, "batch grew beyond MessageCap")
 
 	assert.IsType(b.T, *new(string), v, "bad value in Add")
-	assert.NotContains(b.T, b.values, v, "duplicate value in batch %s", v)
+	assert.NotContainsf(b.T, b.values, v, "duplicate value in batch %s", v)
 
 	if len(b.values) == cap(b.values) {
 		return false, true
