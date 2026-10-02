@@ -3,7 +3,9 @@ package collections_test
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
 	"github.com/weaviate/weaviate-go-client/v6/collections/compression"
@@ -120,6 +122,43 @@ func TestConfigClient_update(t *testing.T) {
 											"searchProbe": 666,
 										},
 									},
+								},
+							},
+						},
+					}),
+				},
+			},
+		},
+		{
+			name: "update replication config",
+			update: func(ctx context.Context, c *collections.ConfigClient) error {
+				return c.UpdateReplicationConfig(t.Context(), func(rc *collections.ReplicationConfig) {
+					rc.DeletionStrategy = collections.DeleteOnConflict
+					if assert.NotNil(t, rc.AsyncReplication, "async replication config") {
+						rc.AsyncReplication.PropagationTimeout = 19 * time.Second
+					}
+				})
+			},
+			stubs: []testkit.Stub[any, any]{
+				returnCollection(api.Collection{
+					Name: rd.CollectionName,
+					Replication: &api.ReplicationConfig{
+						DeletionStrategy: api.NoAutomatedResolution,
+						AsyncReplication: &api.AsyncReplicationConfig{
+							PropagationTimeout: time.Hour,
+							DiffBatchSize:      92,
+						},
+					},
+				}),
+				{
+					Request: testkit.Ptr[any](&api.UpdateCollectionConfigRequest{
+						Collection: api.Collection{
+							Name: rd.CollectionName,
+							Replication: &api.ReplicationConfig{
+								DeletionStrategy: api.DeleteOnConflict,
+								AsyncReplication: &api.AsyncReplicationConfig{
+									PropagationTimeout: 19 * time.Second,
+									DiffBatchSize:      92,
 								},
 							},
 						},

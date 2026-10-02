@@ -172,50 +172,73 @@ func (c *ConfigClient) SetShardStatus(ctx context.Context, options ShardStatusOp
 }
 
 func (c *ConfigClient) SetPropertyDescription(ctx context.Context, propertyName, description string) error {
-	collection, err := c.Get(ctx)
-	if err != nil {
+	if err := c.updateCollection(ctx, func(collection *Collection) (err error) {
+		var ok bool
+		for i := range collection.Properties {
+			p := &collection.Properties[i]
+			if p.Name == propertyName {
+				p.Description = description
+				ok = true
+			}
+		}
+		if !ok {
+			err = fmt.Errorf("set property description: no such property %q", propertyName)
+		}
+		return
+	}); err != nil {
 		return fmt.Errorf("set property description: %w", err)
 	}
-
-	var ok bool
-	for i := range collection.Properties {
-		p := &collection.Properties[i]
-		if p.Name == propertyName {
-			p.Description = description
-			ok = true
-		}
-	}
-	if !ok {
-		return fmt.Errorf("set property description: no such property %q", propertyName)
-	}
-	return c.updateCollection(ctx, *collection)
+	return nil
 }
 
 func (c *ConfigClient) UpdateVectorConfig(ctx context.Context, vectorName string, f func(vc *VectorConfig)) error {
-	collection, err := c.Get(ctx)
-	if err != nil {
-		return fmt.Errorf("update vector config: %w", err)
+	if err := c.updateCollection(ctx, func(collection *Collection) (err error) {
+		vc, ok := collection.Vectors[vectorName]
+		if !ok {
+			err = fmt.Errorf("update vector config: no such vector %q", vectorName)
+		}
+		f(&vc)
+		collection.Vectors[vectorName] = vc
+		return
+	}); err != nil {
+		return fmt.Errorf("set property description: %w", err)
 	}
-
-	vc, ok := collection.Vectors[vectorName]
-	if !ok {
-		return fmt.Errorf("update vector config: no such vector %q", vectorName)
-	}
-	f(&vc)
-	collection.Vectors[vectorName] = vc
-	return c.updateCollection(ctx, *collection)
+	return nil
 }
 
-func (c *ConfigClient) updateCollection(ctx context.Context, collection Collection) error {
-	x, err := collectionToAPI(&collection)
+func (c *ConfigClient) UpdateReplicationConfig(ctx context.Context, f func(rc *ReplicationConfig)) error {
+	if err := c.updateCollection(ctx, func(collection *Collection) (err error) {
+		rc := collection.Replication
+		if rc == nil {
+			rc = new(ReplicationConfig)
+		}
+		f(rc)
+		return
+	}); err != nil {
+		return fmt.Errorf("update replication config: %w", err)
+	}
+	return nil
+}
+
+func (c *ConfigClient) updateCollection(ctx context.Context, f func(*Collection) error) error {
+	collection, err := c.Get(ctx)
 	if err != nil {
-		return fmt.Errorf("update collection config: %w", err)
+		return err
+	}
+
+	if err := f(collection); err != nil {
+		return err
+	}
+
+	x, err := collectionToAPI(collection)
+	if err != nil {
+		return err
 	}
 
 	req := &api.UpdateCollectionConfigRequest{Collection: x}
 
 	if err := c.transport.Do(ctx, req, nil); err != nil {
-		return fmt.Errorf("update collection config: %w", err)
+		return err
 	}
 	return nil
 }
