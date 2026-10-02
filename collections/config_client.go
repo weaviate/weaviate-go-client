@@ -234,6 +234,20 @@ func (c *ConfigClient) UpdateInvertedIndexConfig(ctx context.Context, f func(iic
 	return nil
 }
 
+func (c *ConfigClient) UpdateObjectTTLConfig(ctx context.Context, f func(ttl *ObjectTTLConfig)) error {
+	if err := c.updateCollection(ctx, func(collection *Collection) (err error) {
+		ttl := collection.ObjectTTL
+		if ttl == nil {
+			ttl = new(ObjectTTLConfig)
+		}
+		f(ttl)
+		return
+	}); err != nil {
+		return fmt.Errorf("update object TTL config: %w", err)
+	}
+	return nil
+}
+
 func (c *ConfigClient) updateCollection(ctx context.Context, f func(*Collection) error) error {
 	collection, err := c.Get(ctx)
 	if err != nil {

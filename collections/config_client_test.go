@@ -12,6 +12,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/collections/vectorindex"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
+	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 )
 
 func TestNewConfigClient(t *testing.T) {
@@ -79,6 +80,8 @@ func TestConfigClient_update(t *testing.T) {
 			},
 			update: func(ctx context.Context, c *collections.ConfigClient) error {
 				return c.UpdateVectorConfig(ctx, "lyrics_vec", func(vc *collections.VectorConfig) {
+					require.NotNil(t, vc, "vector config")
+
 					vc.Compression = compression.BQ{
 						RescoreLimit: 92,
 					}
@@ -124,6 +127,8 @@ func TestConfigClient_update(t *testing.T) {
 			},
 			update: func(ctx context.Context, c *collections.ConfigClient) error {
 				return c.UpdateReplicationConfig(t.Context(), func(rc *collections.ReplicationConfig) {
+					require.NotNil(t, rc, "replication config")
+
 					rc.DeletionStrategy = collections.DeleteOnConflict
 					if assert.NotNil(t, rc.AsyncReplication, "async replication config") {
 						rc.AsyncReplication.PropagationTimeout = 19 * time.Second
@@ -151,8 +156,9 @@ func TestConfigClient_update(t *testing.T) {
 				},
 			},
 			update: func(ctx context.Context, c *collections.ConfigClient) error {
-				return c.UpdateInvertedIndexConfig(t.Context(), func(rc *collections.InvertedIndexConfig) {
-					rc.IndexPropertyLength = true
+				return c.UpdateInvertedIndexConfig(t.Context(), func(iic *collections.InvertedIndexConfig) {
+					require.NotNil(t, iic, "inverted index config")
+					iic.IndexPropertyLength = true
 				})
 			},
 			want: api.Collection{
@@ -160,6 +166,32 @@ func TestConfigClient_update(t *testing.T) {
 				InvertedIndex: &api.InvertedIndexConfig{
 					IndexTimestamps:     true,
 					IndexPropertyLength: true,
+				},
+			},
+		},
+		{
+			name: "update object ttl config",
+			current: api.Collection{
+				Name: rd.CollectionName,
+				ObjectTTL: &api.ObjectTTLConfig{
+					Enabled:      false,
+					DefaultTTL:   5 * time.Second,
+					PropertyName: filter.CreatedAt,
+				},
+			},
+			update: func(ctx context.Context, c *collections.ConfigClient) error {
+				return c.UpdateObjectTTLConfig(t.Context(), func(ttl *collections.ObjectTTLConfig) {
+					require.NotNil(t, ttl, "object TTL config")
+					ttl.Enabled = true
+					ttl.PropertyName = filter.LastUpdatedAt
+				})
+			},
+			want: api.Collection{
+				Name: rd.CollectionName,
+				ObjectTTL: &api.ObjectTTLConfig{
+					Enabled:      true,
+					DefaultTTL:   5 * time.Second,
+					PropertyName: filter.LastUpdatedAt,
 				},
 			},
 		},

@@ -207,6 +207,12 @@ func TestClient_Create(t *testing.T) {
 					AutoTenantActivation: true,
 					AutoTenantCreation:   false,
 				},
+				ObjectTTL: &collections.ObjectTTLConfig{
+					Enabled:              true,
+					PropertyName:         "timestamp",
+					DefaultTTL:           72 * time.Hour,
+					FilterExpiredObjects: false,
+				},
 			},
 			stubs: []testkit.Stub[api.CreateCollectionRequest, api.Collection]{
 				{
@@ -323,6 +329,12 @@ func TestClient_Create(t *testing.T) {
 								Enabled:              true,
 								AutoTenantActivation: true,
 								AutoTenantCreation:   false,
+							},
+							ObjectTTL: &api.ObjectTTLConfig{
+								Enabled:              true,
+								PropertyName:         "timestamp",
+								DefaultTTL:           72 * time.Hour,
+								FilterExpiredObjects: false,
 							},
 						},
 					},
@@ -500,6 +512,12 @@ func TestClient_GetConfig(t *testing.T) {
 							AutoTenantActivation: true,
 							AutoTenantCreation:   false,
 						},
+						ObjectTTL: &api.ObjectTTLConfig{
+							Enabled:              true,
+							PropertyName:         "timestamp",
+							DefaultTTL:           72 * time.Hour,
+							FilterExpiredObjects: false,
+						},
 					},
 				},
 			},
@@ -600,6 +618,12 @@ func TestClient_GetConfig(t *testing.T) {
 					Enabled:              true,
 					AutoTenantActivation: true,
 					AutoTenantCreation:   false,
+				},
+				ObjectTTL: &collections.ObjectTTLConfig{
+					Enabled:              true,
+					PropertyName:         "timestamp",
+					DefaultTTL:           72 * time.Hour,
+					FilterExpiredObjects: false,
 				},
 			},
 		},
