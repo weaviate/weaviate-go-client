@@ -23,8 +23,6 @@ type Text2Vec struct {
 	// Properties limits vectorization to these properties.
 	// By default, all text properties are vectorized.
 	Properties []string
-	// PassageModel keeps configs created by other clients intact. Prefer Model.
-	PassageModel string
 	// WaitForModel waits for the model to be loaded.
 	WaitForModel *bool
 	// UseGPU runs inference on a GPU.
@@ -66,11 +64,10 @@ func (t2v Text2Vec) EncodeMap() (map[string]any, error) {
 
 	dest := make(map[string]any)
 	if err := internal.Encode(text2vecJSON{
-		Model:        t2v.Model,
-		PassageModel: t2v.PassageModel,
-		EndpointURL:  t2v.EndpointURL,
-		Options:      options,
-		Properties:   t2v.Properties,
+		Model:       t2v.Model,
+		EndpointURL: t2v.EndpointURL,
+		Options:     options,
+		Properties:  t2v.Properties,
 	}, dest); err != nil {
 		return nil, err
 	}
@@ -84,10 +81,13 @@ func (t2v *Text2Vec) DecodeMap(m map[string]any) error {
 	}
 
 	*t2v = Text2Vec{
-		Model:        dest.Model,
-		PassageModel: dest.PassageModel,
-		EndpointURL:  dest.EndpointURL,
-		Properties:   dest.Properties,
+		Model:       dest.Model,
+		EndpointURL: dest.EndpointURL,
+		Properties:  dest.Properties,
+	}
+	// passageModel is a legacy alias for model. Fold it into Model so old configs read back correctly.
+	if t2v.Model == "" {
+		t2v.Model = dest.PassageModel
 	}
 	if opt := dest.Options; opt != nil {
 		t2v.WaitForModel = opt.WaitForModel

@@ -130,7 +130,7 @@ func TestModules(t *testing.T) {
 		{
 			name: "text2vec-huggingface",
 			module: huggingface.Text2Vec{
-				PassageModel: "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
+				Model:        "sentence-transformers/all-MiniLM-L6-v2",
 				EndpointURL:  "https://my-endpoint.huggingface.cloud",
 				WaitForModel: testkit.Ptr(true),
 				UseGPU:       testkit.Ptr(true),
@@ -138,8 +138,8 @@ func TestModules(t *testing.T) {
 				Properties:   []string{"title", "lyrics"},
 			},
 			conf: map[string]any{
-				"passageModel": "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
-				"endpointURL":  "https://my-endpoint.huggingface.cloud",
+				"model":       "sentence-transformers/all-MiniLM-L6-v2",
+				"endpointURL": "https://my-endpoint.huggingface.cloud",
 				"options": map[string]any{
 					"waitForModel": testkit.Ptr(true),
 					"useGPU":       testkit.Ptr(true),
