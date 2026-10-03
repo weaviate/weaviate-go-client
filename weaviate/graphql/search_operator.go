@@ -24,7 +24,7 @@ func (bm25 *BM25SearchOperatorBuilder) WithOperator(operator string) *BM25Search
 
 // WithMinimumMatch is only relevant for BM25SearchOperatorOr operator.
 func (bm25 *BM25SearchOperatorBuilder) WithMinimumMatch(times int) *BM25SearchOperatorBuilder {
-	if bm25.operator != BM25SearchOperatorAnd && bm25.operator != BM25SearchOperatorAndCross {
+	if bm25.operator == BM25SearchOperatorOr {
 		bm25.minimumMatch = int32(times)
 	}
 	return bm25

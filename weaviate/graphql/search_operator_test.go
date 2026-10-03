@@ -8,6 +8,11 @@ import (
 )
 
 func TestSearchOperatorBuilder(t *testing.T) {
+	t.Run("unspecified operator ignores minimum match", func(t *testing.T) {
+		var builder BM25SearchOperatorBuilder
+		builder.WithMinimumMatch(4)
+		require.Zero(t, builder.minimumMatch)
+	})
 	t.Run("BM25SearchOperatorAnd", func(t *testing.T) {
 		var builder BM25SearchOperatorBuilder
 		builder.WithOperator(BM25SearchOperatorAnd).WithMinimumMatch(4)
