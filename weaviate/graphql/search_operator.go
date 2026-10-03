@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	BM25SearchOperatorAnd = "And"
-	BM25SearchOperatorOr  = "Or"
+	BM25SearchOperatorAnd      = "And"
+	BM25SearchOperatorOr       = "Or"
+	BM25SearchOperatorAndCross = "AndCross"
 )
 
 type BM25SearchOperatorBuilder struct {
@@ -23,7 +24,7 @@ func (bm25 *BM25SearchOperatorBuilder) WithOperator(operator string) *BM25Search
 
 // WithMinimumMatch is only relevant for BM25SearchOperatorOr operator.
 func (bm25 *BM25SearchOperatorBuilder) WithMinimumMatch(times int) *BM25SearchOperatorBuilder {
-	if bm25.operator != BM25SearchOperatorAnd {
+	if bm25.operator == BM25SearchOperatorOr {
 		bm25.minimumMatch = int32(times)
 	}
 	return bm25
@@ -37,6 +38,8 @@ func (bm25 *BM25SearchOperatorBuilder) togrpc() *pb.SearchOperatorOptions {
 	switch bm25.operator {
 	case BM25SearchOperatorAnd:
 		return &pb.SearchOperatorOptions{Operator: pb.SearchOperatorOptions_OPERATOR_AND}
+	case BM25SearchOperatorAndCross:
+		return &pb.SearchOperatorOptions{Operator: pb.SearchOperatorOptions_OPERATOR_AND_CROSS}
 	case BM25SearchOperatorOr:
 		return &pb.SearchOperatorOptions{Operator: pb.SearchOperatorOptions_OPERATOR_OR, MinimumOrTokensMatch: &bm25.minimumMatch}
 	default:
