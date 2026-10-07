@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/query"
 	"github.com/weaviate/weaviate-go-client/v6/types"
@@ -13,9 +14,10 @@ import (
 
 func TestDecode(t *testing.T) {
 	type Song struct {
-		Title    string `json:"title"`
-		Duration int    `json:"duration_sec"`
-		Artist   string `json:"artist"`
+		Title    string               `json:"title"`
+		Duration int                  `json:"duration_sec"`
+		Artist   string               `json:"artist"`
+		Location types.GeoCoordinates `json:"location"`
 	}
 
 	r := query.Result{
@@ -89,6 +91,37 @@ func TestDecode(t *testing.T) {
 	t.Run("nil dest", func(t *testing.T) {
 		//nolint:errcheck
 		require.NotPanics(t, func() { query.Decode[Song](&r, nil) })
+	})
+
+	t.Run("geo coordinates", func(t *testing.T) {
+		r := query.Result{
+			Objects: []query.Object[map[string]any]{
+				{
+					Object: types.Object[map[string]any]{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"location": api.GeoCoordinates{
+								Latitude:  -37.815389,
+								Longitude: 144.970806,
+							},
+						},
+					},
+					Metadata: query.Metadata{Distance: testkit.Ptr[float32](.22)},
+				},
+			},
+		}
+
+		var dest []query.Object[Song]
+
+		err := query.Decode(&r, &dest)
+		require.NoError(t, err, "decode error")
+		require.Len(t, dest, len(r.Objects))
+
+		got := dest[0].Properties
+		require.Equal(t, types.GeoCoordinates{
+			Latitude:  -37.815389,
+			Longitude: 144.970806,
+		}, got.Location, "location value")
 	})
 }
 
