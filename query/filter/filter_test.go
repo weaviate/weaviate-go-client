@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/query/filter"
+	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
 func TestFilter(t *testing.T) {
@@ -140,6 +141,28 @@ func TestFilter(t *testing.T) {
 				Operator: api.FilterOperatorContainsNone,
 				Target:   []string{"gears"},
 				Value:    []int{1, 2, 3},
+			},
+		},
+		{
+			name: "within geo range",
+			expr: filter.Cond{
+				Target:   "location",
+				Operator: filter.WithinGeoRange,
+				Value: filter.GeoRange(types.GeoCoordinates{
+					Latitude:  -37.815389,
+					Longitude: 144.970806,
+				}, 80),
+			},
+			want: &api.FilterExpr{
+				Operator: api.FilterOperatorWithinGeoRange,
+				Target:   []string{"location"},
+				Value: api.GeoRange{
+					Location: api.GeoCoordinates{
+						Latitude:  -37.815389,
+						Longitude: 144.970806,
+					},
+					Distance: 80,
+				},
 			},
 		},
 		{

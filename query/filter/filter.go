@@ -5,6 +5,7 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
 // Expr describes a filter expression. Expressions can be combined into [And] and [Or] groups.
@@ -32,6 +33,7 @@ const (
 	ContainsAll      = Operator(api.FilterOperatorContainsAll)
 	ContainsAny      = Operator(api.FilterOperatorContainsAny)
 	ContainsNone     = Operator(api.FilterOperatorContainsNone)
+	WithinGeoRange   = Operator(api.FilterOperatorWithinGeoRange)
 )
 
 type Cond struct {
@@ -189,6 +191,14 @@ func (r Reference) Count() string {
 
 	path[l-1] = "count(" + path[l-1] + ")"
 	return join(path...)
+}
+
+// GeoRange creates the value for the [WithinGeoRange] expression.
+func GeoRange(location types.GeoCoordinates, distance float32) any {
+	return api.GeoRange{
+		Location: api.GeoCoordinates(location),
+		Distance: distance,
+	}
 }
 
 // pathSep separates parts of the concatenated Target path.
