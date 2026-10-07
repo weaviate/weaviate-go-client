@@ -221,6 +221,7 @@ func TestRESTRequests(t *testing.T) {
 							Name: "metadata", DataType: api.DataTypeObject,
 							NestedProperties: []api.Property{
 								{Name: "duration", DataType: api.DataTypeNumber},
+								{Name: "location", DataType: api.DataTypeGeoCoordinates},
 								{Name: "uploadedTime", DataType: api.DataTypeDate},
 							},
 							Tokenization:    api.TokenizationWhitespace,
@@ -336,6 +337,7 @@ func TestRESTRequests(t *testing.T) {
 						Name: "metadata", DataType: []string{string(api.DataTypeObject)},
 						NestedProperties: []rest.NestedProperty{
 							{Name: "duration", DataType: []string{string(api.DataTypeNumber)}},
+							{Name: "location", DataType: []string{string(api.DataTypeGeoCoordinates)}},
 							{Name: "uploadedTime", DataType: []string{string(api.DataTypeDate)}},
 						},
 						Tokenization:      rest.PropertyTokenizationWhitespace,
