@@ -160,6 +160,43 @@ func TestModules(t *testing.T) {
 			module: huggingface.Text2Vec{},
 			conf:   map[string]any{},
 		},
+		{
+			name: "generative-openai",
+			module: openai.Generative{
+				BaseURL:          "openai.com",
+				Model:            "o3-mini",
+				APIVersion:       "v1",
+				Temperature:      new(36.6),
+				TopP:             new(11.0),
+				MaxTokens:        new(int64(12)),
+				FrequencyPenalty: new(13.0),
+				PresencePenalty:  new(14.0),
+				ReasoningEffort:  openai.LowEffort,
+				Verbosity:        openai.HighVerbosity,
+
+				ResourceName: "iron-ore",
+				DeploymentID: "azure-123",
+			},
+			conf: map[string]any{
+				"baseURL":          "openai.com",
+				"model":            "o3-mini",
+				"apiVersion":       "v1",
+				"temperature":      new(36.6),
+				"topP":             new(11.0),
+				"maxTokens":        new(int64(12)),
+				"frequencyPenalty": new(13.0),
+				"presencePenalty":  new(14.0),
+				"reasoningEffort":  "low",
+				"verbosity":        "high",
+				"resourceName":     "iron-ore",
+				"deploymentId":     "azure-123",
+			},
+		},
+		{
+			name:   "generative-openai",
+			module: openai.Generative{},
+			conf:   map[string]any{},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.name, tt.module.Name(), "module name")
