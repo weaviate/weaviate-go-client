@@ -212,7 +212,7 @@ func marshalBoost(b BoostExpr) (*proto.Boost, error) {
 	conds := make([]*proto.Boost_Condition, len(b.Conds))
 	for i, c := range b.Conds {
 		cond := &proto.Boost_Condition{
-			Weight: nilZero(c.Weight),
+			Weight: NilZero(c.Weight),
 		}
 		switch {
 		case c.Func.TimeDecay != nil:
@@ -226,8 +226,8 @@ func marshalBoost(b BoostExpr) (*proto.Boost, error) {
 					Property:   c.Func.TimeDecay.Property,
 					Origin:     c.Func.TimeDecay.Origin.Format(TimeLayout),
 					Scale:      fmt.Sprintf("%.0fs", c.Func.TimeDecay.Scale.Seconds()),
-					Offset:     nilZero(offset),
-					Curve:      nilZero(proto.Boost_DecayCurve(c.Func.TimeDecay.Curve)),
+					Offset:     NilZero(offset),
+					Curve:      NilZero(proto.Boost_DecayCurve(c.Func.TimeDecay.Curve)),
 					DecayValue: c.Func.TimeDecay.Decay,
 				},
 			}
@@ -238,7 +238,7 @@ func marshalBoost(b BoostExpr) (*proto.Boost, error) {
 					Scale:      c.Func.NumericDecay.Scale,
 					Origin:     c.Func.NumericDecay.Origin,
 					Offset:     c.Func.NumericDecay.Offset,
-					Curve:      nilZero(proto.Boost_DecayCurve(c.Func.NumericDecay.Curve)),
+					Curve:      NilZero(proto.Boost_DecayCurve(c.Func.NumericDecay.Curve)),
 					DecayValue: c.Func.NumericDecay.Decay,
 				},
 			}
@@ -246,7 +246,7 @@ func marshalBoost(b BoostExpr) (*proto.Boost, error) {
 			cond.Condition = &proto.Boost_Condition_PropertyValue{
 				PropertyValue: &proto.Boost_PropertyValueFunction{
 					Property: c.Func.PropertyValue.Property,
-					Modifier: nilZero(proto.Boost_PropertyValueModifier(c.Func.PropertyValue.Modifier)),
+					Modifier: NilZero(proto.Boost_PropertyValueModifier(c.Func.PropertyValue.Modifier)),
 				},
 			}
 		case c.Func.Filter != nil:
@@ -262,8 +262,8 @@ func marshalBoost(b BoostExpr) (*proto.Boost, error) {
 		conds[i] = cond
 	}
 	return &proto.Boost{
-		Weight:     nilZero(b.Weight),
-		Depth:      nilZero(uint32(b.Depth)),
+		Weight:     NilZero(b.Weight),
+		Depth:      NilZero(uint32(b.Depth)),
 		Conditions: conds,
 	}, nil
 }
