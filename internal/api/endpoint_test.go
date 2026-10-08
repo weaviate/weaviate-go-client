@@ -319,6 +319,14 @@ func TestRESTRequests(t *testing.T) {
 							"model":   "campbell",
 						},
 					},
+					RerankerModules: []api.Module{
+						{
+							Name: testkit.RerankerModuleName,
+							Conf: map[string]any{
+								"model": "quicksort",
+							},
+						},
+					},
 				},
 			},
 			wantMethod: http.MethodPost,
@@ -434,6 +442,9 @@ func TestRESTRequests(t *testing.T) {
 					testkit.GenerativeModuleName: map[string]any{
 						"baseURL": "example.com",
 						"model":   "campbell",
+					},
+					testkit.RerankerModuleName: map[string]any{
+						"model": "quicksort",
 					},
 				},
 			},
@@ -1651,6 +1662,9 @@ func TestRESTResponses(t *testing.T) {
 						"baseURL": "example.com",
 						"model":   "campbell",
 					},
+					testkit.RerankerModuleName: map[string]any{
+						"model": "quicksort",
+					},
 				},
 			},
 			dest: new(api.Collection),
@@ -1778,6 +1792,14 @@ func TestRESTResponses(t *testing.T) {
 					Conf: map[string]any{
 						"baseURL": "example.com",
 						"model":   "campbell",
+					},
+				},
+				RerankerModules: []api.Module{
+					{
+						Name: testkit.RerankerModuleName,
+						Conf: map[string]any{
+							"model": "quicksort",
+						},
 					},
 				},
 			},

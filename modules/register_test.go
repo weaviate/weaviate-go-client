@@ -15,7 +15,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/modules/weaviate"
 )
 
-// TestModules ensures that all modules are registerred with [modules.Registry]
+// TestModules ensures that all modules are registered with [modules.Registry]
 // and that they produce correct configurations when serialized.
 func TestModules(t *testing.T) {
 	for _, tt := range []struct {

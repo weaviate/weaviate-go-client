@@ -17,17 +17,18 @@ import (
 
 type (
 	Collection struct {
-		Name          string
-		Description   string
-		Properties    []Property
-		References    []ReferenceProperty
-		Vectors       map[string]VectorConfig
-		Sharding      *ShardingConfig
-		Replication   *ReplicationConfig
-		InvertedIndex *InvertedIndexConfig
-		MultiTenancy  *MultiTenancyConfig
-		ObjectTTL     *ObjectTTLConfig
-		Generative    *Module
+		Name            string
+		Description     string
+		Properties      []Property
+		References      []ReferenceProperty
+		Vectors         map[string]VectorConfig
+		Sharding        *ShardingConfig
+		Replication     *ReplicationConfig
+		InvertedIndex   *InvertedIndexConfig
+		MultiTenancy    *MultiTenancyConfig
+		ObjectTTL       *ObjectTTLConfig
+		Generative      *Module
+		RerankerModules []Module
 	}
 	Property struct {
 		Name             string
@@ -516,6 +517,10 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 		moduleConfig[c.Generative.Name] = c.Generative.Conf
 	}
 
+	for _, rm := range c.RerankerModules {
+		moduleConfig[rm.Name] = rm.Conf
+	}
+
 	if len(moduleConfig) > 0 {
 		out.ModuleConfig = moduleConfig
 	}
@@ -681,12 +686,18 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 	for conf := class.ModuleConfig; len(conf) > 0; {
 		if name, ok := modules.Registry.Find(conf); ok {
 			if m, ok := conf[name].(map[string]any); ok {
+				module := Module{
+					Name: name,
+					Conf: m,
+				}
+				// Matching string prefixes might not be the most elegant solution,
+				// but that's much simpler than introducing new separate registries
+				// for generative and reranker modules.
 				switch {
 				case strings.HasPrefix(name, "generative-"):
-					c.Generative = &Module{
-						Name: name,
-						Conf: m,
-					}
+					c.Generative = &module
+				case strings.HasPrefix(name, "reranker-"):
+					c.RerankerModules = append(c.RerankerModules, module)
 				}
 			}
 			delete(conf, name)
