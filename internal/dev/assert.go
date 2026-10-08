@@ -15,7 +15,7 @@ import (
 // We only ever want to enable asserts in test builds.
 // go test will register a number of command-line flags,
 // test.v is one of them. See: https://stackoverflow.com/a/36666114/14726116
-// In case some code uses asserts before the flags are registerred,
+// In case some code uses asserts before the flags are registered,
 // we double-check the [os.Args] for any values that resemble test flags,
 // i.e start with "-test.".
 //
