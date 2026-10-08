@@ -24,6 +24,7 @@ type (
 		InvertedIndex *InvertedIndexConfig
 		MultiTenancy  *MultiTenancyConfig
 		ObjectTTL     *ObjectTTLConfig
+		Generative    modules.Module
 	}
 	Property struct {
 		Name             string
@@ -245,6 +246,17 @@ func collectionToAPI(c *Collection) (api.Collection, error) {
 		}
 	}
 
+	if c.Generative != nil {
+		conf, err := modules.Registry.Encode(c.Generative)
+		if err != nil {
+			return api.Collection{}, err
+		}
+		out.Generative = &api.Module{
+			Name: c.Generative.Name(),
+			Conf: conf,
+		}
+	}
+
 	return out, nil
 }
 
@@ -342,6 +354,15 @@ func collectionFromAPI(c *api.Collection) (Collection, error) {
 		}
 	}
 
+	var generative modules.Module
+	if c.Generative != nil {
+		conf, err := modules.Registry.Decode(c.Generative.Name, c.Generative.Conf)
+		if err != nil {
+			return Collection{}, err
+		}
+		generative = conf
+	}
+
 	return Collection{
 		Name:          c.Name,
 		Description:   c.Description,
@@ -353,6 +374,7 @@ func collectionFromAPI(c *api.Collection) (Collection, error) {
 		InvertedIndex: invertedIndex,
 		MultiTenancy:  (*MultiTenancyConfig)(c.MultiTenancy),
 		ObjectTTL:     (*ObjectTTLConfig)(c.ObjectTTL),
+		Generative:    generative,
 	}, nil
 }
 

@@ -41,3 +41,31 @@ const (
 	TextModel = "text"
 	CodeModel = "code"
 )
+
+type Generative struct {
+	BaseURL          string  `json:"baseURL"`
+	Model            string  `json:"model"`
+	APIVersion       string  `json:"apiVersion"`
+	Temperature      float32 `json:"temperature"`
+	TopP             float32 `json:"topP"`
+	MaxTokens        int     `json:"maxTokens"`
+	FrequencyPenalty float32 `json:"frequencyPenalty"`
+	PresencePenalty  float32 `json:"presencePenalty"`
+	ReasoningEffort  string  `json:"reasoningEffort"`
+	Verbosity        string  `json:"verbosity"`
+}
+
+const (
+	MinimalEffort = "minimal"
+	LowEffort     = "low"
+	MediumEffort  = "medium"
+	HighEffort    = "high"
+)
+
+const (
+	LowVerbosity    = "low"
+	MediumVerbosity = "medium"
+	HighVerbosity   = "high"
+)
+
+func (Generative) Name() string { return "generative-openai" }

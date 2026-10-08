@@ -213,6 +213,10 @@ func TestClient_Create(t *testing.T) {
 					DefaultTTL:           72 * time.Hour,
 					FilterExpiredObjects: false,
 				},
+				Generative: testkit.GenerativeModule{
+					"baseURL": "example.com",
+					"model":   "campbell",
+				},
 			},
 			stubs: []testkit.Stub[api.CreateCollectionRequest, api.Collection]{
 				{
@@ -335,6 +339,13 @@ func TestClient_Create(t *testing.T) {
 								PropertyName:         "timestamp",
 								DefaultTTL:           72 * time.Hour,
 								FilterExpiredObjects: false,
+							},
+							Generative: &api.Module{
+								Name: testkit.GenerativeModuleName,
+								Conf: map[string]any{
+									"baseURL": "example.com",
+									"model":   "campbell",
+								},
 							},
 						},
 					},
@@ -518,6 +529,13 @@ func TestClient_GetConfig(t *testing.T) {
 							DefaultTTL:           72 * time.Hour,
 							FilterExpiredObjects: false,
 						},
+						Generative: &api.Module{
+							Name: testkit.GenerativeModuleName,
+							Conf: map[string]any{
+								"baseURL": "example.com",
+								"model":   "campbell",
+							},
+						},
 					},
 				},
 			},
@@ -624,6 +642,10 @@ func TestClient_GetConfig(t *testing.T) {
 					PropertyName:         "timestamp",
 					DefaultTTL:           72 * time.Hour,
 					FilterExpiredObjects: false,
+				},
+				Generative: testkit.GenerativeModule{
+					"baseURL": "example.com",
+					"model":   "campbell",
 				},
 			},
 		},

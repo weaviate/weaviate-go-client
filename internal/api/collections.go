@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/collections/compression"
@@ -11,6 +12,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
+	"github.com/weaviate/weaviate-go-client/v6/modules"
 )
 
 type (
@@ -25,6 +27,7 @@ type (
 		InvertedIndex *InvertedIndexConfig
 		MultiTenancy  *MultiTenancyConfig
 		ObjectTTL     *ObjectTTLConfig
+		Generative    *Module
 	}
 	Property struct {
 		Name             string
@@ -508,6 +511,15 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	moduleConfig := make(map[string]any)
+	if c.Generative != nil {
+		moduleConfig[c.Generative.Name] = c.Generative.Conf
+	}
+
+	if len(moduleConfig) > 0 {
+		out.ModuleConfig = moduleConfig
+	}
+
 	return json.Marshal(&out)
 }
 
@@ -664,6 +676,21 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 			DefaultTTL:           time.Duration(class.ObjectTtlConfig.DefaultTtl) * time.Second,
 			FilterExpiredObjects: class.ObjectTtlConfig.FilterExpiredObjects,
 		},
+	}
+
+	for conf := class.ModuleConfig; len(conf) > 0; {
+		if name, ok := modules.Registry.Find(conf); ok {
+			if m, ok := conf[name].(map[string]any); ok {
+				switch {
+				case strings.HasPrefix(name, "generative-"):
+					c.Generative = &Module{
+						Name: name,
+						Conf: m,
+					}
+				}
+			}
+			delete(conf, name)
+		}
 	}
 
 	return nil

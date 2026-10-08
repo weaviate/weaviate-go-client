@@ -312,6 +312,13 @@ func TestRESTRequests(t *testing.T) {
 						DefaultTTL:           72 * time.Hour,
 						FilterExpiredObjects: false,
 					},
+					Generative: &api.Module{
+						Name: testkit.GenerativeModuleName,
+						Conf: map[string]any{
+							"baseURL": "example.com",
+							"model":   "campbell",
+						},
+					},
 				},
 			},
 			wantMethod: http.MethodPost,
@@ -422,6 +429,12 @@ func TestRESTRequests(t *testing.T) {
 					DeleteOn:             "timestamp",
 					DefaultTtl:           int((72 * time.Hour).Seconds()),
 					FilterExpiredObjects: false,
+				},
+				ModuleConfig: map[string]any{
+					testkit.GenerativeModuleName: map[string]any{
+						"baseURL": "example.com",
+						"model":   "campbell",
+					},
 				},
 			},
 		},
@@ -1633,6 +1646,12 @@ func TestRESTResponses(t *testing.T) {
 					DefaultTtl:           int((72 * time.Hour).Seconds()),
 					FilterExpiredObjects: false,
 				},
+				ModuleConfig: map[string]any{
+					testkit.GenerativeModuleName: map[string]any{
+						"baseURL": "example.com",
+						"model":   "campbell",
+					},
+				},
 			},
 			dest: new(api.Collection),
 			want: &api.Collection{
@@ -1753,6 +1772,13 @@ func TestRESTResponses(t *testing.T) {
 					PropertyName:         "timestamp",
 					DefaultTTL:           72 * time.Hour,
 					FilterExpiredObjects: false,
+				},
+				Generative: &api.Module{
+					Name: testkit.GenerativeModuleName,
+					Conf: map[string]any{
+						"baseURL": "example.com",
+						"model":   "campbell",
+					},
 				},
 			},
 		},
