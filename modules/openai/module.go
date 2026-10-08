@@ -3,6 +3,7 @@ package openai
 import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/modules"
+	"github.com/weaviate/weaviate-go-client/v6/modules/internal"
 	proto "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
@@ -110,23 +111,23 @@ func (g Generative) GenerativeProvider() proto.GenerativeProvider {
 				DeploymentId: api.NilZero(g.DeploymentID),
 
 				N:               g.N,
-				Stop:            &proto.TextArray{Values: g.StopSequences},
-				Images:          &proto.TextArray{Values: g.Images},
-				ImageProperties: &proto.TextArray{Values: g.ImageProperties},
+				Stop:            internal.TextArray(g.StopSequences),
+				Images:          internal.TextArray(g.Images),
+				ImageProperties: internal.TextArray(g.ImageProperties),
 			},
 		},
 	}
 }
 
 var effort = map[string]*proto.GenerativeOpenAI_ReasoningEffort{
-	MinimalEffort: new(proto.GenerativeOpenAI_REASONING_EFFORT_MINIMAL),
-	LowEffort:     new(proto.GenerativeOpenAI_REASONING_EFFORT_LOW),
-	MediumEffort:  new(proto.GenerativeOpenAI_REASONING_EFFORT_MEDIUM),
-	HighEffort:    new(proto.GenerativeOpenAI_REASONING_EFFORT_HIGH),
+	MinimalEffort: proto.GenerativeOpenAI_REASONING_EFFORT_MINIMAL.Enum(),
+	LowEffort:     proto.GenerativeOpenAI_REASONING_EFFORT_LOW.Enum(),
+	MediumEffort:  proto.GenerativeOpenAI_REASONING_EFFORT_MEDIUM.Enum(),
+	HighEffort:    proto.GenerativeOpenAI_REASONING_EFFORT_HIGH.Enum(),
 }
 
 var verbosity = map[string]*proto.GenerativeOpenAI_Verbosity{
-	LowVerbosity:    new(proto.GenerativeOpenAI_VERBOSITY_LOW),
-	MediumVerbosity: new(proto.GenerativeOpenAI_VERBOSITY_MEDIUM),
-	HighVerbosity:   new(proto.GenerativeOpenAI_VERBOSITY_HIGH),
+	LowVerbosity:    proto.GenerativeOpenAI_VERBOSITY_LOW.Enum(),
+	MediumVerbosity: proto.GenerativeOpenAI_VERBOSITY_MEDIUM.Enum(),
+	HighVerbosity:   proto.GenerativeOpenAI_VERBOSITY_HIGH.Enum(),
 }
