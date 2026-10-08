@@ -13,7 +13,7 @@ func init() {
 //
 // [Weaviate Docs - text2vec-mistral]: https://docs.weaviate.io/weaviate/model-providers/mistral/embeddings
 type Text2Vec struct {
-	// BaseURL overrides where API requests go, e.g. a proxy.
+	// BaseURL overrides the default request URL, e.g. a proxy.
 	BaseURL string `json:"baseURL,omitempty"`
 	// Model is the embedding model name.
 	Model string `json:"model,omitempty"`

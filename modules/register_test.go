@@ -276,14 +276,14 @@ func TestModules(t *testing.T) {
 		{
 			name: "text2vec-aws",
 			module: aws.Text2Vec{
-				Service:       aws.SageMaker,
-				Region:        "us-east-1",
-				Model:         "amazon.titan-embed-text-v2:0",
-				Endpoint:      "my-endpoint",
-				TargetModel:   "my-target-model",
-				TargetVariant: "my-variant",
-				Dimensions:    512,
-				Properties:    []string{"title", "lyrics"},
+				Service:          aws.SageMaker,
+				Region:           "us-east-1",
+				Model:            "amazon.titan-embed-text-v2:0",
+				Endpoint:         "my-endpoint",
+				SageMakerModel:   "my-target-model",
+				SageMakerVariant: "my-variant",
+				Dimensions:       512,
+				Properties:       []string{"title", "lyrics"},
 			},
 			conf: map[string]any{
 				"service":       aws.SageMaker,

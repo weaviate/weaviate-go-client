@@ -26,10 +26,10 @@ type Text2Vec struct {
 	Region string `json:"region,omitempty"`
 	// Endpoint is the SageMaker endpoint name.
 	Endpoint string `json:"endpoint,omitempty"`
-	// TargetModel is the SageMaker target model for multi-model endpoints.
-	TargetModel string `json:"targetModel,omitempty"`
-	// TargetVariant is the SageMaker production variant to invoke.
-	TargetVariant string `json:"targetVariant,omitempty"`
+	// SageMakerModel for multi-model endpoints.
+	SageMakerModel string `json:"targetModel,omitempty"`
+	// SageMakerVariant is the production variant of the [SageMakerModel].
+	SageMakerVariant string `json:"targetVariant,omitempty"`
 }
 
 func (Text2Vec) Name() string { return "text2vec-aws" }

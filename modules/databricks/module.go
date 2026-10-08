@@ -13,12 +13,12 @@ func init() {
 //
 // [Weaviate Docs - text2vec-databricks]: https://docs.weaviate.io/weaviate/model-providers/databricks/embeddings
 type Text2Vec struct {
-	// Endpoint is the Databricks serving endpoint URL.
+	// Endpoint is the URL of the model server.
 	Endpoint string `json:"endpoint,omitempty"`
 	// Properties limits vectorization to these properties.
 	// By default, all text properties are vectorized.
 	Properties []string `json:"properties,omitempty"`
-	// Instruction is an instruction passed to the embedding model.
+	// Instruction is a system prompt passed to the embedding model.
 	Instruction string `json:"instruction,omitempty"`
 }
 
