@@ -123,3 +123,54 @@ func TestRole_UnmarshalJSON(t *testing.T) {
 	require.ElementsMatch(t, want.Replicate, got.Replicate)
 	require.ElementsMatch(t, want.Groups, got.Groups)
 }
+
+func TestRole_UnmarshalJSON_ReadBackups(t *testing.T) {
+	data := []byte(`{
+		"name": "BackupViewerRole",
+		"permissions": [
+			{"action": "read_backups", "backups": {"collection": "Articles"}},
+			{"action": "read_backups"}
+		]
+	}`)
+
+	want := rbac.NewRole("BackupViewerRole",
+		rbac.BackupsPermission{
+			Actions:    []string{"read_backups"},
+			Collection: "Articles",
+		},
+		rbac.BackupsPermission{
+			Actions:    []string{"read_backups"},
+			Collection: "",
+		},
+	)
+
+	var got *rbac.Role
+	err := json.Unmarshal(data, &got)
+	require.NoError(t, err)
+	require.Equal(t, want.Name, got.Name)
+	require.ElementsMatch(t, want.Backups, got.Backups)
+}
+
+func TestRole_UnmarshalJSON_NilSafety(t *testing.T) {
+	data := []byte(`{
+		"name": "SafeRole",
+		"permissions": [
+			{"action": "manage_backups", "backups": {}},
+			{"action": "create_collections", "collections": {}},
+			{"action": "create_data", "data": {}},
+			{"action": "read_nodes", "nodes": {}},
+			{"action": "read_roles", "roles": {}},
+			{"action": "read_replicate", "replicate": {}},
+			{"action": "read_aliases", "aliases": {}},
+			{"action": "read_groups", "groups": {}},
+			null
+		]
+	}`)
+
+	var got *rbac.Role
+	err := json.Unmarshal(data, &got)
+	require.NoError(t, err)
+	require.Equal(t, "SafeRole", got.Name)
+	require.Len(t, got.Backups, 1)
+	require.Equal(t, "", got.Backups[0].Collection)
+}

@@ -336,33 +336,57 @@ func roleFromWeaviate(r *models.Role) Role {
 	alias := make(mergedPermissions)
 	groups := make(mergedPermissions)
 
+	roleName := ""
+	if r.Name != nil {
+		roleName = *r.Name
+	}
+
 	for _, perm := range r.Permissions {
+		if perm == nil || perm.Action == nil {
+			continue
+		}
 		switch {
 		case perm.Backups != nil:
+			collection := ""
+			if perm.Backups.Collection != nil {
+				collection = *perm.Backups.Collection
+			}
 			backups.Add(func(actions []string, resources ...string) Permission {
 				return BackupsPermission{
 					Actions:    actions,
 					Collection: resources[0],
 				}
-			}, *perm.Action, *perm.Backups.Collection)
+			}, *perm.Action, collection)
 		case perm.Collections != nil:
+			collection := ""
+			if perm.Collections.Collection != nil {
+				collection = *perm.Collections.Collection
+			}
 			collections.Add(func(actions []string, resources ...string) Permission {
 				return CollectionsPermission{
 					Actions:    actions,
 					Collection: resources[0],
 				}
-			}, *perm.Action, *perm.Collections.Collection)
+			}, *perm.Action, collection)
 		case perm.Data != nil:
+			collection := ""
+			if perm.Data.Collection != nil {
+				collection = *perm.Data.Collection
+			}
 			data.Add(func(actions []string, resources ...string) Permission {
 				return DataPermission{
 					Actions:    actions,
 					Collection: resources[0],
 				}
-			}, *perm.Action, *perm.Data.Collection)
+			}, *perm.Action, collection)
 		case perm.Nodes != nil:
 			collection := ""
 			if perm.Nodes.Collection != nil {
 				collection = *perm.Nodes.Collection
+			}
+			verbosity := ""
+			if perm.Nodes.Verbosity != nil {
+				verbosity = *perm.Nodes.Verbosity
 			}
 
 			nodes.Add(func(actions []string, resources ...string) Permission {
@@ -371,45 +395,80 @@ func roleFromWeaviate(r *models.Role) Role {
 					Collection: resources[0],
 					Verbosity:  resources[1],
 				}
-			}, *perm.Action, collection, *perm.Nodes.Verbosity)
+			}, *perm.Action, collection, verbosity)
 		case perm.Roles != nil:
+			role := ""
+			if perm.Roles.Role != nil {
+				role = *perm.Roles.Role
+			}
+			scope := ""
+			if perm.Roles.Scope != nil {
+				scope = *perm.Roles.Scope
+			}
 			roles.Add(func(actions []string, resources ...string) Permission {
 				return RolesPermission{
 					Actions: actions,
 					Role:    resources[0],
 					Scope:   resources[1],
 				}
-			}, *perm.Action, *perm.Roles.Role, *perm.Roles.Scope)
+			}, *perm.Action, role, scope)
 
 		case perm.Replicate != nil:
+			collection := ""
+			if perm.Replicate.Collection != nil {
+				collection = *perm.Replicate.Collection
+			}
+			shard := ""
+			if perm.Replicate.Shard != nil {
+				shard = *perm.Replicate.Shard
+			}
 			replicate.Add(func(actions []string, resources ...string) Permission {
 				return ReplicatePermission{
 					Actions:    actions,
 					Collection: resources[0],
 					Shard:      resources[1],
 				}
-			}, *perm.Action, *perm.Replicate.Collection, *perm.Replicate.Shard)
+			}, *perm.Action, collection, shard)
 		case perm.Aliases != nil:
+			aliasName := ""
+			if perm.Aliases.Alias != nil {
+				aliasName = *perm.Aliases.Alias
+			}
+			collection := ""
+			if perm.Aliases.Collection != nil {
+				collection = *perm.Aliases.Collection
+			}
 			alias.Add(func(actions []string, resources ...string) Permission {
 				return AliasPermission{
 					Actions:    actions,
 					Alias:      resources[0],
 					Collection: resources[1],
 				}
-			}, *perm.Action, *perm.Aliases.Alias, *perm.Aliases.Collection)
+			}, *perm.Action, aliasName, collection)
 		case perm.Groups != nil:
+			group := ""
+			if perm.Groups.Group != nil {
+				group = *perm.Groups.Group
+			}
 			groups.Add(func(actions []string, resources ...string) Permission {
 				return GroupPermission{
 					Actions:   actions,
 					Group:     resources[0],
 					GroupType: resources[1],
 				}
-			}, *perm.Action, *perm.Groups.Group, string(perm.Groups.GroupType))
+			}, *perm.Action, group, string(perm.Groups.GroupType))
 
 		// Weaviate v1.30 may define additional actions for these permission groups
 		// and we want to ensure they can be handled elegantly.
-		// While somewhat crude, this method makes sure any cluster/tenants/users
+		// While somewhat crude, this method makes sure any backups/cluster/tenants/users
 		// action are read correctly without requiring the latest client version.
+		case strings.HasSuffix(*perm.Action, "backups"):
+			backups.Add(func(actions []string, resources ...string) Permission {
+				return BackupsPermission{
+					Actions:    actions,
+					Collection: resources[0],
+				}
+			}, *perm.Action, "")
 		case strings.HasSuffix(*perm.Action, "cluster"):
 			clusters.Add(func(actions []string, _ ...string) Permission {
 				return ClusterPermission{Actions: actions}
@@ -433,7 +492,7 @@ func roleFromWeaviate(r *models.Role) Role {
 			log.Printf("WARN: %q action belongs to an unrecognized group, try updating the client to the latest version", *perm.Action)
 		}
 	}
-	return NewRole(*r.Name, backups, collections, data, mcp, nodes, roles, replicate, alias, clusters, tenants, users, groups)
+	return NewRole(roleName, backups, collections, data, mcp, nodes, roles, replicate, alias, clusters, tenants, users, groups)
 }
 
 // mergedPermissions groups permissions by resource.
