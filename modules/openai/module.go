@@ -1,9 +1,14 @@
 package openai
 
-import "github.com/weaviate/weaviate-go-client/v6/modules"
+import (
+	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/modules"
+	proto "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
+)
 
 func init() {
 	modules.Register(*new(Text2Vec))
+	modules.Register(*new(Generative))
 }
 
 // Text2Vec is a vectorizer for text properties based on the text2vec-openai module.
@@ -43,16 +48,21 @@ const (
 )
 
 type Generative struct {
-	BaseURL          string  `json:"baseURL"`
-	Model            string  `json:"model"`
-	APIVersion       string  `json:"apiVersion"`
-	Temperature      float32 `json:"temperature"`
-	TopP             float32 `json:"topP"`
-	MaxTokens        int     `json:"maxTokens"`
-	FrequencyPenalty float32 `json:"frequencyPenalty"`
-	PresencePenalty  float32 `json:"presencePenalty"`
-	ReasoningEffort  string  `json:"reasoningEffort"`
-	Verbosity        string  `json:"verbosity"`
+	BaseURL          string   `json:"baseURL,omitempty"`
+	Model            string   `json:"model,omitempty"`
+	APIVersion       string   `json:"apiVersion,omitempty"`
+	Temperature      *float64 `json:"temperature,omitempty"`
+	TopP             *float64 `json:"topP,omitempty"`
+	MaxTokens        *int64   `json:"maxTokens,omitempty"`
+	FrequencyPenalty *float64 `json:"frequencyPenalty,omitempty"`
+	PresencePenalty  *float64 `json:"presencePenalty,omitempty"`
+	ReasoningEffort  string   `json:"reasoningEffort,omitempty"`
+	Verbosity        string   `json:"verbosity,omitempty"`
+
+	ResourceName string `json:"resourceName,omitempty"`
+	DeploymentID string `json:"deploymentId,omitempty"`
+
+	*Provider `json:"-"`
 }
 
 const (
@@ -69,3 +79,54 @@ const (
 )
 
 func (Generative) Name() string { return "generative-openai" }
+
+type Provider struct {
+	N               *int64
+	StopSequences   []string
+	Images          []string
+	ImageProperties []string
+	ReturnMetadata  bool
+}
+
+func (g Generative) GenerativeProvider() proto.GenerativeProvider {
+	return proto.GenerativeProvider{
+		ReturnMetadata: g.ReturnMetadata,
+		Kind: &proto.GenerativeProvider_Openai{
+			Openai: &proto.GenerativeOpenAI{
+				BaseUrl:    api.NilZero(g.BaseURL),
+				Model:      api.NilZero(g.Model),
+				ApiVersion: api.NilZero(g.APIVersion),
+
+				Temperature:      g.Temperature,
+				TopP:             g.TopP,
+				MaxTokens:        g.MaxTokens,
+				FrequencyPenalty: g.FrequencyPenalty,
+				PresencePenalty:  g.PresencePenalty,
+				ReasoningEffort:  effort[g.ReasoningEffort],
+				Verbosity:        verbosity[g.Verbosity],
+
+				IsAzure:      new(g.DeploymentID != "" || g.ResourceName != ""),
+				ResourceName: api.NilZero(g.ResourceName),
+				DeploymentId: api.NilZero(g.DeploymentID),
+
+				N:               g.N,
+				Stop:            &proto.TextArray{Values: g.StopSequences},
+				Images:          &proto.TextArray{Values: g.Images},
+				ImageProperties: &proto.TextArray{Values: g.ImageProperties},
+			},
+		},
+	}
+}
+
+var effort = map[string]*proto.GenerativeOpenAI_ReasoningEffort{
+	MinimalEffort: new(proto.GenerativeOpenAI_REASONING_EFFORT_MINIMAL),
+	LowEffort:     new(proto.GenerativeOpenAI_REASONING_EFFORT_LOW),
+	MediumEffort:  new(proto.GenerativeOpenAI_REASONING_EFFORT_MEDIUM),
+	HighEffort:    new(proto.GenerativeOpenAI_REASONING_EFFORT_HIGH),
+}
+
+var verbosity = map[string]*proto.GenerativeOpenAI_Verbosity{
+	LowVerbosity:    new(proto.GenerativeOpenAI_VERBOSITY_LOW),
+	MediumVerbosity: new(proto.GenerativeOpenAI_VERBOSITY_MEDIUM),
+	HighVerbosity:   new(proto.GenerativeOpenAI_VERBOSITY_HIGH),
+}
