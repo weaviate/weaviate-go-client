@@ -32,7 +32,7 @@ func WithConsistencyLevel(cl types.ConsistencyLevel) HandleOption {
 	}
 }
 
-// WithConsistencyLevel default tenant for all read / write requests made with this collection handle.
+// WithTenant default tenant for all read / write requests made with this collection handle.
 func WithTenant(tenant string) HandleOption {
 	return func(rd *api.RequestDefaults) {
 		dev.AssertNotNil(rd, "rd")
@@ -55,6 +55,7 @@ type Handle struct {
 	Aggregate *aggregate.Client
 	Data      *data.Client
 	Query     *query.Client
+	Config    *ConfigClient
 	Tenants   *tenant.Client
 }
 
@@ -68,6 +69,7 @@ func newHandle(t transport.StreamingTransport, rd api.RequestDefaults) *Handle {
 		Aggregate: aggregate.NewClient(t, rd),
 		Data:      data.NewClient(t, rd),
 		Query:     query.NewClient(t, rd),
+		Config:    NewConfigClient(t, rd),
 		Tenants:   tenant.NewClient(t, rd.CollectionName),
 	}
 }
@@ -104,8 +106,8 @@ func (h *Handle) Count(ctx context.Context) (int64, error) {
 // Batch opens a new batch stream. The context will be used throughout
 // the whole streaming process and may be used to terminate it abruptly.
 // In a normal course of operation, a batch should be closed explicitly.
-func (h *Handle) Batch(ctx context.Context, options ...batch.Option) (*batch.Client, error) {
-	return batch.NewClient(ctx, h.transport, h.defaults, options...), nil
+func (h *Handle) Batch(ctx context.Context, options ...batch.Option) *batch.Client {
+	return batch.NewClient(ctx, h.transport, h.defaults, options...)
 }
 
 // HandleOption configures request defaults for collection handle.

@@ -69,7 +69,7 @@ func Thermal(s string) Media { return Media{kind: api.MediaThermal, data: s} }
 // IMU returns near IMU query target. The value must be a base64-encoded string.
 func IMU(s string) Media { return Media{kind: api.MediaIMU, data: s} }
 
-// NearMediaFunc runs plain near vector search.
+// NearMediaFunc runs plain near media search.
 type NearMediaFunc func(context.Context, NearMedia) (*Result, error)
 
 // nearMediaFunc makes internal.Transport available to [query] via a closure.
@@ -89,12 +89,12 @@ func nearMediaFunc(t internal.Transport, rd api.RequestDefaults) NearMediaFunc {
 			ReturnNestedProperties: nm.ReturnNestedProperties,
 			ReturnReferences:       nm.ReturnReferences,
 			GroupBy:                nm.groupBy,
-		}, func(req *api.SearchRequest) { req.NearMedia = nearMedia(&nm) })
+		}, func(req *api.SearchRequest) { req.NearMedia = nm.Search() }, "near media")
 	}
 }
 
-// nearMedia convers [NearMedia] to [api.NearMedia].
-func nearMedia(nm *NearMedia) *api.NearMedia {
+// Search convers [NearMedia] to [api.NearMedia].
+func (nm *NearMedia) Search() *api.NearMedia {
 	if nm == nil {
 		return nil
 	}
@@ -115,10 +115,8 @@ func nearMedia(nm *NearMedia) *api.NearMedia {
 	return out
 }
 
-// GroupBy runs near vector search with a GroupBy clause.
+// GroupBy runs near media search with a GroupBy clause.
 func (nmf NearMediaFunc) GroupBy(ctx context.Context, nv NearMedia, groupBy GroupBy) (*GroupByResult, error) {
 	nv.groupBy = &groupBy
 	return queryGroupBy(ctx, nmf, nv)
 }
-
-func (nm NearMedia) Search() *api.NearMedia { return nearMedia(&nm) }

@@ -35,7 +35,7 @@ func TestClient_Insert(t *testing.T) {
 		err     testkit.Error // Expected error.
 	}{
 		{
-			name: "nil object",
+			name: "no objects",
 			stubs: []testkit.Stub[api.InsertObjectsRequest, api.InsertObjectsResponse]{{
 				Request:  &api.InsertObjectsRequest{RequestDefaults: rd},
 				Response: api.InsertObjectsResponse{Took: 92 * time.Second},
@@ -52,7 +52,10 @@ func TestClient_Insert(t *testing.T) {
 				},
 				Response: api.InsertObjectsResponse{Took: 92 * time.Second},
 			}},
-			want: &data.InsertResult{Took: 92 * time.Second},
+			want: &data.InsertResult{
+				Took:  92 * time.Second,
+				UUIDs: map[int]uuid.UUID{0: uuid.Nil},
+			},
 		},
 		{
 			name: "with data",
@@ -86,32 +89,51 @@ func TestClient_Insert(t *testing.T) {
 						},
 					}},
 				},
-				Response: api.InsertObjectsResponse{Took: 92 * time.Second},
+				Response: api.InsertObjectsResponse{
+					Took: 92 * time.Second,
+				},
 			}},
-			want: &data.InsertResult{Took: 92 * time.Second},
+			want: &data.InsertResult{
+				Took:  92 * time.Second,
+				UUIDs: map[int]uuid.UUID{0: testkit.UUID},
+			},
 		},
 		{
-			name:    "internal server error",
-			objects: []*data.Object{{UUID: testkit.Ptr(testkit.UUID)}},
+			name: "internal server error",
+			objects: []*data.Object{
+				{UUID: testkit.Ptr(testkit.UUID)},
+				{UUID: testkit.Ptr(testkit.UUID)},
+				{UUID: testkit.Ptr(testkit.UUID)},
+			},
 			stubs: []testkit.Stub[api.InsertObjectsRequest, api.InsertObjectsResponse]{{
 				Request: &api.InsertObjectsRequest{
 					RequestDefaults: rd,
-					Objects:         []api.BatchObject{{UUID: testkit.UUID}},
+					Objects: []api.BatchObject{
+						{UUID: testkit.UUID},
+						{UUID: testkit.UUID},
+						{UUID: testkit.UUID},
+					},
 				},
 				Response: api.InsertObjectsResponse{
 					Took:      92 * time.Second,
-					Positions: []int32{0},
-					Errors:    []string{"Whaam!"},
+					Positions: []int{0, 2},
+					Errors:    []string{"Whaam!", "Whaam!"},
 				},
 			}},
 			want: &data.InsertResult{
 				Took: 92 * time.Second,
+				UUIDs: map[int]uuid.UUID{
+					0: testkit.UUID,
+					1: testkit.UUID,
+					2: testkit.UUID,
+				},
 			},
 			err: func(tt assert.TestingT, err error, a ...any) bool {
 				var got data.InsertError
 				return assert.ErrorAs(t, err, &got) &&
-					assert.Equal(t, map[uuid.UUID]string{
-						testkit.UUID: "Whaam!",
+					assert.Equal(t, map[int]string{
+						0: "Whaam!",
+						2: "Whaam!",
 					}, got.Errors)
 			},
 		},
@@ -187,7 +209,7 @@ func TestClient_Replace(t *testing.T) {
 		},
 		{
 			name:   "with error",
-			object: data.Object{UUID: &uuid.Nil},
+			object: data.Object{UUID: &testkit.UUID},
 			stubs: []testkit.Stub[api.ReplaceObjectRequest, any]{
 				{Err: testkit.ErrWhaam},
 			},
@@ -201,6 +223,76 @@ func TestClient_Replace(t *testing.T) {
 
 			err := c.Replace(t.Context(), tt.object)
 			tt.err.Require(t, err, "replace error")
+		})
+	}
+}
+
+func TestClient_Update(t *testing.T) {
+	rd := api.RequestDefaults{
+		CollectionName:   "Update",
+		ConsistencyLevel: api.ConsistencyLevelOne,
+		Tenant:           "john_doe",
+	}
+
+	for _, tt := range []struct {
+		name   string
+		object data.Object                   // Object to be replaced.
+		want   *types.Object[map[string]any] // Expected return value.
+		stubs  []testkit.Stub[api.UpdateObjectRequest, any]
+		err    testkit.Error
+	}{
+		{
+			name: "with data",
+			object: data.Object{
+				UUID: &testkit.UUID,
+				Vectors: []types.Vector{
+					{Name: "single", Single: []float32{1, 2, 3}},
+				},
+				Properties: map[string]any{"foo": "bar"},
+				References: data.References{
+					"ref": []data.Reference{
+						{Collection: "Foo", UUID: testkit.UUID},
+						{Collection: "Bar", UUID: testkit.UUID},
+					},
+				},
+			},
+			stubs: []testkit.Stub[api.UpdateObjectRequest, any]{{
+				Request: &api.UpdateObjectRequest{
+					RequestDefaults: rd,
+					UUID:            &testkit.UUID,
+					Vectors: []api.Vector{
+						{Name: "single", Single: []float32{1, 2, 3}},
+					},
+					Properties: map[string]any{"foo": "bar"},
+					References: api.References{
+						"ref": []api.Reference{
+							{Target: api.ObjectPath{Collection: "Foo", UUID: testkit.UUID}},
+							{Target: api.ObjectPath{Collection: "Bar", UUID: testkit.UUID}},
+						},
+					},
+				},
+			}},
+		},
+		{
+			name: "error on nil uuid",
+			err:  testkit.ExpectError,
+		},
+		{
+			name:   "with error",
+			object: data.Object{UUID: &testkit.UUID},
+			stubs: []testkit.Stub[api.UpdateObjectRequest, any]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+			c := data.NewClient(transport, rd)
+			require.NotNil(t, c, "nil client")
+
+			err := c.Update(t.Context(), tt.object)
+			tt.err.Require(t, err, "update error")
 		})
 	}
 }
@@ -293,7 +385,7 @@ func TestClient_AddReferences(t *testing.T) {
 			want: &data.AddReferencesResult{Took: 92 * time.Second},
 		},
 		{
-			// The refernce added in this tests case {UUID: testkit.UUID} is not
+			// The reference added in this tests case {UUID: testkit.UUID} is not
 			// technically valid, because it does not specify the Origin. That's
 			// not important, because all we want to verify is that the error map
 			// in the result contains the same reference value as its only key.
@@ -306,15 +398,19 @@ func TestClient_AddReferences(t *testing.T) {
 				},
 				Response: api.InsertReferencesResponse{
 					Took:      92 * time.Second,
-					Positions: []int32{0},
+					Positions: []int{0},
 					Errors:    []string{"Whaam!"},
 				},
 			}},
 			want: &data.AddReferencesResult{
 				Took: 92 * time.Second,
-				Errors: map[data.Reference]string{
-					{UUID: testkit.UUID}: "Whaam!",
-				},
+			},
+			err: func(tt assert.TestingT, err error, a ...any) bool {
+				var got data.AddReferencesError
+				return assert.ErrorAs(t, err, &got) &&
+					assert.Equal(t, map[data.Reference]string{
+						{UUID: testkit.UUID}: "Whaam!",
+					}, got.Errors)
 			},
 		},
 		{
@@ -373,20 +469,26 @@ func TestClient_DeleteSelected(t *testing.T) {
 						Verbose: true,
 					},
 					Response: api.DeleteObjectsResponse{
-						Took: 92 * time.Second,
+						Took:    92 * time.Second,
+						Matches: 5,
 						Errors: map[uuid.UUID]error{
 							testkit.UUID: testkit.ErrWhaam,
-							uuid.Nil:     nil,
 						},
 					},
 				},
 			},
 			want: &data.DeleteSelectedResult{
-				Took: 92 * time.Second,
-				Errors: map[uuid.UUID]error{
-					testkit.UUID: testkit.ErrWhaam,
-					uuid.Nil:     nil,
-				},
+				Took:    92 * time.Second,
+				Matches: 5,
+			},
+			err: func(tt assert.TestingT, err error, a ...any) bool {
+				var partial data.DeleteError
+				if assert.ErrorAs(tt, err, &partial) {
+					return assert.Equal(tt, map[uuid.UUID]error{
+						testkit.UUID: testkit.ErrWhaam,
+					}, partial.Errors)
+				}
+				return false
 			},
 		},
 		{

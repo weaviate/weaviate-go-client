@@ -2,7 +2,6 @@ package api_test
 
 import (
 	"encoding/json"
-	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -10,27 +9,30 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 )
 
-func TestObjectReference(t *testing.T) {
+func TestReference_MarshalJSON(t *testing.T) {
 	for _, tt := range []struct {
-		ref  *api.Reference
+		ref  api.Reference
 		want string
 	}{
 		{
-			ref:  &api.Reference{Target: api.ObjectPath{UUID: testkit.UUID}},
+			ref:  api.Reference{Target: api.ObjectPath{UUID: testkit.UUID}},
 			want: "weaviate://localhost/" + testkit.UUID.String(),
 		},
 		{
-			ref:  &api.Reference{Target: api.ObjectPath{Collection: "Songs", UUID: testkit.UUID}},
+			ref:  api.Reference{Target: api.ObjectPath{Collection: "Songs", UUID: testkit.UUID}},
 			want: "weaviate://localhost/Songs/" + testkit.UUID.String(),
 		},
 	} {
 		t.Run(tt.want, func(t *testing.T) {
-			beacon, err := json.Marshal(tt.ref)
-			require.NoError(t, err, "marshal text")
+			want, err := json.Marshal(map[string]string{
+				"beacon": tt.want,
+			})
+			require.NoError(t, err)
 
-			got, err := strconv.Unquote(string(beacon))
-			require.NoError(t, err, "unquote beacon")
-			require.Equal(t, tt.want, got, "beacon")
+			got, err := json.Marshal(tt.ref)
+			require.NoError(t, err)
+
+			require.Equal(t, want, got, "marshaled reference")
 		})
 	}
 }

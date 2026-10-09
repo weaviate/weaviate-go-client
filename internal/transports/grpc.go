@@ -17,7 +17,7 @@ import (
 // Config for [GRPC] transport.
 type GRPCConfig[Client any] struct {
 	Host           string                      // Hostname of the gRPC host.
-	Port           int                         // Port number of the gRPC host.
+	Port           string                      // Port number of the gRPC host.
 	Header         *metadata.MD                // Headers added with each request.
 	MaxMessageSize int                         // Maximum gRPC message size in bytes.
 	TokenSource    oauth2.TokenSource          // OAuth2 token provider.
@@ -54,14 +54,14 @@ type GRPC[Client any] struct {
 	client  Client
 }
 
-func NewGRPC[Client any](cfg GRPCConfig[Client]) (*GRPC[Client], error) {
-	dev.AssertNotNil(cfg.NewGRPCClient, "cfg.NewGRPCClient")
+func NewGRPC[Client any](conf GRPCConfig[Client]) (*GRPC[Client], error) {
+	dev.AssertNotNil(conf.NewGRPCClient, "cfg.NewGRPCClient")
 
 	var callOpts []grpc.CallOption
-	if cfg.MaxMessageSize > 0 {
+	if conf.MaxMessageSize > 0 {
 		callOpts = append(callOpts,
-			grpc.MaxCallSendMsgSize(cfg.MaxMessageSize),
-			grpc.MaxCallRecvMsgSize(cfg.MaxMessageSize),
+			grpc.MaxCallSendMsgSize(conf.MaxMessageSize),
+			grpc.MaxCallRecvMsgSize(conf.MaxMessageSize),
 		)
 	}
 
@@ -69,37 +69,36 @@ func NewGRPC[Client any](cfg GRPCConfig[Client]) (*GRPC[Client], error) {
 		grpc.WithDefaultCallOptions(callOpts...),
 	}
 
-	if cfg.Header != nil {
-		dialOpts = append(dialOpts, withDefaultHeader(*cfg.Header))
+	if conf.Header != nil {
+		dialOpts = append(dialOpts, withDefaultHeader(*conf.Header)...)
 	}
 
 	transportCreds := insecure.NewCredentials()
-	if cfg.TLS {
+	if conf.TLS {
 		transportCreds = credentials.NewTLS(nil)
 	}
 	dialOpts = append(dialOpts, grpc.WithTransportCredentials(transportCreds))
 
-	if cfg.TokenSource != nil {
+	if conf.TokenSource != nil {
 		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(
 			&tokenSource{
-				TokenSource: cfg.TokenSource,
-				tls:         cfg.TLS,
+				TokenSource: conf.TokenSource,
+				tls:         conf.TLS,
 			},
 		))
 	}
 
-	if cfg.KeepAlive != nil {
-		dialOpts = append(dialOpts, grpc.WithKeepaliveParams(*cfg.KeepAlive))
+	if conf.KeepAlive != nil {
+		dialOpts = append(dialOpts, grpc.WithKeepaliveParams(*conf.KeepAlive))
 	}
 
-	target := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
-	channel, err := grpc.NewClient(target, dialOpts...)
+	channel, err := grpc.NewClient(conf.Host+":"+conf.Port, dialOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("create gRPC channel: %w", err)
 	}
 	dev.AssertNotNil(channel, "channel")
 
-	client := cfg.NewGRPCClient(channel)
+	client := conf.NewGRPCClient(channel)
 	dev.AssertNotNil(client, "client")
 
 	return &GRPC[Client]{
@@ -119,9 +118,9 @@ func (c *GRPC[Client]) Close() error {
 	return c.channel.Close()
 }
 
-// withDefaultHeader creates an interceptor that adds md headers to the request context.
-func withDefaultHeader(md metadata.MD) grpc.DialOption {
-	return grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+// withDefaultHeader creates interceptors that add md headers to the request context.
+func withDefaultHeader(md metadata.MD) []grpc.DialOption {
+	appendHeader := func(ctx context.Context) context.Context {
 		var pairs []string
 		for k, v := range md {
 			if len(v) == 0 {
@@ -129,8 +128,16 @@ func withDefaultHeader(md metadata.MD) grpc.DialOption {
 			}
 			pairs = append(pairs, k, v[0])
 		}
-		return invoker(metadata.AppendToOutgoingContext(ctx, pairs...), method, req, reply, cc, opts...)
-	})
+		return metadata.AppendToOutgoingContext(ctx, pairs...)
+	}
+	return []grpc.DialOption{
+		grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+			return invoker(appendHeader(ctx), method, req, reply, cc, opts...)
+		}),
+		grpc.WithStreamInterceptor(func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+			return streamer(appendHeader(ctx), desc, cc, method, opts...)
+		}),
+	}
 }
 
 type tokenSource struct {

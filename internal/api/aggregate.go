@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	proto "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type AggregateRequest struct {
@@ -23,6 +23,11 @@ type AggregateRequest struct {
 	GroupBy     *GroupBy
 
 	NearVector *NearVector
+	NearObject *NearObject
+	NearMedia  *NearMedia
+	NearText   *NearText
+	BM25       *BM25
+	Hybrid     *Hybrid
 }
 
 var (
@@ -97,7 +102,7 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 				Text: &proto.AggregateRequest_Aggregation_Text{
 					Count:              txt.Count,
 					TopOccurences:      txt.TopOccurrences,
-					TopOccurencesLimit: nilZero(uint32(txt.TopOccurencesCutoff)),
+					TopOccurencesLimit: NilZero(uint32(txt.TopOccurencesCutoff)),
 				},
 			},
 		})
@@ -169,7 +174,7 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 		Tenant:     r.Tenant,
 
 		ObjectsCount: r.TotalCount,
-		ObjectLimit:  nilZero(uint32(r.ObjectLimit)),
+		ObjectLimit:  NilZero(uint32(r.ObjectLimit)),
 		Aggregations: aggregations,
 	}
 
@@ -188,6 +193,45 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 			return nil, err
 		}
 		req.Search = &proto.AggregateRequest_NearVector{NearVector: nv}
+	case r.NearText != nil:
+		nt, err := marshalNearText(r.NearText)
+		if err != nil {
+			return nil, err
+		}
+		req.Search = &proto.AggregateRequest_NearText{NearText: nt}
+	case r.NearObject != nil:
+		no, err := marshalNearObject(r.NearObject)
+		if err != nil {
+			return nil, err
+		}
+		req.Search = &proto.AggregateRequest_NearObject{NearObject: no}
+	case r.NearMedia != nil:
+		var media any
+		media, err := marshalNearMedia(r.NearMedia)
+		if err != nil {
+			return nil, err
+		}
+		switch media := media.(type) {
+		case nil:
+		case *proto.NearImageSearch:
+			req.Search = &proto.AggregateRequest_NearImage{NearImage: media}
+		case *proto.NearAudioSearch:
+			req.Search = &proto.AggregateRequest_NearAudio{NearAudio: media}
+		case *proto.NearVideoSearch:
+			req.Search = &proto.AggregateRequest_NearVideo{NearVideo: media}
+		case *proto.NearDepthSearch:
+			req.Search = &proto.AggregateRequest_NearDepth{NearDepth: media}
+		case *proto.NearThermalSearch:
+			req.Search = &proto.AggregateRequest_NearThermal{NearThermal: media}
+		case *proto.NearIMUSearch:
+			req.Search = &proto.AggregateRequest_NearImu{NearImu: media}
+		}
+	case r.Hybrid != nil:
+		h, err := marshalHybrid(r.Hybrid)
+		if err != nil {
+			return nil, err
+		}
+		req.Search = &proto.AggregateRequest_Hybrid{Hybrid: h}
 	default:
 		// It is not a mistake to leave search method unset.
 		// This would be the case when fetch objects with a conventional filter.
@@ -383,10 +427,10 @@ func unmarshalAggregations(aggregations []*proto.AggregateReply_Aggregations_Agg
 			out.Date = append(out.Date, AggregateDateResult{
 				Property: property,
 				Count:    date.Count,
-				Min:      minimum,
-				Max:      maximum,
-				Mode:     mode,
-				Median:   median,
+				Min:      NilZero(minimum),
+				Max:      NilZero(maximum),
+				Mode:     NilZero(mode),
+				Median:   NilZero(median),
 			})
 		case agg.GetInt() != nil:
 			int := agg.GetInt()
@@ -428,8 +472,8 @@ func unmarshalAggregations(aggregations []*proto.AggregateReply_Aggregations_Agg
 	return &out, nil
 }
 
-// nilZero returns a pointer to v if it is not the zero value for T and nil otherwise.
-func nilZero[T comparable](v T) *T {
+// NilZero returns a pointer to v if it is not the zero value for T and nil otherwise.
+func NilZero[T comparable](v T) *T {
 	if v == *new(T) {
 		return nil
 	}

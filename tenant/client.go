@@ -31,15 +31,10 @@ type Status api.TenantStatus
 
 const (
 	Active     = Status(api.TenantStatusActive)
-	Cold       = Status(api.TenantStatusCold)
-	Freezing   = Status(api.TenantStatusFreezing)
-	Frozen     = Status(api.TenantStatusFrozen)
-	Hot        = Status(api.TenantStatusHot)
 	Inactive   = Status(api.TenantStatusInactive)
 	Offloaded  = Status(api.TenantStatusOffloaded)
 	Offloading = Status(api.TenantStatusOffloading)
 	Onloading  = Status(api.TenantStatusOnloading)
-	Unfreezing = Status(api.TenantStatusUnfreezing)
 )
 
 // Create new tenants in the collection.

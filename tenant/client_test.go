@@ -26,7 +26,7 @@ func TestClient_Create(t *testing.T) {
 			name: "successfully",
 			tenants: []tenant.Tenant{
 				{Name: "john_doe", Status: tenant.Active},
-				{Name: "jane_doe", Status: tenant.Frozen},
+				{Name: "jane_doe", Status: tenant.Offloaded},
 			},
 			stubs: []testkit.Stub[api.CreateTenantsRequest, any]{
 				{
@@ -34,7 +34,7 @@ func TestClient_Create(t *testing.T) {
 						Collection: "Songs",
 						Tenants: []api.Tenant{
 							{Name: "john_doe", Status: api.TenantStatusActive},
-							{Name: "jane_doe", Status: api.TenantStatusFrozen},
+							{Name: "jane_doe", Status: api.TenantStatusOffloaded},
 						},
 					},
 				},
@@ -70,7 +70,7 @@ func TestClient_Update(t *testing.T) {
 			name: "successfully",
 			tenants: []tenant.Tenant{
 				{Name: "john_doe", Status: tenant.Active},
-				{Name: "jane_doe", Status: tenant.Frozen},
+				{Name: "jane_doe", Status: tenant.Offloaded},
 			},
 			stubs: []testkit.Stub[api.UpdateTenantsRequest, any]{
 				{
@@ -78,7 +78,7 @@ func TestClient_Update(t *testing.T) {
 						Collection: "Songs",
 						Tenants: []api.Tenant{
 							{Name: "john_doe", Status: api.TenantStatusActive},
-							{Name: "jane_doe", Status: api.TenantStatusFrozen},
+							{Name: "jane_doe", Status: api.TenantStatusOffloaded},
 						},
 					},
 				},
@@ -122,13 +122,13 @@ func TestClient_Get(t *testing.T) {
 					},
 					Response: api.GetTenantsResponse{
 						{Name: "john_doe", Status: api.TenantStatusActive},
-						{Name: "jane_doe", Status: api.TenantStatusFrozen},
+						{Name: "jane_doe", Status: api.TenantStatusOffloaded},
 					},
 				},
 			},
 			want: []tenant.Tenant{
 				{Name: "john_doe", Status: tenant.Active},
-				{Name: "jane_doe", Status: tenant.Frozen},
+				{Name: "jane_doe", Status: tenant.Offloaded},
 			},
 		},
 		{

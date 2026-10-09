@@ -54,9 +54,6 @@ type Hybrid struct {
 	groupBy *GroupBy
 }
 
-// Alpha is a helper for setting optional [Hybrid.Alpha].
-func Alpha(a float32) *float32 { return &a }
-
 const (
 	// RANKED fusion algorithm.
 	HybridFusionRanked = api.HybridFusionRanked
@@ -64,7 +61,7 @@ const (
 	HybridFusionRelativeScore = api.HybridFusionRelativeScore
 )
 
-// HybridFunc runs plain near text search.
+// HybridFunc runs plain hybrid search.
 type HybridFunc func(context.Context, Hybrid) (*Result, error)
 
 // hybridFunc makes internal.Transport available to [query] via a closure.
@@ -84,25 +81,28 @@ func hybridFunc(t internal.Transport, rd api.RequestDefaults) HybridFunc {
 			ReturnNestedProperties: h.ReturnNestedProperties,
 			ReturnReferences:       h.ReturnReferences,
 			GroupBy:                h.groupBy,
-		}, func(req *api.SearchRequest) {
-			req.Hybrid = &api.Hybrid{
-				Query:           h.Query,
-				QueryProperties: h.QueryProperties,
-				Alpha:           h.Alpha,
-				Fusion:          h.Fusion,
-				KeywordSimilarity: api.KeywordSimilarity{
-					AllTokensMatch:     h.KeywordSimilarity.AllTokensMatch(),
-					CrossProperty:      h.KeywordSimilarity.CrossProperty(),
-					MinimumTokensMatch: h.KeywordSimilarity.MinimumTokensMatch(),
-				},
-				NearVector: nearVector(h.NearVector),
-				NearText:   nearText(h.NearText),
-			}
-		})
+		}, func(req *api.SearchRequest) { req.Hybrid = h.Search() }, "hybrid")
 	}
 }
 
-// GroupBy runs near text search with a GroupBy clause.
+// Search convers [Hybrid] to [api.Hybrid].
+func (h *Hybrid) Search() *api.Hybrid {
+	return &api.Hybrid{
+		Query:           h.Query,
+		QueryProperties: h.QueryProperties,
+		Alpha:           h.Alpha,
+		Fusion:          h.Fusion,
+		KeywordSimilarity: api.KeywordSimilarity{
+			AllTokensMatch:     h.KeywordSimilarity.AllTokensMatch(),
+			CrossProperty:      h.KeywordSimilarity.CrossProperty(),
+			MinimumTokensMatch: h.KeywordSimilarity.MinimumTokensMatch(),
+		},
+		NearVector: h.NearVector.Search(),
+		NearText:   h.NearText.Search(),
+	}
+}
+
+// GroupBy runs hybrid search with a GroupBy clause.
 func (hf HybridFunc) GroupBy(ctx context.Context, h Hybrid, groupBy GroupBy) (*GroupByResult, error) {
 	h.groupBy = &groupBy
 	return queryGroupBy(ctx, hf, h)

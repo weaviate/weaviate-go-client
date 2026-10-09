@@ -1,16 +1,16 @@
 package api
 
 import (
-	"encoding"
 	"encoding/json"
 	"errors"
 	"maps"
 	"net/http"
 	"net/url"
+	"slices"
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
-	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
+	proto "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
@@ -77,7 +77,7 @@ func (r *InsertObjectsRequest) MarshalMessage() (*proto.BatchObjectsRequest, err
 
 type InsertObjectsResponse struct {
 	Took      time.Duration
-	Positions []int32  // Positional indices of the failed objects. Aligned with Errors.
+	Positions []int    // Positional indices of the failed objects. Aligned with Errors.
 	Errors    []string // Error messages for failed objects. Aligned with Indices.
 }
 
@@ -89,7 +89,7 @@ func (r *InsertObjectsResponse) UnmarshalMessage(reply *proto.BatchObjectsReply)
 		Took: time.Duration(reply.Took) * time.Second,
 	}
 	for _, e := range reply.GetErrors() {
-		r.Positions = append(r.Positions, e.Index)
+		r.Positions = append(r.Positions, int(e.Index))
 		r.Errors = append(r.Errors, e.Error)
 	}
 	return nil
@@ -129,7 +129,7 @@ func MarshalBatchReference(ref *Reference, rd RequestDefaults) *proto.BatchRefer
 		Name:           ref.Origin.Property,
 		FromCollection: ref.Origin.Collection,
 		FromUuid:       ref.Origin.UUID.String(),
-		ToCollection:   nilZero(ref.Target.Collection),
+		ToCollection:   NilZero(ref.Target.Collection),
 		ToUuid:         ref.Target.UUID.String(),
 		Tenant:         rd.Tenant,
 	}
@@ -146,7 +146,7 @@ func (r *InsertReferencesResponse) UnmarshalMessage(reply *proto.BatchReferences
 	}
 
 	for _, e := range reply.GetErrors() {
-		r.Positions = append(r.Positions, e.Index)
+		r.Positions = append(r.Positions, int(e.Index))
 		r.Errors = append(r.Errors, e.Error)
 	}
 	return nil
@@ -165,36 +165,40 @@ type (
 	References map[string][]Reference
 )
 
-var _ encoding.TextMarshaler = (*Reference)(nil)
+var _ json.Marshaler = (*Reference)(nil)
 
-var (
-	beaconPrefix = []byte("weaviate://localhost/")
-	beaconSep    = []byte("/")
+const (
+	beaconJSONKey = "beacon"
+	beaconPrefix  = "weaviate://localhost/"
+	beaconSep     = "/"
 )
 
-// MarshalText formats the object reference as a beacon.
-// json.Marshal will call this method and encode the result as a JSON string.
-func (r *Reference) MarshalText() ([]byte, error) {
-	id, err := r.Target.UUID.MarshalText()
-	if err != nil {
-		return nil, err
-	}
-	b := append([]byte(nil), beaconPrefix...)
-	if r.Target.Collection != "" {
-		b = append(b, r.Target.Collection...)
-		b = append(b, beaconSep...)
-	}
-	return append(b, id...), nil
-}
-
 // String formats the object reference as a beacon.
-func (r *Reference) String() string {
-	b, _ := r.MarshalText()
-	return string(b)
+func (r Reference) String() string {
+	b := beaconPrefix
+	if r.Target.Collection != "" {
+		b += (r.Target.Collection + beaconSep)
+	}
+	b += r.Target.UUID.String()
+	return b
 }
 
-// MarshalJSON implements json.Marshaler via [rest.Object].
-func (r *ReplaceObjectRequest) MarshalJSON() ([]byte, error) {
+func (r Reference) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]string{
+		beaconJSONKey: r.String(),
+	})
+}
+
+// restObject implements json.Marshaler via [rest.Object].
+type restObject struct {
+	RequestDefaults
+	UUID       *uuid.UUID
+	Properties map[string]any
+	References References
+	Vectors    []Vector
+}
+
+func (r *restObject) MarshalJSON() ([]byte, error) {
 	vectors := make(map[string]any, len(r.Vectors))
 	for _, v := range r.Vectors {
 		if v.Single != nil {
@@ -222,14 +226,18 @@ func (r *ReplaceObjectRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(req)
 }
 
-// ReplaceObjectRequest replaces an object in a collection.
-type ReplaceObjectRequest struct {
-	RequestDefaults
-	UUID       *uuid.UUID
-	Properties map[string]any
-	References References
-	Vectors    []Vector
+func (r *ReplaceObjectRequest) MarshalJSON() ([]byte, error) {
+	return (*restObject)(r).MarshalJSON()
 }
+
+func (r *UpdateObjectRequest) MarshalJSON() ([]byte, error) {
+	body := *r
+	body.UUID = nil
+	return (*restObject)(&body).MarshalJSON()
+}
+
+// ReplaceObjectRequest replaces an object in a collection.
+type ReplaceObjectRequest restObject
 
 var _ transports.Endpoint = (*ReplaceObjectRequest)(nil)
 
@@ -246,6 +254,25 @@ func (r *ReplaceObjectRequest) Query() url.Values {
 }
 
 func (r *ReplaceObjectRequest) Body() any { return r }
+
+// UpdateObjectRequest partially updates an object in collection.
+type UpdateObjectRequest restObject
+
+var _ transports.Endpoint = (*UpdateObjectRequest)(nil)
+
+func (*UpdateObjectRequest) Method() string { return http.MethodPatch }
+func (r *UpdateObjectRequest) Path() string {
+	return "/objects/" + r.CollectionName + "/" + r.UUID.String()
+}
+
+func (r *UpdateObjectRequest) Query() url.Values {
+	if r.ConsistencyLevel != consistencyLevelUndefined {
+		return url.Values{"consistency_level": {string(r.ConsistencyLevel)}}
+	}
+	return nil
+}
+
+func (r *UpdateObjectRequest) Body() any { return r }
 
 // DeleteObjectRequest deletes an object by its UUID.
 type DeleteObjectRequest struct {
@@ -311,14 +338,170 @@ func marshalObjectProperties(properties map[string]any, dest *proto.BatchObject_
 	if len(properties) == 0 {
 		return nil
 	}
-	nonRef, err := structpb.NewStruct(properties)
-	if err != nil {
-		return err
+
+	// TODO(dyma): check if we can just convert every array to []any
+	// and let structpb handle that. IDK if the server will be able to decode it.
+	for _, name := range slices.Sorted(maps.Keys(properties)) {
+		switch v := properties[name].(type) {
+		default:
+			continue
+		case uuid.UUID:
+			properties[name] = v.String()
+			continue
+		case time.Time:
+			properties[name] = v.Format(TimeLayout)
+			continue
+		case []bool:
+			dest.BooleanArrayProperties = append(dest.BooleanArrayProperties, &proto.BooleanArrayProperties{
+				PropName: name,
+				Values:   v,
+			})
+		case []string:
+			dest.TextArrayProperties = append(dest.TextArrayProperties, &proto.TextArrayProperties{
+				PropName: name,
+				Values:   v,
+			})
+		case []uuid.UUID:
+			dest.TextArrayProperties = append(dest.TextArrayProperties, &proto.TextArrayProperties{
+				PropName: name,
+				Values:   uuidArray(v),
+			})
+		case []time.Time:
+			dest.TextArrayProperties = append(dest.TextArrayProperties, &proto.TextArrayProperties{
+				PropName: name,
+				Values:   timeArray(v),
+			})
+		case []int:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(v),
+			})
+		case []int8:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(v),
+			})
+		case []int16:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(v),
+			})
+		case []int32:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(v),
+			})
+		case []int64:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   v,
+			})
+		case []uint:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(v),
+			})
+		case []uint8:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(v),
+			})
+		case []uint16:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(v),
+			})
+		case []uint32:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(v),
+			})
+		case []uint64:
+			dest.IntArrayProperties = append(dest.IntArrayProperties, &proto.IntArrayProperties{
+				PropName: name,
+				Values:   intArray(v),
+			})
+
+		case []float32:
+			dest.NumberArrayProperties = append(dest.NumberArrayProperties, &proto.NumberArrayProperties{
+				PropName: name,
+				Values:   floatArray(v),
+			})
+
+		case []float64:
+			dest.NumberArrayProperties = append(dest.NumberArrayProperties, &proto.NumberArrayProperties{
+				PropName: name,
+				Values:   v,
+			})
+		case []map[string]any:
+			objects := make([]*proto.ObjectPropertiesValue, len(v))
+			for i := range objects {
+				var dest proto.BatchObject_Properties
+				if err := marshalObjectProperties(v[i], &dest); err != nil {
+					return err
+				}
+				objects[i] = &proto.ObjectPropertiesValue{
+					NonRefProperties:       dest.NonRefProperties,
+					NumberArrayProperties:  dest.NumberArrayProperties,
+					IntArrayProperties:     dest.IntArrayProperties,
+					TextArrayProperties:    dest.TextArrayProperties,
+					BooleanArrayProperties: dest.BooleanArrayProperties,
+					ObjectProperties:       dest.ObjectProperties,
+					ObjectArrayProperties:  dest.ObjectArrayProperties,
+				}
+			}
+			dest.ObjectArrayProperties = append(dest.ObjectArrayProperties, &proto.ObjectArrayProperties{
+				PropName: name,
+				Values:   objects,
+			})
+		}
+		delete(properties, name)
 	}
 
-	// TODO(dyma): move object / array properties out of nonRef
-	dest.NonRefProperties = nonRef
+	if len(properties) > 0 {
+		nonRef, err := structpb.NewStruct(properties)
+		if err != nil {
+			return err
+		}
+
+		// TODO(dyma): move object properties out of nonRef
+		dest.NonRefProperties = nonRef
+	}
 	return nil
+}
+
+func intArray[
+	T int | int8 | int16 | int32 |
+		uint | uint8 | uint16 | uint32 | uint64](arr []T) []int64 {
+	out := make([]int64, len(arr))
+	for i := range arr {
+		out[i] = int64(arr[i])
+	}
+	return out
+}
+
+func floatArray(arr []float32) []float64 {
+	out := make([]float64, len(arr))
+	for i := range arr {
+		out[i] = float64(arr[i])
+	}
+	return out
+}
+
+func uuidArray(arr []uuid.UUID) []string {
+	out := make([]string, len(arr))
+	for i := range arr {
+		out[i] = arr[i].String()
+	}
+	return out
+}
+
+func timeArray(arr []time.Time) []string {
+	out := make([]string, len(arr))
+	for i := range arr {
+		out[i] = arr[i].Format(TimeLayout)
+	}
+	return out
 }
 
 func marshalReferenceProperties(references References, dest *proto.BatchObject_Properties) error {
@@ -373,19 +556,24 @@ func (r *DeleteObjectsRequest) Body() transport.MessageMarshaler[proto.BatchDele
 }
 
 func (r *DeleteObjectsRequest) MarshalMessage() (*proto.BatchDeleteRequest, error) {
+	f, err := marshalFilter(r.Filter)
+	if err != nil {
+		return nil, err
+	}
 	return &proto.BatchDeleteRequest{
 		Collection:       r.CollectionName,
-		Tenant:           nilZero(r.Tenant),
+		Tenant:           NilZero(r.Tenant),
 		ConsistencyLevel: r.ConsistencyLevel.proto(),
 		Verbose:          r.Verbose,
 		DryRun:           r.DryRun,
-		Filters:          marshalFilter(r.Filter),
+		Filters:          f,
 	}, nil
 }
 
 type DeleteObjectsResponse struct {
-	Took   time.Duration
-	Errors map[uuid.UUID]error
+	Took    time.Duration
+	Matches int64
+	Errors  map[uuid.UUID]error
 }
 
 var _ transport.MessageUnmarshaler[proto.BatchDeleteReply] = (*DeleteObjectsResponse)(nil)
@@ -400,17 +588,16 @@ func (r *DeleteObjectsResponse) UnmarshalMessage(reply *proto.BatchDeleteReply) 
 			return err
 		}
 
-		var respErr error
 		if !object.Successful && object.Error != nil {
-			respErr = errors.New(*object.Error)
+			errs[id] = errors.New(*object.Error)
 		}
 
-		errs[id] = respErr
 	}
 
 	*r = DeleteObjectsResponse{
-		Took:   time.Duration(reply.Took) * time.Second,
-		Errors: errs,
+		Took:    time.Duration(reply.Took) * time.Second,
+		Matches: reply.GetMatches(),
+		Errors:  errs,
 	}
 	return nil
 }

@@ -1,6 +1,8 @@
 package collections
 
 import (
+	"slices"
+
 	"github.com/weaviate/weaviate-go-client/v6/collections/compression"
 	"github.com/weaviate/weaviate-go-client/v6/collections/vectorindex"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
@@ -14,25 +16,28 @@ type Alias api.Alias
 
 type (
 	Collection struct {
-		Name          string
-		Description   string
-		Properties    []Property
-		References    []Reference
-		Vectors       map[string]VectorConfig
-		Sharding      *ShardingConfig
-		Replication   *ReplicationConfig
-		InvertedIndex *InvertedIndexConfig
-		MultiTenancy  *MultiTenancyConfig
+		Name            string
+		Description     string
+		Properties      []Property
+		References      []Reference
+		Vectors         map[string]VectorConfig
+		Sharding        *ShardingConfig
+		Replication     *ReplicationConfig
+		InvertedIndex   *InvertedIndexConfig
+		MultiTenancy    *MultiTenancyConfig
+		ObjectTTL       *ObjectTTLConfig
+		Generative      modules.Module
+		RerankerModules []modules.Module
 	}
 	Property struct {
-		Name              string
-		Description       string
-		DataType          DataType
-		NestedProperties  []Property
-		Tokenization      Tokenization
-		IndexFilterable   bool
-		IndexRangeFilters bool
-		IndexSearchable   bool
+		Name             string
+		Description      string
+		DataType         DataType
+		NestedProperties []Property
+		Tokenization     Tokenization
+		IndexFilterable  *bool
+		IndexRangeable   *bool
+		IndexSearchable  *bool
 	}
 	Reference struct {
 		Name        string
@@ -61,6 +66,7 @@ type (
 	BM25Config         api.BM25Config
 	StopwordConfig     api.StopwordConfig
 	MultiTenancyConfig api.MultiTenancyConfig
+	ObjectTTLConfig    api.ObjectTTLConfig
 )
 
 type (
@@ -97,9 +103,11 @@ type DataType api.DataType
 const (
 	DataTypeText           DataType = DataType(api.DataTypeText)
 	DataTypeBool           DataType = DataType(api.DataTypeBool)
+	DataTypeBlob           DataType = DataType(api.DataTypeBlob)
 	DataTypeInt            DataType = DataType(api.DataTypeInt)
 	DataTypeNumber         DataType = DataType(api.DataTypeNumber)
 	DataTypeDate           DataType = DataType(api.DataTypeDate)
+	DataTypeUUID           DataType = DataType(api.DataTypeUUID)
 	DataTypeObject         DataType = DataType(api.DataTypeObject)
 	DataTypeGeoCoordinates DataType = DataType(api.DataTypeGeoCoordinates)
 	DataTypeTextArray      DataType = DataType(api.DataTypeTextArray)
@@ -107,6 +115,7 @@ const (
 	DataTypeIntArray       DataType = DataType(api.DataTypeIntArray)
 	DataTypeNumberArray    DataType = DataType(api.DataTypeNumberArray)
 	DataTypeDateArray      DataType = DataType(api.DataTypeDateArray)
+	DataTypeUUIDArray      DataType = DataType(api.DataTypeUUIDArray)
 	DataTypeObjectArray    DataType = DataType(api.DataTypeObjectArray)
 )
 
@@ -138,14 +147,14 @@ func collectionToAPI(c *Collection) (api.Collection, error) {
 		properties = make([]api.Property, len(c.Properties))
 		for i, p := range c.Properties {
 			properties[i] = api.Property{
-				Name:              p.Name,
-				Description:       p.Description,
-				DataType:          api.DataType(p.DataType),
-				NestedProperties:  nestedPropertiesToAPI(p.NestedProperties),
-				Tokenization:      api.Tokenization(p.Tokenization),
-				IndexFilterable:   p.IndexFilterable,
-				IndexRangeFilters: p.IndexRangeFilters,
-				IndexSearchable:   p.IndexSearchable,
+				Name:             p.Name,
+				Description:      p.Description,
+				DataType:         api.DataType(p.DataType),
+				NestedProperties: nestedPropertiesToAPI(p.NestedProperties),
+				Tokenization:     api.Tokenization(p.Tokenization),
+				IndexFilterable:  p.IndexFilterable,
+				IndexRangeable:   p.IndexRangeable,
+				IndexSearchable:  p.IndexSearchable,
 			}
 		}
 	}
@@ -209,6 +218,7 @@ func collectionToAPI(c *Collection) (api.Collection, error) {
 		References:   references,
 		Vectors:      vectors,
 		MultiTenancy: (*api.MultiTenancyConfig)(c.MultiTenancy),
+		ObjectTTL:    (*api.ObjectTTLConfig)(c.ObjectTTL),
 	}
 
 	if c.Sharding != nil {
@@ -239,6 +249,28 @@ func collectionToAPI(c *Collection) (api.Collection, error) {
 		}
 	}
 
+	if c.Generative != nil {
+		conf, err := modules.Registry.Encode(c.Generative)
+		if err != nil {
+			return api.Collection{}, err
+		}
+		out.Generative = &api.Module{
+			Name: c.Generative.Name(),
+			Conf: conf,
+		}
+	}
+
+	for _, rm := range c.RerankerModules {
+		conf, err := modules.Registry.Encode(rm)
+		if err != nil {
+			return api.Collection{}, err
+		}
+		out.RerankerModules = append(out.RerankerModules, api.Module{
+			Name: rm.Name(),
+			Conf: conf,
+		})
+	}
+
 	return out, nil
 }
 
@@ -251,14 +283,14 @@ func collectionFromAPI(c *api.Collection) (Collection, error) {
 		properties = make([]Property, len(c.Properties))
 		for i, p := range c.Properties {
 			properties[i] = Property{
-				Name:              p.Name,
-				Description:       p.Description,
-				DataType:          DataType(p.DataType),
-				NestedProperties:  nestedPropertiesFromAPI(p.NestedProperties),
-				Tokenization:      Tokenization(p.Tokenization),
-				IndexFilterable:   p.IndexFilterable,
-				IndexRangeFilters: p.IndexRangeFilters,
-				IndexSearchable:   p.IndexSearchable,
+				Name:             p.Name,
+				Description:      p.Description,
+				DataType:         DataType(p.DataType),
+				NestedProperties: nestedPropertiesFromAPI(p.NestedProperties),
+				Tokenization:     Tokenization(p.Tokenization),
+				IndexFilterable:  p.IndexFilterable,
+				IndexRangeable:   p.IndexRangeable,
+				IndexSearchable:  p.IndexSearchable,
 			}
 		}
 	}
@@ -336,16 +368,37 @@ func collectionFromAPI(c *api.Collection) (Collection, error) {
 		}
 	}
 
+	var generative modules.Module
+	if c.Generative != nil {
+		conf, err := modules.Registry.Decode(c.Generative.Name, c.Generative.Conf)
+		if err != nil {
+			return Collection{}, err
+		}
+		generative = conf
+	}
+
+	rerankers := slices.Grow([]modules.Module(nil), len(c.RerankerModules))
+	for _, rm := range c.RerankerModules {
+		conf, err := modules.Registry.Decode(rm.Name, rm.Conf)
+		if err != nil {
+			return Collection{}, err
+		}
+		rerankers = append(rerankers, conf)
+	}
+
 	return Collection{
-		Name:          c.Name,
-		Description:   c.Description,
-		Properties:    properties,
-		References:    references,
-		Vectors:       vectors,
-		Sharding:      sharding,
-		Replication:   replication,
-		InvertedIndex: invertedIndex,
-		MultiTenancy:  (*MultiTenancyConfig)(c.MultiTenancy),
+		Name:            c.Name,
+		Description:     c.Description,
+		Properties:      properties,
+		References:      references,
+		Vectors:         vectors,
+		Sharding:        sharding,
+		Replication:     replication,
+		InvertedIndex:   invertedIndex,
+		MultiTenancy:    (*MultiTenancyConfig)(c.MultiTenancy),
+		ObjectTTL:       (*ObjectTTLConfig)(c.ObjectTTL),
+		Generative:      generative,
+		RerankerModules: rerankers,
 	}, nil
 }
 
@@ -357,14 +410,14 @@ func nestedPropertiesFromAPI(nested []api.Property) []Property {
 	out := make([]Property, len(nested))
 	for i, np := range nested {
 		out[i] = Property{
-			Name:              np.Name,
-			Description:       np.Description,
-			DataType:          DataType(np.DataType),
-			NestedProperties:  nestedPropertiesFromAPI(np.NestedProperties),
-			Tokenization:      Tokenization(np.Tokenization),
-			IndexFilterable:   np.IndexFilterable,
-			IndexRangeFilters: np.IndexRangeFilters,
-			IndexSearchable:   np.IndexSearchable,
+			Name:             np.Name,
+			Description:      np.Description,
+			DataType:         DataType(np.DataType),
+			NestedProperties: nestedPropertiesFromAPI(np.NestedProperties),
+			Tokenization:     Tokenization(np.Tokenization),
+			IndexFilterable:  np.IndexFilterable,
+			IndexRangeable:   np.IndexRangeable,
+			IndexSearchable:  np.IndexSearchable,
 		}
 	}
 	return out
@@ -378,14 +431,14 @@ func nestedPropertiesToAPI(nested []Property) []api.Property {
 	out := make([]api.Property, len(nested))
 	for i, p := range nested {
 		out[i] = api.Property{
-			Name:              p.Name,
-			Description:       p.Description,
-			DataType:          api.DataType(p.DataType),
-			NestedProperties:  nestedPropertiesToAPI(p.NestedProperties),
-			Tokenization:      api.Tokenization(p.Tokenization),
-			IndexFilterable:   p.IndexFilterable,
-			IndexRangeFilters: p.IndexRangeFilters,
-			IndexSearchable:   p.IndexSearchable,
+			Name:             p.Name,
+			Description:      p.Description,
+			DataType:         api.DataType(p.DataType),
+			NestedProperties: nestedPropertiesToAPI(p.NestedProperties),
+			Tokenization:     api.Tokenization(p.Tokenization),
+			IndexFilterable:  p.IndexFilterable,
+			IndexRangeable:   p.IndexRangeable,
+			IndexSearchable:  p.IndexSearchable,
 		}
 	}
 	return out

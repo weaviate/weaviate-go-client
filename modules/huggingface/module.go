@@ -85,8 +85,7 @@ func (t2v *Text2Vec) DecodeMap(m map[string]any) error {
 		EndpointURL: dest.EndpointURL,
 		Properties:  dest.Properties,
 	}
-	// passageModel is a legacy alias for model. Fold it into Model so old configs read back correctly.
-	if t2v.Model == "" {
+	if t2v.Model == "" { // passageModel is a legacy alias for model.
 		t2v.Model = dest.PassageModel
 	}
 	if opt := dest.Options; opt != nil {

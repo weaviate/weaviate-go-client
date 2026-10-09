@@ -13,6 +13,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
+	"github.com/weaviate/weaviate-go-client/v6/modules"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
@@ -39,6 +40,8 @@ func TestClient_Use(t *testing.T) {
 		assert.NotNil(t, h.Aggregate, "nil aggregate namespace")
 		assert.NotNil(t, h.Data, "nil data namespace")
 		assert.NotNil(t, h.Query, "nil query namespace")
+		assert.NotNil(t, h.Config, "nil config namespace")
+		assert.NotNil(t, h.Tenants, "nil tenants namespace")
 	}
 
 	t.Run("default handle", func(t *testing.T) {
@@ -113,12 +116,12 @@ func TestClient_Create(t *testing.T) {
 					{Name: "single", DataType: collections.DataTypeBool},
 					{Name: "year", DataType: collections.DataTypeInt},
 					{
-						Name:              "lyrics",
-						DataType:          collections.DataTypeInt,
-						Tokenization:      collections.TokenizationTrigram,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						Name:            "lyrics",
+						DataType:        collections.DataTypeInt,
+						Tokenization:    collections.TokenizationTrigram,
+						IndexFilterable: new(true),
+						IndexRangeable:  new(true),
+						IndexSearchable: new(true),
 					},
 					{
 						Name: "metadata", DataType: collections.DataTypeObject,
@@ -126,10 +129,10 @@ func TestClient_Create(t *testing.T) {
 							{Name: "duration", DataType: collections.DataTypeNumber},
 							{Name: "uploadedTime", DataType: collections.DataTypeDate},
 						},
-						Tokenization:      collections.TokenizationWhitespace,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						Tokenization:    collections.TokenizationWhitespace,
+						IndexFilterable: new(true),
+						IndexRangeable:  new(true),
+						IndexSearchable: new(true),
 					},
 				},
 				References: []collections.Reference{
@@ -205,6 +208,21 @@ func TestClient_Create(t *testing.T) {
 					AutoTenantActivation: true,
 					AutoTenantCreation:   false,
 				},
+				ObjectTTL: &collections.ObjectTTLConfig{
+					Enabled:              true,
+					PropertyName:         "timestamp",
+					DefaultTTL:           72 * time.Hour,
+					FilterExpiredObjects: false,
+				},
+				Generative: testkit.GenerativeModule{
+					"baseURL": "example.com",
+					"model":   "campbell",
+				},
+				RerankerModules: []modules.Module{
+					testkit.RerankerModule{
+						"model": "quicksort",
+					},
+				},
 			},
 			stubs: []testkit.Stub[api.CreateCollectionRequest, api.Collection]{
 				{
@@ -218,12 +236,12 @@ func TestClient_Create(t *testing.T) {
 								{Name: "single", DataType: api.DataTypeBool},
 								{Name: "year", DataType: api.DataTypeInt},
 								{
-									Name:              "lyrics",
-									DataType:          api.DataTypeInt,
-									Tokenization:      api.TokenizationTrigram,
-									IndexFilterable:   true,
-									IndexRangeFilters: true,
-									IndexSearchable:   true,
+									Name:            "lyrics",
+									DataType:        api.DataTypeInt,
+									Tokenization:    api.TokenizationTrigram,
+									IndexFilterable: new(true),
+									IndexRangeable:  new(true),
+									IndexSearchable: new(true),
 								},
 								{
 									Name: "metadata", DataType: api.DataTypeObject,
@@ -231,10 +249,10 @@ func TestClient_Create(t *testing.T) {
 										{Name: "duration", DataType: api.DataTypeNumber},
 										{Name: "uploadedTime", DataType: api.DataTypeDate},
 									},
-									Tokenization:      api.TokenizationWhitespace,
-									IndexFilterable:   true,
-									IndexRangeFilters: true,
-									IndexSearchable:   true,
+									Tokenization:    api.TokenizationWhitespace,
+									IndexFilterable: new(true),
+									IndexRangeable:  new(true),
+									IndexSearchable: new(true),
 								},
 							},
 							References: []api.ReferenceProperty{
@@ -322,6 +340,27 @@ func TestClient_Create(t *testing.T) {
 								AutoTenantActivation: true,
 								AutoTenantCreation:   false,
 							},
+							ObjectTTL: &api.ObjectTTLConfig{
+								Enabled:              true,
+								PropertyName:         "timestamp",
+								DefaultTTL:           72 * time.Hour,
+								FilterExpiredObjects: false,
+							},
+							Generative: &api.Module{
+								Name: testkit.GenerativeModuleName,
+								Conf: map[string]any{
+									"baseURL": "example.com",
+									"model":   "campbell",
+								},
+							},
+							RerankerModules: []api.Module{
+								{
+									Name: testkit.RerankerModuleName,
+									Conf: map[string]any{
+										"model": "quicksort",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -400,12 +439,12 @@ func TestClient_GetConfig(t *testing.T) {
 							{Name: "single", DataType: api.DataTypeBool},
 							{Name: "year", DataType: api.DataTypeInt},
 							{
-								Name:              "lyrics",
-								DataType:          api.DataTypeInt,
-								Tokenization:      api.TokenizationTrigram,
-								IndexFilterable:   true,
-								IndexRangeFilters: true,
-								IndexSearchable:   true,
+								Name:            "lyrics",
+								DataType:        api.DataTypeInt,
+								Tokenization:    api.TokenizationTrigram,
+								IndexFilterable: new(true),
+								IndexRangeable:  new(true),
+								IndexSearchable: new(true),
 							},
 							{
 								Name: "metadata", DataType: api.DataTypeObject,
@@ -413,10 +452,10 @@ func TestClient_GetConfig(t *testing.T) {
 									{Name: "duration", DataType: api.DataTypeNumber},
 									{Name: "uploadedTime", DataType: api.DataTypeDate},
 								},
-								Tokenization:      api.TokenizationWhitespace,
-								IndexFilterable:   true,
-								IndexRangeFilters: true,
-								IndexSearchable:   true,
+								Tokenization:    api.TokenizationWhitespace,
+								IndexFilterable: new(true),
+								IndexRangeable:  new(true),
+								IndexSearchable: new(true),
 							},
 						},
 						References: []api.ReferenceProperty{
@@ -498,6 +537,27 @@ func TestClient_GetConfig(t *testing.T) {
 							AutoTenantActivation: true,
 							AutoTenantCreation:   false,
 						},
+						ObjectTTL: &api.ObjectTTLConfig{
+							Enabled:              true,
+							PropertyName:         "timestamp",
+							DefaultTTL:           72 * time.Hour,
+							FilterExpiredObjects: false,
+						},
+						Generative: &api.Module{
+							Name: testkit.GenerativeModuleName,
+							Conf: map[string]any{
+								"baseURL": "example.com",
+								"model":   "campbell",
+							},
+						},
+						RerankerModules: []api.Module{
+							{
+								Name: testkit.RerankerModuleName,
+								Conf: map[string]any{
+									"model": "quicksort",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -510,12 +570,12 @@ func TestClient_GetConfig(t *testing.T) {
 					{Name: "single", DataType: collections.DataTypeBool},
 					{Name: "year", DataType: collections.DataTypeInt},
 					{
-						Name:              "lyrics",
-						DataType:          collections.DataTypeInt,
-						Tokenization:      collections.TokenizationTrigram,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						Name:            "lyrics",
+						DataType:        collections.DataTypeInt,
+						Tokenization:    collections.TokenizationTrigram,
+						IndexFilterable: new(true),
+						IndexRangeable:  new(true),
+						IndexSearchable: new(true),
 					},
 					{
 						Name: "metadata", DataType: collections.DataTypeObject,
@@ -523,10 +583,10 @@ func TestClient_GetConfig(t *testing.T) {
 							{Name: "duration", DataType: collections.DataTypeNumber},
 							{Name: "uploadedTime", DataType: collections.DataTypeDate},
 						},
-						Tokenization:      collections.TokenizationWhitespace,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						Tokenization:    collections.TokenizationWhitespace,
+						IndexFilterable: new(true),
+						IndexRangeable:  new(true),
+						IndexSearchable: new(true),
 					},
 				},
 				References: []collections.Reference{
@@ -598,6 +658,21 @@ func TestClient_GetConfig(t *testing.T) {
 					Enabled:              true,
 					AutoTenantActivation: true,
 					AutoTenantCreation:   false,
+				},
+				ObjectTTL: &collections.ObjectTTLConfig{
+					Enabled:              true,
+					PropertyName:         "timestamp",
+					DefaultTTL:           72 * time.Hour,
+					FilterExpiredObjects: false,
+				},
+				Generative: testkit.GenerativeModule{
+					"baseURL": "example.com",
+					"model":   "campbell",
+				},
+				RerankerModules: []modules.Module{
+					testkit.RerankerModule{
+						"model": "quicksort",
+					},
 				},
 			},
 		},

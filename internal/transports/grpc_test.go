@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -22,7 +21,7 @@ import (
 func TestNewGRPC(t *testing.T) {
 	grpc, err := transports.NewGRPC(transports.GRPCConfig[any]{
 		Host: "example.com",
-		Port: 12345,
+		Port: "12345",
 
 		NewGRPCClient: func(channel grpc.ClientConnInterface) any {
 			require.NotNil(t, channel, "grpc channel")
@@ -91,6 +90,14 @@ func TestGRPC_Do(t *testing.T) {
 			var empty emptypb.Empty
 			return client.Invoke(ctx, ts.MethodName(), nil, &empty)
 		})
+
+		// Streaming RPCs (e.g. batch) must carry the same headers.
+		gRPC.Do(t.Context(), func(ctx context.Context, client grpc.ClientConnInterface) error {
+			stream, err := client.NewStream(ctx, ts.StreamDesc(), ts.StreamName())
+			require.NoError(t, err, "open stream")
+			require.NoError(t, stream.CloseSend(), "close stream")
+			return stream.RecvMsg(&emptypb.Empty{}) // wait for the handler to finish
+		})
 	})
 
 	t.Run("credentials", func(t *testing.T) {
@@ -144,7 +151,7 @@ type testService struct {
 	lis  net.Listener
 	srv  *grpc.Server
 	host string
-	port int
+	port string
 }
 
 // startTestService starts a local TCP [net.Listener] and creates a [grpc.Server]
@@ -158,14 +165,21 @@ func startTestService(t *testing.T, mh grpc.MethodHandler) *testService {
 	t.Cleanup(func() { lis.Close() })
 
 	addr := strings.Split(lis.Addr().String(), ":")
-	port, _ := strconv.Atoi(addr[1])
-
 	srv := grpc.NewServer()
 	srv.RegisterService(&grpc.ServiceDesc{
 		ServiceName: "testService",
 		Methods: []grpc.MethodDesc{
 			{MethodName: "Test", Handler: mh},
 		},
+		Streams: []grpc.StreamDesc{{
+			StreamName:    "TestStream",
+			ClientStreams: true,
+			ServerStreams: true,
+			Handler: func(srv any, ss grpc.ServerStream) error {
+				_, err := mh(srv, ss.Context(), ss.RecvMsg, nil)
+				return err
+			},
+		}},
 	}, nil)
 
 	go srv.Serve(lis)
@@ -175,10 +189,15 @@ func startTestService(t *testing.T, mh grpc.MethodHandler) *testService {
 		lis:  lis,
 		srv:  srv,
 		host: addr[0],
-		port: port,
+		port: addr[1],
 	}
 }
 
 func (ts *testService) Host() string       { return ts.host }
-func (ts *testService) Port() int          { return ts.port }
+func (ts *testService) Port() string       { return ts.port }
 func (ts *testService) MethodName() string { return "/testService/Test" }
+func (ts *testService) StreamName() string { return "/testService/TestStream" }
+
+func (ts *testService) StreamDesc() *grpc.StreamDesc {
+	return &grpc.StreamDesc{ClientStreams: true, ServerStreams: true}
+}

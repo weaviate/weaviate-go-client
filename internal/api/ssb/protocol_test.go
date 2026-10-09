@@ -87,7 +87,7 @@ func TestClient(t *testing.T) {
 	)
 
 	var (
-		added int // Added to batch stream.
+		total int // Total TaskCount across all runs.
 		seen  int // Arrived to the server.
 		ok    int // Succeeded.
 		fail  int // Failed.
@@ -126,14 +126,29 @@ func TestClient(t *testing.T) {
 
 				// If the test server can OOM, then we won't try and guess
 				// whether the error was expected, as OOM happens randomly.
-				if !sim.CanOOM && err != context.Canceled {
+				if !sim.CanOOM && err != context.Canceled && err != ssb.ErrTooLarge {
 					assert.NoError(t, err, "add error")
 				}
 
-				if err == nil {
-					if assert.NotNil(t, task, "nil task") {
-						tasks = append(tasks, task)
-					}
+				if err != nil {
+					continue
+				}
+
+				if assert.NotNil(t, task, "nil task") {
+					tasks = append(tasks, task)
+				}
+
+				if i < (sim.BatchSize / 2) {
+					// The first batch will not be flushed until sim.BatchSize
+					// objects are added to it. This way we can guarantee that
+					// task #i is not finished and check that its duplicate is
+					// rejected.
+					duplicate, err := c.Add(
+						t.Context(),
+						ssb.Data{Object: &api.BatchObject{UUID: id}},
+					)
+					assert.Errorf(t, err, "%s is duplicated", id)
+					assert.Equal(t, task, duplicate, "expected original task")
 				}
 			}
 
@@ -147,7 +162,7 @@ func TestClient(t *testing.T) {
 			// Wait for all tasks to complete.
 			for _, task := range tasks {
 				<-task.Done()
-				require.LessOrEqual(t, task.TimesRetried(), retryLimit, "task %s retries", task.ID())
+				require.LessOrEqualf(t, task.TimesRetried(), retryLimit, "task %s retries", task.ID())
 
 				switch task.Err() {
 				case nil:
@@ -157,12 +172,12 @@ func TestClient(t *testing.T) {
 				}
 			}
 
-			added += sim.TaskCount
+			total += sim.TaskCount
 			seen += len(srv.seen)
 		})
 	}
 
-	require.GreaterOrEqual(t, seen, int(float64(added)*.9), "over 90% of all data arrive at the server")
+	require.GreaterOrEqual(t, seen, int(float64(total)*.9), "over 90% of all data arrive at the server")
 	require.GreaterOrEqual(t, ok, int(float64(seen)*.75), "over 75% of submitted tasks succeed")
 	require.LessOrEqual(t, fail, int(float64(seen)*.25), "under 25% of submitted tasks fail")
 }
@@ -225,7 +240,7 @@ func (b *Batch) Add(v any) (added, full bool) {
 	defer require.LessOrEqual(b.T, cap(b.values), b.MessageCap, "batch grew beyond MessageCap")
 
 	assert.IsType(b.T, *new(string), v, "bad value in Add")
-	assert.NotContains(b.T, b.values, v, "duplicate value in batch %s", v)
+	assert.NotContainsf(b.T, b.values, v, "duplicate value in batch %s", v)
 
 	if len(b.values) == cap(b.values) {
 		return false, true

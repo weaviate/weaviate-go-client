@@ -97,12 +97,12 @@ func TestRESTRequests(t *testing.T) {
 					"genres": []string{"thrash metal", "blues"},
 					"single": false,
 					"year":   1992,
-					"band": []string{
-						"weaviate://localhost/Drummers/" + testkit.UUID.String(),
-						"weaviate://localhost/Basists/" + testkit.UUID.String(),
+					"band": []map[string]any{
+						{"beacon": "weaviate://localhost/Drummers/" + testkit.UUID.String()},
+						{"beacon": "weaviate://localhost/Basists/" + testkit.UUID.String()},
 					},
-					"label": []string{
-						"weaviate://localhost/" + testkit.UUID.String(),
+					"label": []map[string]any{
+						{"beacon": "weaviate://localhost/" + testkit.UUID.String()},
 					},
 				},
 				Vectors: map[string]any{
@@ -125,6 +125,42 @@ func TestRESTRequests(t *testing.T) {
 			wantBody: &rest.Object{
 				Id:    &testkit.UUID,
 				Class: "Songs",
+			},
+		},
+		{
+			name: "update object",
+			req: &api.UpdateObjectRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+					Tenant:         "john_doe",
+				},
+				UUID: &testkit.UUID,
+				Properties: map[string]any{
+					"title": "DAISIES",
+				},
+				References: api.References{
+					"label": {
+						{Target: api.ObjectPath{UUID: testkit.UUID}},
+					},
+				},
+				Vectors: []api.Vector{
+					{Name: "lyrics", Single: []float32{1, 2, 3}},
+				},
+			},
+			wantMethod: http.MethodPatch,
+			wantPath:   "/objects/Songs/" + testkit.UUID.String(),
+			wantBody: &rest.Object{
+				Class:  "Songs",
+				Tenant: "john_doe",
+				Properties: map[string]any{
+					"title": "DAISIES",
+					"label": []map[string]any{
+						{"beacon": "weaviate://localhost/" + testkit.UUID.String()},
+					},
+				},
+				Vectors: map[string]any{
+					"lyrics": []float32{1, 2, 3},
+				},
 			},
 		},
 		{
@@ -174,12 +210,12 @@ func TestRESTRequests(t *testing.T) {
 						{Name: "single", DataType: api.DataTypeBool},
 						{Name: "year", DataType: api.DataTypeInt},
 						{
-							Name:              "lyrics",
-							DataType:          api.DataTypeInt,
-							Tokenization:      api.TokenizationTrigram,
-							IndexFilterable:   true,
-							IndexRangeFilters: true,
-							IndexSearchable:   true,
+							Name:            "lyrics",
+							DataType:        api.DataTypeInt,
+							Tokenization:    api.TokenizationTrigram,
+							IndexFilterable: new(true),
+							IndexRangeable:  new(true),
+							IndexSearchable: new(true),
 						},
 						{
 							Name: "metadata", DataType: api.DataTypeObject,
@@ -187,10 +223,10 @@ func TestRESTRequests(t *testing.T) {
 								{Name: "duration", DataType: api.DataTypeNumber},
 								{Name: "uploadedTime", DataType: api.DataTypeDate},
 							},
-							Tokenization:      api.TokenizationWhitespace,
-							IndexFilterable:   true,
-							IndexRangeFilters: true,
-							IndexSearchable:   true,
+							Tokenization:    api.TokenizationWhitespace,
+							IndexFilterable: new(true),
+							IndexRangeable:  new(true),
+							IndexSearchable: new(true),
 						},
 					},
 					References: []api.ReferenceProperty{
@@ -270,6 +306,27 @@ func TestRESTRequests(t *testing.T) {
 						AutoTenantActivation: true,
 						AutoTenantCreation:   false,
 					},
+					ObjectTTL: &api.ObjectTTLConfig{
+						Enabled:              true,
+						PropertyName:         "timestamp",
+						DefaultTTL:           72 * time.Hour,
+						FilterExpiredObjects: false,
+					},
+					Generative: &api.Module{
+						Name: testkit.GenerativeModuleName,
+						Conf: map[string]any{
+							"baseURL": "example.com",
+							"model":   "campbell",
+						},
+					},
+					RerankerModules: []api.Module{
+						{
+							Name: testkit.RerankerModuleName,
+							Conf: map[string]any{
+								"model": "quicksort",
+							},
+						},
+					},
 				},
 			},
 			wantMethod: http.MethodPost,
@@ -286,9 +343,9 @@ func TestRESTRequests(t *testing.T) {
 						Name:              "lyrics",
 						DataType:          []string{string(api.DataTypeInt)},
 						Tokenization:      rest.PropertyTokenizationTrigram,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						IndexFilterable:   new(true),
+						IndexRangeFilters: new(true),
+						IndexSearchable:   new(true),
 					},
 					{
 						Name: "metadata", DataType: []string{string(api.DataTypeObject)},
@@ -297,9 +354,9 @@ func TestRESTRequests(t *testing.T) {
 							{Name: "uploadedTime", DataType: []string{string(api.DataTypeDate)}},
 						},
 						Tokenization:      rest.PropertyTokenizationWhitespace,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						IndexFilterable:   new(true),
+						IndexRangeFilters: new(true),
+						IndexSearchable:   new(true),
 					},
 					{
 						Name:     "artist",
@@ -375,6 +432,21 @@ func TestRESTRequests(t *testing.T) {
 					AutoTenantActivation: true,
 					AutoTenantCreation:   false,
 				},
+				ObjectTtlConfig: rest.ObjectTtlConfig{
+					Enabled:              true,
+					DeleteOn:             "timestamp",
+					DefaultTtl:           int((72 * time.Hour).Seconds()),
+					FilterExpiredObjects: false,
+				},
+				ModuleConfig: map[string]any{
+					testkit.GenerativeModuleName: map[string]any{
+						"baseURL": "example.com",
+						"model":   "campbell",
+					},
+					testkit.RerankerModuleName: map[string]any{
+						"model": "quicksort",
+					},
+				},
 			},
 		},
 		{
@@ -421,6 +493,131 @@ func TestRESTRequests(t *testing.T) {
 			req:        api.DeleteCollectionRequest("Songs"),
 			wantMethod: http.MethodDelete,
 			wantPath:   "/schema/Songs",
+		},
+		{
+			name: "update collection config",
+			req: &api.UpdateCollectionConfigRequest{
+				Collection: api.Collection{
+					Name:        "Songs",
+					Description: "My favorite songs",
+					Properties: []api.Property{
+						{Name: "title", DataType: api.DataTypeText},
+						{Name: "genres", DataType: api.DataTypeTextArray},
+						{Name: "single", DataType: api.DataTypeBool},
+						{Name: "year", DataType: api.DataTypeInt},
+					},
+				},
+			},
+			wantMethod: http.MethodPut,
+			wantPath:   "/schema/Songs",
+			wantBody: &rest.Class{
+				Class:       "Songs",
+				Description: "My favorite songs",
+				Properties: []rest.Property{
+					{Name: "title", DataType: []string{string(api.DataTypeText)}},
+					{Name: "genres", DataType: []string{string(api.DataTypeTextArray)}},
+					{Name: "single", DataType: []string{string(api.DataTypeBool)}},
+					{Name: "year", DataType: []string{string(api.DataTypeInt)}},
+				},
+			},
+		},
+		{
+			name: "list collection shards (without tenant)",
+			req: &api.ListCollectionShardsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/schema/Songs/shards",
+		},
+		{
+			name: "list collection shards (with tenant)",
+			req: &api.ListCollectionShardsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+					Tenant:         "john_doe",
+				},
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/schema/Songs/shards",
+			wantQuery: url.Values{
+				"tenant": {"john_doe"},
+			},
+		},
+		{
+			name: "update shard status",
+			req: &api.UpdateShardStatusRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+				ShardName:   "xyz",
+				ShardStatus: api.ShardStatusReady,
+			},
+			wantMethod: http.MethodPut,
+			wantPath:   "/schema/Songs/shards/xyz",
+			wantBody: &rest.ShardStatus{
+				Status: api.ShardStatusReady,
+			},
+		},
+		{
+			name: "add property",
+			req: &api.AddPropertyRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+				Property: &api.Property{
+					Name:     "label",
+					DataType: api.DataTypeText,
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/schema/Songs/properties",
+			wantBody: &rest.Property{
+				Name:     "label",
+				DataType: []string{"text"},
+			},
+		},
+		{
+			name: "add reference",
+			req: &api.AddPropertyRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+				Reference: &api.ReferenceProperty{
+					Name:        "writtenBy",
+					Collections: []string{"Artists"},
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/schema/Songs/properties",
+			wantBody: &rest.Property{
+				Name:     "writtenBy",
+				DataType: []string{"Artists"},
+			},
+		},
+		{
+			name: "drop property index",
+			req: &api.DropPropertyIndexRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+				PropertyName: "scale",
+				IndexType:    api.PropertyIndexRangeable,
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/schema/Songs/properties/scale/index/rangeFilters",
+		},
+		{
+			name: "drop vector index",
+			req: &api.DropVectorIndexRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+				VectorName: "lyrics_vec",
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/schema/Songs/vectors/lyrics_vec/index",
 		},
 		{
 			name: "create backup request",
@@ -1173,14 +1370,14 @@ func TestRESTRequests(t *testing.T) {
 				Collection: "Songs",
 				Tenants: []api.Tenant{
 					{Name: "john_doe", Status: api.TenantStatusActive},
-					{Name: "jane_doe", Status: api.TenantStatusFrozen},
+					{Name: "jane_doe", Status: api.TenantStatusOffloaded},
 				},
 			},
 			wantMethod: http.MethodPost,
 			wantPath:   "/schema/Songs/tenants",
 			wantBody: rest.TenantsCreateJSONRequestBody{
 				{Name: "john_doe", ActivityStatus: rest.ACTIVE},
-				{Name: "jane_doe", ActivityStatus: rest.FROZEN},
+				{Name: "jane_doe", ActivityStatus: rest.OFFLOADED},
 			},
 		},
 		{
@@ -1189,14 +1386,14 @@ func TestRESTRequests(t *testing.T) {
 				Collection: "Songs",
 				Tenants: []api.Tenant{
 					{Name: "john_doe", Status: api.TenantStatusActive},
-					{Name: "jane_doe", Status: api.TenantStatusFrozen},
+					{Name: "jane_doe", Status: api.TenantStatusOffloaded},
 				},
 			},
 			wantMethod: http.MethodPut,
 			wantPath:   "/schema/Songs/tenants",
 			wantBody: rest.TenantsUpdateJSONRequestBody{
 				{Name: "john_doe", ActivityStatus: rest.ACTIVE},
-				{Name: "jane_doe", ActivityStatus: rest.FROZEN},
+				{Name: "jane_doe", ActivityStatus: rest.OFFLOADED},
 			},
 		},
 		{
@@ -1363,9 +1560,9 @@ func TestRESTResponses(t *testing.T) {
 						Name:              "lyrics",
 						DataType:          []string{string(api.DataTypeInt)},
 						Tokenization:      rest.PropertyTokenizationTrigram,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						IndexFilterable:   new(true),
+						IndexRangeFilters: new(true),
+						IndexSearchable:   new(true),
 					},
 					{
 						Name: "metadata", DataType: []string{string(api.DataTypeObject)},
@@ -1374,9 +1571,9 @@ func TestRESTResponses(t *testing.T) {
 							{Name: "uploadedTime", DataType: []string{string(api.DataTypeDate)}},
 						},
 						Tokenization:      rest.PropertyTokenizationWhitespace,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						IndexFilterable:   new(true),
+						IndexRangeFilters: new(true),
+						IndexSearchable:   new(true),
 					},
 					{
 						Name:     "artist",
@@ -1454,6 +1651,21 @@ func TestRESTResponses(t *testing.T) {
 					AutoTenantActivation: true,
 					AutoTenantCreation:   false,
 				},
+				ObjectTtlConfig: rest.ObjectTtlConfig{
+					Enabled:              true,
+					DeleteOn:             "timestamp",
+					DefaultTtl:           int((72 * time.Hour).Seconds()),
+					FilterExpiredObjects: false,
+				},
+				ModuleConfig: map[string]any{
+					testkit.GenerativeModuleName: map[string]any{
+						"baseURL": "example.com",
+						"model":   "campbell",
+					},
+					testkit.RerankerModuleName: map[string]any{
+						"model": "quicksort",
+					},
+				},
 			},
 			dest: new(api.Collection),
 			want: &api.Collection{
@@ -1465,12 +1677,12 @@ func TestRESTResponses(t *testing.T) {
 					{Name: "single", DataType: api.DataTypeBool},
 					{Name: "year", DataType: api.DataTypeInt},
 					{
-						Name:              "lyrics",
-						DataType:          api.DataTypeInt,
-						Tokenization:      api.TokenizationTrigram,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						Name:            "lyrics",
+						DataType:        api.DataTypeInt,
+						Tokenization:    api.TokenizationTrigram,
+						IndexFilterable: new(true),
+						IndexRangeable:  new(true),
+						IndexSearchable: new(true),
 					},
 					{
 						Name: "metadata", DataType: api.DataTypeObject,
@@ -1478,10 +1690,10 @@ func TestRESTResponses(t *testing.T) {
 							{Name: "duration", DataType: api.DataTypeNumber},
 							{Name: "uploadedTime", DataType: api.DataTypeDate},
 						},
-						Tokenization:      api.TokenizationWhitespace,
-						IndexFilterable:   true,
-						IndexRangeFilters: true,
-						IndexSearchable:   true,
+						Tokenization:    api.TokenizationWhitespace,
+						IndexFilterable: new(true),
+						IndexRangeable:  new(true),
+						IndexSearchable: new(true),
 					},
 				},
 				References: []api.ReferenceProperty{
@@ -1568,6 +1780,27 @@ func TestRESTResponses(t *testing.T) {
 					Enabled:              true,
 					AutoTenantActivation: true,
 					AutoTenantCreation:   false,
+				},
+				ObjectTTL: &api.ObjectTTLConfig{
+					Enabled:              true,
+					PropertyName:         "timestamp",
+					DefaultTTL:           72 * time.Hour,
+					FilterExpiredObjects: false,
+				},
+				Generative: &api.Module{
+					Name: testkit.GenerativeModuleName,
+					Conf: map[string]any{
+						"baseURL": "example.com",
+						"model":   "campbell",
+					},
+				},
+				RerankerModules: []api.Module{
+					{
+						Name: testkit.RerankerModuleName,
+						Conf: map[string]any{
+							"model": "quicksort",
+						},
+					},
 				},
 			},
 		},

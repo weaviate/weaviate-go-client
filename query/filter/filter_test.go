@@ -16,7 +16,7 @@ func TestFilter(t *testing.T) {
 	}{
 		{
 			name: "eq",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   "size",
 				Operator: filter.Equal,
 				Value:    3,
@@ -29,7 +29,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "lt",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   "size",
 				Operator: filter.LessThan,
 				Value:    3,
@@ -42,7 +42,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "lte",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   "size",
 				Operator: filter.LessThanEqual,
 				Value:    3,
@@ -55,7 +55,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "gt",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   "size",
 				Operator: filter.GreaterThan,
 				Value:    3,
@@ -68,7 +68,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "gte",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   "size",
 				Operator: filter.GreaterThanEqual,
 				Value:    3,
@@ -81,7 +81,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "like",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   "model",
 				Operator: filter.Like,
 				Value:    "[0-9]+Roadster",
@@ -94,7 +94,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "null",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   "discount",
 				Operator: filter.IsNull,
 			},
@@ -105,7 +105,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "contains all",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   "gears",
 				Operator: filter.ContainsAll,
 				Value:    []int{1, 2, 3},
@@ -118,7 +118,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "contains any",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   "gears",
 				Operator: filter.ContainsAny,
 				Value:    []int{1, 2, 3},
@@ -131,7 +131,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "contains none",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   "gears",
 				Operator: filter.ContainsNone,
 				Value:    []int{1, 2, 3},
@@ -144,7 +144,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "len(property)",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   filter.Len("model"),
 				Operator: filter.Equal,
 				Value:    4,
@@ -157,7 +157,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "reference count",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   filter.Reference("soldIn").Count(),
 				Operator: filter.LessThan,
 				Value:    10,
@@ -171,12 +171,12 @@ func TestFilter(t *testing.T) {
 		{
 			name: "and",
 			expr: filter.And{
-				&filter.Cond{
+				filter.Cond{
 					Target:   "length",
 					Operator: filter.Equal,
 					Value:    2,
 				},
-				&filter.Cond{
+				filter.Cond{
 					Target:   "width",
 					Operator: filter.Equal,
 					Value:    3,
@@ -193,12 +193,12 @@ func TestFilter(t *testing.T) {
 		{
 			name: "or",
 			expr: filter.Or{
-				&filter.Cond{
+				filter.Cond{
 					Target:   "length",
 					Operator: filter.Equal,
 					Value:    2,
 				},
-				&filter.Cond{
+				filter.Cond{
 					Target:   "width",
 					Operator: filter.Equal,
 					Value:    3,
@@ -215,7 +215,7 @@ func TestFilter(t *testing.T) {
 		{
 			name: "not",
 			expr: filter.Not{
-				&filter.Cond{
+				filter.Cond{
 					Target:   "length",
 					Operator: filter.Equal,
 					Value:    2,
@@ -230,7 +230,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "reference",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   filter.Reference("ownedBy").Property("name"),
 				Operator: filter.Like,
 				Value:    ".*_doe",
@@ -243,7 +243,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "len(property) in reference",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   filter.Len(filter.Reference("ownedBy").Property("name")),
 				Operator: filter.GreaterThan,
 				Value:    12,
@@ -256,7 +256,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "reference count in reference",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Target:   filter.Reference("ownedBy").Reference("hasFriends").Count(),
 				Operator: filter.LessThan,
 				Value:    4,
@@ -269,7 +269,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "multi-target reference",
-			expr: &filter.Cond{
+			expr: filter.Cond{
 				Operator: filter.GreaterThanEqual,
 				Target:   filter.Reference("hasAwards").Collection("GrammyAwards").Property("year"),
 				Value:    1974,

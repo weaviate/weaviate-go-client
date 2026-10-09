@@ -23,7 +23,7 @@ type CustomModule[T ~string] interface {
 //
 // In addition to module registration, it supports encoding the
 // module as a map[string]any and decoding a map back into the type
-// registerred for the key.
+// registered for the key.
 //
 // N.B.: before being sent to the server, each module is ultimately
 // encoded into a JSON string, and is decoded from a JSON string on read.
@@ -38,7 +38,7 @@ type Modules[T ~string] struct {
 // a struct or a map. Modules relies on value copy after map lookup,
 // so m must be the value and not a pointer, e.g. *new(struct) or make(map).
 //
-// This function uses reflection because all modules are registerred at
+// This function uses reflection because all modules are registered at
 // package init time: doing the checks right away and failing quickly
 // prevents potential runtime bugs. This is also not on the hotpath.
 func (ms *Modules[T]) Register(m Module[T]) {

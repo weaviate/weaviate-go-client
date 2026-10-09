@@ -13,7 +13,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 )
 
-// TestIndex ensures that all modules are registerred with [vectorindex.Registry]
+// TestIndex ensures that all modules are registered with [vectorindex.Registry]
 // and that they produce correct configurations when serialized.
 func TestIndex(t *testing.T) {
 	for _, tt := range testkit.WithOnly(t, []struct {

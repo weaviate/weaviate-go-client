@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -60,8 +59,8 @@ func NewLocal(ctx context.Context, options ...Option) (*Client, error) {
 	return newClient(ctx, append([]Option{
 		WithScheme("http"),
 		WithHost("localhost"),
-		WithHTTPPort(8080),
-		WithGRPCPort(50051),
+		WithHTTPPort("8080"),
+		WithGRPCPort("50051"),
 	}, options...))
 }
 
@@ -83,8 +82,8 @@ func NewWeaviateCloud(ctx context.Context, host string, apiKey string, options .
 		WithScheme("https"),
 		WithHTTPHost(host),
 		WithGRPCHost("grpc-" + host),
-		WithHTTPPort(443),
-		WithGRPCPort(443),
+		WithHTTPPort("443"),
+		WithGRPCPort("443"),
 		WithAPIKey(apiKey),
 	}, options...))
 }
@@ -121,7 +120,7 @@ func newClient(ctx context.Context, options []Option) (*Client, error) {
 	if strings.Contains(c.RESTHost, domainWeaviateIO) ||
 		strings.Contains(c.RESTHost, domainWeaviateCloud) ||
 		strings.Contains(c.RESTHost, domainSemiTechnology) {
-		clusterURL := c.Scheme + "://" + c.RESTHost + ":" + strconv.Itoa(c.RESTPort)
+		clusterURL := c.Scheme + "://" + c.RESTHost + ":" + c.RESTPort
 		c.Header.Add(headerWeaviateClusterURL, clusterURL)
 	}
 
@@ -178,14 +177,14 @@ func WithGRPCHost(host string) Option {
 }
 
 // Port number of the HTTP host.
-func WithHTTPPort(port int) Option {
+func WithHTTPPort(port string) Option {
 	return func(c *config) {
 		c.RESTPort = port
 	}
 }
 
 // Port number of the gRPC host.
-func WithGRPCPort(port int) Option {
+func WithGRPCPort(port string) Option {
 	return func(c *config) {
 		c.GRPCPort = port
 	}

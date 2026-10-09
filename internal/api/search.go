@@ -9,9 +9,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
-	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	proto "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 type SearchRequest struct {
@@ -205,14 +205,14 @@ const (
 	BoostModifierSQRT  = BoostModifier(proto.Boost_PROPERTY_VALUE_MODIFIER_SQRT)
 )
 
-func marshalBoost(b BoostExpr) *proto.Boost {
+func marshalBoost(b BoostExpr) (*proto.Boost, error) {
 	if len(b.Conds) == 0 {
-		return nil
+		return nil, nil
 	}
 	conds := make([]*proto.Boost_Condition, len(b.Conds))
 	for i, c := range b.Conds {
 		cond := &proto.Boost_Condition{
-			Weight: nilZero(c.Weight),
+			Weight: NilZero(c.Weight),
 		}
 		switch {
 		case c.Func.TimeDecay != nil:
@@ -226,8 +226,8 @@ func marshalBoost(b BoostExpr) *proto.Boost {
 					Property:   c.Func.TimeDecay.Property,
 					Origin:     c.Func.TimeDecay.Origin.Format(TimeLayout),
 					Scale:      fmt.Sprintf("%.0fs", c.Func.TimeDecay.Scale.Seconds()),
-					Offset:     nilZero(offset),
-					Curve:      nilZero(proto.Boost_DecayCurve(c.Func.TimeDecay.Curve)),
+					Offset:     NilZero(offset),
+					Curve:      NilZero(proto.Boost_DecayCurve(c.Func.TimeDecay.Curve)),
 					DecayValue: c.Func.TimeDecay.Decay,
 				},
 			}
@@ -238,7 +238,7 @@ func marshalBoost(b BoostExpr) *proto.Boost {
 					Scale:      c.Func.NumericDecay.Scale,
 					Origin:     c.Func.NumericDecay.Origin,
 					Offset:     c.Func.NumericDecay.Offset,
-					Curve:      nilZero(proto.Boost_DecayCurve(c.Func.NumericDecay.Curve)),
+					Curve:      NilZero(proto.Boost_DecayCurve(c.Func.NumericDecay.Curve)),
 					DecayValue: c.Func.NumericDecay.Decay,
 				},
 			}
@@ -246,22 +246,26 @@ func marshalBoost(b BoostExpr) *proto.Boost {
 			cond.Condition = &proto.Boost_Condition_PropertyValue{
 				PropertyValue: &proto.Boost_PropertyValueFunction{
 					Property: c.Func.PropertyValue.Property,
-					Modifier: nilZero(proto.Boost_PropertyValueModifier(c.Func.PropertyValue.Modifier)),
+					Modifier: NilZero(proto.Boost_PropertyValueModifier(c.Func.PropertyValue.Modifier)),
 				},
 			}
 		case c.Func.Filter != nil:
+			f, err := marshalFilter(*c.Func.Filter)
+			if err != nil {
+				return nil, err
+			}
 			cond.Condition = &proto.Boost_Condition_Filter{
-				Filter: marshalFilter(*c.Func.Filter),
+				Filter: f,
 			}
 		}
 
 		conds[i] = cond
 	}
 	return &proto.Boost{
-		Weight:     nilZero(b.Weight),
-		Depth:      nilZero(uint32(b.Depth)),
+		Weight:     NilZero(b.Weight),
+		Depth:      NilZero(uint32(b.Depth)),
 		Conditions: conds,
-	}
+	}, nil
 }
 
 type HybridFusion proto.Hybrid_FusionType
@@ -290,6 +294,14 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	if r.After == uuid.Nil {
 		after = ""
 	}
+	f, err := marshalFilter(r.Filter)
+	if err != nil {
+		return nil, err
+	}
+	b, err := marshalBoost(r.Boost)
+	if err != nil {
+		return nil, err
+	}
 	req := &proto.SearchRequest{
 		Collection:       r.CollectionName,
 		Tenant:           r.Tenant,
@@ -298,8 +310,8 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 		Offset:           uint32(r.Offset),
 		Autocut:          uint32(r.AutoLimit),
 		After:            after,
-		Filters:          marshalFilter(r.Filter),
-		Boost:            marshalBoost(r.Boost),
+		Filters:          f,
+		Boost:            b,
 		Metadata: &proto.MetadataRequest{
 			Uuid:               true,
 			Distance:           r.ReturnMetadata.Distance,
@@ -324,7 +336,6 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 		}
 	}
 
-	var err error
 	switch {
 	case r.NearVector != nil:
 		req.NearVector, err = marshalNearVector(r.NearVector)
@@ -446,7 +457,7 @@ func marshalReturnVectors(req *proto.MetadataRequest, vectors []string) {
 // and the original property name is the second item.
 var referenceCountRe = regexp.MustCompile(`count\((.*)\)`)
 
-func marshalFilter(f FilterExpr) *proto.Filters {
+func marshalFilter(f FilterExpr) (*proto.Filters, error) {
 	var pf proto.Filters
 
 	switch f.Operator {
@@ -455,7 +466,9 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 	case FilterOperatorAnd, FilterOperatorOr, FilterOperatorNot:
 		var fs []*proto.Filters
 		for _, expr := range f.Exprs {
-			if f := marshalFilter(expr); f != nil {
+			if f, err := marshalFilter(expr); err != nil {
+				return nil, err
+			} else if f != nil {
 				fs = append(fs, f)
 			}
 		}
@@ -463,7 +476,7 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 		// Using AND/OR/NOT with an empty list of sub-expressions is not
 		// a mistake, but omitting such will save a few bits on the wire.
 		if len(fs) == 0 {
-			return nil
+			return nil, nil
 		}
 		pf.Filters = fs
 
@@ -471,13 +484,19 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 	default:
 		pf.Target = marshalFilterTarget(f.Target)
 		if pf.Target == nil { // A filter with nil target is not useful.
-			return nil
+			return nil, nil
 		}
 
 		// The values should've really been [structpb.Value].
 		// Marshaling it would've been as simple as [structpb.NewValue].
 		switch v := f.Value.(type) {
 		case nil:
+		case uuid.UUID:
+			pf.TestValue = &proto.Filters_ValueText{ValueText: v.String()}
+		case []uuid.UUID:
+			pf.TestValue = &proto.Filters_ValueTextArray{
+				ValueTextArray: &proto.TextArray{Values: uuidArray(v)},
+			}
 		case string:
 			pf.TestValue = &proto.Filters_ValueText{ValueText: v}
 		case []string:
@@ -487,6 +506,10 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 		case time.Time:
 			// Date values are passed as formatted date strings.
 			pf.TestValue = &proto.Filters_ValueText{ValueText: v.Format(TimeLayout)}
+		case []time.Time:
+			pf.TestValue = &proto.Filters_ValueTextArray{
+				ValueTextArray: &proto.TextArray{Values: timeArray(v)},
+			}
 		case bool:
 			pf.TestValue = &proto.Filters_ValueBoolean{ValueBoolean: v}
 		case []bool:
@@ -501,20 +524,12 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 		case int64:
 			pf.TestValue = &proto.Filters_ValueInt{ValueInt: v}
 		case []int:
-			values := make([]int64, len(v))
-			for i := range v {
-				values[i] = int64(v[i])
-			}
 			pf.TestValue = &proto.Filters_ValueIntArray{
-				ValueIntArray: &proto.IntArray{Values: values},
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
 			}
 		case []int32:
-			values := make([]int64, len(v))
-			for i := range v {
-				values[i] = int64(v[i])
-			}
 			pf.TestValue = &proto.Filters_ValueIntArray{
-				ValueIntArray: &proto.IntArray{Values: values},
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
 			}
 		case []int64:
 			pf.TestValue = &proto.Filters_ValueIntArray{
@@ -523,33 +538,23 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 
 		case uint:
 			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case uint16:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
 		case uint32:
 			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
 		case uint64:
 			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
 		case []uint:
-			values := make([]int64, len(v))
-			for i := range v {
-				values[i] = int64(v[i])
-			}
 			pf.TestValue = &proto.Filters_ValueIntArray{
-				ValueIntArray: &proto.IntArray{Values: values},
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
 			}
 		case []uint32:
-			values := make([]int64, len(v))
-			for i := range v {
-				values[i] = int64(v[i])
-			}
 			pf.TestValue = &proto.Filters_ValueIntArray{
-				ValueIntArray: &proto.IntArray{Values: values},
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
 			}
 		case []uint64:
-			values := make([]int64, len(v))
-			for i := range v {
-				values[i] = int64(v[i])
-			}
 			pf.TestValue = &proto.Filters_ValueIntArray{
-				ValueIntArray: &proto.IntArray{Values: values},
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
 			}
 
 		// Float values must be cast to float64 before marshaling.
@@ -559,12 +564,8 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 			pf.TestValue = &proto.Filters_ValueNumber{ValueNumber: v}
 
 		case []float32:
-			values := make([]float64, len(v))
-			for i := range v {
-				values[i] = float64(v[i])
-			}
 			pf.TestValue = &proto.Filters_ValueNumberArray{
-				ValueNumberArray: &proto.NumberArray{Values: values},
+				ValueNumberArray: &proto.NumberArray{Values: floatArray(v)},
 			}
 		case []float64:
 			pf.TestValue = &proto.Filters_ValueNumberArray{
@@ -572,12 +573,12 @@ func marshalFilter(f FilterExpr) *proto.Filters {
 			}
 		default:
 			// TODO(dyma): add GeoCoordinates property
-			panic(fmt.Sprintf("%T are not supported", v))
+			return nil, fmt.Errorf("%T is not supported", v)
 		}
 	}
 
 	pf.Operator = proto.Filters_Operator(f.Operator)
-	return &pf
+	return &pf, nil
 }
 
 // multiRefSep separates parts of the concatenated multi-target reference.
@@ -677,11 +678,26 @@ func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
 		return nil, nil
 	}
 
-	// Pre-allocate slices for vectors and targets.
-	// Do not allocate WeightsForTarget, as targets may have no weights.
 	nv := &proto.NearVector{
 		Distance:  req.Similarity.Distance,
 		Certainty: req.Similarity.Certainty,
+	}
+
+	// Searching with a single anonymous vector should have the semantics
+	// of using "the only" vector in the collection.
+	// Unfortunately, Weaviate server does not do this check itself,
+	// so we need to marshal the vector into top-level Vectors instead
+	// of using VectorsForTargets for all target combinations (below).
+	//
+	// TODO(dyma): remove when the latest supported server version
+	// contains this logic.
+	if tvs := req.Target.Vectors; len(tvs) == 1 && tvs[0].Name == "" {
+		v, err := marshalVector(&tvs[0].Vector)
+		if err != nil {
+			return nil, fmt.Errorf("near vector: %w", err)
+		}
+		nv.Vectors = []*proto.Vectors{v}
+		return nv, nil
 	}
 
 	seen := make(map[string]*proto.VectorForTarget)
@@ -1129,8 +1145,7 @@ func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
 			if err != nil {
 				return nil, err
 			}
-			dev.AssertNotNil(t, "time from string")
-			v = *t
+			v = t
 		case *proto.Value_UuidValue:
 			id, err := uuid.Parse(f.GetUuidValue())
 			if err != nil {
@@ -1144,10 +1159,52 @@ func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
 			}
 			dev.AssertNotNil(properties, "properties")
 			v = properties
+		case *proto.Value_ListValue:
+			list := f.GetListValue()
+			switch list.GetKind().(type) {
+			case *proto.ListValue_BoolValues:
+				v = list.GetBoolValues().GetValues()
+			case *proto.ListValue_TextValues:
+				v = list.GetTextValues().GetValues()
+			case *proto.ListValue_IntValues:
+				v = unmarshalIntegerArray(list.GetIntValues().GetValues())
+			case *proto.ListValue_NumberValues:
+				v = unmarshalNumberArray(list.GetNumberValues().GetValues())
+			case *proto.ListValue_UuidValues:
+				arr, err := convertArray(list.GetUuidValues().GetValues(), uuid.Parse)
+				if err != nil {
+					return nil, err
+				}
+				v = arr
+			case *proto.ListValue_DateValues:
+				arr, err := convertArray(list.GetDateValues().GetValues(), timeFromString)
+				if err != nil {
+					return nil, err
+				}
+				v = arr
+			case *proto.ListValue_ObjectValues:
+				arr, err := convertArray(list.GetObjectValues().GetValues(), unmarshalProperties)
+				if err != nil {
+					return nil, err
+				}
+				v = arr
+			}
 		default:
-			// TODO(dyma): support array types
+			return nil, fmt.Errorf("unsupported property type %T", f.GetKind())
 		}
 		out[name] = v
+	}
+	return out, nil
+}
+
+func convertArray[T any, U any](arr []T, f func(T) (U, error)) ([]U, error) {
+	out := make([]U, len(arr))
+	for i := range arr {
+		v, err := f(arr[i])
+		if err != nil {
+			return nil, err
+		}
+		out[i] = v
 	}
 	return out, nil
 }

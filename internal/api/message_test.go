@@ -7,9 +7,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
-	proto "github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/proto/v1"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
+	proto "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -110,6 +110,11 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 							Value:    testkit.Now,
 						},
 						{
+							Target:   []string{"recommended"},
+							Operator: api.FilterOperatorContainsAny,
+							Value:    []uuid.UUID{testkit.UUID, testkit.UUID},
+						},
+						{
 							Operator: api.FilterOperatorOr,
 							Exprs: []api.FilterExpr{
 								{
@@ -155,6 +160,18 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 							TestValue: &proto.Filters_ValueText{ValueText: testkit.Now.Format(api.TimeLayout)},
 						},
 						{
+							Target:   propertyTarget("recommended"),
+							Operator: proto.Filters_OPERATOR_CONTAINS_ANY,
+							TestValue: &proto.Filters_ValueTextArray{
+								ValueTextArray: &proto.TextArray{
+									Values: []string{
+										testkit.UUID.String(),
+										testkit.UUID.String(),
+									},
+								},
+							},
+						},
+						{
 							Operator: proto.Filters_OPERATOR_OR,
 							Filters: []*proto.Filters{
 								{
@@ -180,6 +197,27 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 							}},
 						},
 					},
+				},
+			},
+		},
+		{
+			name: "filter by uuid",
+			req: &api.SearchRequest{
+				Filter: api.FilterExpr{
+					Target:   []string{api.FieldUUID},
+					Operator: api.FilterOperatorEqual,
+					Value:    testkit.UUID,
+				},
+			},
+			want: &proto.SearchRequest{
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+				Filters: &proto.Filters{
+					Target:    propertyTarget(api.FieldUUID),
+					Operator:  proto.Filters_OPERATOR_EQUAL,
+					TestValue: &proto.Filters_ValueText{ValueText: testkit.UUID.String()},
 				},
 			},
 		},
@@ -751,7 +789,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
-			name: "near vector single target anonymous",
+			name: "near vector single target anonymous (the only vector)",
 			req: &api.SearchRequest{
 				NearVector: &api.NearVector{
 					Similarity: api.VectorSimilarity{Distance: testkit.Ptr(.123)},
@@ -769,17 +807,10 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			want: &proto.SearchRequest{
 				NearVector: &proto.NearVector{
 					Distance: testkit.Ptr(.123),
-					Targets: &proto.Targets{
-						TargetVectors: []string{""},
-					},
-					VectorForTargets: []*proto.VectorForTarget{
+					Vectors: []*proto.Vectors{
 						{
-							Vectors: []*proto.Vectors{
-								{
-									VectorBytes: singleVectorBytes,
-									Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
-								},
-							},
+							VectorBytes: singleVectorBytes,
+							Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
 						},
 					},
 				},
@@ -1645,7 +1676,6 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 			name string
 			req  transport.Message[proto.AggregateRequest, proto.AggregateReply]
 			get  func(*proto.AggregateRequest) any
-			want any
 		}{
 			{
 				name: "near vector",
@@ -1661,6 +1691,45 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 				},
 				get: returnAny((*proto.AggregateRequest).GetNearVector),
 			},
+			{
+				name: "near media",
+				req: &api.AggregateRequest{
+					NearMedia: &api.NearMedia{
+						Kind:  api.MediaImage,
+						Media: "base64.img",
+					},
+				},
+				get: returnAny((*proto.AggregateRequest).GetNearImage),
+			},
+			{
+				name: "near text",
+				req: &api.AggregateRequest{
+					NearText: &api.NearText{
+						Concepts: []string{"a", "b", "c"},
+					},
+				},
+				get: returnAny((*proto.AggregateRequest).GetNearText),
+			},
+			{
+				name: "near object",
+				req: &api.AggregateRequest{
+					NearObject: &api.NearObject{
+						UUID: testkit.UUID,
+					},
+				},
+				get: returnAny((*proto.AggregateRequest).GetNearObject),
+			},
+			{
+				name: "hybrid",
+				req: &api.AggregateRequest{
+					Hybrid: &api.Hybrid{
+						NearText: &api.NearText{
+							Concepts: []string{"a", "b", "c"},
+						},
+					},
+				},
+				get: returnAny((*proto.AggregateRequest).GetHybrid),
+			},
 		} {
 			t.Run(tt.name, func(t *testing.T) {
 				require.NotNil(t, tt.req, "invalid test: nil req")
@@ -1671,7 +1740,7 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 				message, err := body.MarshalMessage()
 				require.Nil(t, err, "marshal error")
 
-				require.NotNil(t, tt.get(message))
+				require.NotNil(t, tt.get(message), "query filter")
 			})
 		}
 	})
@@ -1699,8 +1768,10 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 					{
 						UUID: testkit.UUID,
 						Properties: map[string]any{
-							"artist": "Angine de Poitrine",
-							"title":  "Mata Zyklek",
+							"artist":       "Angine de Poitrine",
+							"title":        "Mata Zyklek",
+							"spotify":      testkit.UUID,
+							"release_date": testkit.Now,
 						},
 					},
 				},
@@ -1714,8 +1785,10 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 						Tenant:     "john_doe",
 						Properties: &proto.BatchObject_Properties{
 							NonRefProperties: mustNewStruct(map[string]any{
-								"artist": "Angine de Poitrine",
-								"title":  "Mata Zyklek",
+								"artist":       "Angine de Poitrine",
+								"title":        "Mata Zyklek",
+								"spotify":      testkit.UUID.String(),
+								"release_date": testkit.Now.Format(api.TimeLayout),
 							}),
 						},
 					},
@@ -1797,6 +1870,261 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 							Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
 							VectorBytes: singleVectorBytes,
 						}},
+					},
+				},
+			},
+		},
+		{
+			name: "bool array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"checks": []bool{false, true},
+							"flags":  []bool{true, false, false},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							BooleanArrayProperties: []*proto.BooleanArrayProperties{
+								{
+									PropName: "checks",
+									Values:   []bool{false, true},
+								},
+								{
+									PropName: "flags",
+									Values:   []bool{true, false, false},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "text array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"genres": []string{"punk", "sludge"},
+							"tags":   []string{"#trending", "#explicit"},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							TextArrayProperties: []*proto.TextArrayProperties{
+								{
+									PropName: "genres",
+									Values:   []string{"punk", "sludge"},
+								},
+								{
+									PropName: "tags",
+									Values:   []string{"#trending", "#explicit"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "int array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"123": []uint16{1, 2, 3},
+							"567": []uint16{5, 6, 7},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							IntArrayProperties: []*proto.IntArrayProperties{
+								{
+									PropName: "123",
+									Values:   []int64{1, 2, 3},
+								},
+								{
+									PropName: "567",
+									Values:   []int64{5, 6, 7},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "uuid array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"related": []uuid.UUID{testkit.UUID},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							TextArrayProperties: []*proto.TextArrayProperties{
+								{
+									PropName: "related",
+									Values:   []string{testkit.UUID.String()},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "time array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"release_date": []time.Time{testkit.Now},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							TextArrayProperties: []*proto.TextArrayProperties{
+								{
+									PropName: "release_date",
+									Values:   []string{testkit.Now.Format(api.TimeLayout)},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "object array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"topics": []map[string]any{
+								{"chair": "pink"},
+								{"lucky_number": 13},
+								{
+									"digits": []int{1, 2, 3},
+									"flags":  []bool{true, false, false},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							ObjectArrayProperties: []*proto.ObjectArrayProperties{{
+								PropName: "topics",
+								Values: []*proto.ObjectPropertiesValue{
+									{
+										NonRefProperties: mustNewStruct(map[string]any{
+											"chair": "pink",
+										}),
+									},
+									{
+										NonRefProperties: mustNewStruct(map[string]any{
+											"lucky_number": 13,
+										}),
+									},
+									{
+										IntArrayProperties: []*proto.IntArrayProperties{
+											{PropName: "digits", Values: []int64{1, 2, 3}},
+										},
+										BooleanArrayProperties: []*proto.BooleanArrayProperties{
+											{PropName: "flags", Values: []bool{true, false, false}},
+										},
+									},
+								},
+							}},
+						},
 					},
 				},
 			},
@@ -2248,6 +2576,115 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "array properties",
+			reply: &proto.SearchReply{
+				Results: []*proto.SearchResult{
+					{
+						Properties: &proto.PropertiesResult{
+							TargetCollection: "Arrays",
+							NonRefProps: &proto.Properties{
+								Fields: map[string]*proto.Value{
+									"boolmask": array(&proto.ListValue{
+										Kind: &proto.ListValue_BoolValues{
+											BoolValues: &proto.BoolValues{
+												Values: []bool{true, false, true},
+											},
+										},
+									}),
+									"alphabet": array(&proto.ListValue{
+										Kind: &proto.ListValue_TextValues{
+											TextValues: &proto.TextValues{
+												Values: []string{"a", "b", "c"},
+											},
+										},
+									}),
+									"primes": array(&proto.ListValue{
+										Kind: &proto.ListValue_IntValues{
+											IntValues: &proto.IntValues{
+												Values: []byte{ // [1, 2, 3]
+													1, 0, 0, 0, 0, 0, 0, 0,
+													2, 0, 0, 0, 0, 0, 0, 0,
+													3, 0, 0, 0, 0, 0, 0, 0,
+												},
+											},
+										},
+									}),
+									"pies": array(&proto.ListValue{
+										Kind: &proto.ListValue_NumberValues{
+											NumberValues: &proto.NumberValues{
+												Values: []byte{ // [3.14, 3.1415]
+													31, 133, 235, 81, 184, 30, 9, 64,
+													111, 18, 131, 192, 202, 33, 9, 64,
+												},
+											},
+										},
+									}),
+									"users": array(&proto.ListValue{
+										Kind: &proto.ListValue_UuidValues{
+											UuidValues: &proto.UuidValues{
+												Values: []string{
+													testkit.UUID.String(),
+													testkit.UUID.String(),
+												},
+											},
+										},
+									}),
+									"calendar": array(&proto.ListValue{
+										Kind: &proto.ListValue_DateValues{
+											DateValues: &proto.DateValues{
+												Values: []string{
+													testkit.Now.Format(api.TimeLayout),
+												},
+											},
+										},
+									}),
+									"things": array(&proto.ListValue{
+										Kind: &proto.ListValue_ObjectValues{
+											ObjectValues: &proto.ObjectValues{
+												Values: []*proto.Properties{
+													{
+														Fields: map[string]*proto.Value{
+															"name": text("foo"),
+														},
+													},
+													{
+														Fields: map[string]*proto.Value{
+															"name": text("bar"),
+														},
+													},
+												},
+											},
+										},
+									}),
+								},
+							},
+						},
+					},
+				},
+			},
+			dest: new(api.SearchResponse),
+			want: &api.SearchResponse{
+				Results: []api.Object{
+					{
+						Collection: "Arrays",
+						Properties: map[string]any{
+							"boolmask": []bool{true, false, true},
+							"alphabet": []string{"a", "b", "c"},
+							"primes":   []int64{1, 2, 3},
+							"pies":     []float64{3.14, 3.1415},
+							"users":    []uuid.UUID{testkit.UUID, testkit.UUID},
+							"calendar": []time.Time{testkit.Now},
+							"things": []map[string]any{
+								{"name": "foo"},
+								{"name": "bar"},
+							},
+						},
+					},
+				},
+				GroupByResults: make([]api.Group, 0),
+			},
+		},
+		{
 			name: "references",
 			reply: &proto.SearchReply{
 				Results: []*proto.SearchResult{
@@ -2557,6 +2994,10 @@ func object(m map[string]*proto.Value) *proto.Value {
 	return &proto.Value{Kind: &proto.Value_ObjectValue{ObjectValue: &proto.Properties{
 		Fields: m,
 	}}}
+}
+
+func array(lv *proto.ListValue) *proto.Value {
+	return &proto.Value{Kind: &proto.Value_ListValue{ListValue: lv}}
 }
 
 // TestAggregateResponse_UnmarshalMessage tests that api.AggregateResponse reads
@@ -2913,7 +3354,7 @@ func TestInsertObjectsResponse_UnmarshalMessage(t *testing.T) {
 			dest: new(api.InsertObjectsResponse),
 			want: &api.InsertObjectsResponse{
 				Took:      92 * time.Second,
-				Positions: []int32{6, 22},
+				Positions: []int{6, 22},
 				Errors:    []string{"Whaam!", "Whoops!"},
 			},
 		},
@@ -2940,7 +3381,7 @@ func TestInsertReferencesResponse_UnmarshalMessage(t *testing.T) {
 			dest: new(api.InsertReferencesResponse),
 			want: &api.InsertReferencesResponse{
 				Took:      92 * time.Second,
-				Positions: []int32{6, 22},
+				Positions: []int{6, 22},
 				Errors:    []string{"Whaam!", "Whoops!"},
 			},
 		},
@@ -2969,10 +3410,10 @@ func TestDeleteObjectsResponse_UnmarshalMessage(t *testing.T) {
 			},
 			dest: new(api.DeleteObjectsResponse),
 			want: &api.DeleteObjectsResponse{
-				Took: 92 * time.Second,
+				Took:    92 * time.Second,
+				Matches: 2,
 				Errors: map[uuid.UUID]error{
 					testkit.UUID: testkit.ErrWhaam,
-					uuid.Nil:     nil,
 				},
 			},
 		},
@@ -2993,12 +3434,18 @@ func TestGetTenantsResponse_UnmarshalMessage(t *testing.T) {
 				Tenants: []*proto.Tenant{
 					{Name: "john_doe", ActivityStatus: proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_COLD},
 					{Name: "jane_doe", ActivityStatus: proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_FROZEN},
+					{Name: "jeff_doe", ActivityStatus: proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_HOT},
+					{Name: "jina_doe", ActivityStatus: proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_FREEZING},
+					{Name: "joss_doe", ActivityStatus: proto.TenantActivityStatus_TENANT_ACTIVITY_STATUS_UNFREEZING},
 				},
 			},
 			dest: new(api.GetTenantsResponse),
 			want: &api.GetTenantsResponse{
-				{Name: "john_doe", Status: api.TenantStatusCold},
-				{Name: "jane_doe", Status: api.TenantStatusFrozen},
+				{Name: "john_doe", Status: api.TenantStatusInactive},
+				{Name: "jane_doe", Status: api.TenantStatusOffloaded},
+				{Name: "jeff_doe", Status: api.TenantStatusActive},
+				{Name: "jina_doe", Status: api.TenantStatusOffloading},
+				{Name: "joss_doe", Status: api.TenantStatusOnloading},
 			},
 		},
 	})

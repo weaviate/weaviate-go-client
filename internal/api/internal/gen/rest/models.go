@@ -1243,6 +1243,57 @@ func (e SearchNearTextRequestReturnMetadata) Valid() bool {
 	}
 }
 
+// Defines values for SearchNearVectorRequestConsistencyLevel.
+const (
+	SearchNearVectorRequestConsistencyLevelALL    SearchNearVectorRequestConsistencyLevel = "ALL"
+	SearchNearVectorRequestConsistencyLevelONE    SearchNearVectorRequestConsistencyLevel = "ONE"
+	SearchNearVectorRequestConsistencyLevelQUORUM SearchNearVectorRequestConsistencyLevel = "QUORUM"
+)
+
+// Valid indicates whether the value is a known member of the SearchNearVectorRequestConsistencyLevel enum.
+func (e SearchNearVectorRequestConsistencyLevel) Valid() bool {
+	switch e {
+	case SearchNearVectorRequestConsistencyLevelALL:
+		return true
+	case SearchNearVectorRequestConsistencyLevelONE:
+		return true
+	case SearchNearVectorRequestConsistencyLevelQUORUM:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchNearVectorRequestReturnMetadata.
+const (
+	SearchNearVectorRequestReturnMetadataCertainty      SearchNearVectorRequestReturnMetadata = "certainty"
+	SearchNearVectorRequestReturnMetadataCreationTime   SearchNearVectorRequestReturnMetadata = "creationTime"
+	SearchNearVectorRequestReturnMetadataDistance       SearchNearVectorRequestReturnMetadata = "distance"
+	SearchNearVectorRequestReturnMetadataExplainScore   SearchNearVectorRequestReturnMetadata = "explainScore"
+	SearchNearVectorRequestReturnMetadataLastUpdateTime SearchNearVectorRequestReturnMetadata = "lastUpdateTime"
+	SearchNearVectorRequestReturnMetadataScore          SearchNearVectorRequestReturnMetadata = "score"
+)
+
+// Valid indicates whether the value is a known member of the SearchNearVectorRequestReturnMetadata enum.
+func (e SearchNearVectorRequestReturnMetadata) Valid() bool {
+	switch e {
+	case SearchNearVectorRequestReturnMetadataCertainty:
+		return true
+	case SearchNearVectorRequestReturnMetadataCreationTime:
+		return true
+	case SearchNearVectorRequestReturnMetadataDistance:
+		return true
+	case SearchNearVectorRequestReturnMetadataExplainScore:
+		return true
+	case SearchNearVectorRequestReturnMetadataLastUpdateTime:
+		return true
+	case SearchNearVectorRequestReturnMetadataScore:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SearchReferenceSelectorReturnMetadata.
 const (
 	SearchReferenceSelectorReturnMetadataCreationTime   SearchReferenceSelectorReturnMetadata = "creationTime"
@@ -1853,6 +1904,12 @@ type BackupConfig struct {
 
 	// Path Path or key within the bucket.
 	Path string `json:"Path,omitempty"`
+
+	// DedupeConvergenceTimeoutSeconds How long the coordinator waits for replica convergence proof before shards fall back to being archived by every replica. Only used when dedupeReplicas is set. The wait happens synchronously inside the backup creation request, which blocks for roughly 10 seconds plus up to this timeout; size client timeouts accordingly.
+	DedupeConvergenceTimeoutSeconds int `json:"dedupeConvergenceTimeoutSeconds,omitempty"`
+
+	// DedupeReplicas If true, shards of replicated collections that are provably in sync (via async-replication checkpoints) are archived by a single replica instead of every replica, and a restore copies them back to all replicas. Shards that cannot be proven in sync fall back to being archived by every replica. The proof is the one async replication itself uses (matching object UUIDs and update timestamps at a checkpoint), and the archived copy is the designated replica's state at archive time: it provably contains every write acknowledged at or before the per-class checkpoint cutoff taken shortly after the backup starts (persisted as dedupeCutoffsMs in the backup descriptor), while writes concurrent with the backup are included best-effort, as in any backup mode. Requires async replication on replicated collections and a cluster where every node supports this option. A backup where at least one shard was deduplicated can only be restored by versions that support this option, and its restore requires every replica node of the archived sharding state to be resolvable (or mapped via node_mapping). Restoring such a backup can block the restore request for up to two minutes while participants read all source descriptors; size client timeouts accordingly. If no shard could be deduplicated, the backup is written in the legacy format and restores like any other backup. The option must be enabled on the cluster (env BACKUP_DEDUPE_ENABLED=true); otherwise requests carrying it are rejected with 422, while restores of existing deduplicated backups always work.
+	DedupeReplicas bool `json:"dedupeReplicas,omitempty"`
 }
 
 // BackupConfigCompressionLevel compression level used by compression algorithm
@@ -1863,13 +1920,13 @@ type BackupCreateRequest struct {
 	// Config Backup custom configuration.
 	Config BackupConfig `json:"config,omitempty"`
 
-	// Exclude List of collections to exclude from the backup creation process. If not set, all collections are included. Cannot be used together with `include`. Permits wildcards, e.g. `*` or `prefix*`.
+	// Exclude List of collections to exclude from the backup creation process. If not set, all collections the caller may back up are included. Cannot be used together with `include`. Permits wildcards, e.g. `*` or `prefix*`.
 	Exclude []string `json:"exclude,omitempty"`
 
 	// Id The ID of the backup (required). Must be URL-safe and work as a filesystem path, only lowercase, numbers, underscore, minus characters allowed.
 	Id string `json:"id,omitempty"`
 
-	// Include List of collections to include in the backup creation process. If not set, all collections are included. Cannot be used together with `exclude`. Permits wildcards, e.g. `*` or `prefix*`. A list made only of wildcards that match no collection is rejected.
+	// Include List of collections to include in the backup creation process. If not set, all collections the caller may back up are included. Cannot be used together with `exclude`. Permits wildcards, e.g. `*` or `prefix*`, which match only collections the caller may back up. A list that matches no collection is rejected.
 	Include []string `json:"include,omitempty"`
 
 	// IncludeRoles List of RBAC roles to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted, the whole RBAC state is captured as part of the cluster snapshot; when set, the RBAC blob is filtered to the matching roles. An exact role name that does not exist is rejected; wildcards that match nothing back up no roles. Built-in roles are rejected and are never selected by wildcards (they are re-applied automatically on restore). No per-role permission check is applied.
@@ -1977,7 +2034,7 @@ type BackupRestoreRequest struct {
 	// Exclude List of collections (classes) to exclude from the backup restoration process.
 	Exclude []string `json:"exclude,omitempty"`
 
-	// Include List of collections (classes) to include in the backup restoration process. Permits wildcards, e.g. `*` or `prefix*`. A list made only of wildcards that match no collection in the backup is rejected.
+	// Include List of collections (classes) to include in the backup restoration process. If not set, all collections in the backup the caller may restore are included. Permits wildcards, e.g. `*` or `prefix*`, which match only collections the caller may restore. A list that matches no collection is rejected.
 	Include []string `json:"include,omitempty"`
 
 	// NodeMapping Allows overriding the node names stored in the backup with different ones. Useful when restoring backups to a different environment.
@@ -2037,7 +2094,7 @@ type BatchDelete struct {
 	// DeletionTimeUnixMilli Timestamp of deletion in milliseconds since epoch UTC.
 	DeletionTimeUnixMilli int64 `json:"deletionTimeUnixMilli,omitempty"`
 
-	// DryRun If true, the call will show which objects would be matched using the specified filter without deleting any objects. <br/><br/>Depending on the configured verbosity, you will either receive a count of affected objects, or a list of IDs.
+	// DryRun If true, the call reports what the filter matches and deletes nothing. <br/><br/>Depending on the configured verbosity, you will either receive a count of matched objects, or a list of IDs. With a positive [`QUERY_MAXIMUM_RESULTS`](https://docs.weaviate.io/deploy/configuration/env-vars#QUERY_MAXIMUM_RESULTS) the count stops one above it, and the list holds at most `QUERY_MAXIMUM_RESULTS` IDs. Repeating the dry run reports the same count; for an exact total use an aggregate count, which resolves no objects.
 	DryRun bool `json:"dryRun,omitempty"`
 
 	// Match Outlines how to find the objects to be deleted.
@@ -2058,7 +2115,7 @@ type BatchDeleteResponse struct {
 	// DeletionTimeUnixMilli Timestamp of deletion in milliseconds since epoch UTC.
 	DeletionTimeUnixMilli int64 `json:"deletionTimeUnixMilli,omitempty"`
 
-	// DryRun If true, objects will not be deleted yet, but merely listed. Defaults to false.
+	// DryRun If true, the call reported what the filter matched and deleted nothing. The list holds at most [`QUERY_MAXIMUM_RESULTS`](https://docs.weaviate.io/deploy/configuration/env-vars#QUERY_MAXIMUM_RESULTS) IDs. Defaults to false.
 	DryRun bool `json:"dryRun,omitempty"`
 
 	// Match Outlines how to find the objects to be deleted.
@@ -2079,7 +2136,7 @@ type BatchDeleteResponse struct {
 		// Limit The most amount of objects that can be deleted in a single query, equals [`QUERY_MAXIMUM_RESULTS`](https://docs.weaviate.io/deploy/configuration/env-vars#QUERY_MAXIMUM_RESULTS).
 		Limit int64 `json:"limit"`
 
-		// Matches How many objects were matched by the filter.
+		// Matches How many objects matched the filter. With a positive `limit` the count stops one above `limit`: at or below `limit` this is the exact number of matching objects and every one of them was handled by this call, and above `limit` more objects match than one call deletes, so call again. With a `limit` of 0 or below this is the exact number of matching objects and the call deletes none of them.
 		Matches int64 `json:"matches"`
 
 		// Objects With output set to `minimal` only objects with error occurred will the be described. Successfully deleted objects would be omitted. Output set to `verbose` will list all of the objects with their respective statuses.
@@ -2184,7 +2241,7 @@ type Class struct {
 	// VectorIndexType Name of the vector index type to use for the collection (e.g. `hnsw` or `flat`).
 	VectorIndexType string `json:"vectorIndexType,omitempty"`
 
-	// Vectorizer Specify how the vectors for this collection should be determined. The options are either `none` - this means you have to import a vector with each object yourself - or the name of a module that provides vectorization capabilities, such as `text2vec-weaviate`. If left empty, it will use the globally configured default ([`DEFAULT_VECTORIZER_MODULE`](https://docs.weaviate.io/deploy/configuration/env-vars)) which can itself either be `none` or a specific module.
+	// Vectorizer Specify how the vectors for this collection should be determined. The options are either `none` - this means you have to import a vector with each object yourself - or the name of a module that provides vectorization capabilities, such as `text2vec-weaviate`. If left empty, it defaults to `none`.
 	Vectorizer string `json:"vectorizer,omitempty"`
 }
 
@@ -2651,11 +2708,44 @@ type Meta struct {
 	// Hostname The url of the host.
 	Hostname string `json:"hostname,omitempty"`
 
+	// License License state of the current Weaviate instance.
+	License MetaLicense `json:"license,omitempty"`
+
 	// Modules Module-specific meta information.
 	Modules map[string]interface{} `json:"modules,omitempty"`
 
 	// Version The Weaviate server version.
 	Version string `json:"version,omitempty"`
+}
+
+// MetaLicense License state of the current Weaviate instance.
+type MetaLicense struct {
+	// ClusterMismatch Whether the license is used on a cluster other than the one it was issued for.
+	ClusterMismatch bool `json:"clusterMismatch,omitempty"`
+
+	// DocumentationHref Documentation page for the Weaviate Enterprise Edition.
+	DocumentationHref string `json:"documentationHref,omitempty"`
+
+	// Edition The product edition: community (no license key) or enterprise (license key configured).
+	Edition string `json:"edition,omitempty"`
+
+	// Enforcing Whether license enforcement is active.
+	Enforcing bool `json:"enforcing,omitempty"`
+
+	// ExpiresAt When the license expires, if known.
+	ExpiresAt time.Time `json:"expiresAt,omitempty"`
+
+	// GracePeriodEndsAt When the grace period ends, if the license is not currently valid.
+	GracePeriodEndsAt time.Time `json:"gracePeriodEndsAt,omitempty"`
+
+	// LastCheckedAt When the license was last verified with the license service, if ever.
+	LastCheckedAt time.Time `json:"lastCheckedAt,omitempty"`
+
+	// LicenseId The non-secret id of the configured license, empty when unlicensed.
+	LicenseId string `json:"licenseId,omitempty"`
+
+	// Status Current license status. Only present on Enterprise Edition; a Community Edition node has no license and therefore no license status.
+	Status string `json:"status,omitempty"`
 }
 
 // MultiTenancyConfig Configuration related to multi-tenancy within a collection (class)
@@ -2707,9 +2797,9 @@ type NamespaceUpdateRequest struct {
 type NestedProperty struct {
 	DataType          []string `json:"dataType,omitempty"`
 	Description       string   `json:"description,omitempty"`
-	IndexFilterable   bool     `json:"indexFilterable,omitempty"`
-	IndexRangeFilters bool     `json:"indexRangeFilters,omitempty"`
-	IndexSearchable   bool     `json:"indexSearchable,omitempty"`
+	IndexFilterable   *bool    `json:"indexFilterable,omitempty"`
+	IndexRangeFilters *bool    `json:"indexRangeFilters,omitempty"`
+	IndexSearchable   *bool    `json:"indexSearchable,omitempty"`
 	Name              string   `json:"name,omitempty"`
 
 	// NestedProperties The properties of the nested object(s). Applies to object and object[] data types.
@@ -2913,7 +3003,7 @@ type Permission struct {
 
 	// Aliases Resource definition for alias-related actions and permissions. Used to specify which aliases and collections can be accessed or modified.
 	Aliases struct {
-		// Alias A string that specifies which aliases this permission applies to. Can be an exact alias name or a regex pattern. The default value `*` applies the permission to all aliases.
+		// Alias A string that specifies which aliases this permission applies to. Can be an exact alias name or a regex pattern. The default value `*` applies the permission to all aliases. Must be at most 256 bytes, must not contain '/', and must be a valid regex pattern. Creating a role or adding permissions also refuses ',', '"' and control characters.
 		Alias string `json:"alias,omitempty"`
 
 		// Collection A string that specifies which collections this permission applies to. Can be an exact collection name or a regex pattern. The default value `*` applies the permission to all collections.
@@ -2937,7 +3027,7 @@ type Permission struct {
 		// Collection A string that specifies which collections this permission applies to. Can be an exact collection name or a regex pattern. The default value `*` applies the permission to all collections.
 		Collection string `json:"collection,omitempty"`
 
-		// Object A string that specifies which objects this permission applies to. Can be an exact object ID or a regex pattern. The default value `*` applies the permission to all objects.
+		// Object Deprecated: Object-level permissions are not supported. This field is ignored; the permission always applies to all objects. Kept for backward compatibility.
 		Object string `json:"object,omitempty"`
 
 		// Tenant A string that specifies which tenants this permission applies to. Can be an exact tenant name or a regex pattern. The default value `*` applies the permission to all tenants.
@@ -2946,7 +3036,7 @@ type Permission struct {
 
 	// Groups Resources applicable for group actions.
 	Groups struct {
-		// Group A string that specifies which groups this permission applies to. Can be an exact group name or a regex pattern. The default value `*` applies the permission to all groups.
+		// Group A string that specifies which groups this permission applies to. Can be an exact group name or a regex pattern. The default value `*` applies the permission to all groups. Must be at most 256 bytes, must not contain '/', and must be a valid regex pattern. Creating a role or adding permissions also refuses ',', '"' and control characters.
 		Group string `json:"group,omitempty"`
 
 		// GroupType If the group contains OIDC or database users.
@@ -2955,7 +3045,7 @@ type Permission struct {
 
 	// Namespaces Resources applicable for namespace actions.
 	Namespaces struct {
-		// Namespace A string that specifies which namespaces this permission applies to. Can be an exact namespace name or a regex pattern. The default value `*` applies the permission to all namespaces.
+		// Namespace A string that specifies which namespaces this permission applies to. Can be an exact namespace name or a regex pattern. The default value `*` applies the permission to all namespaces. Must be at most 256 bytes, must not contain '/', and must be a valid regex pattern. Creating a role or adding permissions also refuses ',', '"' and control characters.
 		Namespace string `json:"namespace,omitempty"`
 	} `json:"namespaces,omitempty"`
 
@@ -2973,13 +3063,13 @@ type Permission struct {
 		// Collection string or regex. if a specific collection name, if left empty it will be ALL or *
 		Collection string `json:"collection,omitempty"`
 
-		// Shard string or regex. if a specific shard name, if left empty it will be ALL or *
+		// Shard string or regex. if a specific shard name, if left empty it will be ALL or *. Must be at most 256 bytes, must not contain '/', and must be a valid regex pattern. Creating a role or adding permissions also refuses ',', '"' and control characters.
 		Shard string `json:"shard,omitempty"`
 	} `json:"replicate,omitempty"`
 
 	// Roles Resources applicable for role actions.
 	Roles struct {
-		// Role A string that specifies which roles this permission applies to. Can be an exact role name or a regex pattern. The default value `*` applies the permission to all roles.
+		// Role A string that specifies which roles this permission applies to. Can be an exact role name or a regex pattern. The default value `*` applies the permission to all roles. Must be at most 256 bytes, must not contain '/', and must be a valid regex pattern. Creating a role or adding permissions also refuses ',', '"' and control characters.
 		Role string `json:"role,omitempty"`
 
 		// Scope Set the scope for the manage role permission.
@@ -2997,7 +3087,7 @@ type Permission struct {
 
 	// Users Resources applicable for user actions.
 	Users struct {
-		// Users A string that specifies which users this permission applies to. Can be an exact user name or a regex pattern. The default value `*` applies the permission to all users.
+		// Users A string that specifies which users this permission applies to. Can be an exact user name or a regex pattern. The default value `*` applies the permission to all users. Must be at most 256 bytes, must not contain '/', and must be a valid regex pattern. Creating a role or adding permissions also refuses ',', '"' and control characters.
 		Users string `json:"users,omitempty"`
 	} `json:"users,omitempty"`
 }
@@ -3023,19 +3113,19 @@ type Property struct {
 	Description string `json:"description,omitempty"`
 
 	// DisableDuplicatedReferences If set to false, allows multiple references to the same target object within this property. Setting it to true will enforce uniqueness of references within this property. By default, this is set to true.
-	DisableDuplicatedReferences bool `json:"disableDuplicatedReferences,omitempty"`
+	DisableDuplicatedReferences *bool `json:"disableDuplicatedReferences,omitempty"`
 
 	// IndexFilterable Whether to include this property in the filterable, Roaring Bitmap index. If `false`, this property cannot be used in `where` filters. <br/><br/>Note: Unrelated to vectorization behavior.
-	IndexFilterable bool `json:"indexFilterable,omitempty"`
+	IndexFilterable *bool `json:"indexFilterable,omitempty"`
 
 	// IndexInverted (Deprecated). Whether to include this property in the inverted index. If `false`, this property cannot be used in `where` filters, `bm25` or `hybrid` search. <br/><br/>Unrelated to vectorization behavior (deprecated as of v1.19; use indexFilterable or/and indexSearchable instead)
 	IndexInverted bool `json:"indexInverted,omitempty"`
 
 	// IndexRangeFilters Whether to include this property in the filterable, range-based Roaring Bitmap index. Provides better performance for range queries compared to filterable index in large datasets. Applicable only to properties of data type int, number, date.
-	IndexRangeFilters bool `json:"indexRangeFilters,omitempty"`
+	IndexRangeFilters *bool `json:"indexRangeFilters,omitempty"`
 
 	// IndexSearchable Optional. Should this property be indexed in the inverted index. Defaults to true. Applicable only to properties of data type text and text[]. If you choose false, you will not be able to use this property in bm25 or hybrid search. This property has no affect on vectorization decisions done by modules
-	IndexSearchable bool `json:"indexSearchable,omitempty"`
+	IndexSearchable *bool `json:"indexSearchable,omitempty"`
 
 	// ModuleConfig Configuration specific to modules in a collection context.
 	ModuleConfig map[string]interface{} `json:"moduleConfig,omitempty"`
@@ -3047,7 +3137,7 @@ type Property struct {
 	NestedProperties []NestedProperty `json:"nestedProperties,omitempty"`
 
 	// SearchableBlockmax Internal RAFT-replicated per-property flag: true iff this property's searchable (BM25) bucket is on the blockmax (StrategyInverted) index. Stamped at migration cutover. Absent/null means "not stamped" and is resolved against the class-wide UsingBlockMaxWAND flag. Internal use; clients must not set this.
-	SearchableBlockmax bool `json:"searchableBlockmax,omitempty"`
+	SearchableBlockmax *bool `json:"searchableBlockmax,omitempty"`
 
 	// TextAnalyzer Text analysis options for a property. These settings are immutable after the property is created. Applies only to text and text[] data types that use an inverted index (searchable or filterable).
 	TextAnalyzer TextAnalyzerConfig `json:"textAnalyzer,omitempty"`
@@ -3757,6 +3847,72 @@ type SearchNearTextRequestConsistencyLevel string
 // SearchNearTextRequestReturnMetadata defines model for SearchNearTextRequest.ReturnMetadata.
 type SearchNearTextRequestReturnMetadata string
 
+// SearchNearVectorRequest defines model for SearchNearVectorRequest.
+type SearchNearVectorRequest struct {
+	// AutoLimit Cut results off at the first steep drop in score (autocut). The value is the number of score jumps to allow before cutting.
+	AutoLimit int64 `json:"autoLimit,omitempty"`
+
+	// Certainty Minimum normalized certainty of a match. Only for cosine-distance vector indexes. Mutually exclusive with `distance`.
+	Certainty float32 `json:"certainty,omitempty"`
+
+	// ConsistencyLevel The consistency level for the read.
+	ConsistencyLevel SearchNearVectorRequestConsistencyLevel `json:"consistencyLevel,omitempty"`
+
+	// Distance Maximum vector distance of a match. Mutually exclusive with `certainty`.
+	Distance float32 `json:"distance,omitempty"`
+
+	// GroupBy Reserved for grouped search. Returns 422 (not yet supported).
+	GroupBy string `json:"groupBy,omitempty"`
+
+	// GroupedTask Reserved for grouped retrieval-augmented generation. Returns 422 (not yet supported).
+	GroupedTask string `json:"groupedTask,omitempty"`
+
+	// Limit The maximum number of objects to return. Omitted or `0` falls back to the server default (`QUERY_DEFAULTS_LIMIT`); a value above `QUERY_MAXIMUM_RESULTS` is rejected.
+	Limit int64 `json:"limit,omitempty"`
+
+	// NumberOfGroups Reserved for grouped search. Returns 422 (not yet supported).
+	NumberOfGroups int64 `json:"numberOfGroups,omitempty"`
+
+	// ObjectsPerGroup Reserved for grouped search. Returns 422 (not yet supported).
+	ObjectsPerGroup int64 `json:"objectsPerGroup,omitempty"`
+
+	// Offset The number of objects to skip before returning results. Used with `limit` for pagination.
+	Offset int64 `json:"offset,omitempty"`
+
+	// Rerank Reserved for reranking. Returns 422 (not yet supported).
+	Rerank SearchRerank `json:"rerank,omitempty"`
+
+	// ReturnMetadata The retrieval metadata to return under each result's `metadata` key. The object `id` is always returned as each result's `id` field. Omitted or empty returns no `metadata` block.
+	ReturnMetadata []SearchNearVectorRequestReturnMetadata `json:"returnMetadata,omitempty"`
+
+	// ReturnProperties The non-reference properties to return. Omitted returns all non-reference, non-blob properties; an empty array returns no properties. References are selected with `returnReferences`.
+	ReturnProperties []string `json:"returnProperties,omitempty"`
+
+	// ReturnReferences The cross-references to return under each result's `references` key. Each entry selects one reference property and what to return from the referenced objects. Omitted or empty returns no references.
+	ReturnReferences []SearchReferenceSelector `json:"returnReferences,omitempty"`
+
+	// SinglePrompt Reserved for per-object retrieval-augmented generation. Returns 422 (not yet supported).
+	SinglePrompt string `json:"singlePrompt,omitempty"`
+
+	// TargetVector The named vector to search (the query vector is compared against the vectors stored under this name, and must match their dimensionality). Required when the collection has more than one named vector.
+	TargetVector string `json:"targetVector,omitempty"`
+
+	// Tenant The tenant to search in a multi-tenant collection.
+	Tenant string `json:"tenant,omitempty"`
+
+	// Vector The query vector, as a non-empty array of numbers that fit a 32-bit float, e.g. `[0.12, -0.3, 0.98]`. It must have the dimensionality of the vector space it is searched against, that is of the collection's (target) vector. A vector of the wrong dimensionality is rejected with 422 by uncompressed HNSW and flat indexes; a BQ- or RQ-compressed HNSW index does not detect it and yields an empty result set instead.
+	Vector map[string]interface{} `json:"vector"`
+
+	// Where Filter search results using a where filter.
+	Where WhereFilter `json:"where,omitempty"`
+}
+
+// SearchNearVectorRequestConsistencyLevel The consistency level for the read.
+type SearchNearVectorRequestConsistencyLevel string
+
+// SearchNearVectorRequestReturnMetadata defines model for SearchNearVectorRequest.ReturnMetadata.
+type SearchNearVectorRequestReturnMetadata string
+
 // SearchReferenceSelector Selects one cross-reference to return, and what to return from each referenced object.
 type SearchReferenceSelector struct {
 	// LinkOn The reference property to follow.
@@ -4135,7 +4291,7 @@ type WhereFilter struct {
 	Path []string `json:"path,omitempty"`
 
 	// ValueBoolean value as boolean
-	ValueBoolean bool `json:"valueBoolean,omitempty"`
+	ValueBoolean *bool `json:"valueBoolean,omitempty"`
 
 	// ValueBooleanArray value as boolean
 	ValueBooleanArray []bool `json:"valueBooleanArray,omitempty"`
@@ -4801,6 +4957,9 @@ type SearchNearObjectJSONRequestBody = SearchNearObjectRequest
 
 // SearchNearTextJSONRequestBody defines body for SearchNearText for application/json ContentType.
 type SearchNearTextJSONRequestBody = SearchNearTextRequest
+
+// SearchNearVectorJSONRequestBody defines body for SearchNearVector for application/json ContentType.
+type SearchNearVectorJSONRequestBody = SearchNearVectorRequest
 
 // TokenizeJSONRequestBody defines body for Tokenize for application/json ContentType.
 type TokenizeJSONRequestBody = TokenizeRequest

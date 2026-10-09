@@ -6,15 +6,15 @@ import "time"
 const TimeLayout = time.RFC3339
 
 // timeFromString parses a timestamp formatted in [TimeLayout].
-func timeFromString(s string) (*time.Time, error) {
+func timeFromString(s string) (time.Time, error) {
 	if s == "" {
-		return nil, nil
+		return time.Time{}, nil
 	}
 	t, err := time.Parse(TimeLayout, s)
 	if err != nil {
-		return nil, err
+		return time.Time{}, err
 	}
-	return &t, nil
+	return t, nil
 }
 
 // timeFromUnix parses a UNIX timestamp, which, in the Weaviate server,
