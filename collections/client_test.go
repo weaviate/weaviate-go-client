@@ -13,6 +13,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
+	"github.com/weaviate/weaviate-go-client/v6/modules"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
@@ -213,6 +214,15 @@ func TestClient_Create(t *testing.T) {
 					DefaultTTL:           72 * time.Hour,
 					FilterExpiredObjects: false,
 				},
+				Generative: testkit.GenerativeModule{
+					"baseURL": "example.com",
+					"model":   "campbell",
+				},
+				RerankerModules: []modules.Module{
+					testkit.RerankerModule{
+						"model": "quicksort",
+					},
+				},
 			},
 			stubs: []testkit.Stub[api.CreateCollectionRequest, api.Collection]{
 				{
@@ -335,6 +345,21 @@ func TestClient_Create(t *testing.T) {
 								PropertyName:         "timestamp",
 								DefaultTTL:           72 * time.Hour,
 								FilterExpiredObjects: false,
+							},
+							Generative: &api.Module{
+								Name: testkit.GenerativeModuleName,
+								Conf: map[string]any{
+									"baseURL": "example.com",
+									"model":   "campbell",
+								},
+							},
+							RerankerModules: []api.Module{
+								{
+									Name: testkit.RerankerModuleName,
+									Conf: map[string]any{
+										"model": "quicksort",
+									},
+								},
 							},
 						},
 					},
@@ -518,6 +543,21 @@ func TestClient_GetConfig(t *testing.T) {
 							DefaultTTL:           72 * time.Hour,
 							FilterExpiredObjects: false,
 						},
+						Generative: &api.Module{
+							Name: testkit.GenerativeModuleName,
+							Conf: map[string]any{
+								"baseURL": "example.com",
+								"model":   "campbell",
+							},
+						},
+						RerankerModules: []api.Module{
+							{
+								Name: testkit.RerankerModuleName,
+								Conf: map[string]any{
+									"model": "quicksort",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -624,6 +664,15 @@ func TestClient_GetConfig(t *testing.T) {
 					PropertyName:         "timestamp",
 					DefaultTTL:           72 * time.Hour,
 					FilterExpiredObjects: false,
+				},
+				Generative: testkit.GenerativeModule{
+					"baseURL": "example.com",
+					"model":   "campbell",
+				},
+				RerankerModules: []modules.Module{
+					testkit.RerankerModule{
+						"model": "quicksort",
+					},
 				},
 			},
 		},

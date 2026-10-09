@@ -102,7 +102,7 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 				Text: &proto.AggregateRequest_Aggregation_Text{
 					Count:              txt.Count,
 					TopOccurences:      txt.TopOccurrences,
-					TopOccurencesLimit: nilZero(uint32(txt.TopOccurencesCutoff)),
+					TopOccurencesLimit: NilZero(uint32(txt.TopOccurencesCutoff)),
 				},
 			},
 		})
@@ -174,7 +174,7 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 		Tenant:     r.Tenant,
 
 		ObjectsCount: r.TotalCount,
-		ObjectLimit:  nilZero(uint32(r.ObjectLimit)),
+		ObjectLimit:  NilZero(uint32(r.ObjectLimit)),
 		Aggregations: aggregations,
 	}
 
@@ -427,10 +427,10 @@ func unmarshalAggregations(aggregations []*proto.AggregateReply_Aggregations_Agg
 			out.Date = append(out.Date, AggregateDateResult{
 				Property: property,
 				Count:    date.Count,
-				Min:      nilZero(minimum),
-				Max:      nilZero(maximum),
-				Mode:     nilZero(mode),
-				Median:   nilZero(median),
+				Min:      NilZero(minimum),
+				Max:      NilZero(maximum),
+				Mode:     NilZero(mode),
+				Median:   NilZero(median),
 			})
 		case agg.GetInt() != nil:
 			int := agg.GetInt()
@@ -472,8 +472,8 @@ func unmarshalAggregations(aggregations []*proto.AggregateReply_Aggregations_Agg
 	return &out, nil
 }
 
-// nilZero returns a pointer to v if it is not the zero value for T and nil otherwise.
-func nilZero[T comparable](v T) *T {
+// NilZero returns a pointer to v if it is not the zero value for T and nil otherwise.
+func NilZero[T comparable](v T) *T {
 	if v == *new(T) {
 		return nil
 	}

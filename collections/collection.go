@@ -1,6 +1,8 @@
 package collections
 
 import (
+	"slices"
+
 	"github.com/weaviate/weaviate-go-client/v6/collections/compression"
 	"github.com/weaviate/weaviate-go-client/v6/collections/vectorindex"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
@@ -14,16 +16,18 @@ type Alias api.Alias
 
 type (
 	Collection struct {
-		Name          string
-		Description   string
-		Properties    []Property
-		References    []Reference
-		Vectors       map[string]VectorConfig
-		Sharding      *ShardingConfig
-		Replication   *ReplicationConfig
-		InvertedIndex *InvertedIndexConfig
-		MultiTenancy  *MultiTenancyConfig
-		ObjectTTL     *ObjectTTLConfig
+		Name            string
+		Description     string
+		Properties      []Property
+		References      []Reference
+		Vectors         map[string]VectorConfig
+		Sharding        *ShardingConfig
+		Replication     *ReplicationConfig
+		InvertedIndex   *InvertedIndexConfig
+		MultiTenancy    *MultiTenancyConfig
+		ObjectTTL       *ObjectTTLConfig
+		Generative      modules.Module
+		RerankerModules []modules.Module
 	}
 	Property struct {
 		Name             string
@@ -245,6 +249,28 @@ func collectionToAPI(c *Collection) (api.Collection, error) {
 		}
 	}
 
+	if c.Generative != nil {
+		conf, err := modules.Registry.Encode(c.Generative)
+		if err != nil {
+			return api.Collection{}, err
+		}
+		out.Generative = &api.Module{
+			Name: c.Generative.Name(),
+			Conf: conf,
+		}
+	}
+
+	for _, rm := range c.RerankerModules {
+		conf, err := modules.Registry.Encode(rm)
+		if err != nil {
+			return api.Collection{}, err
+		}
+		out.RerankerModules = append(out.RerankerModules, api.Module{
+			Name: rm.Name(),
+			Conf: conf,
+		})
+	}
+
 	return out, nil
 }
 
@@ -342,17 +368,37 @@ func collectionFromAPI(c *api.Collection) (Collection, error) {
 		}
 	}
 
+	var generative modules.Module
+	if c.Generative != nil {
+		conf, err := modules.Registry.Decode(c.Generative.Name, c.Generative.Conf)
+		if err != nil {
+			return Collection{}, err
+		}
+		generative = conf
+	}
+
+	rerankers := slices.Grow([]modules.Module(nil), len(c.RerankerModules))
+	for _, rm := range c.RerankerModules {
+		conf, err := modules.Registry.Decode(rm.Name, rm.Conf)
+		if err != nil {
+			return Collection{}, err
+		}
+		rerankers = append(rerankers, conf)
+	}
+
 	return Collection{
-		Name:          c.Name,
-		Description:   c.Description,
-		Properties:    properties,
-		References:    references,
-		Vectors:       vectors,
-		Sharding:      sharding,
-		Replication:   replication,
-		InvertedIndex: invertedIndex,
-		MultiTenancy:  (*MultiTenancyConfig)(c.MultiTenancy),
-		ObjectTTL:     (*ObjectTTLConfig)(c.ObjectTTL),
+		Name:            c.Name,
+		Description:     c.Description,
+		Properties:      properties,
+		References:      references,
+		Vectors:         vectors,
+		Sharding:        sharding,
+		Replication:     replication,
+		InvertedIndex:   invertedIndex,
+		MultiTenancy:    (*MultiTenancyConfig)(c.MultiTenancy),
+		ObjectTTL:       (*ObjectTTLConfig)(c.ObjectTTL),
+		Generative:      generative,
+		RerankerModules: rerankers,
 	}, nil
 }
 

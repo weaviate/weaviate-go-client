@@ -10,7 +10,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 )
 
-// TestCompression ensures that all modules are registerred with [compression.Registry]
+// TestCompression ensures that all modules are registered with [compression.Registry]
 // and that they produce correct configurations when serialized.
 func TestCompression(t *testing.T) {
 	for _, tt := range []struct {

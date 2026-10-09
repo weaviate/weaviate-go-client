@@ -312,6 +312,21 @@ func TestRESTRequests(t *testing.T) {
 						DefaultTTL:           72 * time.Hour,
 						FilterExpiredObjects: false,
 					},
+					Generative: &api.Module{
+						Name: testkit.GenerativeModuleName,
+						Conf: map[string]any{
+							"baseURL": "example.com",
+							"model":   "campbell",
+						},
+					},
+					RerankerModules: []api.Module{
+						{
+							Name: testkit.RerankerModuleName,
+							Conf: map[string]any{
+								"model": "quicksort",
+							},
+						},
+					},
 				},
 			},
 			wantMethod: http.MethodPost,
@@ -422,6 +437,15 @@ func TestRESTRequests(t *testing.T) {
 					DeleteOn:             "timestamp",
 					DefaultTtl:           int((72 * time.Hour).Seconds()),
 					FilterExpiredObjects: false,
+				},
+				ModuleConfig: map[string]any{
+					testkit.GenerativeModuleName: map[string]any{
+						"baseURL": "example.com",
+						"model":   "campbell",
+					},
+					testkit.RerankerModuleName: map[string]any{
+						"model": "quicksort",
+					},
 				},
 			},
 		},
@@ -1633,6 +1657,15 @@ func TestRESTResponses(t *testing.T) {
 					DefaultTtl:           int((72 * time.Hour).Seconds()),
 					FilterExpiredObjects: false,
 				},
+				ModuleConfig: map[string]any{
+					testkit.GenerativeModuleName: map[string]any{
+						"baseURL": "example.com",
+						"model":   "campbell",
+					},
+					testkit.RerankerModuleName: map[string]any{
+						"model": "quicksort",
+					},
+				},
 			},
 			dest: new(api.Collection),
 			want: &api.Collection{
@@ -1753,6 +1786,21 @@ func TestRESTResponses(t *testing.T) {
 					PropertyName:         "timestamp",
 					DefaultTTL:           72 * time.Hour,
 					FilterExpiredObjects: false,
+				},
+				Generative: &api.Module{
+					Name: testkit.GenerativeModuleName,
+					Conf: map[string]any{
+						"baseURL": "example.com",
+						"model":   "campbell",
+					},
+				},
+				RerankerModules: []api.Module{
+					{
+						Name: testkit.RerankerModuleName,
+						Conf: map[string]any{
+							"model": "quicksort",
+						},
+					},
 				},
 			},
 		},

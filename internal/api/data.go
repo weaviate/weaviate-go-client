@@ -129,7 +129,7 @@ func MarshalBatchReference(ref *Reference, rd RequestDefaults) *proto.BatchRefer
 		Name:           ref.Origin.Property,
 		FromCollection: ref.Origin.Collection,
 		FromUuid:       ref.Origin.UUID.String(),
-		ToCollection:   nilZero(ref.Target.Collection),
+		ToCollection:   NilZero(ref.Target.Collection),
 		ToUuid:         ref.Target.UUID.String(),
 		Tenant:         rd.Tenant,
 	}
@@ -562,7 +562,7 @@ func (r *DeleteObjectsRequest) MarshalMessage() (*proto.BatchDeleteRequest, erro
 	}
 	return &proto.BatchDeleteRequest{
 		Collection:       r.CollectionName,
-		Tenant:           nilZero(r.Tenant),
+		Tenant:           NilZero(r.Tenant),
 		ConsistencyLevel: r.ConsistencyLevel.proto(),
 		Verbose:          r.Verbose,
 		DryRun:           r.DryRun,
