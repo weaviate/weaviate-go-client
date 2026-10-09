@@ -64,7 +64,12 @@ func TestClient_Insert(t *testing.T) {
 				Vectors: []types.Vector{
 					{Name: "single", Single: []float32{1, 2, 3}},
 				},
-				Properties: map[string]any{"foo": "bar"},
+				Properties: map[string]any{
+					"location": types.GeoCoordinates{
+						Latitude:  -37.815389,
+						Longitude: 144.970806,
+					},
+				},
 				References: data.References{
 					"ref": []data.Reference{
 						{Collection: "Foo", UUID: testkit.UUID},
@@ -80,7 +85,12 @@ func TestClient_Insert(t *testing.T) {
 						Vectors: []api.Vector{
 							{Name: "single", Single: []float32{1, 2, 3}},
 						},
-						Properties: map[string]any{"foo": "bar"},
+						Properties: map[string]any{
+							"location": api.GeoCoordinates{
+								Latitude:  -37.815389,
+								Longitude: 144.970806,
+							},
+						},
 						References: api.References{
 							"ref": []api.Reference{
 								{Target: api.ObjectPath{Collection: "Foo", UUID: testkit.UUID}},

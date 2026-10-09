@@ -6,13 +6,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/data"
+	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
 func TestEncode(t *testing.T) {
 	type Song struct {
-		Title    string `json:"title"`
-		Duration int    `json:"duration_sec"`
-		Artist   string `json:"artist"`
+		Title    string               `json:"title"`
+		Duration int                  `json:"duration_sec"`
+		Artist   string               `json:"artist"`
+		Location types.GeoCoordinates `json:"location"`
 	}
 
 	t.Run("ok", func(t *testing.T) {
@@ -20,6 +22,10 @@ func TestEncode(t *testing.T) {
 			Title:    "This Is My Bassdrum",
 			Artist:   "Telebrains",
 			Duration: 202,
+			Location: types.GeoCoordinates{
+				Latitude:  -37.815389,
+				Longitude: 144.970806,
+			},
 		})
 		require.NoError(t, err, "encode error")
 
@@ -27,6 +33,10 @@ func TestEncode(t *testing.T) {
 			"title":        "This Is My Bassdrum",
 			"artist":       "Telebrains",
 			"duration_sec": 202,
+			"location": map[string]any{
+				"latitude":  float32(-37.815389),
+				"longitude": float32(144.970806),
+			},
 		}, song)
 	})
 

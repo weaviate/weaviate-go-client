@@ -571,8 +571,15 @@ func marshalFilter(f FilterExpr) (*proto.Filters, error) {
 			pf.TestValue = &proto.Filters_ValueNumberArray{
 				ValueNumberArray: &proto.NumberArray{Values: v},
 			}
+		case GeoRange:
+			pf.TestValue = &proto.Filters_ValueGeo{
+				ValueGeo: &proto.GeoCoordinatesFilter{
+					Latitude:  v.Location.Latitude,
+					Longitude: v.Location.Longitude,
+					Distance:  v.Distance,
+				},
+			}
 		default:
-			// TODO(dyma): add GeoCoordinates property
 			return nil, fmt.Errorf("%T is not supported", v)
 		}
 	}
@@ -1159,6 +1166,12 @@ func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
 			}
 			dev.AssertNotNil(properties, "properties")
 			v = properties
+		case *proto.Value_GeoValue:
+			geo := f.GetGeoValue()
+			v = GeoCoordinates{
+				Latitude:  geo.Latitude,
+				Longitude: geo.Longitude,
+			}
 		case *proto.Value_ListValue:
 			list := f.GetListValue()
 			switch list.GetKind().(type) {
@@ -1277,6 +1290,7 @@ const (
 	FilterOperatorContainsAll      = FilterOperator(proto.Filters_OPERATOR_CONTAINS_ALL)
 	FilterOperatorContainsAny      = FilterOperator(proto.Filters_OPERATOR_CONTAINS_ANY)
 	FilterOperatorContainsNone     = FilterOperator(proto.Filters_OPERATOR_CONTAINS_NONE)
+	FilterOperatorWithinGeoRange   = FilterOperator(proto.Filters_OPERATOR_WITHIN_GEO_RANGE)
 )
 
 func (o FilterOperator) String() string {

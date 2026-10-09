@@ -127,6 +127,7 @@ func TestClient_Create(t *testing.T) {
 						Name: "metadata", DataType: collections.DataTypeObject,
 						NestedProperties: []collections.Property{
 							{Name: "duration", DataType: collections.DataTypeNumber},
+							{Name: "location", DataType: collections.DataTypeGeoCoordinates},
 							{Name: "uploadedTime", DataType: collections.DataTypeDate},
 						},
 						Tokenization:    collections.TokenizationWhitespace,
@@ -247,6 +248,7 @@ func TestClient_Create(t *testing.T) {
 									Name: "metadata", DataType: api.DataTypeObject,
 									NestedProperties: []api.Property{
 										{Name: "duration", DataType: api.DataTypeNumber},
+										{Name: "location", DataType: api.DataTypeGeoCoordinates},
 										{Name: "uploadedTime", DataType: api.DataTypeDate},
 									},
 									Tokenization:    api.TokenizationWhitespace,

@@ -351,6 +351,13 @@ func marshalObjectProperties(properties map[string]any, dest *proto.BatchObject_
 		case time.Time:
 			properties[name] = v.Format(TimeLayout)
 			continue
+		case GeoCoordinates:
+			m := make(map[string]any)
+			if err := internal.Encode(v, m); err != nil {
+				return err
+			}
+			properties[name] = m
+			continue
 		case []bool:
 			dest.BooleanArrayProperties = append(dest.BooleanArrayProperties, &proto.BooleanArrayProperties{
 				PropName: name,
@@ -600,4 +607,14 @@ func (r *DeleteObjectsResponse) UnmarshalMessage(reply *proto.BatchDeleteReply) 
 		Errors:  errs,
 	}
 	return nil
+}
+
+type GeoCoordinates struct {
+	Latitude  float32 `json:"latitude"`
+	Longitude float32 `json:"longitude"`
+}
+
+type GeoRange struct {
+	Location GeoCoordinates
+	Distance float32
 }

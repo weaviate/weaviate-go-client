@@ -1,10 +1,12 @@
 package api_test
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
@@ -39,7 +41,13 @@ func testMessageMarshaler[In transport.RequestMessage, Out transport.ReplyMessag
 
 			got, err := body.MarshalMessage()
 			tt.err.Require(t, err)
-			require.EqualExportedValues(t, tt.want, got)
+			if !assert.EqualExportedValues(t, tt.want, got) {
+				w, _ := json.MarshalIndent(tt.want, "", " ")
+				t.Logf("want:\n%s", string(w))
+
+				g, _ := json.MarshalIndent(got, "", " ")
+				t.Logf("got:\n%s", string(g))
+			}
 		})
 	}
 }
@@ -127,6 +135,17 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 									Operator: api.FilterOperatorEqual,
 									Value:    true,
 								},
+								{
+									Target:   []string{"location"},
+									Operator: api.FilterOperatorWithinGeoRange,
+									Value: api.GeoRange{
+										Location: api.GeoCoordinates{
+											Latitude:  -37.815389,
+											Longitude: 144.970806,
+										},
+										Distance: 80,
+									},
+								},
 							},
 						},
 						{
@@ -183,6 +202,17 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 									Target:    propertyTarget("isSingle"),
 									Operator:  proto.Filters_OPERATOR_EQUAL,
 									TestValue: &proto.Filters_ValueBoolean{ValueBoolean: true},
+								},
+								{
+									Target:   propertyTarget("location"),
+									Operator: proto.Filters_OPERATOR_WITHIN_GEO_RANGE,
+									TestValue: &proto.Filters_ValueGeo{
+										ValueGeo: &proto.GeoCoordinatesFilter{
+											Latitude:  -37.815389,
+											Longitude: 144.970806,
+											Distance:  80,
+										},
+									},
 								},
 							},
 						},
@@ -1772,6 +1802,10 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 							"title":        "Mata Zyklek",
 							"spotify":      testkit.UUID,
 							"release_date": testkit.Now,
+							"location": api.GeoCoordinates{
+								Latitude:  -37.815389,
+								Longitude: 144.970806,
+							},
 						},
 					},
 				},
@@ -1789,6 +1823,10 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 								"title":        "Mata Zyklek",
 								"spotify":      testkit.UUID.String(),
 								"release_date": testkit.Now.Format(api.TimeLayout),
+								"location": map[string]any{
+									"latitude":  float32(-37.815389),
+									"longitude": float32(144.970806),
+								},
 							}),
 						},
 					},
@@ -2546,6 +2584,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 										"key": text("D"),
 									}),
 									"kpop_version": null(),
+									"location":     geo(-37.815389, 144.970806),
 								},
 							},
 						},
@@ -2569,6 +2608,10 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 								"key": "D",
 							},
 							"kpop_version": nil,
+							"location": api.GeoCoordinates{
+								Latitude:  -37.815389,
+								Longitude: 144.970806,
+							},
 						},
 					},
 				},
@@ -2993,6 +3036,13 @@ func UUID(u uuid.UUID) *proto.Value {
 func object(m map[string]*proto.Value) *proto.Value {
 	return &proto.Value{Kind: &proto.Value_ObjectValue{ObjectValue: &proto.Properties{
 		Fields: m,
+	}}}
+}
+
+func geo(lat, lon float32) *proto.Value {
+	return &proto.Value{Kind: &proto.Value_GeoValue{GeoValue: &proto.GeoCoordinate{
+		Latitude:  lat,
+		Longitude: lon,
 	}}}
 }
 
