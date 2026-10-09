@@ -7,11 +7,22 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/modules"
+	"github.com/weaviate/weaviate-go-client/v6/modules/aws"
+	"github.com/weaviate/weaviate-go-client/v6/modules/cohere"
+	"github.com/weaviate/weaviate-go-client/v6/modules/databricks"
+	"github.com/weaviate/weaviate-go-client/v6/modules/digitalocean"
 	"github.com/weaviate/weaviate-go-client/v6/modules/google"
 	"github.com/weaviate/weaviate-go-client/v6/modules/huggingface"
+	"github.com/weaviate/weaviate-go-client/v6/modules/jinaai"
+	"github.com/weaviate/weaviate-go-client/v6/modules/mistral"
 	"github.com/weaviate/weaviate-go-client/v6/modules/model2vec"
+	"github.com/weaviate/weaviate-go-client/v6/modules/morph"
+	"github.com/weaviate/weaviate-go-client/v6/modules/nvidia"
+	"github.com/weaviate/weaviate-go-client/v6/modules/ollama"
 	"github.com/weaviate/weaviate-go-client/v6/modules/openai"
 	"github.com/weaviate/weaviate-go-client/v6/modules/selfprovided"
+	"github.com/weaviate/weaviate-go-client/v6/modules/transformers"
+	"github.com/weaviate/weaviate-go-client/v6/modules/voyageai"
 	"github.com/weaviate/weaviate-go-client/v6/modules/weaviate"
 )
 
@@ -161,6 +172,234 @@ func TestModules(t *testing.T) {
 			conf:   map[string]any{},
 		},
 		{
+			name: "text2vec-cohere",
+			module: cohere.Text2Vec{
+				Model:      "embed-english-v3.0",
+				Truncate:   cohere.TruncateStart,
+				BaseURL:    "https://proxy.example.com",
+				Dimensions: 512,
+				Properties: []string{"title", "lyrics"},
+			},
+			conf: map[string]any{
+				"model":      "embed-english-v3.0",
+				"truncate":   cohere.TruncateStart,
+				"baseURL":    "https://proxy.example.com",
+				"dimensions": 512,
+				"properties": []string{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-cohere",
+			module: cohere.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "text2vec-jinaai",
+			module: jinaai.Text2Vec{
+				Model:      "jina-embeddings-v3",
+				BaseURL:    "https://proxy.example.com",
+				Dimensions: 256,
+				Properties: []string{"title", "lyrics"},
+			},
+			conf: map[string]any{
+				"model":      "jina-embeddings-v3",
+				"baseURL":    "https://proxy.example.com",
+				"dimensions": 256,
+				"properties": []string{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-jinaai",
+			module: jinaai.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "text2vec-voyageai",
+			module: voyageai.Text2Vec{
+				Model:      "voyage-3-large",
+				Truncate:   testkit.Ptr(false),
+				BaseURL:    "https://proxy.example.com",
+				Dimensions: 1024,
+				Properties: []string{"title", "lyrics"},
+			},
+			conf: map[string]any{
+				"model":      "voyage-3-large",
+				"truncate":   testkit.Ptr(false),
+				"baseURL":    "https://proxy.example.com",
+				"dimensions": 1024,
+				"properties": []string{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-voyageai",
+			module: voyageai.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "text2vec-mistral",
+			module: mistral.Text2Vec{
+				Model:      "mistral-embed",
+				BaseURL:    "https://proxy.example.com/v1/embeddings",
+				Properties: []string{"title", "lyrics"},
+			},
+			conf: map[string]any{
+				"model":      "mistral-embed",
+				"baseURL":    "https://proxy.example.com/v1/embeddings",
+				"properties": []string{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-mistral",
+			module: mistral.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "text2vec-nvidia",
+			module: nvidia.Text2Vec{
+				Model:      "nvidia/nv-embedqa-e5-v5",
+				Truncate:   nvidia.TruncateEnd,
+				BaseURL:    "https://proxy.example.com",
+				Properties: []string{"title", "lyrics"},
+			},
+			conf: map[string]any{
+				"model":      "nvidia/nv-embedqa-e5-v5",
+				"truncate":   nvidia.TruncateEnd,
+				"baseURL":    "https://proxy.example.com",
+				"properties": []string{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-nvidia",
+			module: nvidia.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "text2vec-aws",
+			module: aws.Text2Vec{
+				Service:          aws.SageMaker,
+				Region:           "us-east-1",
+				Model:            "amazon.titan-embed-text-v2:0",
+				Endpoint:         "my-endpoint",
+				SageMakerModel:   "my-target-model",
+				SageMakerVariant: "my-variant",
+				Dimensions:       512,
+				Properties:       []string{"title", "lyrics"},
+			},
+			conf: map[string]any{
+				"service":       aws.SageMaker,
+				"region":        "us-east-1",
+				"model":         "amazon.titan-embed-text-v2:0",
+				"endpoint":      "my-endpoint",
+				"targetModel":   "my-target-model",
+				"targetVariant": "my-variant",
+				"dimensions":    512,
+				"properties":    []string{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-aws",
+			module: aws.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "text2vec-databricks",
+			module: databricks.Text2Vec{
+				Endpoint:    "https://my-workspace.cloud.databricks.com/serving-endpoints/my-model/invocations",
+				Instruction: "Represent this document for retrieval",
+				Properties:  []string{"title", "lyrics"},
+			},
+			conf: map[string]any{
+				"endpoint":    "https://my-workspace.cloud.databricks.com/serving-endpoints/my-model/invocations",
+				"instruction": "Represent this document for retrieval",
+				"properties":  []string{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-databricks",
+			module: databricks.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "text2vec-digitalocean",
+			module: digitalocean.Text2Vec{
+				Model:      "qwen3-embedding-0.6b",
+				BaseURL:    "https://proxy.example.com",
+				Properties: []string{"title", "lyrics"},
+			},
+			conf: map[string]any{
+				"model":      "qwen3-embedding-0.6b",
+				"baseURL":    "https://proxy.example.com",
+				"properties": []string{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-digitalocean",
+			module: digitalocean.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "text2vec-morph",
+			module: morph.Text2Vec{
+				Model:      "morph-embedding-v3",
+				BaseURL:    "https://proxy.example.com",
+				Endpoint:   "/v2/embeddings",
+				Properties: []string{"title", "lyrics"},
+			},
+			conf: map[string]any{
+				"model":      "morph-embedding-v3",
+				"baseURL":    "https://proxy.example.com",
+				"endpoint":   "/v2/embeddings",
+				"properties": []string{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-morph",
+			module: morph.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "text2vec-ollama",
+			module: ollama.Text2Vec{
+				APIEndpoint: "http://host.docker.internal:11434",
+				Model:       "mxbai-embed-large",
+				Properties:  []string{"title", "lyrics"},
+			},
+			conf: map[string]any{
+				"apiEndpoint": "http://host.docker.internal:11434",
+				"model":       "mxbai-embed-large",
+				"properties":  []string{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-ollama",
+			module: ollama.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "text2vec-transformers",
+			module: transformers.Text2Vec{
+				PoolingStrategy:     transformers.CLS,
+				InferenceURL:        "http://t2v-transformers:8080",
+				PassageInferenceURL: "http://t2v-passage:8080",
+				QueryInferenceURL:   "http://t2v-query:8080",
+				Dimensions:          384,
+				Properties:          []string{"title", "lyrics"},
+			},
+			conf: map[string]any{
+				"poolingStrategy":     transformers.CLS,
+				"inferenceUrl":        "http://t2v-transformers:8080",
+				"passageInferenceUrl": "http://t2v-passage:8080",
+				"queryInferenceUrl":   "http://t2v-query:8080",
+				"dimensions":          384,
+				"properties":          []string{"title", "lyrics"},
+			},
+		},
+		{
+			name:   "text2vec-transformers",
+			module: transformers.Text2Vec{},
+      conf:   map[string]any{},
+		},
+    {
 			name: "generative-openai",
 			module: openai.Generative{
 				BaseURL:          "openai.com",
