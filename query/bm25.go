@@ -17,6 +17,7 @@ type BM25 struct {
 	After                  uuid.UUID        // Skip all objects before the one with this ID.
 	Filter                 filter.Expr      // Filter results based on their properties.
 	Boost                  boost.Expr       // Rerank search results using a decay function.
+	Rerank                 RerankExpr       // Rerank search results via a reranking model.
 	ReturnMetadata         ReturnMetadata   // Select query and object metadata to return for each object.
 	ReturnVectors          []string         // List vectors to return for each object in the result set.
 	ReturnReferences       []Reference      // Select reference properties to return.
@@ -88,6 +89,7 @@ func bm25Func(t internal.Transport, rd api.RequestDefaults) BM25Func {
 			After:                  bm25.After,
 			Filter:                 bm25.Filter,
 			Boost:                  bm25.Boost,
+			Rerank:                 bm25.Rerank,
 			ReturnVectors:          bm25.ReturnVectors,
 			ReturnMetadata:         bm25.ReturnMetadata,
 			ReturnProperties:       bm25.ReturnProperties,

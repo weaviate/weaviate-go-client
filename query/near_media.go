@@ -17,6 +17,7 @@ type NearMedia struct {
 	After                  uuid.UUID        // Skip all objects before the one with this ID.
 	Filter                 filter.Expr      // Filter results based on their properties.
 	Boost                  boost.Expr       // Rerank search results using a decay function.
+	Rerank                 RerankExpr       // Rerank search results via a reranking model.
 	ReturnMetadata         ReturnMetadata   // Select query and object metadata to return for each object.
 	ReturnVectors          []string         // List vectors to return for each object in the result set.
 	ReturnReferences       []Reference      // Select reference properties to return.
@@ -83,6 +84,7 @@ func nearMediaFunc(t internal.Transport, rd api.RequestDefaults) NearMediaFunc {
 			After:                  nm.After,
 			Filter:                 nm.Filter,
 			Boost:                  nm.Boost,
+			Rerank:                 nm.Rerank,
 			ReturnVectors:          nm.ReturnVectors,
 			ReturnMetadata:         nm.ReturnMetadata,
 			ReturnProperties:       nm.ReturnProperties,

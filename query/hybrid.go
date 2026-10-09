@@ -17,6 +17,7 @@ type Hybrid struct {
 	After                  uuid.UUID        // Skip all objects before the one with this ID.
 	Filter                 filter.Expr      // Filter results based on their properties.
 	Boost                  boost.Expr       // Rerank search results using a decay function.
+	Rerank                 RerankExpr       // Rerank search results via a reranking model.
 	ReturnMetadata         ReturnMetadata   // Select query and object metadata to return for each object.
 	ReturnVectors          []string         // List vectors to return for each object in the result set.
 	ReturnReferences       []Reference      // Select reference properties to return.
@@ -75,6 +76,7 @@ func hybridFunc(t internal.Transport, rd api.RequestDefaults) HybridFunc {
 			After:                  h.After,
 			Filter:                 h.Filter,
 			Boost:                  h.Boost,
+			Rerank:                 h.Rerank,
 			ReturnVectors:          h.ReturnVectors,
 			ReturnMetadata:         h.ReturnMetadata,
 			ReturnProperties:       h.ReturnProperties,

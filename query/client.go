@@ -79,6 +79,11 @@ type VectorTarget interface {
 	Vectors() []api.TargetVector
 }
 
+type (
+	RerankExpr api.RerankExpr
+	SortExpr   api.SortExpr
+)
+
 type Result struct {
 	Took    time.Duration
 	Objects []Object[map[string]any]
@@ -122,6 +127,8 @@ type request struct {
 	After                  uuid.UUID
 	Filter                 filter.Expr
 	Boost                  boost.Expr
+	Rerank                 RerankExpr
+	Sort                   []SortExpr
 	ReturnMetadata         ReturnMetadata
 	ReturnVectors          []string
 	ReturnReferences       []Reference
@@ -137,10 +144,15 @@ func query(ctx context.Context, t internal.Transport, r request, f func(*api.Sea
 		AutoLimit:        r.AutoLimit,
 		Offset:           r.Offset,
 		After:            r.After,
+		Rerank:           api.RerankExpr(r.Rerank),
 		ReturnVectors:    r.ReturnVectors,
 		ReturnMetadata:   api.ReturnMetadata(r.ReturnMetadata),
 		ReturnProperties: marshalReturnProperties(r.ReturnProperties, r.ReturnNestedProperties),
 		ReturnReferences: marshalReturnReferences(r.ReturnReferences),
+	}
+
+	for i := range r.Sort {
+		req.Sort = append(req.Sort, api.SortExpr(r.Sort[i]))
 	}
 
 	if r.Filter != nil {

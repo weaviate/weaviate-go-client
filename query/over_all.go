@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
-	"github.com/weaviate/weaviate-go-client/v6/query/boost"
 	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 )
 
@@ -16,7 +15,7 @@ type OverAll struct {
 	AutoLimit              int              // Return objects in the first N similarity clusters.
 	After                  uuid.UUID        // Skip all objects before the one with this ID.
 	Filter                 filter.Expr      // Filter results based on their properties.
-	Boost                  boost.Expr       // Rerank search results using a decay function.
+	Sort                   []SortExpr       // Sort search results by property value.
 	ReturnMetadata         ReturnMetadata   // Select query and object metadata to return for each object.
 	ReturnVectors          []string         // List vectors to return for each object in the result set.
 	ReturnReferences       []Reference      // Select reference properties to return.
@@ -43,7 +42,7 @@ func overAllFunc(t internal.Transport, rd api.RequestDefaults) OverAllFunc {
 			Offset:                 int32(oaf.Offset),
 			After:                  oaf.After,
 			Filter:                 oaf.Filter,
-			Boost:                  oaf.Boost,
+			Sort:                   oaf.Sort,
 			ReturnVectors:          oaf.ReturnVectors,
 			ReturnMetadata:         oaf.ReturnMetadata,
 			ReturnProperties:       oaf.ReturnProperties,

@@ -478,6 +478,44 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "rerank",
+			req: &api.SearchRequest{
+				Rerank: api.RerankExpr{
+					Property: "lyrics",
+					Query:    "not too satanic",
+				},
+			},
+			want: &proto.SearchRequest{
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+				Rerank: &proto.Rerank{
+					Property: "lyrics",
+					Query:    new(string("not too satanic")),
+				},
+			},
+		},
+		{
+			name: "sort",
+			req: &api.SearchRequest{
+				Sort: []api.SortExpr{
+					{Properties: []string{"release_date"}, Descending: true},
+					{Properties: []string{"duration_sec"}},
+				},
+			},
+			want: &proto.SearchRequest{
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+				SortBy: []*proto.SortBy{
+					{Path: []string{"release_date"}, Ascending: false},
+					{Path: []string{"duration_sec"}, Ascending: true},
+				},
+			},
+		},
+		{
 			name: "return metadata",
 			req: &api.SearchRequest{
 				ReturnMetadata: api.ReturnMetadata{
