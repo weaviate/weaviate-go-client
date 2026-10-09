@@ -23,6 +23,8 @@ type SearchRequest struct {
 	After            uuid.UUID
 	Filter           FilterExpr
 	Boost            BoostExpr
+	Rerank           RerankExpr
+	Sort             []SortExpr
 	ReturnProperties []ReturnProperty
 	ReturnReferences []ReturnReference
 	ReturnVectors    []string
@@ -148,6 +150,14 @@ type (
 		AllTokensMatch     bool
 		CrossProperty      bool
 		MinimumTokensMatch *int32
+	}
+	RerankExpr struct {
+		Property string
+		Query    string
+	}
+	SortExpr struct {
+		Properties []string
+		Descending bool
 	}
 )
 
@@ -322,6 +332,20 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 			ExplainScore:       r.ReturnMetadata.ExplainScore,
 		},
 		Properties: new(proto.PropertiesRequest),
+	}
+
+	if r.Rerank.Property != "" {
+		req.Rerank = &proto.Rerank{
+			Property: r.Rerank.Property,
+			Query:    NilZero(r.Rerank.Query),
+		}
+	}
+
+	for _, s := range r.Sort {
+		req.SortBy = append(req.SortBy, &proto.SortBy{
+			Path:      s.Properties,
+			Ascending: !s.Descending,
+		})
 	}
 
 	marshalReturnVectors(req.Metadata, r.ReturnVectors)

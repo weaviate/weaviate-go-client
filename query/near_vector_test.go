@@ -9,6 +9,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/query"
+	"github.com/weaviate/weaviate-go-client/v6/query/boost"
 	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
@@ -70,6 +71,11 @@ func TestNearVector(t *testing.T) {
 							Value:    int64(4),
 						},
 					},
+				},
+				Boost: boost.PropertyValue{Property: "lyrics"},
+				Rerank: query.RerankExpr{
+					Property: "lyrics",
+					Query:    "not too satanic",
 				},
 				ReturnMetadata: query.ReturnMetadata{
 					CreatedAt:    true,
@@ -150,6 +156,19 @@ func TestNearVector(t *testing.T) {
 									},
 								},
 							},
+						},
+						Boost: api.BoostExpr{
+							Conds: []api.BoostCond{
+								{Func: api.BoostFunc{
+									PropertyValue: &api.PropertyValue{
+										Property: "lyrics",
+									},
+								}},
+							},
+						},
+						Rerank: api.RerankExpr{
+							Property: "lyrics",
+							Query:    "not too satanic",
 						},
 						ReturnMetadata: api.ReturnMetadata{
 							CreatedAt:    true,
