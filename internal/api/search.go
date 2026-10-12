@@ -37,6 +37,8 @@ type SearchRequest struct {
 	NearText   *NearText
 	BM25       *BM25
 	Hybrid     *Hybrid
+
+	Generate *GenerateRequest
 }
 
 var (
@@ -332,6 +334,7 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 			ExplainScore:       r.ReturnMetadata.ExplainScore,
 		},
 		Properties: new(proto.PropertiesRequest),
+		Generative: marshalGenerateRequest(r.Generate),
 	}
 
 	if r.Rerank.Property != "" {
@@ -986,6 +989,7 @@ type SearchResponse struct {
 	Took           time.Duration
 	Results        []Object
 	GroupByResults []Group
+	Generative     TaskOutput
 }
 
 var _ transport.MessageUnmarshaler[proto.SearchReply] = (*SearchResponse)(nil)
@@ -996,6 +1000,7 @@ type (
 		Metadata   ObjectMetadata
 		Properties map[string]any
 		References map[string][]Object
+		Generative TaskOutput
 	}
 	ObjectMetadata struct {
 		UUID          uuid.UUID
@@ -1012,6 +1017,7 @@ type (
 		MinDistance, MaxDistance float32
 		Size                     int64
 		Objects                  []GroupObject
+		Generative               TaskOutput
 	}
 	GroupObject struct {
 		Object

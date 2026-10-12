@@ -1568,6 +1568,96 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "generative single",
+			req: &api.SearchRequest{
+				Generate: &api.GenerateRequest{
+					Single: &api.SingleTask{
+						Prompt: "c'mon, do something",
+						Provider: &api.GenerativeProvider{
+							Kind: &proto.GenerativeProvider_Aws{
+								Aws: &proto.GenerativeAWS{
+									Model: new("bezos-3.0"),
+								},
+							},
+						},
+						Debug: true,
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				Generative: &proto.GenerativeSearch{
+					Single: &proto.GenerativeSearch_Single{
+						Prompt: "c'mon, do something",
+						Queries: []*proto.GenerativeProvider{
+							{
+								Kind: &proto.GenerativeProvider_Aws{
+									Aws: &proto.GenerativeAWS{
+										Model: new("bezos-3.0"),
+									},
+								},
+							},
+						},
+						Debug: true,
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "generative grouped",
+			req: &api.SearchRequest{
+				Generate: &api.GenerateRequest{
+					Grouped: &api.GroupedTask{
+						Prompt:            "c'mon, do something",
+						IncludeProperties: []string{"title", "lyrics"},
+						Provider: &api.GenerativeProvider{
+							Kind: &proto.GenerativeProvider_Aws{
+								Aws: &proto.GenerativeAWS{
+									Model: new("bezos-3.0"),
+								},
+							},
+						},
+						Debug: true,
+					},
+				},
+				GroupBy: &api.GroupBy{
+					Property:       "album",
+					Limit:          6,
+					NumberOfGroups: 7,
+				},
+			},
+			want: &proto.SearchRequest{
+				Generative: &proto.GenerativeSearch{
+					Grouped: &proto.GenerativeSearch_Grouped{
+						Task:       "c'mon, do something",
+						Properties: &proto.TextArray{Values: []string{"title", "lyrics"}},
+						Queries: []*proto.GenerativeProvider{
+							{
+								Kind: &proto.GenerativeProvider_Aws{
+									Aws: &proto.GenerativeAWS{
+										Model: new("bezos-3.0"),
+									},
+								},
+							},
+						},
+						Debug: true,
+					},
+				},
+				GroupBy: &proto.GroupBy{
+					Path:            []string{"album"},
+					ObjectsPerGroup: 6,
+					NumberOfGroups:  7,
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
 	})
 }
 
