@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -989,7 +990,7 @@ type SearchResponse struct {
 	Took           time.Duration
 	Results        []Object
 	GroupByResults []Group
-	Generative     TaskOutput
+	Generative     *TaskOutput
 }
 
 var _ transport.MessageUnmarshaler[proto.SearchReply] = (*SearchResponse)(nil)
@@ -1000,7 +1001,7 @@ type (
 		Metadata   ObjectMetadata
 		Properties map[string]any
 		References map[string][]Object
-		Generative TaskOutput
+		Generative *TaskOutput
 	}
 	ObjectMetadata struct {
 		UUID          uuid.UUID
@@ -1017,7 +1018,7 @@ type (
 		MinDistance, MaxDistance float32
 		Size                     int64
 		Objects                  []GroupObject
-		Generative               TaskOutput
+		Generative               *TaskOutput
 	}
 	GroupObject struct {
 		Object
@@ -1029,36 +1030,59 @@ type (
 func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
 	dev.AssertNotNil(reply, "reply")
 
-	objects := make([]Object, len(reply.Results))
+	objects := slices.Grow([]Object(nil), len(reply.Results))
 	if err := unmarshalObjects(reply.Results, func(i int, o Object) {
-		objects[i] = o
+		objects = append(objects, o)
 	}); err != nil {
 		return err
 	}
 
-	groups := make([]Group, len(reply.GroupByResults))
-	for gi, group := range reply.GroupByResults {
+	groups := slices.Grow([]Group(nil), len(reply.GroupByResults))
+	for _, group := range reply.GroupByResults {
 		if group == nil {
 			continue
 		}
 		dev.AssertNotNil(group, "group")
 
-		objects := make([]GroupObject, len(group.Objects))
-		if err := unmarshalObjects(group.Objects, func(i int, o Object) {
-			objects[i] = GroupObject{
+		objects := slices.Grow([]GroupObject(nil), len(group.Objects))
+		if err := unmarshalObjects(group.Objects, func(_ int, o Object) {
+			objects = append(objects, GroupObject{
 				BelongsToGroup: group.Name,
 				Object:         o,
-			}
+			})
 		}); err != nil {
 			return nil
 		}
 
-		groups[gi] = Group{
+		var generative *TaskOutput
+		if vs := group.GetGenerativeResult().GetValues(); len(vs) > 0 {
+			v := vs[0]
+			generative = &TaskOutput{
+				Text: v.Result,
+				DebugInfo: DebugInfo{
+					FullPrompt: v.Debug.GetFullPrompt(),
+				},
+			}
+		}
+
+		groups = append(groups, Group{
 			Name:        group.Name,
 			MinDistance: group.MinDistance,
 			MaxDistance: group.MaxDistance,
 			Size:        group.NumberOfObjects,
 			Objects:     objects,
+			Generative:  generative,
+		})
+	}
+
+	var generative *TaskOutput
+	if vs := reply.GetGenerativeGroupedResults().GetValues(); len(vs) > 0 {
+		v := vs[0]
+		generative = &TaskOutput{
+			Text: v.Result,
+			DebugInfo: DebugInfo{
+				FullPrompt: v.Debug.GetFullPrompt(),
+			},
 		}
 	}
 
@@ -1066,6 +1090,7 @@ func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
 		Took:           time.Duration(reply.Took) * time.Second,
 		Results:        objects,
 		GroupByResults: groups,
+		Generative:     generative,
 	}
 	return nil
 }
@@ -1082,7 +1107,7 @@ func unmarshalObjects(objects []*proto.SearchResult, f func(int, Object)) error 
 		}
 		dev.AssertNotNil(object, "object")
 
-		o, err := unmarshalObject(object.Properties, object.Metadata)
+		o, err := unmarshalObject(object.Properties, object.Metadata, object.Generative)
 		if err != nil {
 			return err
 		}
@@ -1093,7 +1118,7 @@ func unmarshalObjects(objects []*proto.SearchResult, f func(int, Object)) error 
 	return nil
 }
 
-func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) (*Object, error) {
+func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult, gen *proto.GenerativeResult) (*Object, error) {
 	properties, err := unmarshalProperties(pr.GetNonRefProps())
 	if err != nil {
 		return nil, err
@@ -1110,7 +1135,7 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) (*Obj
 			references[ref.PropName] = make([]Object, 0, len(ref.Properties))
 		}
 		for _, p := range ref.Properties {
-			o, err := unmarshalObject(p, p.Metadata)
+			o, err := unmarshalObject(p, p.Metadata, nil)
 			if err != nil {
 				return nil, err
 			}
@@ -1147,11 +1172,25 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult) (*Obj
 		}
 	}
 
+	var generative *TaskOutput
+	if vs := gen.GetValues(); len(vs) > 0 {
+		v := vs[0]
+		generative = &TaskOutput{
+			Text: v.Result,
+			DebugInfo: DebugInfo{
+				FullPrompt: v.Debug.GetFullPrompt(),
+			},
+		}
+
+		// TODO(dyma): add provider metadata
+	}
+
 	return &Object{
 		Collection: pr.GetTargetCollection(),
 		Metadata:   metadata,
 		Properties: properties,
 		References: references,
+		Generative: generative,
 	}, nil
 }
 

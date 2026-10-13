@@ -26,7 +26,6 @@ type (
 
 type TaskOutput struct {
 	Text      string
-	Metadata  ProviderMetadata
 	DebugInfo DebugInfo
 }
 
