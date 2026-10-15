@@ -78,15 +78,15 @@ func TestModules(t *testing.T) {
 		{
 			name: "text2vec-openai",
 			module: openai.Text2Vec{
-				Model:        "text-embedding-3-large",
-				Dimensions:   1024,
-				ModelType:    openai.TextModel,
-				ModelVersion: "3",
-				BaseURL:      "https://proxy.example.com",
-				Endpoint:     "/v2/embeddings",
-				ResourceName: "my-resource",
-				DeploymentID: "my-deployment",
-				Properties:   []string{"title", "lyrics"},
+				Model:             "text-embedding-3-large",
+				Dimensions:        1024,
+				ModelType:         openai.TextModel,
+				ModelVersion:      "3",
+				BaseURL:           "https://proxy.example.com",
+				Endpoint:          "/v2/embeddings",
+				AzureResourceName: "my-resource",
+				AzureDeploymentID: "my-deployment",
+				Properties:        []string{"title", "lyrics"},
 			},
 			conf: map[string]any{
 				"model":        "text-embedding-3-large",
@@ -276,14 +276,14 @@ func TestModules(t *testing.T) {
 		{
 			name: "text2vec-aws",
 			module: aws.Text2Vec{
-				Service:          aws.SageMaker,
-				Region:           "us-east-1",
-				Model:            "amazon.titan-embed-text-v2:0",
-				Endpoint:         "my-endpoint",
-				SageMakerModel:   "my-target-model",
-				SageMakerVariant: "my-variant",
-				Dimensions:       512,
-				Properties:       []string{"title", "lyrics"},
+				Service:           aws.SageMaker,
+				Region:            "us-east-1",
+				BedrockModel:      "amazon.titan-embed-text-v2:0",
+				SageMakerEndpoint: "my-endpoint",
+				SageMakerModel:    "my-target-model",
+				SageMakerVariant:  "my-variant",
+				Dimensions:        512,
+				Properties:        []string{"title", "lyrics"},
 			},
 			conf: map[string]any{
 				"service":       aws.SageMaker,
@@ -378,7 +378,7 @@ func TestModules(t *testing.T) {
 		{
 			name: "text2vec-transformers",
 			module: transformers.Text2Vec{
-				PoolingStrategy:     transformers.CLS,
+				PoolingStrategy:     transformers.CLSPooling,
 				InferenceURL:        "http://t2v-transformers:8080",
 				PassageInferenceURL: "http://t2v-passage:8080",
 				QueryInferenceURL:   "http://t2v-query:8080",
@@ -386,7 +386,7 @@ func TestModules(t *testing.T) {
 				Properties:          []string{"title", "lyrics"},
 			},
 			conf: map[string]any{
-				"poolingStrategy":     transformers.CLS,
+				"poolingStrategy":     transformers.CLSPooling,
 				"inferenceUrl":        "http://t2v-transformers:8080",
 				"passageInferenceUrl": "http://t2v-passage:8080",
 				"queryInferenceUrl":   "http://t2v-query:8080",

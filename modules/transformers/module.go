@@ -31,6 +31,6 @@ type Text2Vec struct {
 func (Text2Vec) Name() string { return "text2vec-transformers" }
 
 const (
-	MaskedMean = "masked_mean"
-	CLS        = "cls"
+	MaskedMeanPooling = "masked_mean"
+	CLSPooling        = "cls"
 )

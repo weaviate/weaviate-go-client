@@ -13,8 +13,8 @@ func init() {
 //
 // [Weaviate Docs - text2vec-aws]: https://docs.weaviate.io/weaviate/model-providers/aws/embeddings
 type Text2Vec struct {
-	// Model is the Bedrock model ID.
-	Model string `json:"model,omitempty"`
+	// BedrockModel is the Bedrock model ID.
+	BedrockModel string `json:"model,omitempty"`
 	// Dimensions is the size of the output vectors.
 	Dimensions int `json:"dimensions,omitzero"`
 	// Properties limits vectorization to these properties.
@@ -24,8 +24,8 @@ type Text2Vec struct {
 	Service string `json:"service,omitempty"`
 	// Region is the AWS region to run the model in.
 	Region string `json:"region,omitempty"`
-	// Endpoint is the SageMaker endpoint name.
-	Endpoint string `json:"endpoint,omitempty"`
+	// SageMakerEndpoint is the endpoint name.
+	SageMakerEndpoint string `json:"endpoint,omitempty"`
 	// SageMakerModel for multi-model endpoints.
 	SageMakerModel string `json:"targetModel,omitempty"`
 	// SageMakerVariant is the production variant of the [SageMakerModel].
