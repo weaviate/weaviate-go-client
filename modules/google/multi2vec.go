@@ -26,10 +26,10 @@ type Multi2Vec struct {
 	AudioFields []string `json:"audioFields,omitempty"`
 	// Weights sets the contribution of each field to the combined vector.
 	Weights Weights `json:"weights,omitzero"`
-	// ProjectID is the Google Cloud project ID.
-	ProjectID string `json:"projectId,omitempty"`
-	// Location is the Vertex AI region to run the model in.
-	Location string `json:"location,omitempty"`
+	// VertexProjectID is the Google Cloud project ID, required for Vertex AI.
+	VertexProjectID string `json:"projectId,omitempty"`
+	// VertexLocation is the Vertex AI region to run the model in.
+	VertexLocation string `json:"location,omitempty"`
 	// VideoIntervalSeconds is the length of the video segments to embed.
 	VideoIntervalSeconds int `json:"videoIntervalSeconds,omitzero"`
 }

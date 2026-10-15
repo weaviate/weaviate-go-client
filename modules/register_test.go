@@ -157,8 +157,8 @@ func TestModules(t *testing.T) {
 					VideoFields: []float32{0.2},
 					AudioFields: []float32{0.1},
 				},
-				ProjectID:            "my-project",
-				Location:             "us-east1",
+				VertexProjectID:      "my-project",
+				VertexLocation:       "us-east1",
 				VideoIntervalSeconds: 10,
 			},
 			conf: map[string]any{
