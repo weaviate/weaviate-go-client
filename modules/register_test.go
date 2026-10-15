@@ -113,14 +113,14 @@ func TestModules(t *testing.T) {
 		{
 			name: "text2vec-google",
 			module: google.Text2Vec{
-				APIEndpoint:   "us-east1-aiplatform.googleapis.com",
-				ProjectID:     "my-project",
-				Model:         "gemini-embedding-001",
-				Location:      "us-east1",
-				Dimensions:    1536,
-				TaskType:      google.SemanticSimilarity,
-				TitleProperty: "title",
-				Properties:    []string{"title", "lyrics"},
+				APIEndpoint:     "us-east1-aiplatform.googleapis.com",
+				VertexProjectID: "my-project",
+				Model:           "gemini-embedding-001",
+				VertexLocation:  "us-east1",
+				Dimensions:      1536,
+				TaskType:        google.SemanticSimilarity,
+				TitleProperty:   "title",
+				Properties:      []string{"title", "lyrics"},
 			},
 			conf: map[string]any{
 				"apiEndpoint":   "us-east1-aiplatform.googleapis.com",
@@ -397,9 +397,9 @@ func TestModules(t *testing.T) {
 		{
 			name:   "text2vec-transformers",
 			module: transformers.Text2Vec{},
-      conf:   map[string]any{},
+			conf:   map[string]any{},
 		},
-    {
+		{
 			name: "generative-openai",
 			module: openai.Generative{
 				BaseURL:          "openai.com",

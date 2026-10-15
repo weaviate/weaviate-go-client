@@ -22,10 +22,10 @@ type Text2Vec struct {
 	// Properties limits vectorization to these properties.
 	// By default, all text properties are vectorized.
 	Properties []string `json:"properties,omitempty"`
-	// ProjectID is the Google Cloud project ID, required for Vertex AI.
-	ProjectID string `json:"projectId,omitempty"`
-	// Location is the Vertex AI region to run the model in.
-	Location string `json:"location,omitempty"`
+	// VertexProjectID is the Google Cloud project ID, required for Vertex AI.
+	VertexProjectID string `json:"projectId,omitempty"`
+	// VertexLocation is the Vertex AI region to run the model in.
+	VertexLocation string `json:"location,omitempty"`
 	// TaskType tells the model what the embeddings will be used for.
 	TaskType string `json:"taskType,omitempty"`
 	// TitleProperty names the property the model uses as the document title.
