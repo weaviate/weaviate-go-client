@@ -20,7 +20,7 @@ func init() {
 // [Weaviate Docs - text2vec-openai]: https://docs.weaviate.io/weaviate/model-providers/openai/embeddings
 // [Weaviate Docs - text2vec-openai (Azure)]: https://docs.weaviate.io/weaviate/model-providers/openai-azure/embeddings
 type Text2Vec struct {
-	// BaseURL overrides where API requests go, e.g. a proxy.
+	// BaseURL overrides the default request URL, e.g. a proxy.
 	BaseURL string `json:"baseURL,omitempty"`
 	// Model is the embedding model name.
 	Model string `json:"model,omitempty"`
@@ -35,10 +35,10 @@ type Text2Vec struct {
 	ModelType string `json:"type,omitempty"`
 	// Endpoint is the API path appended to BaseURL, e.g. "/api/v3/embeddings".
 	Endpoint string `json:"endpoint,omitempty"`
-	// ResourceName is the Azure OpenAI resource name.
-	ResourceName string `json:"resourceName,omitempty"`
-	// DeploymentID is the Azure OpenAI deployment ID.
-	DeploymentID string `json:"deploymentId,omitempty"`
+	// AzureResourceName is the Azure OpenAI resource name.
+	AzureResourceName string `json:"resourceName,omitempty"`
+	// AzureDeploymentID is the Azure OpenAI deployment ID.
+	AzureDeploymentID string `json:"deploymentId,omitempty"`
 }
 
 func (Text2Vec) Name() string { return "text2vec-openai" }
