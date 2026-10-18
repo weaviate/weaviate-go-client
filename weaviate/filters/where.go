@@ -68,6 +68,13 @@ func (b *WhereBuilder) WithValueBoolean(valueBoolean ...bool) *WhereBuilder {
 	return b
 }
 
+// WithIsNull filters for null or non-null values. Pass true to match null properties.
+// Use this instead of Equal with WithValueBoolean on text and other non-boolean fields.
+func (b *WhereBuilder) WithIsNull(isNull bool) *WhereBuilder {
+	b.operator = IsNull
+	return b.WithValueBoolean(isNull)
+}
+
 // WithValueString the string value in where filter
 func (b *WhereBuilder) WithValueString(valueString ...string) *WhereBuilder {
 	b.valueString = valueString
