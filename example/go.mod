@@ -1,8 +1,11 @@
 module github.com/weaviate/weaviate-go-client/v6/example
 
-go 1.26.1
+go 1.26.10
 
-require github.com/weaviate/weaviate-go-client/v6 v6.0.0-example
+require (
+	github.com/google/uuid v1.6.0
+	github.com/weaviate/weaviate-go-client/v6 v6.0.0-example
+)
 
 require (
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
@@ -10,7 +13,6 @@ require (
 	github.com/go-openapi/jsonpointer v0.23.1 // indirect
 	github.com/go-openapi/swag/jsonname v0.26.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.9.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
