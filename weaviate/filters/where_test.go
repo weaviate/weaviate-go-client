@@ -150,6 +150,11 @@ func TestWhereBuilder_String(t *testing.T) {
 			want:    "where:{operator: IsNull path: [\"wordCount\"] valueBoolean: true}",
 		},
 		{
+			name:    "with is null helper on text field",
+			builder: Where().WithPath([]string{"parentProductId"}).WithIsNull(true),
+			want:    "where:{operator: IsNull path: [\"parentProductId\"] valueBoolean: true}",
+		},
+		{
 			name:    "with: path operator.ContainsAny text",
 			builder: Where().WithPath([]string{"id"}).WithOperator(ContainsAny).WithValueText("txt1", "txt2", "txt3"),
 			want:    "where:{operator: ContainsAny path: [\"id\"] valueText: [\"txt1\",\"txt2\",\"txt3\"]}",
