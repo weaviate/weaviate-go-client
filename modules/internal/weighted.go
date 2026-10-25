@@ -6,17 +6,29 @@ import (
 )
 
 type WeightedFields struct {
-	ImageFields []modules.WeightedField
-	TextFields  []modules.WeightedField
+	TextFields    []modules.WeightedField
+	ImageFields   []modules.WeightedField
+	AudioFields   []modules.WeightedField
+	VideoFields   []modules.WeightedField
+	DepthFields   []modules.WeightedField
+	ThermalFields []modules.WeightedField
+	IMUFields     []modules.WeightedField
 }
 
-func WithWeightedFields(module any, wfs WeightedFields) (map[string]any, error) {
+func EncodeWithWeightedFields(module any, wfs WeightedFields) (map[string]any, error) {
 	dest := make(map[string]any)
-	if err := internal.Encode(module, dest); err != nil {
-		return nil, err
+	if module != nil {
+		if err := internal.Encode(module, dest); err != nil {
+			return nil, err
+		}
 	}
 	addFields(dest, "textFields", wfs.TextFields)
 	addFields(dest, "imageFields", wfs.ImageFields)
+	addFields(dest, "audioFields", wfs.AudioFields)
+	addFields(dest, "videoFields", wfs.VideoFields)
+	addFields(dest, "depthFields", wfs.DepthFields)
+	addFields(dest, "thermalFields", wfs.ThermalFields)
+	addFields(dest, "imuFields", wfs.IMUFields)
 	return dest, nil
 }
 
@@ -45,6 +57,11 @@ func DecodeWithWeightedFields(m map[string]any, dest any) (wfs WeightedFields, e
 
 	readFields(m, "textFields", &wfs.TextFields)
 	readFields(m, "imageFields", &wfs.ImageFields)
+	readFields(m, "audioFields", &wfs.AudioFields)
+	readFields(m, "videoFields", &wfs.VideoFields)
+	readFields(m, "depthFields", &wfs.DepthFields)
+	readFields(m, "thermalFields", &wfs.ThermalFields)
+	readFields(m, "imuFields", &wfs.IMUFields)
 	return
 }
 

@@ -670,11 +670,12 @@ func TestModules(t *testing.T) {
 			name: "multi2vec-clip",
 			module: clip.Multi2Vec{
 				InferenceURL: "http://multi2vec-clip:8080",
-				TextFields:   []string{"title", "lyrics"},
-				ImageFields:  []string{"cover"},
-				Weights: clip.Weights{
-					TextFields:  []float32{0.2, 0.3},
-					ImageFields: []float32{0.5},
+				TextFields: []modules.WeightedField{
+					{Property: "title", Weight: 0.2},
+					{Property: "lyrics", Weight: 0.3},
+				},
+				ImageFields: []modules.WeightedField{
+					{Property: "cover", Weight: 0.5},
 				},
 			},
 			conf: map[string]any{
@@ -695,21 +696,26 @@ func TestModules(t *testing.T) {
 		{
 			name: "multi2vec-bind",
 			module: bind.Multi2Vec{
-				TextFields:    []string{"title"},
-				ImageFields:   []string{"cover"},
-				AudioFields:   []string{"track"},
-				VideoFields:   []string{"clip"},
-				IMUFields:     []string{"motion"},
-				ThermalFields: []string{"heat"},
-				DepthFields:   []string{"depth"},
-				Weights: bind.Weights{
-					TextFields:    []float32{0.1},
-					ImageFields:   []float32{0.1},
-					AudioFields:   []float32{0.1},
-					VideoFields:   []float32{0.1},
-					IMUFields:     []float32{0.2},
-					ThermalFields: []float32{0.2},
-					DepthFields:   []float32{0.2},
+				TextFields: []modules.WeightedField{
+					{Property: "title", Weight: 0.1},
+				},
+				ImageFields: []modules.WeightedField{
+					{Property: "cover", Weight: 0.1},
+				},
+				AudioFields: []modules.WeightedField{
+					{Property: "track", Weight: 0.1},
+				},
+				VideoFields: []modules.WeightedField{
+					{Property: "clip", Weight: 0.1},
+				},
+				IMUFields: []modules.WeightedField{
+					{Property: "motion", Weight: 0.2},
+				},
+				ThermalFields: []modules.WeightedField{
+					{Property: "heat", Weight: 0.2},
+				},
+				DepthFields: []modules.WeightedField{
+					{Property: "depth", Weight: 0.2},
 				},
 			},
 			conf: map[string]any{
