@@ -632,6 +632,7 @@ const (
 	ManageBackups         PermissionAction = "manage_backups"
 	ManageNamespaces      PermissionAction = "manage_namespaces"
 	ReadAliases           PermissionAction = "read_aliases"
+	ReadBackups           PermissionAction = "read_backups"
 	ReadCluster           PermissionAction = "read_cluster"
 	ReadCollections       PermissionAction = "read_collections"
 	ReadData              PermissionAction = "read_data"
@@ -694,6 +695,8 @@ func (e PermissionAction) Valid() bool {
 	case ManageNamespaces:
 		return true
 	case ReadAliases:
+		return true
+	case ReadBackups:
 		return true
 	case ReadCluster:
 		return true
@@ -1908,31 +1911,31 @@ type BackupConfig struct {
 	// DedupeConvergenceTimeoutSeconds How long the coordinator waits for replica convergence proof before shards fall back to being archived by every replica. Only used when dedupeReplicas is set. The wait happens synchronously inside the backup creation request, which blocks for roughly 10 seconds plus up to this timeout; size client timeouts accordingly.
 	DedupeConvergenceTimeoutSeconds int `json:"dedupeConvergenceTimeoutSeconds,omitempty"`
 
-	// DedupeReplicas If true, shards of replicated collections that are provably in sync (via async-replication checkpoints) are archived by a single replica instead of every replica, and a restore copies them back to all replicas. Shards that cannot be proven in sync fall back to being archived by every replica. The proof is the one async replication itself uses (matching object UUIDs and update timestamps at a checkpoint), and the archived copy is the designated replica's state at archive time: it provably contains every write acknowledged at or before the per-class checkpoint cutoff taken shortly after the backup starts (persisted as dedupeCutoffsMs in the backup descriptor), while writes concurrent with the backup are included best-effort, as in any backup mode. Requires async replication on replicated collections and a cluster where every node supports this option. A backup where at least one shard was deduplicated can only be restored by versions that support this option, and its restore requires every replica node of the archived sharding state to be resolvable (or mapped via node_mapping). Restoring such a backup can block the restore request for up to two minutes while participants read all source descriptors; size client timeouts accordingly. If no shard could be deduplicated, the backup is written in the legacy format and restores like any other backup. The option must be enabled on the cluster (env BACKUP_DEDUPE_ENABLED=true); otherwise requests carrying it are rejected with 422, while restores of existing deduplicated backups always work.
+	// DedupeReplicas If true, shards of replicated collections proven in sync by async-replication checkpoints are archived by one replica instead of all, and restore copies them back to every replica; other shards are archived by every replica. Requires async replication, BACKUP_DEDUPE_ENABLED=true (else 422) and a Weaviate license key (else 403) on every node. Such backups restore only on versions that support this option; restoring needs no license.
 	DedupeReplicas bool `json:"dedupeReplicas,omitempty"`
 }
 
 // BackupConfigCompressionLevel compression level used by compression algorithm
 type BackupConfigCompressionLevel string
 
-// BackupCreateRequest Request body for creating a backup for a set of collections.
+// BackupCreateRequest Request body for creating a backup. The resolved selection must contain at least one collection, dynamic user, or RBAC role.
 type BackupCreateRequest struct {
 	// Config Backup custom configuration.
 	Config BackupConfig `json:"config,omitempty"`
 
-	// Exclude List of collections to exclude from the backup creation process. If not set, all collections the caller may back up are included. Cannot be used together with `include`. Permits wildcards, e.g. `*` or `prefix*`.
+	// Exclude List of collections to exclude from the backup creation process. If not set, all collections the caller may back up are included. Cannot be used together with `include`. Permits wildcards, e.g. `*` or `prefix*`. Excluding every collection is allowed when users or roles are selected, including through omitted identity selectors.
 	Exclude []string `json:"exclude,omitempty"`
 
 	// Id The ID of the backup (required). Must be URL-safe and work as a filesystem path, only lowercase, numbers, underscore, minus characters allowed.
 	Id string `json:"id,omitempty"`
 
-	// Include List of collections to include in the backup creation process. If not set, all collections the caller may back up are included. Cannot be used together with `exclude`. Permits wildcards, e.g. `*` or `prefix*`, which match only collections the caller may back up. A list that matches no collection is rejected.
+	// Include List of collections to include in the backup creation process. If not set, all collections the caller may back up are included. Cannot be used together with `exclude`. Permits wildcards, e.g. `*` or `prefix*`, which match only collections the caller may back up. A list that matches no collection is allowed when users or roles are selected, including through omitted identity selectors.
 	Include []string `json:"include,omitempty"`
 
-	// IncludeRoles List of RBAC roles to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted, the whole RBAC state is captured as part of the cluster snapshot; when set, the RBAC blob is filtered to the matching roles. An exact role name that does not exist is rejected; wildcards that match nothing back up no roles. Built-in roles are rejected and are never selected by wildcards (they are re-applied automatically on restore). No per-role permission check is applied.
+	// IncludeRoles List of RBAC roles to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted or null, the whole RBAC state is captured, including built-in roles and assignments. An empty list or wildcards matching nothing omit the RBAC snapshot; restoring it leaves existing roles untouched. Otherwise, only matching roles are captured. An exact role name that does not exist is rejected. Explicit selectors cannot select built-in roles: exact names are rejected and wildcards exclude them. Selected roles, including built-in roles selected by omission, permit a backup with zero collections. No per-role permission check is applied.
 	IncludeRoles []string `json:"includeRoles,omitempty"`
 
-	// IncludeUsers List of dynamic DB users to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted, the whole dynamic-user store is captured as part of the cluster snapshot and no per-user permission check is applied; when set, only matching users are captured. An exact user name that does not exist is rejected; wildcards that match nothing back up no users.
+	// IncludeUsers List of dynamic DB users to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted or null, the whole dynamic-user store is captured. An empty list or wildcards matching nothing omit the user snapshot; restoring it leaves existing users untouched. Otherwise, only matching users are captured. An exact user name that does not exist is rejected. Selected users, including those selected by omission, permit a backup with zero collections. No per-user permission check is applied.
 	IncludeUsers []string `json:"includeUsers,omitempty"`
 
 	// IncrementalBaseBackupId The ID of an existing backup to use as the base for a file-based incremental backup. If set, only files that have changed since the base backup will be included in the new backup.
@@ -2026,15 +2029,15 @@ type BackupListResponse = []struct {
 // BackupListResponseStatus Status of backup process.
 type BackupListResponseStatus string
 
-// BackupRestoreRequest Request body for restoring a backup for a set of collections (classes).
+// BackupRestoreRequest Request body for restoring a backup. A backup with no collections can restore users or roles when the matching restore option is enabled.
 type BackupRestoreRequest struct {
 	// Config Backup custom configuration
 	Config RestoreConfig `json:"config,omitempty"`
 
-	// Exclude List of collections (classes) to exclude from the backup restoration process.
+	// Exclude List of collections (classes) to exclude from the backup restoration process. Any entry is rejected when the backup contains no collections.
 	Exclude []string `json:"exclude,omitempty"`
 
-	// Include List of collections (classes) to include in the backup restoration process. If not set, all collections in the backup the caller may restore are included. Permits wildcards, e.g. `*` or `prefix*`, which match only collections the caller may restore. A list that matches no collection is rejected.
+	// Include List of collections (classes) to include in the backup restoration process. If not set, all collections in the backup the caller may restore are included. Permits wildcards, e.g. `*` or `prefix*`, which match only collections the caller may restore. A list that matches no collection is rejected. Any entry is rejected when the backup contains no collections.
 	Include []string `json:"include,omitempty"`
 
 	// NodeMapping Allows overriding the node names stored in the backup with different ones. Useful when restoring backups to a different environment.
@@ -2323,6 +2326,9 @@ type DBUserCredential struct {
 	// CreatedAt Date and time in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.
 	CreatedAt time.Time `json:"createdAt,omitempty"`
 
+	// ExpiresAt Date and time in ISO 8601 format, in UTC, at which the user's API key stops authenticating. Absent or null means the key never expires, except that import never changes an existing user's expiry, so a record without one keeps the stored value. A new user takes the record's value, even one that has passed. A differing future value for an existing user gives that record an error result naming `PUT /v1/users/db/{user_id}/expiration`. A differing past value gives `skipped_exists` for a deactivated user. For an active one it gives an error result advising to deactivate the user, or delete it and re-import, because that PUT refuses a past time. A node without a Weaviate license key refuses the whole import with 403 when any record sets a non-null `expiresAt`.
+	ExpiresAt time.Time `json:"expiresAt,omitempty"`
+
 	// Namespace The namespace the user was bound to on the source. Informational on export; import binds the user to the request's target namespace.
 	Namespace string `json:"namespace,omitempty"`
 
@@ -2355,6 +2361,9 @@ type DBUserInfo struct {
 
 	// DbUserType Type of the returned user.
 	DbUserType DBUserInfoDbUserType `json:"dbUserType"`
+
+	// ExpiresAt Date and time in ISO 8601 format, in UTC, at which the user's API key stops authenticating. Absent means the key never expires. Expiry does not change `active`.
+	ExpiresAt time.Time `json:"expiresAt,omitempty"`
 
 	// LastUsedAt Date and time in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.
 	LastUsedAt time.Time `json:"lastUsedAt,omitempty"`
@@ -4244,6 +4253,9 @@ type UserImportResultStatus string
 
 // UserOwnInfo defines model for UserOwnInfo.
 type UserOwnInfo struct {
+	// ExpiresAt Date and time in ISO 8601 format, in UTC, at which the caller's API key stops authenticating. Absent means the key never expires, the caller is not a DB user, or DB user management is disabled.
+	ExpiresAt time.Time `json:"expiresAt,omitempty"`
+
 	// Groups The groups associated with the user.
 	Groups []string `json:"groups,omitempty"`
 	Roles  []Role   `json:"roles,omitempty"`
@@ -4795,6 +4807,9 @@ type CreateUserJSONBody struct {
 	// CreateTime EXPERIMENTAL, DONT USE. THIS WILL BE REMOVED AGAIN. - set the given time as creation time
 	CreateTime time.Time `json:"createTime,omitempty"`
 
+	// ExpiresAt Date and time in ISO 8601 format at which the user's API key stops authenticating, stored in UTC with millisecond precision. It must be in the future. Setting it needs a Weaviate license key on the node, else the request answers 403. On a node with a license key, a request that also sets `import` to true answers 422. Absent means the key never expires.
+	ExpiresAt time.Time `json:"expiresAt,omitempty"`
+
 	// Import EXPERIMENTAL, DONT USE. THIS WILL BE REMOVED AGAIN. - import api key from static user
 	Import bool `json:"import,omitempty"`
 }
@@ -4803,6 +4818,15 @@ type CreateUserJSONBody struct {
 type DeactivateUserJSONBody struct {
 	// RevokeKey Whether the API key should be revoked when deactivating the user.
 	RevokeKey bool `json:"revoke_key,omitempty"`
+}
+
+// SetUserExpirationJSONBody defines parameters for SetUserExpiration.
+type SetUserExpirationJSONBody struct {
+	// ExpiresAt Date and time in ISO 8601 format, stored in UTC with millisecond precision, at which the user's API key stops authenticating. It must be in the future.
+	ExpiresAt time.Time `json:"expiresAt,omitempty"`
+
+	// NeverExpires True clears the user's expiry, so the API key never expires. False answers 422.
+	NeverExpires bool `json:"neverExpires,omitempty"`
 }
 
 // AggregateJSONRequestBody defines body for Aggregate for application/json ContentType.
@@ -4969,3 +4993,6 @@ type CreateUserJSONRequestBody CreateUserJSONBody
 
 // DeactivateUserJSONRequestBody defines body for DeactivateUser for application/json ContentType.
 type DeactivateUserJSONRequestBody DeactivateUserJSONBody
+
+// SetUserExpirationJSONRequestBody defines body for SetUserExpiration for application/json ContentType.
+type SetUserExpirationJSONRequestBody SetUserExpirationJSONBody
