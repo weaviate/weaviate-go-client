@@ -66,25 +66,25 @@ func DecodeWithWeightedFields(m map[string]any, dest any) (wfs WeightedFields, e
 }
 
 func readFields(m map[string]any, key string, dest *[]modules.WeightedField) {
-	var fields []string
 	if f, ok := m[key]; ok {
-		var ok bool
-		if fields, ok = f.([]string); ok {
-			var weights []float32
-			if w, ok := m["weights"]; ok {
-				if weightsMap, ok := w.(map[string]any); ok {
-					weights = weightsMap[key].([]float32)
-				}
+		fields, ok := f.([]string)
+		if !ok {
+			return
+		}
+		var weights []float32
+		if w, ok := m["weights"]; ok {
+			if weightsMap, ok := w.(map[string]any); ok {
+				weights = weightsMap[key].([]float32)
 			}
-			for i, field := range fields {
-				wf := modules.WeightedField{
-					Property: field,
-				}
-				if i <= len(weights)-1 {
-					wf.Weight = weights[i]
-				}
-				*dest = append(*dest, wf)
+		}
+		for i, field := range fields {
+			wf := modules.WeightedField{
+				Property: field,
 			}
+			if i <= len(weights)-1 {
+				wf.Weight = weights[i]
+			}
+			*dest = append(*dest, wf)
 		}
 	}
 }
