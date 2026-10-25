@@ -503,13 +503,14 @@ func TestModules(t *testing.T) {
 		{
 			name: "multi2vec-aws",
 			module: aws.Multi2Vec{
-				Model:       "amazon.titan-embed-image-v1",
-				Dimensions:  384,
-				TextFields:  []string{"title", "lyrics"},
-				ImageFields: []string{"cover"},
-				Weights: aws.Weights{
-					TextFields:  []float32{0.2, 0.3},
-					ImageFields: []float32{0.5},
+				Model:      "amazon.titan-embed-image-v1",
+				Dimensions: 384,
+				TextFields: []modules.WeightedField{
+					{Property: "title", Weight: 0.2},
+					{Property: "lyrics", Weight: 0.3},
+				},
+				ImageFields: []modules.WeightedField{
+					{Property: "cover", Weight: 0.5},
 				},
 				Region: "us-east-1",
 			},
