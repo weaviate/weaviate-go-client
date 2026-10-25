@@ -61,13 +61,13 @@ type Multi2Vec struct {
 	ImageFields []modules.WeightedField
 }
 
+func (Multi2Vec) Name() string { return "multi2vec-aws" }
+
 type multi2vecJSON struct {
 	Model      string `json:"model,omitempty"`
 	Dimensions int    `json:"dimensions,omitzero"`
 	Region     string `json:"region,omitempty"`
 }
-
-func (Multi2Vec) Name() string { return "multi2vec-aws" }
 
 func (m2v Multi2Vec) EncodeMap() (map[string]any, error) {
 	return internal.EncodeWithWeightedFields(multi2vecJSON{

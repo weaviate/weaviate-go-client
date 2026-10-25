@@ -2,6 +2,7 @@ package modules_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -144,22 +145,24 @@ func TestModules(t *testing.T) {
 		{
 			name: "multi2vec-google",
 			module: google.Multi2Vec{
-				APIEndpoint: "us-east1-aiplatform.googleapis.com",
-				Model:       "multimodalembedding@001",
-				Dimensions:  512,
-				TextFields:  []string{"title"},
-				ImageFields: []string{"cover"},
-				VideoFields: []string{"clip"},
-				AudioFields: []string{"track"},
-				Weights: google.Weights{
-					TextFields:  []float32{0.4},
-					ImageFields: []float32{0.3},
-					VideoFields: []float32{0.2},
-					AudioFields: []float32{0.1},
+				APIEndpoint:     "us-east1-aiplatform.googleapis.com",
+				Model:           "multimodalembedding@001",
+				Dimensions:      512,
+				VertexProjectID: "my-project",
+				VertexLocation:  "us-east1",
+				VideoInterval:   10 * time.Second,
+				TextFields: []modules.WeightedField{
+					{Property: "title", Weight: 0.4},
 				},
-				VertexProjectID:      "my-project",
-				VertexLocation:       "us-east1",
-				VideoIntervalSeconds: 10,
+				ImageFields: []modules.WeightedField{
+					{Property: "cover", Weight: 0.3},
+				},
+				AudioFields: []modules.WeightedField{
+					{Property: "track", Weight: 0.2},
+				},
+				VideoFields: []modules.WeightedField{
+					{Property: "clip", Weight: 0.1},
+				},
 			},
 			conf: map[string]any{
 				"apiEndpoint": "us-east1-aiplatform.googleapis.com",
@@ -167,13 +170,13 @@ func TestModules(t *testing.T) {
 				"dimensions":  512,
 				"textFields":  []string{"title"},
 				"imageFields": []string{"cover"},
-				"videoFields": []string{"clip"},
 				"audioFields": []string{"track"},
+				"videoFields": []string{"clip"},
 				"weights": map[string]any{
 					"textFields":  []float32{0.4},
 					"imageFields": []float32{0.3},
-					"videoFields": []float32{0.2},
-					"audioFields": []float32{0.1},
+					"audioFields": []float32{0.2},
+					"videoFields": []float32{0.1},
 				},
 				"projectId":            "my-project",
 				"location":             "us-east1",
@@ -243,15 +246,16 @@ func TestModules(t *testing.T) {
 		{
 			name: "multi2vec-cohere",
 			module: cohere.Multi2Vec{
-				Model:       "embed-multilingual-v3.0",
-				Truncate:    cohere.TruncateEnd,
-				BaseURL:     "https://proxy.example.com",
-				Dimensions:  1024,
-				TextFields:  []string{"title", "lyrics"},
-				ImageFields: []string{"cover"},
-				Weights: cohere.Weights{
-					TextFields:  []float32{0.2, 0.3},
-					ImageFields: []float32{0.5},
+				Model:      "embed-multilingual-v3.0",
+				Truncate:   cohere.TruncateEnd,
+				BaseURL:    "https://proxy.example.com",
+				Dimensions: 1024,
+				TextFields: []modules.WeightedField{
+					{Property: "title", Weight: 0.2},
+					{Property: "lyrics", Weight: 0.3},
+				},
+				ImageFields: []modules.WeightedField{
+					{Property: "cover", Weight: 0.5},
 				},
 			},
 			conf: map[string]any{
@@ -295,14 +299,15 @@ func TestModules(t *testing.T) {
 		{
 			name: "multi2vec-jinaai",
 			module: jinaai.Multi2Vec{
-				BaseURL:     "https://proxy.example.com",
-				Model:       "jina-clip-v2",
-				Dimensions:  512,
-				TextFields:  []string{"title", "lyrics"},
-				ImageFields: []string{"cover"},
-				Weights: jinaai.Weights{
-					TextFields:  []float32{0.2, 0.3},
-					ImageFields: []float32{0.5},
+				BaseURL:    "https://proxy.example.com",
+				Model:      "jina-clip-v2",
+				Dimensions: 512,
+				TextFields: []modules.WeightedField{
+					{Property: "title", Weight: 0.2},
+					{Property: "lyrics", Weight: 0.3},
+				},
+				ImageFields: []modules.WeightedField{
+					{Property: "cover", Weight: 0.5},
 				},
 			},
 			conf: map[string]any{
@@ -347,17 +352,18 @@ func TestModules(t *testing.T) {
 		{
 			name: "multi2vec-voyageai",
 			module: voyageai.Multi2Vec{
-				BaseURL:     "https://proxy.example.com",
-				Model:       "voyage-multimodal-3",
-				TextFields:  []string{"title"},
-				ImageFields: []string{"cover"},
-				VideoFields: []string{"clip"},
-				Weights: voyageai.Weights{
-					TextFields:  []float32{0.5},
-					ImageFields: []float32{0.3},
-					VideoFields: []float32{0.2},
-				},
+				BaseURL:  "https://proxy.example.com",
+				Model:    "voyage-multimodal-3",
 				Truncate: testkit.Ptr(false),
+				TextFields: []modules.WeightedField{
+					{Property: "title", Weight: 0.5},
+				},
+				ImageFields: []modules.WeightedField{
+					{Property: "cover", Weight: 0.3},
+				},
+				VideoFields: []modules.WeightedField{
+					{Property: "clip", Weight: 0.2},
+				},
 			},
 			conf: map[string]any{
 				"baseURL":     "https://proxy.example.com",
@@ -381,13 +387,14 @@ func TestModules(t *testing.T) {
 		{
 			name: "multi2vec-twelvelabs",
 			module: twelvelabs.Multi2Vec{
-				BaseURL:     "https://proxy.example.com",
-				Model:       "Marengo-retrieval-2.7",
-				TextFields:  []string{"title", "lyrics"},
-				ImageFields: []string{"cover"},
-				Weights: twelvelabs.Weights{
-					TextFields:  []float32{0.2, 0.3},
-					ImageFields: []float32{0.5},
+				BaseURL: "https://proxy.example.com",
+				Model:   "Marengo-retrieval-2.7",
+				TextFields: []modules.WeightedField{
+					{Property: "title", Weight: 0.2},
+					{Property: "lyrics", Weight: 0.3},
+				},
+				ImageFields: []modules.WeightedField{
+					{Property: "cover", Weight: 0.5},
 				},
 			},
 			conf: map[string]any{
@@ -447,13 +454,14 @@ func TestModules(t *testing.T) {
 		{
 			name: "multi2vec-nvidia",
 			module: nvidia.Multi2Vec{
-				BaseURL:     "https://proxy.example.com",
-				Model:       "nvidia/nvclip",
-				TextFields:  []string{"title", "lyrics"},
-				ImageFields: []string{"cover"},
-				Weights: nvidia.Weights{
-					TextFields:  []float32{0.2, 0.3},
-					ImageFields: []float32{0.5},
+				BaseURL: "https://proxy.example.com",
+				Model:   "nvidia/nvclip",
+				TextFields: []modules.WeightedField{
+					{Property: "title", Weight: 0.2},
+					{Property: "lyrics", Weight: 0.3},
+				},
+				ImageFields: []modules.WeightedField{
+					{Property: "cover", Weight: 0.5},
 				},
 			},
 			conf: map[string]any{
