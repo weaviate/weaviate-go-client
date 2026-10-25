@@ -99,7 +99,7 @@ func TestGenerativeProvider(t *testing.T) {
 			if assert.Implements(t, (*generate.Provider)(nil), tt.module) {
 				p := tt.module.(generate.Provider)
 				got := p.GenerativeProvider()
-				require.EqualExportedValues(t, tt.want, &got)
+				require.EqualExportedValues(t, tt.want, got)
 			}
 		})
 	}

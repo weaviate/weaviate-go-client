@@ -39,8 +39,8 @@ type DebugInfo struct {
 	FullPrompt string
 }
 
-func marshalGenerateRequest(r *GenerateRequest) *proto.GenerativeSearch {
-	if r == nil {
+func marshalGenerateRequest(r GenerateRequest) *proto.GenerativeSearch {
+	if r.Single == nil && r.Grouped == nil {
 		return nil
 	}
 	var s proto.GenerativeSearch

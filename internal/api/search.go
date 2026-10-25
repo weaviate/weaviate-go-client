@@ -39,7 +39,7 @@ type SearchRequest struct {
 	BM25       *BM25
 	Hybrid     *Hybrid
 
-	Generate *GenerateRequest
+	Generate GenerateRequest
 }
 
 var (
@@ -990,7 +990,7 @@ type SearchResponse struct {
 	Took           time.Duration
 	Results        []Object
 	GroupByResults []Group
-	Generative     *TaskOutput
+	Generative     TaskOutput
 }
 
 var _ transport.MessageUnmarshaler[proto.SearchReply] = (*SearchResponse)(nil)
@@ -1001,7 +1001,7 @@ type (
 		Metadata   ObjectMetadata
 		Properties map[string]any
 		References map[string][]Object
-		Generative *TaskOutput
+		Generative TaskOutput
 	}
 	ObjectMetadata struct {
 		UUID          uuid.UUID
@@ -1018,7 +1018,7 @@ type (
 		MinDistance, MaxDistance float32
 		Size                     int64
 		Objects                  []GroupObject
-		Generative               *TaskOutput
+		Generative               TaskOutput
 	}
 	GroupObject struct {
 		Object
@@ -1054,10 +1054,10 @@ func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
 			return nil
 		}
 
-		var generative *TaskOutput
+		var generative TaskOutput
 		if vs := group.GetGenerativeResult().GetValues(); len(vs) > 0 {
 			v := vs[0]
-			generative = &TaskOutput{
+			generative = TaskOutput{
 				Text: v.Result,
 				DebugInfo: DebugInfo{
 					FullPrompt: v.Debug.GetFullPrompt(),
@@ -1075,10 +1075,10 @@ func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
 		})
 	}
 
-	var generative *TaskOutput
+	var generative TaskOutput
 	if vs := reply.GetGenerativeGroupedResults().GetValues(); len(vs) > 0 {
 		v := vs[0]
-		generative = &TaskOutput{
+		generative = TaskOutput{
 			Text: v.Result,
 			DebugInfo: DebugInfo{
 				FullPrompt: v.Debug.GetFullPrompt(),
@@ -1172,10 +1172,10 @@ func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult, gen *
 		}
 	}
 
-	var generative *TaskOutput
+	var generative TaskOutput
 	if vs := gen.GetValues(); len(vs) > 0 {
 		v := vs[0]
-		generative = &TaskOutput{
+		generative = TaskOutput{
 			Text: v.Result,
 			DebugInfo: DebugInfo{
 				FullPrompt: v.Debug.GetFullPrompt(),

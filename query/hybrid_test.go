@@ -22,14 +22,14 @@ func TestHybrid(t *testing.T) {
 		testkit.Only
 
 		name  string
-		nt    query.Hybrid
+		h     query.Hybrid
 		stubs []testkit.Stub[api.SearchRequest, api.SearchResponse]
 		want  *query.Result // Expected return value.
 		err   testkit.Error
 	}{
 		{
 			name: "with near text",
-			nt: query.Hybrid{
+			h: query.Hybrid{
 				Query:             "yellow submarine",
 				QueryProperties:   []string{"title", "lyrics"},
 				KeywordSimilarity: query.AllTokensMatch,
@@ -97,7 +97,7 @@ func TestHybrid(t *testing.T) {
 		},
 		{
 			name: "with near vector",
-			nt: query.Hybrid{
+			h: query.Hybrid{
 				Query:             "yellow submarine",
 				QueryProperties:   []string{"title", "lyrics"},
 				KeywordSimilarity: query.MinimumTokensMatch(2),
@@ -173,7 +173,7 @@ func TestHybrid(t *testing.T) {
 			c := query.NewClient(transport, rd)
 			require.NotNil(t, c, "client")
 
-			got, err := c.Hybrid(t.Context(), tt.nt)
+			got, err := c.Hybrid(t.Context(), tt.h)
 			tt.err.Require(t, err, "hybrid query")
 			require.EqualExportedValues(t, tt.want, got, "query result")
 		})

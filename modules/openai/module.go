@@ -89,8 +89,8 @@ type Provider struct {
 	ReturnMetadata  bool
 }
 
-func (g Generative) GenerativeProvider() proto.GenerativeProvider {
-	return proto.GenerativeProvider{
+func (g Generative) GenerativeProvider() *proto.GenerativeProvider {
+	return &proto.GenerativeProvider{
 		ReturnMetadata: g.ReturnMetadata,
 		Kind: &proto.GenerativeProvider_Openai{
 			Openai: &proto.GenerativeOpenAI{

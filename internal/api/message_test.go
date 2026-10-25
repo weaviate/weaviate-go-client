@@ -1571,7 +1571,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 		{
 			name: "generative single",
 			req: &api.SearchRequest{
-				Generate: &api.GenerateRequest{
+				Generate: api.GenerateRequest{
 					Single: &api.SingleTask{
 						Prompt: "c'mon, do something",
 						Provider: &api.GenerativeProvider{
@@ -1610,7 +1610,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 		{
 			name: "generative grouped",
 			req: &api.SearchRequest{
-				Generate: &api.GenerateRequest{
+				Generate: api.GenerateRequest{
 					Grouped: &api.GroupedTask{
 						Prompt:            "c'mon, do something",
 						IncludeProperties: []string{"title", "lyrics"},
@@ -3154,7 +3154,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 			want: &api.SearchResponse{
 				Results: []api.Object{
 					{
-						Generative: &api.TaskOutput{
+						Generative: api.TaskOutput{
 							Text: "I am sitting in the morning",
 							DebugInfo: api.DebugInfo{
 								FullPrompt: "At the diner on the corner",
@@ -3162,7 +3162,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 						},
 					},
 					{
-						Generative: &api.TaskOutput{
+						Generative: api.TaskOutput{
 							Text: "I am waiting at the counter",
 							DebugInfo: api.DebugInfo{
 								FullPrompt: "For the man to pour the coffee",
@@ -3188,7 +3188,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 			},
 			dest: new(api.SearchResponse),
 			want: &api.SearchResponse{
-				Generative: &api.TaskOutput{
+				Generative: api.TaskOutput{
 					Text: "And he fills it only halfway",
 					DebugInfo: api.DebugInfo{
 						FullPrompt: "And before I even argue",
@@ -3242,7 +3242,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 			want: &api.SearchResponse{
 				GroupByResults: []api.Group{
 					{
-						Generative: &api.TaskOutput{
+						Generative: api.TaskOutput{
 							Text: "He is looking out the window",
 							DebugInfo: api.DebugInfo{
 								FullPrompt: "At somebody coming in",
@@ -3250,7 +3250,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 						},
 					},
 					{
-						Generative: &api.TaskOutput{
+						Generative: api.TaskOutput{
 							Text: "It is always nice to see you",
 							DebugInfo: api.DebugInfo{
 								FullPrompt: "Says the man behind the counter",
@@ -3258,7 +3258,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 						},
 					},
 					{
-						Generative: &api.TaskOutput{
+						Generative: api.TaskOutput{
 							Text: "To the woman who has come in",
 							DebugInfo: api.DebugInfo{
 								FullPrompt: "She is shaking her umbrella",

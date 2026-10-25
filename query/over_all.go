@@ -34,22 +34,27 @@ type OverAllFunc func(context.Context, OverAll) (*Result, error)
 
 // overAllFunc makes internal.Transport available to [query] via a closure.
 func overAllFunc(t internal.Transport, rd api.RequestDefaults) OverAllFunc {
-	return func(ctx context.Context, oaf OverAll) (*Result, error) {
-		return query(ctx, t, request{
-			RequestDefaults:        rd,
-			Limit:                  int32(oaf.Limit),
-			AutoLimit:              int32(oaf.AutoLimit),
-			Offset:                 int32(oaf.Offset),
-			After:                  oaf.After,
-			Filter:                 oaf.Filter,
-			Sort:                   oaf.Sort,
-			ReturnVectors:          oaf.ReturnVectors,
-			ReturnMetadata:         oaf.ReturnMetadata,
-			ReturnProperties:       oaf.ReturnProperties,
-			ReturnNestedProperties: oaf.ReturnNestedProperties,
-			ReturnReferences:       oaf.ReturnReferences,
-			GroupBy:                oaf.groupBy,
-		}, func(req *api.SearchRequest) {}, "over all")
+	return func(ctx context.Context, oa OverAll) (*Result, error) {
+		return query(ctx, t, oa.QueryRequest(rd, oa.groupBy))
+	}
+}
+
+func (oa *OverAll) QueryRequest(rd api.RequestDefaults, gb *GroupBy) Request {
+	return Request{
+		RequestDefaults:        rd,
+		Limit:                  int32(oa.Limit),
+		AutoLimit:              int32(oa.AutoLimit),
+		Offset:                 int32(oa.Offset),
+		After:                  oa.After,
+		Filter:                 oa.Filter,
+		Sort:                   oa.Sort,
+		ReturnVectors:          oa.ReturnVectors,
+		ReturnMetadata:         oa.ReturnMetadata,
+		ReturnProperties:       oa.ReturnProperties,
+		ReturnNestedProperties: oa.ReturnNestedProperties,
+		ReturnReferences:       oa.ReturnReferences,
+		GroupBy:                gb,
+		Label:                  "over all",
 	}
 }
 

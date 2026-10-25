@@ -121,7 +121,7 @@ func TestNearText(t *testing.T) {
 			require.NotNil(t, c, "client")
 
 			got, err := c.NearText(t.Context(), tt.nt)
-			tt.err.Require(t, err, "near vector query")
+			tt.err.Require(t, err, "near text query")
 			require.EqualExportedValues(t, tt.want, got, "query result")
 		})
 	}

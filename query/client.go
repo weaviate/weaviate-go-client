@@ -119,7 +119,7 @@ type GroupObject[T any] struct {
 	BelongsToGroup string
 }
 
-type request struct {
+type Request struct {
 	api.RequestDefaults
 	Limit                  int32
 	Offset                 int32
@@ -135,49 +135,16 @@ type request struct {
 	ReturnNestedProperties []NestedProperty
 	ReturnProperties       []string
 	GroupBy                *GroupBy
+	SetSearch              func(*api.SearchRequest)
+	Label                  string
 }
 
-func query(ctx context.Context, t internal.Transport, r request, f func(*api.SearchRequest), label string) (*Result, error) {
-	req := &api.SearchRequest{
-		RequestDefaults:  r.RequestDefaults,
-		Limit:            r.Limit,
-		AutoLimit:        r.AutoLimit,
-		Offset:           r.Offset,
-		After:            r.After,
-		Rerank:           api.RerankExpr(r.Rerank),
-		ReturnVectors:    r.ReturnVectors,
-		ReturnMetadata:   api.ReturnMetadata(r.ReturnMetadata),
-		ReturnProperties: marshalReturnProperties(r.ReturnProperties, r.ReturnNestedProperties),
-		ReturnReferences: marshalReturnReferences(r.ReturnReferences),
-	}
-
-	for i := range r.Sort {
-		req.Sort = append(req.Sort, api.SortExpr(r.Sort[i]))
-	}
-
-	if r.Filter != nil {
-		if expr := r.Filter.Expr(); expr != nil {
-			req.Filter = *expr
-		}
-	}
-
-	if r.Boost != nil {
-		req.Boost = r.Boost.Expr()
-	}
-
-	f(req)
-
-	if r.GroupBy != nil {
-		req.GroupBy = &api.GroupBy{
-			Property:       r.GroupBy.Property,
-			Limit:          r.GroupBy.ObjectLimit,
-			NumberOfGroups: r.GroupBy.NumberOfGroups,
-		}
-	}
+func query(ctx context.Context, t internal.Transport, r Request) (*Result, error) {
+	req := r.Marshal()
 
 	var resp api.SearchResponse
 	if err := t.Do(ctx, req, &resp); err != nil {
-		return nil, fmt.Errorf("%s: %w", label, err)
+		return nil, fmt.Errorf("%s: %w", r.Label, err)
 	}
 
 	// query was called from the GroupBy() method. This means we should put
@@ -191,7 +158,7 @@ func query(ctx context.Context, t internal.Transport, r request, f func(*api.Sea
 			for _, obj := range group.Objects {
 				objects = append(objects, GroupObject[map[string]any]{
 					BelongsToGroup: group.Name,
-					Object:         unmarshalObject(&obj.Object),
+					Object:         UnmarshalObject(&obj.Object),
 				})
 			}
 
@@ -215,7 +182,7 @@ func query(ctx context.Context, t internal.Transport, r request, f func(*api.Sea
 
 	objects := slices.Grow([]Object[map[string]any](nil), len(resp.Results))
 	for _, obj := range resp.Results {
-		objects = append(objects, unmarshalObject(&obj))
+		objects = append(objects, UnmarshalObject(&obj))
 	}
 	return &Result{Took: resp.Took, Objects: objects}, nil
 }
@@ -266,7 +233,8 @@ func marshalSearchTarget(target VectorTarget) api.SearchTarget {
 	return out
 }
 
-func unmarshalObject(o *api.Object) Object[map[string]any] {
+// UnmarshalObject converts internal result object object into [Object].
+func UnmarshalObject(o *api.Object) Object[map[string]any] {
 	vectors := internal.MakeMap[string, types.Vector](len(o.Metadata.Vectors))
 	for k, v := range o.Metadata.Vectors {
 		vectors[k] = types.Vector(v)
@@ -276,7 +244,7 @@ func unmarshalObject(o *api.Object) Object[map[string]any] {
 	for k, refs := range o.References {
 		objects := make([]types.Object[map[string]any], len(refs))
 		for i, ref := range refs {
-			objects[i] = unmarshalObject(&ref).Object
+			objects[i] = UnmarshalObject(&ref).Object
 		}
 		references[k] = objects
 	}
@@ -298,6 +266,48 @@ func unmarshalObject(o *api.Object) Object[map[string]any] {
 			ExplainScore: o.Metadata.ExplainScore,
 		},
 	}
+}
+
+func (r *Request) Marshal() *api.SearchRequest {
+	req := &api.SearchRequest{
+		RequestDefaults:  r.RequestDefaults,
+		Limit:            r.Limit,
+		AutoLimit:        r.AutoLimit,
+		Offset:           r.Offset,
+		After:            r.After,
+		Rerank:           api.RerankExpr(r.Rerank),
+		ReturnVectors:    r.ReturnVectors,
+		ReturnMetadata:   api.ReturnMetadata(r.ReturnMetadata),
+		ReturnProperties: marshalReturnProperties(r.ReturnProperties, r.ReturnNestedProperties),
+		ReturnReferences: marshalReturnReferences(r.ReturnReferences),
+	}
+
+	for i := range r.Sort {
+		req.Sort = append(req.Sort, api.SortExpr(r.Sort[i]))
+	}
+
+	if r.Filter != nil {
+		if expr := r.Filter.Expr(); expr != nil {
+			req.Filter = *expr
+		}
+	}
+
+	if r.Boost != nil {
+		req.Boost = r.Boost.Expr()
+	}
+
+	if r.SetSearch != nil {
+		r.SetSearch(req)
+	}
+
+	if r.GroupBy != nil {
+		req.GroupBy = &api.GroupBy{
+			Property:       r.GroupBy.Property,
+			Limit:          r.GroupBy.ObjectLimit,
+			NumberOfGroups: r.GroupBy.NumberOfGroups,
+		}
+	}
+	return req
 }
 
 // groupByResultKey is used to pass grouped query results to the GroupBy caller.
