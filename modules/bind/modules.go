@@ -20,9 +20,9 @@ type Multi2Vec struct {
 	ImageFields   []modules.WeightedField `json:"-"`
 	AudioFields   []modules.WeightedField `json:"-"`
 	VideoFields   []modules.WeightedField `json:"-"`
-	IMUFields     []modules.WeightedField `json:"-"`
-	ThermalFields []modules.WeightedField `json:"-"`
 	DepthFields   []modules.WeightedField `json:"-"`
+	ThermalFields []modules.WeightedField `json:"-"`
+	IMUFields     []modules.WeightedField `json:"-"`
 }
 
 func (Multi2Vec) Name() string { return "multi2vec-bind" }
