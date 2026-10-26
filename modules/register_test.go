@@ -152,16 +152,16 @@ func TestModules(t *testing.T) {
 				VertexLocation:  "us-east1",
 				VideoInterval:   10 * time.Second,
 				TextFields: []modules.WeightedField{
-					{Property: "title", Weight: 0.4},
+					{Name: "title", Weight: 0.4},
 				},
 				ImageFields: []modules.WeightedField{
-					{Property: "cover", Weight: 0.3},
+					{Name: "cover", Weight: 0.3},
 				},
 				AudioFields: []modules.WeightedField{
-					{Property: "track", Weight: 0.2},
+					{Name: "track", Weight: 0.2},
 				},
 				VideoFields: []modules.WeightedField{
-					{Property: "clip", Weight: 0.1},
+					{Name: "clip", Weight: 0.1},
 				},
 			},
 			conf: map[string]any{
@@ -251,11 +251,11 @@ func TestModules(t *testing.T) {
 				BaseURL:    "https://proxy.example.com",
 				Dimensions: 1024,
 				TextFields: []modules.WeightedField{
-					{Property: "title", Weight: 0.2},
-					{Property: "lyrics", Weight: 0.3},
+					{Name: "title", Weight: 0.2},
+					{Name: "lyrics", Weight: 0.3},
 				},
 				ImageFields: []modules.WeightedField{
-					{Property: "cover", Weight: 0.5},
+					{Name: "cover", Weight: 0.5},
 				},
 			},
 			conf: map[string]any{
@@ -303,11 +303,11 @@ func TestModules(t *testing.T) {
 				Model:      "jina-clip-v2",
 				Dimensions: 512,
 				TextFields: []modules.WeightedField{
-					{Property: "title", Weight: 0.2},
-					{Property: "lyrics", Weight: 0.3},
+					{Name: "title", Weight: 0.2},
+					{Name: "lyrics", Weight: 0.3},
 				},
 				ImageFields: []modules.WeightedField{
-					{Property: "cover", Weight: 0.5},
+					{Name: "cover", Weight: 0.5},
 				},
 			},
 			conf: map[string]any{
@@ -356,13 +356,13 @@ func TestModules(t *testing.T) {
 				Model:    "voyage-multimodal-3",
 				Truncate: testkit.Ptr(false),
 				TextFields: []modules.WeightedField{
-					{Property: "title", Weight: 0.5},
+					{Name: "title", Weight: 0.5},
 				},
 				ImageFields: []modules.WeightedField{
-					{Property: "cover", Weight: 0.3},
+					{Name: "cover", Weight: 0.3},
 				},
 				VideoFields: []modules.WeightedField{
-					{Property: "clip", Weight: 0.2},
+					{Name: "clip", Weight: 0.2},
 				},
 			},
 			conf: map[string]any{
@@ -390,11 +390,11 @@ func TestModules(t *testing.T) {
 				BaseURL: "https://proxy.example.com",
 				Model:   "Marengo-retrieval-2.7",
 				TextFields: []modules.WeightedField{
-					{Property: "title", Weight: 0.2},
-					{Property: "lyrics", Weight: 0.3},
+					{Name: "title", Weight: 0.2},
+					{Name: "lyrics", Weight: 0.3},
 				},
 				ImageFields: []modules.WeightedField{
-					{Property: "cover", Weight: 0.5},
+					{Name: "cover", Weight: 0.5},
 				},
 			},
 			conf: map[string]any{
@@ -457,11 +457,11 @@ func TestModules(t *testing.T) {
 				BaseURL: "https://proxy.example.com",
 				Model:   "nvidia/nvclip",
 				TextFields: []modules.WeightedField{
-					{Property: "title", Weight: 0.2},
-					{Property: "lyrics", Weight: 0.3},
+					{Name: "title", Weight: 0.2},
+					{Name: "lyrics", Weight: 0.3},
 				},
 				ImageFields: []modules.WeightedField{
-					{Property: "cover", Weight: 0.5},
+					{Name: "cover", Weight: 0.5},
 				},
 			},
 			conf: map[string]any{
@@ -514,11 +514,11 @@ func TestModules(t *testing.T) {
 				Model:      "amazon.titan-embed-image-v1",
 				Dimensions: 384,
 				TextFields: []modules.WeightedField{
-					{Property: "title", Weight: 0.2},
-					{Property: "lyrics", Weight: 0.3},
+					{Name: "title", Weight: 0.2},
+					{Name: "lyrics", Weight: 0.3},
 				},
 				ImageFields: []modules.WeightedField{
-					{Property: "cover", Weight: 0.5},
+					{Name: "cover", Weight: 0.5},
 				},
 				Region: "us-east-1",
 			},
@@ -679,11 +679,11 @@ func TestModules(t *testing.T) {
 			module: clip.Multi2Vec{
 				InferenceURL: "http://multi2vec-clip:8080",
 				TextFields: []modules.WeightedField{
-					{Property: "title", Weight: 0.2},
-					{Property: "lyrics", Weight: 0.3},
+					{Name: "title", Weight: 0.2},
+					{Name: "lyrics", Weight: 0.3},
 				},
 				ImageFields: []modules.WeightedField{
-					{Property: "cover", Weight: 0.5},
+					{Name: "cover", Weight: 0.5},
 				},
 			},
 			conf: map[string]any{
@@ -705,25 +705,25 @@ func TestModules(t *testing.T) {
 			name: "multi2vec-bind",
 			module: bind.Multi2Vec{
 				TextFields: []modules.WeightedField{
-					{Property: "title", Weight: 0.1},
+					{Name: "title", Weight: 0.1},
 				},
 				ImageFields: []modules.WeightedField{
-					{Property: "cover", Weight: 0.1},
+					{Name: "cover", Weight: 0.1},
 				},
 				AudioFields: []modules.WeightedField{
-					{Property: "track", Weight: 0.1},
+					{Name: "track", Weight: 0.1},
 				},
 				VideoFields: []modules.WeightedField{
-					{Property: "clip", Weight: 0.1},
+					{Name: "clip", Weight: 0.1},
 				},
 				IMUFields: []modules.WeightedField{
-					{Property: "motion", Weight: 0.2},
+					{Name: "motion", Weight: 0.2},
 				},
 				ThermalFields: []modules.WeightedField{
-					{Property: "heat", Weight: 0.2},
+					{Name: "heat", Weight: 0.2},
 				},
 				DepthFields: []modules.WeightedField{
-					{Property: "depth", Weight: 0.2},
+					{Name: "depth", Weight: 0.2},
 				},
 			},
 			conf: map[string]any{

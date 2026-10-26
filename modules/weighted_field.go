@@ -1,6 +1,6 @@
 package modules
 
 type WeightedField struct {
-	Property string
-	Weight   float32
+	Name   string
+	Weight float32
 }

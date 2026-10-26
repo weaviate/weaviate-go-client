@@ -39,7 +39,7 @@ func addFields(m map[string]any, key string, wfs []modules.WeightedField) {
 	var fields []string
 	var weights []float32
 	for _, wf := range wfs {
-		fields = append(fields, wf.Property)
+		fields = append(fields, wf.Name)
 		weights = append(weights, wf.Weight)
 	}
 
@@ -79,7 +79,7 @@ func readFields(m map[string]any, key string, dest *[]modules.WeightedField) {
 		}
 		for i, field := range fields {
 			wf := modules.WeightedField{
-				Property: field,
+				Name: field,
 			}
 			if i <= len(weights)-1 {
 				wf.Weight = weights[i]
