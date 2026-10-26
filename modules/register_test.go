@@ -2,12 +2,15 @@ package modules_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/modules"
 	"github.com/weaviate/weaviate-go-client/v6/modules/aws"
+	"github.com/weaviate/weaviate-go-client/v6/modules/bind"
+	"github.com/weaviate/weaviate-go-client/v6/modules/clip"
 	"github.com/weaviate/weaviate-go-client/v6/modules/cohere"
 	"github.com/weaviate/weaviate-go-client/v6/modules/databricks"
 	"github.com/weaviate/weaviate-go-client/v6/modules/digitalocean"
@@ -22,6 +25,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/modules/openai"
 	"github.com/weaviate/weaviate-go-client/v6/modules/selfprovided"
 	"github.com/weaviate/weaviate-go-client/v6/modules/transformers"
+	"github.com/weaviate/weaviate-go-client/v6/modules/twelvelabs"
 	"github.com/weaviate/weaviate-go-client/v6/modules/voyageai"
 	"github.com/weaviate/weaviate-go-client/v6/modules/weaviate"
 )
@@ -139,6 +143,52 @@ func TestModules(t *testing.T) {
 			conf:   map[string]any{},
 		},
 		{
+			name: "multi2vec-google",
+			module: google.Multi2Vec{
+				APIEndpoint:     "us-east1-aiplatform.googleapis.com",
+				Model:           "multimodalembedding@001",
+				Dimensions:      512,
+				VertexProjectID: "my-project",
+				VertexLocation:  "us-east1",
+				VideoInterval:   10 * time.Second,
+				TextFields: []modules.WeightedField{
+					{Name: "title", Weight: 0.4},
+				},
+				ImageFields: []modules.WeightedField{
+					{Name: "cover", Weight: 0.3},
+				},
+				AudioFields: []modules.WeightedField{
+					{Name: "track", Weight: 0.2},
+				},
+				VideoFields: []modules.WeightedField{
+					{Name: "clip", Weight: 0.1},
+				},
+			},
+			conf: map[string]any{
+				"apiEndpoint": "us-east1-aiplatform.googleapis.com",
+				"model":       "multimodalembedding@001",
+				"dimensions":  512,
+				"textFields":  []string{"title"},
+				"imageFields": []string{"cover"},
+				"audioFields": []string{"track"},
+				"videoFields": []string{"clip"},
+				"weights": map[string]any{
+					"textFields":  []float32{0.4},
+					"imageFields": []float32{0.3},
+					"audioFields": []float32{0.2},
+					"videoFields": []float32{0.1},
+				},
+				"projectId":            "my-project",
+				"location":             "us-east1",
+				"videoIntervalSeconds": 10,
+			},
+		},
+		{
+			name:   "multi2vec-google",
+			module: google.Multi2Vec{},
+			conf:   map[string]any{},
+		},
+		{
 			name: "text2vec-huggingface",
 			module: huggingface.Text2Vec{
 				Model:        "sentence-transformers/all-MiniLM-L6-v2",
@@ -194,6 +244,39 @@ func TestModules(t *testing.T) {
 			conf:   map[string]any{},
 		},
 		{
+			name: "multi2vec-cohere",
+			module: cohere.Multi2Vec{
+				Model:      "embed-multilingual-v3.0",
+				Truncate:   cohere.TruncateEnd,
+				BaseURL:    "https://proxy.example.com",
+				Dimensions: 1024,
+				TextFields: []modules.WeightedField{
+					{Name: "title", Weight: 0.2},
+					{Name: "lyrics", Weight: 0.3},
+				},
+				ImageFields: []modules.WeightedField{
+					{Name: "cover", Weight: 0.5},
+				},
+			},
+			conf: map[string]any{
+				"model":       "embed-multilingual-v3.0",
+				"truncate":    cohere.TruncateEnd,
+				"baseURL":     "https://proxy.example.com",
+				"dimensions":  1024,
+				"textFields":  []string{"title", "lyrics"},
+				"imageFields": []string{"cover"},
+				"weights": map[string]any{
+					"textFields":  []float32{0.2, 0.3},
+					"imageFields": []float32{0.5},
+				},
+			},
+		},
+		{
+			name:   "multi2vec-cohere",
+			module: cohere.Multi2Vec{},
+			conf:   map[string]any{},
+		},
+		{
 			name: "text2vec-jinaai",
 			module: jinaai.Text2Vec{
 				Model:      "jina-embeddings-v3",
@@ -211,6 +294,37 @@ func TestModules(t *testing.T) {
 		{
 			name:   "text2vec-jinaai",
 			module: jinaai.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "multi2vec-jinaai",
+			module: jinaai.Multi2Vec{
+				BaseURL:    "https://proxy.example.com",
+				Model:      "jina-clip-v2",
+				Dimensions: 512,
+				TextFields: []modules.WeightedField{
+					{Name: "title", Weight: 0.2},
+					{Name: "lyrics", Weight: 0.3},
+				},
+				ImageFields: []modules.WeightedField{
+					{Name: "cover", Weight: 0.5},
+				},
+			},
+			conf: map[string]any{
+				"baseURL":     "https://proxy.example.com",
+				"model":       "jina-clip-v2",
+				"dimensions":  512,
+				"textFields":  []string{"title", "lyrics"},
+				"imageFields": []string{"cover"},
+				"weights": map[string]any{
+					"textFields":  []float32{0.2, 0.3},
+					"imageFields": []float32{0.5},
+				},
+			},
+		},
+		{
+			name:   "multi2vec-jinaai",
+			module: jinaai.Multi2Vec{},
 			conf:   map[string]any{},
 		},
 		{
@@ -233,6 +347,70 @@ func TestModules(t *testing.T) {
 		{
 			name:   "text2vec-voyageai",
 			module: voyageai.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "multi2vec-voyageai",
+			module: voyageai.Multi2Vec{
+				BaseURL:  "https://proxy.example.com",
+				Model:    "voyage-multimodal-3",
+				Truncate: testkit.Ptr(false),
+				TextFields: []modules.WeightedField{
+					{Name: "title", Weight: 0.5},
+				},
+				ImageFields: []modules.WeightedField{
+					{Name: "cover", Weight: 0.3},
+				},
+				VideoFields: []modules.WeightedField{
+					{Name: "clip", Weight: 0.2},
+				},
+			},
+			conf: map[string]any{
+				"baseURL":     "https://proxy.example.com",
+				"model":       "voyage-multimodal-3",
+				"textFields":  []string{"title"},
+				"imageFields": []string{"cover"},
+				"videoFields": []string{"clip"},
+				"weights": map[string]any{
+					"textFields":  []float32{0.5},
+					"imageFields": []float32{0.3},
+					"videoFields": []float32{0.2},
+				},
+				"truncate": testkit.Ptr(false),
+			},
+		},
+		{
+			name:   "multi2vec-voyageai",
+			module: voyageai.Multi2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "multi2vec-twelvelabs",
+			module: twelvelabs.Multi2Vec{
+				BaseURL: "https://proxy.example.com",
+				Model:   "Marengo-retrieval-2.7",
+				TextFields: []modules.WeightedField{
+					{Name: "title", Weight: 0.2},
+					{Name: "lyrics", Weight: 0.3},
+				},
+				ImageFields: []modules.WeightedField{
+					{Name: "cover", Weight: 0.5},
+				},
+			},
+			conf: map[string]any{
+				"baseURL":     "https://proxy.example.com",
+				"model":       "Marengo-retrieval-2.7",
+				"textFields":  []string{"title", "lyrics"},
+				"imageFields": []string{"cover"},
+				"weights": map[string]any{
+					"textFields":  []float32{0.2, 0.3},
+					"imageFields": []float32{0.5},
+				},
+			},
+		},
+		{
+			name:   "multi2vec-twelvelabs",
+			module: twelvelabs.Multi2Vec{},
 			conf:   map[string]any{},
 		},
 		{
@@ -274,6 +452,35 @@ func TestModules(t *testing.T) {
 			conf:   map[string]any{},
 		},
 		{
+			name: "multi2vec-nvidia",
+			module: nvidia.Multi2Vec{
+				BaseURL: "https://proxy.example.com",
+				Model:   "nvidia/nvclip",
+				TextFields: []modules.WeightedField{
+					{Name: "title", Weight: 0.2},
+					{Name: "lyrics", Weight: 0.3},
+				},
+				ImageFields: []modules.WeightedField{
+					{Name: "cover", Weight: 0.5},
+				},
+			},
+			conf: map[string]any{
+				"baseURL":     "https://proxy.example.com",
+				"model":       "nvidia/nvclip",
+				"textFields":  []string{"title", "lyrics"},
+				"imageFields": []string{"cover"},
+				"weights": map[string]any{
+					"textFields":  []float32{0.2, 0.3},
+					"imageFields": []float32{0.5},
+				},
+			},
+		},
+		{
+			name:   "multi2vec-nvidia",
+			module: nvidia.Multi2Vec{},
+			conf:   map[string]any{},
+		},
+		{
 			name: "text2vec-aws",
 			module: aws.Text2Vec{
 				Service:           aws.SageMaker,
@@ -299,6 +506,37 @@ func TestModules(t *testing.T) {
 		{
 			name:   "text2vec-aws",
 			module: aws.Text2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "multi2vec-aws",
+			module: aws.Multi2Vec{
+				Model:      "amazon.titan-embed-image-v1",
+				Dimensions: 384,
+				TextFields: []modules.WeightedField{
+					{Name: "title", Weight: 0.2},
+					{Name: "lyrics", Weight: 0.3},
+				},
+				ImageFields: []modules.WeightedField{
+					{Name: "cover", Weight: 0.5},
+				},
+				Region: "us-east-1",
+			},
+			conf: map[string]any{
+				"model":       "amazon.titan-embed-image-v1",
+				"dimensions":  384,
+				"textFields":  []string{"title", "lyrics"},
+				"imageFields": []string{"cover"},
+				"weights": map[string]any{
+					"textFields":  []float32{0.2, 0.3},
+					"imageFields": []float32{0.5},
+				},
+				"region": "us-east-1",
+			},
+		},
+		{
+			name:   "multi2vec-aws",
+			module: aws.Multi2Vec{},
 			conf:   map[string]any{},
 		},
 		{
@@ -434,6 +672,82 @@ func TestModules(t *testing.T) {
 		{
 			name:   "generative-openai",
 			module: openai.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "multi2vec-clip",
+			module: clip.Multi2Vec{
+				InferenceURL: "http://multi2vec-clip:8080",
+				TextFields: []modules.WeightedField{
+					{Name: "title", Weight: 0.2},
+					{Name: "lyrics", Weight: 0.3},
+				},
+				ImageFields: []modules.WeightedField{
+					{Name: "cover", Weight: 0.5},
+				},
+			},
+			conf: map[string]any{
+				"inferenceUrl": "http://multi2vec-clip:8080",
+				"textFields":   []string{"title", "lyrics"},
+				"imageFields":  []string{"cover"},
+				"weights": map[string]any{
+					"textFields":  []float32{0.2, 0.3},
+					"imageFields": []float32{0.5},
+				},
+			},
+		},
+		{
+			name:   "multi2vec-clip",
+			module: clip.Multi2Vec{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "multi2vec-bind",
+			module: bind.Multi2Vec{
+				TextFields: []modules.WeightedField{
+					{Name: "title", Weight: 0.1},
+				},
+				ImageFields: []modules.WeightedField{
+					{Name: "cover", Weight: 0.1},
+				},
+				AudioFields: []modules.WeightedField{
+					{Name: "track", Weight: 0.1},
+				},
+				VideoFields: []modules.WeightedField{
+					{Name: "clip", Weight: 0.1},
+				},
+				IMUFields: []modules.WeightedField{
+					{Name: "motion", Weight: 0.2},
+				},
+				ThermalFields: []modules.WeightedField{
+					{Name: "heat", Weight: 0.2},
+				},
+				DepthFields: []modules.WeightedField{
+					{Name: "depth", Weight: 0.2},
+				},
+			},
+			conf: map[string]any{
+				"textFields":    []string{"title"},
+				"imageFields":   []string{"cover"},
+				"audioFields":   []string{"track"},
+				"videoFields":   []string{"clip"},
+				"imuFields":     []string{"motion"},
+				"thermalFields": []string{"heat"},
+				"depthFields":   []string{"depth"},
+				"weights": map[string]any{
+					"textFields":    []float32{0.1},
+					"imageFields":   []float32{0.1},
+					"audioFields":   []float32{0.1},
+					"videoFields":   []float32{0.1},
+					"imuFields":     []float32{0.2},
+					"thermalFields": []float32{0.2},
+					"depthFields":   []float32{0.2},
+				},
+			},
+		},
+		{
+			name:   "multi2vec-bind",
+			module: bind.Multi2Vec{},
 			conf:   map[string]any{},
 		},
 	} {
