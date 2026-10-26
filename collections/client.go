@@ -7,6 +7,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/aggregate"
 	"github.com/weaviate/weaviate-go-client/v6/batch"
 	"github.com/weaviate/weaviate-go-client/v6/data"
+	"github.com/weaviate/weaviate-go-client/v6/generate"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
@@ -55,6 +56,7 @@ type Handle struct {
 	Aggregate *aggregate.Client
 	Data      *data.Client
 	Query     *query.Client
+	Generate  *generate.Client
 	Config    *ConfigClient
 	Tenants   *tenant.Client
 }
@@ -69,6 +71,7 @@ func newHandle(t transport.StreamingTransport, rd api.RequestDefaults) *Handle {
 		Aggregate: aggregate.NewClient(t, rd),
 		Data:      data.NewClient(t, rd),
 		Query:     query.NewClient(t, rd),
+		Generate:  generate.NewClient(t, rd),
 		Config:    NewConfigClient(t, rd),
 		Tenants:   tenant.NewClient(t, rd.CollectionName),
 	}

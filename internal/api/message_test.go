@@ -1568,6 +1568,96 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "generative single",
+			req: &api.SearchRequest{
+				Generate: api.GenerateRequest{
+					Single: &api.SingleTask{
+						Prompt: "c'mon, do something",
+						Provider: &api.GenerativeProvider{
+							Kind: &proto.GenerativeProvider_Aws{
+								Aws: &proto.GenerativeAWS{
+									Model: new("bezos-3.0"),
+								},
+							},
+						},
+						Debug: true,
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				Generative: &proto.GenerativeSearch{
+					Single: &proto.GenerativeSearch_Single{
+						Prompt: "c'mon, do something",
+						Queries: []*proto.GenerativeProvider{
+							{
+								Kind: &proto.GenerativeProvider_Aws{
+									Aws: &proto.GenerativeAWS{
+										Model: new("bezos-3.0"),
+									},
+								},
+							},
+						},
+						Debug: true,
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "generative grouped",
+			req: &api.SearchRequest{
+				Generate: api.GenerateRequest{
+					Grouped: &api.GroupedTask{
+						Prompt:            "c'mon, do something",
+						IncludeProperties: []string{"title", "lyrics"},
+						Provider: &api.GenerativeProvider{
+							Kind: &proto.GenerativeProvider_Aws{
+								Aws: &proto.GenerativeAWS{
+									Model: new("bezos-3.0"),
+								},
+							},
+						},
+						Debug: true,
+					},
+				},
+				GroupBy: &api.GroupBy{
+					Property:       "album",
+					Limit:          6,
+					NumberOfGroups: 7,
+				},
+			},
+			want: &proto.SearchRequest{
+				Generative: &proto.GenerativeSearch{
+					Grouped: &proto.GenerativeSearch_Grouped{
+						Task:       "c'mon, do something",
+						Properties: &proto.TextArray{Values: []string{"title", "lyrics"}},
+						Queries: []*proto.GenerativeProvider{
+							{
+								Kind: &proto.GenerativeProvider_Aws{
+									Aws: &proto.GenerativeAWS{
+										Model: new("bezos-3.0"),
+									},
+								},
+							},
+						},
+						Debug: true,
+					},
+				},
+				GroupBy: &proto.GroupBy{
+					Path:            []string{"album"},
+					ObjectsPerGroup: 6,
+					NumberOfGroups:  7,
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
 	})
 }
 
@@ -2539,7 +2629,6 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 						},
 					},
 				},
-				GroupByResults: make([]api.Group, 0),
 			},
 		},
 		{
@@ -2567,7 +2656,6 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 						},
 					},
 				},
-				GroupByResults: make([]api.Group, 0),
 			},
 		},
 		{
@@ -2653,7 +2741,6 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 						},
 					},
 				},
-				GroupByResults: make([]api.Group, 0),
 			},
 		},
 		{
@@ -2762,7 +2849,6 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 						},
 					},
 				},
-				GroupByResults: make([]api.Group, 0),
 			},
 		},
 		{
@@ -2856,7 +2942,6 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 						},
 					},
 				},
-				GroupByResults: make([]api.Group, 0),
 			},
 		},
 		{
@@ -2951,7 +3036,6 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 			},
 			dest: new(api.SearchResponse),
 			want: &api.SearchResponse{
-				Results: make([]api.Object, 0),
 				GroupByResults: []api.Group{
 					{
 						Name:        "metadata and properties",
@@ -3030,6 +3114,154 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 										},
 									},
 								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "generative single",
+			reply: &proto.SearchReply{
+				Results: []*proto.SearchResult{
+					{
+						Generative: &proto.GenerativeResult{
+							Values: []*proto.GenerativeReply{
+								{
+									Result: "I am sitting in the morning",
+									Debug: &proto.GenerativeDebug{
+										FullPrompt: new("At the diner on the corner"),
+									},
+								},
+							},
+						},
+					},
+					{
+						Generative: &proto.GenerativeResult{
+							Values: []*proto.GenerativeReply{
+								{
+									Result: "I am waiting at the counter",
+									Debug: &proto.GenerativeDebug{
+										FullPrompt: new("For the man to pour the coffee"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			dest: new(api.SearchResponse),
+			want: &api.SearchResponse{
+				Results: []api.Object{
+					{
+						Generative: api.TaskOutput{
+							Text: "I am sitting in the morning",
+							DebugInfo: api.DebugInfo{
+								FullPrompt: "At the diner on the corner",
+							},
+						},
+					},
+					{
+						Generative: api.TaskOutput{
+							Text: "I am waiting at the counter",
+							DebugInfo: api.DebugInfo{
+								FullPrompt: "For the man to pour the coffee",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "generative grouped",
+			reply: &proto.SearchReply{
+				GenerativeGroupedResults: &proto.GenerativeResult{
+					Values: []*proto.GenerativeReply{
+						{
+							Result: "And he fills it only halfway",
+							Debug: &proto.GenerativeDebug{
+								FullPrompt: new("And before I even argue"),
+							},
+						},
+					},
+				},
+			},
+			dest: new(api.SearchResponse),
+			want: &api.SearchResponse{
+				Generative: api.TaskOutput{
+					Text: "And he fills it only halfway",
+					DebugInfo: api.DebugInfo{
+						FullPrompt: "And before I even argue",
+					},
+				},
+			},
+		},
+		{
+			name: "generative with group by",
+			reply: &proto.SearchReply{
+				GroupByResults: []*proto.GroupByResult{
+					{
+						GenerativeResult: &proto.GenerativeResult{
+							Values: []*proto.GenerativeReply{
+								{
+									Result: "He is looking out the window",
+									Debug: &proto.GenerativeDebug{
+										FullPrompt: new("At somebody coming in"),
+									},
+								},
+							},
+						},
+					},
+					{
+						GenerativeResult: &proto.GenerativeResult{
+							Values: []*proto.GenerativeReply{
+								{
+									Result: "It is always nice to see you",
+									Debug: &proto.GenerativeDebug{
+										FullPrompt: new("Says the man behind the counter"),
+									},
+								},
+							},
+						},
+					},
+					{
+						GenerativeResult: &proto.GenerativeResult{
+							Values: []*proto.GenerativeReply{
+								{
+									Result: "To the woman who has come in",
+									Debug: &proto.GenerativeDebug{
+										FullPrompt: new("She is shaking her umbrella"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			dest: new(api.SearchResponse),
+			want: &api.SearchResponse{
+				GroupByResults: []api.Group{
+					{
+						Generative: api.TaskOutput{
+							Text: "He is looking out the window",
+							DebugInfo: api.DebugInfo{
+								FullPrompt: "At somebody coming in",
+							},
+						},
+					},
+					{
+						Generative: api.TaskOutput{
+							Text: "It is always nice to see you",
+							DebugInfo: api.DebugInfo{
+								FullPrompt: "Says the man behind the counter",
+							},
+						},
+					},
+					{
+						Generative: api.TaskOutput{
+							Text: "To the woman who has come in",
+							DebugInfo: api.DebugInfo{
+								FullPrompt: "She is shaking her umbrella",
 							},
 						},
 					},

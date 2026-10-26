@@ -40,6 +40,7 @@ func TestClient_Use(t *testing.T) {
 		assert.NotNil(t, h.Aggregate, "nil aggregate namespace")
 		assert.NotNil(t, h.Data, "nil data namespace")
 		assert.NotNil(t, h.Query, "nil query namespace")
+		assert.NotNil(t, h.Generate, "nil generate namespace")
 		assert.NotNil(t, h.Config, "nil config namespace")
 		assert.NotNil(t, h.Tenants, "nil tenants namespace")
 	}

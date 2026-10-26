@@ -76,22 +76,7 @@ type NearMediaFunc func(context.Context, NearMedia) (*Result, error)
 // nearMediaFunc makes internal.Transport available to [query] via a closure.
 func nearMediaFunc(t internal.Transport, rd api.RequestDefaults) NearMediaFunc {
 	return func(ctx context.Context, nm NearMedia) (*Result, error) {
-		return query(ctx, t, request{
-			RequestDefaults:        rd,
-			Limit:                  int32(nm.Limit),
-			AutoLimit:              int32(nm.AutoLimit),
-			Offset:                 int32(nm.Offset),
-			After:                  nm.After,
-			Filter:                 nm.Filter,
-			Boost:                  nm.Boost,
-			Rerank:                 nm.Rerank,
-			ReturnVectors:          nm.ReturnVectors,
-			ReturnMetadata:         nm.ReturnMetadata,
-			ReturnProperties:       nm.ReturnProperties,
-			ReturnNestedProperties: nm.ReturnNestedProperties,
-			ReturnReferences:       nm.ReturnReferences,
-			GroupBy:                nm.groupBy,
-		}, func(req *api.SearchRequest) { req.NearMedia = nm.Search() }, "near media")
+		return query(ctx, t, nm.QueryRequest(rd, nm.groupBy))
 	}
 }
 
@@ -115,6 +100,27 @@ func (nm *NearMedia) Search() *api.NearMedia {
 	}
 
 	return out
+}
+
+func (nm *NearMedia) QueryRequest(rd api.RequestDefaults, gb *GroupBy) Request {
+	return Request{
+		RequestDefaults:        rd,
+		Limit:                  int32(nm.Limit),
+		AutoLimit:              int32(nm.AutoLimit),
+		Offset:                 int32(nm.Offset),
+		After:                  nm.After,
+		Filter:                 nm.Filter,
+		Boost:                  nm.Boost,
+		Rerank:                 nm.Rerank,
+		ReturnVectors:          nm.ReturnVectors,
+		ReturnMetadata:         nm.ReturnMetadata,
+		ReturnProperties:       nm.ReturnProperties,
+		ReturnNestedProperties: nm.ReturnNestedProperties,
+		ReturnReferences:       nm.ReturnReferences,
+		GroupBy:                gb,
+		SetSearch:              func(req *api.SearchRequest) { req.NearMedia = nm.Search() },
+		Label:                  "near media",
+	}
 }
 
 // GroupBy runs near media search with a GroupBy clause.

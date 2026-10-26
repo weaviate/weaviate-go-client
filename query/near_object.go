@@ -69,22 +69,7 @@ func nearObjectFunc(t internal.Transport, rd api.RequestDefaults) NearObjectFunc
 			}
 		}
 
-		return query(ctx, t, request{
-			RequestDefaults:        rd,
-			Limit:                  int32(no.Limit),
-			AutoLimit:              int32(no.AutoLimit),
-			Offset:                 int32(no.Offset),
-			After:                  no.After,
-			Filter:                 no.Filter,
-			Boost:                  no.Boost,
-			Rerank:                 no.Rerank,
-			ReturnVectors:          no.ReturnVectors,
-			ReturnMetadata:         no.ReturnMetadata,
-			ReturnProperties:       no.ReturnProperties,
-			ReturnNestedProperties: no.ReturnNestedProperties,
-			ReturnReferences:       no.ReturnReferences,
-			GroupBy:                no.groupBy,
-		}, func(req *api.SearchRequest) { req.NearObject = no.Search() }, "near object")
+		return query(ctx, t, no.QueryRequest(rd, no.groupBy))
 	}
 }
 
@@ -107,6 +92,27 @@ func (no *NearObject) Search() *api.NearObject {
 	}
 
 	return out
+}
+
+func (no *NearObject) QueryRequest(rd api.RequestDefaults, gb *GroupBy) Request {
+	return Request{
+		RequestDefaults:        rd,
+		Limit:                  int32(no.Limit),
+		AutoLimit:              int32(no.AutoLimit),
+		Offset:                 int32(no.Offset),
+		After:                  no.After,
+		Filter:                 no.Filter,
+		Boost:                  no.Boost,
+		Rerank:                 no.Rerank,
+		ReturnVectors:          no.ReturnVectors,
+		ReturnMetadata:         no.ReturnMetadata,
+		ReturnProperties:       no.ReturnProperties,
+		ReturnNestedProperties: no.ReturnNestedProperties,
+		ReturnReferences:       no.ReturnReferences,
+		GroupBy:                gb,
+		SetSearch:              func(req *api.SearchRequest) { req.NearObject = no.Search() },
+		Label:                  "near object",
+	}
 }
 
 // GroupBy runs near object search with a GroupBy clause.

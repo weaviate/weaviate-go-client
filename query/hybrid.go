@@ -68,22 +68,7 @@ type HybridFunc func(context.Context, Hybrid) (*Result, error)
 // hybridFunc makes internal.Transport available to [query] via a closure.
 func hybridFunc(t internal.Transport, rd api.RequestDefaults) HybridFunc {
 	return func(ctx context.Context, h Hybrid) (*Result, error) {
-		return query(ctx, t, request{
-			RequestDefaults:        rd,
-			Limit:                  int32(h.Limit),
-			AutoLimit:              int32(h.AutoLimit),
-			Offset:                 int32(h.Offset),
-			After:                  h.After,
-			Filter:                 h.Filter,
-			Boost:                  h.Boost,
-			Rerank:                 h.Rerank,
-			ReturnVectors:          h.ReturnVectors,
-			ReturnMetadata:         h.ReturnMetadata,
-			ReturnProperties:       h.ReturnProperties,
-			ReturnNestedProperties: h.ReturnNestedProperties,
-			ReturnReferences:       h.ReturnReferences,
-			GroupBy:                h.groupBy,
-		}, func(req *api.SearchRequest) { req.Hybrid = h.Search() }, "hybrid")
+		return query(ctx, t, h.QueryRequest(rd, h.groupBy))
 	}
 }
 
@@ -101,6 +86,27 @@ func (h *Hybrid) Search() *api.Hybrid {
 		},
 		NearVector: h.NearVector.Search(),
 		NearText:   h.NearText.Search(),
+	}
+}
+
+func (h *Hybrid) QueryRequest(rd api.RequestDefaults, gb *GroupBy) Request {
+	return Request{
+		RequestDefaults:        rd,
+		Limit:                  int32(h.Limit),
+		AutoLimit:              int32(h.AutoLimit),
+		Offset:                 int32(h.Offset),
+		After:                  h.After,
+		Filter:                 h.Filter,
+		Boost:                  h.Boost,
+		Rerank:                 h.Rerank,
+		ReturnVectors:          h.ReturnVectors,
+		ReturnMetadata:         h.ReturnMetadata,
+		ReturnProperties:       h.ReturnProperties,
+		ReturnNestedProperties: h.ReturnNestedProperties,
+		ReturnReferences:       h.ReturnReferences,
+		GroupBy:                gb,
+		SetSearch:              func(req *api.SearchRequest) { req.Hybrid = h.Search() },
+		Label:                  "hybrid",
 	}
 }
 

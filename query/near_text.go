@@ -71,22 +71,7 @@ type NearTextFunc func(context.Context, NearText) (*Result, error)
 // nearTextFunc makes internal.Transport available to [query] via a closure.
 func nearTextFunc(t internal.Transport, rd api.RequestDefaults) NearTextFunc {
 	return func(ctx context.Context, nt NearText) (*Result, error) {
-		return query(ctx, t, request{
-			RequestDefaults:        rd,
-			Limit:                  int32(nt.Limit),
-			AutoLimit:              int32(nt.AutoLimit),
-			Offset:                 int32(nt.Offset),
-			After:                  nt.After,
-			Filter:                 nt.Filter,
-			Boost:                  nt.Boost,
-			Rerank:                 nt.Rerank,
-			ReturnVectors:          nt.ReturnVectors,
-			ReturnMetadata:         nt.ReturnMetadata,
-			ReturnProperties:       nt.ReturnProperties,
-			ReturnNestedProperties: nt.ReturnNestedProperties,
-			ReturnReferences:       nt.ReturnReferences,
-			GroupBy:                nt.groupBy,
-		}, func(req *api.SearchRequest) { req.NearText = nt.Search() }, "near text")
+		return query(ctx, t, nt.QueryRequest(rd, nt.groupBy))
 	}
 }
 
@@ -114,6 +99,27 @@ func (nt *NearText) Search() *api.NearText {
 	}
 
 	return out
+}
+
+func (nt *NearText) QueryRequest(rd api.RequestDefaults, gb *GroupBy) Request {
+	return Request{
+		RequestDefaults:        rd,
+		Limit:                  int32(nt.Limit),
+		AutoLimit:              int32(nt.AutoLimit),
+		Offset:                 int32(nt.Offset),
+		After:                  nt.After,
+		Filter:                 nt.Filter,
+		Boost:                  nt.Boost,
+		Rerank:                 nt.Rerank,
+		ReturnVectors:          nt.ReturnVectors,
+		ReturnMetadata:         nt.ReturnMetadata,
+		ReturnProperties:       nt.ReturnProperties,
+		ReturnNestedProperties: nt.ReturnNestedProperties,
+		ReturnReferences:       nt.ReturnReferences,
+		GroupBy:                gb,
+		SetSearch:              func(req *api.SearchRequest) { req.NearText = nt.Search() },
+		Label:                  "near text",
+	}
 }
 
 // GroupBy runs near text search with a GroupBy clause.

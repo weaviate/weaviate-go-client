@@ -51,22 +51,7 @@ type NearVectorFunc func(context.Context, NearVector) (*Result, error)
 // nearVectorFunc makes internal.Transport available to [query] via a closure.
 func nearVectorFunc(t internal.Transport, rd api.RequestDefaults) NearVectorFunc {
 	return func(ctx context.Context, nv NearVector) (*Result, error) {
-		return query(ctx, t, request{
-			RequestDefaults:        rd,
-			Limit:                  int32(nv.Limit),
-			AutoLimit:              int32(nv.AutoLimit),
-			Offset:                 int32(nv.Offset),
-			After:                  nv.After,
-			Filter:                 nv.Filter,
-			Boost:                  nv.Boost,
-			Rerank:                 nv.Rerank,
-			ReturnVectors:          nv.ReturnVectors,
-			ReturnMetadata:         nv.ReturnMetadata,
-			ReturnProperties:       nv.ReturnProperties,
-			ReturnNestedProperties: nv.ReturnNestedProperties,
-			ReturnReferences:       nv.ReturnReferences,
-			GroupBy:                nv.groupBy,
-		}, func(req *api.SearchRequest) { req.NearVector = nv.Search() }, "near vector")
+		return query(ctx, t, nv.QueryRequest(rd, nv.groupBy))
 	}
 }
 
@@ -83,6 +68,27 @@ func (nv *NearVector) Search() *api.NearVector {
 			Distance:  nv.Similarity.Distance(),
 			Certainty: nv.Similarity.Certainty(),
 		},
+	}
+}
+
+func (nv *NearVector) QueryRequest(rd api.RequestDefaults, gb *GroupBy) Request {
+	return Request{
+		RequestDefaults:        rd,
+		Limit:                  int32(nv.Limit),
+		AutoLimit:              int32(nv.AutoLimit),
+		Offset:                 int32(nv.Offset),
+		After:                  nv.After,
+		Filter:                 nv.Filter,
+		Boost:                  nv.Boost,
+		Rerank:                 nv.Rerank,
+		ReturnVectors:          nv.ReturnVectors,
+		ReturnMetadata:         nv.ReturnMetadata,
+		ReturnProperties:       nv.ReturnProperties,
+		ReturnNestedProperties: nv.ReturnNestedProperties,
+		ReturnReferences:       nv.ReturnReferences,
+		GroupBy:                gb,
+		SetSearch:              func(req *api.SearchRequest) { req.NearVector = nv.Search() },
+		Label:                  "near vector",
 	}
 }
 

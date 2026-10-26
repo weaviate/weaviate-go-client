@@ -81,22 +81,7 @@ type BM25Func func(context.Context, BM25) (*Result, error)
 // bm25Func makes internal.Transport available to [query] via a closure.
 func bm25Func(t internal.Transport, rd api.RequestDefaults) BM25Func {
 	return func(ctx context.Context, bm25 BM25) (*Result, error) {
-		return query(ctx, t, request{
-			RequestDefaults:        rd,
-			Limit:                  int32(bm25.Limit),
-			AutoLimit:              int32(bm25.AutoLimit),
-			Offset:                 int32(bm25.Offset),
-			After:                  bm25.After,
-			Filter:                 bm25.Filter,
-			Boost:                  bm25.Boost,
-			Rerank:                 bm25.Rerank,
-			ReturnVectors:          bm25.ReturnVectors,
-			ReturnMetadata:         bm25.ReturnMetadata,
-			ReturnProperties:       bm25.ReturnProperties,
-			ReturnNestedProperties: bm25.ReturnNestedProperties,
-			ReturnReferences:       bm25.ReturnReferences,
-			GroupBy:                bm25.groupBy,
-		}, func(req *api.SearchRequest) { req.BM25 = bm25.Search() }, "bm25")
+		return query(ctx, t, bm25.QueryRequest(rd, bm25.groupBy))
 	}
 }
 
@@ -110,6 +95,27 @@ func (bm25 *BM25) Search() *api.BM25 {
 			CrossProperty:      bm25.KeywordSimilarity.CrossProperty(),
 			MinimumTokensMatch: bm25.KeywordSimilarity.MinimumTokensMatch(),
 		},
+	}
+}
+
+func (bm25 *BM25) QueryRequest(rd api.RequestDefaults, gb *GroupBy) Request {
+	return Request{
+		RequestDefaults:        rd,
+		Limit:                  int32(bm25.Limit),
+		AutoLimit:              int32(bm25.AutoLimit),
+		Offset:                 int32(bm25.Offset),
+		After:                  bm25.After,
+		Filter:                 bm25.Filter,
+		Boost:                  bm25.Boost,
+		Rerank:                 bm25.Rerank,
+		ReturnVectors:          bm25.ReturnVectors,
+		ReturnMetadata:         bm25.ReturnMetadata,
+		ReturnProperties:       bm25.ReturnProperties,
+		ReturnNestedProperties: bm25.ReturnNestedProperties,
+		ReturnReferences:       bm25.ReturnReferences,
+		GroupBy:                gb,
+		SetSearch:              func(req *api.SearchRequest) { req.BM25 = bm25.Search() },
+		Label:                  "bm25",
 	}
 }
 
