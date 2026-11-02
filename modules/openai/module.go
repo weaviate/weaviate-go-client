@@ -90,8 +90,12 @@ type Provider struct {
 }
 
 func (g Generative) GenerativeProvider() *proto.GenerativeProvider {
+	p := g.Provider
+	if p == nil {
+		p = new(Provider)
+	}
 	return &proto.GenerativeProvider{
-		ReturnMetadata: g.ReturnMetadata,
+		ReturnMetadata: p.ReturnMetadata,
 		Kind: &proto.GenerativeProvider_Openai{
 			Openai: &proto.GenerativeOpenAI{
 				BaseUrl:    api.NilZero(g.BaseURL),
@@ -110,10 +114,10 @@ func (g Generative) GenerativeProvider() *proto.GenerativeProvider {
 				ResourceName: api.NilZero(g.ResourceName),
 				DeploymentId: api.NilZero(g.DeploymentID),
 
-				N:               g.N,
-				Stop:            internal.TextArray(g.StopSequences),
-				Images:          internal.TextArray(g.Images),
-				ImageProperties: internal.TextArray(g.ImageProperties),
+				N:               p.N,
+				Stop:            internal.TextArray(p.StopSequences),
+				Images:          internal.TextArray(p.Images),
+				ImageProperties: internal.TextArray(p.ImageProperties),
 			},
 		},
 	}

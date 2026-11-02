@@ -73,6 +73,18 @@ func TestGenerativeProvider(t *testing.T) {
 			},
 		},
 		{
+			name:   "generative-openai without provider options",
+			module: openai.Generative{Model: "gpt-5-mini"},
+			want: &proto.GenerativeProvider{
+				Kind: &proto.GenerativeProvider_Openai{
+					Openai: &proto.GenerativeOpenAI{
+						Model:   new("gpt-5-mini"),
+						IsAzure: new(false),
+					},
+				},
+			},
+		},
+		{
 			name: "generative-openai-azure",
 			module: openai.Generative{
 				BaseURL:      "openai.com",
