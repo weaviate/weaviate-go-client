@@ -380,7 +380,7 @@ func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error 
 	dev.AssertNotNil(results, "results")
 
 	*r = AggregateResponse{
-		Took:           time.Duration(reply.GetTook()) * time.Second,
+		Took:           durationFromSeconds(reply.GetTook()),
 		Results:        results,
 		GroupByResults: groups,
 	}

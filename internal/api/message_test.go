@@ -2576,7 +2576,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 		{
 			name: "metadata",
 			reply: &proto.SearchReply{
-				Took: 92,
+				Took: 92.25,
 				Results: []*proto.SearchResult{
 					{
 						Metadata: &proto.MetadataResult{
@@ -2605,7 +2605,7 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 			},
 			dest: new(api.SearchResponse),
 			want: &api.SearchResponse{
-				Took: 92 * time.Second,
+				Took: 92250 * time.Millisecond,
 				Results: []api.Object{
 					{
 						Metadata: api.ObjectMetadata{
@@ -3680,9 +3680,9 @@ func TestInsertObjectsResponse_UnmarshalMessage(t *testing.T) {
 		},
 		{
 			name:  "no errors",
-			reply: &proto.BatchObjectsReply{Took: 92},
+			reply: &proto.BatchObjectsReply{Took: 92.25},
 			dest:  new(api.InsertObjectsResponse),
-			want:  &api.InsertObjectsResponse{Took: 92 * time.Second},
+			want:  &api.InsertObjectsResponse{Took: 92250 * time.Millisecond},
 		},
 	})
 }
@@ -3707,9 +3707,9 @@ func TestInsertReferencesResponse_UnmarshalMessage(t *testing.T) {
 		},
 		{
 			name:  "no errors",
-			reply: &proto.BatchReferencesReply{Took: 92},
+			reply: &proto.BatchReferencesReply{Took: 92.25},
 			dest:  new(api.InsertReferencesResponse),
-			want:  &api.InsertReferencesResponse{Took: 92 * time.Second},
+			want:  &api.InsertReferencesResponse{Took: 92250 * time.Millisecond},
 		},
 	})
 }
@@ -3739,9 +3739,9 @@ func TestDeleteObjectsResponse_UnmarshalMessage(t *testing.T) {
 		},
 		{
 			name:  "no errors",
-			reply: &proto.BatchDeleteReply{Took: 92},
+			reply: &proto.BatchDeleteReply{Took: 92.25},
 			dest:  new(api.DeleteObjectsResponse),
-			want:  &api.DeleteObjectsResponse{Took: 92 * time.Second},
+			want:  &api.DeleteObjectsResponse{Took: 92250 * time.Millisecond},
 		},
 	})
 }

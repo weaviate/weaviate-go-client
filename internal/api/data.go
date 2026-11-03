@@ -86,7 +86,7 @@ var _ transport.MessageUnmarshaler[proto.BatchObjectsReply] = (*InsertObjectsRes
 // UnmarshalMessage implements [transport.MessageUnmarshaler].
 func (r *InsertObjectsResponse) UnmarshalMessage(reply *proto.BatchObjectsReply) error {
 	*r = InsertObjectsResponse{
-		Took: time.Duration(reply.Took) * time.Second,
+		Took: durationFromSeconds(reply.Took),
 	}
 	for _, e := range reply.GetErrors() {
 		r.Positions = append(r.Positions, int(e.Index))
@@ -142,7 +142,7 @@ var _ transport.MessageUnmarshaler[proto.BatchReferencesReply] = (*InsertReferen
 // UnmarshalMessage implements [transport.MessageUnmarshaler].
 func (r *InsertReferencesResponse) UnmarshalMessage(reply *proto.BatchReferencesReply) error {
 	*r = InsertReferencesResponse{
-		Took: time.Duration(reply.Took) * time.Second,
+		Took: durationFromSeconds(reply.Took),
 	}
 
 	for _, e := range reply.GetErrors() {
@@ -602,7 +602,7 @@ func (r *DeleteObjectsResponse) UnmarshalMessage(reply *proto.BatchDeleteReply) 
 	}
 
 	*r = DeleteObjectsResponse{
-		Took:    time.Duration(reply.Took) * time.Second,
+		Took:    durationFromSeconds(reply.Took),
 		Matches: reply.GetMatches(),
 		Errors:  errs,
 	}
