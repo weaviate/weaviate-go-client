@@ -1087,7 +1087,7 @@ func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
 	}
 
 	*r = SearchResponse{
-		Took:           time.Duration(reply.Took) * time.Second,
+		Took:           durationFromSeconds(reply.Took),
 		Results:        objects,
 		GroupByResults: groups,
 		Generative:     generative,

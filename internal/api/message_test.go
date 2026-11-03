@@ -2574,6 +2574,12 @@ func TestSearchResponse_UnmarshalMessage(t *testing.T) {
 
 	testMessageUnmarshaler(t, []MessageUnmarshalerTest[proto.SearchReply]{
 		{
+			name:  "fractional took",
+			reply: &proto.SearchReply{Took: 0.25},
+			dest:  new(api.SearchResponse),
+			want:  &api.SearchResponse{Took: 250 * time.Millisecond},
+		},
+		{
 			name: "metadata",
 			reply: &proto.SearchReply{
 				Took: 92,
@@ -3684,6 +3690,12 @@ func TestInsertObjectsResponse_UnmarshalMessage(t *testing.T) {
 			dest:  new(api.InsertObjectsResponse),
 			want:  &api.InsertObjectsResponse{Took: 92 * time.Second},
 		},
+		{
+			name:  "fractional took",
+			reply: &proto.BatchObjectsReply{Took: 0.25},
+			dest:  new(api.InsertObjectsResponse),
+			want:  &api.InsertObjectsResponse{Took: 250 * time.Millisecond},
+		},
 	})
 }
 
@@ -3710,6 +3722,12 @@ func TestInsertReferencesResponse_UnmarshalMessage(t *testing.T) {
 			reply: &proto.BatchReferencesReply{Took: 92},
 			dest:  new(api.InsertReferencesResponse),
 			want:  &api.InsertReferencesResponse{Took: 92 * time.Second},
+		},
+		{
+			name:  "fractional took",
+			reply: &proto.BatchReferencesReply{Took: 0.25},
+			dest:  new(api.InsertReferencesResponse),
+			want:  &api.InsertReferencesResponse{Took: 250 * time.Millisecond},
 		},
 	})
 }
@@ -3742,6 +3760,12 @@ func TestDeleteObjectsResponse_UnmarshalMessage(t *testing.T) {
 			reply: &proto.BatchDeleteReply{Took: 92},
 			dest:  new(api.DeleteObjectsResponse),
 			want:  &api.DeleteObjectsResponse{Took: 92 * time.Second},
+		},
+		{
+			name:  "fractional took",
+			reply: &proto.BatchDeleteReply{Took: 0.25},
+			dest:  new(api.DeleteObjectsResponse),
+			want:  &api.DeleteObjectsResponse{Took: 250 * time.Millisecond},
 		},
 	})
 }

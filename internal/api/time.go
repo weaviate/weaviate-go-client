@@ -22,3 +22,9 @@ func timeFromString(s string) (time.Time, error) {
 func timeFromUnix(ts int64) time.Time {
 	return time.UnixMilli(ts)
 }
+
+// durationFromSeconds converts an RPC took value. The protobuf field is a
+// float number of seconds, so the fractional part has to be kept.
+func durationFromSeconds(seconds float32) time.Duration {
+	return time.Duration(float64(seconds) * float64(time.Second))
+}
