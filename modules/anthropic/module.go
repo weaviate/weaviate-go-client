@@ -21,7 +21,7 @@ func init() {
 type Generative struct {
 	// BaseURL overrides the default request URL, e.g. a proxy.
 	BaseURL string `json:"baseURL,omitempty"`
-	// Model is the Anthropic model name, e.g. "claude-haiku-5-5".
+	// Model is the Anthropic model name, e.g. "claude-haiku-4-5".
 	Model         string   `json:"model,omitempty"`
 	MaxTokens     *int64   `json:"maxTokens,omitempty"`
 	StopSequences []string `json:"stopSequences,omitempty"`

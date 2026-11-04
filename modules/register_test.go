@@ -679,7 +679,7 @@ func TestModules(t *testing.T) {
 			name: "generative-anthropic",
 			module: anthropic.Generative{
 				BaseURL:       "anthropic.com",
-				Model:         "claude-haiku-5-5",
+				Model:         "claude-haiku-4-5",
 				MaxTokens:     new(int64(12)),
 				Temperature:   new(0.7),
 				TopK:          new(int64(5)),
@@ -688,7 +688,7 @@ func TestModules(t *testing.T) {
 			},
 			conf: map[string]any{
 				"baseURL":       "anthropic.com",
-				"model":         "claude-haiku-5-5",
+				"model":         "claude-haiku-4-5",
 				"maxTokens":     new(int64(12)),
 				"temperature":   new(0.7),
 				"topK":          new(int64(5)),
