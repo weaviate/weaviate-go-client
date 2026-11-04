@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Monitor GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  # Monitor dependencies in go.mod and open PRs to upgrade them as necessary
+  - package-ecosystem: "gomod"
+    directories:
+      - "/"
+    labels: ["security-update", "dependencies"]
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "build(dependabot)"
