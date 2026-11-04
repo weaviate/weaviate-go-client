@@ -8,6 +8,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/generate"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/modules"
+	"github.com/weaviate/weaviate-go-client/v6/modules/anthropic"
 	"github.com/weaviate/weaviate-go-client/v6/modules/openai"
 	proto "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
@@ -102,6 +103,52 @@ func TestGenerativeProvider(t *testing.T) {
 						IsAzure:      new(true),
 						ResourceName: new("iron-ore"),
 						DeploymentId: new("azure-123"),
+					},
+				},
+			},
+		},
+		{
+			name: "generative-anthropic",
+			module: anthropic.Generative{
+				BaseURL:       "anthropic.com",
+				Model:         "claude-haiku-5-5",
+				MaxTokens:     new(int64(12)),
+				Temperature:   new(0.7),
+				TopK:          new(int64(5)),
+				TopP:          new(0.9),
+				StopSequences: []string{"<enough>"},
+
+				Provider: &anthropic.Provider{
+					Images:          []string{"pony.png"},
+					ImageProperties: []string{"profile_pic"},
+					ReturnMetadata:  true,
+				},
+			},
+			want: &proto.GenerativeProvider{
+				ReturnMetadata: true,
+				Kind: &proto.GenerativeProvider_Anthropic{
+					Anthropic: &proto.GenerativeAnthropic{
+						BaseUrl:       new("anthropic.com"),
+						Model:         new("claude-haiku-5-5"),
+						MaxTokens:     new(int64(12)),
+						Temperature:   new(0.7),
+						TopK:          new(int64(5)),
+						TopP:          new(0.9),
+						StopSequences: &proto.TextArray{Values: []string{"<enough>"}},
+
+						Images:          &proto.TextArray{Values: []string{"pony.png"}},
+						ImageProperties: &proto.TextArray{Values: []string{"profile_pic"}},
+					},
+				},
+			},
+		},
+		{
+			name:   "generative-anthropic without provider options",
+			module: anthropic.Generative{Model: "claude-haiku-5-5"},
+			want: &proto.GenerativeProvider{
+				Kind: &proto.GenerativeProvider_Anthropic{
+					Anthropic: &proto.GenerativeAnthropic{
+						Model: new("claude-haiku-5-5"),
 					},
 				},
 			},
