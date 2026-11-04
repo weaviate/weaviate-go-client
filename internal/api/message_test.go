@@ -88,6 +88,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				After:     uuid.Max,
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api:      true,
 				Metadata:         &proto.MetadataRequest{Uuid: true},
 				Collection:       "Songs",
 				Tenant:           "john_doe",
@@ -161,7 +162,8 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
-				Metadata: &proto.MetadataRequest{Uuid: true},
+				Uses_127Api: true,
+				Metadata:    &proto.MetadataRequest{Uuid: true},
 				Properties: &proto.PropertiesRequest{
 					ReturnAllNonrefProperties: true,
 				},
@@ -240,7 +242,8 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
-				Metadata: &proto.MetadataRequest{Uuid: true},
+				Uses_127Api: true,
+				Metadata:    &proto.MetadataRequest{Uuid: true},
 				Properties: &proto.PropertiesRequest{
 					ReturnAllNonrefProperties: true,
 				},
@@ -261,7 +264,8 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
-				Metadata: &proto.MetadataRequest{Uuid: true},
+				Uses_127Api: true,
+				Metadata:    &proto.MetadataRequest{Uuid: true},
 				Properties: &proto.PropertiesRequest{
 					ReturnAllNonrefProperties: true,
 				},
@@ -288,7 +292,8 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
-				Metadata: &proto.MetadataRequest{Uuid: true},
+				Uses_127Api: true,
+				Metadata:    &proto.MetadataRequest{Uuid: true},
 				Properties: &proto.PropertiesRequest{
 					ReturnAllNonrefProperties: true,
 				},
@@ -323,7 +328,8 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
-				Metadata: &proto.MetadataRequest{Uuid: true},
+				Uses_127Api: true,
+				Metadata:    &proto.MetadataRequest{Uuid: true},
 				Properties: &proto.PropertiesRequest{
 					ReturnAllNonrefProperties: true,
 				},
@@ -424,7 +430,8 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
-				Metadata: &proto.MetadataRequest{Uuid: true},
+				Uses_127Api: true,
+				Metadata:    &proto.MetadataRequest{Uuid: true},
 				Properties: &proto.PropertiesRequest{
 					ReturnAllNonrefProperties: true,
 				},
@@ -516,7 +523,8 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
-				Metadata: &proto.MetadataRequest{Uuid: true},
+				Uses_127Api: true,
+				Metadata:    &proto.MetadataRequest{Uuid: true},
 				Properties: &proto.PropertiesRequest{
 					ReturnAllNonrefProperties: true,
 				},
@@ -535,7 +543,8 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
-				Metadata: &proto.MetadataRequest{Uuid: true},
+				Uses_127Api: true,
+				Metadata:    &proto.MetadataRequest{Uuid: true},
 				Properties: &proto.PropertiesRequest{
 					ReturnAllNonrefProperties: true,
 				},
@@ -559,6 +568,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				ReturnVectors: []string{"title_vec", "lyrics_vec"},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				Metadata: &proto.MetadataRequest{
 					Uuid:               true,
 					Distance:           true,
@@ -580,6 +590,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				ReturnVectors: []string{},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				Metadata: &proto.MetadataRequest{
 					Uuid:   true,
 					Vector: true,
@@ -598,7 +609,8 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
-				Metadata: &proto.MetadataRequest{Uuid: true},
+				Uses_127Api: true,
+				Metadata:    &proto.MetadataRequest{Uuid: true},
 				Properties: &proto.PropertiesRequest{
 					NonRefProperties: []string{"title", "lyrics"},
 				},
@@ -608,7 +620,8 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			name: "return all properties",
 			req:  &api.SearchRequest{},
 			want: &proto.SearchRequest{
-				Metadata: &proto.MetadataRequest{Uuid: true},
+				Uses_127Api: true,
+				Metadata:    &proto.MetadataRequest{Uuid: true},
 				Properties: &proto.PropertiesRequest{
 					ReturnAllNonrefProperties: true,
 				},
@@ -652,7 +665,8 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
-				Metadata: &proto.MetadataRequest{Uuid: true},
+				Uses_127Api: true,
+				Metadata:    &proto.MetadataRequest{Uuid: true},
 				Properties: &proto.PropertiesRequest{
 					ObjectProperties: []*proto.ObjectPropertiesRequest{
 						{
@@ -725,7 +739,8 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
-				Metadata: &proto.MetadataRequest{Uuid: true},
+				Uses_127Api: true,
+				Metadata:    &proto.MetadataRequest{Uuid: true},
 				Properties: &proto.PropertiesRequest{
 					RefProperties: []*proto.RefPropertiesRequest{
 						{
@@ -794,8 +809,9 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
-				NearVector: nil,
-				Metadata:   &proto.MetadataRequest{Uuid: true},
+				Uses_127Api: true,
+				NearVector:  nil,
+				Metadata:    &proto.MetadataRequest{Uuid: true},
 				Properties: &proto.PropertiesRequest{
 					ReturnAllNonrefProperties: true,
 				},
@@ -832,6 +848,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearVector: &proto.NearVector{
 					Distance: testkit.Ptr(.123),
 					Targets: &proto.Targets{
@@ -873,6 +890,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearVector: &proto.NearVector{
 					Distance: testkit.Ptr(.123),
 					Vectors: []*proto.Vectors{
@@ -912,6 +930,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearVector: &proto.NearVector{
 					Targets: &proto.Targets{
 						TargetVectors: []string{"title_vec", "lyrics_vec"},
@@ -972,6 +991,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearVector: &proto.NearVector{
 					Targets: &proto.Targets{
 						TargetVectors: []string{"title_vec", "lyrics_vec"},
@@ -1042,6 +1062,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearVector: &proto.NearVector{
 					Targets: &proto.Targets{
 						TargetVectors: []string{"title_vec", "title_vec"},
@@ -1090,6 +1111,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearImage: &proto.NearImageSearch{
 					Image: "base64-media",
 				},
@@ -1108,6 +1130,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearAudio: &proto.NearAudioSearch{
 					Audio: "base64-media",
 				},
@@ -1126,6 +1149,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearVideo: &proto.NearVideoSearch{
 					Video: "base64-media",
 				},
@@ -1144,6 +1168,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearDepth: &proto.NearDepthSearch{
 					Depth: "base64-media",
 				},
@@ -1162,6 +1187,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearThermal: &proto.NearThermalSearch{
 					Thermal: "base64-media",
 				},
@@ -1180,6 +1206,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearImu: &proto.NearIMUSearch{
 					Imu: "base64-media",
 				},
@@ -1208,6 +1235,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearObject: &proto.NearObject{
 					Id: testkit.UUID.String(),
 				},
@@ -1232,6 +1260,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearText: &proto.NearTextSearch{
 					MoveTo: &proto.NearTextSearch_Move{
 						Force:    0.58,
@@ -1263,6 +1292,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearText: &proto.NearTextSearch{
 					MoveTo: &proto.NearTextSearch_Move{
 						Force: 0.58,
@@ -1291,6 +1321,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearText: &proto.NearTextSearch{
 					Query:    []string{"apples", "oranges"},
 					Distance: testkit.Ptr(.92),
@@ -1321,6 +1352,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearText: &proto.NearTextSearch{
 					Query: []string{"apples", "oranges"},
 					Targets: &proto.Targets{
@@ -1348,6 +1380,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearText: &proto.NearTextSearch{
 					Query: []string{"apples", "oranges"},
 					Targets: &proto.Targets{
@@ -1382,6 +1415,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				NearText: &proto.NearTextSearch{
 					Query: []string{"apples", "oranges"},
 					Targets: &proto.Targets{
@@ -1412,6 +1446,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				Bm25Search: &proto.BM25{
 					Query:      "she sells seashells",
 					Properties: []string{"sentence"},
@@ -1450,6 +1485,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				HybridSearch: &proto.Hybrid{
 					Query:         "yellow submarine",
 					Properties:    []string{"title", "lyrics"},
@@ -1513,6 +1549,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				HybridSearch: &proto.Hybrid{
 					Query:         "yellow submarine",
 					Properties:    []string{"title", "lyrics"},
@@ -1557,6 +1594,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				GroupBy: &proto.GroupBy{
 					Path:            []string{"album"},
 					ObjectsPerGroup: 6,
@@ -1586,6 +1624,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				Generative: &proto.GenerativeSearch{
 					Single: &proto.GenerativeSearch_Single{
 						Prompt: "c'mon, do something",
@@ -1631,6 +1670,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			want: &proto.SearchRequest{
+				Uses_127Api: true,
 				Generative: &proto.GenerativeSearch{
 					Grouped: &proto.GenerativeSearch_Grouped{
 						Task:       "c'mon, do something",

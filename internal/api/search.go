@@ -316,6 +316,8 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 		return nil, err
 	}
 	req := &proto.SearchRequest{
+		// Required for the server to read GenerativeSearch.Single and .Grouped.
+		Uses_127Api:      true,
 		Collection:       r.CollectionName,
 		Tenant:           r.Tenant,
 		ConsistencyLevel: r.ConsistencyLevel.proto(),
