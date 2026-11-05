@@ -242,6 +242,7 @@ func TestNewWeaviateCloud(t *testing.T) {
 		assert.NotNil(t, c.Groups, "nil groups")
 		assert.NotNil(t, c.Cluster, "nil cluster")
 		assert.NotNil(t, c.Replication, "nil replication")
+		assert.NotNil(t, c.Tokenize, "nil tokenize")
 	})
 }
 

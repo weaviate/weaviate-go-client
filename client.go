@@ -19,6 +19,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 	"github.com/weaviate/weaviate-go-client/v6/rbac"
 	"github.com/weaviate/weaviate-go-client/v6/replication"
+	"github.com/weaviate/weaviate-go-client/v6/tokenize"
 	"golang.org/x/oauth2"
 )
 
@@ -33,6 +34,7 @@ type Client struct {
 	Groups      *rbac.GroupsClient
 	Cluster     *cluster.Client
 	Replication *replication.Client
+	Tokenize    *tokenize.Client
 }
 
 var _ io.Closer = (*Client)(nil)
@@ -139,6 +141,7 @@ func newClient(ctx context.Context, options []Option) (*Client, error) {
 		Groups:      rbac.NewGroupsClient(t),
 		Cluster:     cluster.NewClient(t),
 		Replication: replication.NewClient(t),
+		Tokenize:    tokenize.NewClient(t),
 	}, nil
 }
 
