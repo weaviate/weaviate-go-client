@@ -745,6 +745,42 @@ func TestRESTRequests(t *testing.T) {
 			wantPath:   "/backups/filesystem/bak-1/restore",
 		},
 		{
+			name: "create export",
+			req: &api.CreateExportRequest{
+				Backend:            "s3",
+				ID:                 "exp-1",
+				FileFormat:         api.ExportFileFormatParquet,
+				IncludeCollections: []string{"Songs"},
+				ExcludeCollections: []string{"Pizza"},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/export/s3",
+			wantBody: &rest.ExportCreateRequest{
+				Id:         "exp-1",
+				FileFormat: rest.Parquet,
+				Include:    []string{"Songs"},
+				Exclude:    []string{"Pizza"},
+			},
+		},
+		{
+			name: "get export status",
+			req: &api.GetExportStatusRequest{
+				Backend: "s3",
+				ID:      "exp-1",
+			},
+			wantMethod: http.MethodGet,
+			wantPath:   "/export/s3/exp-1",
+		},
+		{
+			name: "cancel export create",
+			req: &api.CancelExportRequest{
+				Backend: "s3",
+				ID:      "exp-1",
+			},
+			wantMethod: http.MethodDelete,
+			wantPath:   "/export/s3/exp-1",
+		},
+		{
 			name: "create role",
 			req: &api.CreateRoleRequest{
 				Role: api.Role{
@@ -1903,6 +1939,76 @@ func TestRESTResponses(t *testing.T) {
 					SizeGiB:             testkit.Ptr[float32](80085),
 					StartedAt:           testkit.Ptr(time.Time{}),
 					CompletedAt:         testkit.Ptr(time.Time{}),
+				},
+			},
+		},
+		{
+			name: "export create response",
+			body: &rest.ExportCreateResponse{
+				Backend:   "s3",
+				Id:        "exp-1",
+				Path:      "/path/to/export",
+				Classes:   []string{"Songs"},
+				Status:    rest.STARTED,
+				StartedAt: testkit.Now,
+			},
+			dest: new(api.ExportInfo),
+			want: &api.ExportInfo{
+				Backend:             "s3",
+				ID:                  "exp-1",
+				Path:                "/path/to/export",
+				IncludesCollections: []string{"Songs"},
+				Status:              api.ExportStatusStarted,
+				StartedAt:           &testkit.Now,
+			},
+		},
+		{
+			name: "export create status response",
+			body: &rest.ExportStatusResponse{
+				Backend:     "s3",
+				Id:          "exp-1",
+				Path:        "/path/to/export",
+				Classes:     []string{"Songs"},
+				Status:      rest.ExportStatusResponseStatusFAILED,
+				StartedAt:   testkit.Now,
+				CompletedAt: testkit.Now,
+				Error:       "Whaam!",
+				TookInMs:    80085,
+				ShardStatus: map[string]map[string]rest.ShardProgress{
+					"abc": {
+						"node-0": {
+							ObjectsExported: 92,
+							Status:          rest.ShardProgressStatusFAILED,
+							Error:           "Whaam!",
+						},
+						"node-1": {
+							SkipReason: "We have exports at home",
+						},
+					},
+				},
+			},
+			dest: new(api.ExportInfo),
+			want: &api.ExportInfo{
+				Backend:             "s3",
+				ID:                  "exp-1",
+				Path:                "/path/to/export",
+				IncludesCollections: []string{"Songs"},
+				Status:              api.ExportStatusFailed,
+				StartedAt:           &testkit.Now,
+				CompletedAt:         &testkit.Now,
+				Error:               "Whaam!",
+				Took:                80085 * time.Millisecond,
+				PerShardStatus: map[string]map[string]api.ShardExportStatus{
+					"abc": {
+						"node-0": {
+							ObjectsExported: 92,
+							Status:          api.ExportStatusFailed,
+							Error:           "Whaam!",
+						},
+						"node-1": {
+							SkipReason: "We have exports at home",
+						},
+					},
 				},
 			},
 		},
