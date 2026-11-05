@@ -67,6 +67,7 @@ type (
 	StopwordConfig     api.StopwordConfig
 	MultiTenancyConfig api.MultiTenancyConfig
 	ObjectTTLConfig    api.ObjectTTLConfig
+	TextAnalyzerConfig api.TextAnalyzerConfig
 )
 
 type (
