@@ -1980,9 +1980,7 @@ func TestRESTResponses(t *testing.T) {
 							ObjectsExported: 92,
 							Status:          rest.ShardProgressStatusFAILED,
 							Error:           "Whaam!",
-						},
-						"node-1": {
-							SkipReason: "We have exports at home",
+							SkipReason:      "We have exports at home",
 						},
 					},
 				},
@@ -2004,9 +2002,7 @@ func TestRESTResponses(t *testing.T) {
 							ObjectsExported: 92,
 							Status:          api.ExportStatusFailed,
 							Error:           "Whaam!",
-						},
-						"node-1": {
-							SkipReason: "We have exports at home",
+							SkipReason:      "We have exports at home",
 						},
 					},
 				},
