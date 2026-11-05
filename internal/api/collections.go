@@ -36,7 +36,7 @@ type (
 		DataType         DataType
 		NestedProperties []Property
 		Tokenization     Tokenization
-		TextAnalyzer     *TextAnalyzerConfig
+		TextAnalyzer     TextAnalyzerConfig
 		IndexFilterable  *bool
 		IndexRangeable   *bool
 		IndexSearchable  *bool
@@ -372,11 +372,16 @@ const skipDefaultCompressionKey = "skipDefaultQuantization"
 // MarshalJSON marshals Property via [rest.Property].
 func (p *Property) MarshalJSON() ([]byte, error) {
 	return json.Marshal(rest.Property{
-		Name:              p.Name,
-		Description:       p.Description,
-		DataType:          []string{string(p.DataType)},
-		NestedProperties:  nestedPropertiesToREST(p.NestedProperties),
-		Tokenization:      rest.PropertyTokenization(p.Tokenization),
+		Name:             p.Name,
+		Description:      p.Description,
+		DataType:         []string{string(p.DataType)},
+		NestedProperties: nestedPropertiesToREST(p.NestedProperties),
+		Tokenization:     rest.PropertyTokenization(p.Tokenization),
+		TextAnalyzer: rest.TextAnalyzerConfig{
+			AsciiFold:       p.TextAnalyzer.FoldASCII,
+			AsciiFoldIgnore: p.TextAnalyzer.KeepASCII,
+			StopwordPreset:  p.TextAnalyzer.StopwordPreset,
+		},
 		IndexFilterable:   p.IndexFilterable,
 		IndexRangeFilters: p.IndexRangeable,
 		IndexSearchable:   p.IndexSearchable,
@@ -396,11 +401,16 @@ func (c *Collection) MarshalJSON() ([]byte, error) {
 	properties := make([]rest.Property, len(c.Properties)+len(c.References))
 	for i, p := range c.Properties {
 		properties[i] = rest.Property{
-			Name:              p.Name,
-			Description:       p.Description,
-			DataType:          []string{string(p.DataType)},
-			NestedProperties:  nestedPropertiesToREST(p.NestedProperties),
-			Tokenization:      rest.PropertyTokenization(p.Tokenization),
+			Name:             p.Name,
+			Description:      p.Description,
+			DataType:         []string{string(p.DataType)},
+			NestedProperties: nestedPropertiesToREST(p.NestedProperties),
+			Tokenization:     rest.PropertyTokenization(p.Tokenization),
+			TextAnalyzer: rest.TextAnalyzerConfig{
+				AsciiFold:       p.TextAnalyzer.FoldASCII,
+				AsciiFoldIgnore: p.TextAnalyzer.KeepASCII,
+				StopwordPreset:  p.TextAnalyzer.StopwordPreset,
+			},
 			IndexFilterable:   p.IndexFilterable,
 			IndexRangeFilters: p.IndexRangeable,
 			IndexSearchable:   p.IndexSearchable,
@@ -573,9 +583,14 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 				DataType:         DataType(p.DataType[0]),
 				NestedProperties: nestedPropertiesFromREST(p.NestedProperties),
 				Tokenization:     Tokenization(p.Tokenization),
-				IndexFilterable:  p.IndexFilterable,
-				IndexRangeable:   p.IndexRangeFilters,
-				IndexSearchable:  p.IndexSearchable,
+				TextAnalyzer: TextAnalyzerConfig{
+					FoldASCII:      p.TextAnalyzer.AsciiFold,
+					KeepASCII:      p.TextAnalyzer.AsciiFoldIgnore,
+					StopwordPreset: p.TextAnalyzer.StopwordPreset,
+				},
+				IndexFilterable: p.IndexFilterable,
+				IndexRangeable:  p.IndexRangeFilters,
+				IndexSearchable: p.IndexSearchable,
 			})
 		} else {
 			references = append(references, ReferenceProperty{

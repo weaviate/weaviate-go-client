@@ -35,6 +35,7 @@ type (
 		DataType         DataType
 		NestedProperties []Property
 		Tokenization     Tokenization
+		TextAnalyzer     TextAnalyzerConfig
 		IndexFilterable  *bool
 		IndexRangeable   *bool
 		IndexSearchable  *bool
@@ -153,6 +154,7 @@ func collectionToAPI(c *Collection) (api.Collection, error) {
 				DataType:         api.DataType(p.DataType),
 				NestedProperties: nestedPropertiesToAPI(p.NestedProperties),
 				Tokenization:     api.Tokenization(p.Tokenization),
+				TextAnalyzer:     api.TextAnalyzerConfig(p.TextAnalyzer),
 				IndexFilterable:  p.IndexFilterable,
 				IndexRangeable:   p.IndexRangeable,
 				IndexSearchable:  p.IndexSearchable,
@@ -289,6 +291,7 @@ func collectionFromAPI(c *api.Collection) (Collection, error) {
 				DataType:         DataType(p.DataType),
 				NestedProperties: nestedPropertiesFromAPI(p.NestedProperties),
 				Tokenization:     Tokenization(p.Tokenization),
+				TextAnalyzer:     TextAnalyzerConfig(p.TextAnalyzer),
 				IndexFilterable:  p.IndexFilterable,
 				IndexRangeable:   p.IndexRangeable,
 				IndexSearchable:  p.IndexSearchable,
