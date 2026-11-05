@@ -1943,7 +1943,7 @@ func TestRESTResponses(t *testing.T) {
 			},
 		},
 		{
-			name: "export create response",
+			name: "create export response",
 			body: &rest.ExportCreateResponse{
 				Backend:   "s3",
 				Id:        "exp-1",
