@@ -236,6 +236,7 @@ func TestNewWeaviateCloud(t *testing.T) {
 
 		assert.NotNil(t, c.Alias, "nil alias")
 		assert.NotNil(t, c.Backup, "nil backup")
+		assert.NotNil(t, c.Export, "nil export")
 		assert.NotNil(t, c.Collections, "nil collections")
 		assert.NotNil(t, c.Roles, "nil roles")
 		assert.NotNil(t, c.Users, "nil users")

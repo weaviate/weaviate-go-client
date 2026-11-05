@@ -13,6 +13,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/backup"
 	"github.com/weaviate/weaviate-go-client/v6/cluster"
 	"github.com/weaviate/weaviate-go-client/v6/collections"
+	"github.com/weaviate/weaviate-go-client/v6/export"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
 	"github.com/weaviate/weaviate-go-client/v6/internal/auth"
@@ -27,6 +28,7 @@ type Client struct {
 
 	Alias       *alias.Client
 	Backup      *backup.Client
+	Export      *export.Client
 	Collections *collections.Client
 	Roles       *rbac.RolesClient
 	Users       *rbac.UsersClient
@@ -134,6 +136,7 @@ func newClient(ctx context.Context, options []Option) (*Client, error) {
 		Alias:       alias.NewClient(t),
 		Collections: collections.NewClient(t),
 		Backup:      backup.NewClient(t),
+		Export:      export.NewClient(t),
 		Roles:       rbac.NewRolesClient(t),
 		Users:       rbac.NewUsersClient(t),
 		Groups:      rbac.NewGroupsClient(t),

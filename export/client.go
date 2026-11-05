@@ -31,6 +31,8 @@ type Info struct {
 	StartedAt   *time.Time
 	CompletedAt *time.Time
 	Took        time.Duration
+
+	c *Client
 }
 
 type ShardStatus struct {
@@ -85,6 +87,7 @@ func (c *Client) Create(ctx context.Context, options CreateOptions) (*Info, erro
 		IncludesCollections: resp.IncludesCollections,
 		Status:              Status(resp.Status),
 		StartedAt:           resp.StartedAt,
+		c:                   c,
 	}, nil
 }
 
@@ -132,6 +135,7 @@ func (c *Client) GetCreateStatus(ctx context.Context, options GetStatusOptions) 
 		CompletedAt:         resp.CompletedAt,
 		Error:               resp.Error,
 		Took:                resp.Took,
+		c:                   c,
 	}, nil
 }
 
@@ -151,4 +155,11 @@ func (c *Client) CancelCreate(ctx context.Context, options CancelOptions) error 
 		return fmt.Errorf("cancel export: %w", err)
 	}
 	return nil
+}
+
+// IsCompleted returns true if the export operation has completed, successfully or otherwise.
+func (i *Info) IsCompleted() bool {
+	return i.Status == StatusSuccess ||
+		i.Status == StatusFailed ||
+		i.Status == StatusCanceled
 }
