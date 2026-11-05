@@ -36,6 +36,7 @@ type (
 		DataType         DataType
 		NestedProperties []Property
 		Tokenization     Tokenization
+		TextAnalyzer     *TextAnalyzerConfig
 		IndexFilterable  *bool
 		IndexRangeable   *bool
 		IndexSearchable  *bool
@@ -85,6 +86,11 @@ type (
 		PropertyName         string
 		DefaultTTL           time.Duration
 		FilterExpiredObjects bool
+	}
+	TextAnalyzerConfig struct {
+		FoldASCII      bool
+		KeepASCII      []string
+		StopwordPreset string
 	}
 )
 

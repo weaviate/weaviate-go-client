@@ -1516,6 +1516,60 @@ func TestRESTRequests(t *testing.T) {
 			wantMethod: http.MethodDelete,
 			wantPath:   "/replication/replicate",
 		},
+		{
+			name: "tokenize as property",
+			req: &api.TokenizeRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+				Text:        "Hypermedia systems",
+				PropetyName: "lyrics",
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/schema/Songs/properties/lyrics/tokenize",
+			wantBody: rest.TokenizeRequest{
+				Text: "Hypermedia systems",
+			},
+		},
+		{
+			name: "tokenize",
+			req: &api.TokenizeRequest{
+				Text:         "Hypermedia ßyßtemß",
+				Tokenization: api.TokenizationTrigram,
+				TextAnalyzer: &api.TextAnalyzerConfig{
+					FoldASCII:      true,
+					KeepASCII:      []string{"ß"},
+					StopwordPreset: "de-DE",
+				},
+				Stopwords: &api.StopwordConfig{
+					Preset:    "de-DE",
+					Additions: []string{"Zugabe"},
+				},
+				StopwordPresets: map[string][]string{
+					"en-DY": {"withe"},
+					"de-DY": {"runterwegs"},
+				},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/tokenize",
+			wantBody: rest.TokenizeRequest{
+				Text:         "Hypermedia ßyßtemß",
+				Tokenization: rest.TokenizeRequestTokenization(api.TokenizationTrigram),
+				AnalyzerConfig: rest.TextAnalyzerConfig{
+					AsciiFold:       true,
+					AsciiFoldIgnore: []string{"ß"},
+					StopwordPreset:  "de-DE",
+				},
+				Stopwords: rest.StopwordConfig{
+					Preset:    "de-DE",
+					Additions: []string{"Zugabe"},
+				},
+				StopwordPresets: map[string][]string{
+					"en-DY": {"withe"},
+					"de-DY": {"runterwegs"},
+				},
+			},
+		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)
@@ -2553,9 +2607,22 @@ func TestRESTResponses(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "tokenization output",
+			body: &rest.TokenizeResponse{
+				Indexed: []string{"Hypermedia", "systems"},
+				Query:   []string{"SELECT", "*", "FROM", "htmx_posters"},
+			},
+			dest: new(api.TokenizeResponse),
+			want: &api.TokenizeResponse{
+				Indexed: []string{"Hypermedia", "systems"},
+				Query:   []string{"SELECT", "*", "FROM", "htmx_posters"},
+			},
+		},
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.NotNil(t, tt.body, "incomplete test case: body is nil")
+			require.NotNil(t, tt.dest, "incomplete test case: dest is nil")
 			testkit.RequirePointer(t, tt.body, "body")
 			testkit.RequirePointer(t, tt.dest, "dest")
 
