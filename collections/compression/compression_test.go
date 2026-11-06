@@ -37,6 +37,19 @@ func TestCompression(t *testing.T) {
 			conf:   make(map[string]any),
 		},
 		{
+			name: "rq centered",
+			module: compression.RQ{
+				Bits:         4,
+				RescoreLimit: 20,
+				Centering:    true,
+			},
+			conf: map[string]any{
+				"bits":         4,
+				"rescoreLimit": 20,
+				"centering":    true,
+			},
+		},
+		{
 			name: "bq",
 			module: compression.BQ{
 				RescoreLimit: 1,

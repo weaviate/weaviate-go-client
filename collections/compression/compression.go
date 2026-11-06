@@ -28,6 +28,9 @@ type RQ struct {
 	Bits         int  `json:"bits,omitempty"`
 	RescoreLimit int  `json:"rescoreLimit,omitempty"`
 	Cache        bool `json:"cache,omitempty"`
+	// Centering fits a mean vector and stores residuals instead of raw vectors.
+	// It requires 4-bit quantization.
+	Centering bool `json:"centering,omitempty"`
 }
 
 func (RQ) Name() Type { return "rq" }
