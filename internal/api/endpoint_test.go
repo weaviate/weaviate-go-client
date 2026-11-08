@@ -808,6 +808,7 @@ func TestRESTRequests(t *testing.T) {
 						},
 						Backups: []api.BackupsPermission{
 							{Collection: "Songs", Manage: true},
+							{Collection: "Artists", Read: true},
 						},
 						Cluster: []api.ClusterPermission{{Read: true}},
 						Collections: []api.CollectionPermission{
@@ -915,6 +916,12 @@ func TestRESTRequests(t *testing.T) {
 						"action": "manage_backups",
 						"backups": map[string]any{
 							"collection": "Songs",
+						},
+					},
+					{
+						"action": "read_backups",
+						"backups": map[string]any{
+							"collection": "Artists",
 						},
 					},
 					{
@@ -2141,6 +2148,12 @@ func TestRESTResponses(t *testing.T) {
 						},
 					},
 					{
+						"action": "read_backups",
+						"backups": map[string]any{
+							"collection": "Artists",
+						},
+					},
+					{
 						"action": "read_cluster",
 					},
 					{
@@ -2368,6 +2381,7 @@ func TestRESTResponses(t *testing.T) {
 					},
 					Backups: []api.BackupsPermission{
 						{Collection: "Songs", Manage: true},
+						{Collection: "Artists", Read: true},
 					},
 					Cluster: []api.ClusterPermission{{Read: true}},
 					Collections: []api.CollectionPermission{
