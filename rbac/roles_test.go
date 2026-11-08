@@ -326,6 +326,35 @@ func TestRolesClient_HasPermission(t *testing.T) {
 			want: false,
 		},
 		{
+			name: "has read_backups permission",
+			permission: rbac.HasPermission{
+				RoleID:  "rock-n-role",
+				Backups: rbac.BackupsPermission{Collection: "Songs", Read: true},
+			},
+			stubs: []testkit.Stub[api.HasPermissionRequest, api.HasPermissionResponse]{{
+				Request: &api.HasPermissionRequest{
+					RoleID:  "rock-n-role",
+					Backups: api.BackupsPermission{Collection: "Songs", Read: true},
+				},
+				Response: true,
+			}},
+			want: true,
+		},
+		{
+			name: "too many backup actions",
+			permission: rbac.HasPermission{
+				RoleID: "rock-n-role",
+				Backups: rbac.BackupsPermission{
+					Collection: "Songs",
+					Manage:     true,
+					Read:       true,
+				},
+			},
+			err: testkit.Error(func(tt assert.TestingT, got error, a ...any) bool {
+				return assert.ErrorContains(tt, got, "2 were provided")
+			}),
+		},
+		{
 			name: "too many actions",
 			permission: rbac.HasPermission{
 				RoleID: "rock-n-role",

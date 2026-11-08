@@ -371,6 +371,9 @@ func marshalHasPermission(has HasPermission) (*api.HasPermissionRequest, error) 
 	if has.Backups.Manage {
 		count++
 	}
+	if has.Backups.Read {
+		count++
+	}
 	if has.Cluster.Read {
 		count++
 	}
