@@ -21,19 +21,11 @@ func init() {
 type Generative struct {
 	// BaseURL overrides the default request URL, e.g. a proxy.
 	BaseURL string `json:"baseURL,omitempty"`
-	// Model is the Anthropic model name, e.g. "claude-haiku-4-5".
+	// Model name
 	Model         string   `json:"model,omitempty"`
 	MaxTokens     *int64   `json:"maxTokens,omitempty"`
 	StopSequences []string `json:"stopSequences,omitempty"`
 
-	// Temperature, TopK, and TopP are sampling parameters.
-	// Claude 4.7 and later models reject them with an error, and some
-	// earlier models reject Temperature and TopP set together.
-	// Leave them unset unless the target model accepts them.
-	//
-	// See [Anthropic Docs - Messages API].
-	//
-	// [Anthropic Docs - Messages API]: https://platform.claude.com/docs/en/build-with-claude/working-with-messages
 	Temperature *float64 `json:"temperature,omitempty"`
 	TopK        *int64   `json:"topK,omitempty"`
 	TopP        *float64 `json:"topP,omitempty"`
@@ -48,7 +40,7 @@ func (Generative) Name() string { return "generative-anthropic" }
 type Provider struct {
 	// Images are base64-encoded images passed to the model with the prompt.
 	Images []string
-	// ImageProperties name the object properties that contain images for the prompt.
+	// ImageProperties lists the object properties that contain images for the prompt.
 	ImageProperties []string
 	// ReturnMetadata requests provider metadata, such as token usage, in the response.
 	ReturnMetadata bool
