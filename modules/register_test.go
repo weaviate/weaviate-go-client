@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/modules"
+	"github.com/weaviate/weaviate-go-client/v6/modules/anthropic"
 	"github.com/weaviate/weaviate-go-client/v6/modules/aws"
 	"github.com/weaviate/weaviate-go-client/v6/modules/bind"
 	"github.com/weaviate/weaviate-go-client/v6/modules/clip"
@@ -672,6 +673,32 @@ func TestModules(t *testing.T) {
 		{
 			name:   "generative-openai",
 			module: openai.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "generative-anthropic",
+			module: anthropic.Generative{
+				BaseURL:       "anthropic.com",
+				Model:         "claude-haiku-4-5",
+				MaxTokens:     new(int64(12)),
+				Temperature:   new(0.7),
+				TopK:          new(int64(5)),
+				TopP:          new(0.9),
+				StopSequences: []string{"<enough>"},
+			},
+			conf: map[string]any{
+				"baseURL":       "anthropic.com",
+				"model":         "claude-haiku-4-5",
+				"maxTokens":     new(int64(12)),
+				"temperature":   new(0.7),
+				"topK":          new(int64(5)),
+				"topP":          new(0.9),
+				"stopSequences": []string{"<enough>"},
+			},
+		},
+		{
+			name:   "generative-anthropic",
+			module: anthropic.Generative{},
 			conf:   map[string]any{},
 		},
 		{
