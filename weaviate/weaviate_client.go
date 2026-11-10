@@ -126,6 +126,9 @@ type experimental struct {
 }
 
 // Experimental Search gRPC API group
+//
+// Deprecated: the Go client v6 is out: github.com/weaviate/weaviate-go-client/v6.
+// Consider upgrading. See https://docs.weaviate.io/weaviate/client-libraries/go.
 func (e *experimental) Search() *graphql.Search {
 	return graphql.NewSearch(e.grpcClient)
 }
@@ -300,6 +303,10 @@ func (c *Client) Classifications() *classifications.API {
 }
 
 // GraphQL API group
+//
+// Deprecated: the GraphQL API is deprecated and is planned to be disabled and removed.
+// Migrate to github.com/weaviate/weaviate-go-client/v6, which queries over gRPC.
+// See https://docs.weaviate.io/weaviate/api/graphql/migration.
 func (c *Client) GraphQL() *graphql.API {
 	return c.graphQL
 }

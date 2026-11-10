@@ -4,6 +4,11 @@ A native Go client for [Weaviate](https://github.com/weaviate/weaviate).
 
 ## Usage
 
+> :warning: **The GraphQL API is deprecated.** The `v5` client sends `GraphQL().Get()`,
+> `Aggregate()`, `Explore()`, and `Raw()` queries over GraphQL, and they will fail once
+> Weaviate disables GraphQL. Migrate to [`weaviate-go-client/v6`](https://github.com/weaviate/weaviate-go-client/tree/v6),
+> which queries over gRPC. See [Migrating from the GraphQL API](https://docs.weaviate.io/weaviate/api/graphql/migration).
+
 > :warning: `v5.0.0` cannot be installed due to a malformed `go.mod` file.
 > Prefer `v5.0.1` or higher.
 

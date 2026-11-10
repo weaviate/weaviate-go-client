@@ -33,6 +33,9 @@ linters:
         text: "SA1019" # TODO: remove this once deprecated gRPC fields are removed from API
       - linters:
           - staticcheck
+        text: "SA1019: .*weaviate-go-client/v6" # the client itself still uses its deprecated GraphQL API
+      - linters:
+          - staticcheck
         text: "SA1029:"
       - linters:
           - staticcheck

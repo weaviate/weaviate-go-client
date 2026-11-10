@@ -2,7 +2,10 @@ package graphql
 
 import (
 	"context"
+	"log"
 	"net/http"
+	"strings"
+	"sync"
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/connection"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/except"
@@ -10,6 +13,10 @@ import (
 )
 
 // API group for GraphQL
+//
+// Deprecated: the GraphQL API is deprecated and is planned to be disabled and removed.
+// Migrate to github.com/weaviate/weaviate-go-client/v6, which queries over gRPC.
+// See https://docs.weaviate.io/weaviate/api/graphql/migration.
 type API struct {
 	connection *connection.Connection
 }
@@ -20,11 +27,19 @@ func New(con *connection.Connection) *API {
 }
 
 // Get queries
+//
+// Deprecated: the GraphQL API is deprecated and is planned to be disabled and removed.
+// Migrate to github.com/weaviate/weaviate-go-client/v6, which queries over gRPC.
+// See https://docs.weaviate.io/weaviate/api/graphql/migration.
 func (api *API) Get() *GetBuilder {
 	return &GetBuilder{connection: api.connection}
 }
 
 // Get queries with Multiple Class
+//
+// Deprecated: the GraphQL API is deprecated and is planned to be disabled and removed.
+// Migrate to github.com/weaviate/weaviate-go-client/v6, which queries over gRPC.
+// See https://docs.weaviate.io/weaviate/api/graphql/migration.
 func (api *API) MultiClassGet() *MultiClassBuilder {
 	return &MultiClassBuilder{
 		connection:    api.connection,
@@ -33,16 +48,28 @@ func (api *API) MultiClassGet() *MultiClassBuilder {
 }
 
 // Explore queries
+//
+// Deprecated: the GraphQL API is deprecated and is planned to be disabled and removed.
+// Migrate to github.com/weaviate/weaviate-go-client/v6, which queries over gRPC.
+// See https://docs.weaviate.io/weaviate/api/graphql/migration.
 func (api *API) Explore() *Explore {
 	return &Explore{connection: api.connection}
 }
 
 // Aggregate queries
+//
+// Deprecated: the GraphQL API is deprecated and is planned to be disabled and removed.
+// Migrate to github.com/weaviate/weaviate-go-client/v6, which queries over gRPC.
+// See https://docs.weaviate.io/weaviate/api/graphql/migration.
 func (api *API) Aggregate() *AggregateBuilder {
 	return &AggregateBuilder{connection: api.connection}
 }
 
 // Raw creates a raw GraphQL query
+//
+// Deprecated: the GraphQL API is deprecated and is planned to be disabled and removed.
+// Migrate to github.com/weaviate/weaviate-go-client/v6, which queries over gRPC.
+// See https://docs.weaviate.io/weaviate/api/graphql/migration.
 func (api *API) Raw() *Raw {
 	return &Raw{connection: api.connection}
 }
@@ -138,12 +165,39 @@ func runGraphQLQuery(ctx context.Context, rest rest, query string) (*models.Grap
 	gqlQuery := models.GraphQLQuery{
 		Query: query,
 	}
+	warnGraphQLDeprecated()
 	responseData, responseErr := rest.RunREST(ctx, "/graphql", http.MethodPost, &gqlQuery)
 	err := except.CheckResponseDataErrorAndStatusCode(responseData, responseErr, 200)
 	if err != nil {
+		if graphQLDisabled(responseData) {
+			return nil, except.NewWeaviateClientError(responseData.StatusCode, graphQLDisabledMessage)
+		}
 		return nil, except.NewDerivedWeaviateClientError(err)
 	}
 	var gqlResponse models.GraphQLResponse
 	parseErr := responseData.DecodeBodyIntoTarget(&gqlResponse)
 	return &gqlResponse, parseErr
+}
+
+// graphQLDeprecationNotice points v5 users to the client that does not use GraphQL.
+const graphQLDeprecationNotice = "the GraphQL API is deprecated and is planned to be disabled and removed. " +
+	"weaviate-go-client/v5 sends Get, Aggregate, Explore, and Raw queries over GraphQL; " +
+	"migrate to github.com/weaviate/weaviate-go-client/v6, which queries over gRPC. " +
+	"See https://docs.weaviate.io/weaviate/api/graphql/migration"
+
+const graphQLDisabledMessage = "graphql api is disabled on this Weaviate instance. " + graphQLDeprecationNotice
+
+var graphQLWarning sync.Once
+
+// warnGraphQLDeprecated logs the deprecation notice once per process.
+func warnGraphQLDeprecated() {
+	graphQLWarning.Do(func() {
+		log.Printf("weaviate-go-client: %s", graphQLDeprecationNotice)
+	})
+}
+
+// graphQLDisabled reports whether Weaviate refused the query because
+// DISABLE_GRAPHQL is set.
+func graphQLDisabled(responseData *connection.ResponseData) bool {
+	return responseData != nil && strings.Contains(string(responseData.Body), "graphql api is disabled")
 }
