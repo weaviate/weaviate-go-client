@@ -1,13 +1,16 @@
 package nvidia
 
 import (
+	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/modules"
 	"github.com/weaviate/weaviate-go-client/v6/modules/internal"
+	proto "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 func init() {
 	modules.Register(*new(Text2Vec))
 	modules.Register(*new(Multi2Vec))
+	modules.Register(*new(Generative))
 }
 
 // Text2Vec is a vectorizer for text properties based on the text2vec-nvidia module.
@@ -83,4 +86,53 @@ func (m2v *Multi2Vec) DecodeMap(m map[string]any) error {
 		ImageFields: wfs.ImageFields,
 	}
 	return nil
+}
+
+// Generative configures the generative-nvidia module, either as a collection's
+// default generative module or as a per-query provider in the generate package.
+// Unset fields inherit the server defaults.
+//
+// See [Weaviate Docs - generative-nvidia].
+//
+// [Weaviate Docs - generative-nvidia]: https://docs.weaviate.io/weaviate/model-providers/nvidia/generative
+type Generative struct {
+	// BaseURL overrides the default request URL, e.g. a proxy.
+	BaseURL string `json:"baseURL,omitempty"`
+	// Model name
+	Model     string `json:"model,omitempty"`
+	MaxTokens *int64 `json:"maxTokens,omitempty"`
+
+	Temperature *float64 `json:"temperature,omitempty"`
+	TopP        *float64 `json:"topP,omitempty"`
+
+	// Provider holds query-time options. It is ignored in collection configuration.
+	*Provider `json:"-"`
+}
+
+func (Generative) Name() string { return "generative-nvidia" }
+
+// Provider holds options that apply only when Generative is used as a per-query provider.
+type Provider struct {
+	// ReturnMetadata requests provider metadata, such as token usage, in the response.
+	ReturnMetadata bool
+}
+
+func (g Generative) GenerativeProvider() *proto.GenerativeProvider {
+	p := g.Provider
+	if p == nil {
+		p = new(Provider)
+	}
+	return &proto.GenerativeProvider{
+		ReturnMetadata: p.ReturnMetadata,
+		Kind: &proto.GenerativeProvider_Nvidia{
+			Nvidia: &proto.GenerativeNvidia{
+				BaseUrl: api.NilZero(g.BaseURL),
+				Model:   api.NilZero(g.Model),
+
+				MaxTokens:   g.MaxTokens,
+				Temperature: g.Temperature,
+				TopP:        g.TopP,
+			},
+		},
+	}
 }

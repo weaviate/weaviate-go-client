@@ -1,13 +1,16 @@
 package aws
 
 import (
+	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/modules"
 	"github.com/weaviate/weaviate-go-client/v6/modules/internal"
+	proto "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
 )
 
 func init() {
 	modules.Register(*new(Text2Vec))
 	modules.Register(*new(Multi2Vec))
+	modules.Register(*new(Generative))
 }
 
 // Text2Vec is a vectorizer for text properties based on the text2vec-aws module.
@@ -95,4 +98,72 @@ func (m2v *Multi2Vec) DecodeMap(m map[string]any) error {
 		ImageFields: wfs.ImageFields,
 	}
 	return nil
+}
+
+// Generative configures the generative-aws module, either as a collection's
+// default generative module or as a per-query provider in the generate package.
+// Unset fields inherit the server defaults.
+//
+// See [Weaviate Docs - generative-aws].
+//
+// [Weaviate Docs - generative-aws]: https://docs.weaviate.io/weaviate/model-providers/aws/generative
+type Generative struct {
+	// Service selects the AWS service that hosts the model.
+	Service string `json:"service,omitempty"`
+	// Region is the AWS region to run the model in.
+	Region string `json:"region,omitempty"`
+	// BedrockModel is the Bedrock model ID.
+	BedrockModel string `json:"model,omitempty"`
+	// SageMakerEndpoint is the endpoint name.
+	SageMakerEndpoint string `json:"endpoint,omitempty"`
+	// SageMakerModel for multi-model endpoints.
+	SageMakerModel string `json:"targetModel,omitempty"`
+	// SageMakerVariant is the production variant of the [SageMakerModel].
+	SageMakerVariant string `json:"targetVariant,omitempty"`
+
+	MaxTokens     *int64   `json:"maxTokens,omitempty"`
+	StopSequences []string `json:"stopSequences,omitempty"`
+	Temperature   *float64 `json:"temperature,omitempty"`
+
+	// Provider holds query-time options. It is ignored in collection configuration.
+	*Provider `json:"-"`
+}
+
+func (Generative) Name() string { return "generative-aws" }
+
+// Provider holds options that apply only when Generative is used as a per-query provider.
+type Provider struct {
+	// Images are base64-encoded images passed to the model with the prompt.
+	Images []string
+	// ImageProperties lists the object properties that contain images for the prompt.
+	ImageProperties []string
+	// ReturnMetadata requests provider metadata, such as token usage, in the response.
+	ReturnMetadata bool
+}
+
+func (g Generative) GenerativeProvider() *proto.GenerativeProvider {
+	p := g.Provider
+	if p == nil {
+		p = new(Provider)
+	}
+	return &proto.GenerativeProvider{
+		ReturnMetadata: p.ReturnMetadata,
+		Kind: &proto.GenerativeProvider_Aws{
+			Aws: &proto.GenerativeAWS{
+				Service:       api.NilZero(g.Service),
+				Region:        api.NilZero(g.Region),
+				Model:         api.NilZero(g.BedrockModel),
+				Endpoint:      api.NilZero(g.SageMakerEndpoint),
+				TargetModel:   api.NilZero(g.SageMakerModel),
+				TargetVariant: api.NilZero(g.SageMakerVariant),
+
+				MaxTokens:     g.MaxTokens,
+				Temperature:   g.Temperature,
+				StopSequences: internal.TextArray(g.StopSequences),
+
+				Images:          internal.TextArray(p.Images),
+				ImageProperties: internal.TextArray(p.ImageProperties),
+			},
+		},
+	}
 }
