@@ -13,11 +13,15 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/modules/bind"
 	"github.com/weaviate/weaviate-go-client/v6/modules/clip"
 	"github.com/weaviate/weaviate-go-client/v6/modules/cohere"
+	"github.com/weaviate/weaviate-go-client/v6/modules/contextualai"
 	"github.com/weaviate/weaviate-go-client/v6/modules/databricks"
+	"github.com/weaviate/weaviate-go-client/v6/modules/deepseek"
 	"github.com/weaviate/weaviate-go-client/v6/modules/digitalocean"
+	"github.com/weaviate/weaviate-go-client/v6/modules/friendliai"
 	"github.com/weaviate/weaviate-go-client/v6/modules/google"
 	"github.com/weaviate/weaviate-go-client/v6/modules/huggingface"
 	"github.com/weaviate/weaviate-go-client/v6/modules/jinaai"
+	"github.com/weaviate/weaviate-go-client/v6/modules/meta"
 	"github.com/weaviate/weaviate-go-client/v6/modules/mistral"
 	"github.com/weaviate/weaviate-go-client/v6/modules/model2vec"
 	"github.com/weaviate/weaviate-go-client/v6/modules/morph"
@@ -29,12 +33,15 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/modules/twelvelabs"
 	"github.com/weaviate/weaviate-go-client/v6/modules/voyageai"
 	"github.com/weaviate/weaviate-go-client/v6/modules/weaviate"
+	"github.com/weaviate/weaviate-go-client/v6/modules/xai"
 )
 
 // TestModules ensures that all modules are registered with [modules.Registry]
 // and that they produce correct configurations when serialized.
 func TestModules(t *testing.T) {
-	for _, tt := range []struct {
+	for _, tt := range testkit.WithOnly(t, []struct {
+		testkit.Only
+
 		name   string         // Module name.
 		module modules.Module // Module configuration.
 		conf   map[string]any // Expected configuration.
@@ -679,7 +686,7 @@ func TestModules(t *testing.T) {
 			name: "generative-anthropic",
 			module: anthropic.Generative{
 				BaseURL:       "anthropic.com",
-				Model:         "claude-haiku-4-5",
+				Model:         "claude-haiku-5-5",
 				MaxTokens:     new(int64(12)),
 				Temperature:   new(0.7),
 				TopK:          new(int64(5)),
@@ -688,7 +695,7 @@ func TestModules(t *testing.T) {
 			},
 			conf: map[string]any{
 				"baseURL":       "anthropic.com",
-				"model":         "claude-haiku-4-5",
+				"model":         "claude-haiku-5-5",
 				"maxTokens":     new(int64(12)),
 				"temperature":   new(0.7),
 				"topK":          new(int64(5)),
@@ -699,6 +706,322 @@ func TestModules(t *testing.T) {
 		{
 			name:   "generative-anthropic",
 			module: anthropic.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "generative-aws",
+			module: aws.Generative{
+				Service:           aws.SageMaker,
+				Region:            "us-east-1",
+				BedrockModel:      "anthropic.claude-haiku-5-5",
+				SageMakerEndpoint: "my-endpoint",
+				SageMakerModel:    "my-target-model",
+				SageMakerVariant:  "my-variant",
+				MaxTokens:         new(int64(12)),
+				StopSequences:     []string{"<enough>"},
+				Temperature:       new(0.7),
+			},
+			conf: map[string]any{
+				"service":       aws.SageMaker,
+				"region":        "us-east-1",
+				"model":         "anthropic.claude-haiku-5-5",
+				"endpoint":      "my-endpoint",
+				"targetModel":   "my-target-model",
+				"targetVariant": "my-variant",
+				"maxTokens":     new(int64(12)),
+				"stopSequences": []string{"<enough>"},
+				"temperature":   new(0.7),
+			},
+		},
+		{
+			name:   "generative-aws",
+			module: aws.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "generative-cohere",
+			module: cohere.Generative{
+				BaseURL:       "https://proxy.example.com",
+				Model:         "command-a-03-2025",
+				MaxTokens:     new(int64(12)),
+				StopSequences: []string{"<enough>"},
+				Temperature:   new(0.7),
+				K:             new(int64(5)),
+			},
+			conf: map[string]any{
+				"baseURL":       "https://proxy.example.com",
+				"model":         "command-a-03-2025",
+				"maxTokens":     new(int64(12)),
+				"stopSequences": []string{"<enough>"},
+				"temperature":   new(0.7),
+				"k":             new(int64(5)),
+			},
+		},
+		{
+			name:   "generative-cohere",
+			module: cohere.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "generative-contextualai",
+			module: contextualai.Generative{
+				Model:           "v2",
+				MaxNewTokens:    new(int64(12)),
+				Temperature:     new(0.7),
+				TopP:            new(0.9),
+				SystemPrompt:    "Be brief.",
+				AvoidCommentary: new(true),
+				Knowledge:       []string{"The sky is blue."},
+			},
+			conf: map[string]any{
+				"model":           "v2",
+				"maxNewTokens":    new(int64(12)),
+				"temperature":     new(0.7),
+				"topP":            new(0.9),
+				"systemPrompt":    "Be brief.",
+				"avoidCommentary": new(true),
+				"knowledge":       []string{"The sky is blue."},
+			},
+		},
+		{
+			name:   "generative-contextualai",
+			module: contextualai.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "generative-databricks",
+			module: databricks.Generative{
+				Endpoint:    "https://my-workspace.cloud.databricks.com/serving-endpoints/my-model/invocations",
+				MaxTokens:   new(int64(12)),
+				Temperature: new(0.7),
+				TopP:        new(0.9),
+			},
+			conf: map[string]any{
+				"endpoint":    "https://my-workspace.cloud.databricks.com/serving-endpoints/my-model/invocations",
+				"maxTokens":   new(int64(12)),
+				"temperature": new(0.7),
+				"topP":        new(0.9),
+			},
+		},
+		{
+			name:   "generative-databricks",
+			module: databricks.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "generative-deepseek",
+			module: deepseek.Generative{
+				BaseURL:          "https://proxy.example.com",
+				Model:            "deepseek-chat",
+				MaxTokens:        new(int64(12)),
+				StopSequences:    []string{"<enough>"},
+				Temperature:      new(0.7),
+				TopP:             new(0.9),
+				FrequencyPenalty: new(0.1),
+				PresencePenalty:  new(0.2),
+			},
+			conf: map[string]any{
+				"baseURL":          "https://proxy.example.com",
+				"model":            "deepseek-chat",
+				"maxTokens":        new(int64(12)),
+				"stop":             []string{"<enough>"},
+				"temperature":      new(0.7),
+				"topP":             new(0.9),
+				"frequencyPenalty": new(0.1),
+				"presencePenalty":  new(0.2),
+			},
+		},
+		{
+			name:   "generative-deepseek",
+			module: deepseek.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "generative-digitalocean",
+			module: digitalocean.Generative{
+				BaseURL:          "https://proxy.example.com",
+				Model:            "llama3.3-70b-instruct",
+				MaxTokens:        new(int64(12)),
+				StopSequences:    []string{"<enough>"},
+				Temperature:      new(0.7),
+				TopP:             new(0.9),
+				FrequencyPenalty: new(0.1),
+				PresencePenalty:  new(0.2),
+			},
+			conf: map[string]any{
+				"baseURL":          "https://proxy.example.com",
+				"model":            "llama3.3-70b-instruct",
+				"maxTokens":        new(int64(12)),
+				"stop":             []string{"<enough>"},
+				"temperature":      new(0.7),
+				"topP":             new(0.9),
+				"frequencyPenalty": new(0.1),
+				"presencePenalty":  new(0.2),
+			},
+		},
+		{
+			name:   "generative-digitalocean",
+			module: digitalocean.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "generative-friendliai",
+			module: friendliai.Generative{
+				BaseURL:     "https://inference.friendli.ai",
+				Model:       "meta-llama-3.1-70b-instruct",
+				MaxTokens:   new(int64(12)),
+				Temperature: new(0.7),
+			},
+			conf: map[string]any{
+				"baseURL":     "https://inference.friendli.ai",
+				"model":       "meta-llama-3.1-70b-instruct",
+				"maxTokens":   new(int64(12)),
+				"temperature": new(0.7),
+			},
+		},
+		{
+			name:   "generative-friendliai",
+			module: friendliai.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "generative-google",
+			module: google.Generative{
+				APIEndpoint:      "us-east1-aiplatform.googleapis.com",
+				Model:            "gemini-2.5-flash",
+				MaxTokens:        new(int64(12)),
+				Temperature:      new(0.7),
+				TopK:             new(int64(5)),
+				TopP:             new(0.9),
+				VertexProjectID:  "my-project",
+				VertexEndpointID: "my-endpoint",
+				VertexRegion:     "us-east1",
+				VertexLocation:   "global",
+			},
+			conf: map[string]any{
+				"apiEndpoint": "us-east1-aiplatform.googleapis.com",
+				"model":       "gemini-2.5-flash",
+				"tokenLimit":  new(int64(12)),
+				"temperature": new(0.7),
+				"topK":        new(int64(5)),
+				"topP":        new(0.9),
+				"projectId":   "my-project",
+				"endpointId":  "my-endpoint",
+				"region":      "us-east1",
+				"location":    "global",
+			},
+		},
+		{
+			name:   "generative-google",
+			module: google.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "generative-meta",
+			module: meta.Generative{
+				BaseURL:          "https://api.meta.ai",
+				Model:            "muse-spark-1.2",
+				MaxTokens:        new(int64(12)),
+				Temperature:      new(0.7),
+				TopP:             new(0.9),
+				FrequencyPenalty: new(0.1),
+				PresencePenalty:  new(0.2),
+				ReasoningEffort:  meta.XHighEffort,
+			},
+			conf: map[string]any{
+				"baseURL":          "https://api.meta.ai",
+				"model":            "muse-spark-1.2",
+				"maxTokens":        new(int64(12)),
+				"temperature":      new(0.7),
+				"topP":             new(0.9),
+				"frequencyPenalty": new(0.1),
+				"presencePenalty":  new(0.2),
+				"reasoningEffort":  "xhigh",
+			},
+		},
+		{
+			name:   "generative-meta",
+			module: meta.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "generative-mistral",
+			module: mistral.Generative{
+				BaseURL:     "https://proxy.example.com",
+				Model:       "mistral-large-latest",
+				MaxTokens:   new(int64(12)),
+				Temperature: new(0.7),
+			},
+			conf: map[string]any{
+				"baseURL":     "https://proxy.example.com",
+				"model":       "mistral-large-latest",
+				"maxTokens":   new(int64(12)),
+				"temperature": new(0.7),
+			},
+		},
+		{
+			name:   "generative-mistral",
+			module: mistral.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "generative-nvidia",
+			module: nvidia.Generative{
+				BaseURL:     "https://proxy.example.com",
+				Model:       "nvidia/llama-3.1-nemotron-70b-instruct",
+				MaxTokens:   new(int64(12)),
+				Temperature: new(0.7),
+				TopP:        new(0.9),
+			},
+			conf: map[string]any{
+				"baseURL":     "https://proxy.example.com",
+				"model":       "nvidia/llama-3.1-nemotron-70b-instruct",
+				"maxTokens":   new(int64(12)),
+				"temperature": new(0.7),
+				"topP":        new(0.9),
+			},
+		},
+		{
+			name:   "generative-nvidia",
+			module: nvidia.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "generative-ollama",
+			module: ollama.Generative{
+				APIEndpoint: "http://host.docker.internal:11434",
+				Model:       "llama3.2",
+			},
+			conf: map[string]any{
+				"apiEndpoint": "http://host.docker.internal:11434",
+				"model":       "llama3.2",
+			},
+		},
+		{
+			name:   "generative-ollama",
+			module: ollama.Generative{},
+			conf:   map[string]any{},
+		},
+		{
+			name: "generative-xai",
+			module: xai.Generative{
+				BaseURL:     "https://proxy.example.com",
+				Model:       "grok-4",
+				MaxTokens:   new(int64(12)),
+				Temperature: new(0.7),
+				TopP:        new(0.9),
+			},
+			conf: map[string]any{
+				"baseURL":     "https://proxy.example.com",
+				"model":       "grok-4",
+				"maxTokens":   new(int64(12)),
+				"temperature": new(0.7),
+				"topP":        new(0.9),
+			},
+		},
+		{
+			name:   "generative-xai",
+			module: xai.Generative{},
 			conf:   map[string]any{},
 		},
 		{
@@ -777,17 +1100,41 @@ func TestModules(t *testing.T) {
 			module: bind.Multi2Vec{},
 			conf:   map[string]any{},
 		},
-	} {
+	}) {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.name, tt.module.Name(), "module name")
-
 			conf, err := modules.Registry.Encode(tt.module)
 			require.NoError(t, err, "encode")
 			assert.Equal(t, tt.conf, conf, "encoded configuration")
 
-			module, err := modules.Registry.Decode(tt.name, conf)
+			module, err := modules.Registry.Decode(tt.module.Name(), tt.conf)
 			require.NoError(t, err, "decode")
 			assert.EqualExportedValues(t, tt.module, module, "decoded module")
+		})
+	}
+}
+
+// Some modules' configuration options have deprecated aliases,
+// which should be correctly mapped to their respective fields.
+func TestModule_DecodeMap(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		conf map[string]any
+		want modules.Module
+	}{
+		{
+			name: "generative-google",
+			conf: map[string]any{
+				"modelId": "gemini-2.5-flash",
+			},
+			want: google.Generative{
+				Model: "gemini-2.5-flash",
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			module, err := modules.Registry.Decode(tt.want.Name(), tt.conf)
+			require.NoError(t, err, "decode")
+			assert.EqualExportedValues(t, tt.want, module, "decoded module")
 		})
 	}
 }
