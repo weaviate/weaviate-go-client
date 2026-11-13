@@ -213,7 +213,7 @@ func TestRESTRequests(t *testing.T) {
 							Name:         "lyrics",
 							DataType:     api.DataTypeInt,
 							Tokenization: api.TokenizationTrigram,
-							TextAnalyzer: api.TextAnalyzerConfig{
+							TextAnalyzer: &api.TextAnalyzerConfig{
 								FoldASCII:      true,
 								KeepASCII:      []string{"(╯°□°)╯"},
 								StopwordPreset: "en-EN",
@@ -349,7 +349,7 @@ func TestRESTRequests(t *testing.T) {
 						Name:         "lyrics",
 						DataType:     []string{string(api.DataTypeInt)},
 						Tokenization: rest.PropertyTokenizationTrigram,
-						TextAnalyzer: rest.TextAnalyzerConfig{
+						TextAnalyzer: &rest.TextAnalyzerConfig{
 							AsciiFold:       true,
 							AsciiFoldIgnore: []string{"(╯°□°)╯"},
 							StopwordPreset:  "en-EN",
@@ -1662,7 +1662,7 @@ func TestRESTResponses(t *testing.T) {
 						Name:         "lyrics",
 						DataType:     []string{string(api.DataTypeInt)},
 						Tokenization: rest.PropertyTokenizationTrigram,
-						TextAnalyzer: rest.TextAnalyzerConfig{
+						TextAnalyzer: &rest.TextAnalyzerConfig{
 							AsciiFold:       true,
 							AsciiFoldIgnore: []string{"(╯°□°)╯"},
 							StopwordPreset:  "en-EN",
@@ -1787,7 +1787,7 @@ func TestRESTResponses(t *testing.T) {
 						Name:         "lyrics",
 						DataType:     api.DataTypeInt,
 						Tokenization: api.TokenizationTrigram,
-						TextAnalyzer: api.TextAnalyzerConfig{
+						TextAnalyzer: &api.TextAnalyzerConfig{
 							FoldASCII:      true,
 							KeepASCII:      []string{"(╯°□°)╯"},
 							StopwordPreset: "en-EN",

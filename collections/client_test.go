@@ -120,7 +120,7 @@ func TestClient_Create(t *testing.T) {
 						Name:         "lyrics",
 						DataType:     collections.DataTypeInt,
 						Tokenization: collections.TokenizationTrigram,
-						TextAnalyzer: collections.TextAnalyzerConfig{
+						TextAnalyzer: &collections.TextAnalyzerConfig{
 							FoldASCII:      true,
 							KeepASCII:      []string{"(╯°□°)╯"},
 							StopwordPreset: "en-EN",
@@ -246,7 +246,7 @@ func TestClient_Create(t *testing.T) {
 									Name:         "lyrics",
 									DataType:     api.DataTypeInt,
 									Tokenization: api.TokenizationTrigram,
-									TextAnalyzer: api.TextAnalyzerConfig{
+									TextAnalyzer: &api.TextAnalyzerConfig{
 										FoldASCII:      true,
 										KeepASCII:      []string{"(╯°□°)╯"},
 										StopwordPreset: "en-EN",
@@ -455,7 +455,7 @@ func TestClient_GetConfig(t *testing.T) {
 								Name:         "lyrics",
 								DataType:     api.DataTypeInt,
 								Tokenization: api.TokenizationTrigram,
-								TextAnalyzer: api.TextAnalyzerConfig{
+								TextAnalyzer: &api.TextAnalyzerConfig{
 									FoldASCII:      true,
 									KeepASCII:      []string{"(╯°□°)╯"},
 									StopwordPreset: "en-EN",
@@ -591,7 +591,7 @@ func TestClient_GetConfig(t *testing.T) {
 						Name:         "lyrics",
 						DataType:     collections.DataTypeInt,
 						Tokenization: collections.TokenizationTrigram,
-						TextAnalyzer: collections.TextAnalyzerConfig{
+						TextAnalyzer: &collections.TextAnalyzerConfig{
 							FoldASCII:      true,
 							KeepASCII:      []string{"(╯°□°)╯"},
 							StopwordPreset: "en-EN",
