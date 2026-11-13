@@ -144,10 +144,8 @@ func (m2v *Multi2Vec) DecodeMap(m map[string]any) error {
 type Generative struct {
 	// APIEndpoint is a host name without a scheme such as "https://".
 	APIEndpoint string `json:"apiEndpoint,omitempty"`
-	// Model name
-	Model string `json:"model,omitempty"`
-	// MaxTokens is stored as "tokenLimit" in the collection configuration.
-	MaxTokens *int64 `json:"tokenLimit,omitempty"`
+	Model       string `json:"model,omitempty"`
+	MaxTokens   *int64 `json:"tokenLimit,omitempty"`
 
 	Temperature *float64 `json:"temperature,omitempty"`
 	TopK        *int64   `json:"topK,omitempty"`
@@ -168,19 +166,21 @@ type Generative struct {
 
 func (Generative) Name() string { return "generative-google" }
 
-// DecodeMap reads the legacy "modelId" key into Model when "model" is not set,
-// following the server's precedence.
+// DecodeMap reads the legacy "modelId" key into Model if "model" is not set.
 func (g *Generative) DecodeMap(m map[string]any) error {
-	type generative Generative // Drops DecodeMap to avoid recursion.
-	var dest generative
+	type generativeJSON Generative // Avoid recursive calls to DecodeMap.
+	var dest struct {
+		// See https://pkg.go.dev/github.com/go-viper/mapstructure/v2#hdr-Embedded_Structs_and_Squashing.
+		generativeJSON `json:",squash"`
+		ModelID        string `json:"modelId,omitempty"` // Deprecated alias for "model".
+	}
 	if err := orm.Decode(m, &dest); err != nil {
 		return err
 	}
-
-	*g = Generative(dest)
-	if modelID, ok := m["modelId"].(string); ok && g.Model == "" {
-		g.Model = modelID
+	if dest.Model == "" {
+		dest.Model = dest.ModelID
 	}
+	*g = Generative(dest.generativeJSON)
 	return nil
 }
 
