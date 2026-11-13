@@ -171,6 +171,7 @@ func (g *Generative) DecodeMap(m map[string]any) error {
 	type generativeJSON Generative // Avoid recursive calls to DecodeMap.
 	var dest struct {
 		// See https://pkg.go.dev/github.com/go-viper/mapstructure/v2#hdr-Embedded_Structs_and_Squashing.
+		// nolint:staticcheck
 		generativeJSON `json:",squash"`
 		ModelID        string `json:"modelId,omitempty"` // Deprecated alias for "model".
 	}
