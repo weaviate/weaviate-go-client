@@ -2049,7 +2049,7 @@ func TestRESTResponses(t *testing.T) {
 					"abc": {
 						"node-0": {
 							ObjectsExported: 92,
-							Status:          rest.ShardProgressStatusFAILED,
+							Status:          rest.FAILED,
 							Error:           "Whaam!",
 							SkipReason:      "We have exports at home",
 						},

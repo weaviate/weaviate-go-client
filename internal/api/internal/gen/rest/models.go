@@ -835,6 +835,48 @@ func (e ReplicationConfigDeletionStrategy) Valid() bool {
 	}
 }
 
+// Defines values for ReplicationRebalancePlanState.
+const (
+	ReplicationRebalancePlanStateCOMPLETED        ReplicationRebalancePlanState = "COMPLETED"
+	ReplicationRebalancePlanStateFAILED           ReplicationRebalancePlanState = "FAILED"
+	ReplicationRebalancePlanStateNOACCEPTABLEPLAN ReplicationRebalancePlanState = "NO_ACCEPTABLE_PLAN"
+	ReplicationRebalancePlanStateNOTNEEDED        ReplicationRebalancePlanState = "NOT_NEEDED"
+	ReplicationRebalancePlanStatePLANNING         ReplicationRebalancePlanState = "PLANNING"
+	ReplicationRebalancePlanStatePLANNINGFAILED   ReplicationRebalancePlanState = "PLANNING_FAILED"
+	ReplicationRebalancePlanStatePROPOSED         ReplicationRebalancePlanState = "PROPOSED"
+	ReplicationRebalancePlanStateRUNNING          ReplicationRebalancePlanState = "RUNNING"
+	ReplicationRebalancePlanStateSTOPPED          ReplicationRebalancePlanState = "STOPPED"
+	ReplicationRebalancePlanStateSTOPPING         ReplicationRebalancePlanState = "STOPPING"
+)
+
+// Valid indicates whether the value is a known member of the ReplicationRebalancePlanState enum.
+func (e ReplicationRebalancePlanState) Valid() bool {
+	switch e {
+	case ReplicationRebalancePlanStateCOMPLETED:
+		return true
+	case ReplicationRebalancePlanStateFAILED:
+		return true
+	case ReplicationRebalancePlanStateNOACCEPTABLEPLAN:
+		return true
+	case ReplicationRebalancePlanStateNOTNEEDED:
+		return true
+	case ReplicationRebalancePlanStatePLANNING:
+		return true
+	case ReplicationRebalancePlanStatePLANNINGFAILED:
+		return true
+	case ReplicationRebalancePlanStatePROPOSED:
+		return true
+	case ReplicationRebalancePlanStateRUNNING:
+		return true
+	case ReplicationRebalancePlanStateSTOPPED:
+		return true
+	case ReplicationRebalancePlanStateSTOPPING:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ReplicationReplicateDetailsReplicaResponseType.
 const (
 	ReplicationReplicateDetailsReplicaResponseTypeCOPY ReplicationReplicateDetailsReplicaResponseType = "COPY"
@@ -1320,22 +1362,22 @@ func (e SearchReferenceSelectorReturnMetadata) Valid() bool {
 
 // Defines values for ShardProgressStatus.
 const (
-	ShardProgressStatusFAILED       ShardProgressStatus = "FAILED"
-	ShardProgressStatusSKIPPED      ShardProgressStatus = "SKIPPED"
-	ShardProgressStatusSUCCESS      ShardProgressStatus = "SUCCESS"
-	ShardProgressStatusTRANSFERRING ShardProgressStatus = "TRANSFERRING"
+	FAILED       ShardProgressStatus = "FAILED"
+	SKIPPED      ShardProgressStatus = "SKIPPED"
+	SUCCESS      ShardProgressStatus = "SUCCESS"
+	TRANSFERRING ShardProgressStatus = "TRANSFERRING"
 )
 
 // Valid indicates whether the value is a known member of the ShardProgressStatus enum.
 func (e ShardProgressStatus) Valid() bool {
 	switch e {
-	case ShardProgressStatusFAILED:
+	case FAILED:
 		return true
-	case ShardProgressStatusSKIPPED:
+	case SKIPPED:
 		return true
-	case ShardProgressStatusSUCCESS:
+	case SUCCESS:
 		return true
-	case ShardProgressStatusTRANSFERRING:
+	case TRANSFERRING:
 		return true
 	default:
 		return false
@@ -1908,7 +1950,7 @@ type BackupConfig struct {
 	// Path Path or key within the bucket.
 	Path string `json:"Path,omitempty"`
 
-	// DedupeConvergenceTimeoutSeconds How long the coordinator waits for replica convergence proof before shards fall back to being archived by every replica. Only used when dedupeReplicas is set. The wait happens synchronously inside the backup creation request, which blocks for roughly 10 seconds plus up to this timeout; size client timeouts accordingly.
+	// DedupeConvergenceTimeoutSeconds How long the coordinator waits for replica convergence proof before shards fall back to being archived by every replica. Only used when dedupeReplicas is set. When omitted, BACKUP_DEDUPE_CONVERGENCE_TIMEOUT applies (15 seconds unless configured). The wait happens synchronously inside the backup creation request, which blocks for roughly 10 seconds plus up to this timeout; size client timeouts accordingly.
 	DedupeConvergenceTimeoutSeconds int `json:"dedupeConvergenceTimeoutSeconds,omitempty"`
 
 	// DedupeReplicas If true, shards of replicated collections proven in sync by async-replication checkpoints are archived by one replica instead of all, and restore copies them back to every replica; other shards are archived by every replica. Requires async replication, BACKUP_DEDUPE_ENABLED=true (else 422) and a Weaviate license key (else 403) on every node. Such backups restore only on versions that support this option; restoring needs no license.
@@ -2780,11 +2822,11 @@ type Namespace struct {
 	// Name The unique name of the namespace.
 	Name string `json:"name,omitempty"`
 
-	// State Lifecycle state. "active" namespaces accept all operations. "suspended" namespaces reject new classes, aliases, users, roles, and role assignments, and their users can no longer authenticate; everything the namespace already owns is retained. "resuming" namespaces are on their way back to "active" and are still restricted the same way. "deleting" namespaces are being removed: new classes, aliases, and users can no longer be created in the namespace, and the namespace itself disappears once removal completes.
+	// State Lifecycle state. "active" namespaces accept all operations. "suspended" namespaces reject new classes, aliases, users, roles, role assignments, and replica movements, and their users can no longer authenticate; everything the namespace already owns is retained. "resuming" namespaces are on their way back to "active" and are still restricted the same way, replica movements included. "deleting" namespaces are being removed: new classes, aliases, users, and replica movements can no longer be created in the namespace, and the namespace itself disappears once removal completes.
 	State NamespaceState `json:"state,omitempty"`
 }
 
-// NamespaceState Lifecycle state. "active" namespaces accept all operations. "suspended" namespaces reject new classes, aliases, users, roles, and role assignments, and their users can no longer authenticate; everything the namespace already owns is retained. "resuming" namespaces are on their way back to "active" and are still restricted the same way. "deleting" namespaces are being removed: new classes, aliases, and users can no longer be created in the namespace, and the namespace itself disappears once removal completes.
+// NamespaceState Lifecycle state. "active" namespaces accept all operations. "suspended" namespaces reject new classes, aliases, users, roles, role assignments, and replica movements, and their users can no longer authenticate; everything the namespace already owns is retained. "resuming" namespaces are on their way back to "active" and are still restricted the same way, replica movements included. "deleting" namespaces are being removed: new classes, aliases, users, and replica movements can no longer be created in the namespace, and the namespace itself disappears once removal completes.
 type NamespaceState string
 
 // NamespaceCreateRequest Optional body for namespace creation. When `home_node` is omitted, the cluster picks one automatically.
@@ -3286,6 +3328,90 @@ type ReplicationConfig struct {
 // ReplicationConfigDeletionStrategy Conflict resolution strategy for deleted objects.
 type ReplicationConfigDeletionStrategy string
 
+// ReplicationRebalanceCreateResponse Contains the unique identifier of a newly created rebalance plan. GET /replication/rebalance reports the plan's progress.
+type ReplicationRebalanceCreateResponse struct {
+	// Id The unique identifier (ID) of the rebalance plan.
+	Id string `json:"id,omitempty"`
+}
+
+// ReplicationRebalancePlan The cluster's rebalance plan: the request it was created from, its current state, and the node measurements and baseline balance taken by its planning run.
+type ReplicationRebalancePlan struct {
+	// Baseline The measured load of each listed node before any move.
+	Baseline []struct {
+		// DiskUtilisation The node's used disk bytes divided by its disk usage warning threshold in bytes.
+		DiskUtilisation float32 `json:"diskUtilisation"`
+
+		// Node The name of the node.
+		Node string `json:"node"`
+
+		// ReplicaCount The number of shard replicas the node hosts, not counting replicas of FROZEN tenants.
+		ReplicaCount int `json:"replicaCount"`
+	} `json:"baseline,omitempty"`
+
+	// Collections The names of the collections given in the create request.
+	Collections []string `json:"collections,omitempty"`
+
+	// CreatedAtUnixMs The UNIX timestamp in ms when the plan was created.
+	CreatedAtUnixMs int64 `json:"createdAtUnixMs,omitempty"`
+
+	// Id The unique identifier (ID) of the rebalance plan.
+	Id string `json:"id,omitempty"`
+
+	// MeasuredAtUnixMs The UNIX timestamp in ms when the applied planning run started measuring the nodes. Zero until a planning run completes.
+	MeasuredAtUnixMs int64 `json:"measuredAtUnixMs,omitempty"`
+
+	// Nodes The resource measurement of each listed node, taken by the applied planning run.
+	Nodes []struct {
+		// DiskAvailableBytes The free bytes on the disk holding the node's data. The count includes blocks reserved for root.
+		DiskAvailableBytes int64 `json:"diskAvailableBytes"`
+
+		// DiskTotalBytes The total size in bytes of the disk holding the node's data.
+		DiskTotalBytes int64 `json:"diskTotalBytes"`
+
+		// DiskWarningPercentage The node's disk usage warning threshold, as a percentage of the disk's total size.
+		DiskWarningPercentage int64 `json:"diskWarningPercentage"`
+
+		// Error Why the node could not be measured. Empty when the measurement succeeded.
+		Error string `json:"error,omitempty"`
+
+		// MemoryLimitBytes The node's Go runtime memory limit in bytes.
+		MemoryLimitBytes int64 `json:"memoryLimitBytes"`
+
+		// Node The name of the node.
+		Node string `json:"node"`
+
+		// ReplicationWorkers The number of replication engine workers configured on the node.
+		ReplicationWorkers int `json:"replicationWorkers"`
+	} `json:"nodes,omitempty"`
+
+	// Reason A human-readable explanation of the planning outcome, e.g. why planning failed.
+	Reason string `json:"reason,omitempty"`
+
+	// SourceNodes The names of the nodes that replicas move away from, as given in the create request.
+	SourceNodes []string `json:"sourceNodes,omitempty"`
+
+	// State The current state of the rebalance plan. A plan starts in `PLANNING`. A planning run ends it `NOT_NEEDED`, `PROPOSED`, `NO_ACCEPTABLE_PLAN` or `PLANNING_FAILED`, and a stop ends it `STOPPED`.
+	State ReplicationRebalancePlanState `json:"state,omitempty"`
+
+	// TargetNodes The names of the nodes that replicas move to, as given in the create request.
+	TargetNodes []string `json:"targetNodes,omitempty"`
+}
+
+// ReplicationRebalancePlanState The current state of the rebalance plan. A plan starts in `PLANNING`. A planning run ends it `NOT_NEEDED`, `PROPOSED`, `NO_ACCEPTABLE_PLAN` or `PLANNING_FAILED`, and a stop ends it `STOPPED`.
+type ReplicationRebalancePlanState string
+
+// ReplicationRebalanceRequest Specifies the nodes a rebalance plan moves shard replicas between. Replicas move from the source nodes to the target nodes.
+type ReplicationRebalanceRequest struct {
+	// Collections The names of the collections the plan covers. The value is stored with the plan and does not yet affect planning.
+	Collections []string `json:"collections,omitempty"`
+
+	// SourceNodes The names of the nodes that replicas move away from. The list must be non-empty, must not repeat a node, and must not share a node with `targetNodes`.
+	SourceNodes []string `json:"sourceNodes,omitempty"`
+
+	// TargetNodes The names of the nodes that replicas move to. The list must be non-empty, must not repeat a node, and must not share a node with `sourceNodes`.
+	TargetNodes []string `json:"targetNodes,omitempty"`
+}
+
 // ReplicationReplicateDetailsReplicaResponse Provides a comprehensive overview of a specific replication operation, detailing its unique ID, the involved collection, shard, source and target nodes, transfer type, current status, and optionally, its status history.
 type ReplicationReplicateDetailsReplicaResponse struct {
 	// Collection The name of the collection to which the shard being replicated belongs.
@@ -3651,7 +3777,7 @@ type SearchCommonReturnMetadata string
 
 // SearchHybridRequest defines model for SearchHybridRequest.
 type SearchHybridRequest struct {
-	// Alpha The weight of the vector part of the search, between 0 and 1. `0` is a pure keyword search, `1` a pure vector search. Omitted defaults to `0.75`. With `0` the query is never vectorized, so a collection without a vectorizer module is searchable.
+	// Alpha The weight of the vector part of the search, between 0 and 1. `0` is a pure keyword search, `1` a pure vector search. Omitted defaults to `0.75`. With `0`, or with `vector` supplied, the query is never vectorized, so a collection without a vectorizer module is searchable.
 	Alpha float32 `json:"alpha,omitempty"`
 
 	// AutoLimit Cut results off at the first steep drop in score (autocut). The value is the number of score jumps to allow before cutting.
@@ -3684,7 +3810,7 @@ type SearchHybridRequest struct {
 	// Offset The number of objects to skip before returning results. Used with `limit` for pagination.
 	Offset int64 `json:"offset,omitempty"`
 
-	// Query The query, as a plain string. It is scored with BM25F for the keyword part of the search and vectorized server-side for the vector part. Must not be empty.
+	// Query The query, as a plain string. It is scored with BM25F for the keyword part of the search and vectorized server-side for the vector part, unless `vector` is supplied. Must not be empty.
 	Query string `json:"query"`
 
 	// QueryProperties The properties the keyword part of the search scores against, each optionally weighted with a `^boost` suffix (e.g. `title^2`). Omitted or empty searches every searchable text property. A property without a searchable index is rejected with 422.
@@ -3710,6 +3836,9 @@ type SearchHybridRequest struct {
 
 	// Tenant The tenant to search in a multi-tenant collection.
 	Tenant string `json:"tenant,omitempty"`
+
+	// Vector The query vector for the vector part of the search, used instead of vectorizing `query`. A non-empty array of numbers that fit a 32-bit float, e.g. `[0.12, -0.3, 0.98]`. It must have the dimensionality of the vector space it is searched against, that is of the collection's (target) vector. Requires `alpha` > 0.
+	Vector map[string]interface{} `json:"vector,omitempty"`
 
 	// Where Filter search results using a where filter.
 	Where WhereFilter `json:"where,omitempty"`
@@ -3909,7 +4038,7 @@ type SearchNearVectorRequest struct {
 	// Tenant The tenant to search in a multi-tenant collection.
 	Tenant string `json:"tenant,omitempty"`
 
-	// Vector The query vector, as a non-empty array of numbers that fit a 32-bit float, e.g. `[0.12, -0.3, 0.98]`. It must have the dimensionality of the vector space it is searched against, that is of the collection's (target) vector. A vector of the wrong dimensionality is rejected with 422 by uncompressed HNSW and flat indexes; a BQ- or RQ-compressed HNSW index does not detect it and yields an empty result set instead.
+	// Vector The query vector, as a non-empty array of numbers that fit a 32-bit float, e.g. `[0.12, -0.3, 0.98]`. It must have the dimensionality of the vector space it is searched against, that is of the collection's (target) vector.
 	Vector map[string]interface{} `json:"vector"`
 
 	// Where Filter search results using a where filter.
@@ -4682,6 +4811,12 @@ type ObjectsReferencesUpdateParams struct {
 	Tenant string `form:"tenant,omitempty" json:"tenant,omitempty"`
 }
 
+// GetRebalancePlanParams defines parameters for GetRebalancePlan.
+type GetRebalancePlanParams struct {
+	// Consistency If true, the read goes through the cluster leader for read-your-writes. If false, the node serving the request answers from its local state, which can lag the leader. Default is false.
+	Consistency bool `json:"consistency,omitempty"`
+}
+
 // ListReplicationParams defines parameters for ListReplication.
 type ListReplicationParams struct {
 	// TargetNode The name of the target node to get details for.
@@ -4933,6 +5068,9 @@ type ObjectsReferencesCreateJSONRequestBody = SingleRef
 
 // ObjectsReferencesUpdateJSONRequestBody defines body for ObjectsReferencesUpdate for application/json ContentType.
 type ObjectsReferencesUpdateJSONRequestBody = MultipleRef
+
+// CreateRebalancePlanJSONRequestBody defines body for CreateRebalancePlan for application/json ContentType.
+type CreateRebalancePlanJSONRequestBody = ReplicationRebalanceRequest
 
 // ReplicateJSONRequestBody defines body for Replicate for application/json ContentType.
 type ReplicateJSONRequestBody = ReplicationReplicateReplicaRequest
