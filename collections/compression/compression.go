@@ -28,6 +28,7 @@ type RQ struct {
 	Bits         int  `json:"bits,omitempty"`
 	RescoreLimit int  `json:"rescoreLimit,omitempty"`
 	Cache        bool `json:"cache,omitempty"`
+	Centering    bool `json:"centering,omitempty"`
 }
 
 func (RQ) Name() Type { return "rq" }
