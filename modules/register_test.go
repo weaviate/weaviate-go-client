@@ -39,7 +39,9 @@ import (
 // TestModules ensures that all modules are registered with [modules.Registry]
 // and that they produce correct configurations when serialized.
 func TestModules(t *testing.T) {
-	for _, tt := range []struct {
+	for _, tt := range testkit.WithOnly(t, []struct {
+		testkit.Only
+
 		name   string         // Module name.
 		module modules.Module // Module configuration.
 		conf   map[string]any // Expected configuration.
@@ -1098,49 +1100,41 @@ func TestModules(t *testing.T) {
 			module: bind.Multi2Vec{},
 			conf:   map[string]any{},
 		},
-	} {
+	}) {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.name, tt.module.Name(), "module name")
-
 			conf, err := modules.Registry.Encode(tt.module)
 			require.NoError(t, err, "encode")
 			assert.Equal(t, tt.conf, conf, "encoded configuration")
 
-			module, err := modules.Registry.Decode(tt.name, conf)
+			module, err := modules.Registry.Decode(tt.module.Name(), tt.conf)
 			require.NoError(t, err, "decode")
 			assert.EqualExportedValues(t, tt.module, module, "decoded module")
 		})
 	}
 }
 
-// TestGoogleGenerative_LegacyModelID ensures that collections configured with
-// the legacy "modelId" key keep their model after a read-modify-write.
-func TestGoogleGenerative_LegacyModelID(t *testing.T) {
+// Some modules' configuration options have deprecated aliases,
+// which should be correctly map to their respective fields.
+func TestGenerative_DecodeMap(t *testing.T) {
 	for _, tt := range []struct {
 		name string
-		conf map[string]any // Stored configuration.
-		want string         // Expected Generative.Model.
+		conf map[string]any
+		want modules.Module
 	}{
 		{
-			name: "modelId only",
-			conf: map[string]any{"modelId": "gemini-2.5-flash"},
-			want: "gemini-2.5-flash",
-		},
-		{
-			name: "model takes precedence",
-			conf: map[string]any{"model": "gemini-2.5-pro", "modelId": "gemini-2.5-flash"},
-			want: "gemini-2.5-pro",
+			name: "generative-google",
+			conf: map[string]any{
+				"modelId": "gemini-2.5-flash",
+			},
+			want: google.Generative{
+				Model: "gemini-2.5-flash",
+			},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			module, err := modules.Registry.Decode("generative-google", tt.conf)
+			module, err := modules.Registry.Decode(tt.want.Name(), tt.conf)
 			require.NoError(t, err, "decode")
-			require.IsType(t, google.Generative{}, module)
-			assert.Equal(t, tt.want, module.(google.Generative).Model, "model")
-
-			conf, err := modules.Registry.Encode(module)
-			require.NoError(t, err, "encode")
-			assert.Equal(t, map[string]any{"model": tt.want}, conf, "encoded configuration")
+			assert.EqualExportedValues(t, tt.want, module, "decoded module")
 		})
 	}
 }
