@@ -53,6 +53,7 @@ type (
 		Collection string `json:"collection,omitempty"`
 
 		Manage bool `json:"-"`
+		Read   bool `json:"-"`
 	}
 	ClusterPermission struct {
 		Read bool `json:"-"`
@@ -266,6 +267,8 @@ func (r *HasPermissionRequest) MarshalJSON() ([]byte, error) {
 		action, data = rest.DeleteAliases, r.Alias
 	case r.Backups.Manage:
 		action, data = rest.ManageBackups, r.Backups
+	case r.Backups.Read:
+		action, data = rest.ReadBackups, r.Backups
 	case r.Cluster.Read:
 		action, data = rest.ReadCluster, nil
 	case r.Collections.Create:
@@ -379,6 +382,9 @@ func (ps *Permissions) MarshalJSON() ([]byte, error) {
 	for _, p := range ps.Backups {
 		if p.Manage {
 			add(rest.ManageBackups, p)
+		}
+		if p.Read {
+			add(rest.ReadBackups, p)
 		}
 	}
 
@@ -566,6 +572,8 @@ func (r *Role) UnmarshalJSON(data []byte) error {
 			find(lookup, p.Action, p.Alias, &r.Aliases).Delete = true
 		case rest.ManageBackups:
 			find(lookup, p.Action, p.Backup, &r.Backups).Manage = true
+		case rest.ReadBackups:
+			find(lookup, p.Action, p.Backup, &r.Backups).Read = true
 		case rest.ReadCluster:
 			find(lookup, p.Action, p.Cluster, &r.Cluster).Read = true
 		case rest.CreateCollections:

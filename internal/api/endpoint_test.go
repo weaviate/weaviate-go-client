@@ -808,6 +808,7 @@ func TestRESTRequests(t *testing.T) {
 						},
 						Backups: []api.BackupsPermission{
 							{Collection: "Songs", Manage: true},
+							{Collection: "Artists", Read: true},
 						},
 						Cluster: []api.ClusterPermission{{Read: true}},
 						Collections: []api.CollectionPermission{
@@ -915,6 +916,12 @@ func TestRESTRequests(t *testing.T) {
 						"action": "manage_backups",
 						"backups": map[string]any{
 							"collection": "Songs",
+						},
+					},
+					{
+						"action": "read_backups",
+						"backups": map[string]any{
+							"collection": "Artists",
 						},
 					},
 					{
@@ -1214,6 +1221,21 @@ func TestRESTRequests(t *testing.T) {
 			wantPath:   "/authz/roles/rock-n-role/has-permission",
 			wantBody: map[string]any{
 				"action": "read_cluster",
+			},
+		},
+		{
+			name: "check role has read_backups permission",
+			req: &api.HasPermissionRequest{
+				RoleID:  "rock-n-role",
+				Backups: api.BackupsPermission{Collection: "Songs", Read: true},
+			},
+			wantMethod: http.MethodPost,
+			wantPath:   "/authz/roles/rock-n-role/has-permission",
+			wantBody: map[string]any{
+				"action": "read_backups",
+				"backups": map[string]any{
+					"collection": "Songs",
+				},
 			},
 		},
 		{
@@ -2141,6 +2163,12 @@ func TestRESTResponses(t *testing.T) {
 						},
 					},
 					{
+						"action": "read_backups",
+						"backups": map[string]any{
+							"collection": "Artists",
+						},
+					},
+					{
 						"action": "read_cluster",
 					},
 					{
@@ -2368,6 +2396,7 @@ func TestRESTResponses(t *testing.T) {
 					},
 					Backups: []api.BackupsPermission{
 						{Collection: "Songs", Manage: true},
+						{Collection: "Artists", Read: true},
 					},
 					Cluster: []api.ClusterPermission{{Read: true}},
 					Collections: []api.CollectionPermission{
