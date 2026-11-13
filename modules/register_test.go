@@ -1115,7 +1115,7 @@ func TestModules(t *testing.T) {
 
 // Some modules' configuration options have deprecated aliases,
 // which should be correctly map to their respective fields.
-func TestGenerative_DecodeMap(t *testing.T) {
+func TestModule_DecodeMap(t *testing.T) {
 	for _, tt := range []struct {
 		name string
 		conf map[string]any
