@@ -1585,6 +1585,38 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "hybrid with mmr selection",
+			req: &api.SearchRequest{
+				Hybrid: &api.Hybrid{
+					Query:  "yellow submarine",
+					Fusion: api.HybridFusionRanked,
+					Selection: api.Selection{
+						MMR: &api.SelectionMMR{Limit: int32(3), Balance: .2},
+					},
+				},
+			},
+			want: &proto.SearchRequest{
+				Uses_127Api: true,
+				HybridSearch: &proto.Hybrid{
+					Query:         "yellow submarine",
+					UseAlphaParam: true,
+					FusionType:    proto.Hybrid_FUSION_TYPE_RANKED,
+					Selection: &proto.Selection{
+						Selection: &proto.Selection_Mmr{
+							Mmr: &proto.Selection_MMR{
+								Limit:   testkit.Ptr[uint32](3),
+								Balance: testkit.Ptr[float32](.2),
+							},
+						},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
 			name: "group by",
 			req: &api.SearchRequest{
 				GroupBy: &api.GroupBy{
