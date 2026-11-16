@@ -2857,7 +2857,7 @@ type NestedProperty struct {
 	NestedProperties []NestedProperty `json:"nestedProperties,omitempty"`
 
 	// TextAnalyzer Text analysis options for a property. These settings are immutable after the property is created. Applies only to text and text[] data types that use an inverted index (searchable or filterable).
-	TextAnalyzer TextAnalyzerConfig         `json:"textAnalyzer,omitempty"`
+	TextAnalyzer *TextAnalyzerConfig        `json:"textAnalyzer,omitempty"`
 	Tokenization NestedPropertyTokenization `json:"tokenization,omitempty"`
 }
 
@@ -3191,7 +3191,7 @@ type Property struct {
 	SearchableBlockmax *bool `json:"searchableBlockmax,omitempty"`
 
 	// TextAnalyzer Text analysis options for a property. These settings are immutable after the property is created. Applies only to text and text[] data types that use an inverted index (searchable or filterable).
-	TextAnalyzer TextAnalyzerConfig `json:"textAnalyzer,omitempty"`
+	TextAnalyzer *TextAnalyzerConfig `json:"textAnalyzer,omitempty"`
 
 	// Tokenization Determines how a property is indexed. This setting applies to `text` and `text[]` data types. The following tokenization methods are available:<br/><br/>- `word` (default): Splits the text on any non-alphanumeric characters and lowercases the tokens.<br/>- `lowercase`: Splits the text on whitespace and lowercases the tokens.<br/>- `whitespace`: Splits the text on whitespace. This tokenization is case-sensitive.<br/>- `field`: Indexes the entire property value as a single token after trimming whitespace.<br/>- `trigram`: Splits the property into rolling trigrams (three-character sequences).<br/>- `gse`: Uses the `gse` tokenizer, suitable for Chinese language text. [See `gse` docs](https://pkg.go.dev/github.com/go-ego/gse#section-readme).<br/>- `kagome_ja`: Uses the `Kagome` tokenizer with a Japanese (IPA) dictionary. [See `kagome` docs](https://github.com/ikawaha/kagome).<br/>- `kagome_kr`: Uses the `Kagome` tokenizer with a Korean dictionary. [See `kagome` docs](https://github.com/ikawaha/kagome).<br/><br/>See [Reference: Tokenization](https://docs.weaviate.io/weaviate/config-refs/collections#tokenization) for details.
 	Tokenization PropertyTokenization `json:"tokenization,omitempty"`
