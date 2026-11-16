@@ -1,4 +1,5 @@
 # weaviate-go-client  <img width="215" height="250" alt="Weaviate Gopher" align='right' src="https://github.com/user-attachments/assets/807e11d7-7194-4652-be9f-6ce8eef8f80f" />
+[![Go Reference](https://pkg.go.dev/badge/github.com/weaviate/weaviate-go-client/v6.svg)](https://pkg.go.dev/github.com/weaviate/weaviate-go-client/v6)
 
 An idiomatic Go client for [Weaviate](https://github.com/weaviate/weaviate).
 
