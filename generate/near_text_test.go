@@ -48,7 +48,7 @@ func TestNearText(t *testing.T) {
 						Balance: .2,
 					}),
 				},
-				Single: &generate.SingleTask{
+				Single: &generate.SinglePrompt{
 					Prompt: "What time is it?",
 				},
 				Grouped: &generate.GroupedTask{
