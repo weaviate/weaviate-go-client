@@ -53,12 +53,14 @@ type Query interface {
 // Request contains common generation parameters.
 type Request[Q Query] struct {
 	Query   Q
-	Single  *SingleTask  // Per-object generative task.
-	Grouped *GroupedTask // Per-group generative task.
+	Single  *SinglePrompt // Per-object generative task.
+	Grouped *GroupedTask  // Per-group generative task.
 	groupBy *query.GroupBy
 }
 
 type (
+	SinglePrompt = SingleTask
+	// Prefer [SinglePrompt], which is standard Weaviate terminology.
 	SingleTask struct {
 		Prompt   string
 		Provider Provider
