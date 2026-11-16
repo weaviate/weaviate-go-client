@@ -24,11 +24,13 @@ func TestCompression(t *testing.T) {
 				Bits:         1,
 				RescoreLimit: 2,
 				Cache:        true,
+				Centering:    true,
 			},
 			conf: map[string]any{
 				"bits":         1,
 				"rescoreLimit": 2,
 				"cache":        true,
+				"centering":    true,
 			},
 		},
 		{
