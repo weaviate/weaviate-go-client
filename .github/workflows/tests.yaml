@@ -3,10 +3,8 @@ name: Run tests
 on:
   push:
     branches:
-      - v6
+      - main
   pull_request:
-    branches:
-      - v6
 
 jobs:
   unit:

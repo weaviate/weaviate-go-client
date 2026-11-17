@@ -3,10 +3,8 @@ name: lint
 on:
   push:
     branches:
-      - v6
+      - main
   pull_request:
-    branches:
-      - v6
 
 permissions:
   contents: read

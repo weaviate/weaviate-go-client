@@ -3,7 +3,7 @@ name: Fetch latest OpenAPI schema
 on:
   push:
     branches:
-      - v6
+      - main
 
 jobs:
   check:

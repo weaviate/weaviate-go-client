@@ -3,7 +3,7 @@ name: Run examples
 on:
   push:
     branches:
-      - v6
+      - main
   pull_request:
     paths:
       - "example/**"
