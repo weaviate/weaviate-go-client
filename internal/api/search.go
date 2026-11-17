@@ -129,7 +129,7 @@ type (
 		Alpha             *float32
 		Fusion            HybridFusion
 		KeywordSimilarity KeywordSimilarity
-		Selection Selection
+		Selection         Selection
 
 		NearVector *NearVector
 		NearText   *NearText
@@ -596,6 +596,7 @@ func marshalFilter(f FilterExpr) (*proto.Filters, error) {
 
 		case []float32:
 			pf.TestValue = &proto.Filters_ValueNumberArray{
+				// NOTE(dyma): number[] is marshaled to []byte when the data is inserted.
 				ValueNumberArray: &proto.NumberArray{Values: floatArray(v)},
 			}
 		case []float64:

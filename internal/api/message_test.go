@@ -2236,6 +2236,53 @@ func TestInsertObjectsRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "number array",
+			req: &api.InsertObjectsRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName:   "Songs",
+					Tenant:           "john_doe",
+					ConsistencyLevel: api.ConsistencyLevelOne,
+				},
+				Objects: []api.BatchObject{
+					{
+						UUID: testkit.UUID,
+						Properties: map[string]any{
+							"32": []float32{3.14, 3.1415},
+							"64": []float64{3.14, 3.1415},
+						},
+					},
+				},
+			},
+			want: &proto.BatchObjectsRequest{
+				ConsistencyLevel: testkit.Ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE),
+				Objects: []*proto.BatchObject{
+					{
+						Uuid:       testkit.UUID.String(),
+						Collection: "Songs",
+						Tenant:     "john_doe",
+						Properties: &proto.BatchObject_Properties{
+							NumberArrayProperties: []*proto.NumberArrayProperties{
+								{
+									PropName: "32",
+									ValuesBytes: []byte{
+										0, 0, 0, 96, 184, 30, 9, 64,
+										0, 0, 0, 192, 202, 33, 9, 64,
+									},
+								},
+								{
+									PropName: "64",
+									ValuesBytes: []byte{
+										31, 133, 235, 81, 184, 30, 9, 64,
+										111, 18, 131, 192, 202, 33, 9, 64,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "uuid array",
 			req: &api.InsertObjectsRequest{
 				RequestDefaults: api.RequestDefaults{

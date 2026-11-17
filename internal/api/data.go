@@ -431,14 +431,14 @@ func marshalObjectProperties(properties map[string]any, dest *proto.BatchObject_
 
 		case []float32:
 			dest.NumberArrayProperties = append(dest.NumberArrayProperties, &proto.NumberArrayProperties{
-				PropName: name,
-				Values:   floatArray(v),
+				PropName:    name,
+				ValuesBytes: marshalNumberArray(v),
 			})
 
 		case []float64:
 			dest.NumberArrayProperties = append(dest.NumberArrayProperties, &proto.NumberArrayProperties{
-				PropName: name,
-				Values:   v,
+				PropName:    name,
+				ValuesBytes: marshalNumberArray(v),
 			})
 		case []map[string]any:
 			objects := make([]*proto.ObjectPropertiesValue, len(v))

@@ -154,10 +154,10 @@ func unmarshalIntegerArray(b []byte) []int64 {
 }
 
 // marshalNumberArray encodes an []float64 into a byte-slice.
-func marshalNumberArray(v []float64) []byte {
+func marshalNumberArray[T float32 | float64](v []T) []byte {
 	arr := make([]byte, len(v)*sizeof_uint64)
 	for i := range v {
-		bits := math.Float64bits(v[i])
+		bits := math.Float64bits(float64(v[i]))
 		order.PutUint64(arr[i*sizeof_uint64:], bits)
 	}
 	return arr

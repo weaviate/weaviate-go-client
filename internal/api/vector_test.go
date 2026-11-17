@@ -84,7 +84,17 @@ func TestArrays(t *testing.T) {
 		require.Equal(t, want, got, "bad array bytes")
 		require.Equal(t, v, unmarshalIntegerArray(got), "bad roundtrip")
 	})
-	t.Run("float array", func(t *testing.T) {
+	t.Run("float32 array", func(t *testing.T) {
+		v := []float32{3.14, 3.1415}
+		want := []byte{
+			0, 0, 0, 96, 184, 30, 9, 64,
+			0, 0, 0, 192, 202, 33, 9, 64,
+		}
+		got := marshalNumberArray(v)
+		require.Equal(t, want, got, "bad array bytes")
+		require.InDeltaSlice(t, v, unmarshalNumberArray(got), 1e-6, "bad roundtrip")
+	})
+	t.Run("float64 array", func(t *testing.T) {
 		v := []float64{3.14, 3.1415}
 		want := []byte{
 			31, 133, 235, 81, 184, 30, 9, 64,
