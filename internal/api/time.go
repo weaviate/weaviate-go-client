@@ -22,3 +22,9 @@ func timeFromString(s string) (time.Time, error) {
 func timeFromUnix(ts int64) time.Time {
 	return time.UnixMilli(ts)
 }
+
+// durationFromSeconds converts seconds to [time.Duration]
+// preserving the fractional amount (ms / μs / ns).
+func durationFromSeconds(seconds float32) time.Duration {
+	return time.Duration(float64(seconds) * float64(time.Second))
+}
