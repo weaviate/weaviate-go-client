@@ -838,6 +838,27 @@ func (e ReplicationConfigDeletionStrategy) Valid() bool {
 	}
 }
 
+// Defines values for ReplicationRebalancePlanDraftingStatus.
+const (
+	ReplicationRebalancePlanDraftingStatusDRAFTING ReplicationRebalancePlanDraftingStatus = "DRAFTING"
+	ReplicationRebalancePlanDraftingStatusFAILED   ReplicationRebalancePlanDraftingStatus = "FAILED"
+	ReplicationRebalancePlanDraftingStatusREPORTED ReplicationRebalancePlanDraftingStatus = "REPORTED"
+)
+
+// Valid indicates whether the value is a known member of the ReplicationRebalancePlanDraftingStatus enum.
+func (e ReplicationRebalancePlanDraftingStatus) Valid() bool {
+	switch e {
+	case ReplicationRebalancePlanDraftingStatusDRAFTING:
+		return true
+	case ReplicationRebalancePlanDraftingStatusFAILED:
+		return true
+	case ReplicationRebalancePlanDraftingStatusREPORTED:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ReplicationRebalancePlanState.
 const (
 	ReplicationRebalancePlanStateCOMPLETED        ReplicationRebalancePlanState = "COMPLETED"
@@ -1365,22 +1386,22 @@ func (e SearchReferenceSelectorReturnMetadata) Valid() bool {
 
 // Defines values for ShardProgressStatus.
 const (
-	FAILED       ShardProgressStatus = "FAILED"
-	SKIPPED      ShardProgressStatus = "SKIPPED"
-	SUCCESS      ShardProgressStatus = "SUCCESS"
-	TRANSFERRING ShardProgressStatus = "TRANSFERRING"
+	ShardProgressStatusFAILED       ShardProgressStatus = "FAILED"
+	ShardProgressStatusSKIPPED      ShardProgressStatus = "SKIPPED"
+	ShardProgressStatusSUCCESS      ShardProgressStatus = "SUCCESS"
+	ShardProgressStatusTRANSFERRING ShardProgressStatus = "TRANSFERRING"
 )
 
 // Valid indicates whether the value is a known member of the ShardProgressStatus enum.
 func (e ShardProgressStatus) Valid() bool {
 	switch e {
-	case FAILED:
+	case ShardProgressStatusFAILED:
 		return true
-	case SKIPPED:
+	case ShardProgressStatusSKIPPED:
 		return true
-	case SUCCESS:
+	case ShardProgressStatusSUCCESS:
 		return true
-	case TRANSFERRING:
+	case ShardProgressStatusTRANSFERRING:
 		return true
 	default:
 		return false
@@ -3354,7 +3375,7 @@ type ReplicationRebalanceCreateResponse struct {
 	Id string `json:"id,omitempty"`
 }
 
-// ReplicationRebalancePlan The cluster's rebalance plan: the request it was created from, its current state, and the node measurements and baseline balance taken by its planning run.
+// ReplicationRebalancePlan The cluster's rebalance plan: the request it was created from, its current state, the per-node drafting status while it is planning, and the node measurements and baseline balance taken by its planning run.
 type ReplicationRebalancePlan struct {
 	// Baseline The measured load of each listed node before any move.
 	Baseline []struct {
@@ -3373,6 +3394,15 @@ type ReplicationRebalancePlan struct {
 
 	// CreatedAtUnixMs The UNIX timestamp in ms when the plan was created.
 	CreatedAtUnixMs int64 `json:"createdAtUnixMs,omitempty"`
+
+	// Drafting The drafting status of each listed node, source nodes first, while the plan is `PLANNING`. The list is empty in every other state. It is also empty while the plan is `PLANNING` until the node serving the request holds the plan's drafting task.
+	Drafting []struct {
+		// Node The name of the node.
+		Node string `json:"node"`
+
+		// Status `REPORTED` once the node has saved and reported its draft, `FAILED` if its drafting failed, and `DRAFTING` otherwise.
+		Status ReplicationRebalancePlanDraftingStatus `json:"status"`
+	} `json:"drafting,omitempty"`
 
 	// Id The unique identifier (ID) of the rebalance plan.
 	Id string `json:"id,omitempty"`
@@ -3416,6 +3446,9 @@ type ReplicationRebalancePlan struct {
 	// TargetNodes The names of the nodes that replicas move to, as given in the create request.
 	TargetNodes []string `json:"targetNodes,omitempty"`
 }
+
+// ReplicationRebalancePlanDraftingStatus `REPORTED` once the node has saved and reported its draft, `FAILED` if its drafting failed, and `DRAFTING` otherwise.
+type ReplicationRebalancePlanDraftingStatus string
 
 // ReplicationRebalancePlanState The current state of the rebalance plan. A plan starts in `PLANNING`. A planning run ends it `NOT_NEEDED`, `PROPOSED`, `NO_ACCEPTABLE_PLAN` or `PLANNING_FAILED`, and a stop ends it `STOPPED`.
 type ReplicationRebalancePlanState string
