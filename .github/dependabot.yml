@@ -14,3 +14,19 @@ updates:
       interval: "monthly"
     commit-message:
       prefix: "build(dependabot)"
+
+  # Monitor v5 branch while the previous version is being deprecated.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: v5
+  - package-ecosystem: "gomod"
+    directories:
+      - "/"
+    labels: ["security-update", "dependencies"]
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "build(dependabot)"
+    target-branch: v5
