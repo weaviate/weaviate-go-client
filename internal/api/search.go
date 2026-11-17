@@ -129,6 +129,7 @@ type (
 		Alpha             *float32
 		Fusion            HybridFusion
 		KeywordSimilarity KeywordSimilarity
+		Selection Selection
 
 		NearVector *NearVector
 		NearText   *NearText
@@ -802,6 +803,7 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 		Distance:  req.Similarity.Distance,
 		Certainty: req.Similarity.Certainty,
 		Targets:   marshalSearchTarget(req.Target),
+		Selection: marshalSelection(req.Selection),
 	}
 
 	if m := req.MoveTo; m != nil {
@@ -828,10 +830,14 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 		}
 	}
 
+	return nt, nil
+}
+
+func marshalSelection(req Selection) *proto.Selection {
 	switch {
-	case req.Selection.MMR != nil:
-		mmr := req.Selection.MMR
-		nt.Selection = &proto.Selection{
+	case req.MMR != nil:
+		mmr := req.MMR
+		return &proto.Selection{
 			Selection: &proto.Selection_Mmr{
 				Mmr: &proto.Selection_MMR{
 					Limit:   nilPresent(uint32(mmr.Limit), mmr.Limit > 0),
@@ -840,8 +846,7 @@ func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
 			},
 		}
 	}
-
-	return nt, nil
+	return nil
 }
 
 func marshalNearObject(req *NearObject) (*proto.NearObject, error) {
@@ -969,6 +974,7 @@ func marshalHybrid(req *Hybrid) (*proto.Hybrid, error) {
 		UseAlphaParam:      true,
 		FusionType:         proto.Hybrid_FusionType(req.Fusion),
 		Bm25SearchOperator: marshalKeywordSimilarity(req.KeywordSimilarity),
+		Selection:          marshalSelection(req.Selection),
 	}
 
 	var err error

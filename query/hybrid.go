@@ -48,6 +48,9 @@ type Hybrid struct {
 	// Fusion algorithm for combining BM25 and vector search result sets.
 	Fusion api.HybridFusion
 
+	// Selection reduces redundancy in the result set, e.g. via [SelectionMMR].
+	Selection Selection
+
 	// Similarity threshold for BM25 search component.
 	KeywordSimilarity KeywordSimilarity
 
@@ -83,6 +86,9 @@ func (h *Hybrid) Search() *api.Hybrid {
 			AllTokensMatch:     h.KeywordSimilarity.AllTokensMatch(),
 			CrossProperty:      h.KeywordSimilarity.CrossProperty(),
 			MinimumTokensMatch: h.KeywordSimilarity.MinimumTokensMatch(),
+		},
+		Selection: api.Selection{
+			MMR: (*api.SelectionMMR)(h.Selection.MMR()),
 		},
 		NearVector: h.NearVector.Search(),
 		NearText:   h.NearText.Search(),

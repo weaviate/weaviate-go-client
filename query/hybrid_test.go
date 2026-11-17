@@ -35,6 +35,10 @@ func TestHybrid(t *testing.T) {
 				KeywordSimilarity: query.AllTokensMatch,
 				Alpha:             new(float32(0.44)),
 				Fusion:            query.HybridFusionRelativeScore,
+				Selection: query.SelectionMMR(query.MMR{
+					Limit:   3,
+					Balance: .2,
+				}),
 				NearText: &query.NearText{
 					Concepts: []string{"sea"},
 					Target:   query.VectorName("title_vec"),
@@ -52,6 +56,12 @@ func TestHybrid(t *testing.T) {
 							},
 							Alpha:  testkit.Ptr[float32](0.44),
 							Fusion: api.HybridFusionRelativeScore,
+							Selection: api.Selection{
+								MMR: &api.SelectionMMR{
+									Limit:   3,
+									Balance: .2,
+								},
+							},
 							NearText: &api.NearText{
 								Concepts: []string{"sea"},
 								Target: api.SearchTarget{
