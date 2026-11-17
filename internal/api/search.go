@@ -129,7 +129,6 @@ type (
 		Alpha             *float32
 		Fusion            HybridFusion
 		KeywordSimilarity KeywordSimilarity
-
 		Selection Selection
 
 		NearVector *NearVector
