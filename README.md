@@ -14,10 +14,14 @@ Import the package into your project and create a client instance:
 ```go
 package main
 
-import "github.com/weaviate/weaviate-go-client/v6"
+import (
+    "context"
+
+    "github.com/weaviate/weaviate-go-client/v6"
+)
 
 func main() {
-    c, err := weaviate.NewLocal()
+    c, err := weaviate.NewLocal(context.Background())
     if err != nil {
         panic(err)
     }
