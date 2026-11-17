@@ -1,0 +1,289 @@
+package transports
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"golang.org/x/oauth2"
+)
+
+// Endpoint describes a REST request.
+type Endpoint interface {
+	// Method returns an HTTP method appropriate for the request.
+	Method() string
+
+	// Path returns endpoint URL with path parameters populated.
+	Path() string
+
+	// Query returns query string, if the request supports query parameters.
+	// A request which does not have query parameters can safely return nil.
+	Query() url.Values
+
+	// Body returns the request body, which will be marshaled to JSON.
+	// Requests that do not have a payload should return nil.
+	Body() any
+}
+
+// StatusAccepter is an interface that response types can implement to
+// control which HTTP status codes > 299 should not result in an error.
+//
+// The [REST] transport always treats codes < 299 as successful
+// and only calls AcceptStatus for codes > 299.
+type StatusAccepter interface {
+	// AcceptStatus returns true if a status code is acceptable.
+	AcceptStatus(code int) bool
+}
+
+// Config options for [REST].
+type RESTConfig struct {
+	Scheme      string               // Scheme for request URLs, "http" or "https".
+	Host        string               // Hostname of the REST host.
+	Port        string               // Port number of the REST host
+	Header      http.Header          // Headers added with each request.
+	TokenSource oauth2.TokenSource   // OAuth2 token source.
+	KeepAlive   *net.KeepAliveConfig // Keepalive configuration.
+	Version     string               // Version of the REST API.
+}
+
+func (c *REST) Do(ctx context.Context, req Endpoint, dest any) error {
+	var body io.Reader
+	if b := req.Body(); b != nil {
+		marshaled, err := json.Marshal(b)
+		if err != nil {
+			return fmt.Errorf("marshal request body: %w", err)
+		}
+		body = bytes.NewReader(marshaled)
+	}
+
+	url := c.url(req)
+	httpreq, err := http.NewRequestWithContext(ctx, req.Method(), url, body)
+	if err != nil {
+		return fmt.Errorf("create request: %w", err)
+	}
+
+	// Clone default request headers.
+	httpreq.Header = c.header.Clone()
+	if httpreq.Header == nil {
+		httpreq.Header = make(http.Header)
+	}
+
+	// Accept JSON even if dest is nil, as we don't want to spoof the request.
+	httpreq.Header.Set("Accept", "application/json")
+	if body != nil {
+		httpreq.Header.Set("Content-Type", "application/json")
+	}
+
+	res, err := c.hc.Do(httpreq)
+	if err != nil {
+		return fmt.Errorf("execute request: %q", err)
+	}
+
+	// Response body SHOULD always be read completely and closed
+	// to allow the underlying [http.Transport] to re-use the TCP connection.
+	// See: https://pkg.go.dev/net/http#Client.Do
+	resBody, err := io.ReadAll(res.Body)
+	defer res.Body.Close() //nolint:errcheck
+
+	// Now, if we didn't need the body, then a failure to read it
+	// must not foil the request, as it may cause the caller to retry
+	// the request incorrectly.
+	if err != nil && dest != nil {
+		return fmt.Errorf("read response body: %w", err)
+	}
+
+	if res.StatusCode > 299 {
+		// Some request types may want to "swallow" a bad status code,
+		// and not return an error in that case. We will not try to unmarshal
+		// the body  as it may not contain valid JSON, in which case we'll
+		// have to return an error anyways.
+		if acc, ok := dest.(StatusAccepter); ok {
+			if acc.AcceptStatus(res.StatusCode) {
+				return nil
+			}
+		}
+		return &HTTPError{Code: res.StatusCode, Body: string(resBody)}
+	}
+
+	if dest != nil && len(resBody) > 0 {
+		if err := json.Unmarshal(resBody, dest); err != nil {
+			return fmt.Errorf("unmarshal response body: %w", err)
+		}
+	}
+	return nil
+}
+
+func (c *REST) url(req Endpoint) string {
+	var url strings.Builder
+
+	url.WriteString(c.baseURL)
+	url.WriteString(strings.TrimLeft(req.Path(), "/"))
+
+	if query := req.Query(); len(query) > 0 {
+		url.WriteString("?")
+		url.WriteString(query.Encode())
+	}
+
+	return url.String()
+}
+
+type REST struct {
+	hc      *http.Client // Internal HTTP transport.
+	baseURL string       // Base server URL.
+	header  http.Header  // Default headers.
+}
+
+func NewREST(cfg RESTConfig) *REST {
+	baseURL := fmt.Sprintf(
+		"%s://%s:%s/%s/",
+		cfg.Scheme, cfg.Host, cfg.Port, cfg.Version,
+	)
+
+	hc := &http.Client{}
+	if cfg.KeepAlive != nil {
+		tr := http.DefaultTransport.(*http.Transport).Clone()
+		tr.DialContext = (&net.Dialer{
+			Timeout:         30 * time.Second,
+			KeepAliveConfig: *cfg.KeepAlive,
+		}).DialContext
+		hc.Transport = tr
+	}
+
+	// Handle TokenSource config last. [oauth2.NewClient] will wrap around
+	// the current hc.Transport, which must be fully configured at that point.
+	if cfg.TokenSource != nil {
+		// Here [oauth2.NewClient] uses context exclusively as a value store,
+		// where it looks for the HTTPClient key before falling back to
+		// [http.DefaultClient]. We could get away with passing a nil context,
+		// which we won't do in case our http.Client has some configurations
+		// we want to propagate to the oauth2 client.
+		ctx := context.WithValue(context.Background(), oauth2.HTTPClient, hc)
+		hc = oauth2.NewClient(ctx, cfg.TokenSource)
+	}
+
+	return &REST{
+		hc:      hc,
+		baseURL: baseURL,
+		header:  cfg.Header,
+	}
+}
+
+// HTTPError is returned if the response has an error HTTP status code.
+type HTTPError struct {
+	Code int    // HTTP status code.
+	Body string // Raw response body.
+}
+
+var _ error = (*HTTPError)(nil)
+
+func (e *HTTPError) Error() string {
+	return fmt.Sprintf("HTTP %d: %s", e.Code, e.Body)
+}
+
+// BaseEndpoint implements [Endpoint] methods which may return nil.
+// These values are usually optional in the request.
+// BaseEndpoint can be embedded in a another request struct to reduce boilerplate.
+//
+// Example:
+//
+//	type DeleteSongRequest struct {
+//		transport.BaseEndpoint
+//		SongID string
+//	}
+//
+//	// DeleteSongRequest implements transport.Endpoint.
+//	var _ transport.Endpoint = (*DeleteSongRequest)(nil)
+//
+//	func (r *DeleteSongRequest) Method() string { return http.MethodDelete }
+//	func (r *DeleteSongRequest) Path() string   { return "/songs/" + r.SongID }
+type BaseEndpoint struct{}
+
+func (*BaseEndpoint) Query() url.Values { return nil }
+func (*BaseEndpoint) Body() any         { return nil }
+
+// IdentityEndpoint returns a factory for requests to identity endpoints.
+//
+// Example:
+//
+//	// Assign request creator func to a variable.
+//	var DeleteSongRequest = transport.IdentityEndpoint[int](http.MethodDelete, "/songs/%v")
+//
+//	// Use it to create new requests
+//	req := DeleteSongRequest(123)
+//
+// The pathFmt MUST ONLY contain a single formatting directive. Callers are free to use
+// the formatting directive most appropriate to the identity type, e.g. %s for strings,
+// but %d for numbers.
+//
+// IdentityEndpoint will panic on invalid pathFmt _before_ the factory is created.
+//
+//	// BAD: panics because pathFmt contains 2 formatting directives.
+//	var DeleteSongsRequest = transport.IdentityEndpoint[uuid.UUID](http.MethodGet, "/albums/%v/songs/%v")
+func IdentityEndpoint[I any](method, pathFmt string) func(I) any {
+	dev.Assert(strings.Count(pathFmt, "%") == 1, "%s must have a single formatting directive", pathFmt)
+
+	return func(id I) any {
+		return &identityEndpoint[I]{
+			method:  method,
+			pathFmt: pathFmt,
+			id:      id,
+		}
+	}
+}
+
+// identityEndpoint implements [Endpoint] for endpoints that use some ID parameter
+// in the request path, e.g. 'DELETE /users/<user-id>' or 'GET /artist/<artist-id>/songs'.
+// String IDs will be URL-encoded via [url.PathEscape] so using a raw value is safe.
+// See [IdentityEndpoint] for more details.
+type identityEndpoint[I any] struct {
+	BaseEndpoint
+	method, pathFmt string
+	id              I
+}
+
+var _ Endpoint = (*identityEndpoint[any])(nil)
+
+func (r *identityEndpoint[I]) Method() string { return r.method }
+func (r *identityEndpoint[I]) Path() string   { return Path(r.pathFmt, r.id) }
+
+// Path URL-encodes all string elements of a and formats the output to pathFmt.
+func Path(pathFmt string, a ...any) string {
+	for i := range a {
+		if s, ok := a[i].(string); ok {
+			a[i] = url.PathEscape(s)
+		}
+	}
+	return fmt.Sprintf(pathFmt, a...)
+}
+
+// StaticEndpoint creates a new static endpoint with a method and a path.
+func StaticEndpoint(method, path string) *staticEndpoint {
+	return &staticEndpoint{method: method, path: path}
+}
+
+// staticEndpoint implements [Endpoint] for requests that has
+// neither query or path parameters, nor the body. Each request
+// to a static endpoint looks identical to all other ones, e.g. GET /live.
+// Since such request is independent of its inputs (it has none of them),
+// it can be created once and re-used throughout the program's lifetime.
+//
+// Example:
+//
+//	var ListSongsRequest transport.Endpoint = transport.StaticEndpoint(http.MethodGet, "/songs")
+type staticEndpoint struct {
+	BaseEndpoint
+	method, path string
+}
+
+var _ Endpoint = (*staticEndpoint)(nil)
+
+func (e *staticEndpoint) Method() string { return e.method }
+func (e *staticEndpoint) Path() string   { return e.path }

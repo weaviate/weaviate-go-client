@@ -1,0 +1,520 @@
+package api
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	proto "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
+)
+
+type AggregateRequest struct {
+	RequestDefaults
+
+	Text    []AggregateTextRequest
+	Integer []AggregateIntegerRequest
+	Number  []AggregateNumberRequest
+	Boolean []AggregateBooleanRequest
+	Date    []AggregateDateRequest
+
+	TotalCount  bool
+	ObjectLimit int32
+	GroupBy     *GroupBy
+
+	NearVector *NearVector
+	NearObject *NearObject
+	NearMedia  *NearMedia
+	NearText   *NearText
+	BM25       *BM25
+	Hybrid     *Hybrid
+}
+
+var (
+	_ transport.Message[proto.AggregateRequest, proto.AggregateReply] = (*AggregateRequest)(nil)
+	_ transport.MessageMarshaler[proto.AggregateRequest]              = (*AggregateRequest)(nil)
+)
+
+type (
+	AggregateTextRequest struct {
+		Property string
+
+		Count               bool
+		TopOccurrences      bool
+		TopOccurencesCutoff int32
+	}
+	AggregateIntegerRequest struct {
+		Property string
+
+		Count  bool
+		Sum    bool
+		Min    bool
+		Max    bool
+		Mode   bool
+		Mean   bool
+		Median bool
+	}
+	AggregateNumberRequest struct {
+		Property string
+
+		Count  bool
+		Sum    bool
+		Min    bool
+		Max    bool
+		Mode   bool
+		Mean   bool
+		Median bool
+	}
+	AggregateBooleanRequest struct {
+		Property string
+
+		Count           bool
+		Type            bool
+		PercentageTrue  bool
+		PercentageFalse bool
+		TotalTrue       bool
+		TotalFalse      bool
+	}
+	AggregateDateRequest struct {
+		Property string
+
+		Count  bool
+		Min    bool
+		Max    bool
+		Mode   bool
+		Median bool
+	}
+)
+
+func (*AggregateRequest) Method() transport.MethodFunc[proto.AggregateRequest, proto.AggregateReply] {
+	return proto.WeaviateClient.Aggregate
+}
+func (r *AggregateRequest) Body() transport.MessageMarshaler[proto.AggregateRequest] { return r }
+
+func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
+	dev.AssertNotNil(r, "r")
+
+	var aggregations []*proto.AggregateRequest_Aggregation
+	for _, txt := range r.Text {
+		aggregations = append(aggregations, &proto.AggregateRequest_Aggregation{
+			Property: txt.Property,
+			Aggregation: &proto.AggregateRequest_Aggregation_Text_{
+				Text: &proto.AggregateRequest_Aggregation_Text{
+					Count:              txt.Count,
+					TopOccurences:      txt.TopOccurrences,
+					TopOccurencesLimit: NilZero(uint32(txt.TopOccurencesCutoff)),
+				},
+			},
+		})
+	}
+	for _, int := range r.Integer {
+		aggregations = append(aggregations, &proto.AggregateRequest_Aggregation{
+			Property: int.Property,
+			Aggregation: &proto.AggregateRequest_Aggregation_Int{
+				Int: &proto.AggregateRequest_Aggregation_Integer{
+					Count:   int.Count,
+					Sum:     int.Sum,
+					Minimum: int.Min,
+					Maximum: int.Max,
+					Mode:    int.Mode,
+					Mean:    int.Mean,
+					Median:  int.Median,
+				},
+			},
+		})
+	}
+	for _, num := range r.Number {
+		aggregations = append(aggregations, &proto.AggregateRequest_Aggregation{
+			Property: num.Property,
+			Aggregation: &proto.AggregateRequest_Aggregation_Number_{
+				Number: &proto.AggregateRequest_Aggregation_Number{
+					Count:   num.Count,
+					Sum:     num.Sum,
+					Minimum: num.Min,
+					Maximum: num.Max,
+					Mode:    num.Mode,
+					Mean:    num.Mean,
+					Median:  num.Median,
+				},
+			},
+		})
+	}
+	for _, bool := range r.Boolean {
+		aggregations = append(aggregations, &proto.AggregateRequest_Aggregation{
+			Property: bool.Property,
+			Aggregation: &proto.AggregateRequest_Aggregation_Boolean_{
+				Boolean: &proto.AggregateRequest_Aggregation_Boolean{
+					Count:           bool.Count,
+					Type:            bool.Type,
+					PercentageTrue:  bool.PercentageTrue,
+					PercentageFalse: bool.PercentageFalse,
+					TotalTrue:       bool.TotalTrue,
+					TotalFalse:      bool.TotalFalse,
+				},
+			},
+		})
+	}
+	for _, date := range r.Date {
+		aggregations = append(aggregations, &proto.AggregateRequest_Aggregation{
+			Property: date.Property,
+			Aggregation: &proto.AggregateRequest_Aggregation_Date_{
+				Date: &proto.AggregateRequest_Aggregation_Date{
+					Count:   date.Count,
+					Minimum: date.Min,
+					Maximum: date.Max,
+					Mode:    date.Mode,
+					Median:  date.Median,
+				},
+			},
+		})
+	}
+
+	req := &proto.AggregateRequest{
+		Collection: r.CollectionName,
+		Tenant:     r.Tenant,
+
+		ObjectsCount: r.TotalCount,
+		ObjectLimit:  NilZero(uint32(r.ObjectLimit)),
+		Aggregations: aggregations,
+	}
+
+	if r.GroupBy != nil {
+		req.Limit = ptr(uint32(r.GroupBy.Limit))
+		req.GroupBy = &proto.AggregateRequest_GroupBy{
+			Collection: r.CollectionName,
+			Property:   r.GroupBy.Property,
+		}
+	}
+
+	switch {
+	case r.NearVector != nil:
+		nv, err := marshalNearVector(r.NearVector)
+		if err != nil {
+			return nil, err
+		}
+		req.Search = &proto.AggregateRequest_NearVector{NearVector: nv}
+	case r.NearText != nil:
+		nt, err := marshalNearText(r.NearText)
+		if err != nil {
+			return nil, err
+		}
+		req.Search = &proto.AggregateRequest_NearText{NearText: nt}
+	case r.NearObject != nil:
+		no, err := marshalNearObject(r.NearObject)
+		if err != nil {
+			return nil, err
+		}
+		req.Search = &proto.AggregateRequest_NearObject{NearObject: no}
+	case r.NearMedia != nil:
+		var media any
+		media, err := marshalNearMedia(r.NearMedia)
+		if err != nil {
+			return nil, err
+		}
+		switch media := media.(type) {
+		case nil:
+		case *proto.NearImageSearch:
+			req.Search = &proto.AggregateRequest_NearImage{NearImage: media}
+		case *proto.NearAudioSearch:
+			req.Search = &proto.AggregateRequest_NearAudio{NearAudio: media}
+		case *proto.NearVideoSearch:
+			req.Search = &proto.AggregateRequest_NearVideo{NearVideo: media}
+		case *proto.NearDepthSearch:
+			req.Search = &proto.AggregateRequest_NearDepth{NearDepth: media}
+		case *proto.NearThermalSearch:
+			req.Search = &proto.AggregateRequest_NearThermal{NearThermal: media}
+		case *proto.NearIMUSearch:
+			req.Search = &proto.AggregateRequest_NearImu{NearImu: media}
+		}
+	case r.Hybrid != nil:
+		h, err := marshalHybrid(r.Hybrid)
+		if err != nil {
+			return nil, err
+		}
+		req.Search = &proto.AggregateRequest_Hybrid{Hybrid: h}
+	default:
+		// It is not a mistake to leave search method unset.
+		// This would be the case when fetch objects with a conventional filter.
+	}
+
+	return req, nil
+}
+
+type AggregateResponse struct {
+	Took           time.Duration
+	Results        Aggregations
+	GroupByResults []AggregateGroup
+}
+
+var _ transport.MessageUnmarshaler[proto.AggregateReply] = (*AggregateResponse)(nil)
+
+type (
+	Aggregations struct {
+		TotalCount *int64
+		Text       []AggregateTextResult
+		Integer    []AggregateIntegerResult
+		Number     []AggregateNumberResult
+		Boolean    []AggregateBooleanResult
+		Date       []AggregateDateResult
+	}
+	AggregateTextResult struct {
+		Property       string
+		Count          *int64
+		TopOccurrences []TopOccurrence
+	}
+	AggregateTopOccurrence struct {
+		Value       string
+		OccursTimes int64
+	}
+	AggregateIntegerResult struct {
+		Property string
+		Count    *int64
+		Sum      *int64
+		Min      *int64
+		Max      *int64
+		Mode     *int64
+		Mean     *float64
+		Median   *float64
+	}
+	AggregateNumberResult struct {
+		Property string
+		Count    *int64
+		Sum      *float64
+		Min      *float64
+		Max      *float64
+		Mode     *float64
+		Mean     *float64
+		Median   *float64
+	}
+	AggregateBooleanResult struct {
+		Property        string
+		Count           *int64
+		Type            *string
+		PercentageTrue  *float64
+		PercentageFalse *float64
+		TotalTrue       *int64
+		TotalFalse      *int64
+	}
+	AggregateDateResult struct {
+		Property string
+		Count    *int64
+		Min      *time.Time
+		Max      *time.Time
+		Mode     *time.Time
+		Median   *time.Time
+	}
+	TopOccurrence struct {
+		Value       string
+		OccursTimes int64
+	}
+	AggregateGroup struct {
+		Property string
+		Value    any
+		Results  Aggregations
+	}
+)
+
+func (r *AggregateResponse) UnmarshalMessage(reply *proto.AggregateReply) error {
+	var results Aggregations
+	var groups []AggregateGroup
+
+	single := reply.GetSingleResult()
+	if single != nil {
+		aggregations, err := unmarshalAggregations(single.GetAggregations().GetAggregations())
+		if err != nil {
+			return err
+		}
+		if aggregations != nil {
+			results = *aggregations
+			results.TotalCount = single.ObjectsCount
+		}
+	}
+
+	grouped := reply.GetGroupedResults()
+	if grouped != nil {
+		for _, group := range grouped.Groups {
+			by := group.GetGroupedBy()
+			property := by.GetPath()[0]
+
+			var results Aggregations
+			aggregations, err := unmarshalAggregations(group.GetAggregations().GetAggregations())
+			if err != nil {
+				return err
+			}
+			if aggregations != nil {
+				results = *aggregations
+				results.TotalCount = group.ObjectsCount
+			}
+
+			var value any
+			switch by.GetValue().(type) {
+			case *proto.AggregateReply_Group_GroupedBy_Text:
+				value = by.GetText()
+			case *proto.AggregateReply_Group_GroupedBy_Texts:
+				value = by.GetTexts().GetValues()
+			case *proto.AggregateReply_Group_GroupedBy_Int:
+				value = by.GetInt()
+			case *proto.AggregateReply_Group_GroupedBy_Ints:
+				value = by.GetInts().GetValues()
+			case *proto.AggregateReply_Group_GroupedBy_Number:
+				value = by.GetNumber()
+			case *proto.AggregateReply_Group_GroupedBy_Numbers:
+				value = by.GetNumbers().GetValues()
+			case *proto.AggregateReply_Group_GroupedBy_Boolean:
+				value = by.GetBoolean()
+			case *proto.AggregateReply_Group_GroupedBy_Booleans:
+				value = by.GetBooleans().GetValues()
+			default:
+				// TODO(dyma): support geo
+			}
+
+			dev.AssertNotNil(aggregations, "result")
+			groups = append(groups, AggregateGroup{
+				Property: property,
+				Value:    value,
+				Results:  results,
+			})
+		}
+	}
+
+	dev.AssertNotNil(results, "results")
+
+	*r = AggregateResponse{
+		Took:           durationFromSeconds(reply.GetTook()),
+		Results:        results,
+		GroupByResults: groups,
+	}
+	return nil
+}
+
+func unmarshalAggregations(aggregations []*proto.AggregateReply_Aggregations_Aggregation) (*Aggregations, error) {
+	var out Aggregations
+	for _, agg := range aggregations {
+		property := agg.GetProperty()
+		switch {
+		case agg.GetText() != nil:
+			txt := agg.GetText()
+			top := make([]TopOccurrence, len(txt.GetTopOccurences().GetItems()))
+			for i, item := range txt.GetTopOccurences().GetItems() {
+				top[i] = TopOccurrence{
+					Value:       item.Value,
+					OccursTimes: item.Occurs,
+				}
+			}
+			out.Text = append(out.Text, AggregateTextResult{
+				Property:       property,
+				Count:          txt.Count,
+				TopOccurrences: top,
+			})
+		case agg.GetDate() != nil:
+			date := agg.GetDate()
+			minimum, err := timeFromString(date.GetMinimum())
+			if err != nil {
+				return nil, fmt.Errorf("%q minimum: %w", property, err)
+			}
+			maximum, err := timeFromString(date.GetMaximum())
+			if err != nil {
+				return nil, fmt.Errorf("%q maximum: %w", property, err)
+			}
+			mode, err := timeFromString(date.GetMode())
+			if err != nil {
+				return nil, fmt.Errorf("%q mode: %w", property, err)
+			}
+			median, err := timeFromString(date.GetMedian())
+			if err != nil {
+				return nil, fmt.Errorf("%q median: %w", property, err)
+			}
+			out.Date = append(out.Date, AggregateDateResult{
+				Property: property,
+				Count:    date.Count,
+				Min:      NilZero(minimum),
+				Max:      NilZero(maximum),
+				Mode:     NilZero(mode),
+				Median:   NilZero(median),
+			})
+		case agg.GetInt() != nil:
+			int := agg.GetInt()
+			out.Integer = append(out.Integer, AggregateIntegerResult{
+				Property: property,
+				Count:    int.Count,
+				Sum:      int.Sum,
+				Min:      int.Minimum,
+				Max:      int.Maximum,
+				Mode:     int.Mode,
+				Median:   int.Median,
+				Mean:     int.Mean,
+			})
+		case agg.GetNumber() != nil:
+			num := agg.GetNumber()
+			out.Number = append(out.Number, AggregateNumberResult{
+				Property: property,
+				Count:    num.Count,
+				Sum:      num.Sum,
+				Min:      num.Minimum,
+				Max:      num.Maximum,
+				Mode:     num.Mode,
+				Median:   num.Median,
+				Mean:     num.Mean,
+			})
+		case agg.GetBoolean() != nil:
+			bool := agg.GetBoolean()
+			out.Boolean = append(out.Boolean, AggregateBooleanResult{
+				Property:        property,
+				Count:           bool.Count,
+				Type:            bool.Type,
+				PercentageTrue:  bool.PercentageTrue,
+				PercentageFalse: bool.PercentageFalse,
+				TotalTrue:       bool.TotalTrue,
+				TotalFalse:      bool.TotalFalse,
+			})
+		}
+	}
+	return &out, nil
+}
+
+// NilZero returns a pointer to v if it is not the zero value for T and nil otherwise.
+func NilZero[T comparable](v T) *T {
+	if v == *new(T) {
+		return nil
+	}
+	return &v
+}
+
+type (
+	CountObjectsRequest  RequestDefaults
+	CountObjectsResponse int64
+)
+
+var (
+	_ transport.Message[proto.AggregateRequest, proto.AggregateReply] = (*CountObjectsRequest)(nil)
+	_ transport.MessageUnmarshaler[proto.AggregateReply]              = (*CountObjectsResponse)(nil)
+)
+
+func (*CountObjectsRequest) Method() transport.MethodFunc[proto.AggregateRequest, proto.AggregateReply] {
+	return (*AggregateRequest)(nil).Method() // Safe to call on a nil value.
+}
+
+func (r *CountObjectsRequest) Body() transport.MessageMarshaler[proto.AggregateRequest] {
+	dev.AssertNotNil(r, "r")
+	req := &AggregateRequest{
+		RequestDefaults: RequestDefaults(*r),
+		TotalCount:      true,
+	}
+	return req.Body()
+}
+
+func (r *CountObjectsResponse) UnmarshalMessage(reply *proto.AggregateReply) error {
+	var resp AggregateResponse
+	if err := resp.UnmarshalMessage(reply); err != nil {
+		return err
+	}
+	if resp.Results.TotalCount == nil {
+		return fmt.Errorf("nil total count")
+	}
+	*r = CountObjectsResponse(*resp.Results.TotalCount)
+	return nil
+}
+
+func (r CountObjectsResponse) Int64() int64 {
+	return int64(r)
+}

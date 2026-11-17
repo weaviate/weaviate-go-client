@@ -1,0 +1,526 @@
+package data_test
+
+import (
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/weaviate/weaviate-go-client/v6/data"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
+	"github.com/weaviate/weaviate-go-client/v6/query/filter"
+	"github.com/weaviate/weaviate-go-client/v6/types"
+)
+
+func TestNewClient(t *testing.T) {
+	require.Panics(t, func() {
+		data.NewClient(nil, api.RequestDefaults{CollectionName: "New"})
+	}, "nil transport")
+}
+
+func TestClient_Insert(t *testing.T) {
+	rd := api.RequestDefaults{
+		CollectionName:   "Insert",
+		ConsistencyLevel: api.ConsistencyLevelOne,
+		Tenant:           "john_doe",
+	}
+
+	for _, tt := range []struct {
+		name    string
+		objects []*data.Object // Object to be inserted.
+		stubs   []testkit.Stub[api.InsertObjectsRequest, api.InsertObjectsResponse]
+		want    *data.InsertResult
+		err     testkit.Error // Expected error.
+	}{
+		{
+			name: "no objects",
+			stubs: []testkit.Stub[api.InsertObjectsRequest, api.InsertObjectsResponse]{{
+				Request:  &api.InsertObjectsRequest{RequestDefaults: rd},
+				Response: api.InsertObjectsResponse{Took: 92 * time.Second},
+			}},
+			want: &data.InsertResult{Took: 92 * time.Second},
+		},
+		{
+			name:    "nil uuid",
+			objects: []*data.Object{{UUID: testkit.Ptr(uuid.Nil)}},
+			stubs: []testkit.Stub[api.InsertObjectsRequest, api.InsertObjectsResponse]{{
+				Request: &api.InsertObjectsRequest{
+					RequestDefaults: rd,
+					Objects:         []api.BatchObject{{UUID: uuid.Nil}},
+				},
+				Response: api.InsertObjectsResponse{Took: 92 * time.Second},
+			}},
+			want: &data.InsertResult{
+				Took:  92 * time.Second,
+				UUIDs: map[int]uuid.UUID{0: uuid.Nil},
+			},
+		},
+		{
+			name: "with data",
+			objects: []*data.Object{{
+				UUID: testkit.Ptr(testkit.UUID),
+				Vectors: []types.Vector{
+					{Name: "single", Single: []float32{1, 2, 3}},
+				},
+				Properties: map[string]any{
+					"location": types.GeoCoordinates{
+						Latitude:  -37.815389,
+						Longitude: 144.970806,
+					},
+				},
+				References: data.References{
+					"ref": []data.Reference{
+						{Collection: "Foo", UUID: testkit.UUID},
+						{Collection: "Bar", UUID: testkit.UUID},
+					},
+				},
+			}},
+			stubs: []testkit.Stub[api.InsertObjectsRequest, api.InsertObjectsResponse]{{
+				Request: &api.InsertObjectsRequest{
+					RequestDefaults: rd,
+					Objects: []api.BatchObject{{
+						UUID: testkit.UUID,
+						Vectors: []api.Vector{
+							{Name: "single", Single: []float32{1, 2, 3}},
+						},
+						Properties: map[string]any{
+							"location": api.GeoCoordinates{
+								Latitude:  -37.815389,
+								Longitude: 144.970806,
+							},
+						},
+						References: api.References{
+							"ref": []api.Reference{
+								{Target: api.ObjectPath{Collection: "Foo", UUID: testkit.UUID}},
+								{Target: api.ObjectPath{Collection: "Bar", UUID: testkit.UUID}},
+							},
+						},
+					}},
+				},
+				Response: api.InsertObjectsResponse{
+					Took: 92 * time.Second,
+				},
+			}},
+			want: &data.InsertResult{
+				Took:  92 * time.Second,
+				UUIDs: map[int]uuid.UUID{0: testkit.UUID},
+			},
+		},
+		{
+			name: "internal server error",
+			objects: []*data.Object{
+				{UUID: testkit.Ptr(testkit.UUID)},
+				{UUID: testkit.Ptr(testkit.UUID)},
+				{UUID: testkit.Ptr(testkit.UUID)},
+			},
+			stubs: []testkit.Stub[api.InsertObjectsRequest, api.InsertObjectsResponse]{{
+				Request: &api.InsertObjectsRequest{
+					RequestDefaults: rd,
+					Objects: []api.BatchObject{
+						{UUID: testkit.UUID},
+						{UUID: testkit.UUID},
+						{UUID: testkit.UUID},
+					},
+				},
+				Response: api.InsertObjectsResponse{
+					Took:      92 * time.Second,
+					Positions: []int{0, 2},
+					Errors:    []string{"Whaam!", "Whaam!"},
+				},
+			}},
+			want: &data.InsertResult{
+				Took: 92 * time.Second,
+				UUIDs: map[int]uuid.UUID{
+					0: testkit.UUID,
+					1: testkit.UUID,
+					2: testkit.UUID,
+				},
+			},
+			err: func(tt assert.TestingT, err error, a ...any) bool {
+				var got data.InsertError
+				return assert.ErrorAs(t, err, &got) &&
+					assert.Equal(t, map[int]string{
+						0: "Whaam!",
+						2: "Whaam!",
+					}, got.Errors)
+			},
+		},
+		{
+			name: "with request error",
+			stubs: []testkit.Stub[api.InsertObjectsRequest, api.InsertObjectsResponse]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+			c := data.NewClient(transport, rd)
+			require.NotNil(t, c, "nil client")
+
+			got, err := c.Insert(t.Context(), tt.objects...)
+			tt.err.Require(t, err, "insert error")
+			require.Equal(t, tt.want, got, "returned object")
+		})
+	}
+}
+
+func TestClient_Replace(t *testing.T) {
+	rd := api.RequestDefaults{
+		CollectionName:   "Replace",
+		ConsistencyLevel: api.ConsistencyLevelOne,
+		Tenant:           "john_doe",
+	}
+
+	for _, tt := range []struct {
+		name   string
+		object data.Object                   // Object to be replaced.
+		want   *types.Object[map[string]any] // Expected return value.
+		stubs  []testkit.Stub[api.ReplaceObjectRequest, any]
+		err    testkit.Error
+	}{
+		{
+			name: "with data",
+			object: data.Object{
+				UUID: &testkit.UUID,
+				Vectors: []types.Vector{
+					{Name: "single", Single: []float32{1, 2, 3}},
+				},
+				Properties: map[string]any{"foo": "bar"},
+				References: data.References{
+					"ref": []data.Reference{
+						{Collection: "Foo", UUID: testkit.UUID},
+						{Collection: "Bar", UUID: testkit.UUID},
+					},
+				},
+			},
+			stubs: []testkit.Stub[api.ReplaceObjectRequest, any]{{
+				Request: &api.ReplaceObjectRequest{
+					RequestDefaults: rd,
+					UUID:            &testkit.UUID,
+					Vectors: []api.Vector{
+						{Name: "single", Single: []float32{1, 2, 3}},
+					},
+					Properties: map[string]any{"foo": "bar"},
+					References: api.References{
+						"ref": []api.Reference{
+							{Target: api.ObjectPath{Collection: "Foo", UUID: testkit.UUID}},
+							{Target: api.ObjectPath{Collection: "Bar", UUID: testkit.UUID}},
+						},
+					},
+				},
+			}},
+		},
+		{
+			name: "error on nil uuid",
+			err:  testkit.ExpectError,
+		},
+		{
+			name:   "with error",
+			object: data.Object{UUID: &testkit.UUID},
+			stubs: []testkit.Stub[api.ReplaceObjectRequest, any]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+			c := data.NewClient(transport, rd)
+			require.NotNil(t, c, "nil client")
+
+			err := c.Replace(t.Context(), tt.object)
+			tt.err.Require(t, err, "replace error")
+		})
+	}
+}
+
+func TestClient_Update(t *testing.T) {
+	rd := api.RequestDefaults{
+		CollectionName:   "Update",
+		ConsistencyLevel: api.ConsistencyLevelOne,
+		Tenant:           "john_doe",
+	}
+
+	for _, tt := range []struct {
+		name   string
+		object data.Object                   // Object to be replaced.
+		want   *types.Object[map[string]any] // Expected return value.
+		stubs  []testkit.Stub[api.UpdateObjectRequest, any]
+		err    testkit.Error
+	}{
+		{
+			name: "with data",
+			object: data.Object{
+				UUID: &testkit.UUID,
+				Vectors: []types.Vector{
+					{Name: "single", Single: []float32{1, 2, 3}},
+				},
+				Properties: map[string]any{"foo": "bar"},
+				References: data.References{
+					"ref": []data.Reference{
+						{Collection: "Foo", UUID: testkit.UUID},
+						{Collection: "Bar", UUID: testkit.UUID},
+					},
+				},
+			},
+			stubs: []testkit.Stub[api.UpdateObjectRequest, any]{{
+				Request: &api.UpdateObjectRequest{
+					RequestDefaults: rd,
+					UUID:            &testkit.UUID,
+					Vectors: []api.Vector{
+						{Name: "single", Single: []float32{1, 2, 3}},
+					},
+					Properties: map[string]any{"foo": "bar"},
+					References: api.References{
+						"ref": []api.Reference{
+							{Target: api.ObjectPath{Collection: "Foo", UUID: testkit.UUID}},
+							{Target: api.ObjectPath{Collection: "Bar", UUID: testkit.UUID}},
+						},
+					},
+				},
+			}},
+		},
+		{
+			name: "error on nil uuid",
+			err:  testkit.ExpectError,
+		},
+		{
+			name:   "with error",
+			object: data.Object{UUID: &testkit.UUID},
+			stubs: []testkit.Stub[api.UpdateObjectRequest, any]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+			c := data.NewClient(transport, rd)
+			require.NotNil(t, c, "nil client")
+
+			err := c.Update(t.Context(), tt.object)
+			tt.err.Require(t, err, "update error")
+		})
+	}
+}
+
+func TestClient_Delete(t *testing.T) {
+	rd := api.RequestDefaults{
+		CollectionName:   "Delete",
+		ConsistencyLevel: api.ConsistencyLevelOne,
+		Tenant:           "john_doe",
+	}
+
+	for _, tt := range []struct {
+		name  string
+		uuid  uuid.UUID // ID of the object to be deleted.
+		stubs []testkit.Stub[api.DeleteObjectRequest, any]
+		err   testkit.Error
+	}{
+		{
+			name: "ok",
+			uuid: testkit.UUID,
+			stubs: []testkit.Stub[api.DeleteObjectRequest, any]{{
+				Request: &api.DeleteObjectRequest{
+					RequestDefaults: rd,
+					UUID:            testkit.UUID,
+				},
+			}},
+		},
+		{
+			name: "with error",
+			uuid: testkit.UUID,
+			stubs: []testkit.Stub[api.DeleteObjectRequest, any]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+			c := data.NewClient(transport, rd)
+			require.NotNil(t, c, "nil client")
+
+			err := c.Delete(t.Context(), tt.uuid)
+			tt.err.Require(t, err, "delete error")
+		})
+	}
+}
+
+func TestClient_AddReferences(t *testing.T) {
+	rd := api.RequestDefaults{
+		CollectionName:   "Songs",
+		ConsistencyLevel: api.ConsistencyLevelOne,
+		Tenant:           "john_doe",
+	}
+
+	for _, tt := range []struct {
+		name       string
+		references []data.Reference // Reference to be inserted.
+		stubs      []testkit.Stub[api.InsertReferencesRequest, api.InsertReferencesResponse]
+		want       *data.AddReferencesResult
+		err        testkit.Error // Expected error.
+	}{
+		{
+			name: "references",
+			references: []data.Reference{
+				{ // Single-target reference, bornIn: "Cities".
+					Origin: data.ObjectPath{Collection: "Artists", Property: "bornIn", UUID: testkit.UUID},
+					UUID:   testkit.UUID,
+				},
+				{ // Multi-target reference, "hasAwards": ["Grammy", "TonyAward"].
+					Origin:     data.ObjectPath{Collection: "Songs", Property: "hasAwards", UUID: testkit.UUID},
+					Collection: "Grammy", UUID: testkit.UUID,
+				},
+			},
+			stubs: []testkit.Stub[api.InsertReferencesRequest, api.InsertReferencesResponse]{{
+				Request: &api.InsertReferencesRequest{
+					RequestDefaults: rd,
+					References: []api.Reference{
+						{
+							Origin: api.ObjectPath{Collection: "Artists", Property: "bornIn", UUID: testkit.UUID},
+							Target: api.ObjectPath{UUID: testkit.UUID},
+						},
+						{
+							Origin: api.ObjectPath{Collection: "Songs", Property: "hasAwards", UUID: testkit.UUID},
+							Target: api.ObjectPath{Collection: "Grammy", UUID: testkit.UUID},
+						},
+					},
+				},
+				Response: api.InsertReferencesResponse{Took: 92 * time.Second},
+			}},
+			want: &data.AddReferencesResult{Took: 92 * time.Second},
+		},
+		{
+			// The reference added in this tests case {UUID: testkit.UUID} is not
+			// technically valid, because it does not specify the Origin. That's
+			// not important, because all we want to verify is that the error map
+			// in the result contains the same reference value as its only key.
+			name:       "internal server error",
+			references: []data.Reference{{UUID: testkit.UUID}},
+			stubs: []testkit.Stub[api.InsertReferencesRequest, api.InsertReferencesResponse]{{
+				Request: &api.InsertReferencesRequest{
+					RequestDefaults: rd,
+					References:      []api.Reference{{Target: api.ObjectPath{UUID: testkit.UUID}}},
+				},
+				Response: api.InsertReferencesResponse{
+					Took:      92 * time.Second,
+					Positions: []int{0},
+					Errors:    []string{"Whaam!"},
+				},
+			}},
+			want: &data.AddReferencesResult{
+				Took: 92 * time.Second,
+			},
+			err: func(tt assert.TestingT, err error, a ...any) bool {
+				var got data.AddReferencesError
+				return assert.ErrorAs(t, err, &got) &&
+					assert.Equal(t, map[data.Reference]string{
+						{UUID: testkit.UUID}: "Whaam!",
+					}, got.Errors)
+			},
+		},
+		{
+			name: "with request error",
+			stubs: []testkit.Stub[api.InsertReferencesRequest, api.InsertReferencesResponse]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+			c := data.NewClient(transport, rd)
+			require.NotNil(t, c, "nil client")
+
+			got, err := c.AddReferences(t.Context(), tt.references...)
+			tt.err.Require(t, err, "insert error")
+			require.Equal(t, tt.want, got, "returned object")
+		})
+	}
+}
+
+func TestClient_DeleteSelected(t *testing.T) {
+	rd := api.RequestDefaults{
+		CollectionName:   "DeleteSelected",
+		ConsistencyLevel: api.ConsistencyLevelOne,
+		Tenant:           "john_doe",
+	}
+
+	for _, tt := range []struct {
+		name     string
+		selected data.DeleteSelected
+		stubs    []testkit.Stub[api.DeleteObjectsRequest, api.DeleteObjectsResponse]
+		want     *data.DeleteSelectedResult
+		err      testkit.Error
+	}{
+		{
+			name: "reported errors",
+			selected: data.DeleteSelected{
+				Filter: &filter.Cond{
+					Target:   "reasons_to_keep",
+					Operator: filter.IsNull,
+				},
+				DryRun:  true,
+				Verbose: true,
+			},
+			stubs: []testkit.Stub[api.DeleteObjectsRequest, api.DeleteObjectsResponse]{
+				{
+					Request: &api.DeleteObjectsRequest{
+						RequestDefaults: rd,
+						Filter: api.FilterExpr{
+							Target:   []string{"reasons_to_keep"},
+							Operator: api.FilterOperatorIsNull,
+						},
+						DryRun:  true,
+						Verbose: true,
+					},
+					Response: api.DeleteObjectsResponse{
+						Took:    92 * time.Second,
+						Matches: 5,
+						Errors: map[uuid.UUID]error{
+							testkit.UUID: testkit.ErrWhaam,
+						},
+					},
+				},
+			},
+			want: &data.DeleteSelectedResult{
+				Took:    92 * time.Second,
+				Matches: 5,
+			},
+			err: func(tt assert.TestingT, err error, a ...any) bool {
+				var partial data.DeleteError
+				if assert.ErrorAs(tt, err, &partial) {
+					return assert.Equal(tt, map[uuid.UUID]error{
+						testkit.UUID: testkit.ErrWhaam,
+					}, partial.Errors)
+				}
+				return false
+			},
+		},
+		{
+			name: "request error",
+			selected: data.DeleteSelected{
+				DryRun:  true,
+				Verbose: true,
+			},
+			stubs: []testkit.Stub[api.DeleteObjectsRequest, api.DeleteObjectsResponse]{
+				{Err: testkit.ErrWhaam},
+			},
+			err: testkit.ExpectError,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, tt.stubs)
+			c := data.NewClient(transport, rd)
+			require.NotNil(t, c, "nil client")
+
+			got, err := c.DeleteSelected(t.Context(), tt.selected)
+			tt.err.Require(t, err, "delete error")
+			assert.EqualValues(t, tt.want, got, "bad result")
+		})
+	}
+}

@@ -1,0 +1,118 @@
+package testkit
+
+import (
+	"context"
+	"reflect"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/weaviate/weaviate-go-client/v6/internal"
+)
+
+// TransportFunc implements internal.Transport to allow
+// mocking it in tests with a single function.
+type TransportFunc func(context.Context, any, any) error
+
+var _ internal.Transport = (*TransportFunc)(nil)
+
+// Do implements internal.Transport.
+func (f TransportFunc) Do(ctx context.Context, req, dest any) error {
+	return f(ctx, req, dest)
+}
+
+// NopTransport is a [internal.Transport] implementation
+// to be used in a scenarios where no action is required,
+// but passing a nil-transport communicates wrong intent.
+//
+// Use [MockTransoprt] for anything more advanced.
+var NopTransport internal.Transport = TransportFunc(func(context.Context, any, any) error { return nil })
+
+// NewTransport creates a MockTransoprt populated with request/response stubs.
+// All requests must be consumed -- this is verified on test cleanup.
+func NewTransport[Req, Resp any](t *testing.T, stubs []Stub[Req, Resp]) *MockTransport[Req, Resp] {
+	mock := &MockTransport[Req, Resp]{t: t, stubs: stubs}
+	t.Cleanup(func() {
+		if !t.Failed() {
+			assert.Emptyf(t, mock.stubs, "requests were not fully consumed, %d remaining", len(mock.stubs))
+		}
+	})
+	return mock
+}
+
+// Stub describes request-response pair for a MockTransport request
+// along with any error that should be returned.
+type Stub[Req, Resp any] struct {
+	Request  *Req  // Expected request value. Leave unset to skip request check.
+	Response Resp  // Response value. Will not be used if request dest is nil.
+	Err      error // Error returned from Do. If set, Response and dest are ignored.
+}
+
+// MockTransport uses responses one by one until the slice is exhausted.
+// It will not cycle through the responses, so calling the transport more times
+// than the number of responses it has will fail the associated test.
+type MockTransport[Req, Resp any] struct {
+	t     *testing.T
+	stubs []Stub[Req, Resp]
+}
+
+var _ internal.Transport = (*MockTransport[any, any])(nil)
+
+// Do type-asserts dest to ensure it matches the expected type T,
+// and consumes the next response, assigning it to dest.
+// Returns Response.Err.
+func (t *MockTransport[Req, Resp]) Do(ctx context.Context, req, dest any) error {
+	t.t.Helper()
+
+	if len(t.stubs) == 0 {
+		require.Failf(t.t, "too many requests", "%#v is not expected", req)
+	}
+
+	var stub Stub[Req, Resp]
+	stub, t.stubs = t.stubs[0], t.stubs[1:] // pop front
+
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
+	if stub.Request != nil {
+		if reflect.TypeFor[Req]().Kind() == reflect.Interface {
+			assert.Implements(t.t, (*Req)(nil), req, "bad request")
+
+			// If Req is an interface, [Stub.Request] must be a pointer to satisfy *Req.
+			// We expect the _actual_ request to be the de-referenced value, so we compare
+			// *stub.Request instead of stub.Request.
+			assert.Equal(t.t, *stub.Request, req, "bad request")
+		} else if assert.IsType(t.t, (*Req)(nil), req, "bad request") {
+			assert.Equal(t.t, stub.Request, req, "bad request")
+		}
+	}
+
+	if stub.Err != nil {
+		return stub.Err
+	}
+
+	if dest != nil {
+		if reflect.TypeFor[Resp]().Kind() == reflect.Interface {
+			assert.Implements(t.t, (*Resp)(nil), dest, "bad dest")
+
+			// To support heterogenous requests in the same transport,
+			// we need to handle Resp == interface{} correctly. Since
+			// a non-nil dest will have some concrete type, we cannot
+			// cast to to (*any) and dereference it safely, as we do
+			// with homogenous requests in the else-branch).
+			// We can leverage reflection to assign the response to dest.
+			resp := reflect.ValueOf(stub.Response)
+			var literalNil reflect.Value
+			if resp != literalNil {
+				reflect.ValueOf(dest).Elem().Set(resp)
+			}
+		} else if assert.IsType(t.t, (*Resp)(nil), dest, "bad dest") {
+			*dest.(*Resp) = stub.Response
+		}
+	}
+	return nil
+}
+
+// Done returns true if all requests have been consumed.
+func (t *MockTransport[Req, Resp]) Done() bool { return len(t.stubs) == 0 }
