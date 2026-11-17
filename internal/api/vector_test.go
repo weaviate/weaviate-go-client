@@ -52,6 +52,7 @@ func TestVectorBytes(t *testing.T) {
 		}
 		got := marshalSingle(v)
 		require.Equal(t, want, got, "bad vector bytes")
+		require.Equal(t, v, unmarshalSingle(got), "bad roundtrip")
 	})
 
 	t.Run("trivial multi", func(t *testing.T) {
@@ -67,6 +68,7 @@ func TestVectorBytes(t *testing.T) {
 		}
 		got := marshalMulti(v)
 		require.Equal(t, want, got, "bad vector bytes")
+		require.Equal(t, v, unmarshalMulti(got), "bad roundtrip")
 	})
 }
 
