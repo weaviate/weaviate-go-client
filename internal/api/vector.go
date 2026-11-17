@@ -129,6 +129,15 @@ func unmarshalMulti(b []byte) [][]float32 {
 	return vv
 }
 
+// marshalIntegerArray encodes an []int64 into a byte-slice.
+func marshalIntegerArray(v []int64) []byte {
+	arr := make([]byte, len(v)*sizeof_uint64)
+	for i := range v {
+		order.PutUint64(arr[i*sizeof_uint64:], uint64(v[i]))
+	}
+	return arr
+}
+
 // unmarshalIntegerArray decodes the values of an int[] property
 // from a byte-slice, assuming each value is encoded as a uint64.
 // If len(b) is not a multiple of 8 the result is an empty slice.
@@ -140,6 +149,16 @@ func unmarshalIntegerArray(b []byte) []int64 {
 	for i := range arr {
 		bits := order.Uint64(b[i*sizeof_uint64:])
 		arr[i] = int64(bits)
+	}
+	return arr
+}
+
+// marshalNumberArray encodes an []float64 into a byte-slice.
+func marshalNumberArray(v []float64) []byte {
+	arr := make([]byte, len(v)*sizeof_uint64)
+	for i := range v {
+		bits := math.Float64bits(v[i])
+		order.PutUint64(arr[i*sizeof_uint64:], bits)
 	}
 	return arr
 }

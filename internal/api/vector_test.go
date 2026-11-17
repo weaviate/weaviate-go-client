@@ -74,20 +74,24 @@ func TestVectorBytes(t *testing.T) {
 
 func TestArrays(t *testing.T) {
 	t.Run("integer array", func(t *testing.T) {
-		want := []int64{1, 2, 3}
-		got := unmarshalIntegerArray([]byte{
+		v := []int64{1, 2, 3}
+		want := []byte{
 			1, 0, 0, 0, 0, 0, 0, 0,
 			2, 0, 0, 0, 0, 0, 0, 0,
 			3, 0, 0, 0, 0, 0, 0, 0,
-		})
-		require.Equal(t, want, got)
+		}
+		got := marshalIntegerArray(v)
+		require.Equal(t, want, got, "bad array bytes")
+		require.Equal(t, v, unmarshalIntegerArray(got), "bad roundtrip")
 	})
 	t.Run("float array", func(t *testing.T) {
-		want := []float64{3.14, 3.1415}
-		got := unmarshalNumberArray([]byte{
+		v := []float64{3.14, 3.1415}
+		want := []byte{
 			31, 133, 235, 81, 184, 30, 9, 64,
 			111, 18, 131, 192, 202, 33, 9, 64,
-		})
-		require.Equal(t, want, got)
+		}
+		got := marshalNumberArray(v)
+		require.Equal(t, want, got, "bad array bytes")
+		require.Equal(t, v, unmarshalNumberArray(got), "bad roundtrip")
 	})
 }
