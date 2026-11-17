@@ -420,6 +420,7 @@ const (
 	IndexStatusStatusCancelled IndexStatusStatus = "cancelled"
 	IndexStatusStatusFailed    IndexStatusStatus = "failed"
 	IndexStatusStatusIndexing  IndexStatusStatus = "indexing"
+	IndexStatusStatusPartial   IndexStatusStatus = "partial"
 	IndexStatusStatusPending   IndexStatusStatus = "pending"
 	IndexStatusStatusReady     IndexStatusStatus = "ready"
 )
@@ -432,6 +433,8 @@ func (e IndexStatusStatus) Valid() bool {
 	case IndexStatusStatusFailed:
 		return true
 	case IndexStatusStatusIndexing:
+		return true
+	case IndexStatusStatusPartial:
 		return true
 	case IndexStatusStatusPending:
 		return true
@@ -2654,16 +2657,24 @@ type GroupType string
 type IndexStatus struct {
 	// Algorithm BM25 algorithm currently backing this searchable index. 'wand' is the legacy map-based bucket strategy; 'blockmax' is the Block Max WAND inverted strategy. Only populated for `type=searchable` entries. Not populated for filterable or rangeable indexes.
 	Algorithm IndexStatusAlgorithm `json:"algorithm,omitempty"`
-	Progress  float32              `json:"progress,omitempty"`
-	Status    IndexStatusStatus    `json:"status,omitempty"`
+
+	// MigratedTenants Number of tenants already migrated, counted over the failed or cancelled runs of this migration since the property last finished one; `taskId` names the latest run. Present only on a `partial` entry, and only to a caller who may read the collection's tenants.
+	MigratedTenants int64   `json:"migratedTenants,omitempty"`
+	Progress        float32 `json:"progress,omitempty"`
+
+	// Status `partial`: the latest reindex task failed or was cancelled after some tenants had migrated; those tenants have the new index. After a tokenization change they answer queries with it; after enabling an index they answer with it only once the migration finishes. A replica that still owes a tenant's swap answers with the old index until its retry lands. See `migratedTenants` and `totalTenants`.
+	Status IndexStatusStatus `json:"status,omitempty"`
 
 	// TargetAlgorithm BM25 algorithm this searchable index is being rebuilt onto. Populated only while an in-flight rebuild is changing the algorithm; mirrors `targetTokenization` for the change-tokenization verb. Today the only supported transition is wand -> blockmax.
 	TargetAlgorithm    IndexStatusTargetAlgorithm `json:"targetAlgorithm,omitempty"`
 	TargetTokenization string                     `json:"targetTokenization,omitempty"`
 
-	// TaskId ID of the reindex task driving this index entry. Present on every task-driven entry (`pending`, `indexing`, `failed`, `cancelled`); absent on a plain `ready` entry. A coupled searchable+filterable tokenization migration reports the same `taskId` on both affected entries.
+	// TaskId ID of the reindex task driving this index entry. Present on every task-driven entry (`pending`, `indexing`, `failed`, `cancelled`, `partial`); absent on a plain `ready` entry. A coupled searchable+filterable tokenization migration reports the same `taskId` on both affected entries.
 	TaskId       string `json:"taskId,omitempty"`
 	Tokenization string `json:"tokenization,omitempty"`
+
+	// TotalTenants Number of tenants those runs cover, counted the same way as `migratedTenants`. Present only on a `partial` entry, and only to a caller who may read the collection's tenants.
+	TotalTenants int64 `json:"totalTenants,omitempty"`
 
 	// Type Canonical inverted-index type. Always one of `filterable`, `searchable`, `rangeFilters` — never the `rangeable` write-path alias.
 	Type IndexStatusType `json:"type,omitempty"`
@@ -2672,7 +2683,7 @@ type IndexStatus struct {
 // IndexStatusAlgorithm BM25 algorithm currently backing this searchable index. 'wand' is the legacy map-based bucket strategy; 'blockmax' is the Block Max WAND inverted strategy. Only populated for `type=searchable` entries. Not populated for filterable or rangeable indexes.
 type IndexStatusAlgorithm string
 
-// IndexStatusStatus defines model for IndexStatus.Status.
+// IndexStatusStatus `partial`: the latest reindex task failed or was cancelled after some tenants had migrated; those tenants have the new index. After a tokenization change they answer queries with it; after enabling an index they answer with it only once the migration finishes. A replica that still owes a tenant's swap answers with the old index until its retry lands. See `migratedTenants` and `totalTenants`.
 type IndexStatusStatus string
 
 // IndexStatusTargetAlgorithm BM25 algorithm this searchable index is being rebuilt onto. Populated only while an in-flight rebuild is changing the algorithm; mirrors `targetTokenization` for the change-tokenization verb. Today the only supported transition is wand -> blockmax.
@@ -2816,8 +2827,11 @@ type MultipleRef = []SingleRef
 
 // Namespace A cluster-level namespace used to group resources under a common administrative unit. Namespace names must contain only lowercase letters, digits, and hyphens, must start and end with a letter or digit, must be 3-36 characters long, and must not be a reserved name.
 type Namespace struct {
-	// HomeNode The cluster node where this namespace's shards are placed. Set at create time and updatable later. Updating it only affects future placement decisions; existing live shards are not moved.
+	// HomeNode Deprecated: use home_nodes. Holds the first entry of `home_nodes`.
 	HomeNode string `json:"home_node,omitempty"`
+
+	// HomeNodes The cluster nodes where this namespace's shards are placed. The list is set at create time and can be updated later. An update applies to future placement decisions only, and existing live shards are not moved. A collection or tenant with replication factor N below the list length is placed on the first N entries that are storage nodes.
+	HomeNodes []string `json:"home_nodes,omitempty"`
 
 	// Name The unique name of the namespace.
 	Name string `json:"name,omitempty"`
@@ -2829,10 +2843,13 @@ type Namespace struct {
 // NamespaceState Lifecycle state. "active" namespaces accept all operations. "suspended" namespaces reject new classes, aliases, users, roles, role assignments, and replica movements, and their users can no longer authenticate; everything the namespace already owns is retained. "resuming" namespaces are on their way back to "active" and are still restricted the same way, replica movements included. "deleting" namespaces are being removed: new classes, aliases, users, and replica movements can no longer be created in the namespace, and the namespace itself disappears once removal completes.
 type NamespaceState string
 
-// NamespaceCreateRequest Optional body for namespace creation. When `home_node` is omitted, the cluster picks one automatically.
+// NamespaceCreateRequest Optional body for namespace creation. When neither `home_nodes` nor `home_node` is set, the cluster picks the home nodes.
 type NamespaceCreateRequest struct {
-	// HomeNode Optional. Cluster node to place this namespace's shards on. Must be a current storage candidate. When omitted, the cluster picks one.
+	// HomeNode Deprecated: use home_nodes. A value is taken as a one-entry `home_nodes`. Sending it with a non-empty `home_nodes` is a 422, even when it equals the first entry.
 	HomeNode string `json:"home_node,omitempty"`
+
+	// HomeNodes Optional cluster nodes to place this namespace's shards on. Entries must be distinct current storage candidates, at least `REPLICATION_MINIMUM_FACTOR` of them. When this and `home_node` are both omitted or empty, the cluster picks `REPLICATION_MAXIMUM_FACTOR` nodes, or every storage node when there are fewer. It refuses that create when `REPLICATION_MAXIMUM_FACTOR` is unset or 0 or below, or when there are fewer storage nodes than `REPLICATION_MINIMUM_FACTOR`. List order decides placement. A collection or tenant with replication factor N goes on the first N entries that are storage nodes, so the first of those receives every factor-1 placement. Until every node runs this release, send only home_node: older nodes ignore home_nodes on create and pick a home node themselves.
+	HomeNodes []string `json:"home_nodes,omitempty"`
 }
 
 // NamespaceListResponse Response object containing a list of namespaces.
@@ -2840,8 +2857,11 @@ type NamespaceListResponse = []Namespace
 
 // NamespaceUpdateRequest Update payload for an existing namespace.
 type NamespaceUpdateRequest struct {
-	// HomeNode Cluster node to use for future placements in this namespace. Must be a current storage candidate. Existing live shards are not moved.
-	HomeNode string `json:"home_node"`
+	// HomeNode Deprecated: use home_nodes. A value is taken as a one-entry `home_nodes`. Sending it with a non-empty `home_nodes` is a 422, even when it equals the first entry.
+	HomeNode string `json:"home_node,omitempty"`
+
+	// HomeNodes Cluster nodes to place this namespace's shards on. The list replaces the namespace's home nodes for placements made after the update, and existing shards stay on their nodes. Entries must be distinct current storage candidates, at least `REPLICATION_MINIMUM_FACTOR` of them, and at least the largest replication factor among the namespace's collections. Unlike on create, an empty list does not auto-pick, so a body with neither this nor `home_node` is a 422. List order decides placement. A collection or tenant with replication factor N goes on the first N entries that are storage nodes, so the first of those receives every factor-1 placement. Until every node runs this release, send only home_node: older nodes refuse an update without it.
+	HomeNodes []string `json:"home_nodes,omitempty"`
 }
 
 // NestedProperty defines model for NestedProperty.

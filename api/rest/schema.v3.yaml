@@ -1198,16 +1198,22 @@ components:
                         - wand
                         - blockmax
                     type: string
+                migratedTenants:
+                    description: Number of tenants already migrated, counted over the failed or cancelled runs of this migration since the property last finished one; `taskId` names the latest run. Present only on a `partial` entry, and only to a caller who may read the collection's tenants.
+                    format: int64
+                    type: integer
                 progress:
                     format: float
                     type: number
                 status:
+                    description: '`partial`: the latest reindex task failed or was cancelled after some tenants had migrated; those tenants have the new index. After a tokenization change they answer queries with it; after enabling an index they answer with it only once the migration finishes. A replica that still owes a tenant''s swap answers with the old index until its retry lands. See `migratedTenants` and `totalTenants`.'
                     enum:
                         - ready
                         - indexing
                         - pending
                         - failed
                         - cancelled
+                        - partial
                     type: string
                 targetAlgorithm:
                     description: BM25 algorithm this searchable index is being rebuilt onto. Populated only while an in-flight rebuild is changing the algorithm; mirrors `targetTokenization` for the change-tokenization verb. Today the only supported transition is wand -> blockmax.
@@ -1218,10 +1224,14 @@ components:
                 targetTokenization:
                     type: string
                 taskId:
-                    description: ID of the reindex task driving this index entry. Present on every task-driven entry (`pending`, `indexing`, `failed`, `cancelled`); absent on a plain `ready` entry. A coupled searchable+filterable tokenization migration reports the same `taskId` on both affected entries.
+                    description: ID of the reindex task driving this index entry. Present on every task-driven entry (`pending`, `indexing`, `failed`, `cancelled`, `partial`); absent on a plain `ready` entry. A coupled searchable+filterable tokenization migration reports the same `taskId` on both affected entries.
                     type: string
                 tokenization:
                     type: string
+                totalTenants:
+                    description: Number of tenants those runs cover, counted the same way as `migratedTenants`. Present only on a `partial` entry, and only to a caller who may read the collection's tenants.
+                    format: int64
+                    type: integer
                 type:
                     description: Canonical inverted-index type. Always one of `filterable`, `searchable`, `rangeFilters` — never the `rangeable` write-path alias.
                     enum:
@@ -1396,8 +1406,15 @@ components:
             description: A cluster-level namespace used to group resources under a common administrative unit. Namespace names must contain only lowercase letters, digits, and hyphens, must start and end with a letter or digit, must be 3-36 characters long, and must not be a reserved name.
             properties:
                 home_node:
-                    description: The cluster node where this namespace's shards are placed. Set at create time and updatable later. Updating it only affects future placement decisions; existing live shards are not moved.
+                    description: 'Deprecated: use home_nodes. Holds the first entry of `home_nodes`.'
                     type: string
+                    x-deprecated: true
+                home_nodes:
+                    description: The cluster nodes where this namespace's shards are placed. The list is set at create time and can be updated later. An update applies to future placement decisions only, and existing live shards are not moved. A collection or tenant with replication factor N below the list length is placed on the first N entries that are storage nodes.
+                    items:
+                        type: string
+                    maxItems: 64
+                    type: array
                 name:
                     description: The unique name of the namespace.
                     type: string
@@ -1411,11 +1428,18 @@ components:
                     type: string
             type: object
         NamespaceCreateRequest:
-            description: Optional body for namespace creation. When `home_node` is omitted, the cluster picks one automatically.
+            description: Optional body for namespace creation. When neither `home_nodes` nor `home_node` is set, the cluster picks the home nodes.
             properties:
                 home_node:
-                    description: Optional. Cluster node to place this namespace's shards on. Must be a current storage candidate. When omitted, the cluster picks one.
+                    description: 'Deprecated: use home_nodes. A value is taken as a one-entry `home_nodes`. Sending it with a non-empty `home_nodes` is a 422, even when it equals the first entry.'
                     type: string
+                    x-deprecated: true
+                home_nodes:
+                    description: 'Optional cluster nodes to place this namespace''s shards on. Entries must be distinct current storage candidates, at least `REPLICATION_MINIMUM_FACTOR` of them. When this and `home_node` are both omitted or empty, the cluster picks `REPLICATION_MAXIMUM_FACTOR` nodes, or every storage node when there are fewer. It refuses that create when `REPLICATION_MAXIMUM_FACTOR` is unset or 0 or below, or when there are fewer storage nodes than `REPLICATION_MINIMUM_FACTOR`. List order decides placement. A collection or tenant with replication factor N goes on the first N entries that are storage nodes, so the first of those receives every factor-1 placement. Until every node runs this release, send only home_node: older nodes ignore home_nodes on create and pick a home node themselves.'
+                    items:
+                        type: string
+                    maxItems: 64
+                    type: array
             type: object
         NamespaceListResponse:
             description: Response object containing a list of namespaces.
@@ -1426,10 +1450,16 @@ components:
             description: Update payload for an existing namespace.
             properties:
                 home_node:
-                    description: Cluster node to use for future placements in this namespace. Must be a current storage candidate. Existing live shards are not moved.
+                    description: 'Deprecated: use home_nodes. A value is taken as a one-entry `home_nodes`. Sending it with a non-empty `home_nodes` is a 422, even when it equals the first entry.'
+                    nullable: true
                     type: string
-            required:
-                - home_node
+                    x-deprecated: true
+                home_nodes:
+                    description: 'Cluster nodes to place this namespace''s shards on. The list replaces the namespace''s home nodes for placements made after the update, and existing shards stay on their nodes. Entries must be distinct current storage candidates, at least `REPLICATION_MINIMUM_FACTOR` of them, and at least the largest replication factor among the namespace''s collections. Unlike on create, an empty list does not auto-pick, so a body with neither this nor `home_node` is a 422. List order decides placement. A collection or tenant with replication factor N goes on the first N entries that are storage nodes, so the first of those receives every factor-1 placement. Until every node runs this release, send only home_node: older nodes refuse an update without it.'
+                    items:
+                        type: string
+                    maxItems: 64
+                    type: array
             type: object
         NestedProperty:
             properties:
@@ -3597,7 +3627,7 @@ info:
         url: https://github.com/weaviate
     description: '# Introduction<br/> Weaviate is an open source, AI-native vector database that helps developers create intuitive and reliable AI-powered applications. <br/> ### Base Path <br/>The base path for the Weaviate server is structured as `[YOUR-WEAVIATE-HOST]:[PORT]/v1`. As an example, if you wish to access the `schema` endpoint on a local instance, you would navigate to `http://localhost:8080/v1/schema`. Ensure you replace `[YOUR-WEAVIATE-HOST]` and `[PORT]` with your actual server host and port number respectively. <br/> ### Questions? <br/>If you have any comments or questions, please feel free to reach out to us at the community forum [https://forum.weaviate.io/](https://forum.weaviate.io/). <br/>### Issues? <br/>If you find a bug or want to file a feature request, please open an issue on our GitHub repository for [Weaviate](https://github.com/weaviate/weaviate). <br/>### Need more documentation? <br/>For a quickstart, code examples, concepts and more, please visit our [documentation page](https://docs.weaviate.io/weaviate).'
     title: Weaviate REST API
-    version: 1.41.0-dev
+    version: 1.41.0-rc.0
 openapi: 3.0.1
 paths:
     /:
@@ -6492,7 +6522,7 @@ paths:
                     application/yaml:
                         schema:
                             $ref: '#/components/schemas/NamespaceCreateRequest'
-                description: Optional body. When omitted, `home_node` is picked automatically.
+                description: Optional body. When neither `home_nodes` nor `home_node` is set, the cluster picks the home nodes.
                 required: false
             responses:
                 "201":
@@ -6527,7 +6557,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
-                    description: The request syntax is correct, but the server couldn't process it due to semantic issues (e.g. invalid name format or reserved name).
+                    description: The request syntax is correct, but the server couldn't process it due to semantic issues (e.g. invalid name format or reserved name). A `home_nodes` list the cluster refuses, or a body that sets both `home_nodes` and `home_node`, also answers 422.
                 "500":
                     content:
                         application/json:
@@ -6539,7 +6569,7 @@ paths:
                 - namespaces
             x-codegen-request-body-name: body
         put:
-            description: Update a namespace's `home_node`. The new value applies to future placement decisions only (new collection create, new tenant create, tenant reactivation). Existing live shards are not moved.
+            description: Update a namespace's `home_nodes`. The new list replaces the namespace's list and applies to future placement decisions only (new collection create, new tenant create, offloaded-tenant reactivation). Existing live shards are not moved.
             operationId: updateNamespace
             parameters:
                 - description: The name of the namespace.
@@ -6556,7 +6586,7 @@ paths:
                     application/yaml:
                         schema:
                             $ref: '#/components/schemas/NamespaceUpdateRequest'
-                description: Required body. `home_node` is the new placement target.
+                description: Required body. `home_nodes` replaces the namespace's list.
                 required: true
             responses:
                 "200":
@@ -6585,7 +6615,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
-                    description: The request syntax is correct, but the server couldn't process it due to semantic issues (e.g. invalid name format, reserved name, unknown home_node, or the namespace being in the `deleting` state).
+                    description: The request syntax is correct, but the server couldn't process it due to semantic issues (e.g. invalid name format, reserved name, or the namespace being in the `deleting` state). A `home_nodes` list the cluster refuses, a body that sets both `home_nodes` and `home_node`, or a body that sets neither also answers 422.
                 "500":
                     content:
                         application/json:
@@ -9378,7 +9408,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
-                    description: Invalid index, property or collection provided.
+                    description: Invalid index, property or collection provided, or a reindex on this property is in flight or left partial; the message names the remedy.
                 "500":
                     content:
                         application/json:
@@ -9474,7 +9504,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
-                    description: 'Nothing was started: the collection has a conflicting in-flight reindex task, has a replica movement in flight, or had its shards or replicas change while the reindex was submitted. The message says which.'
+                    description: 'Nothing was started: the collection has a conflicting in-flight reindex task, has a replica movement in flight, or had its shards or replicas change while the reindex was submitted; or an earlier run of a migration stopped after some tenants migrated an index of this property, which only a resubmit of that migration finishes. The message says which.'
                 "422":
                     content:
                         application/json:
@@ -9539,7 +9569,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/IndexUpdateResponse'
-                    description: Cancellation processed. Body carries `{"status":"CANCELLED","taskId":...}` when a STARTED task was cancelled, or `{"status":"NO_OP"}` when there was nothing to cancel.
+                    description: Cancellation processed. Body carries `{"status":"CANCELLED","taskId":...}` when a STARTED or PREPARING task was cancelled, or `{"status":"NO_OP"}` when there was nothing to cancel.
                 "401":
                     content: {}
                     description: Unauthorized or invalid credentials.
@@ -9560,7 +9590,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
-                    description: The target task could not be cancelled, and this request cancelled nothing. This happens for one of three reasons. It is in a cluster-wide coordination phase (PREPARING or SWAPPING) and past the point at which cancelling is safe, so the caller must wait for it to reach a terminal state. It carries a status this build does not recognize and has to terminate on the nodes that do. Or it stopped being cancellable between the read and the cancel. In the first two cases the task is still in flight and will reach a terminal state on its own. In the third it isn't possible to tell whether the task moved into a coordination phase or already reached a terminal state, possibly CANCELLED if a concurrent cancel won the race — re-read the index status to see where it landed.
+                    description: The target task could not be cancelled, and this request cancelled nothing. This happens for one of three reasons. It has reached SWAPPING, so it can no longer be cancelled; it ends once every replica that owes a swap has swapped, and a node lost for good, or a swap that never succeeds, holds it. It carries a status this build does not recognize and has to terminate on the nodes that do. Or it stopped being cancellable between the read and the cancel, and it isn't possible to tell whether it reached such a status or a terminal one, possibly CANCELLED if a concurrent cancel won the race — re-read the index status to see where it landed.
                 "422":
                     content:
                         application/json:
@@ -9654,7 +9684,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
-                    description: 'Nothing was started: the collection has a conflicting in-flight reindex task, has a replica movement in flight, or had its shards or replicas change while the reindex was submitted. The message says which.'
+                    description: 'Nothing was started: the collection has a conflicting in-flight reindex task, has a replica movement in flight, or had its shards or replicas change while the reindex was submitted; or an earlier run of a migration stopped after some tenants migrated an index of this property, which only a resubmit of that migration finishes. The message says which.'
                 "422":
                     content:
                         application/json:
