@@ -27,7 +27,7 @@ func Decode[P any](r *Result, dest *[]Object[P]) error {
 
 // DecodeGrouped decodes map[string]any properties of [query.GroupByResult] objects into arbitrary Go structs.
 func DecodeGrouped[P any](r *GroupByResult, dest *[]GroupObject[P]) (map[string]Group[P], error) {
-	groups := make(map[string]Group[P], len(r.Groups)) // TODO(dyma): use internal.MakeMap
+	groups := internal.MakeMap[string, Group[P]](len(r.Groups))
 	grow(&dest, len(r.Objects))
 
 	var tail int

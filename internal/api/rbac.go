@@ -815,8 +815,7 @@ type ListGroupsResponse []string
 // TODO(dyma): I wonder how many of the following requests will eventually
 // include Namespace in the body. Probably deleting a namespaced user will
 // need that. So they will likely not stay IdentityEndpoints for long.
-// We can leave them like as is for alpha.3, or until namespaces stabilize,
-// that's just something to keep in mind.
+// We can leave them like as is until namespaces stabilize, something to keep in mind.
 // ============================================================================
 
 // CreateUserRequest creates a new user with type [RBACKindDB].

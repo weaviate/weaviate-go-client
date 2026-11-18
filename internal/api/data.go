@@ -339,8 +339,6 @@ func marshalObjectProperties(properties map[string]any, dest *proto.BatchObject_
 		return nil
 	}
 
-	// TODO(dyma): check if we can just convert every array to []any
-	// and let structpb handle that. IDK if the server will be able to decode it.
 	for _, name := range slices.Sorted(maps.Keys(properties)) {
 		switch v := properties[name].(type) {
 		default:
@@ -471,7 +469,6 @@ func marshalObjectProperties(properties map[string]any, dest *proto.BatchObject_
 			return err
 		}
 
-		// TODO(dyma): move object properties out of nonRef
 		dest.NonRefProperties = nonRef
 	}
 	return nil
