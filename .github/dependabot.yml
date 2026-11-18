@@ -1,17 +1,32 @@
 version: 2
 updates:
+  # Monitor GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      # Check for updates to GitHub Actions every week
-      interval: "weekly"    
-  - package-ecosystem: "gomod" 
-  # Enable Dependabot to monitor and automatically update Go module dependencies for 
-  # security vulnerabilities and version updates
+      interval: "weekly"
+  # Monitor dependencies in go.mod and open PRs to upgrade them as necessary
+  - package-ecosystem: "gomod"
     directories:
       - "/"
     labels: ["security-update", "dependencies"]
     schedule:
       interval: "monthly"
     commit-message:
-      prefix: "dependencies(update)"
+      prefix: "build(dependabot)"
+
+  # Monitor v5 branch while the previous version is being deprecated.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: v5
+  - package-ecosystem: "gomod"
+    directories:
+      - "/"
+    labels: ["security-update", "dependencies"]
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "build(dependabot)"
+    target-branch: v5

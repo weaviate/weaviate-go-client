@@ -1,0 +1,449 @@
+package collections
+
+import (
+	"slices"
+
+	"github.com/weaviate/weaviate-go-client/v6/collections/compression"
+	"github.com/weaviate/weaviate-go-client/v6/collections/vectorindex"
+	"github.com/weaviate/weaviate-go-client/v6/internal"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"github.com/weaviate/weaviate-go-client/v6/modules"
+)
+
+// Alias defines an alias for a collection.
+type Alias api.Alias
+
+type (
+	Collection struct {
+		Name            string
+		Description     string
+		Properties      []Property
+		References      []Reference
+		Vectors         map[string]VectorConfig
+		Sharding        *ShardingConfig
+		Replication     *ReplicationConfig
+		InvertedIndex   *InvertedIndexConfig
+		MultiTenancy    *MultiTenancyConfig
+		ObjectTTL       *ObjectTTLConfig
+		Generative      modules.Module
+		RerankerModules []modules.Module
+	}
+	Property struct {
+		Name             string
+		Description      string
+		DataType         DataType
+		NestedProperties []Property
+		Tokenization     Tokenization
+		TextAnalyzer     *TextAnalyzerConfig
+		IndexFilterable  *bool
+		IndexRangeable   *bool
+		IndexSearchable  *bool
+	}
+	Reference struct {
+		Name        string
+		Collections []string
+	}
+	ShardingConfig struct {
+		VirtualPerPhysical  int
+		DesiredCount        int
+		DesiredVirtualCount int
+	}
+	ReplicationConfig struct {
+		AsyncReplication *AsyncReplicationConfig // Fine-tune asynchronous replication.
+		DeletionStrategy DeletionStrategy        // Conflict resolution strategy for deleted objects.
+		Factor           int                     // Number of times a collection is replicated.
+	}
+	AsyncReplicationConfig api.AsyncReplicationConfig
+	InvertedIndexConfig    struct {
+		IndexNullState         bool            // Index each object with the null state.
+		IndexPropertyLength    bool            // Index length of properties.
+		IndexTimestamps        bool            // Index each object by its internal timestamps.
+		UsingBlockMaxWAND      bool            // Toggle UsingBlockMaxWAND usage for BM25 search.
+		CleanupIntervalSeconds int32           // Asynchronous index cleanup internal.
+		BM25                   *BM25Config     // Tuning parameters for the BM25 algorithm.
+		Stopwords              *StopwordConfig // Fine-grained control over stopword list usage.
+	}
+	BM25Config         api.BM25Config
+	StopwordConfig     api.StopwordConfig
+	MultiTenancyConfig api.MultiTenancyConfig
+	ObjectTTLConfig    api.ObjectTTLConfig
+	TextAnalyzerConfig api.TextAnalyzerConfig
+)
+
+type (
+	VectorIndex internal.Module[vectorindex.Type]
+	Compression internal.Module[compression.Type]
+)
+
+type VectorConfig struct {
+	// Vector index configuration.
+	// See [collections/vectorindex] package for available index options.
+	Index VectorIndex
+
+	// Compression algorithm for vector data.
+	// See [collections/compression] package for available algorithms.
+	Compression Compression
+
+	// SkipDefaultCompression prevents the server from selecting the default
+	// compression algorithm when [Compression] does not specify any.
+	// If set to true, vector data will be stored in its original shape until
+	// compression is manually enabled later.
+	SkipDefaultCompression bool
+
+	// Vectorizer module. If no module is selected, the field should be set
+	// to an implementation encoding the "none" option for this module kind.
+	// The value is encoded via [modules.Encode] and does not receive any
+	// special treatment in this package.
+	// See ./modules package for available vectorizers.
+	Vectorizer modules.Module
+}
+
+// DataType defines supported property data types.
+type DataType api.DataType
+
+const (
+	DataTypeText           DataType = DataType(api.DataTypeText)
+	DataTypeBool           DataType = DataType(api.DataTypeBool)
+	DataTypeBlob           DataType = DataType(api.DataTypeBlob)
+	DataTypeInt            DataType = DataType(api.DataTypeInt)
+	DataTypeNumber         DataType = DataType(api.DataTypeNumber)
+	DataTypeDate           DataType = DataType(api.DataTypeDate)
+	DataTypeUUID           DataType = DataType(api.DataTypeUUID)
+	DataTypeObject         DataType = DataType(api.DataTypeObject)
+	DataTypeGeoCoordinates DataType = DataType(api.DataTypeGeoCoordinates)
+	DataTypeTextArray      DataType = DataType(api.DataTypeTextArray)
+	DataTypeBoolArray      DataType = DataType(api.DataTypeBoolArray)
+	DataTypeIntArray       DataType = DataType(api.DataTypeIntArray)
+	DataTypeNumberArray    DataType = DataType(api.DataTypeNumberArray)
+	DataTypeDateArray      DataType = DataType(api.DataTypeDateArray)
+	DataTypeUUIDArray      DataType = DataType(api.DataTypeUUIDArray)
+	DataTypeObjectArray    DataType = DataType(api.DataTypeObjectArray)
+)
+
+type Tokenization api.Tokenization
+
+const (
+	TokenizationWord       Tokenization = Tokenization(api.TokenizationWord)
+	TokenizationWhitespace Tokenization = Tokenization(api.TokenizationWhitespace)
+	TokenizationLowercase  Tokenization = Tokenization(api.TokenizationLowercase)
+	TokenizationField      Tokenization = Tokenization(api.TokenizationField)
+	TokenizationGSE        Tokenization = Tokenization(api.TokenizationGSE)
+	TokenizationGSE_CH     Tokenization = Tokenization(api.TokenizationGSE_CH)
+	TokenizationTrigram    Tokenization = Tokenization(api.TokenizationTrigram)
+	TokenizationKagomeJA   Tokenization = Tokenization(api.TokenizationKagomeJA)
+	TokenizationKagomeKR   Tokenization = Tokenization(api.TokenizationKagomeKR)
+)
+
+type DeletionStrategy string
+
+const (
+	DeleteOnConflict      DeletionStrategy = DeletionStrategy(api.DeleteOnConflict)
+	NoAutomatedResolution DeletionStrategy = DeletionStrategy(api.NoAutomatedResolution)
+	TimeBasedResolution   DeletionStrategy = DeletionStrategy(api.TimeBasedResolution)
+)
+
+func collectionToAPI(c *Collection) (api.Collection, error) {
+	var properties []api.Property
+	if len(c.Properties) > 0 {
+		properties = make([]api.Property, len(c.Properties))
+		for i, p := range c.Properties {
+			properties[i] = api.Property{
+				Name:             p.Name,
+				Description:      p.Description,
+				DataType:         api.DataType(p.DataType),
+				NestedProperties: nestedPropertiesToAPI(p.NestedProperties),
+				Tokenization:     api.Tokenization(p.Tokenization),
+				TextAnalyzer:     (*api.TextAnalyzerConfig)(p.TextAnalyzer),
+				IndexFilterable:  p.IndexFilterable,
+				IndexRangeable:   p.IndexRangeable,
+				IndexSearchable:  p.IndexSearchable,
+			}
+		}
+	}
+
+	var references []api.ReferenceProperty
+	if len(c.References) > 0 {
+		references = make([]api.ReferenceProperty, len(c.References))
+		for i, ref := range c.References {
+			references[i] = api.ReferenceProperty{
+				Name:        ref.Name,
+				Collections: ref.Collections,
+			}
+		}
+	}
+
+	vectors := internal.MakeMap[string, api.VectorConfig](len(c.Vectors))
+	for k, v := range c.Vectors {
+		var vc api.VectorConfig
+
+		if v.Index != nil {
+			conf, err := vectorindex.Registry.Encode(v.Index)
+			if err != nil {
+				return api.Collection{}, err
+			}
+			vc.Index = &api.Module{
+				Name: string(v.Index.Name()),
+				Conf: conf,
+			}
+		}
+
+		vc.SkipDefaultCompression = v.SkipDefaultCompression
+		if v.Compression != nil {
+			conf, err := compression.Registry.Encode(v.Compression)
+			if err != nil {
+				return api.Collection{}, err
+			}
+			vc.Compression = &api.Module{
+				Name: string(v.Compression.Name()),
+				Conf: conf,
+			}
+		}
+
+		if v.Vectorizer != nil {
+			conf, err := modules.Registry.Encode(v.Vectorizer)
+			if err != nil {
+				return api.Collection{}, err
+			}
+			vc.Vectorizer = &api.Module{
+				Name: v.Vectorizer.Name(),
+				Conf: conf,
+			}
+		}
+
+		vectors[k] = vc
+	}
+
+	out := api.Collection{
+		Name:         c.Name,
+		Description:  c.Description,
+		Properties:   properties,
+		References:   references,
+		Vectors:      vectors,
+		MultiTenancy: (*api.MultiTenancyConfig)(c.MultiTenancy),
+		ObjectTTL:    (*api.ObjectTTLConfig)(c.ObjectTTL),
+	}
+
+	if c.Sharding != nil {
+		out.Sharding = &api.ShardingConfig{
+			DesiredCount:        c.Sharding.DesiredCount,
+			DesiredVirtualCount: c.Sharding.DesiredVirtualCount,
+			VirtualPerPhysical:  c.Sharding.VirtualPerPhysical,
+		}
+	}
+
+	if c.Replication != nil {
+		out.Replication = &api.ReplicationConfig{
+			Factor:           c.Replication.Factor,
+			DeletionStrategy: api.DeletionStrategy(c.Replication.DeletionStrategy),
+			AsyncReplication: (*api.AsyncReplicationConfig)(c.Replication.AsyncReplication),
+		}
+	}
+
+	if c.InvertedIndex != nil {
+		out.InvertedIndex = &api.InvertedIndexConfig{
+			IndexNullState:         c.InvertedIndex.IndexNullState,
+			IndexPropertyLength:    c.InvertedIndex.IndexPropertyLength,
+			IndexTimestamps:        c.InvertedIndex.IndexTimestamps,
+			UsingBlockMaxWAND:      c.InvertedIndex.UsingBlockMaxWAND,
+			CleanupIntervalSeconds: c.InvertedIndex.CleanupIntervalSeconds,
+			Stopwords:              (*api.StopwordConfig)(c.InvertedIndex.Stopwords),
+			BM25:                   (*api.BM25Config)(c.InvertedIndex.BM25),
+		}
+	}
+
+	if c.Generative != nil {
+		conf, err := modules.Registry.Encode(c.Generative)
+		if err != nil {
+			return api.Collection{}, err
+		}
+		out.Generative = &api.Module{
+			Name: c.Generative.Name(),
+			Conf: conf,
+		}
+	}
+
+	for _, rm := range c.RerankerModules {
+		conf, err := modules.Registry.Encode(rm)
+		if err != nil {
+			return api.Collection{}, err
+		}
+		out.RerankerModules = append(out.RerankerModules, api.Module{
+			Name: rm.Name(),
+			Conf: conf,
+		})
+	}
+
+	return out, nil
+}
+
+// collectionFromAPI converts api.Collection into Collection.
+func collectionFromAPI(c *api.Collection) (Collection, error) {
+	dev.AssertNotNil(c, "c")
+
+	var properties []Property
+	if len(c.Properties) > 0 {
+		properties = make([]Property, len(c.Properties))
+		for i, p := range c.Properties {
+			properties[i] = Property{
+				Name:             p.Name,
+				Description:      p.Description,
+				DataType:         DataType(p.DataType),
+				NestedProperties: nestedPropertiesFromAPI(p.NestedProperties),
+				Tokenization:     Tokenization(p.Tokenization),
+				TextAnalyzer:     (*TextAnalyzerConfig)(p.TextAnalyzer),
+				IndexFilterable:  p.IndexFilterable,
+				IndexRangeable:   p.IndexRangeable,
+				IndexSearchable:  p.IndexSearchable,
+			}
+		}
+	}
+
+	var references []Reference
+	if len(c.References) > 0 {
+		references = make([]Reference, len(c.References))
+		for i, ref := range c.References {
+			references[i] = Reference{
+				Name:        ref.Name,
+				Collections: ref.Collections,
+			}
+		}
+	}
+
+	vectors := internal.MakeMap[string, VectorConfig](len(c.Vectors))
+	for k, v := range c.Vectors {
+		var vc VectorConfig
+
+		if v.Index != nil {
+			conf, err := vectorindex.Registry.Decode(v.Index.Name, v.Index.Conf)
+			if err != nil {
+				return Collection{}, err
+			}
+			vc.Index = conf
+		}
+
+		vc.SkipDefaultCompression = v.SkipDefaultCompression
+		if v.Compression != nil {
+			conf, err := compression.Registry.Decode(v.Compression.Name, v.Compression.Conf)
+			if err != nil {
+				return Collection{}, err
+			}
+			vc.Compression = conf
+		}
+
+		if v.Vectorizer != nil {
+			conf, err := modules.Registry.Decode(v.Vectorizer.Name, v.Vectorizer.Conf)
+			if err != nil {
+				return Collection{}, err
+			}
+			vc.Vectorizer = conf
+		}
+		vectors[k] = vc
+	}
+
+	var sharding *ShardingConfig
+	if c.Sharding != nil {
+		sharding = &ShardingConfig{
+			DesiredCount:        c.Sharding.DesiredCount,
+			DesiredVirtualCount: c.Sharding.DesiredVirtualCount,
+			VirtualPerPhysical:  c.Sharding.VirtualPerPhysical,
+		}
+	}
+
+	var replication *ReplicationConfig
+	if c.Replication != nil {
+		replication = &ReplicationConfig{
+			Factor:           c.Replication.Factor,
+			DeletionStrategy: DeletionStrategy(c.Replication.DeletionStrategy),
+			AsyncReplication: (*AsyncReplicationConfig)(c.Replication.AsyncReplication),
+		}
+	}
+
+	var invertedIndex *InvertedIndexConfig
+	if c.InvertedIndex != nil {
+		invertedIndex = &InvertedIndexConfig{
+			IndexNullState:         c.InvertedIndex.IndexNullState,
+			IndexPropertyLength:    c.InvertedIndex.IndexPropertyLength,
+			IndexTimestamps:        c.InvertedIndex.IndexTimestamps,
+			UsingBlockMaxWAND:      c.InvertedIndex.UsingBlockMaxWAND,
+			CleanupIntervalSeconds: c.InvertedIndex.CleanupIntervalSeconds,
+			Stopwords:              (*StopwordConfig)(c.InvertedIndex.Stopwords),
+			BM25:                   (*BM25Config)(c.InvertedIndex.BM25),
+		}
+	}
+
+	var generative modules.Module
+	if c.Generative != nil {
+		conf, err := modules.Registry.Decode(c.Generative.Name, c.Generative.Conf)
+		if err != nil {
+			return Collection{}, err
+		}
+		generative = conf
+	}
+
+	rerankers := slices.Grow([]modules.Module(nil), len(c.RerankerModules))
+	for _, rm := range c.RerankerModules {
+		conf, err := modules.Registry.Decode(rm.Name, rm.Conf)
+		if err != nil {
+			return Collection{}, err
+		}
+		rerankers = append(rerankers, conf)
+	}
+
+	return Collection{
+		Name:            c.Name,
+		Description:     c.Description,
+		Properties:      properties,
+		References:      references,
+		Vectors:         vectors,
+		Sharding:        sharding,
+		Replication:     replication,
+		InvertedIndex:   invertedIndex,
+		MultiTenancy:    (*MultiTenancyConfig)(c.MultiTenancy),
+		ObjectTTL:       (*ObjectTTLConfig)(c.ObjectTTL),
+		Generative:      generative,
+		RerankerModules: rerankers,
+	}, nil
+}
+
+func nestedPropertiesFromAPI(nested []api.Property) []Property {
+	if len(nested) == 0 {
+		return nil
+	}
+
+	out := make([]Property, len(nested))
+	for i, np := range nested {
+		out[i] = Property{
+			Name:             np.Name,
+			Description:      np.Description,
+			DataType:         DataType(np.DataType),
+			NestedProperties: nestedPropertiesFromAPI(np.NestedProperties),
+			Tokenization:     Tokenization(np.Tokenization),
+			IndexFilterable:  np.IndexFilterable,
+			IndexRangeable:   np.IndexRangeable,
+			IndexSearchable:  np.IndexSearchable,
+		}
+	}
+	return out
+}
+
+func nestedPropertiesToAPI(nested []Property) []api.Property {
+	if len(nested) == 0 {
+		return nil
+	}
+
+	out := make([]api.Property, len(nested))
+	for i, p := range nested {
+		out[i] = api.Property{
+			Name:             p.Name,
+			Description:      p.Description,
+			DataType:         api.DataType(p.DataType),
+			NestedProperties: nestedPropertiesToAPI(p.NestedProperties),
+			Tokenization:     api.Tokenization(p.Tokenization),
+			IndexFilterable:  p.IndexFilterable,
+			IndexRangeable:   p.IndexRangeable,
+			IndexSearchable:  p.IndexSearchable,
+		}
+	}
+	return out
+}

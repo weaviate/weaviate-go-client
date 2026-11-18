@@ -1,0 +1,788 @@
+package api
+
+import (
+	"encoding/json"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+
+	"github.com/weaviate/weaviate-go-client/v6/collections/compression"
+	"github.com/weaviate/weaviate-go-client/v6/internal"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/internal/gen/rest"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
+	"github.com/weaviate/weaviate-go-client/v6/modules"
+)
+
+type (
+	Collection struct {
+		Name            string
+		Description     string
+		Properties      []Property
+		References      []ReferenceProperty
+		Vectors         map[string]VectorConfig
+		Sharding        *ShardingConfig
+		Replication     *ReplicationConfig
+		InvertedIndex   *InvertedIndexConfig
+		MultiTenancy    *MultiTenancyConfig
+		ObjectTTL       *ObjectTTLConfig
+		Generative      *Module
+		RerankerModules []Module
+	}
+	Property struct {
+		Name             string
+		Description      string
+		DataType         DataType
+		NestedProperties []Property
+		Tokenization     Tokenization
+		TextAnalyzer     *TextAnalyzerConfig
+		IndexFilterable  *bool
+		IndexRangeable   *bool
+		IndexSearchable  *bool
+	}
+	ReferenceProperty struct {
+		Name        string
+		Collections []string // Collections that can be referenced.
+	}
+	ShardingConfig struct {
+		DesiredCount        int
+		DesiredVirtualCount int
+		VirtualPerPhysical  int
+	}
+	ReplicationConfig struct {
+		AsyncReplication *AsyncReplicationConfig // Fine-tuning parameters for async replication.
+		Factor           int                     // Number of times a collection is replicated.
+		DeletionStrategy DeletionStrategy        // Conflict resolution strategy for deleted objects.
+	}
+	AsyncReplicationConfig struct {
+		DiffBatchSize                   int64         // Maximum number of keys in a diff batch.
+		DiffPerNodeTimeout              time.Duration // Timeout for computing a diff against a single node. Recommended unit: seconds.
+		ReplicationFrequency            time.Duration // Frequency at which diff calculations are run. Recommended unit: milliseconds.
+		ReplicationFrequencyPropagating time.Duration // Replication frequency during the propagating phase. Recommended unit: milliseconds.
+		PrePropagationTimeout           time.Duration // Total timeout for the pre-propagation phase. Recommended unit: seconds.
+		PropagationConcurrency          int64         // Maximum number of concurrent propagation workers.
+		PropagationBatchSize            int64         // Maximum number of objects in a single propagation batch.
+		PropagationLimit                int64         // Maximum number of objects propagated in a single replication round.
+		PropagationTimeout              time.Duration // Timeout for a single propagation batch request. Recommended unit: seconds.
+		PropagationDelay                time.Duration // Delay before newly added / updated objects are propagated. Recommended unit: milliseconds.
+		HashTreeHeight                  int64         // Height of the hash tree used to compute the diff.
+		LoggingFrequency                time.Duration // Frequency at which replication status is logged. Recommended unit: seconds.
+	}
+	InvertedIndexConfig struct {
+		IndexNullState         bool            // Index each object with the null state.
+		IndexPropertyLength    bool            // Index length of properties.
+		IndexTimestamps        bool            // Index each object by its internal timestamps.
+		UsingBlockMaxWAND      bool            // Toggle UsingBlockMaxWAND usage for BM25 search.
+		CleanupIntervalSeconds int32           // Asynchronous index cleanup internal.
+		BM25                   *BM25Config     // Tuning parameters for the BM25 algorithm.
+		Stopwords              *StopwordConfig // Fine-grained control over stopword list usage.
+	}
+	BM25Config         rest.BM25Config
+	StopwordConfig     rest.StopwordConfig
+	MultiTenancyConfig rest.MultiTenancyConfig
+	ObjectTTLConfig    struct {
+		Enabled              bool
+		PropertyName         string
+		DefaultTTL           time.Duration
+		FilterExpiredObjects bool
+	}
+	TextAnalyzerConfig struct {
+		FoldASCII      bool
+		KeepASCII      []string
+		StopwordPreset string
+	}
+)
+
+type VectorConfig struct {
+	// Vector index configuration.
+	Index *Module
+
+	// Compression algorithm.
+	Compression            *Module
+	SkipDefaultCompression bool
+
+	// Vectorizer module.
+	Vectorizer *Module
+}
+
+type Module struct {
+	Name string         // Module name.
+	Conf map[string]any // Module configuration.
+}
+
+const (
+	FieldUUID          = "_id"
+	FieldCreatedAt     = "_creationTimeUnix"
+	FieldLastUpdatedAt = "_lastUpdateTimeUnix"
+)
+
+// DataType defines supported property data types.
+type DataType string
+
+const (
+	DataTypeText           DataType = "text"
+	DataTypeBool           DataType = "boolean"
+	DataTypeBlob           DataType = "blob"
+	DataTypeInt            DataType = "int"
+	DataTypeNumber         DataType = "number"
+	DataTypeDate           DataType = "date"
+	DataTypeUUID           DataType = "uuid"
+	DataTypeObject         DataType = "object"
+	DataTypeGeoCoordinates DataType = "geoCoordinates"
+	DataTypePhoneNumber    DataType = "phoneNumber"
+	DataTypeTextArray      DataType = "text[]"
+	DataTypeBoolArray      DataType = "boolean[]"
+	DataTypeIntArray       DataType = "int[]"
+	DataTypeNumberArray    DataType = "number[]"
+	DataTypeDateArray      DataType = "date[]"
+	DataTypeUUIDArray      DataType = "uuid[]"
+	DataTypeObjectArray    DataType = "object[]"
+)
+
+// knownDataTypes are a set of all data types defined in the Weaviate server.
+// A property whose data type is not in knownDataTypes is assumed to be a reference.
+var knownDataTypes = newSet([]DataType{
+	DataTypeText,
+	DataTypeBool,
+	DataTypeBlob,
+	DataTypeInt,
+	DataTypeNumber,
+	DataTypeDate,
+	DataTypeUUID,
+	DataTypeObject,
+	DataTypeGeoCoordinates,
+	DataTypePhoneNumber,
+	DataTypeTextArray,
+	DataTypeBoolArray,
+	DataTypeIntArray,
+	DataTypeNumberArray,
+	DataTypeDateArray,
+	DataTypeUUIDArray,
+	DataTypeObjectArray,
+})
+
+type Tokenization string
+
+const (
+	TokenizationWord       Tokenization = Tokenization(rest.PropertyTokenizationWord)
+	TokenizationWhitespace Tokenization = Tokenization(rest.PropertyTokenizationWhitespace)
+	TokenizationLowercase  Tokenization = Tokenization(rest.PropertyTokenizationLowercase)
+	TokenizationField      Tokenization = Tokenization(rest.PropertyTokenizationField)
+	TokenizationGSE        Tokenization = Tokenization(rest.PropertyTokenizationGse)
+	TokenizationGSE_CH     Tokenization = Tokenization(rest.PropertyTokenizationGseCh)
+	TokenizationTrigram    Tokenization = Tokenization(rest.PropertyTokenizationTrigram)
+	TokenizationKagomeJA   Tokenization = Tokenization(rest.PropertyTokenizationKagomeJa)
+	TokenizationKagomeKR   Tokenization = Tokenization(rest.PropertyTokenizationKagomeKr)
+)
+
+type DeletionStrategy string
+
+const (
+	DeleteOnConflict      DeletionStrategy = DeletionStrategy(rest.DeleteOnConflict)
+	NoAutomatedResolution DeletionStrategy = DeletionStrategy(rest.NoAutomatedResolution)
+	TimeBasedResolution   DeletionStrategy = DeletionStrategy(rest.TimeBasedResolution)
+)
+
+// CreateCollectionsRequest creates a new collection in the schema.
+type CreateCollectionRequest struct {
+	transports.BaseEndpoint
+	Collection
+}
+
+var _ transports.Endpoint = (*CreateCollectionRequest)(nil)
+
+func (*CreateCollectionRequest) Method() string { return http.MethodPost }
+func (*CreateCollectionRequest) Path() string   { return "/schema" }
+func (r *CreateCollectionRequest) Body() any    { return &r.Collection }
+
+// GetCollectionRequest by collection name.
+var GetCollectionRequest = transports.IdentityEndpoint[string](http.MethodGet, "/schema/%s")
+
+// ListCollectionsRequest fetches definitions for all collections in the schema.
+var ListCollectionsRequest transports.Endpoint = transports.StaticEndpoint(http.MethodGet, "/schema")
+
+type ListCollectionsResponse []Collection
+
+var _ json.Unmarshaler = (*ListCollectionsResponse)(nil)
+
+func (r *ListCollectionsResponse) UnmarshalJSON(data []byte) error {
+	var schema struct {
+		Collections []Collection `json:"classes"`
+	}
+	if err := json.Unmarshal(data, &schema); err != nil {
+		return err
+	}
+	*r = schema.Collections
+	return nil
+}
+
+// DeleteCollectionRequest by collection name.
+var DeleteCollectionRequest = transports.IdentityEndpoint[string](http.MethodDelete, "/schema/%s")
+
+var (
+	_ json.Marshaler   = (*Collection)(nil)
+	_ json.Unmarshaler = (*Collection)(nil)
+)
+
+// UpdateCollectionConfigRequest replaces collection config.
+type UpdateCollectionConfigRequest struct {
+	transports.BaseEndpoint
+	Collection
+}
+
+var _ transports.Endpoint = (*UpdateCollectionConfigRequest)(nil)
+
+func (*UpdateCollectionConfigRequest) Method() string { return http.MethodPut }
+func (r *UpdateCollectionConfigRequest) Path() string { return "/schema/" + r.Name }
+func (r *UpdateCollectionConfigRequest) Body() any    { return &r.Collection }
+
+// ListCollectionShardsRequest fetches statuses of all requests in the collection.
+type ListCollectionShardsRequest struct {
+	transports.BaseEndpoint
+	RequestDefaults
+}
+
+var _ transports.Endpoint = (*ListCollectionShardsRequest)(nil)
+
+func (*ListCollectionShardsRequest) Method() string { return http.MethodGet }
+func (r *ListCollectionShardsRequest) Path() string { return "/schema/" + r.CollectionName + "/shards" }
+func (r *ListCollectionShardsRequest) Query() url.Values {
+	if r.Tenant == "" {
+		return nil
+	}
+	return url.Values{"tenant": {r.Tenant}}
+}
+
+// ListCollectionShardsResponse reads the response of [ListCollectionsRequest].
+type ListCollectionShardsResponse []Shard
+
+func (r *ListCollectionShardsResponse) UnmarshalJSON(data []byte) error {
+	var resp rest.ShardStatusList
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil
+	}
+	shards := make(ListCollectionShardsResponse, len(resp))
+	for i, shard := range resp {
+		shards[i] = Shard{
+			Name:          shard.Name,
+			PerNodeStatus: shard.PerNodeStatus,
+		}
+	}
+	*r = shards
+	return nil
+}
+
+// UpdateShardStatusRequest in a collection.
+type UpdateShardStatusRequest struct {
+	transports.BaseEndpoint
+	RequestDefaults
+	ShardName   string
+	ShardStatus string
+}
+
+const (
+	ShardStatusReady    = "READY"
+	ShardStatusReadOnly = "READONLY"
+)
+
+var _ transports.Endpoint = (*UpdateShardStatusRequest)(nil)
+
+func (*UpdateShardStatusRequest) Method() string { return http.MethodPut }
+func (r *UpdateShardStatusRequest) Path() string {
+	return "/schema/" + r.CollectionName + "/shards/" + r.ShardName
+}
+
+func (r *UpdateShardStatusRequest) Body() any {
+	return rest.ShardStatus{Status: r.ShardStatus}
+}
+
+// AddPropertyRequest creates new property in the collection.
+type AddPropertyRequest struct {
+	transports.BaseEndpoint
+	RequestDefaults
+
+	Property  *Property
+	Reference *ReferenceProperty
+}
+
+var _ transports.Endpoint = (*AddPropertyRequest)(nil)
+
+func (*AddPropertyRequest) Method() string { return http.MethodPost }
+func (r *AddPropertyRequest) Path() string {
+	return "/schema/" + r.CollectionName + "/properties"
+}
+
+func (r *AddPropertyRequest) Body() any {
+	switch {
+	case r.Property != nil:
+		return r.Property
+	case r.Reference != nil:
+		return r.Reference
+	}
+	dev.Unreachable()
+	return nil
+}
+
+// DropPropertyIndexRequest drops a property's inverted vector index.
+type DropPropertyIndexRequest struct {
+	transports.BaseEndpoint
+	RequestDefaults
+	PropertyName string
+	IndexType    PropertyIndexType
+}
+
+var _ transports.Endpoint = (*DropPropertyIndexRequest)(nil)
+
+func (*DropPropertyIndexRequest) Method() string { return http.MethodDelete }
+func (r *DropPropertyIndexRequest) Path() string {
+	return "/schema/" + r.CollectionName +
+		"/properties/" + r.PropertyName +
+		"/index/" + string(r.IndexType)
+}
+
+type PropertyIndexType string
+
+const (
+	PropertyIndexFilterable = PropertyIndexType("filterable")
+	PropertyIndexSearchable = PropertyIndexType("searchable")
+	PropertyIndexRangeable  = PropertyIndexType("rangeFilters")
+)
+
+// DropVectorIndexRequest removes vector index from the schema
+// without removing the associated data.
+type DropVectorIndexRequest struct {
+	transports.BaseEndpoint
+	RequestDefaults
+	VectorName string
+}
+
+var _ transports.Endpoint = (*DropVectorIndexRequest)(nil)
+
+func (*DropVectorIndexRequest) Method() string { return http.MethodDelete }
+func (r *DropVectorIndexRequest) Path() string {
+	return "/schema/" + r.CollectionName +
+		"/vectors/" + r.VectorName + "/index"
+}
+
+// -----------------------------------------------------------------------------
+
+const skipDefaultCompressionKey = "skipDefaultQuantization"
+
+// MarshalJSON marshals Property via [rest.Property].
+func (p *Property) MarshalJSON() ([]byte, error) {
+	var textAnalyzer *rest.TextAnalyzerConfig
+	if p.TextAnalyzer != nil {
+		textAnalyzer = &rest.TextAnalyzerConfig{
+			AsciiFold:       p.TextAnalyzer.FoldASCII,
+			AsciiFoldIgnore: p.TextAnalyzer.KeepASCII,
+			StopwordPreset:  p.TextAnalyzer.StopwordPreset,
+		}
+	}
+	return json.Marshal(rest.Property{
+		Name:              p.Name,
+		Description:       p.Description,
+		DataType:          []string{string(p.DataType)},
+		NestedProperties:  nestedPropertiesToREST(p.NestedProperties),
+		Tokenization:      rest.PropertyTokenization(p.Tokenization),
+		TextAnalyzer:      textAnalyzer,
+		IndexFilterable:   p.IndexFilterable,
+		IndexRangeFilters: p.IndexRangeable,
+		IndexSearchable:   p.IndexSearchable,
+	})
+}
+
+// MarshalJSON marshals ReferenceProperty via [rest.Property].
+func (ref *ReferenceProperty) MarshalJSON() ([]byte, error) {
+	return json.Marshal(rest.Property{
+		Name:     ref.Name,
+		DataType: ref.Collections,
+	})
+}
+
+// MarshalJSON marshals Collection via [rest.Class].
+func (c *Collection) MarshalJSON() ([]byte, error) {
+	properties := make([]rest.Property, len(c.Properties)+len(c.References))
+	for i, p := range c.Properties {
+		var textAnalyzer *rest.TextAnalyzerConfig
+		if p.TextAnalyzer != nil {
+			textAnalyzer = &rest.TextAnalyzerConfig{
+				AsciiFold:       p.TextAnalyzer.FoldASCII,
+				AsciiFoldIgnore: p.TextAnalyzer.KeepASCII,
+				StopwordPreset:  p.TextAnalyzer.StopwordPreset,
+			}
+		}
+		properties[i] = rest.Property{
+			Name:              p.Name,
+			Description:       p.Description,
+			DataType:          []string{string(p.DataType)},
+			NestedProperties:  nestedPropertiesToREST(p.NestedProperties),
+			Tokenization:      rest.PropertyTokenization(p.Tokenization),
+			TextAnalyzer:      textAnalyzer,
+			IndexFilterable:   p.IndexFilterable,
+			IndexRangeFilters: p.IndexRangeable,
+			IndexSearchable:   p.IndexSearchable,
+		}
+	}
+	for i, ref := range c.References {
+		properties[i+len(c.Properties)] = rest.Property{
+			Name:     ref.Name,
+			DataType: ref.Collections,
+		}
+	}
+
+	vectors := internal.MakeMap[string, rest.VectorConfig](len(c.Vectors))
+	for k, v := range c.Vectors {
+		var vc rest.VectorConfig
+
+		if v.Index != nil {
+			vc.VectorIndexType = v.Index.Name
+			vc.VectorIndexConfig = v.Index.Conf
+
+			if !v.SkipDefaultCompression && v.Compression != nil {
+				// "enabled" flag is hidden from the user,
+				// and we only set it at the API threshold.
+				v.Compression.Conf["enabled"] = true
+				vc.VectorIndexConfig[v.Compression.Name] = v.Compression.Conf
+			}
+		}
+
+		if v.SkipDefaultCompression {
+			if vc.VectorIndexConfig == nil {
+				vc.VectorIndexConfig = make(map[string]any, 1)
+			}
+			vc.VectorIndexConfig[skipDefaultCompressionKey] = true
+		}
+
+		if v.Vectorizer != nil {
+			vc.Vectorizer = map[string]any{
+				v.Vectorizer.Name: v.Vectorizer.Conf,
+			}
+		}
+
+		vectors[k] = vc
+	}
+
+	out := &rest.Class{
+		Class:        c.Name,
+		Description:  c.Description,
+		Properties:   properties,
+		VectorConfig: vectors,
+	}
+
+	if c.Sharding != nil {
+		out.ShardingConfig = map[string]any{
+			"desiredCount":        c.Sharding.DesiredCount,
+			"desiredVirtualCount": c.Sharding.DesiredVirtualCount,
+			"virtualPerPhysical":  c.Sharding.VirtualPerPhysical,
+		}
+	}
+
+	if c.Replication != nil {
+		out.ReplicationConfig = rest.ReplicationConfig{
+			Factor:           c.Replication.Factor,
+			DeletionStrategy: rest.ReplicationConfigDeletionStrategy(c.Replication.DeletionStrategy),
+		}
+
+		if async := c.Replication.AsyncReplication; async != nil {
+			out.ReplicationConfig.AsyncConfig = rest.ReplicationAsyncConfig{
+				DiffBatchSize:             async.DiffBatchSize,
+				DiffPerNodeTimeout:        int64(async.DiffPerNodeTimeout.Seconds()),
+				Frequency:                 async.ReplicationFrequency.Milliseconds(),
+				FrequencyWhilePropagating: async.ReplicationFrequencyPropagating.Milliseconds(),
+				PrePropagationTimeout:     int64(async.PrePropagationTimeout.Seconds()),
+				PropagationConcurrency:    async.PropagationConcurrency,
+				PropagationBatchSize:      async.PropagationBatchSize,
+				PropagationLimit:          async.PropagationLimit,
+				PropagationTimeout:        int64(async.PropagationTimeout.Seconds()),
+				PropagationDelay:          async.PropagationDelay.Milliseconds(),
+				HashtreeHeight:            async.HashTreeHeight,
+				LoggingFrequency:          int64(async.LoggingFrequency.Seconds()),
+			}
+		}
+	}
+
+	if c.InvertedIndex != nil {
+		out.InvertedIndexConfig = rest.InvertedIndexConfig{
+			IndexNullState:         c.InvertedIndex.IndexNullState,
+			IndexPropertyLength:    c.InvertedIndex.IndexPropertyLength,
+			IndexTimestamps:        c.InvertedIndex.IndexTimestamps,
+			UsingBlockMaxWAND:      c.InvertedIndex.UsingBlockMaxWAND,
+			CleanupIntervalSeconds: c.InvertedIndex.CleanupIntervalSeconds,
+		}
+
+		if c.InvertedIndex.Stopwords != nil {
+			out.InvertedIndexConfig.Stopwords = rest.StopwordConfig(*c.InvertedIndex.Stopwords)
+		}
+
+		if c.InvertedIndex.BM25 != nil {
+			out.InvertedIndexConfig.Bm25 = &rest.BM25Config{
+				B:  c.InvertedIndex.BM25.B,
+				K1: c.InvertedIndex.BM25.K1,
+			}
+		}
+	}
+
+	if c.MultiTenancy != nil {
+		out.MultiTenancyConfig = rest.MultiTenancyConfig(*c.MultiTenancy)
+	}
+
+	if c.ObjectTTL != nil {
+		out.ObjectTtlConfig = rest.ObjectTtlConfig{
+			Enabled:              c.ObjectTTL.Enabled,
+			DeleteOn:             c.ObjectTTL.PropertyName,
+			DefaultTtl:           int(c.ObjectTTL.DefaultTTL.Seconds()),
+			FilterExpiredObjects: c.ObjectTTL.FilterExpiredObjects,
+		}
+	}
+
+	moduleConfig := make(map[string]any)
+	if c.Generative != nil {
+		moduleConfig[c.Generative.Name] = c.Generative.Conf
+	}
+
+	for _, rm := range c.RerankerModules {
+		moduleConfig[rm.Name] = rm.Conf
+	}
+
+	if len(moduleConfig) > 0 {
+		out.ModuleConfig = moduleConfig
+	}
+
+	return json.Marshal(&out)
+}
+
+func nestedPropertiesToREST(nps []Property) []rest.NestedProperty {
+	if len(nps) == 0 {
+		return nil
+	}
+
+	properties := make([]rest.NestedProperty, len(nps))
+	for i, p := range nps {
+		properties[i] = rest.NestedProperty{
+			Name:              p.Name,
+			Description:       p.Description,
+			DataType:          []string{string(p.DataType)},
+			NestedProperties:  nestedPropertiesToREST(p.NestedProperties),
+			Tokenization:      rest.NestedPropertyTokenization(p.Tokenization),
+			IndexFilterable:   p.IndexFilterable,
+			IndexRangeFilters: p.IndexRangeable,
+			IndexSearchable:   p.IndexSearchable,
+		}
+	}
+
+	return properties
+}
+
+func (c *Collection) UnmarshalJSON(data []byte) error {
+	var class rest.Class
+	if err := json.Unmarshal(data, &class); err != nil {
+		return err
+	}
+
+	properties := make([]Property, 0, len(class.Properties))
+	references := make([]ReferenceProperty, 0, len(class.Properties))
+	for _, p := range class.Properties {
+		notReference := len(p.DataType) == 1 && knownDataTypes.Contains(DataType(p.DataType[0]))
+		if notReference {
+			var textAnalyzer *TextAnalyzerConfig
+			if p.TextAnalyzer != nil {
+				textAnalyzer = &TextAnalyzerConfig{
+					FoldASCII:      p.TextAnalyzer.AsciiFold,
+					KeepASCII:      p.TextAnalyzer.AsciiFoldIgnore,
+					StopwordPreset: p.TextAnalyzer.StopwordPreset,
+				}
+			}
+			properties = append(properties, Property{
+				Name:             p.Name,
+				Description:      p.Description,
+				DataType:         DataType(p.DataType[0]),
+				NestedProperties: nestedPropertiesFromREST(p.NestedProperties),
+				Tokenization:     Tokenization(p.Tokenization),
+				TextAnalyzer:     textAnalyzer,
+				IndexFilterable:  p.IndexFilterable,
+				IndexRangeable:   p.IndexRangeFilters,
+				IndexSearchable:  p.IndexSearchable,
+			})
+		} else {
+			references = append(references, ReferenceProperty{
+				Name:        p.Name,
+				Collections: p.DataType,
+			})
+		}
+	}
+
+	vectors := internal.MakeMap[string, VectorConfig](len(class.VectorConfig))
+	for k, v := range class.VectorConfig {
+		var vc VectorConfig
+
+		for name, raw := range v.Vectorizer {
+			if conf, ok := raw.(map[string]any); ok {
+				vc.Vectorizer = &Module{
+					Name: name,
+					Conf: conf,
+				}
+			}
+			break
+		}
+
+		if conf := v.VectorIndexConfig; conf != nil {
+			// Compression config map is embedded into the vector index configuration.
+			// If we can find any of the registered compression modules there, we can
+			// extract them into a Module and remove that entry from conf map.
+			if name, ok := compression.Registry.Find(conf); ok {
+				if m, ok := conf[name].(map[string]any); ok {
+					vc.Compression = &Module{
+						Name: name,
+						Conf: m,
+					}
+				}
+				delete(conf, name)
+			}
+
+			if v, ok := conf[skipDefaultCompressionKey]; ok {
+				delete(conf, skipDefaultCompressionKey)
+				if skip, ok := v.(bool); ok {
+					vc.SkipDefaultCompression = skip
+				}
+			}
+
+			vc.Index = &Module{
+				Name: v.VectorIndexType,
+				Conf: conf,
+			}
+
+		}
+
+		vectors[k] = vc
+	}
+
+	var sharding ShardingConfig
+	if len(class.ShardingConfig) > 0 {
+		// In case any of the fields are not ints, the cast will return a zero value.
+		// We explicitly ignore the checks _ to avoid runtime panics in such cases.
+		sharding.DesiredCount = int(class.ShardingConfig["desiredCount"].(float64))
+		sharding.DesiredVirtualCount = int(class.ShardingConfig["desiredVirtualCount"].(float64))
+		sharding.VirtualPerPhysical = int(class.ShardingConfig["virtualPerPhysical"].(float64))
+	}
+
+	*c = Collection{
+		Name:        class.Class,
+		Description: class.Description,
+		Properties:  properties,
+		References:  references,
+		Vectors:     vectors,
+		Replication: &ReplicationConfig{
+			Factor:           class.ReplicationConfig.Factor,
+			DeletionStrategy: DeletionStrategy(class.ReplicationConfig.DeletionStrategy),
+			AsyncReplication: &AsyncReplicationConfig{
+				DiffBatchSize:                   class.ReplicationConfig.AsyncConfig.DiffBatchSize,
+				DiffPerNodeTimeout:              time.Duration(class.ReplicationConfig.AsyncConfig.DiffPerNodeTimeout) * time.Second,
+				ReplicationFrequency:            time.Duration(class.ReplicationConfig.AsyncConfig.Frequency) * time.Millisecond,
+				ReplicationFrequencyPropagating: time.Duration(class.ReplicationConfig.AsyncConfig.FrequencyWhilePropagating) * time.Millisecond,
+				PrePropagationTimeout:           time.Duration(class.ReplicationConfig.AsyncConfig.PrePropagationTimeout) * time.Second,
+				PropagationConcurrency:          class.ReplicationConfig.AsyncConfig.PropagationConcurrency,
+				PropagationBatchSize:            class.ReplicationConfig.AsyncConfig.PropagationBatchSize,
+				PropagationLimit:                class.ReplicationConfig.AsyncConfig.PropagationLimit,
+				PropagationTimeout:              time.Duration(class.ReplicationConfig.AsyncConfig.PropagationTimeout) * time.Second,
+				PropagationDelay:                time.Duration(class.ReplicationConfig.AsyncConfig.PropagationDelay) * time.Millisecond,
+				HashTreeHeight:                  class.ReplicationConfig.AsyncConfig.HashtreeHeight,
+				LoggingFrequency:                time.Duration(class.ReplicationConfig.AsyncConfig.LoggingFrequency) * time.Second,
+			},
+		},
+		InvertedIndex: &InvertedIndexConfig{
+			IndexNullState:         class.InvertedIndexConfig.IndexNullState,
+			IndexPropertyLength:    class.InvertedIndexConfig.IndexPropertyLength,
+			IndexTimestamps:        class.InvertedIndexConfig.IndexTimestamps,
+			UsingBlockMaxWAND:      class.InvertedIndexConfig.UsingBlockMaxWAND,
+			CleanupIntervalSeconds: class.InvertedIndexConfig.CleanupIntervalSeconds,
+			Stopwords:              (*StopwordConfig)(&class.InvertedIndexConfig.Stopwords),
+			BM25: &BM25Config{
+				B:  class.InvertedIndexConfig.Bm25.B,
+				K1: class.InvertedIndexConfig.Bm25.K1,
+			},
+		},
+		Sharding: &sharding,
+		MultiTenancy: &MultiTenancyConfig{
+			Enabled:              class.MultiTenancyConfig.Enabled,
+			AutoTenantCreation:   class.MultiTenancyConfig.AutoTenantCreation,
+			AutoTenantActivation: class.MultiTenancyConfig.AutoTenantActivation,
+		},
+		ObjectTTL: &ObjectTTLConfig{
+			Enabled:              class.ObjectTtlConfig.Enabled,
+			PropertyName:         class.ObjectTtlConfig.DeleteOn,
+			DefaultTTL:           time.Duration(class.ObjectTtlConfig.DefaultTtl) * time.Second,
+			FilterExpiredObjects: class.ObjectTtlConfig.FilterExpiredObjects,
+		},
+	}
+
+	for conf := class.ModuleConfig; len(conf) > 0; {
+		if name, ok := modules.Registry.Find(conf); ok {
+			if m, ok := conf[name].(map[string]any); ok {
+				module := Module{
+					Name: name,
+					Conf: m,
+				}
+				// Matching string prefixes might not be the most elegant solution,
+				// but that's much simpler than introducing new separate registries
+				// for generative and reranker modules.
+				switch {
+				case strings.HasPrefix(name, "generative-"):
+					c.Generative = &module
+				case strings.HasPrefix(name, "reranker-"):
+					c.RerankerModules = append(c.RerankerModules, module)
+				}
+			}
+			delete(conf, name)
+		}
+	}
+
+	return nil
+}
+
+func nestedPropertiesFromREST(nested []rest.NestedProperty) []Property {
+	if len(nested) == 0 {
+		return nil
+	}
+
+	nps := make([]Property, 0, len(nested))
+	for _, np := range nested {
+		if len(np.DataType) != 1 {
+			// Invalid response -- nested property must have exactly 1 data type.
+			continue
+		}
+
+		nps = append(nps, Property{
+			Name:             np.Name,
+			Description:      np.Description,
+			DataType:         DataType(np.DataType[0]),
+			NestedProperties: nestedPropertiesFromREST(np.NestedProperties),
+			Tokenization:     Tokenization(np.Tokenization),
+			IndexFilterable:  np.IndexFilterable,
+			IndexRangeable:   np.IndexRangeFilters,
+			IndexSearchable:  np.IndexSearchable,
+		})
+	}
+	return nps
+}
+
+func newSet[Slice ~[]E, E comparable](values Slice) set[E] {
+	set := make(set[E], len(values))
+	for _, v := range values {
+		set.Add(v)
+	}
+	return set
+}
+
+// set is a lightweight set implementation based on on map[string]struct{}.
+// It uses struct{} as a value type, because empty structs do not use memory.
+type set[E comparable] map[E]struct{}
+
+func (s set[E]) Add(v E) {
+	s[v] = struct{}{}
+}
+
+func (s set[E]) Contains(v E) bool {
+	_, ok := s[v]
+	return ok
+}

@@ -1,0 +1,123 @@
+package query
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+	"github.com/weaviate/weaviate-go-client/v6/internal"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/query/boost"
+	"github.com/weaviate/weaviate-go-client/v6/query/filter"
+)
+
+type Hybrid struct {
+	Limit                  int              // Limit the number of results returned for the query.
+	Offset                 int              // Skip the first N objects in the collection.
+	AutoLimit              int              // Return objects in the first N similarity clusters.
+	After                  uuid.UUID        // Skip all objects before the one with this ID.
+	Filter                 filter.Expr      // Filter results based on their properties.
+	Boost                  boost.Expr       // Rerank search results using a decay function.
+	Rerank                 RerankExpr       // Rerank search results via a reranking model.
+	ReturnMetadata         ReturnMetadata   // Select query and object metadata to return for each object.
+	ReturnVectors          []string         // List vectors to return for each object in the result set.
+	ReturnReferences       []Reference      // Select reference properties to return.
+	ReturnNestedProperties []NestedProperty // Return object properties and a subset of their nested properties.
+
+	// Select a subset of properties to return. By default, all properties are returned.
+	// To not return any properties, initialize this value to an empty slice explicitly.
+	ReturnProperties []string
+
+	// Keyword-based search query. Required parameter.
+	Query string
+
+	// QueryProperties limits BM25 search to the selected properties.
+	QueryProperties []string
+
+	// NearVector parameters for vector search.
+	// Only set ONE of [Hybrid.NearText] / [Hybrid.NearVector].
+	NearVector *NearVector
+
+	// NearText parameters for vector search.
+	// Only set ONE of [Hybrid.NearText] / [Hybrid.NearVector].
+	NearText *NearText
+
+	// Alpha controls bias between BM25 and vector search result sets.
+	// An alpha of 0 is pure vector search; an Alpha of 1 is pure BM25 search.
+	Alpha *float32
+
+	// Fusion algorithm for combining BM25 and vector search result sets.
+	Fusion api.HybridFusion
+
+	// Selection reduces redundancy in the result set, e.g. via [SelectionMMR].
+	Selection Selection
+
+	// Similarity threshold for BM25 search component.
+	KeywordSimilarity KeywordSimilarity
+
+	// groupBy can only be set by [NearTextFunc.GroupBy], as it changes the shape of the response.
+	groupBy *GroupBy
+}
+
+const (
+	// RANKED fusion algorithm.
+	HybridFusionRanked = api.HybridFusionRanked
+	// RELATIVE_SCORE fusion algorithm.
+	HybridFusionRelativeScore = api.HybridFusionRelativeScore
+)
+
+// HybridFunc runs plain hybrid search.
+type HybridFunc func(context.Context, Hybrid) (*Result, error)
+
+// hybridFunc makes internal.Transport available to [query] via a closure.
+func hybridFunc(t internal.Transport, rd api.RequestDefaults) HybridFunc {
+	return func(ctx context.Context, h Hybrid) (*Result, error) {
+		return query(ctx, t, h.QueryRequest(rd, h.groupBy))
+	}
+}
+
+// Search convers [Hybrid] to [api.Hybrid].
+func (h *Hybrid) Search() *api.Hybrid {
+	return &api.Hybrid{
+		Query:           h.Query,
+		QueryProperties: h.QueryProperties,
+		Alpha:           h.Alpha,
+		Fusion:          h.Fusion,
+		KeywordSimilarity: api.KeywordSimilarity{
+			AllTokensMatch:     h.KeywordSimilarity.AllTokensMatch(),
+			CrossProperty:      h.KeywordSimilarity.CrossProperty(),
+			MinimumTokensMatch: h.KeywordSimilarity.MinimumTokensMatch(),
+		},
+		Selection: api.Selection{
+			MMR: (*api.SelectionMMR)(h.Selection.MMR()),
+		},
+		NearVector: h.NearVector.Search(),
+		NearText:   h.NearText.Search(),
+	}
+}
+
+func (h *Hybrid) QueryRequest(rd api.RequestDefaults, gb *GroupBy) Request {
+	return Request{
+		RequestDefaults:        rd,
+		Limit:                  int32(h.Limit),
+		AutoLimit:              int32(h.AutoLimit),
+		Offset:                 int32(h.Offset),
+		After:                  h.After,
+		Filter:                 h.Filter,
+		Boost:                  h.Boost,
+		Rerank:                 h.Rerank,
+		ReturnVectors:          h.ReturnVectors,
+		ReturnMetadata:         h.ReturnMetadata,
+		ReturnProperties:       h.ReturnProperties,
+		ReturnNestedProperties: h.ReturnNestedProperties,
+		ReturnReferences:       h.ReturnReferences,
+		GroupBy:                gb,
+		SetSearch:              func(req *api.SearchRequest) { req.Hybrid = h.Search() },
+		Label:                  "hybrid",
+	}
+}
+
+// GroupBy runs hybrid search with a GroupBy clause.
+func (hf HybridFunc) GroupBy(ctx context.Context, h Hybrid, groupBy GroupBy) (*GroupByResult, error) {
+	h.groupBy = &groupBy
+	return queryGroupBy(ctx, hf, h)
+}

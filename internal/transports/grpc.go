@@ -1,0 +1,174 @@
+package transports
+
+import (
+	"context"
+	"fmt"
+	"io"
+
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"golang.org/x/oauth2"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/metadata"
+)
+
+// Config for [GRPC] transport.
+type GRPCConfig[Client any] struct {
+	Host           string                      // Hostname of the gRPC host.
+	Port           string                      // Port number of the gRPC host.
+	Header         *metadata.MD                // Headers added with each request.
+	MaxMessageSize int                         // Maximum gRPC message size in bytes.
+	TokenSource    oauth2.TokenSource          // OAuth2 token provider.
+	TLS            bool                        // If true, channel will use TLS protocol.
+	KeepAlive      *keepalive.ClientParameters // Keepalive configuration.
+
+	NewGRPCClient NewGRPCClientFunc[Client]
+}
+
+// NewGRPCClientFunc creates a new instance of the underlying GRPC transport.
+type NewGRPCClientFunc[Client any] func(grpc.ClientConnInterface) Client
+
+// RPC describes a gRPC request in the given Client.
+type RPC[Client any] func(context.Context, Client) error
+
+func (c *GRPC[Client]) Do(ctx context.Context, rpc RPC[Client]) error {
+	dev.AssertNotNil(rpc, "rpc")
+
+	if err := rpc(ctx, c.client); err != nil {
+		return fmt.Errorf("grpc: %w", err)
+	}
+	return nil
+}
+
+// GRPC is a wrapper around a protobuf client that dispatches messages
+// and manages related client resources, i.e. the gRPC channel.
+//
+// Unline [REST], which also takes care of request execution, marshaling
+// and unmarshaling of the request/response payloads, GRPC is only concerned
+// with resource management. This is because the generated Client stub will
+// already contain serialization code, response status handling, and such.
+type GRPC[Client any] struct {
+	channel *grpc.ClientConn
+	client  Client
+}
+
+func NewGRPC[Client any](conf GRPCConfig[Client]) (*GRPC[Client], error) {
+	dev.AssertNotNil(conf.NewGRPCClient, "cfg.NewGRPCClient")
+
+	var callOpts []grpc.CallOption
+	if conf.MaxMessageSize > 0 {
+		callOpts = append(callOpts,
+			grpc.MaxCallSendMsgSize(conf.MaxMessageSize),
+			grpc.MaxCallRecvMsgSize(conf.MaxMessageSize),
+		)
+	}
+
+	dialOpts := []grpc.DialOption{
+		grpc.WithDefaultCallOptions(callOpts...),
+	}
+
+	if conf.Header != nil {
+		dialOpts = append(dialOpts, withDefaultHeader(*conf.Header)...)
+	}
+
+	transportCreds := insecure.NewCredentials()
+	if conf.TLS {
+		transportCreds = credentials.NewTLS(nil)
+	}
+	dialOpts = append(dialOpts, grpc.WithTransportCredentials(transportCreds))
+
+	if conf.TokenSource != nil {
+		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(
+			&tokenSource{
+				TokenSource: conf.TokenSource,
+				tls:         conf.TLS,
+			},
+		))
+	}
+
+	if conf.KeepAlive != nil {
+		dialOpts = append(dialOpts, grpc.WithKeepaliveParams(*conf.KeepAlive))
+	}
+
+	channel, err := grpc.NewClient(conf.Host+":"+conf.Port, dialOpts...)
+	if err != nil {
+		return nil, fmt.Errorf("create gRPC channel: %w", err)
+	}
+	dev.AssertNotNil(channel, "channel")
+
+	client := conf.NewGRPCClient(channel)
+	dev.AssertNotNil(client, "client")
+
+	return &GRPC[Client]{
+		channel: channel,
+		client:  client,
+	}, nil
+}
+
+// Client returns the underlying client instance.
+func (c *GRPC[Client]) Client() Client {
+	return c.client
+}
+
+var _ io.Closer = (*GRPC[any])(nil)
+
+func (c *GRPC[Client]) Close() error {
+	return c.channel.Close()
+}
+
+// withDefaultHeader creates interceptors that add md headers to the request context.
+func withDefaultHeader(md metadata.MD) []grpc.DialOption {
+	appendHeader := func(ctx context.Context) context.Context {
+		var pairs []string
+		for k, v := range md {
+			if len(v) == 0 {
+				continue
+			}
+			pairs = append(pairs, k, v[0])
+		}
+		return metadata.AppendToOutgoingContext(ctx, pairs...)
+	}
+	return []grpc.DialOption{
+		grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+			return invoker(appendHeader(ctx), method, req, reply, cc, opts...)
+		}),
+		grpc.WithStreamInterceptor(func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+			return streamer(appendHeader(ctx), desc, cc, method, opts...)
+		}),
+	}
+}
+
+type tokenSource struct {
+	oauth2.TokenSource
+	tls bool // Enable transport level security.
+}
+
+var _ credentials.PerRPCCredentials = (*tokenSource)(nil)
+
+// GetRequestMetadata gets the request metadata as a map from a [tokenSource].
+// This behaves exactly like [oauth.TokenSource.GetRequestMetadata] but omits
+// security level check if TLS is disabled.
+//
+// We disable this precaution knowingly to allow the users to use authenticated
+// connections on an unprotected (possibly private) network.
+//
+// See also: [credentials.CheckSecurityLevel].
+func (ts *tokenSource) GetRequestMetadata(ctx context.Context, _ ...string) (map[string]string, error) {
+	token, err := ts.Token()
+	if err != nil {
+		return nil, err
+	}
+	if ts.tls {
+		ri, _ := credentials.RequestInfoFromContext(ctx)
+		if err = credentials.CheckSecurityLevel(ri.AuthInfo, credentials.PrivacyAndIntegrity); err != nil {
+			return nil, fmt.Errorf("unable to transfer TokenSource PerRPCCredentials: %v", err)
+		}
+	}
+	return map[string]string{
+		"authorization": token.Type() + " " + token.AccessToken,
+	}, nil
+}
+
+func (ts *tokenSource) RequireTransportSecurity() bool { return ts.tls }

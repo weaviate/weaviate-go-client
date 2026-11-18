@@ -1,0 +1,1376 @@
+package api
+
+import (
+	"errors"
+	"fmt"
+	"regexp"
+	"slices"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/weaviate/weaviate-go-client/v6/internal"
+	"github.com/weaviate/weaviate-go-client/v6/internal/api/transport"
+	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	proto "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
+)
+
+type SearchRequest struct {
+	RequestDefaults
+
+	Limit            int32
+	Offset           int32
+	AutoLimit        int32
+	After            uuid.UUID
+	Filter           FilterExpr
+	Boost            BoostExpr
+	Rerank           RerankExpr
+	Sort             []SortExpr
+	ReturnProperties []ReturnProperty
+	ReturnReferences []ReturnReference
+	ReturnVectors    []string
+	ReturnMetadata   ReturnMetadata
+	GroupBy          *GroupBy
+
+	NearVector *NearVector
+	NearObject *NearObject
+	NearMedia  *NearMedia
+	NearText   *NearText
+	BM25       *BM25
+	Hybrid     *Hybrid
+
+	Generate GenerateRequest
+}
+
+var (
+	_ transport.Message[proto.SearchRequest, proto.SearchReply] = (*SearchRequest)(nil)
+	_ transport.MessageMarshaler[proto.SearchRequest]           = (*SearchRequest)(nil)
+)
+
+func (r *SearchRequest) Method() transport.MethodFunc[proto.SearchRequest, proto.SearchReply] {
+	return proto.WeaviateClient.Search
+}
+func (r *SearchRequest) Body() transport.MessageMarshaler[proto.SearchRequest] { return r }
+
+type (
+	FilterExpr struct {
+		Operator FilterOperator
+		Exprs    []FilterExpr // Sub-expressions of logical operators AND/OR/NOT.
+		Target   []string     // Target of a comparison expression, i.e. property, reference.
+		Value    any          // Test value appropriate for the target data type.
+	}
+	ReturnMetadata struct {
+		CreatedAt    bool
+		LastUpdateAt bool
+		Distance     bool
+		Certainty    bool
+		Score        bool
+		ExplainScore bool
+	}
+	ReturnProperty struct {
+		Name             string
+		NestedProperties []ReturnProperty
+	}
+	ReturnReference struct {
+		PropertyName     string
+		TargetCollection string
+		ReturnMetadata   ReturnMetadata
+		ReturnVectors    []string
+		ReturnProperties []ReturnProperty
+		ReturnReferences []ReturnReference
+	}
+	GroupBy struct {
+		Property       string
+		Limit          int32
+		NumberOfGroups int32
+	}
+)
+
+type (
+	SearchTarget struct {
+		CombinationMethod CombinationMethod
+		Vectors           []TargetVector
+	}
+	TargetVector struct {
+		Vector
+		Weight *float32
+	}
+	NearVector struct {
+		Target     SearchTarget
+		Similarity VectorSimilarity
+	}
+	NearObject struct {
+		UUID       uuid.UUID
+		Target     SearchTarget
+		Similarity VectorSimilarity
+	}
+	NearMedia struct {
+		Media      string
+		Kind       MediaKind
+		Target     SearchTarget
+		Similarity VectorSimilarity
+	}
+	NearText struct {
+		Concepts         []string
+		Target           SearchTarget
+		Similarity       VectorSimilarity
+		MoveTo, MoveAway *Move
+
+		Selection Selection
+	}
+	BM25 struct {
+		Query             string
+		QueryProperties   []string
+		KeywordSimilarity KeywordSimilarity
+	}
+	Hybrid struct {
+		Query             string
+		QueryProperties   []string
+		Alpha             *float32
+		Fusion            HybridFusion
+		KeywordSimilarity KeywordSimilarity
+		Selection         Selection
+
+		NearVector *NearVector
+		NearText   *NearText
+	}
+	Move struct {
+		Force    float32
+		Objects  []uuid.UUID
+		Concepts []string
+	}
+	Selection struct {
+		MMR *SelectionMMR
+	}
+	SelectionMMR struct {
+		Limit   int32
+		Balance float32
+	}
+	VectorSimilarity struct {
+		Distance  *float64
+		Certainty *float64
+	}
+	KeywordSimilarity struct {
+		AllTokensMatch     bool
+		CrossProperty      bool
+		MinimumTokensMatch *int32
+	}
+	RerankExpr struct {
+		Property string
+		Query    string
+	}
+	SortExpr struct {
+		Properties []string
+		Descending bool
+	}
+)
+
+type (
+	BoostExpr struct {
+		Weight float32
+		Depth  int
+		Conds  []BoostCond
+	}
+	BoostCond struct {
+		Weight float32
+		Func   BoostFunc
+	}
+	BoostFunc struct {
+		TimeDecay     *TimeDecay
+		NumericDecay  *NumericDecay
+		PropertyValue *PropertyValue
+		Filter        *FilterExpr
+	}
+
+	TimeDecay struct {
+		Property string        // Required parameter.
+		Origin   time.Time     // Required parameter.
+		Scale    time.Duration // Required parameter.
+		Offset   *time.Duration
+		Curve    BoostCurve
+		Decay    *float32
+	}
+	NumericDecay struct {
+		Property string  // Required parameter.
+		Origin   float64 // Required parameter.
+		Scale    float64 // Required parameter.
+		Offset   *float64
+		Curve    BoostCurve
+		Decay    *float32
+	}
+	PropertyValue struct {
+		Property string
+		Modifier BoostModifier
+	}
+)
+
+type BoostCurve proto.Boost_DecayCurve
+
+const (
+	BoostCurveGauss       = BoostCurve(proto.Boost_DECAY_CURVE_GAUSS)
+	BoostCurveLinear      = BoostCurve(proto.Boost_DECAY_CURVE_LINEAR)
+	BoostCurveExponential = BoostCurve(proto.Boost_DECAY_CURVE_EXPONENTIAL)
+)
+
+type BoostModifier proto.Boost_PropertyValueModifier
+
+const (
+	BoostModifierLog1P = BoostModifier(proto.Boost_PROPERTY_VALUE_MODIFIER_LOG1P)
+	BoostModifierSQRT  = BoostModifier(proto.Boost_PROPERTY_VALUE_MODIFIER_SQRT)
+)
+
+func marshalBoost(b BoostExpr) (*proto.Boost, error) {
+	if len(b.Conds) == 0 {
+		return nil, nil
+	}
+	conds := make([]*proto.Boost_Condition, len(b.Conds))
+	for i, c := range b.Conds {
+		cond := &proto.Boost_Condition{
+			Weight: NilZero(c.Weight),
+		}
+		switch {
+		case c.Func.TimeDecay != nil:
+			var offset string
+			if o := c.Func.TimeDecay.Offset; o != nil {
+				offset = fmt.Sprintf("%.0fs", c.Func.TimeDecay.Offset.Seconds())
+			}
+
+			cond.Condition = &proto.Boost_Condition_TimeDecay{
+				TimeDecay: &proto.Boost_TimeDecayFunction{
+					Property:   c.Func.TimeDecay.Property,
+					Origin:     c.Func.TimeDecay.Origin.Format(TimeLayout),
+					Scale:      fmt.Sprintf("%.0fs", c.Func.TimeDecay.Scale.Seconds()),
+					Offset:     NilZero(offset),
+					Curve:      NilZero(proto.Boost_DecayCurve(c.Func.TimeDecay.Curve)),
+					DecayValue: c.Func.TimeDecay.Decay,
+				},
+			}
+		case c.Func.NumericDecay != nil:
+			cond.Condition = &proto.Boost_Condition_NumericDecay{
+				NumericDecay: &proto.Boost_NumericDecayFunction{
+					Property:   c.Func.NumericDecay.Property,
+					Scale:      c.Func.NumericDecay.Scale,
+					Origin:     c.Func.NumericDecay.Origin,
+					Offset:     c.Func.NumericDecay.Offset,
+					Curve:      NilZero(proto.Boost_DecayCurve(c.Func.NumericDecay.Curve)),
+					DecayValue: c.Func.NumericDecay.Decay,
+				},
+			}
+		case c.Func.PropertyValue != nil:
+			cond.Condition = &proto.Boost_Condition_PropertyValue{
+				PropertyValue: &proto.Boost_PropertyValueFunction{
+					Property: c.Func.PropertyValue.Property,
+					Modifier: NilZero(proto.Boost_PropertyValueModifier(c.Func.PropertyValue.Modifier)),
+				},
+			}
+		case c.Func.Filter != nil:
+			f, err := marshalFilter(*c.Func.Filter)
+			if err != nil {
+				return nil, err
+			}
+			cond.Condition = &proto.Boost_Condition_Filter{
+				Filter: f,
+			}
+		}
+
+		conds[i] = cond
+	}
+	return &proto.Boost{
+		Weight:     NilZero(b.Weight),
+		Depth:      NilZero(uint32(b.Depth)),
+		Conditions: conds,
+	}, nil
+}
+
+type HybridFusion proto.Hybrid_FusionType
+
+const (
+	HybridFusionRanked        = HybridFusion(proto.Hybrid_FUSION_TYPE_RANKED)
+	HybridFusionRelativeScore = HybridFusion(proto.Hybrid_FUSION_TYPE_UNSPECIFIED)
+)
+
+type MediaKind int
+
+const (
+	_ = iota // none selected, to avoid confusing zero value with MediaImage
+	MediaImage
+	MediaVideo
+	MediaAudio
+	MediaDepth
+	MediaThermal
+	MediaIMU
+)
+
+func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
+	dev.AssertNotNil(r, "r")
+
+	after := r.After.String()
+	if r.After == uuid.Nil {
+		after = ""
+	}
+	f, err := marshalFilter(r.Filter)
+	if err != nil {
+		return nil, err
+	}
+	b, err := marshalBoost(r.Boost)
+	if err != nil {
+		return nil, err
+	}
+	req := &proto.SearchRequest{
+		// Required for the server to read GenerativeSearch.Single and .Grouped.
+		Uses_127Api:      true,
+		Collection:       r.CollectionName,
+		Tenant:           r.Tenant,
+		ConsistencyLevel: r.ConsistencyLevel.proto(),
+		Limit:            uint32(r.Limit),
+		Offset:           uint32(r.Offset),
+		Autocut:          uint32(r.AutoLimit),
+		After:            after,
+		Filters:          f,
+		Boost:            b,
+		Metadata: &proto.MetadataRequest{
+			Uuid:               true,
+			Distance:           r.ReturnMetadata.Distance,
+			Certainty:          r.ReturnMetadata.Certainty,
+			CreationTimeUnix:   r.ReturnMetadata.CreatedAt,
+			LastUpdateTimeUnix: r.ReturnMetadata.LastUpdateAt,
+			Score:              r.ReturnMetadata.Score,
+			ExplainScore:       r.ReturnMetadata.ExplainScore,
+		},
+		Properties: new(proto.PropertiesRequest),
+		Generative: marshalGenerateRequest(r.Generate),
+	}
+
+	if r.Rerank.Property != "" {
+		req.Rerank = &proto.Rerank{
+			Property: r.Rerank.Property,
+			Query:    NilZero(r.Rerank.Query),
+		}
+	}
+
+	for _, s := range r.Sort {
+		req.SortBy = append(req.SortBy, &proto.SortBy{
+			Path:      s.Properties,
+			Ascending: !s.Descending,
+		})
+	}
+
+	marshalReturnVectors(req.Metadata, r.ReturnVectors)
+	marshalReturnProperties(req.Properties, r.ReturnProperties)
+	marshalReturnReferences(req.Properties, r.ReturnReferences)
+
+	if r.GroupBy != nil {
+		req.GroupBy = &proto.GroupBy{
+			Path:            []string{r.GroupBy.Property},
+			ObjectsPerGroup: r.GroupBy.Limit,
+			NumberOfGroups:  r.GroupBy.NumberOfGroups,
+		}
+	}
+
+	switch {
+	case r.NearVector != nil:
+		req.NearVector, err = marshalNearVector(r.NearVector)
+	case r.NearObject != nil:
+		req.NearObject, err = marshalNearObject(r.NearObject)
+	case r.NearText != nil:
+		req.NearText, err = marshalNearText(r.NearText)
+	case r.NearMedia != nil:
+		var media any
+		media, err = marshalNearMedia(r.NearMedia)
+		switch media := media.(type) {
+		case nil:
+		case *proto.NearImageSearch:
+			req.NearImage = media
+		case *proto.NearAudioSearch:
+			req.NearAudio = media
+		case *proto.NearVideoSearch:
+			req.NearVideo = media
+		case *proto.NearDepthSearch:
+			req.NearDepth = media
+		case *proto.NearThermalSearch:
+			req.NearThermal = media
+		case *proto.NearIMUSearch:
+			req.NearImu = media
+		}
+	case r.BM25 != nil:
+		req.Bm25Search, err = marshalBM25(r.BM25)
+	case r.Hybrid != nil:
+		req.HybridSearch, err = marshalHybrid(r.Hybrid)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func marshalReturnProperties(req *proto.PropertiesRequest, rps []ReturnProperty) {
+	dev.AssertNotNil(req, "req")
+
+	if len(rps) == 0 && rps != nil {
+		// ReturnProperties were explicitly set to an empty slice, do not return any.
+		return
+	}
+
+	if rps == nil {
+		// ReturnProperties were not set at all, default to all properties.
+		req.ReturnAllNonrefProperties = true
+		return
+	}
+
+	// walk traverses the ReturnProperty tree and collects requested nested object properties.
+	//
+	// The reason we cannot recursively call marshalReturnProperties itself is
+	// that PropertiesRequest has a different shape from ObjectPropertiesRequest.
+	var walk func(*[]*proto.ObjectPropertiesRequest, *ReturnProperty)
+
+	walk = func(os *[]*proto.ObjectPropertiesRequest, rp *ReturnProperty) {
+		o := &proto.ObjectPropertiesRequest{PropName: rp.Name}
+		for _, np := range rp.NestedProperties {
+			if len(np.NestedProperties) == 0 {
+				o.PrimitiveProperties = append(o.PrimitiveProperties, np.Name)
+			} else {
+				walk(&o.ObjectProperties, &np)
+			}
+		}
+		*os = append(*os, o)
+	}
+
+	// Add all "primitive" and "nested" object properties to the request.
+	for _, rp := range rps {
+		if len(rp.NestedProperties) == 0 {
+			req.NonRefProperties = append(req.NonRefProperties, rp.Name)
+		} else {
+			walk(&req.ObjectProperties, &rp)
+		}
+	}
+}
+
+// marshalReturnReferences traverses each ReturnReference tree in the slice
+// and collects requested references and properties.
+func marshalReturnReferences(req *proto.PropertiesRequest, rrs []ReturnReference) {
+	dev.AssertNotNil(req, "req")
+
+	for _, rr := range rrs {
+		ref := &proto.RefPropertiesRequest{
+			ReferenceProperty: rr.PropertyName,
+			TargetCollection:  rr.TargetCollection,
+			Metadata: &proto.MetadataRequest{
+				Uuid:               true,
+				CreationTimeUnix:   rr.ReturnMetadata.CreatedAt,
+				LastUpdateTimeUnix: rr.ReturnMetadata.LastUpdateAt,
+				Vectors:            rr.ReturnVectors,
+			},
+			Properties: new(proto.PropertiesRequest),
+		}
+
+		marshalReturnVectors(ref.Metadata, rr.ReturnVectors)
+		marshalReturnProperties(ref.Properties, rr.ReturnProperties)
+		marshalReturnReferences(ref.Properties, rr.ReturnReferences)
+
+		req.RefProperties = append(req.RefProperties, ref)
+	}
+}
+
+func marshalReturnVectors(req *proto.MetadataRequest, vectors []string) {
+	dev.AssertNotNil(req, "req")
+
+	if len(vectors) == 0 && vectors != nil {
+		// ReturnVectors were explicitly set to an empty slice, include the "only" vector.
+		req.Vector = true
+		req.Vectors = nil
+	} else {
+		req.Vectors = vectors
+	}
+}
+
+// referenceCountRe matches property names wrapped in the count() "operator".
+// If FindStringSubmatch returns a slice with 2 items, the pattern was matched,
+// and the original property name is the second item.
+var referenceCountRe = regexp.MustCompile(`count\((.*)\)`)
+
+func marshalFilter(f FilterExpr) (*proto.Filters, error) {
+	var pf proto.Filters
+
+	switch f.Operator {
+
+	// Logical operators AND, OR, and NOT  have a list of sub-expressions, and no target.
+	case FilterOperatorAnd, FilterOperatorOr, FilterOperatorNot:
+		var fs []*proto.Filters
+		for _, expr := range f.Exprs {
+			if f, err := marshalFilter(expr); err != nil {
+				return nil, err
+			} else if f != nil {
+				fs = append(fs, f)
+			}
+		}
+
+		// Using AND/OR/NOT with an empty list of sub-expressions is not
+		// a mistake, but omitting such will save a few bits on the wire.
+		if len(fs) == 0 {
+			return nil, nil
+		}
+		pf.Filters = fs
+
+	// All other operators are comparison operators with a target and a test value.
+	default:
+		pf.Target = marshalFilterTarget(f.Target)
+		if pf.Target == nil { // A filter with nil target is not useful.
+			return nil, nil
+		}
+
+		// The values should've really been [structpb.Value].
+		// Marshaling it would've been as simple as [structpb.NewValue].
+		switch v := f.Value.(type) {
+		case nil:
+		case uuid.UUID:
+			pf.TestValue = &proto.Filters_ValueText{ValueText: v.String()}
+		case []uuid.UUID:
+			pf.TestValue = &proto.Filters_ValueTextArray{
+				ValueTextArray: &proto.TextArray{Values: uuidArray(v)},
+			}
+		case string:
+			pf.TestValue = &proto.Filters_ValueText{ValueText: v}
+		case []string:
+			pf.TestValue = &proto.Filters_ValueTextArray{
+				ValueTextArray: &proto.TextArray{Values: v},
+			}
+		case time.Time:
+			// Date values are passed as formatted date strings.
+			pf.TestValue = &proto.Filters_ValueText{ValueText: v.Format(TimeLayout)}
+		case []time.Time:
+			pf.TestValue = &proto.Filters_ValueTextArray{
+				ValueTextArray: &proto.TextArray{Values: timeArray(v)},
+			}
+		case bool:
+			pf.TestValue = &proto.Filters_ValueBoolean{ValueBoolean: v}
+		case []bool:
+			pf.TestValue = &proto.Filters_ValueBooleanArray{
+				ValueBooleanArray: &proto.BooleanArray{Values: v},
+			}
+
+		case int:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case int32:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case int64:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: v}
+		case []int:
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
+			}
+		case []int32:
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
+			}
+		case []int64:
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: v},
+			}
+
+		case uint:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case uint16:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case uint32:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case uint64:
+			pf.TestValue = &proto.Filters_ValueInt{ValueInt: int64(v)}
+		case []uint:
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
+			}
+		case []uint32:
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
+			}
+		case []uint64:
+			pf.TestValue = &proto.Filters_ValueIntArray{
+				ValueIntArray: &proto.IntArray{Values: intArray(v)},
+			}
+
+		// Float values must be cast to float64 before marshaling.
+		case float32:
+			pf.TestValue = &proto.Filters_ValueNumber{ValueNumber: float64(v)}
+		case float64:
+			pf.TestValue = &proto.Filters_ValueNumber{ValueNumber: v}
+
+		case []float32:
+			pf.TestValue = &proto.Filters_ValueNumberArray{
+				// NOTE(dyma): number[] is marshaled to []byte when the data is inserted.
+				ValueNumberArray: &proto.NumberArray{Values: floatArray(v)},
+			}
+		case []float64:
+			pf.TestValue = &proto.Filters_ValueNumberArray{
+				ValueNumberArray: &proto.NumberArray{Values: v},
+			}
+		case GeoRange:
+			pf.TestValue = &proto.Filters_ValueGeo{
+				ValueGeo: &proto.GeoCoordinatesFilter{
+					Latitude:  v.Location.Latitude,
+					Longitude: v.Location.Longitude,
+					Distance:  v.Distance,
+				},
+			}
+		default:
+			return nil, fmt.Errorf("%T is not supported", v)
+		}
+	}
+
+	pf.Operator = proto.Filters_Operator(f.Operator)
+	return &pf, nil
+}
+
+// multiRefSep separates parts of the concatenated multi-target reference.
+const multiRefSep = ":"
+
+// MultiTargetReference constructs a multi-target reference such that
+// the name of the property and collection components are encoded unambiguously.
+//
+// Weaviate does not require a property name to be lowercase, so we cannot
+// rely on a heuristic a Collection being the only possible upper-case part
+// of the filter target path.
+func MultiTargetReference(property, collection string) string {
+	return property + multiRefSep + collection
+}
+
+// splitReferenceTarget returns the reference-property and collection components
+// of a reference target. If it's a single-target reference, collection is empty.
+// Otherwise, collection is the remainder of the string following [multiRefSep].
+func splitReferenceTarget(ref string) (property, collection string) {
+	parts := strings.Split(ref, multiRefSep)
+
+	// multiRefSep is not an empty string, so parts will always be non-empty.
+	dev.Assert(len(parts) > 0, "len(reference path)")
+
+	property = parts[0]
+	if len(parts) > 1 {
+		collection = parts[1]
+	}
+	return
+}
+
+func marshalFilterTarget(path []string) *proto.FilterTarget {
+	switch len(path) {
+	case 0:
+		// An empty target is not valid. We do not return an error here
+		// because the client does not validate intpus and because empty
+		// path is a possible scenario in the recursive case (see default).
+		return nil
+	case 1:
+		// The server allows using property length as a filter property
+		// by wrapping its name in the len() operator, e.g. len(tags).
+		// This package extends that with a count() operator, which
+		// allows using reference count as the property. This requires
+		// the property name to be sent in the [proto.FilterTarget_Count] message.
+		property := path[0]
+		if count := referenceCountRe.FindStringSubmatch(property); len(count) == 2 {
+			return &proto.FilterTarget{
+				Target: &proto.FilterTarget_Count{
+					Count: &proto.FilterReferenceCount{
+						On: count[1],
+					},
+				},
+			}
+		} else {
+			return &proto.FilterTarget{
+				Target: &proto.FilterTarget_Property{
+					Property: property,
+				},
+			}
+		}
+	default:
+		// Here we can be sure that path has more than 1 item.
+		// If the second item starts with an uppercase letter,
+		// assume it's a collection name and marshal property
+		// as a multi-target reference.
+		// Continue marshaling the remainder of the path recursively
+		// until the last element is a property or a count() expression.
+		property, collection := splitReferenceTarget(path[0])
+		path = path[1:]
+		if collection != "" {
+			return &proto.FilterTarget{
+				Target: &proto.FilterTarget_MultiTarget{
+					MultiTarget: &proto.FilterReferenceMultiTarget{
+						On:               property,
+						TargetCollection: collection,
+						Target:           marshalFilterTarget(path),
+					},
+				},
+			}
+		} else {
+			return &proto.FilterTarget{
+				Target: &proto.FilterTarget_SingleTarget{
+					SingleTarget: &proto.FilterReferenceSingleTarget{
+						On:     property,
+						Target: marshalFilterTarget(path),
+					},
+				},
+			}
+		}
+	}
+}
+
+func marshalNearVector(req *NearVector) (*proto.NearVector, error) {
+	dev.AssertNotNil(req, "req")
+
+	if len(req.Target.Vectors) == 0 {
+		return nil, nil
+	}
+
+	nv := &proto.NearVector{
+		Distance:  req.Similarity.Distance,
+		Certainty: req.Similarity.Certainty,
+	}
+
+	// Searching with a single anonymous vector should have the semantics
+	// of using "the only" vector in the collection.
+	// Unfortunately, Weaviate server does not do this check itself,
+	// so we need to marshal the vector into top-level Vectors instead
+	// of using VectorsForTargets for all target combinations (below).
+	//
+	// TODO(dyma): remove when the latest supported server version
+	// contains this logic.
+	if tvs := req.Target.Vectors; len(tvs) == 1 && tvs[0].Name == "" {
+		v, err := marshalVector(&tvs[0].Vector)
+		if err != nil {
+			return nil, fmt.Errorf("near vector: %w", err)
+		}
+		nv.Vectors = []*proto.Vectors{v}
+		return nv, nil
+	}
+
+	seen := make(map[string]*proto.VectorForTarget)
+	var vectors []*proto.VectorForTarget
+	var weights []*proto.WeightsForTarget
+	var targets []string
+	for _, tv := range req.Target.Vectors {
+		v, err := marshalVector(&tv.Vector)
+		if err != nil {
+			return nil, fmt.Errorf("near vector: %w", err)
+		}
+		dev.AssertNotNil(v, "v")
+
+		vft, ok := seen[tv.Name]
+		if !ok {
+			vft = &proto.VectorForTarget{Name: tv.Name}
+			vectors = append(vectors, vft)
+			seen[tv.Name] = vft
+		}
+
+		vft.Vectors = append(vft.Vectors, v)
+		targets = append(targets, tv.Name)
+		if tv.Weight != nil {
+			weights = append(weights, &proto.WeightsForTarget{
+				Target: tv.Name,
+				Weight: *tv.Weight,
+			})
+		}
+	}
+
+	nv.VectorForTargets = vectors
+	nv.Targets = &proto.Targets{
+		TargetVectors:     targets,
+		WeightsForTargets: weights,
+		Combination:       proto.CombinationMethod(req.Target.CombinationMethod),
+	}
+
+	return nv, nil
+}
+
+// marshalVector marshals [Vector.Single] or [Vector.Multi] to bytes,
+// depending on the presence. If neither is present it returns an error.
+func marshalVector(v *Vector) (*proto.Vectors, error) {
+	dev.AssertNotNil(v, "v")
+
+	out := &proto.Vectors{Name: v.Name}
+	switch {
+	case v.Single != nil:
+		out.Type = proto.Vectors_VECTOR_TYPE_SINGLE_FP32
+		out.VectorBytes = marshalSingle(v.Single)
+	case v.Multi != nil:
+		out.Type = proto.Vectors_VECTOR_TYPE_MULTI_FP32
+		out.VectorBytes = marshalMulti(v.Multi)
+	default:
+		return nil, errors.New("empty vector")
+	}
+	return out, nil
+}
+
+func marshalNearText(req *NearText) (*proto.NearTextSearch, error) {
+	dev.AssertNotNil(req, "req")
+
+	nt := &proto.NearTextSearch{
+		Query:     req.Concepts,
+		Distance:  req.Similarity.Distance,
+		Certainty: req.Similarity.Certainty,
+		Targets:   marshalSearchTarget(req.Target),
+		Selection: marshalSelection(req.Selection),
+	}
+
+	if m := req.MoveTo; m != nil {
+		var uuids []string
+		for _, u := range m.Objects {
+			uuids = append(uuids, u.String())
+		}
+		nt.MoveTo = &proto.NearTextSearch_Move{
+			Force:    m.Force,
+			Concepts: m.Concepts,
+			Uuids:    uuids,
+		}
+	}
+
+	if m := req.MoveAway; m != nil {
+		var uuids []string
+		for _, u := range m.Objects {
+			uuids = append(uuids, u.String())
+		}
+		nt.MoveAway = &proto.NearTextSearch_Move{
+			Force:    m.Force,
+			Concepts: m.Concepts,
+			Uuids:    uuids,
+		}
+	}
+
+	return nt, nil
+}
+
+func marshalSelection(req Selection) *proto.Selection {
+	switch {
+	case req.MMR != nil:
+		mmr := req.MMR
+		return &proto.Selection{
+			Selection: &proto.Selection_Mmr{
+				Mmr: &proto.Selection_MMR{
+					Limit:   nilPresent(uint32(mmr.Limit), mmr.Limit > 0),
+					Balance: nilPresent(mmr.Balance, mmr.Balance > 0),
+				},
+			},
+		}
+	}
+	return nil
+}
+
+func marshalNearObject(req *NearObject) (*proto.NearObject, error) {
+	dev.AssertNotNil(req, "req")
+
+	return &proto.NearObject{
+		Id:        req.UUID.String(),
+		Distance:  req.Similarity.Distance,
+		Certainty: req.Similarity.Certainty,
+		Targets:   marshalSearchTarget(req.Target),
+	}, nil
+}
+
+func marshalSearchTarget(st SearchTarget) *proto.Targets {
+	if len(st.Vectors) == 0 {
+		return nil
+	}
+
+	// Pre-allocate slices for targets. Do not allocate WeightsForTarget,
+	// as targets may have no weights.
+	ts := &proto.Targets{
+		TargetVectors: make([]string, len(st.Vectors)),
+		Combination:   proto.CombinationMethod(st.CombinationMethod),
+	}
+
+	for i, tv := range st.Vectors {
+		ts.TargetVectors[i] = tv.Name
+		if tv.Weight != nil {
+			ts.WeightsForTargets = append(ts.WeightsForTargets,
+				&proto.WeightsForTarget{
+					Target: tv.Name,
+					Weight: *tv.Weight,
+				})
+		}
+	}
+	return ts
+}
+
+func marshalNearMedia(req *NearMedia) (any, error) {
+	dev.AssertNotNil(req, "req")
+	switch req.Kind {
+	case MediaImage:
+		return &proto.NearImageSearch{
+			Certainty: req.Similarity.Certainty,
+			Distance:  req.Similarity.Distance,
+			Targets:   marshalSearchTarget(req.Target),
+			Image:     req.Media,
+		}, nil
+	case MediaVideo:
+		return &proto.NearVideoSearch{
+			Certainty: req.Similarity.Certainty,
+			Distance:  req.Similarity.Distance,
+			Targets:   marshalSearchTarget(req.Target),
+			Video:     req.Media,
+		}, nil
+	case MediaAudio:
+		return &proto.NearAudioSearch{
+			Certainty: req.Similarity.Certainty,
+			Distance:  req.Similarity.Distance,
+			Targets:   marshalSearchTarget(req.Target),
+			Audio:     req.Media,
+		}, nil
+	case MediaDepth:
+		return &proto.NearDepthSearch{
+			Certainty: req.Similarity.Certainty,
+			Distance:  req.Similarity.Distance,
+			Targets:   marshalSearchTarget(req.Target),
+			Depth:     req.Media,
+		}, nil
+	case MediaThermal:
+		return &proto.NearThermalSearch{
+			Certainty: req.Similarity.Certainty,
+			Distance:  req.Similarity.Distance,
+			Targets:   marshalSearchTarget(req.Target),
+			Thermal:   req.Media,
+		}, nil
+	case MediaIMU:
+		return &proto.NearIMUSearch{
+			Certainty: req.Similarity.Certainty,
+			Distance:  req.Similarity.Distance,
+			Targets:   marshalSearchTarget(req.Target),
+			Imu:       req.Media,
+		}, nil
+	}
+	return nil, errors.New("missing media")
+}
+
+func marshalBM25(req *BM25) (*proto.BM25, error) {
+	dev.AssertNotNil(req, "req")
+	return &proto.BM25{
+		Query:          req.Query,
+		Properties:     req.QueryProperties,
+		SearchOperator: marshalKeywordSimilarity(req.KeywordSimilarity),
+	}, nil
+}
+
+func marshalKeywordSimilarity(kw KeywordSimilarity) *proto.SearchOperatorOptions {
+	switch {
+	case kw.AllTokensMatch:
+		if kw.CrossProperty {
+			return &proto.SearchOperatorOptions{
+				Operator: proto.SearchOperatorOptions_OPERATOR_AND_CROSS,
+			}
+		} else {
+			return &proto.SearchOperatorOptions{
+				Operator: proto.SearchOperatorOptions_OPERATOR_AND,
+			}
+		}
+	case kw.MinimumTokensMatch != nil:
+		return &proto.SearchOperatorOptions{
+			Operator:             proto.SearchOperatorOptions_OPERATOR_OR,
+			MinimumOrTokensMatch: kw.MinimumTokensMatch,
+		}
+	}
+	return nil
+}
+
+func marshalHybrid(req *Hybrid) (*proto.Hybrid, error) {
+	dev.AssertNotNil(req, "req")
+
+	h := &proto.Hybrid{
+		Query:              req.Query,
+		Properties:         req.QueryProperties,
+		AlphaParam:         req.Alpha,
+		UseAlphaParam:      true,
+		FusionType:         proto.Hybrid_FusionType(req.Fusion),
+		Bm25SearchOperator: marshalKeywordSimilarity(req.KeywordSimilarity),
+		Selection:          marshalSelection(req.Selection),
+	}
+
+	var err error
+	if req.NearVector != nil {
+		if h.NearVector, err = marshalNearVector(req.NearVector); err != nil {
+			return nil, err
+		}
+		h.Targets = h.NearVector.Targets
+	}
+	if req.NearText != nil {
+		if h.NearText, err = marshalNearText(req.NearText); err != nil {
+			return nil, err
+		}
+		h.Targets = h.NearText.Targets
+	}
+
+	return h, nil
+}
+
+type SearchResponse struct {
+	Took           time.Duration
+	Results        []Object
+	GroupByResults []Group
+	Generative     TaskOutput
+}
+
+var _ transport.MessageUnmarshaler[proto.SearchReply] = (*SearchResponse)(nil)
+
+type (
+	Object struct {
+		Collection string
+		Metadata   ObjectMetadata
+		Properties map[string]any
+		References map[string][]Object
+		Generative TaskOutput
+	}
+	ObjectMetadata struct {
+		UUID          uuid.UUID
+		CreatedAt     *time.Time
+		LastUpdatedAt *time.Time
+		Distance      *float32
+		Certainty     *float32
+		Score         *float32
+		ExplainScore  *string
+		Vectors       Vectors
+	}
+	Group struct {
+		Name                     string
+		MinDistance, MaxDistance float32
+		Size                     int64
+		Objects                  []GroupObject
+		Generative               TaskOutput
+	}
+	GroupObject struct {
+		Object
+		BelongsToGroup string
+	}
+)
+
+// UnmarshalMessage reads proto.SearchReply into this SearchResponse.
+func (r *SearchResponse) UnmarshalMessage(reply *proto.SearchReply) error {
+	dev.AssertNotNil(reply, "reply")
+
+	objects := slices.Grow([]Object(nil), len(reply.Results))
+	if err := unmarshalObjects(reply.Results, func(i int, o Object) {
+		objects = append(objects, o)
+	}); err != nil {
+		return err
+	}
+
+	groups := slices.Grow([]Group(nil), len(reply.GroupByResults))
+	for _, group := range reply.GroupByResults {
+		if group == nil {
+			continue
+		}
+		dev.AssertNotNil(group, "group")
+
+		objects := slices.Grow([]GroupObject(nil), len(group.Objects))
+		if err := unmarshalObjects(group.Objects, func(_ int, o Object) {
+			objects = append(objects, GroupObject{
+				BelongsToGroup: group.Name,
+				Object:         o,
+			})
+		}); err != nil {
+			return nil
+		}
+
+		var generative TaskOutput
+		if vs := group.GetGenerativeResult().GetValues(); len(vs) > 0 {
+			v := vs[0]
+			generative = TaskOutput{
+				Text: v.Result,
+				DebugInfo: DebugInfo{
+					FullPrompt: v.Debug.GetFullPrompt(),
+				},
+			}
+		}
+
+		groups = append(groups, Group{
+			Name:        group.Name,
+			MinDistance: group.MinDistance,
+			MaxDistance: group.MaxDistance,
+			Size:        group.NumberOfObjects,
+			Objects:     objects,
+			Generative:  generative,
+		})
+	}
+
+	var generative TaskOutput
+	if vs := reply.GetGenerativeGroupedResults().GetValues(); len(vs) > 0 {
+		v := vs[0]
+		generative = TaskOutput{
+			Text: v.Result,
+			DebugInfo: DebugInfo{
+				FullPrompt: v.Debug.GetFullPrompt(),
+			},
+		}
+	}
+
+	*r = SearchResponse{
+		Took:           durationFromSeconds(reply.Took),
+		Results:        objects,
+		GroupByResults: groups,
+		Generative:     generative,
+	}
+	return nil
+}
+
+// unmarshalObjects calls [unmarshalObject] for each search result
+// and passes the object and its index to the consumer f.
+// Any non-nil error stops the iteration and is returned immediately.
+func unmarshalObjects(objects []*proto.SearchResult, f func(int, Object)) error {
+	dev.AssertNotNil(f, "f")
+
+	for i, object := range objects {
+		if object == nil {
+			continue
+		}
+		dev.AssertNotNil(object, "object")
+
+		o, err := unmarshalObject(object.Properties, object.Metadata, object.Generative)
+		if err != nil {
+			return err
+		}
+		dev.AssertNotNil(o, "o")
+
+		f(i, *o)
+	}
+	return nil
+}
+
+func unmarshalObject(pr *proto.PropertiesResult, mr *proto.MetadataResult, gen *proto.GenerativeResult) (*Object, error) {
+	properties, err := unmarshalProperties(pr.GetNonRefProps())
+	if err != nil {
+		return nil, err
+	}
+
+	references := internal.MakeMap[string, []Object](len(pr.GetRefProps()))
+	for _, ref := range pr.GetRefProps() {
+		if ref == nil {
+			continue
+		}
+		dev.AssertNotNil(ref, "ref")
+
+		if _, ok := references[ref.PropName]; !ok {
+			references[ref.PropName] = make([]Object, 0, len(ref.Properties))
+		}
+		for _, p := range ref.Properties {
+			o, err := unmarshalObject(p, p.Metadata, nil)
+			if err != nil {
+				return nil, err
+			}
+			dev.AssertNotNil(o, "o")
+			references[ref.PropName] = append(references[ref.PropName], *o)
+		}
+	}
+
+	var metadata ObjectMetadata
+	if mr != nil {
+		var id uuid.UUID
+		if bytes := mr.GetIdAsBytes(); bytes != nil {
+			fromBytes, err := uuid.FromBytes(bytes)
+			if err != nil {
+				return nil, err
+			}
+			id = fromBytes
+		}
+
+		vectors, err := unmarshalVectors(mr)
+		if err != nil {
+			return nil, err
+		}
+
+		metadata = ObjectMetadata{
+			UUID:          id,
+			CreatedAt:     nilPresent(timeFromUnix(mr.CreationTimeUnix), mr.CreationTimeUnixPresent),
+			LastUpdatedAt: nilPresent(timeFromUnix(mr.LastUpdateTimeUnix), mr.LastUpdateTimeUnixPresent),
+			Distance:      nilPresent(mr.Distance, mr.DistancePresent),
+			Certainty:     nilPresent(mr.Certainty, mr.CertaintyPresent),
+			Score:         nilPresent(mr.Score, mr.ScorePresent),
+			ExplainScore:  nilPresent(mr.ExplainScore, mr.ExplainScorePresent),
+			Vectors:       vectors,
+		}
+	}
+
+	var generative TaskOutput
+	if vs := gen.GetValues(); len(vs) > 0 {
+		v := vs[0]
+		generative = TaskOutput{
+			Text: v.Result,
+			DebugInfo: DebugInfo{
+				FullPrompt: v.Debug.GetFullPrompt(),
+			},
+		}
+
+		// TODO(dyma): add provider metadata
+	}
+
+	return &Object{
+		Collection: pr.GetTargetCollection(),
+		Metadata:   metadata,
+		Properties: properties,
+		References: references,
+		Generative: generative,
+	}, nil
+}
+
+// unmarshalProperties unmarshals map[string]proto.Value into map[string]any.
+// ps can be nil, in which case an empty map is returned.
+func unmarshalProperties(ps *proto.Properties) (map[string]any, error) {
+	if len(ps.GetFields()) == 0 {
+		return nil, nil
+	}
+	out := make(map[string]any, len(ps.GetFields()))
+	for name, f := range ps.GetFields() {
+		var v any
+		switch f.GetKind().(type) {
+		case *proto.Value_NullValue:
+			v = nil
+		case *proto.Value_TextValue:
+			v = f.GetTextValue()
+		case *proto.Value_IntValue:
+			v = f.GetIntValue()
+		case *proto.Value_NumberValue:
+			v = f.GetNumberValue()
+		case *proto.Value_BoolValue:
+			v = f.GetBoolValue()
+		case *proto.Value_BlobValue:
+			v = f.GetBlobValue()
+		case *proto.Value_DateValue:
+			t, err := timeFromString(f.GetDateValue())
+			if err != nil {
+				return nil, err
+			}
+			v = t
+		case *proto.Value_UuidValue:
+			id, err := uuid.Parse(f.GetUuidValue())
+			if err != nil {
+				return nil, err
+			}
+			v = id
+		case *proto.Value_ObjectValue:
+			properties, err := unmarshalProperties(f.GetObjectValue())
+			if err != nil {
+				return nil, err
+			}
+			dev.AssertNotNil(properties, "properties")
+			v = properties
+		case *proto.Value_GeoValue:
+			geo := f.GetGeoValue()
+			v = GeoCoordinates{
+				Latitude:  geo.Latitude,
+				Longitude: geo.Longitude,
+			}
+		case *proto.Value_ListValue:
+			list := f.GetListValue()
+			switch list.GetKind().(type) {
+			case *proto.ListValue_BoolValues:
+				v = list.GetBoolValues().GetValues()
+			case *proto.ListValue_TextValues:
+				v = list.GetTextValues().GetValues()
+			case *proto.ListValue_IntValues:
+				v = unmarshalIntegerArray(list.GetIntValues().GetValues())
+			case *proto.ListValue_NumberValues:
+				v = unmarshalNumberArray(list.GetNumberValues().GetValues())
+			case *proto.ListValue_UuidValues:
+				arr, err := convertArray(list.GetUuidValues().GetValues(), uuid.Parse)
+				if err != nil {
+					return nil, err
+				}
+				v = arr
+			case *proto.ListValue_DateValues:
+				arr, err := convertArray(list.GetDateValues().GetValues(), timeFromString)
+				if err != nil {
+					return nil, err
+				}
+				v = arr
+			case *proto.ListValue_ObjectValues:
+				arr, err := convertArray(list.GetObjectValues().GetValues(), unmarshalProperties)
+				if err != nil {
+					return nil, err
+				}
+				v = arr
+			}
+		default:
+			return nil, fmt.Errorf("unsupported property type %T", f.GetKind())
+		}
+		out[name] = v
+	}
+	return out, nil
+}
+
+func convertArray[T any, U any](arr []T, f func(T) (U, error)) ([]U, error) {
+	out := make([]U, len(arr))
+	for i := range arr {
+		v, err := f(arr[i])
+		if err != nil {
+			return nil, err
+		}
+		out[i] = v
+	}
+	return out, nil
+}
+
+func unmarshalVectors(mr *proto.MetadataResult) (Vectors, error) {
+	if len(mr.GetVectors()) == 0 && mr.GetVectorBytes() == nil {
+		return nil, nil
+	}
+	out := make(Vectors, len(mr.GetVectors()))
+	for _, vector := range mr.GetVectors() {
+		v := Vector{Name: vector.Name}
+		bytes := vector.GetVectorBytes()
+		switch vector.Type {
+		case proto.Vectors_VECTOR_TYPE_SINGLE_FP32:
+			v.Single = unmarshalSingle(bytes)
+		case proto.Vectors_VECTOR_TYPE_MULTI_FP32:
+			v.Multi = unmarshalMulti(bytes)
+		default:
+			return nil, fmt.Errorf("unknown type for vector %q", vector.Name)
+		}
+		out[v.Name] = v
+	}
+
+	if v := mr.GetVectorBytes(); len(v) > 0 {
+		out[DefaultVectorName] = Vector{
+			Name:   DefaultVectorName,
+			Single: unmarshalSingle(v),
+		}
+	}
+	return out, nil
+}
+
+type CombinationMethod proto.CombinationMethod
+
+const (
+	CombinationMethodSum           = CombinationMethod(proto.CombinationMethod_COMBINATION_METHOD_TYPE_SUM)
+	CombinationMethodMin           = CombinationMethod(proto.CombinationMethod_COMBINATION_METHOD_TYPE_MIN)
+	CombinationMethodAverage       = CombinationMethod(proto.CombinationMethod_COMBINATION_METHOD_TYPE_AVERAGE)
+	CombinationMethodManualWeights = CombinationMethod(proto.CombinationMethod_COMBINATION_METHOD_TYPE_MANUAL)
+	CombinationMethodRelativeScore = CombinationMethod(proto.CombinationMethod_COMBINATION_METHOD_TYPE_RELATIVE_SCORE)
+)
+
+// proto converts ConsistencyLevel into a protobuf value.
+func (cl ConsistencyLevel) proto() *proto.ConsistencyLevel {
+	switch cl {
+	case ConsistencyLevelOne:
+		return ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ONE)
+	case ConsistencyLevelQuorum:
+		return ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_QUORUM)
+	case ConsistencyLevelAll:
+		return ptr(proto.ConsistencyLevel_CONSISTENCY_LEVEL_ALL)
+	default:
+		return nil
+	}
+}
+
+type FilterOperator proto.Filters_Operator
+
+const (
+	FilterOperatorNot              = FilterOperator(proto.Filters_OPERATOR_NOT)
+	FilterOperatorAnd              = FilterOperator(proto.Filters_OPERATOR_AND)
+	FilterOperatorOr               = FilterOperator(proto.Filters_OPERATOR_OR)
+	FilterOperatorEqual            = FilterOperator(proto.Filters_OPERATOR_EQUAL)
+	FilterOperatorLessThan         = FilterOperator(proto.Filters_OPERATOR_LESS_THAN)
+	FilterOperatorLessThanEqual    = FilterOperator(proto.Filters_OPERATOR_LESS_THAN_EQUAL)
+	FilterOperatorGreaterThan      = FilterOperator(proto.Filters_OPERATOR_GREATER_THAN)
+	FilterOperatorGreaterThanEqual = FilterOperator(proto.Filters_OPERATOR_GREATER_THAN_EQUAL)
+	FilterOperatorLike             = FilterOperator(proto.Filters_OPERATOR_LIKE)
+	FilterOperatorIsNull           = FilterOperator(proto.Filters_OPERATOR_IS_NULL)
+	FilterOperatorContainsAll      = FilterOperator(proto.Filters_OPERATOR_CONTAINS_ALL)
+	FilterOperatorContainsAny      = FilterOperator(proto.Filters_OPERATOR_CONTAINS_ANY)
+	FilterOperatorContainsNone     = FilterOperator(proto.Filters_OPERATOR_CONTAINS_NONE)
+	FilterOperatorWithinGeoRange   = FilterOperator(proto.Filters_OPERATOR_WITHIN_GEO_RANGE)
+)
+
+func (o FilterOperator) String() string {
+	return proto.Filters_Operator(o).String()
+}
