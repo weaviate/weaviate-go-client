@@ -55,8 +55,6 @@ func (c *Client) Create(ctx context.Context, tenants ...Tenant) error {
 	return nil
 }
 
-// TODO(dyma): do we want to hedge for the possibility of some cursor-based API
-// and accept an options struct instead?
 func (c *Client) Get(ctx context.Context, tenants ...string) ([]Tenant, error) {
 	req := &api.GetTenantsRequest{
 		Collection: c.collection,
