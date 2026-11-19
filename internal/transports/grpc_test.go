@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -98,6 +99,34 @@ func TestGRPC_Do(t *testing.T) {
 			require.NoError(t, stream.CloseSend(), "close stream")
 			return stream.RecvMsg(&emptypb.Empty{}) // wait for the handler to finish
 		})
+	})
+
+	t.Run("dial options", func(t *testing.T) {
+		ts := startTestService(t, func(any, context.Context, func(any) error, grpc.UnaryServerInterceptor) (any, error) {
+			return nil, nil
+		})
+
+		var dialed atomic.Int32
+		gRPC, err := transports.NewGRPC(transports.GRPCConfig[grpc.ClientConnInterface]{
+			Host:          ts.Host(),
+			Port:          ts.Port(),
+			NewGRPCClient: func(channel grpc.ClientConnInterface) grpc.ClientConnInterface { return channel },
+			DialOptions: []grpc.DialOption{
+				grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
+					dialed.Add(1)
+					return (&net.Dialer{}).DialContext(ctx, "tcp", addr)
+				}),
+			},
+		})
+		require.NoError(t, err, "new grpc transport")
+
+		err = gRPC.Do(t.Context(), func(ctx context.Context, client grpc.ClientConnInterface) error {
+			var empty emptypb.Empty
+			return client.Invoke(ctx, ts.MethodName(), nil, &empty)
+		})
+
+		require.NoError(t, err)
+		assert.EqualValues(t, 1, dialed.Load(), "connections opened by the custom dialer")
 	})
 
 	t.Run("credentials", func(t *testing.T) {

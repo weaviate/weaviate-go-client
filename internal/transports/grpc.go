@@ -24,6 +24,10 @@ type GRPCConfig[Client any] struct {
 	TLS            bool                        // If true, channel will use TLS protocol.
 	KeepAlive      *keepalive.ClientParameters // Keepalive configuration.
 
+	// DialOptions are appended to the options derived from the fields above,
+	// so they take precedence where gRPC lets a later option replace an earlier one.
+	DialOptions []grpc.DialOption
+
 	NewGRPCClient NewGRPCClientFunc[Client]
 }
 
@@ -91,6 +95,8 @@ func NewGRPC[Client any](conf GRPCConfig[Client]) (*GRPC[Client], error) {
 	if conf.KeepAlive != nil {
 		dialOpts = append(dialOpts, grpc.WithKeepaliveParams(*conf.KeepAlive))
 	}
+
+	dialOpts = append(dialOpts, conf.DialOptions...)
 
 	channel, err := grpc.NewClient(conf.Host+":"+conf.Port, dialOpts...)
 	if err != nil {

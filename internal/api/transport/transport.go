@@ -30,6 +30,11 @@ type Config struct {
 	Timeout   Timeout     // Request timeout options.
 	KeepAlive *KeepAlive  // Keepalive configuration.
 	Version   string      // API version, e.g. "v1"
+
+	// HTTPClient, if set, sends all REST requests and the OAuth2 token requests.
+	HTTPClient *http.Client
+	// GRPCDialOptions are appended to the dial options of the gRPC channel.
+	GRPCDialOptions []grpc.DialOption
 }
 
 // Timeout sets client-side timeouts.
@@ -73,6 +78,8 @@ func newTransport(ctx context.Context, cfg Config) (StreamingTransport, error) {
 		Port:    cfg.RESTPort,
 		Header:  cfg.Header,
 		Version: cfg.Version,
+
+		HTTPClient: cfg.HTTPClient,
 	}
 
 	gRPCConf := transports.GRPCConfig[proto.WeaviateClient]{
@@ -82,6 +89,15 @@ func newTransport(ctx context.Context, cfg Config) (StreamingTransport, error) {
 		Header: (*metadata.MD)(&cfg.Header),
 
 		NewGRPCClient: proto.NewWeaviateClient,
+		DialOptions:   cfg.GRPCDialOptions,
+	}
+
+	// The oauth2 package reads the client for its token requests from the context.
+	// The token URL comes from the server's OpenID configuration, so those requests
+	// must go through the caller's client too, or they would bypass whatever policy
+	// it enforces.
+	if cfg.HTTPClient != nil {
+		ctx = context.WithValue(ctx, oauth2.HTTPClient, cfg.HTTPClient)
 	}
 
 	// unwrapTokenSource handles nil cfg.Auth correctly and returns a nil TokenSource.
