@@ -148,7 +148,9 @@ func (hnsw *HNSW) DecodeMap(m map[string]any) error {
 	}
 
 	var multivector *MultiVector
-	if mv := dest.MultiVector; mv != nil {
+	// The server reports a multivector block (and an encoder inside it) on every
+	// index and marks the ones that are not in use with "enabled": false.
+	if mv := dest.MultiVector; mv != nil && mv["enabled"] != false {
 		multivector = &MultiVector{}
 		if aggregation, ok := mv["aggregation"]; ok {
 			switch aggregation := aggregation.(type) {
@@ -160,7 +162,7 @@ func (hnsw *HNSW) DecodeMap(m map[string]any) error {
 		}
 
 		if key, ok := encoderRegistry.Find(mv); ok {
-			if conf, ok := mv[key].(map[string]any); ok {
+			if conf, ok := mv[key].(map[string]any); ok && conf["enabled"] != false {
 				enc, err := encoderRegistry.Decode(key, conf)
 				if err != nil {
 					return err

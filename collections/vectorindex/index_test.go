@@ -178,3 +178,46 @@ func TestIndex(t *testing.T) {
 		})
 	}
 }
+
+// The server reports a multivector block on every HNSW index and marks it
+// with "enabled": false for single-vector indexes. Decoding it as a multivector
+// configuration would enable it when the index is written back.
+func TestHNSW_disabledMultiVector(t *testing.T) {
+	module, err := vectorindex.Registry.Decode("hnsw", map[string]any{
+		"distance": "cosine",
+		"multivector": map[string]any{
+			"enabled":     false,
+			"aggregation": "maxSim",
+			"muvera": map[string]any{
+				"enabled":      false,
+				"ksim":         4,
+				"dprojections": 16,
+				"repetitions":  10,
+			},
+		},
+	})
+	require.NoError(t, err, "decode")
+	require.Equal(t, vectorindex.HNSW{Distance: vectorindex.DistanceCosine}, module, "decoded module")
+
+	conf, err := vectorindex.Registry.Encode(module)
+	require.NoError(t, err, "encode")
+	require.NotContains(t, conf, "multivector", "encoded configuration")
+}
+
+// An enabled multivector block may carry an encoder the server is not using.
+func TestHNSW_disabledMultiVectorEncoder(t *testing.T) {
+	module, err := vectorindex.Registry.Decode("hnsw", map[string]any{
+		"multivector": map[string]any{
+			"enabled":     true,
+			"aggregation": "maxSim",
+			"muvera": map[string]any{
+				"enabled": false,
+				"ksim":    4,
+			},
+		},
+	})
+	require.NoError(t, err, "decode")
+	require.Equal(t, vectorindex.HNSW{
+		MultiVector: &vectorindex.MultiVector{Aggregation: vectorindex.AggregationMaxSim},
+	}, module, "decoded module")
+}

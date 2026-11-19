@@ -12,6 +12,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/collections/vectorindex"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
+	_ "github.com/weaviate/weaviate-go-client/v6/modules/selfprovided"
 	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 )
 
@@ -109,6 +110,133 @@ func TestConfigClient_update(t *testing.T) {
 								"searchProbe": 666,
 							},
 						},
+					},
+				},
+			},
+		},
+		{
+			name: "add vector",
+			current: api.Collection{
+				Name: rd.CollectionName,
+				Vectors: map[string]api.VectorConfig{
+					"title_vec": {},
+				},
+			},
+			update: func(ctx context.Context, c *collections.ConfigClient) error {
+				return c.AddVector(ctx, "lyrics_vec", collections.VectorConfig{
+					Index:       vectorindex.HFresh{SearchProbe: 123},
+					Compression: compression.BQ{RescoreLimit: 92},
+				})
+			},
+			want: api.Collection{
+				Name: rd.CollectionName,
+				Vectors: map[string]api.VectorConfig{
+					"title_vec": {},
+					"lyrics_vec": {
+						Compression: &api.Module{
+							Name: "bq",
+							Conf: map[string]any{
+								"rescoreLimit": 92,
+							},
+						},
+						Index: &api.Module{
+							Name: "hfresh",
+							Conf: map[string]any{
+								"searchProbe": 123,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "add first vector",
+			current: api.Collection{
+				Name: rd.CollectionName,
+			},
+			update: func(ctx context.Context, c *collections.ConfigClient) error {
+				return c.AddVector(ctx, "lyrics_vec", collections.VectorConfig{
+					Index: vectorindex.HFresh{SearchProbe: 123},
+				})
+			},
+			want: api.Collection{
+				Name: rd.CollectionName,
+				Vectors: map[string]api.VectorConfig{
+					"lyrics_vec": {
+						Index: &api.Module{
+							Name: "hfresh",
+							Conf: map[string]any{
+								"searchProbe": 123,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			// Settings the typed configuration cannot express (a zero rescore
+			// limit, fields it does not model) must survive an update of
+			// another part of the collection.
+			name: "update sends other vectors back as read",
+			current: api.Collection{
+				Name: rd.CollectionName,
+				Vectors: map[string]api.VectorConfig{
+					"title_vec": api.VectorConfig{
+						Vectorizer: &api.Module{Name: "none"},
+						Index: &api.Module{
+							Name: "hnsw",
+							Conf: map[string]any{
+								"distance":    "cosine",
+								"multivector": map[string]any{"enabled": false},
+							},
+						},
+						Compression: &api.Module{
+							Name: "rq",
+							Conf: map[string]any{
+								"enabled":       true,
+								"bits":          float64(8),
+								"rescoreLimit":  float64(0),
+								"trainingLimit": float64(10000),
+							},
+						},
+					},
+					"lyrics_vec": {
+						Vectorizer: &api.Module{Name: "none"},
+						Index:      &api.Module{Name: "hfresh", Conf: map[string]any{"searchProbe": 123}},
+					},
+				},
+			},
+			update: func(ctx context.Context, c *collections.ConfigClient) error {
+				return c.UpdateVectorConfig(ctx, "lyrics_vec", func(vc *collections.VectorConfig) {
+					vc.Index = vectorindex.HFresh{SearchProbe: 666}
+				})
+			},
+			want: api.Collection{
+				Name: rd.CollectionName,
+				Vectors: map[string]api.VectorConfig{
+					"title_vec": api.VectorConfig{
+						Vectorizer: &api.Module{Name: "none"},
+						Index: &api.Module{
+							Name: "hnsw",
+							Conf: map[string]any{
+								"distance":    "cosine",
+								"multivector": map[string]any{"enabled": false},
+							},
+						},
+						Compression: &api.Module{
+							Name: "rq",
+							Conf: map[string]any{
+								"enabled":       true,
+								"bits":          float64(8),
+								"rescoreLimit":  float64(0),
+								"trainingLimit": float64(10000),
+							},
+						},
+					},
+					// Its vectorizer keeps the null settings it was read with.
+					"lyrics_vec": {
+						Vectorizer: &api.Module{Name: "none"},
+						Index:      &api.Module{Name: "hfresh", Conf: map[string]any{"searchProbe": 666}},
 					},
 				},
 			},
@@ -242,6 +370,53 @@ func TestConfigClient_update(t *testing.T) {
 
 			err := tt.update(t.Context(), c)
 			require.NoError(t, err, "update collection")
+		})
+	}
+}
+
+// A rejected update must not reach the server:
+// only the read of the current configuration is expected.
+func TestConfigClient_vectorNotUpdated(t *testing.T) {
+	rd := api.RequestDefaults{
+		CollectionName: "Songs",
+	}
+
+	for _, tt := range []struct {
+		name   string
+		update func(ctx context.Context, c *collections.ConfigClient) error
+	}{
+		{
+			name: "add a vector that exists",
+			update: func(ctx context.Context, c *collections.ConfigClient) error {
+				return c.AddVector(ctx, "title_vec", collections.VectorConfig{})
+			},
+		},
+		{
+			name: "update a vector that does not exist",
+			update: func(ctx context.Context, c *collections.ConfigClient) error {
+				return c.UpdateVectorConfig(ctx, "lyrics_vec", func(*collections.VectorConfig) {
+					require.FailNow(t, "update function called for a missing vector")
+				})
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			transport := testkit.NewTransport(t, []testkit.Stub[any, any]{
+				{
+					Request: new(api.GetCollectionRequest("Songs")),
+					Response: api.Collection{
+						Name: rd.CollectionName,
+						Vectors: map[string]api.VectorConfig{
+							"title_vec": {},
+						},
+					},
+				},
+			})
+			c := collections.NewConfigClient(transport, rd)
+
+			err := tt.update(t.Context(), c)
+			require.ErrorContains(t, err, "vector", "error names the problem")
+			require.NotContains(t, err.Error(), "property description", "error names the right operation")
 		})
 	}
 }

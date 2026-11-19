@@ -617,7 +617,9 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 		var vc VectorConfig
 
 		for name, raw := range v.Vectorizer {
-			if conf, ok := raw.(map[string]any); ok {
+			// The settings may be null, e.g. {"none": null}.
+			conf, ok := raw.(map[string]any)
+			if ok || raw == nil {
 				vc.Vectorizer = &Module{
 					Name: name,
 					Conf: conf,
@@ -630,8 +632,16 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 			// Compression config map is embedded into the vector index configuration.
 			// If we can find any of the registered compression modules there, we can
 			// extract them into a Module and remove that entry from conf map.
-			if name, ok := compression.Registry.Find(conf); ok {
-				if m, ok := conf[name].(map[string]any); ok {
+			//
+			// The server reports every algorithm it knows and marks the ones that
+			// are not in use with "enabled": false. Only the enabled one is the
+			// vector's compression; the rest must not be sent back on update.
+			for {
+				name, ok := compression.Registry.Find(conf)
+				if !ok {
+					break
+				}
+				if m, ok := conf[name].(map[string]any); ok && m["enabled"] != false {
 					vc.Compression = &Module{
 						Name: name,
 						Conf: m,
