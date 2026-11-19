@@ -1998,10 +1998,10 @@ type BackupCreateRequest struct {
 	// Include List of collections to include in the backup creation process. If not set, all collections the caller may back up are included. Cannot be used together with `exclude`. Permits wildcards, e.g. `*` or `prefix*`, which match only collections the caller may back up. A list that matches no collection is allowed when users or roles are selected, including through omitted identity selectors.
 	Include []string `json:"include,omitempty"`
 
-	// IncludeRoles List of RBAC roles to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted or null, the whole RBAC state is captured, including built-in roles and assignments. An empty list or wildcards matching nothing omit the RBAC snapshot; restoring it leaves existing roles untouched. Otherwise, only matching roles are captured. An exact role name that does not exist is rejected. Explicit selectors cannot select built-in roles: exact names are rejected and wildcards exclude them. Selected roles, including built-in roles selected by omission, permit a backup with zero collections. No per-role permission check is applied.
+	// IncludeRoles List of RBAC roles to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted or null, the whole RBAC state is captured, including built-in roles and assignments, when the caller may back up all roles (`backups/roles/*`) and every existing custom role; otherwise only the custom roles the caller may back up are captured, by name, with the backed-up users' built-in role assignments. An empty list or wildcards matching nothing omit the RBAC snapshot, though the backed-up users' built-in role assignments are still carried: restoring such a backup with rolesOptions `all` applies those assignments as the whole RBAC state, deleting every existing custom role. When no assignments were carried, the restore leaves existing roles untouched. Otherwise, only the matching custom roles the caller may back up are captured. An exact role name that does not exist is rejected. Explicit selectors cannot select built-in roles: exact names are rejected and wildcards exclude them. Selected roles, including built-in roles selected by omission, permit a backup with zero collections. Each named role requires permission on `backups/roles/<name>`. A wildcard selector expands only over the custom roles the caller may back up, and requires `backups/roles/*` when the caller may back up none.
 	IncludeRoles []string `json:"includeRoles,omitempty"`
 
-	// IncludeUsers List of dynamic DB users to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted or null, the whole dynamic-user store is captured. An empty list or wildcards matching nothing omit the user snapshot; restoring it leaves existing users untouched. Otherwise, only matching users are captured. An exact user name that does not exist is rejected. Selected users, including those selected by omission, permit a backup with zero collections. No per-user permission check is applied.
+	// IncludeUsers List of dynamic DB users to include in the backup. Permits `*` and `?` wildcards, e.g. `*` or `prefix*`. When omitted or null, the whole dynamic-user store is captured when the caller may back up all users (`backups/users/*`) and every existing user; otherwise only the users the caller may back up are captured, by name. An empty list or wildcards matching nothing omit the user snapshot; restoring it leaves existing users untouched. Otherwise, only the matching users the caller may back up are captured. An exact user name that does not exist is rejected. Selected users, including those selected by omission, permit a backup with zero collections. Each named user requires permission on `backups/users/<id>`. A wildcard selector expands only over the users the caller may back up, and requires `backups/users/*` when the caller may back up none.
 	IncludeUsers []string `json:"includeUsers,omitempty"`
 
 	// IncrementalBaseBackupId The ID of an existing backup to use as the base for a file-based incremental backup. If set, only files that have changed since the base backup will be included in the new backup.
@@ -3102,10 +3102,16 @@ type Permission struct {
 		Collection string `json:"collection,omitempty"`
 	} `json:"aliases,omitempty"`
 
-	// Backups Resources applicable for backup actions.
+	// Backups Resources applicable for backup actions. At most one of `collection`, `user` and `role` may be set; with none set, the permission applies to all collections.
 	Backups struct {
-		// Collection A string that specifies which collections this permission applies to. Can be an exact collection name or a regex pattern. The default value `*` applies the permission to all collections.
+		// Collection A string that specifies which collections this permission applies to. Can be an exact collection name or a regex pattern. The default value `*` applies the permission to all collections. Cannot be combined with `user` or `role`.
 		Collection string `json:"collection,omitempty"`
+
+		// Role A string that specifies which custom roles this permission allows to be backed up. Can be an exact role name or a regex pattern; `*` applies the permission to all roles. Restoring replaces the whole RBAC store, so a restore that applies roles, with its status and cancellation, requires `*`. The status, cancellation and listing of a backup require the roles it names; one capturing the whole RBAC state requires `*`. Cannot be combined with `collection` or `user`.
+		Role string `json:"role,omitempty"`
+
+		// User A string that specifies which dynamic users this permission allows to be backed up. Can be an exact user ID or a regex pattern; `*` applies the permission to all users. Restoring replaces the whole user store, so a restore that applies users, with its status and cancellation, requires `*`. The status, cancellation and listing of a backup require the users it names; one capturing the whole store requires `*`. Cannot be combined with `collection` or `role`.
+		User string `json:"user,omitempty"`
 	} `json:"backups,omitempty"`
 
 	// Collections Resources applicable for collection and/or tenant actions.
@@ -3650,17 +3656,17 @@ type RestoreConfig struct {
 	// Path Path within the bucket
 	Path string `json:"Path,omitempty"`
 
-	// RolesOptions How roles should be restored
+	// RolesOptions How roles should be restored. `all` replaces the whole RBAC store with the backup's RBAC snapshot and requires the `backups/roles/*` permission; `noRestore` leaves existing roles untouched.
 	RolesOptions RestoreConfigRolesOptions `json:"rolesOptions,omitempty"`
 
-	// UsersOptions How users should be restored
+	// UsersOptions How users should be restored. `all` replaces the whole dynamic-user store with the backup's user snapshot and requires the `backups/users/*` permission; `noRestore` leaves existing users untouched.
 	UsersOptions RestoreConfigUsersOptions `json:"usersOptions,omitempty"`
 }
 
-// RestoreConfigRolesOptions How roles should be restored
+// RestoreConfigRolesOptions How roles should be restored. `all` replaces the whole RBAC store with the backup's RBAC snapshot and requires the `backups/roles/*` permission; `noRestore` leaves existing roles untouched.
 type RestoreConfigRolesOptions string
 
-// RestoreConfigUsersOptions How users should be restored
+// RestoreConfigUsersOptions How users should be restored. `all` replaces the whole dynamic-user store with the backup's user snapshot and requires the `backups/users/*` permission; `noRestore` leaves existing users untouched.
 type RestoreConfigUsersOptions string
 
 // RestrictionViolationResponse Returned with HTTP 422 from class create/update endpoints. For restriction violations (operator-disallowed config via ALLOWED_VECTOR_INDEX_TYPES or ALLOWED_COMPRESSION_TYPES) the structured fields (`errorCode`, `restriction`, `value`, `allowed`, `message`) are populated; the `message` text is rendered from the operator-overridable `RESTRICTIONS_ERROR_MESSAGE` template. For unrelated 422 errors the `error` array is populated (matching the legacy ErrorResponse shape) and the structured fields are omitted.

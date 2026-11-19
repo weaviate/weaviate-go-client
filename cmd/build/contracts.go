@@ -33,10 +33,11 @@ const (
 	SchemaV3            = "schema.v3.yaml"
 	SwaggerConverterURL = "https://converter.swagger.io/api/convert"
 
-	ContractsHelp = `Usage: go run ./cmd/build contracts [--check]
+	ContractsHelp = `Usage: go run ./cmd/build contracts [--check] [--ref REF]
 
 Options:
 	--check	Exit with non-zero exit code if checksums do not match.
+	--ref	Branch, tag, or commit in weaviate/weaviate to fetch contracts from. Defaults to the default branch.
 	--help	Print this message.
 
 Environment variables:
@@ -64,10 +65,12 @@ func Contracts(ctx context.Context, args []string) error {
 	var opt struct {
 		Help  bool
 		Check bool
+		Ref   string
 	}
 	cmd := flag.NewFlagSet("contracts", flag.ExitOnError)
 	cmd.BoolVar(&opt.Help, "help", false, "Print help message.")
 	cmd.BoolVar(&opt.Check, "check", false, "Exit with non-zero exit code if checksums do not match.")
+	cmd.StringVar(&opt.Ref, "ref", "", "Branch, tag, or commit in weaviate/weaviate to fetch contracts from.")
 
 	if err := cmd.Parse(args); err != nil {
 		return err
@@ -79,7 +82,7 @@ func Contracts(ctx context.Context, args []string) error {
 	}
 
 	log.Printf("Fetching metadata for %s", WeaviateOpenAPIDir)
-	openapi, err := headOpenAPISpecs(ctx)
+	openapi, err := headOpenAPISpecs(ctx, opt.Ref)
 	if err != nil {
 		return err
 	}
@@ -158,10 +161,11 @@ type githubFile struct {
 	DownloadURL string `json:"download_url"`
 }
 
-// headOpenAPISpecs fetches metadata for schema.json.
-func headOpenAPISpecs(ctx context.Context) (*githubFile, error) {
+// headOpenAPISpecs fetches metadata for schema.json at the given ref.
+// An empty ref selects the default branch.
+func headOpenAPISpecs(ctx context.Context, ref string) (*githubFile, error) {
 	dir, basename := filepath.Split(WeaviateOpenAPIDir)
-	specs, err := ghFiles(ctx, dir)
+	specs, err := ghFiles(ctx, dir, ref)
 	if err != nil {
 		return nil, err
 	}
@@ -224,8 +228,14 @@ func gitSHA(ctx context.Context, file string) (string, error) {
 }
 
 // ghFiles fetches metadata for files in a given weaviate/weaviate project directory.
-func ghFiles(ctx context.Context, dir string) ([]githubFile, error) {
-	rc, err := ghGet(ctx, WeaviateRoot+"/"+dir)
+// An empty ref selects the default branch.
+func ghFiles(ctx context.Context, dir, ref string) ([]githubFile, error) {
+	// GitHub redirects paths with a trailing slash and drops the query string.
+	url := WeaviateRoot + "/" + strings.TrimSuffix(dir, "/")
+	if ref != "" {
+		url += "?ref=" + ref
+	}
+	rc, err := ghGet(ctx, url)
 	if err != nil {
 		return nil, err
 	}
