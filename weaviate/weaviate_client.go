@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/alias"
@@ -29,6 +31,15 @@ import (
 )
 
 const defaultTimeout = 60 * time.Second
+
+var migrationNotice sync.Once
+
+const migrationRecommendation = "Weaviate's GraphQL API is deprecated and may be disabled on your server. " +
+	"The v5 client's GraphQL() queries depend on it. " +
+	"We strongly recommend upgrading the whole application to github.com/weaviate/weaviate-go-client/v6, " +
+	"including query, ingestion and collection-management code. " +
+	"Follow MIGRATING_TO_V6.md in this module for explicit UUIDs, existing collections and legacy-vector compatibility: " +
+	"https://github.com/weaviate/weaviate-go-client/blob/ax/202611-v5-to-v6-upgrade-nudges/MIGRATING_TO_V6.md"
 
 // Config of the client endpoint
 type Config struct {
@@ -130,6 +141,10 @@ func (e *experimental) Search() *graphql.Search {
 	return graphql.NewSearch(e.grpcClient)
 }
 
+// NewClient creates a client using config. The first successful call per process
+// logs an informational recommendation through Go's standard logger to migrate
+// the whole application to v6. See MIGRATING_TO_V6.md in this module for query
+// and ingestion examples, explicit UUID handling, and legacy collection compatibility.
 func NewClient(config Config) (*Client, error) {
 	if config.AuthConfig != nil && config.ConnectionClient != nil {
 		return nil, errors.New("only AuthConfig or ConnectionClient can be given in the config")
@@ -206,6 +221,7 @@ func NewClient(config Config) (*Client, error) {
 		tokenize:        tokenize.New(con),
 	}
 
+	migrationNotice.Do(func() { log.Print(migrationRecommendation) })
 	return client, nil
 }
 
