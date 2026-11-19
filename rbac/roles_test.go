@@ -54,6 +54,45 @@ func TestRolesClient_Create(t *testing.T) {
 			},
 			err: testkit.ExpectError,
 		},
+		{
+			name: "with correctly defined backups permissions",
+			role: rbac.Role{
+				ID: "backups-role",
+				Permissions: rbac.Permissions{
+					Backups: []rbac.BackupsPermission{
+						{Collection: "col1"},
+						{Role: "role1"},
+						{User: "user1"},
+					},
+				},
+			},
+			stubs: []testkit.Stub[api.CreateRoleRequest, any]{{
+				Request: &api.CreateRoleRequest{
+					Role: api.Role{
+						ID: "backups-role",
+						Permissions: api.Permissions{
+							Backups: []api.BackupsPermission{
+								{Collection: "col1"},
+								{Role: "role1"},
+								{User: "user1"},
+							},
+						},
+					},
+				},
+			}},
+		},
+		{
+			name: "with incorrectly defined backups permissions",
+			role: rbac.Role{
+				ID: "invalid-backups-role",
+				Permissions: rbac.Permissions{
+					Backups: []rbac.BackupsPermission{
+						{Collection: "col1", Role: "role1", User: "user1"},
+					},
+				},
+			},
+			err: testkit.ExpectError,
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			transport := testkit.NewTransport(t, tt.stubs)

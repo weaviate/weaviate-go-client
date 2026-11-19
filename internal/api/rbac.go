@@ -51,6 +51,8 @@ type (
 	}
 	BackupsPermission struct {
 		Collection string `json:"collection,omitempty"`
+		Role       string `json:"role,omitempty"`
+		User       string `json:"user,omitempty"`
 
 		Manage bool `json:"-"`
 		Read   bool `json:"-"`
