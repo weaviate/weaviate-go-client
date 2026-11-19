@@ -3,6 +3,7 @@ package transports_test
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -11,6 +12,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/google/uuid"
@@ -363,4 +365,98 @@ func TestPath(t *testing.T) {
 	want := "/path/url%20encode%20me"
 	got := transports.Path("/path/%s", "url encode me")
 	assert.Equal(t, got, want)
+}
+
+// roundTripper counts requests.
+type roundTripper struct{ requests atomic.Int32 }
+
+func (rt *roundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
+	rt.requests.Add(1)
+	return http.DefaultTransport.RoundTrip(r)
+}
+
+func TestREST_HTTPClient(t *testing.T) {
+	errNoRedirect := errors.New("redirects are not allowed")
+	noRedirect := func(*http.Request, []*http.Request) error { return errNoRedirect }
+
+	// newServers starts a server that redirects every request to a second one.
+	newServers := func(t *testing.T, checkRequest func(*http.Request)) (*httptest.Server, *atomic.Int32) {
+		var redirected atomic.Int32
+		target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			redirected.Add(1)
+		}))
+		t.Cleanup(target.Close)
+
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if checkRequest != nil {
+				checkRequest(r)
+			}
+			http.Redirect(w, r, target.URL, http.StatusFound)
+		}))
+		t.Cleanup(srv.Close)
+		return srv, &redirected
+	}
+
+	get := &endpoint{method: http.MethodGet, path: "/test"}
+
+	t.Run("default client follows redirects", func(t *testing.T) {
+		srv, redirected := newServers(t, nil)
+		scheme, host, port := testkit.SchemeHostPort(t, srv)
+		rest := transports.NewREST(transports.RESTConfig{Scheme: scheme, Host: host, Port: port})
+
+		require.NoError(t, rest.Do(t.Context(), get, nil))
+		assert.EqualValues(t, 1, redirected.Load(), "requests to the redirect target")
+	})
+
+	t.Run("custom transport and redirect policy", func(t *testing.T) {
+		srv, redirected := newServers(t, nil)
+		scheme, host, port := testkit.SchemeHostPort(t, srv)
+
+		var rt roundTripper
+		rest := transports.NewREST(transports.RESTConfig{
+			Scheme: scheme, Host: host, Port: port,
+			HTTPClient: &http.Client{Transport: &rt, CheckRedirect: noRedirect},
+		})
+
+		err := rest.Do(t.Context(), get, nil)
+		require.ErrorContains(t, err, errNoRedirect.Error())
+		assert.EqualValues(t, 1, rt.requests.Load(), "requests sent through the custom transport")
+		assert.Zero(t, redirected.Load(), "requests to the redirect target")
+	})
+
+	t.Run("authentication is layered on top", func(t *testing.T) {
+		srv, redirected := newServers(t, func(r *http.Request) {
+			assert.Equal(t, "Bearer api-key", r.Header.Get("Authorization"), "authorization header")
+		})
+		scheme, host, port := testkit.SchemeHostPort(t, srv)
+
+		var rt roundTripper
+		hc := &http.Client{Transport: &rt, CheckRedirect: noRedirect}
+		rest := transports.NewREST(transports.RESTConfig{
+			Scheme: scheme, Host: host, Port: port,
+			HTTPClient:  hc,
+			TokenSource: oauth2.StaticTokenSource(&oauth2.Token{AccessToken: "api-key"}),
+		})
+
+		err := rest.Do(t.Context(), get, nil)
+		require.ErrorContains(t, err, errNoRedirect.Error())
+		assert.EqualValues(t, 1, rt.requests.Load(), "requests sent through the custom transport")
+		assert.Zero(t, redirected.Load(), "requests to the redirect target")
+		assert.Same(t, &rt, hc.Transport, "the caller's client must not be modified")
+	})
+
+	t.Run("keepalive leaves a custom client alone", func(t *testing.T) {
+		srv, _ := newServers(t, nil)
+		scheme, host, port := testkit.SchemeHostPort(t, srv)
+
+		var rt roundTripper
+		rest := transports.NewREST(transports.RESTConfig{
+			Scheme: scheme, Host: host, Port: port,
+			HTTPClient: &http.Client{Transport: &rt},
+			KeepAlive:  &net.KeepAliveConfig{Enable: true},
+		})
+
+		require.NoError(t, rest.Do(t.Context(), get, nil))
+		assert.EqualValues(t, 2, rt.requests.Load(), "the request and its redirect go through the custom transport")
+	})
 }

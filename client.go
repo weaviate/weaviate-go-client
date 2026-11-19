@@ -22,6 +22,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/replication"
 	"github.com/weaviate/weaviate-go-client/v6/tokenize"
 	"golang.org/x/oauth2"
+	"google.golang.org/grpc"
 )
 
 type Client struct {
@@ -293,6 +294,23 @@ func WithKeepAlive(keepalive KeepAlive) Option {
 	}
 }
 
+// Custom [http.Client] for REST and OAuth2 token requests.
+//
+// [WithKeepAlive] does not apply to the REST transport when this option is set.
+func WithHTTPClient(hc *http.Client) Option {
+	return func(c *config) {
+		c.HTTPClient = hc
+	}
+}
+
+// Additional dial options for the gRPC channel.
+// These are applied last and may override the defaults.
+func WithGRPCDialOptions(opts ...grpc.DialOption) Option {
+	return func(c *config) {
+		c.GRPCDialOptions = append(c.GRPCDialOptions, opts...)
+	}
+}
+
 // IsLive reports instance / cluster liveness.
 func (c *Client) IsLive(ctx context.Context) (bool, error) {
 	if err := c.transport.Do(ctx, api.IsLiveRequest, nil); err != nil {
@@ -385,6 +403,9 @@ func newTransport(ctx context.Context, c config) (*hybridTransport, error) {
 		Timeout:   c.Timeout,
 		KeepAlive: c.KeepAlive,
 		Version:   api.Version,
+
+		HTTPClient:      c.HTTPClient,
+		GRPCDialOptions: c.GRPCDialOptions,
 	})
 	if err != nil {
 		return nil, err

@@ -16,7 +16,7 @@ func (rt RefreshToken) Exchange(ctx context.Context, cfg oauth2.Config) (oauth2.
 	if rt.Expiry.IsZero() {
 		rt.Expiry = time.Now().Add(time.Duration(rt.ExpiresIn) * time.Second)
 	}
-	return cfg.TokenSource(context.Background(), (*oauth2.Token)(&rt)), nil
+	return cfg.TokenSource(tokenContext(ctx), (*oauth2.Token)(&rt)), nil
 }
 
 // ClientCredentials implements [transport.Exchanger] for the Client Credentials Grant.
@@ -34,7 +34,7 @@ func (cc ClientCredentials) Exchange(ctx context.Context, cfg oauth2.Config) (oa
 		AuthStyle:    oauth2.AuthStyleInParams,
 	}
 
-	return ccc.TokenSource(context.Background()), nil
+	return ccc.TokenSource(tokenContext(ctx)), nil
 }
 
 // RsourceOwnerPasswordCredentials implements [transport.Exchanger] for the Resource Owner Password Credentials Grant.
@@ -54,7 +54,13 @@ func (ropc ResourceOwnerPasswordCredentials) Exchange(ctx context.Context, cfg o
 	if err != nil {
 		return nil, err
 	}
-	return cfg.TokenSource(context.Background(), t), nil
+	return cfg.TokenSource(tokenContext(ctx), t), nil
+}
+
+// tokenContext drops cancelation from ctx, but keeps its values,
+// which is where oauth2 looks for a custom HTTP client.
+func tokenContext(ctx context.Context) context.Context {
+	return context.WithoutCancel(ctx)
 }
 
 const (

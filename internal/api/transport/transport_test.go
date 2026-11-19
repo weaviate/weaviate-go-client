@@ -3,15 +3,20 @@ package transport
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/weaviate/weaviate-go-client/v6/internal/auth"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 	proto "github.com/weaviate/weaviate/grpc/generated/protocol/v1"
@@ -59,6 +64,70 @@ func TestNew(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, tport, "nil transport")
 	require.True(t, fetchedMeta, "transport must fetch instance metadata on startup")
+}
+
+// Test that REST and OAuth2 token requests use the custom HTTP client.
+//
+//nolint:errcheck
+func TestNew_HTTPClient(t *testing.T) {
+	var tokenRequests atomic.Int32
+	idp := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenRequests.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"access_token": "access-token", "token_type": "Bearer", "expires_in": 0,
+		})
+	}))
+	t.Cleanup(idp.Close)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v0/.well-known/openid-configuration":
+			json.NewEncoder(w).Encode(map[string]any{"href": idp.URL + "/token", "clientId": "test-client-id"})
+		case "/v0/meta":
+			assert.Equal(t, "Bearer access-token", r.Header.Get("Authorization"), "authorization header")
+			json.NewEncoder(w).Encode(GetInstanceMetadataResponse{GRPCMaxMessageSize: 2048})
+		default:
+			t.Errorf("unexpected request: %s", r.URL.Path)
+		}
+	}))
+	t.Cleanup(srv.Close)
+
+	var seen recordingTransport
+	scheme, host, port := testkit.SchemeHostPort(t, srv)
+	tport, err := New(t.Context(), Config{
+		Scheme:     scheme,
+		RESTHost:   host,
+		RESTPort:   port,
+		Version:    "v0",
+		Auth:       auth.ClientCredentials{ClientSecret: "secret"},
+		HTTPClient: &http.Client{Transport: &seen},
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() { tport.(io.Closer).Close() })
+
+	assert.Positive(t, tokenRequests.Load(), "token requests")
+	assert.Contains(t, seen.URLs(), idp.URL+"/token", "the token request must use the custom client")
+	assert.Contains(t, seen.URLs(), srv.URL+"/v0/meta", "REST requests must use the custom client")
+}
+
+// recordingTransport records request URLs.
+type recordingTransport struct {
+	mu   sync.Mutex
+	urls []string
+}
+
+func (rt *recordingTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	rt.mu.Lock()
+	rt.urls = append(rt.urls, r.URL.String())
+	rt.mu.Unlock()
+	return http.DefaultTransport.RoundTrip(r)
+}
+
+func (rt *recordingTransport) URLs() []string {
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+	return slices.Clone(rt.urls)
 }
 
 func TestTransport_Do(t *testing.T) {

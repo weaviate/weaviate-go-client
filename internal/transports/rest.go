@@ -52,6 +52,7 @@ type RESTConfig struct {
 	TokenSource oauth2.TokenSource   // OAuth2 token source.
 	KeepAlive   *net.KeepAliveConfig // Keepalive configuration.
 	Version     string               // Version of the REST API.
+	HTTPClient  *http.Client         // Custom HTTP client. KeepAlive is ignored if set.
 }
 
 func (c *REST) Do(ctx context.Context, req Endpoint, dest any) error {
@@ -148,7 +149,11 @@ func NewREST(cfg RESTConfig) *REST {
 	)
 
 	hc := &http.Client{}
-	if cfg.KeepAlive != nil {
+	if cfg.HTTPClient != nil {
+		// Copy to avoid modifying the caller's client.
+		clone := *cfg.HTTPClient
+		hc = &clone
+	} else if cfg.KeepAlive != nil {
 		tr := http.DefaultTransport.(*http.Transport).Clone()
 		tr.DialContext = (&net.Dialer{
 			Timeout:         30 * time.Second,

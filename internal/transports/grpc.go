@@ -23,6 +23,7 @@ type GRPCConfig[Client any] struct {
 	TokenSource    oauth2.TokenSource          // OAuth2 token provider.
 	TLS            bool                        // If true, channel will use TLS protocol.
 	KeepAlive      *keepalive.ClientParameters // Keepalive configuration.
+	DialOptions    []grpc.DialOption           // Additional dial options, applied last.
 
 	NewGRPCClient NewGRPCClientFunc[Client]
 }
@@ -91,6 +92,8 @@ func NewGRPC[Client any](conf GRPCConfig[Client]) (*GRPC[Client], error) {
 	if conf.KeepAlive != nil {
 		dialOpts = append(dialOpts, grpc.WithKeepaliveParams(*conf.KeepAlive))
 	}
+
+	dialOpts = append(dialOpts, conf.DialOptions...)
 
 	channel, err := grpc.NewClient(conf.Host+":"+conf.Port, dialOpts...)
 	if err != nil {

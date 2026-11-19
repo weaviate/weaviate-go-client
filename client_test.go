@@ -18,6 +18,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/internal/transports"
 	"golang.org/x/oauth2"
+	"google.golang.org/grpc"
 )
 
 // withStreaming adds a nil-[transport.Streaming] to [internal.Transport].
@@ -273,6 +274,39 @@ func TestWithAPIKey(t *testing.T) {
 		assert.Zero(t, tok.Expiry, "expires in")
 		assert.Equal(t, "Bearer", tok.Type(), "token type")
 	}
+}
+
+// DO NOT enable t.Parallel() for this test as it modifies the global state.
+func TestWithHTTPClientAndGRPCDialOptions(t *testing.T) {
+	newFunc := transport.New
+	t.Cleanup(func() { transport.New = newFunc })
+
+	var got transport.Config
+	transport.New = func(_ context.Context, cfg transport.Config) (transport.StreamingTransport, error) {
+		got = cfg
+		return nopTransport, nil
+	}
+
+	t.Run("not set by default", func(t *testing.T) {
+		_, err := weaviate.NewClient(t.Context())
+		require.NoError(t, err, "new client")
+
+		assert.Nil(t, got.HTTPClient, "http client")
+		assert.Empty(t, got.GRPCDialOptions, "grpc dial options")
+	})
+
+	t.Run("passed to the transport", func(t *testing.T) {
+		hc := &http.Client{Timeout: time.Minute}
+		_, err := weaviate.NewClient(t.Context(),
+			weaviate.WithHTTPClient(hc),
+			weaviate.WithGRPCDialOptions(grpc.WithUserAgent("a")),
+			weaviate.WithGRPCDialOptions(grpc.WithUserAgent("b"), grpc.WithUserAgent("c")),
+		)
+		require.NoError(t, err, "new client")
+
+		assert.Same(t, hc, got.HTTPClient, "http client")
+		assert.Len(t, got.GRPCDialOptions, 3, "repeated options accumulate")
+	})
 }
 
 // DO NOT enable t.Parallel() for this test as it modifies the global state.
