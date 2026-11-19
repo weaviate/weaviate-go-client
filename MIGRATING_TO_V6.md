@@ -1,26 +1,27 @@
-# Migrate the whole application from Go client v5 to v6
+# Migrate your application from Go client v5 to v6
 
-We strongly recommend upgrading every application entry point to
+The v5 Go client makes heavy use of `GraphQL()` builders. However, Weaviate's [GraphQL API is deprecated](https://weaviate.io/blog/graphql-api-deprecation).
+
+Thus, we strongly recommend upgrading every application entry point to
 `github.com/weaviate/weaviate-go-client/v6`: services, import commands, scheduled
-jobs and maintenance tools. Fixing queries alone can leave ingestion on v5.
+jobs and maintenance tools. That means every feature - rather than, for example,
+updating queries alone and leaving ingestion on v5.
 
-Weaviate's GraphQL API is deprecated. The v5 `GraphQL()` builders depend on it;
-other v5 operations can use REST or gRPC. Removing GraphQL dependencies and
-completing an SDK upgrade are different goals. This note covers the latter.
 See the official [GraphQL migration guide](https://docs.weaviate.io/weaviate/api/graphql/migration)
 for the retirement schedule, query mappings and
 [features without an equivalent](https://docs.weaviate.io/weaviate/api/graphql/migration#graphql-features-without-an-equivalent).
 
-## Before changing code
+## Recommendations:
+
+### Before changing code
 
 - Record representative responses, ordering, filters, pagination, counts and
   object IDs. Preserve those contracts rather than accepting new SDK defaults.
 - Keep the existing embedding provider, model, source-property selection,
   collection configuration and ID derivation. An SDK upgrade is not a reason to
   switch vectorizers or recreate data.
-- For v6.0.0, use **Go 1.26.10+**, as declared in its
-  [go.mod](https://github.com/weaviate/weaviate-go-client/blob/v6.0.0/go.mod),
-  and **Weaviate 1.38.8+** for UUID compatibility.
+- For the v6 client, use the version of as declared in its go.mod. For example **Go 1.26.10+** is specified in [v6.0.0](https://github.com/weaviate/weaviate-go-client/blob/v6.0.0/go.mod).
+- Consider upgrading Weaviate to the latest version also, which you can find at: https://github.com/weaviate/weaviate/tags
 - Make both HTTP and gRPC endpoints reachable. Client construction and
   `client.IsReady` check REST readiness only; exercise a real data/query call
   to verify gRPC. Follow the [Go connection requirements](https://docs.weaviate.io/weaviate/client-libraries/go).
@@ -28,7 +29,7 @@ for the retirement schedule, query mappings and
 Install v6 in the application module:
 
 ```sh
-go get github.com/weaviate/weaviate-go-client/v6@v6.0.0
+go get github.com/weaviate/weaviate-go-client/v6
 ```
 
 The import is at the module root, without a `/weaviate` suffix:
@@ -38,6 +39,8 @@ The import is at the module root, without a `/weaviate` suffix:
 
 Use the [official Go documentation](https://docs.weaviate.io/weaviate/client-libraries/go)
 and its linked operation guides for complete examples and authentication.
+Individual documentation pages (https://docs.weaviate.io/weaviate/manage-collections/collection-operations, or https://docs.weaviate.io/weaviate/search/similarity for example) hold code examples.
+
 These native APIs cover more than the running service:
 
 | Operation | Native v6 API | What to preserve |
@@ -52,15 +55,12 @@ See [hybrid search](https://docs.weaviate.io/weaviate/search/hybrid),
 [filters](https://docs.weaviate.io/weaviate/search/filters),
 [aggregation](https://docs.weaviate.io/weaviate/search/aggregate) and
 [object import](https://docs.weaviate.io/weaviate/manage-objects/import).
-For grouped aggregation, set a limit covering the old response, for example
-`aggregate.GroupBy{Property: "kind", Limit: 10000}`. That is a finite cap,
-not an unlimited result set.
 
 Keep the loader's original namespace, hash and source key when deriving UUIDs.
 Pass the parsed UUID explicitly as `data.Object.UUID`; omitting it generates a
 random UUID. `Data.Insert` uses gRPC `BatchObjects`: inserting an existing UUID
 overwrites the object rather than merging a partial property patch, so send the
-complete intended property map. Timestamps need not be preserved. Check errors,
+complete intended property map. Check errors,
 including per-object failures reported as `data.InsertError`. This variadic
 call is not streaming batching; choose suitable batch sizes for the workload.
 
@@ -73,8 +73,6 @@ Use `client.Collections.Exists(ctx, name)` to distinguish the two paths:
   existing legacy unnamed-vector collection unchanged.
 - **Missing:** create the intended collection through `client.Collections.Create`,
   preserving the deployment's vectorizer, model, properties and index settings.
-  Do not retain v5 or write an application-level REST schema helper merely
-  because the new SDK uses a named-vector configuration.
 
 Specify vector settings explicitly. Server defaults changed in
 [Weaviate 1.40](https://docs.weaviate.io/deploy/migration#vector-config-defaults):
@@ -82,12 +80,11 @@ a definition with no vector parameters creates a collection without a vector,
 and `DEFAULT_VECTORIZER_MODULE` is ignored. Enabling a module is not the same
 as selecting it for a collection.
 
-### Optional worked example: an existing self-hosted model2vec configuration
+### Worked example: an existing self-hosted model2vec configuration
 
-**model2vec is not an SDK default or a migration recommendation.** This example
-applies only if the application already uses `text2vec-model2vec` with an enabled
-module and inference service. Its [integration requirements](https://docs.weaviate.io/weaviate/model-providers/model2vec/embeddings#requirements)
-exclude Weaviate Cloud. Keep your own provider instead of adopting this example.
+This example uses the `text2vec-model2vec` as an illustrative example.
+
+Keep your own provider, and adopt the pattern rather than adopting this example verbatim.
 
 For this plain legacy configuration, the v5 declaration is:
 
@@ -146,9 +143,11 @@ func CreateNamedCollection(ctx context.Context, client *weaviate.Client, name st
 }
 ```
 
-Call the v6 creator only in the missing-collection branch; the v5 declaration
-is shown for comparison, not for retention in the migrated application. Both
-leave eligible text-property selection implicit. Adding an explicit property
+You can thusly replace the v5 collection creation code with the "legacy" vector,
+with the v6 code using a named vector with "default" vector, and the vectorizer
+explicitly set.
+
+Both leave eligible text-property selection implicit. Adding an explicit property
 list can change vectorization, including empty or missing text behavior.
 Carry over custom module/property/index settings rather than assuming this
 plain example matches them.
