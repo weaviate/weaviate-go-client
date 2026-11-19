@@ -184,17 +184,41 @@ func (c *ConfigClient) SetPropertyDescription(ctx context.Context, propertyName,
 	return nil
 }
 
+// AddVector adds a new named vector to the collection.
+// It returns an error if the collection already has a vector with this name;
+// use [ConfigClient.UpdateVectorConfig] to change an existing one.
+//
+// Objects created before the vector was added do not have a value for it.
+func (c *ConfigClient) AddVector(ctx context.Context, vectorName string, vc VectorConfig) error {
+	if err := c.updateCollection(ctx, func(collection *Collection) error {
+		if _, ok := collection.Vectors[vectorName]; ok {
+			return fmt.Errorf("vector %q already exists", vectorName)
+		}
+		if collection.Vectors == nil {
+			collection.Vectors = make(map[string]VectorConfig, 1)
+		}
+		collection.Vectors[vectorName] = vc
+		return nil
+	}); err != nil {
+		return fmt.Errorf("add vector: %w", err)
+	}
+	return nil
+}
+
+// UpdateVectorConfig changes the configuration of an existing named vector.
+// It returns an error if the collection has no vector with this name;
+// use [ConfigClient.AddVector] to add one.
 func (c *ConfigClient) UpdateVectorConfig(ctx context.Context, vectorName string, f func(vc *VectorConfig)) error {
-	if err := c.updateCollection(ctx, func(collection *Collection) (err error) {
+	if err := c.updateCollection(ctx, func(collection *Collection) error {
 		vc, ok := collection.Vectors[vectorName]
 		if !ok {
-			err = fmt.Errorf("update vector config: no such vector %q", vectorName)
+			return fmt.Errorf("no such vector %q", vectorName)
 		}
 		f(&vc)
 		collection.Vectors[vectorName] = vc
-		return
+		return nil
 	}); err != nil {
-		return fmt.Errorf("set property description: %w", err)
+		return fmt.Errorf("update vector config: %w", err)
 	}
 	return nil
 }
