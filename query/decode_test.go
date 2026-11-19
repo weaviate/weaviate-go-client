@@ -88,6 +88,26 @@ func TestDecode(t *testing.T) {
 		}
 	})
 
+	t.Run("reuse longer dest", func(t *testing.T) {
+		// A caller may reuse the same destination slice across queries whose
+		// result sets have different sizes. Decode must shrink the slice to
+		// the current result, not leave stale objects at the tail.
+		dest := []query.Object[Song]{
+			{Object: types.Object[Song]{UUID: uuid.New()}},
+			{Object: types.Object[Song]{UUID: uuid.New()}},
+			{Object: types.Object[Song]{UUID: uuid.New()}},
+			{Object: types.Object[Song]{UUID: uuid.New()}},
+		}
+
+		err := query.Decode(&r, &dest)
+		require.NoError(t, err, "decode error")
+		require.Len(t, dest, len(r.Objects), "stale objects must not remain in dest")
+
+		for i := range len(r.Objects) {
+			assert.Equal(t, r.Objects[i].Properties["title"], dest[i].Properties.Title, "title")
+		}
+	})
+
 	t.Run("nil dest", func(t *testing.T) {
 		//nolint:errcheck
 		require.NotPanics(t, func() { query.Decode[Song](&r, nil) })

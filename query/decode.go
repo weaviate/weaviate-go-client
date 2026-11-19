@@ -10,6 +10,11 @@ import (
 // Decode decodes map[string]any properties of [query.Result] objects into arbitrary Go structs.
 func Decode[P any](r *Result, dest *[]Object[P]) error {
 	grow(&dest, len(r.Objects))
+	// Reusing a destination slice from a larger result must not leave stale
+	// objects beyond the current result set.
+	if len(*dest) > len(r.Objects) {
+		*dest = (*dest)[:len(r.Objects)]
+	}
 
 	for i, obj := range r.Objects {
 		if i > len(*dest)-1 {
