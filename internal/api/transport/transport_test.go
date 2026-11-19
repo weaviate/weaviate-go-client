@@ -66,9 +66,7 @@ func TestNew(t *testing.T) {
 	require.True(t, fetchedMeta, "transport must fetch instance metadata on startup")
 }
 
-// The token URL is whatever the server's OpenID configuration says it is.
-// A custom HTTP client must carry the token requests too, or they would
-// escape the policy that client enforces.
+// Test that REST and OAuth2 token requests use the custom HTTP client.
 //
 //nolint:errcheck
 func TestNew_HTTPClient(t *testing.T) {
@@ -113,7 +111,7 @@ func TestNew_HTTPClient(t *testing.T) {
 	assert.Contains(t, seen.URLs(), srv.URL+"/v0/meta", "REST requests must use the custom client")
 }
 
-// recordingTransport records the URLs it passes on to [http.DefaultTransport].
+// recordingTransport records request URLs.
 type recordingTransport struct {
 	mu   sync.Mutex
 	urls []string

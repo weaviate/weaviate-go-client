@@ -31,10 +31,8 @@ type Config struct {
 	KeepAlive *KeepAlive  // Keepalive configuration.
 	Version   string      // API version, e.g. "v1"
 
-	// HTTPClient, if set, sends all REST requests and the OAuth2 token requests.
-	HTTPClient *http.Client
-	// GRPCDialOptions are appended to the dial options of the gRPC channel.
-	GRPCDialOptions []grpc.DialOption
+	HTTPClient      *http.Client      // Custom HTTP client for REST and OAuth2 requests.
+	GRPCDialOptions []grpc.DialOption // Additional gRPC dial options.
 }
 
 // Timeout sets client-side timeouts.
@@ -92,10 +90,7 @@ func newTransport(ctx context.Context, cfg Config) (StreamingTransport, error) {
 		DialOptions:   cfg.GRPCDialOptions,
 	}
 
-	// The oauth2 package reads the client for its token requests from the context.
-	// The token URL comes from the server's OpenID configuration, so those requests
-	// must go through the caller's client too, or they would bypass whatever policy
-	// it enforces.
+	// Token requests must use the custom HTTP client too.
 	if cfg.HTTPClient != nil {
 		ctx = context.WithValue(ctx, oauth2.HTTPClient, cfg.HTTPClient)
 	}

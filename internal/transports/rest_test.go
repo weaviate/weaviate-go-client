@@ -367,7 +367,7 @@ func TestPath(t *testing.T) {
 	assert.Equal(t, got, want)
 }
 
-// roundTripper counts the requests it passes on to [http.DefaultTransport].
+// roundTripper counts requests.
 type roundTripper struct{ requests atomic.Int32 }
 
 func (rt *roundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
@@ -375,14 +375,11 @@ func (rt *roundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	return http.DefaultTransport.RoundTrip(r)
 }
 
-// A caller that connects to addresses it does not control needs to decide
-// which requests are allowed to leave. The custom client is where it does that.
 func TestREST_HTTPClient(t *testing.T) {
 	errNoRedirect := errors.New("redirects are not allowed")
 	noRedirect := func(*http.Request, []*http.Request) error { return errNoRedirect }
 
-	// newServers starts a server whose every response redirects to a second one,
-	// and reports how many requests the second server received.
+	// newServers starts a server that redirects every request to a second one.
 	newServers := func(t *testing.T, checkRequest func(*http.Request)) (*httptest.Server, *atomic.Int32) {
 		var redirected atomic.Int32
 		target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

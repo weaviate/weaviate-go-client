@@ -23,10 +23,7 @@ type GRPCConfig[Client any] struct {
 	TokenSource    oauth2.TokenSource          // OAuth2 token provider.
 	TLS            bool                        // If true, channel will use TLS protocol.
 	KeepAlive      *keepalive.ClientParameters // Keepalive configuration.
-
-	// DialOptions are appended to the options derived from the fields above,
-	// so they take precedence where gRPC lets a later option replace an earlier one.
-	DialOptions []grpc.DialOption
+	DialOptions    []grpc.DialOption           // Additional dial options, applied last.
 
 	NewGRPCClient NewGRPCClientFunc[Client]
 }

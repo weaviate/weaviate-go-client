@@ -57,10 +57,8 @@ func (ropc ResourceOwnerPasswordCredentials) Exchange(ctx context.Context, cfg o
 	return cfg.TokenSource(tokenContext(ctx), t), nil
 }
 
-// tokenContext returns the context a token source refreshes its token with.
-// The source outlives the call that created it, so the context must not carry
-// that call's deadline or cancelation. It keeps the values of ctx, because
-// that is where oauth2 looks for a custom HTTP client ([oauth2.HTTPClient]).
+// tokenContext drops cancelation from ctx, but keeps its values,
+// which is where oauth2 looks for a custom HTTP client.
 func tokenContext(ctx context.Context) context.Context {
 	return context.WithoutCancel(ctx)
 }

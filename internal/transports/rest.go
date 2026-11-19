@@ -52,12 +52,7 @@ type RESTConfig struct {
 	TokenSource oauth2.TokenSource   // OAuth2 token source.
 	KeepAlive   *net.KeepAliveConfig // Keepalive configuration.
 	Version     string               // Version of the REST API.
-
-	// HTTPClient, if set, is the client requests are sent with. Its Transport,
-	// CheckRedirect, Jar, and Timeout are kept, and TokenSource is layered
-	// on top of its Transport. KeepAlive is ignored when HTTPClient is set:
-	// the caller owns the connection settings of the client they supply.
-	HTTPClient *http.Client
+	HTTPClient  *http.Client         // Custom HTTP client. KeepAlive is ignored if set.
 }
 
 func (c *REST) Do(ctx context.Context, req Endpoint, dest any) error {
@@ -155,8 +150,7 @@ func NewREST(cfg RESTConfig) *REST {
 
 	hc := &http.Client{}
 	if cfg.HTTPClient != nil {
-		// Copy the client, so that wrapping its Transport below
-		// does not modify the value the caller holds.
+		// Copy to avoid modifying the caller's client.
 		clone := *cfg.HTTPClient
 		hc = &clone
 	} else if cfg.KeepAlive != nil {

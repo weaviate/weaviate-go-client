@@ -294,37 +294,17 @@ func WithKeepAlive(keepalive KeepAlive) Option {
 	}
 }
 
-// WithHTTPClient sets the [http.Client] used for REST requests, including
-// the requests that fetch and refresh OAuth2 tokens.
+// Custom [http.Client] for REST and OAuth2 token requests.
 //
-// Use it to control what the client is allowed to connect to (a redirect policy
-// in CheckRedirect, a dialer that validates resolved addresses), to route
-// requests through a proxy, to present client certificates, or to add tracing.
-//
-// The client's Transport, CheckRedirect, Jar, and Timeout are kept as they are.
-// Authentication is layered on top of its Transport. The supplied client is not
-// modified. Client-side timeouts set by [WithTimeout] still apply per request.
-//
-// [WithKeepAlive] does not change the connections of a custom HTTP client;
-// configure keepalive on its Transport instead. It still applies to gRPC.
-//
-// Search and batch requests use gRPC and are not affected by this option;
-// see [WithGRPCDialOptions].
+// [WithKeepAlive] does not apply to the REST transport when this option is set.
 func WithHTTPClient(hc *http.Client) Option {
 	return func(c *config) {
 		c.HTTPClient = hc
 	}
 }
 
-// WithGRPCDialOptions adds dial options to the gRPC channel, for example
-// [grpc.WithContextDialer] to control how connections are established,
-// or interceptors for tracing.
-//
-// The options are appended to the ones the client derives from its other
-// settings (credentials, headers, message size, keepalive), so an option
-// given here takes precedence where gRPC allows one to replace another.
-// Overriding transport credentials this way disables the TLS setup
-// that [WithScheme] selects.
+// Additional dial options for the gRPC channel.
+// These are applied last and may override the defaults.
 func WithGRPCDialOptions(opts ...grpc.DialOption) Option {
 	return func(c *config) {
 		c.GRPCDialOptions = append(c.GRPCDialOptions, opts...)
