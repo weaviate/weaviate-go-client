@@ -73,3 +73,20 @@ func TestCollection_UnmarshalJSON_compressionEnabled(t *testing.T) {
 		})
 	}
 }
+
+// A vectorizer may be stored without settings, e.g. {"none": null} on a
+// collection created over REST. It is still the vector's vectorizer.
+func TestCollection_UnmarshalJSON_vectorizerWithoutSettings(t *testing.T) {
+	body, err := json.Marshal(&rest.Class{
+		Class:               "Songs",
+		InvertedIndexConfig: rest.InvertedIndexConfig{Bm25: &rest.BM25Config{}},
+		VectorConfig: map[string]rest.VectorConfig{
+			"title_vec": {Vectorizer: map[string]any{"none": nil}},
+		},
+	})
+	require.NoError(t, err, "marshal response")
+
+	var got api.Collection
+	require.NoError(t, json.Unmarshal(body, &got), "unmarshal collection")
+	require.Equal(t, &api.Module{Name: "none"}, got.Vectors["title_vec"].Vectorizer, "vectorizer")
+}

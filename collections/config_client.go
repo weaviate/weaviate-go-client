@@ -3,6 +3,7 @@ package collections
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/weaviate/weaviate-go-client/v6/cluster"
 	"github.com/weaviate/weaviate-go-client/v6/internal"
@@ -199,7 +200,7 @@ func (c *ConfigClient) AddVector(ctx context.Context, vectorName string, vc Vect
 		}
 		collection.Vectors[vectorName] = vc
 		return nil
-	}); err != nil {
+	}, vectorName); err != nil {
 		return fmt.Errorf("add vector: %w", err)
 	}
 	return nil
@@ -217,7 +218,7 @@ func (c *ConfigClient) UpdateVectorConfig(ctx context.Context, vectorName string
 		f(&vc)
 		collection.Vectors[vectorName] = vc
 		return nil
-	}); err != nil {
+	}, vectorName); err != nil {
 		return fmt.Errorf("update vector config: %w", err)
 	}
 	return nil
@@ -279,19 +280,48 @@ func (c *ConfigClient) UpdateMultiTenancyConfig(ctx context.Context, f func(mt *
 	return nil
 }
 
-func (c *ConfigClient) updateCollection(ctx context.Context, f func(*Collection) error) error {
-	collection, err := c.Get(ctx)
+// updateCollection reads the collection, applies f and writes it back.
+//
+// Vectors not named in updatedVectors are sent back exactly as the server
+// returned them. The typed configuration does not carry every server setting
+// (for example, it cannot tell a zero rescore limit from an unset one), so
+// re-encoding a vector that was not meant to change could change it.
+func (c *ConfigClient) updateCollection(ctx context.Context, f func(*Collection) error, updatedVectors ...string) error {
+	var current api.Collection
+	if err := c.transport.Do(ctx, api.GetCollectionRequest(c.defaults.CollectionName), &current); err != nil {
+		return fmt.Errorf("get collection config: %w", err)
+	}
+
+	collection, err := collectionFromAPI(&current)
 	if err != nil {
 		return err
 	}
 
-	if err := f(collection); err != nil {
+	if err := f(&collection); err != nil {
 		return err
 	}
 
-	x, err := collectionToAPI(collection)
+	x, err := collectionToAPI(&collection)
 	if err != nil {
 		return err
+	}
+
+	for name, vector := range current.Vectors {
+		updated, ok := x.Vectors[name]
+		if !ok {
+			continue
+		}
+		if !slices.Contains(updatedVectors, name) {
+			x.Vectors[name] = vector
+			continue
+		}
+		// The vectorizer is immutable and the server tells null settings from
+		// empty ones, which the typed configuration cannot.
+		if was, is := vector.Vectorizer, updated.Vectorizer; was != nil && is != nil &&
+			was.Name == is.Name && len(was.Conf) == 0 && len(is.Conf) == 0 {
+			updated.Vectorizer = was
+			x.Vectors[name] = updated
+		}
 	}
 
 	req := &api.UpdateCollectionConfigRequest{Collection: x}

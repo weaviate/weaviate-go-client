@@ -12,6 +12,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/collections/vectorindex"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
+	_ "github.com/weaviate/weaviate-go-client/v6/modules/selfprovided"
 	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 )
 
@@ -168,6 +169,74 @@ func TestConfigClient_update(t *testing.T) {
 								"searchProbe": 123,
 							},
 						},
+					},
+				},
+			},
+		},
+		{
+			// Settings the typed configuration cannot express (a zero rescore
+			// limit, fields it does not model) must survive an update of
+			// another part of the collection.
+			name: "update sends other vectors back as read",
+			current: api.Collection{
+				Name: rd.CollectionName,
+				Vectors: map[string]api.VectorConfig{
+					"title_vec": api.VectorConfig{
+						Vectorizer: &api.Module{Name: "none"},
+						Index: &api.Module{
+							Name: "hnsw",
+							Conf: map[string]any{
+								"distance":    "cosine",
+								"multivector": map[string]any{"enabled": false},
+							},
+						},
+						Compression: &api.Module{
+							Name: "rq",
+							Conf: map[string]any{
+								"enabled":       true,
+								"bits":          float64(8),
+								"rescoreLimit":  float64(0),
+								"trainingLimit": float64(10000),
+							},
+						},
+					},
+					"lyrics_vec": {
+						Vectorizer: &api.Module{Name: "none"},
+						Index:      &api.Module{Name: "hfresh", Conf: map[string]any{"searchProbe": 123}},
+					},
+				},
+			},
+			update: func(ctx context.Context, c *collections.ConfigClient) error {
+				return c.UpdateVectorConfig(ctx, "lyrics_vec", func(vc *collections.VectorConfig) {
+					vc.Index = vectorindex.HFresh{SearchProbe: 666}
+				})
+			},
+			want: api.Collection{
+				Name: rd.CollectionName,
+				Vectors: map[string]api.VectorConfig{
+					"title_vec": api.VectorConfig{
+						Vectorizer: &api.Module{Name: "none"},
+						Index: &api.Module{
+							Name: "hnsw",
+							Conf: map[string]any{
+								"distance":    "cosine",
+								"multivector": map[string]any{"enabled": false},
+							},
+						},
+						Compression: &api.Module{
+							Name: "rq",
+							Conf: map[string]any{
+								"enabled":       true,
+								"bits":          float64(8),
+								"rescoreLimit":  float64(0),
+								"trainingLimit": float64(10000),
+							},
+						},
+					},
+					// Its vectorizer keeps the null settings it was read with.
+					"lyrics_vec": {
+						Vectorizer: &api.Module{Name: "none"},
+						Index:      &api.Module{Name: "hfresh", Conf: map[string]any{"searchProbe": 666}},
 					},
 				},
 			},

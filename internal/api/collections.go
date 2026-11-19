@@ -617,7 +617,9 @@ func (c *Collection) UnmarshalJSON(data []byte) error {
 		var vc VectorConfig
 
 		for name, raw := range v.Vectorizer {
-			if conf, ok := raw.(map[string]any); ok {
+			// The settings may be null, e.g. {"none": null}.
+			conf, ok := raw.(map[string]any)
+			if ok || raw == nil {
 				vc.Vectorizer = &Module{
 					Name: name,
 					Conf: conf,
