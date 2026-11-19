@@ -754,7 +754,7 @@ func (r *GetAssignedRolesRequest) Query() url.Values {
 	if !r.IncludePermissions {
 		return nil
 	}
-	return url.Values{"includePermissions": {"true"}}
+	return url.Values{"includeFullRoles": {"true"}}
 }
 
 const (

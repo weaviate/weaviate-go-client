@@ -1238,7 +1238,7 @@ func TestRESTRequests(t *testing.T) {
 			},
 			wantMethod: http.MethodGet,
 			wantPath:   "/authz/users/john-malkovich/roles/db",
-			wantQuery:  url.Values{"includePermissions": {"true"}},
+			wantQuery:  url.Values{"includeFullRoles": {"true"}},
 		},
 		{
 			name: "get roles assigned to the group (include permissions)",
@@ -1249,7 +1249,7 @@ func TestRESTRequests(t *testing.T) {
 			},
 			wantMethod: http.MethodGet,
 			wantPath:   "/authz/groups/external/roles/oidc",
-			wantQuery:  url.Values{"includePermissions": {"true"}},
+			wantQuery:  url.Values{"includeFullRoles": {"true"}},
 		},
 		{
 			name: "assign roles to user",
@@ -1626,7 +1626,7 @@ func TestRESTRequests(t *testing.T) {
 	}) {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Implements(t, (*transports.Endpoint)(nil), tt.req)
-			endpoint := (tt.req).(transports.Endpoint)
+			endpoint := tt.req.(transports.Endpoint)
 
 			assert.Equal(t, tt.wantMethod, endpoint.Method(), "bad method")
 			assert.Equal(t, tt.wantPath, endpoint.Path(), "bad path")
