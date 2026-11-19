@@ -71,6 +71,10 @@ type (
 	UserPermission   api.UserPermission
 )
 
+func (b BackupsPermission) discriminated() bool {
+	return (b.Collection != "" && b.Role == "" && b.User == "") || (b.Collection == "" && b.Role != "" && b.User == "") || (b.Collection == "" && b.Role == "" && b.User != "")
+}
+
 const (
 	NodeVerbosityMinimal = NodeVerbosity(api.NodeVerbosityMinimal)
 	NodeVerbosityVerbose = NodeVerbosity(api.NodeVerbosityVerbose)
@@ -80,10 +84,14 @@ const (
 )
 
 func (c *RolesClient) Create(ctx context.Context, r Role) error {
+	perms, err := marshalPermissions(&r.Permissions)
+	if err != nil {
+		return fmt.Errorf("marshal permissions: %w", err)
+	}
 	req := &api.CreateRoleRequest{
 		Role: api.Role{
 			ID:          r.ID,
-			Permissions: marshalPermissions(&r.Permissions),
+			Permissions: perms,
 		},
 	}
 	if err := c.transport.Do(ctx, req, nil); err != nil {
@@ -138,10 +146,14 @@ type AddPermissions struct {
 }
 
 func (c *RolesClient) AddPermissions(ctx context.Context, options AddPermissions) error {
+	perms, err := marshalPermissions(&options.Permissions)
+	if err != nil {
+		return fmt.Errorf("marshal permissions: %w", err)
+	}
 	req := &api.ManagePermissionsRequest{
 		RoleID:      options.RoleID,
 		Verb:        api.PermissionVerbAdd,
-		Permissions: marshalPermissions(&options.Permissions),
+		Permissions: perms,
 	}
 	if err := c.transport.Do(ctx, req, nil); err != nil {
 		return fmt.Errorf("add role permissions: %w", err)
@@ -155,10 +167,14 @@ type RemovePermissions struct {
 }
 
 func (c *RolesClient) RemovePermissions(ctx context.Context, options RemovePermissions) error {
+	perms, err := marshalPermissions(&options.Permissions)
+	if err != nil {
+		return fmt.Errorf("marshal permissions: %w", err)
+	}
 	req := &api.ManagePermissionsRequest{
 		RoleID:      options.RoleID,
 		Verb:        api.PermissionVerbRemove,
-		Permissions: marshalPermissions(&options.Permissions),
+		Permissions: perms,
 	}
 	if err := c.transport.Do(ctx, req, nil); err != nil {
 		return fmt.Errorf("remove role permissions: %w", err)
@@ -238,12 +254,15 @@ func (c *RolesClient) GroupAssignments(ctx context.Context, roleID string) ([]Gr
 	return out, nil
 }
 
-func marshalPermissions(ps *Permissions) api.Permissions {
+func marshalPermissions(ps *Permissions) (api.Permissions, error) {
 	var out api.Permissions
 	for _, p := range ps.Aliases {
 		out.Aliases = append(out.Aliases, api.AliasPermission(p))
 	}
 	for _, p := range ps.Backups {
+		if !p.discriminated() {
+			return api.Permissions{}, fmt.Errorf("invalid non-discriminated backups permission: %+v", p)
+		}
 		out.Backups = append(out.Backups, api.BackupsPermission(p))
 	}
 	for _, p := range ps.Cluster {
@@ -285,7 +304,7 @@ func marshalPermissions(ps *Permissions) api.Permissions {
 	for _, p := range ps.Users {
 		out.Users = append(out.Users, api.UserPermission(p))
 	}
-	return out
+	return out, nil
 }
 
 func unmarshalRole(r *api.Role) Role {

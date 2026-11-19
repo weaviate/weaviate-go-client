@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-const help = `Usage: go run ./cmd/build/main.go [OPTIONS] COMMAND
+const help = `Usage: go run ./cmd/build [OPTIONS] COMMAND
 
 CLI tools for weaviate-go-client maintainers.
 

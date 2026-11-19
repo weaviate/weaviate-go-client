@@ -51,6 +51,8 @@ type (
 	}
 	BackupsPermission struct {
 		Collection string `json:"collection,omitempty"`
+		Role       string `json:"role,omitempty"`
+		User       string `json:"user,omitempty"`
 
 		Manage bool `json:"-"`
 		Read   bool `json:"-"`
@@ -752,7 +754,7 @@ func (r *GetAssignedRolesRequest) Query() url.Values {
 	if !r.IncludePermissions {
 		return nil
 	}
-	return url.Values{"includePermissions": {"true"}}
+	return url.Values{"includeFullRoles": {"true"}}
 }
 
 const (

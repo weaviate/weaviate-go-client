@@ -82,6 +82,10 @@ func (c *REST) Do(ctx context.Context, req Endpoint, dest any) error {
 		httpreq.Header.Set("Content-Type", "application/json")
 	}
 
+	// Set compatability header for roles requests
+	// TODO(tommy): remove once v1.41 is the minimum supported version
+	httpreq.Header.Set("X-Weaviate-Accept-Backup-Principals", "true")
+
 	res, err := c.hc.Do(httpreq)
 	if err != nil {
 		return fmt.Errorf("execute request: %q", err)
