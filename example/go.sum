@@ -102,8 +102,8 @@ github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/vmware-labs/yaml-jsonpath v0.3.2 h1:/5QKeCBGdsInyDCyVNLbXyilb61MXGi9NP674f9Hobk=
 github.com/vmware-labs/yaml-jsonpath v0.3.2/go.mod h1:U6whw1z03QyqgWdgXxvVnQ90zN1BWz5V+51Ewf8k+rQ=
-github.com/weaviate/weaviate/grpc/generated/protocol v0.0.0-20260910114322-ea6fe86ddafd h1:6BOI4wjaYZC9OqZgrBbEi7Q6AX/LysFT+fztruyKLPg=
-github.com/weaviate/weaviate/grpc/generated/protocol v0.0.0-20260910114322-ea6fe86ddafd/go.mod h1:1RncLOcarCYyc3fUu12nFuvVvcm+87Mf9g6gXgvfEA4=
+github.com/weaviate/weaviate/grpc/generated/protocol v0.0.0-20261123081759-4ed69cc93384 h1:+x8XSugnpMiSGoSYy6PrJUWF2MpRn398myvIpi/fTRk=
+github.com/weaviate/weaviate/grpc/generated/protocol v0.0.0-20261123081759-4ed69cc93384/go.mod h1:1RncLOcarCYyc3fUu12nFuvVvcm+87Mf9g6gXgvfEA4=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 go.opentelemetry.io/auto/sdk v1.2.1 h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=
 go.opentelemetry.io/auto/sdk v1.2.1/go.mod h1:KRTj+aOaElaLi+wW1kO/DZRXwkF4C5xPbEe3ZiIhN7Y=
