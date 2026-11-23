@@ -1617,6 +1617,267 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "vector search params request-wide",
+			req: &api.SearchRequest{
+				NearVector: &api.NearVector{
+					Target: api.SearchTarget{
+						Vectors: []api.TargetVector{{Vector: api.Vector{Single: singleVector}}},
+					},
+				},
+				VectorSearchParams: api.VectorSearchParams{Ef: 256},
+			},
+			want: &proto.SearchRequest{
+				Uses_127Api: true,
+				NearVector: &proto.NearVector{
+					Vectors: []*proto.Vectors{{
+						VectorBytes: singleVectorBytes,
+						Type:        proto.Vectors_VECTOR_TYPE_SINGLE_FP32,
+					}},
+				},
+				VectorSearchParams: &proto.VectorSearchParams{Ef: testkit.Ptr[uint32](256)},
+				Metadata:           &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "vector search params all fields",
+			req: &api.SearchRequest{
+				NearObject: &api.NearObject{UUID: testkit.UUID},
+				VectorSearchParams: api.VectorSearchParams{
+					Ef:             128,
+					SearchProbe:    32,
+					FilterStrategy: api.FilterStrategyACORN,
+				},
+			},
+			want: &proto.SearchRequest{
+				Uses_127Api: true,
+				NearObject:  &proto.NearObject{Id: testkit.UUID.String()},
+				VectorSearchParams: &proto.VectorSearchParams{
+					Ef:             testkit.Ptr[uint32](128),
+					SearchProbe:    testkit.Ptr[uint32](32),
+					FilterStrategy: testkit.Ptr(proto.FilterStrategy_FILTER_STRATEGY_ACORN),
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "vector search params per target",
+			req: &api.SearchRequest{
+				NearText: &api.NearText{
+					Concepts: []string{"apples", "oranges"},
+					Target: api.SearchTarget{
+						Vectors: []api.TargetVector{
+							{Vector: api.Vector{Name: "title_vec"}},
+							{Vector: api.Vector{Name: "lyrics_vec"}},
+						},
+					},
+				},
+				TargetVectorSearchParams: map[string]api.VectorSearchParams{
+					"title_vec":  {Ef: 64},
+					"lyrics_vec": {FilterStrategy: api.FilterStrategyPathseer},
+				},
+			},
+			want: &proto.SearchRequest{
+				Uses_127Api: true,
+				NearText: &proto.NearTextSearch{
+					Query: []string{"apples", "oranges"},
+					Targets: &proto.Targets{
+						TargetVectors: []string{"title_vec", "lyrics_vec"},
+					},
+				},
+				VectorSearchParamsForTargets: []*proto.VectorSearchParamsForTarget{
+					{
+						Target: "lyrics_vec",
+						Params: &proto.VectorSearchParams{
+							FilterStrategy: testkit.Ptr(proto.FilterStrategy_FILTER_STRATEGY_PATHSEER),
+						},
+					},
+					{
+						Target: "title_vec",
+						Params: &proto.VectorSearchParams{Ef: testkit.Ptr[uint32](64)},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "vector search params request-wide and per target",
+			req: &api.SearchRequest{
+				NearText: &api.NearText{
+					Concepts: []string{"apples"},
+					Target: api.SearchTarget{
+						Vectors: []api.TargetVector{
+							{Vector: api.Vector{Name: "title_vec"}},
+							{Vector: api.Vector{Name: "lyrics_vec"}},
+						},
+					},
+				},
+				VectorSearchParams: api.VectorSearchParams{
+					Ef:             256,
+					FilterStrategy: api.FilterStrategySweeping,
+				},
+				TargetVectorSearchParams: map[string]api.VectorSearchParams{
+					"lyrics_vec": {Ef: 64},
+				},
+			},
+			want: &proto.SearchRequest{
+				Uses_127Api: true,
+				NearText: &proto.NearTextSearch{
+					Query: []string{"apples"},
+					Targets: &proto.Targets{
+						TargetVectors: []string{"title_vec", "lyrics_vec"},
+					},
+				},
+				VectorSearchParams: &proto.VectorSearchParams{
+					Ef:             testkit.Ptr[uint32](256),
+					FilterStrategy: testkit.Ptr(proto.FilterStrategy_FILTER_STRATEGY_SWEEPING),
+				},
+				VectorSearchParamsForTargets: []*proto.VectorSearchParamsForTarget{
+					{
+						Target: "lyrics_vec",
+						Params: &proto.VectorSearchParams{Ef: testkit.Ptr[uint32](64)},
+					},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "vector search params hybrid",
+			req: &api.SearchRequest{
+				Hybrid: &api.Hybrid{
+					Query: "yellow submarine",
+					NearText: &api.NearText{
+						Concepts: []string{"beatles"},
+					},
+				},
+				VectorSearchParams: api.VectorSearchParams{SearchProbe: 16},
+			},
+			want: &proto.SearchRequest{
+				Uses_127Api: true,
+				HybridSearch: &proto.Hybrid{
+					Query:         "yellow submarine",
+					UseAlphaParam: true,
+					NearText: &proto.NearTextSearch{
+						Query: []string{"beatles"},
+					},
+				},
+				VectorSearchParams: &proto.VectorSearchParams{SearchProbe: testkit.Ptr[uint32](16)},
+				Metadata:           &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "vector search params near image",
+			req: &api.SearchRequest{
+				NearMedia: &api.NearMedia{
+					Kind:  api.MediaImage,
+					Media: "base64-media",
+				},
+				VectorSearchParams: api.VectorSearchParams{Ef: 512},
+			},
+			want: &proto.SearchRequest{
+				Uses_127Api: true,
+				NearImage: &proto.NearImageSearch{
+					Image: "base64-media",
+				},
+				VectorSearchParams: &proto.VectorSearchParams{Ef: testkit.Ptr[uint32](512)},
+				Metadata:           &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "vector search params zero value not sent",
+			req: &api.SearchRequest{
+				NearObject:               &api.NearObject{UUID: testkit.UUID},
+				VectorSearchParams:       api.VectorSearchParams{},
+				TargetVectorSearchParams: map[string]api.VectorSearchParams{},
+			},
+			want: &proto.SearchRequest{
+				Uses_127Api: true,
+				NearObject:  &proto.NearObject{Id: testkit.UUID.String()},
+				Metadata:    &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
+		},
+		{
+			name: "vector search params unknown filter strategy",
+			req: &api.SearchRequest{
+				NearObject:         &api.NearObject{UUID: testkit.UUID},
+				VectorSearchParams: api.VectorSearchParams{FilterStrategy: api.FilterStrategy(42)},
+			},
+			err: testkit.ExpectError,
+		},
+		{
+			name: "vector search params negative ef",
+			req: &api.SearchRequest{
+				NearObject:         &api.NearObject{UUID: testkit.UUID},
+				VectorSearchParams: api.VectorSearchParams{Ef: -1},
+			},
+			err: testkit.ExpectError,
+		},
+		{
+			name: "vector search params negative search probe",
+			req: &api.SearchRequest{
+				NearObject:         &api.NearObject{UUID: testkit.UUID},
+				VectorSearchParams: api.VectorSearchParams{SearchProbe: -1},
+			},
+			err: testkit.ExpectError,
+		},
+		{
+			name: "vector search params per target invalid",
+			req: &api.SearchRequest{
+				NearObject: &api.NearObject{UUID: testkit.UUID},
+				TargetVectorSearchParams: map[string]api.VectorSearchParams{
+					"title_vec": {Ef: -1},
+				},
+			},
+			err: testkit.ExpectError,
+		},
+		{
+			name: "vector search params empty target name",
+			req: &api.SearchRequest{
+				NearObject: &api.NearObject{UUID: testkit.UUID},
+				TargetVectorSearchParams: map[string]api.VectorSearchParams{
+					"": {Ef: 64},
+				},
+			},
+			err: testkit.ExpectError,
+		},
+		{
+			name: "vector search params on bm25",
+			req: &api.SearchRequest{
+				BM25:               &api.BM25{Query: "yellow submarine"},
+				VectorSearchParams: api.VectorSearchParams{Ef: 256},
+			},
+			err: testkit.ExpectError,
+		},
+		{
+			name: "vector search params without search",
+			req: &api.SearchRequest{
+				TargetVectorSearchParams: map[string]api.VectorSearchParams{
+					"title_vec": {Ef: 64},
+				},
+			},
+			err: testkit.ExpectError,
+		},
+		{
 			name: "group by",
 			req: &api.SearchRequest{
 				GroupBy: &api.GroupBy{
@@ -3888,4 +4149,20 @@ func TestGetTenantsResponse_UnmarshalMessage(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestFilterStrategy_String(t *testing.T) {
+	for _, tt := range []struct {
+		strategy api.FilterStrategy
+		want     string
+	}{
+		{api.FilterStrategySweeping, "FILTER_STRATEGY_SWEEPING"},
+		{api.FilterStrategyACORN, "FILTER_STRATEGY_ACORN"},
+		{api.FilterStrategyPathseer, "FILTER_STRATEGY_PATHSEER"},
+		{api.FilterStrategy(0), "FILTER_STRATEGY_UNSPECIFIED"},
+	} {
+		t.Run(tt.want, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.strategy.String())
+		})
+	}
 }
