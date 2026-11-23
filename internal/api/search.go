@@ -3,6 +3,8 @@ package api
 import (
 	"errors"
 	"fmt"
+	"maps"
+	"math"
 	"regexp"
 	"slices"
 	"strings"
@@ -38,6 +40,13 @@ type SearchRequest struct {
 	NearText   *NearText
 	BM25       *BM25
 	Hybrid     *Hybrid
+
+	// VectorSearchParams tune the vector index for this request only.
+	// They apply to every target vector of a near* or hybrid search.
+	VectorSearchParams VectorSearchParams
+	// TargetVectorSearchParams override VectorSearchParams field-wise
+	// for the named target vectors.
+	TargetVectorSearchParams map[string]VectorSearchParams
 
 	Generate GenerateRequest
 }
@@ -289,6 +298,79 @@ const (
 	HybridFusionRelativeScore = HybridFusion(proto.Hybrid_FUSION_TYPE_UNSPECIFIED)
 )
 
+// VectorSearchParams tune the vector index for a single request.
+// Zero fields are not sent, so the collection's vectorIndexConfig applies.
+type VectorSearchParams struct {
+	Ef             int            // HNSW layer-0 beam width (also the HNSW stage of a dynamic index).
+	SearchProbe    int            // HFresh number of centroid postings visited.
+	FilterStrategy FilterStrategy // HNSW strategy for the filtered graph walk.
+}
+
+// IsZero reports whether no parameter is set.
+func (p VectorSearchParams) IsZero() bool {
+	return p == VectorSearchParams{}
+}
+
+// FilterStrategy selects the HNSW strategy for a filtered graph walk.
+type FilterStrategy proto.FilterStrategy
+
+const (
+	FilterStrategySweeping = FilterStrategy(proto.FilterStrategy_FILTER_STRATEGY_SWEEPING)
+	FilterStrategyACORN    = FilterStrategy(proto.FilterStrategy_FILTER_STRATEGY_ACORN)
+	FilterStrategyPathseer = FilterStrategy(proto.FilterStrategy_FILTER_STRATEGY_PATHSEER)
+)
+
+func (s FilterStrategy) String() string {
+	return proto.FilterStrategy(s).String()
+}
+
+// marshalVectorSearchParams returns nil for the zero value.
+func marshalVectorSearchParams(p VectorSearchParams) (*proto.VectorSearchParams, error) {
+	if p.IsZero() {
+		return nil, nil
+	}
+	if p.Ef < 0 || int64(p.Ef) > math.MaxUint32 {
+		return nil, fmt.Errorf("vector search params: ef must be between 0 and %d", uint32(math.MaxUint32))
+	}
+	if p.SearchProbe < 0 || int64(p.SearchProbe) > math.MaxUint32 {
+		return nil, fmt.Errorf("vector search params: search probe must be between 0 and %d", uint32(math.MaxUint32))
+	}
+	switch p.FilterStrategy {
+	case 0, FilterStrategySweeping, FilterStrategyACORN, FilterStrategyPathseer:
+	default:
+		return nil, fmt.Errorf("vector search params: unknown filter strategy %d", p.FilterStrategy)
+	}
+	return &proto.VectorSearchParams{
+		Ef:             NilZero(uint32(p.Ef)),
+		SearchProbe:    NilZero(uint32(p.SearchProbe)),
+		FilterStrategy: NilZero(proto.FilterStrategy(p.FilterStrategy)),
+	}, nil
+}
+
+// marshalTargetVectorSearchParams emits per-target entries sorted by target name,
+// so that the request is deterministic. An all-zero entry is still sent.
+func marshalTargetVectorSearchParams(m map[string]VectorSearchParams) ([]*proto.VectorSearchParamsForTarget, error) {
+	if len(m) == 0 {
+		return nil, nil
+	}
+	out := make([]*proto.VectorSearchParamsForTarget, 0, len(m))
+	for _, target := range slices.Sorted(maps.Keys(m)) {
+		if target == "" {
+			return nil, errors.New("vector search params: target name must be set")
+		}
+		p := m[target]
+		params := &proto.VectorSearchParams{}
+		if !p.IsZero() {
+			var err error
+			if params, err = marshalVectorSearchParams(p); err != nil {
+				return nil, fmt.Errorf("target %q: %w", target, err)
+			}
+		}
+		out = append(out, &proto.VectorSearchParamsForTarget{Target: target, Params: params})
+	}
+	return out, nil
+}
+
 type MediaKind int
 
 const (
@@ -400,7 +482,26 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if !r.VectorSearchParams.IsZero() || len(r.TargetVectorSearchParams) > 0 {
+		if r.BM25 != nil || !r.hasVectorSearch() {
+			return nil, errors.New("vector search params require a near* or hybrid search")
+		}
+		req.VectorSearchParams, err = marshalVectorSearchParams(r.VectorSearchParams)
+		if err != nil {
+			return nil, err
+		}
+		req.VectorSearchParamsForTargets, err = marshalTargetVectorSearchParams(r.TargetVectorSearchParams)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return req, nil
+}
+
+// hasVectorSearch reports whether the request carries a search that walks a vector index.
+func (r *SearchRequest) hasVectorSearch() bool {
+	return r.NearVector != nil || r.NearObject != nil || r.NearText != nil || r.NearMedia != nil || r.Hybrid != nil
 }
 
 func marshalReturnProperties(req *proto.PropertiesRequest, rps []ReturnProperty) {
