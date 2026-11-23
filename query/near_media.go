@@ -40,6 +40,16 @@ type NearMedia struct {
 	// Prefer expressing similarity in terms of vector distance, as that is a more conventional metric.
 	Similarity VectorSimilarity
 
+	// VectorSearchParams tune the vector index for this request only.
+	// They apply to every target vector of the search; zero fields keep
+	// the collection's vectorIndexConfig. Servers older than v1.41 ignore them.
+	VectorSearchParams VectorSearchParams
+
+	// TargetVectorSearchParams override VectorSearchParams field by field for
+	// the named target vectors. Keys are target vector names, so this requires
+	// named vectors, and every key must be a target of the request.
+	TargetVectorSearchParams map[string]VectorSearchParams
+
 	// groupBy can only be set by [NearMediaFunc.GroupBy], as it changes the shape of the response.
 	groupBy *GroupBy
 }
@@ -104,22 +114,24 @@ func (nm *NearMedia) Search() *api.NearMedia {
 
 func (nm *NearMedia) QueryRequest(rd api.RequestDefaults, gb *GroupBy) Request {
 	return Request{
-		RequestDefaults:        rd,
-		Limit:                  int32(nm.Limit),
-		AutoLimit:              int32(nm.AutoLimit),
-		Offset:                 int32(nm.Offset),
-		After:                  nm.After,
-		Filter:                 nm.Filter,
-		Boost:                  nm.Boost,
-		Rerank:                 nm.Rerank,
-		ReturnVectors:          nm.ReturnVectors,
-		ReturnMetadata:         nm.ReturnMetadata,
-		ReturnProperties:       nm.ReturnProperties,
-		ReturnNestedProperties: nm.ReturnNestedProperties,
-		ReturnReferences:       nm.ReturnReferences,
-		GroupBy:                gb,
-		SetSearch:              func(req *api.SearchRequest) { req.NearMedia = nm.Search() },
-		Label:                  "near media",
+		RequestDefaults:          rd,
+		Limit:                    int32(nm.Limit),
+		AutoLimit:                int32(nm.AutoLimit),
+		Offset:                   int32(nm.Offset),
+		After:                    nm.After,
+		Filter:                   nm.Filter,
+		Boost:                    nm.Boost,
+		Rerank:                   nm.Rerank,
+		ReturnVectors:            nm.ReturnVectors,
+		ReturnMetadata:           nm.ReturnMetadata,
+		ReturnProperties:         nm.ReturnProperties,
+		ReturnNestedProperties:   nm.ReturnNestedProperties,
+		ReturnReferences:         nm.ReturnReferences,
+		GroupBy:                  gb,
+		VectorSearchParams:       nm.VectorSearchParams,
+		TargetVectorSearchParams: nm.TargetVectorSearchParams,
+		SetSearch:                func(req *api.SearchRequest) { req.NearMedia = nm.Search() },
+		Label:                    "near media",
 	}
 }
 

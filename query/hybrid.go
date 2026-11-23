@@ -35,10 +35,12 @@ type Hybrid struct {
 
 	// NearVector parameters for vector search.
 	// Only set ONE of [Hybrid.NearText] / [Hybrid.NearVector].
+	// Its Limit, Filter and VectorSearchParams are ignored: set them on [Hybrid].
 	NearVector *NearVector
 
 	// NearText parameters for vector search.
 	// Only set ONE of [Hybrid.NearText] / [Hybrid.NearVector].
+	// Its Limit, Filter and VectorSearchParams are ignored: set them on [Hybrid].
 	NearText *NearText
 
 	// Alpha controls bias between BM25 and vector search result sets.
@@ -53,6 +55,16 @@ type Hybrid struct {
 
 	// Similarity threshold for BM25 search component.
 	KeywordSimilarity KeywordSimilarity
+
+	// VectorSearchParams tune the vector index for this request only.
+	// They apply to every target vector of the nested vector search; zero fields keep
+	// the collection's vectorIndexConfig. Servers older than v1.41 ignore them.
+	VectorSearchParams VectorSearchParams
+
+	// TargetVectorSearchParams override VectorSearchParams field by field for
+	// the named target vectors. Keys are target vector names, so this requires
+	// named vectors, and every key must be a target of the request.
+	TargetVectorSearchParams map[string]VectorSearchParams
 
 	// groupBy can only be set by [NearTextFunc.GroupBy], as it changes the shape of the response.
 	groupBy *GroupBy
@@ -97,22 +109,24 @@ func (h *Hybrid) Search() *api.Hybrid {
 
 func (h *Hybrid) QueryRequest(rd api.RequestDefaults, gb *GroupBy) Request {
 	return Request{
-		RequestDefaults:        rd,
-		Limit:                  int32(h.Limit),
-		AutoLimit:              int32(h.AutoLimit),
-		Offset:                 int32(h.Offset),
-		After:                  h.After,
-		Filter:                 h.Filter,
-		Boost:                  h.Boost,
-		Rerank:                 h.Rerank,
-		ReturnVectors:          h.ReturnVectors,
-		ReturnMetadata:         h.ReturnMetadata,
-		ReturnProperties:       h.ReturnProperties,
-		ReturnNestedProperties: h.ReturnNestedProperties,
-		ReturnReferences:       h.ReturnReferences,
-		GroupBy:                gb,
-		SetSearch:              func(req *api.SearchRequest) { req.Hybrid = h.Search() },
-		Label:                  "hybrid",
+		RequestDefaults:          rd,
+		Limit:                    int32(h.Limit),
+		AutoLimit:                int32(h.AutoLimit),
+		Offset:                   int32(h.Offset),
+		After:                    h.After,
+		Filter:                   h.Filter,
+		Boost:                    h.Boost,
+		Rerank:                   h.Rerank,
+		ReturnVectors:            h.ReturnVectors,
+		ReturnMetadata:           h.ReturnMetadata,
+		ReturnProperties:         h.ReturnProperties,
+		ReturnNestedProperties:   h.ReturnNestedProperties,
+		ReturnReferences:         h.ReturnReferences,
+		GroupBy:                  gb,
+		VectorSearchParams:       h.VectorSearchParams,
+		TargetVectorSearchParams: h.TargetVectorSearchParams,
+		SetSearch:                func(req *api.SearchRequest) { req.Hybrid = h.Search() },
+		Label:                    "hybrid",
 	}
 }
 

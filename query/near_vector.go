@@ -35,6 +35,16 @@ type NearVector struct {
 	// Prefer expressing similarity in terms of vector distance, as that is a more conventional metric.
 	Similarity VectorSimilarity
 
+	// VectorSearchParams tune the vector index for this request only.
+	// They apply to every target vector of the search; zero fields keep
+	// the collection's vectorIndexConfig. Servers older than v1.41 ignore them.
+	VectorSearchParams VectorSearchParams
+
+	// TargetVectorSearchParams override VectorSearchParams field by field for
+	// the named target vectors. Keys are target vector names, so this requires
+	// named vectors, and every key must be a target of the request.
+	TargetVectorSearchParams map[string]VectorSearchParams
+
 	// groupBy can only be set by [NearVectorFunc.GroupBy], as it changes the shape of the response.
 	groupBy *GroupBy
 }
@@ -73,22 +83,24 @@ func (nv *NearVector) Search() *api.NearVector {
 
 func (nv *NearVector) QueryRequest(rd api.RequestDefaults, gb *GroupBy) Request {
 	return Request{
-		RequestDefaults:        rd,
-		Limit:                  int32(nv.Limit),
-		AutoLimit:              int32(nv.AutoLimit),
-		Offset:                 int32(nv.Offset),
-		After:                  nv.After,
-		Filter:                 nv.Filter,
-		Boost:                  nv.Boost,
-		Rerank:                 nv.Rerank,
-		ReturnVectors:          nv.ReturnVectors,
-		ReturnMetadata:         nv.ReturnMetadata,
-		ReturnProperties:       nv.ReturnProperties,
-		ReturnNestedProperties: nv.ReturnNestedProperties,
-		ReturnReferences:       nv.ReturnReferences,
-		GroupBy:                gb,
-		SetSearch:              func(req *api.SearchRequest) { req.NearVector = nv.Search() },
-		Label:                  "near vector",
+		RequestDefaults:          rd,
+		Limit:                    int32(nv.Limit),
+		AutoLimit:                int32(nv.AutoLimit),
+		Offset:                   int32(nv.Offset),
+		After:                    nv.After,
+		Filter:                   nv.Filter,
+		Boost:                    nv.Boost,
+		Rerank:                   nv.Rerank,
+		ReturnVectors:            nv.ReturnVectors,
+		ReturnMetadata:           nv.ReturnMetadata,
+		ReturnProperties:         nv.ReturnProperties,
+		ReturnNestedProperties:   nv.ReturnNestedProperties,
+		ReturnReferences:         nv.ReturnReferences,
+		GroupBy:                  gb,
+		VectorSearchParams:       nv.VectorSearchParams,
+		TargetVectorSearchParams: nv.TargetVectorSearchParams,
+		SetSearch:                func(req *api.SearchRequest) { req.NearVector = nv.Search() },
+		Label:                    "near vector",
 	}
 }
 
