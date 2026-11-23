@@ -170,6 +170,114 @@ func TestHybrid(t *testing.T) {
 			},
 		},
 		{
+			name: "with vector search params",
+			h: query.Hybrid{
+				Query: "yellow submarine",
+				NearText: &query.NearText{
+					Concepts: []string{"beatles"},
+					Target:   query.VectorName("title_vec"),
+				},
+				VectorSearchParams: query.VectorSearchParams{
+					Ef:             256,
+					FilterStrategy: query.FilterStrategyACORN,
+				},
+				TargetVectorSearchParams: map[string]query.VectorSearchParams{
+					"title_vec": {Ef: 64},
+				},
+			},
+			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
+				{
+					Request: &api.SearchRequest{
+						RequestDefaults: rd,
+						Hybrid: &api.Hybrid{
+							Query: "yellow submarine",
+							NearText: &api.NearText{
+								Concepts: []string{"beatles"},
+								Target: api.SearchTarget{
+									Vectors: []api.TargetVector{{Vector: api.Vector{Name: "title_vec"}}},
+								},
+							},
+						},
+						VectorSearchParams: api.VectorSearchParams{
+							Ef:             256,
+							FilterStrategy: api.FilterStrategyACORN,
+						},
+						TargetVectorSearchParams: map[string]api.VectorSearchParams{
+							"title_vec": {Ef: 64},
+						},
+					},
+					Response: api.SearchResponse{
+						Took: 92 * time.Second,
+						Results: []api.Object{
+							{
+								Collection: "Songs",
+								Metadata:   api.ObjectMetadata{UUID: testkit.UUID},
+							},
+						},
+					},
+				},
+			},
+			want: &query.Result{
+				Took: 92 * time.Second,
+				Objects: []query.Object[map[string]any]{
+					{
+						Object: types.Object[map[string]any]{
+							Collection: "Songs",
+							UUID:       testkit.UUID,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "nested near vector params ignored",
+			h: query.Hybrid{
+				Query: "yellow submarine",
+				NearVector: &query.NearVector{
+					Target:             query.VectorName("title_vec"),
+					VectorSearchParams: query.VectorSearchParams{Ef: 999},
+					TargetVectorSearchParams: map[string]query.VectorSearchParams{
+						"title_vec": {SearchProbe: 7},
+					},
+				},
+			},
+			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
+				{
+					Request: &api.SearchRequest{
+						RequestDefaults: rd,
+						Hybrid: &api.Hybrid{
+							Query: "yellow submarine",
+							NearVector: &api.NearVector{
+								Target: api.SearchTarget{
+									Vectors: []api.TargetVector{{Vector: api.Vector{Name: "title_vec"}}},
+								},
+							},
+						},
+					},
+					Response: api.SearchResponse{
+						Took: 92 * time.Second,
+						Results: []api.Object{
+							{
+								Collection: "Songs",
+								Metadata:   api.ObjectMetadata{UUID: testkit.UUID},
+							},
+						},
+					},
+				},
+			},
+			want: &query.Result{
+				Took: 92 * time.Second,
+				Objects: []query.Object[map[string]any]{
+					{
+						Object: types.Object[map[string]any]{
+							Collection: "Songs",
+							UUID:       testkit.UUID,
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "request error",
 			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
 				{Err: testkit.ErrWhaam},
