@@ -42,7 +42,7 @@ type NearMedia struct {
 
 	// VectorSearchParams tune the vector index for this request only.
 	// They apply to every target vector of the search; zero fields keep
-	// the collection's vectorIndexConfig. Servers older than v1.41 ignore them.
+	// the collection's vectorIndexConfig. Servers older than v1.42 ignore them.
 	VectorSearchParams VectorSearchParams
 
 	// TargetVectorSearchParams override VectorSearchParams field by field for

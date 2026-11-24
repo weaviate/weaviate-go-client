@@ -15,7 +15,7 @@ import "github.com/weaviate/weaviate-go-client/v6/internal/api"
 //     It has no effect without a filter.
 //
 // The server rejects values above its HNSW_MAX_SEARCH_EF and
-// HFRESH_MAX_SEARCH_PROBE limits. Servers older than v1.41 ignore these
+// HFRESH_MAX_SEARCH_PROBE limits. Servers older than v1.42 ignore these
 // parameters. Not applied by Aggregate.
 //
 //	query.VectorSearchParams{Ef: 256, FilterStrategy: query.FilterStrategyACORN}
