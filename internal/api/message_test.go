@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"encoding/json"
+	"math"
 	"testing"
 	"time"
 
@@ -1680,6 +1681,7 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				TargetVectorSearchParams: map[string]api.VectorSearchParams{
 					"title_vec":  {Ef: 64},
 					"lyrics_vec": {FilterStrategy: api.FilterStrategyPathseer},
+					"album_vec":  {SearchProbe: 3},
 				},
 			},
 			want: &proto.SearchRequest{
@@ -1691,6 +1693,10 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 					},
 				},
 				VectorSearchParamsForTargets: []*proto.VectorSearchParamsForTarget{
+					{
+						Target: "album_vec",
+						Params: &proto.VectorSearchParams{SearchProbe: testkit.Ptr[uint32](3)},
+					},
 					{
 						Target: "lyrics_vec",
 						Params: &proto.VectorSearchParams{
@@ -1859,6 +1865,45 @@ func TestSearchRequest_MarshalMessage(t *testing.T) {
 				},
 			},
 			err: testkit.ExpectError,
+		},
+		{
+			name: "vector search params ef above uint32",
+			req: &api.SearchRequest{
+				NearObject:         &api.NearObject{UUID: testkit.UUID},
+				VectorSearchParams: api.VectorSearchParams{Ef: math.MaxUint32 + 1},
+			},
+			err: testkit.ExpectError,
+		},
+		{
+			name: "vector search params on nested hybrid search",
+			req: &api.SearchRequest{
+				Hybrid: &api.Hybrid{
+					Query:                    "yellow submarine",
+					NearText:                 &api.NearText{Concepts: []string{"beatles"}},
+					NestedVectorSearchParams: true,
+				},
+			},
+			err: testkit.ExpectError,
+		},
+		{
+			name: "vector search params empty per-target entry is sent",
+			req: &api.SearchRequest{
+				NearObject: &api.NearObject{UUID: testkit.UUID},
+				TargetVectorSearchParams: map[string]api.VectorSearchParams{
+					"title_vec": {},
+				},
+			},
+			want: &proto.SearchRequest{
+				Uses_127Api: true,
+				NearObject:  &proto.NearObject{Id: testkit.UUID.String()},
+				VectorSearchParamsForTargets: []*proto.VectorSearchParamsForTarget{
+					{Target: "title_vec", Params: &proto.VectorSearchParams{}},
+				},
+				Metadata: &proto.MetadataRequest{Uuid: true},
+				Properties: &proto.PropertiesRequest{
+					ReturnAllNonrefProperties: true,
+				},
+			},
 		},
 		{
 			name: "vector search params on bm25",
