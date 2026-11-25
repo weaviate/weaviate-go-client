@@ -35,12 +35,14 @@ type Hybrid struct {
 
 	// NearVector parameters for vector search.
 	// Only set ONE of [Hybrid.NearText] / [Hybrid.NearVector].
-	// Its Limit, Filter and VectorSearchParams are ignored: set them on [Hybrid].
+	// Its Limit and Filter are ignored: set them on [Hybrid]. Setting its
+	// VectorSearchParams is an error: set them on [Hybrid].
 	NearVector *NearVector
 
 	// NearText parameters for vector search.
 	// Only set ONE of [Hybrid.NearText] / [Hybrid.NearVector].
-	// Its Limit, Filter and VectorSearchParams are ignored: set them on [Hybrid].
+	// Its Limit and Filter are ignored: set them on [Hybrid]. Setting its
+	// VectorSearchParams is an error: set them on [Hybrid].
 	NearText *NearText
 
 	// Alpha controls bias between BM25 and vector search result sets.
@@ -62,8 +64,9 @@ type Hybrid struct {
 	VectorSearchParams VectorSearchParams
 
 	// TargetVectorSearchParams override VectorSearchParams field by field for
-	// the named target vectors. Keys are target vector names, so this requires
-	// named vectors, and every key must be a target of the request.
+	// the named target vectors: each key must be one of the request's targets,
+	// or the collection's only named vector. An entry cannot unset a field set
+	// in VectorSearchParams. Aggregate ignores both fields.
 	TargetVectorSearchParams map[string]VectorSearchParams
 
 	// groupBy can only be set by [NearTextFunc.GroupBy], as it changes the shape of the response.
@@ -104,7 +107,21 @@ func (h *Hybrid) Search() *api.Hybrid {
 		},
 		NearVector: h.NearVector.Search(),
 		NearText:   h.NearText.Search(),
+
+		NestedVectorSearchParams: h.nestedVectorSearchParams(),
 	}
+}
+
+// nestedVectorSearchParams reports whether the nested vector search sets
+// vector search params, which belong on [Hybrid].
+func (h *Hybrid) nestedVectorSearchParams() bool {
+	if nv := h.NearVector; nv != nil && (nv.VectorSearchParams != (VectorSearchParams{}) || len(nv.TargetVectorSearchParams) > 0) {
+		return true
+	}
+	if nt := h.NearText; nt != nil && (nt.VectorSearchParams != (VectorSearchParams{}) || len(nt.TargetVectorSearchParams) > 0) {
+		return true
+	}
+	return false
 }
 
 func (h *Hybrid) QueryRequest(rd api.RequestDefaults, gb *GroupBy) Request {

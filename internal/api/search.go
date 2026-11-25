@@ -142,6 +142,11 @@ type (
 
 		NearVector *NearVector
 		NearText   *NearText
+
+		// NestedVectorSearchParams is set when the nested NearVector or
+		// NearText carried vector search params, which hybrid does not apply;
+		// marshalling rejects it so they are not dropped silently.
+		NestedVectorSearchParams bool
 	}
 	Move struct {
 		Force    float32
@@ -484,7 +489,7 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	}
 
 	if !r.VectorSearchParams.IsZero() || len(r.TargetVectorSearchParams) > 0 {
-		if r.BM25 != nil || !r.hasVectorSearch() {
+		if !r.hasVectorSearch() {
 			return nil, errors.New("vector search params require a near* or hybrid search")
 		}
 		req.VectorSearchParams, err = marshalVectorSearchParams(r.VectorSearchParams)
@@ -1068,6 +1073,10 @@ func marshalKeywordSimilarity(kw KeywordSimilarity) *proto.SearchOperatorOptions
 
 func marshalHybrid(req *Hybrid) (*proto.Hybrid, error) {
 	dev.AssertNotNil(req, "req")
+
+	if req.NestedVectorSearchParams {
+		return nil, errors.New("hybrid: set VectorSearchParams on Hybrid, not on its NearVector or NearText")
+	}
 
 	h := &proto.Hybrid{
 		Query:              req.Query,

@@ -230,7 +230,7 @@ func TestHybrid(t *testing.T) {
 			},
 		},
 		{
-			name: "nested near vector params ignored",
+			name: "nested near vector params are flagged for rejection",
 			h: query.Hybrid{
 				Query: "yellow submarine",
 				NearVector: &query.NearVector{
@@ -252,6 +252,7 @@ func TestHybrid(t *testing.T) {
 									Vectors: []api.TargetVector{{Vector: api.Vector{Name: "title_vec"}}},
 								},
 							},
+							NestedVectorSearchParams: true,
 						},
 					},
 					Response: api.SearchResponse{
