@@ -9,7 +9,8 @@ import "github.com/weaviate/weaviate-go-client/v6/internal/api"
 // fields it does not know:
 //
 //   - Ef is the HNSW layer-0 beam width. It also applies to the HNSW stage
-//     of a dynamic index.
+//     of a dynamic index. On a compressed index it also caps the candidates
+//     that are rescored, so a low Ef can lower recall on filtered searches.
 //   - SearchProbe is the number of centroid postings an HFresh index visits.
 //   - FilterStrategy selects the HNSW strategy for the filtered graph walk.
 //     It has no effect without a filter.

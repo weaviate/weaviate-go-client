@@ -46,8 +46,9 @@ type NearMedia struct {
 	VectorSearchParams VectorSearchParams
 
 	// TargetVectorSearchParams override VectorSearchParams field by field for
-	// the named target vectors. Keys are target vector names, so this requires
-	// named vectors, and every key must be a target of the request.
+	// the named target vectors: each key must be one of the request's targets,
+	// or the collection's only named vector. An entry cannot unset a field set
+	// in VectorSearchParams. Aggregate ignores both fields.
 	TargetVectorSearchParams map[string]VectorSearchParams
 
 	// groupBy can only be set by [NearMediaFunc.GroupBy], as it changes the shape of the response.
