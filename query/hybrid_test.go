@@ -170,18 +170,18 @@ func TestHybrid(t *testing.T) {
 			},
 		},
 		{
-			name: "with vector search params",
+			name: "with vector index params",
 			h: query.Hybrid{
 				Query: "yellow submarine",
 				NearText: &query.NearText{
 					Concepts: []string{"beatles"},
 					Target:   query.VectorName("title_vec"),
 				},
-				VectorSearchParams: query.VectorSearchParams{
+				VectorIndexParams: query.VectorIndexParams{
 					Ef:             256,
 					FilterStrategy: query.FilterStrategyACORN,
 				},
-				TargetVectorSearchParams: map[string]query.VectorSearchParams{
+				TargetVectorIndexParams: map[string]query.VectorIndexParams{
 					"title_vec": {Ef: 64},
 				},
 			},
@@ -198,11 +198,11 @@ func TestHybrid(t *testing.T) {
 								},
 							},
 						},
-						VectorSearchParams: api.VectorSearchParams{
+						VectorIndexParams: api.VectorIndexParams{
 							Ef:             256,
 							FilterStrategy: api.FilterStrategyACORN,
 						},
-						TargetVectorSearchParams: map[string]api.VectorSearchParams{
+						TargetVectorIndexParams: map[string]api.VectorIndexParams{
 							"title_vec": {Ef: 64},
 						},
 					},
@@ -234,9 +234,9 @@ func TestHybrid(t *testing.T) {
 			h: query.Hybrid{
 				Query: "yellow submarine",
 				NearVector: &query.NearVector{
-					Target:             query.VectorName("title_vec"),
-					VectorSearchParams: query.VectorSearchParams{Ef: 999},
-					TargetVectorSearchParams: map[string]query.VectorSearchParams{
+					Target:            query.VectorName("title_vec"),
+					VectorIndexParams: query.VectorIndexParams{Ef: 999},
+					TargetVectorIndexParams: map[string]query.VectorIndexParams{
 						"title_vec": {SearchProbe: 7},
 					},
 				},
@@ -252,7 +252,7 @@ func TestHybrid(t *testing.T) {
 									Vectors: []api.TargetVector{{Vector: api.Vector{Name: "title_vec"}}},
 								},
 							},
-							NestedVectorSearchParams: true,
+							NestedVectorIndexParams: true,
 						},
 					},
 					Response: api.SearchResponse{

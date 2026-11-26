@@ -107,15 +107,15 @@ func TestNearText(t *testing.T) {
 			},
 		},
 		{
-			name: "with vector search params",
+			name: "with vector index params",
 			nt: query.NearText{
 				Concepts: []string{"birds"},
 				Target:   query.VectorName("title_vec"),
-				VectorSearchParams: query.VectorSearchParams{
+				VectorIndexParams: query.VectorIndexParams{
 					Ef:             256,
 					FilterStrategy: query.FilterStrategyACORN,
 				},
-				TargetVectorSearchParams: map[string]query.VectorSearchParams{
+				TargetVectorIndexParams: map[string]query.VectorIndexParams{
 					"title_vec": {Ef: 64},
 				},
 			},
@@ -129,11 +129,11 @@ func TestNearText(t *testing.T) {
 								Vectors: []api.TargetVector{{Vector: api.Vector{Name: "title_vec"}}},
 							},
 						},
-						VectorSearchParams: api.VectorSearchParams{
+						VectorIndexParams: api.VectorIndexParams{
 							Ef:             256,
 							FilterStrategy: api.FilterStrategyACORN,
 						},
-						TargetVectorSearchParams: map[string]api.VectorSearchParams{
+						TargetVectorIndexParams: map[string]api.VectorIndexParams{
 							"title_vec": {Ef: 64},
 						},
 					},

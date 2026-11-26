@@ -11,12 +11,12 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/query"
 )
 
-// TestVectorSearchParams checks that every generative search type forwards
-// the per-request vector search params (near text is covered in its own test).
-func TestVectorSearchParams(t *testing.T) {
+// TestVectorIndexParams checks that every generative search type forwards
+// the per-request vector index params (near text is covered in its own test).
+func TestVectorIndexParams(t *testing.T) {
 	rd := api.RequestDefaults{CollectionName: "Songs"}
-	params := query.VectorSearchParams{Ef: 256, FilterStrategy: query.FilterStrategyACORN}
-	perTarget := map[string]query.VectorSearchParams{"title_vec": {Ef: 64}}
+	params := query.VectorIndexParams{Ef: 256, FilterStrategy: query.FilterStrategyACORN}
+	perTarget := map[string]query.VectorIndexParams{"title_vec": {Ef: 64}}
 	target := api.SearchTarget{Vectors: []api.TargetVector{{Vector: api.Vector{Name: "title_vec"}}}}
 	single := &generate.SinglePrompt{Prompt: "What time is it?"}
 
@@ -31,7 +31,7 @@ func TestVectorSearchParams(t *testing.T) {
 			name: "near vector",
 			run: func(ctx context.Context, c *generate.Client) error {
 				_, err := c.NearVector(ctx, generate.NearVector{Single: single, Query: &query.NearVector{
-					Target: query.VectorName("title_vec"), VectorSearchParams: params, TargetVectorSearchParams: perTarget,
+					Target: query.VectorName("title_vec"), VectorIndexParams: params, TargetVectorIndexParams: perTarget,
 				}})
 				return err
 			},
@@ -41,7 +41,7 @@ func TestVectorSearchParams(t *testing.T) {
 			name: "near object",
 			run: func(ctx context.Context, c *generate.Client) error {
 				_, err := c.NearObject(ctx, generate.NearObject{Single: single, Query: &query.NearObject{
-					UUID: testkit.UUID, Target: query.VectorName("title_vec"), VectorSearchParams: params, TargetVectorSearchParams: perTarget,
+					UUID: testkit.UUID, Target: query.VectorName("title_vec"), VectorIndexParams: params, TargetVectorIndexParams: perTarget,
 				}})
 				return err
 			},
@@ -52,7 +52,7 @@ func TestVectorSearchParams(t *testing.T) {
 			run: func(ctx context.Context, c *generate.Client) error {
 				_, err := c.NearMedia(ctx, generate.NearMedia{Single: single, Query: &query.NearMedia{
 					Media: query.Image("hounds-mid-race=="), Target: query.VectorName("title_vec"),
-					VectorSearchParams: params, TargetVectorSearchParams: perTarget,
+					VectorIndexParams: params, TargetVectorIndexParams: perTarget,
 				}})
 				return err
 			},
@@ -62,7 +62,7 @@ func TestVectorSearchParams(t *testing.T) {
 			name: "hybrid",
 			run: func(ctx context.Context, c *generate.Client) error {
 				_, err := c.Hybrid(ctx, generate.Hybrid{Single: single, Query: &query.Hybrid{
-					Query: "yellow submarine", VectorSearchParams: params, TargetVectorSearchParams: perTarget,
+					Query: "yellow submarine", VectorIndexParams: params, TargetVectorIndexParams: perTarget,
 				}})
 				return err
 			},
@@ -72,8 +72,8 @@ func TestVectorSearchParams(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			want := tt.want
 			want.RequestDefaults = rd
-			want.VectorSearchParams = api.VectorSearchParams{Ef: 256, FilterStrategy: api.FilterStrategyACORN}
-			want.TargetVectorSearchParams = map[string]api.VectorSearchParams{"title_vec": {Ef: 64}}
+			want.VectorIndexParams = api.VectorIndexParams{Ef: 256, FilterStrategy: api.FilterStrategyACORN}
+			want.TargetVectorIndexParams = map[string]api.VectorIndexParams{"title_vec": {Ef: 64}}
 			want.Generate = api.GenerateRequest{Single: &api.SingleTask{Prompt: "What time is it?"}}
 			transport := testkit.NewTransport(t, []testkit.Stub[api.SearchRequest, api.SearchResponse]{
 				{Request: &want, Response: api.SearchResponse{}},

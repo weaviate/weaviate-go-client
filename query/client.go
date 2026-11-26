@@ -138,10 +138,10 @@ type Request struct {
 	SetSearch              func(*api.SearchRequest)
 	Label                  string
 
-	// VectorSearchParams apply to every target vector of the search.
-	VectorSearchParams VectorSearchParams
-	// TargetVectorSearchParams override VectorSearchParams per target vector name.
-	TargetVectorSearchParams map[string]VectorSearchParams
+	// VectorIndexParams apply to every target vector of the search.
+	VectorIndexParams VectorIndexParams
+	// TargetVectorIndexParams override VectorIndexParams per target vector name.
+	TargetVectorIndexParams map[string]VectorIndexParams
 }
 
 func query(ctx context.Context, t internal.Transport, r Request) (*Result, error) {
@@ -286,8 +286,8 @@ func (r *Request) Marshal() *api.SearchRequest {
 		ReturnProperties: marshalReturnProperties(r.ReturnProperties, r.ReturnNestedProperties),
 		ReturnReferences: marshalReturnReferences(r.ReturnReferences),
 
-		VectorSearchParams:       api.VectorSearchParams(r.VectorSearchParams),
-		TargetVectorSearchParams: marshalTargetVectorSearchParams(r.TargetVectorSearchParams),
+		VectorIndexParams:       api.VectorIndexParams(r.VectorIndexParams),
+		TargetVectorIndexParams: marshalTargetVectorIndexParams(r.TargetVectorIndexParams),
 	}
 
 	for i := range r.Sort {

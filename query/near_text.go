@@ -46,16 +46,16 @@ type NearText struct {
 	// Prefer expressing Similarity in terms of vector distance, as that is a more conventional metric.
 	Similarity VectorSimilarity
 
-	// VectorSearchParams tune the vector index for this request only.
+	// VectorIndexParams tune the vector index for this request only.
 	// They apply to every target vector of the search; zero fields keep
 	// the collection's vectorIndexConfig. Servers older than v1.42 ignore them.
-	VectorSearchParams VectorSearchParams
+	VectorIndexParams VectorIndexParams
 
-	// TargetVectorSearchParams override VectorSearchParams field by field for
+	// TargetVectorIndexParams override VectorIndexParams field by field for
 	// the named target vectors: each key must be one of the request's targets,
 	// or the collection's only named vector. An entry cannot unset a field set
-	// in VectorSearchParams. Aggregate ignores both fields.
-	TargetVectorSearchParams map[string]VectorSearchParams
+	// in VectorIndexParams. Aggregate ignores both fields.
+	TargetVectorIndexParams map[string]VectorIndexParams
 
 	// groupBy can only be set by [NearTextFunc.GroupBy], as it changes the shape of the response.
 	groupBy *GroupBy
@@ -114,24 +114,24 @@ func (nt *NearText) Search() *api.NearText {
 
 func (nt *NearText) QueryRequest(rd api.RequestDefaults, gb *GroupBy) Request {
 	return Request{
-		RequestDefaults:          rd,
-		Limit:                    int32(nt.Limit),
-		AutoLimit:                int32(nt.AutoLimit),
-		Offset:                   int32(nt.Offset),
-		After:                    nt.After,
-		Filter:                   nt.Filter,
-		Boost:                    nt.Boost,
-		Rerank:                   nt.Rerank,
-		ReturnVectors:            nt.ReturnVectors,
-		ReturnMetadata:           nt.ReturnMetadata,
-		ReturnProperties:         nt.ReturnProperties,
-		ReturnNestedProperties:   nt.ReturnNestedProperties,
-		ReturnReferences:         nt.ReturnReferences,
-		GroupBy:                  gb,
-		VectorSearchParams:       nt.VectorSearchParams,
-		TargetVectorSearchParams: nt.TargetVectorSearchParams,
-		SetSearch:                func(req *api.SearchRequest) { req.NearText = nt.Search() },
-		Label:                    "near text",
+		RequestDefaults:         rd,
+		Limit:                   int32(nt.Limit),
+		AutoLimit:               int32(nt.AutoLimit),
+		Offset:                  int32(nt.Offset),
+		After:                   nt.After,
+		Filter:                  nt.Filter,
+		Boost:                   nt.Boost,
+		Rerank:                  nt.Rerank,
+		ReturnVectors:           nt.ReturnVectors,
+		ReturnMetadata:          nt.ReturnMetadata,
+		ReturnProperties:        nt.ReturnProperties,
+		ReturnNestedProperties:  nt.ReturnNestedProperties,
+		ReturnReferences:        nt.ReturnReferences,
+		GroupBy:                 gb,
+		VectorIndexParams:       nt.VectorIndexParams,
+		TargetVectorIndexParams: nt.TargetVectorIndexParams,
+		SetSearch:               func(req *api.SearchRequest) { req.NearText = nt.Search() },
+		Label:                   "near text",
 	}
 }
 

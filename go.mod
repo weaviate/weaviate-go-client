@@ -9,7 +9,7 @@ require (
 	github.com/oapi-codegen/runtime v1.4.1
 	github.com/oasdiff/yaml v0.1.1
 	github.com/stretchr/testify v1.11.1
-	github.com/weaviate/weaviate/grpc/generated/protocol v0.0.0-20261123081759-4ed69cc93384
+	github.com/weaviate/weaviate/grpc/generated/protocol v0.0.0-20261126092324-de1eaa59e431
 	golang.org/x/oauth2 v0.36.0
 	google.golang.org/api v0.282.0
 	google.golang.org/grpc v1.83.2
