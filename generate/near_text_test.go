@@ -140,6 +140,70 @@ func TestNearText(t *testing.T) {
 			},
 		},
 		{
+			name: "with vector index params",
+			nt: generate.NearText{
+				Query: &query.NearText{
+					Concepts: []string{"birds"},
+					Target:   query.VectorName("title_vec"),
+					VectorIndexParams: query.VectorIndexParams{
+						Ef:             256,
+						FilterStrategy: query.FilterStrategyACORN,
+					},
+					TargetVectorIndexParams: map[string]query.VectorIndexParams{
+						"title_vec": {Ef: 64},
+					},
+				},
+				Single: &generate.SinglePrompt{Prompt: "What time is it?"},
+			},
+			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
+				{
+					Request: &api.SearchRequest{
+						RequestDefaults: rd,
+						NearText: &api.NearText{
+							Concepts: []string{"birds"},
+							Target: api.SearchTarget{
+								Vectors: []api.TargetVector{{Vector: api.Vector{Name: "title_vec"}}},
+							},
+						},
+						VectorIndexParams: api.VectorIndexParams{
+							Ef:             256,
+							FilterStrategy: api.FilterStrategyACORN,
+						},
+						TargetVectorIndexParams: map[string]api.VectorIndexParams{
+							"title_vec": {Ef: 64},
+						},
+						Generate: api.GenerateRequest{
+							Single: &api.SingleTask{Prompt: "What time is it?"},
+						},
+					},
+					Response: api.SearchResponse{
+						Took: 92 * time.Second,
+						Results: []api.Object{
+							{
+								Collection: "Songs",
+								Metadata:   api.ObjectMetadata{UUID: testkit.UUID},
+								Generative: api.TaskOutput{Text: "It's hero time!"},
+							},
+						},
+					},
+				},
+			},
+			want: &generate.Result{
+				Took: 92 * time.Second,
+				Objects: []generate.Object[map[string]any]{
+					{
+						Object: query.Object[map[string]any]{
+							Object: types.Object[map[string]any]{
+								Collection: "Songs",
+								UUID:       testkit.UUID,
+							},
+						},
+						Generative: generate.TaskOutput{Text: "It's hero time!"},
+					},
+				},
+			},
+		},
+		{
 			name: "request error",
 			nt:   generate.NearText{Query: &query.NearText{}},
 			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{

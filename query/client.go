@@ -137,6 +137,11 @@ type Request struct {
 	GroupBy                *GroupBy
 	SetSearch              func(*api.SearchRequest)
 	Label                  string
+
+	// VectorIndexParams apply to every target vector of the search.
+	VectorIndexParams VectorIndexParams
+	// TargetVectorIndexParams override VectorIndexParams per target vector name.
+	TargetVectorIndexParams map[string]VectorIndexParams
 }
 
 func query(ctx context.Context, t internal.Transport, r Request) (*Result, error) {
@@ -280,6 +285,9 @@ func (r *Request) Marshal() *api.SearchRequest {
 		ReturnMetadata:   api.ReturnMetadata(r.ReturnMetadata),
 		ReturnProperties: marshalReturnProperties(r.ReturnProperties, r.ReturnNestedProperties),
 		ReturnReferences: marshalReturnReferences(r.ReturnReferences),
+
+		VectorIndexParams:       api.VectorIndexParams(r.VectorIndexParams),
+		TargetVectorIndexParams: marshalTargetVectorIndexParams(r.TargetVectorIndexParams),
 	}
 
 	for i := range r.Sort {

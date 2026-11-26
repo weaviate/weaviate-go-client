@@ -21,7 +21,7 @@ require (
 	github.com/speakeasy-api/jsonpath v0.6.3 // indirect
 	github.com/speakeasy-api/openapi v1.23.0 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
-	github.com/weaviate/weaviate/grpc/generated/protocol v0.0.0-20260910114322-ea6fe86ddafd // indirect
+	github.com/weaviate/weaviate/grpc/generated/protocol v0.0.0-20261126092324-de1eaa59e431 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/mod v0.41.0 // indirect
 	golang.org/x/net v0.60.0 // indirect

@@ -120,6 +120,8 @@ func main() {
 		Limit:            3,
 		ReturnProperties: []string{"title", "album"},
 		ReturnMetadata:   query.ReturnMetadata{Distance: true},
+		// Widen the HNSW beam for this query only; ignored by servers older than v1.42.
+		VectorIndexParams: query.VectorIndexParams{Ef: 128},
 	})
 	example.Catch(err)
 

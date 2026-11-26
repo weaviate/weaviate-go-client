@@ -97,6 +97,60 @@ func TestNearObject(t *testing.T) {
 			want: &query.Result{Took: 92 * time.Second},
 		},
 		{
+			name: "with vector index params",
+			no: query.NearObject{
+				UUID:   testkit.UUID,
+				Target: query.VectorName("title_vec"),
+				VectorIndexParams: query.VectorIndexParams{
+					Ef:             256,
+					FilterStrategy: query.FilterStrategyACORN,
+				},
+				TargetVectorIndexParams: map[string]query.VectorIndexParams{
+					"title_vec": {Ef: 64},
+				},
+			},
+			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
+				{
+					Request: &api.SearchRequest{
+						RequestDefaults: rd,
+						NearObject: &api.NearObject{
+							UUID: testkit.UUID,
+							Target: api.SearchTarget{
+								Vectors: []api.TargetVector{{Vector: api.Vector{Name: "title_vec"}}},
+							},
+						},
+						VectorIndexParams: api.VectorIndexParams{
+							Ef:             256,
+							FilterStrategy: api.FilterStrategyACORN,
+						},
+						TargetVectorIndexParams: map[string]api.VectorIndexParams{
+							"title_vec": {Ef: 64},
+						},
+					},
+					Response: api.SearchResponse{
+						Took: 92 * time.Second,
+						Results: []api.Object{
+							{
+								Collection: "Songs",
+								Metadata:   api.ObjectMetadata{UUID: testkit.UUID},
+							},
+						},
+					},
+				},
+			},
+			want: &query.Result{
+				Took: 92 * time.Second,
+				Objects: []query.Object[map[string]any]{
+					{
+						Object: types.Object[map[string]any]{
+							Collection: "Songs",
+							UUID:       testkit.UUID,
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "request error",
 			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
 				{Err: testkit.ErrWhaam},

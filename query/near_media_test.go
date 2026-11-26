@@ -134,6 +134,61 @@ func TestNearMedia(t *testing.T) {
 			},
 		},
 		{
+			name: "with vector index params",
+			nm: query.NearMedia{
+				Media:  query.Image("hounds-mid-race=="),
+				Target: query.VectorName("title_vec"),
+				VectorIndexParams: query.VectorIndexParams{
+					Ef:             256,
+					FilterStrategy: query.FilterStrategyACORN,
+				},
+				TargetVectorIndexParams: map[string]query.VectorIndexParams{
+					"title_vec": {Ef: 64},
+				},
+			},
+			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
+				{
+					Request: &api.SearchRequest{
+						RequestDefaults: rd,
+						NearMedia: &api.NearMedia{
+							Kind:  api.MediaImage,
+							Media: "hounds-mid-race==",
+							Target: api.SearchTarget{
+								Vectors: []api.TargetVector{{Vector: api.Vector{Name: "title_vec"}}},
+							},
+						},
+						VectorIndexParams: api.VectorIndexParams{
+							Ef:             256,
+							FilterStrategy: api.FilterStrategyACORN,
+						},
+						TargetVectorIndexParams: map[string]api.VectorIndexParams{
+							"title_vec": {Ef: 64},
+						},
+					},
+					Response: api.SearchResponse{
+						Took: 92 * time.Second,
+						Results: []api.Object{
+							{
+								Collection: "Songs",
+								Metadata:   api.ObjectMetadata{UUID: testkit.UUID},
+							},
+						},
+					},
+				},
+			},
+			want: &query.Result{
+				Took: 92 * time.Second,
+				Objects: []query.Object[map[string]any]{
+					{
+						Object: types.Object[map[string]any]{
+							Collection: "Songs",
+							UUID:       testkit.UUID,
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "request error",
 			stubs: []testkit.Stub[api.SearchRequest, api.SearchResponse]{
 				{Err: testkit.ErrWhaam},

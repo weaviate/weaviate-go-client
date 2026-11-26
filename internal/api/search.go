@@ -3,6 +3,8 @@ package api
 import (
 	"errors"
 	"fmt"
+	"maps"
+	"math"
 	"regexp"
 	"slices"
 	"strings"
@@ -38,6 +40,13 @@ type SearchRequest struct {
 	NearText   *NearText
 	BM25       *BM25
 	Hybrid     *Hybrid
+
+	// VectorIndexParams tune the vector index for this request only.
+	// They apply to every target vector of a near* or hybrid search.
+	VectorIndexParams VectorIndexParams
+	// TargetVectorIndexParams override VectorIndexParams field-wise
+	// for the named target vectors.
+	TargetVectorIndexParams map[string]VectorIndexParams
 
 	Generate GenerateRequest
 }
@@ -133,6 +142,11 @@ type (
 
 		NearVector *NearVector
 		NearText   *NearText
+
+		// NestedVectorIndexParams is set when the nested NearVector or
+		// NearText carried vector index params, which hybrid does not apply;
+		// marshalling rejects it so they are not dropped silently.
+		NestedVectorIndexParams bool
 	}
 	Move struct {
 		Force    float32
@@ -289,6 +303,79 @@ const (
 	HybridFusionRelativeScore = HybridFusion(proto.Hybrid_FUSION_TYPE_UNSPECIFIED)
 )
 
+// VectorIndexParams tune the vector index for a single request.
+// Zero fields are not sent, so the collection's vectorIndexConfig applies.
+type VectorIndexParams struct {
+	Ef             int            // HNSW layer-0 beam width (also the HNSW stage of a dynamic index).
+	SearchProbe    int            // HFresh number of centroid postings visited.
+	FilterStrategy FilterStrategy // HNSW strategy for the filtered graph walk.
+}
+
+// IsZero reports whether no parameter is set.
+func (p VectorIndexParams) IsZero() bool {
+	return p == VectorIndexParams{}
+}
+
+// FilterStrategy selects the HNSW strategy for a filtered graph walk.
+type FilterStrategy proto.FilterStrategy
+
+const (
+	FilterStrategySweeping = FilterStrategy(proto.FilterStrategy_FILTER_STRATEGY_SWEEPING)
+	FilterStrategyACORN    = FilterStrategy(proto.FilterStrategy_FILTER_STRATEGY_ACORN)
+	FilterStrategyPathseer = FilterStrategy(proto.FilterStrategy_FILTER_STRATEGY_PATHSEER)
+)
+
+func (s FilterStrategy) String() string {
+	return proto.FilterStrategy(s).String()
+}
+
+// marshalVectorIndexParams returns nil for the zero value.
+func marshalVectorIndexParams(p VectorIndexParams) (*proto.VectorIndexParams, error) {
+	if p.IsZero() {
+		return nil, nil
+	}
+	if p.Ef < 0 || int64(p.Ef) > math.MaxUint32 {
+		return nil, fmt.Errorf("vector index params: ef must be between 0 and %d", uint32(math.MaxUint32))
+	}
+	if p.SearchProbe < 0 || int64(p.SearchProbe) > math.MaxUint32 {
+		return nil, fmt.Errorf("vector index params: search probe must be between 0 and %d", uint32(math.MaxUint32))
+	}
+	switch p.FilterStrategy {
+	case 0, FilterStrategySweeping, FilterStrategyACORN, FilterStrategyPathseer:
+	default:
+		return nil, fmt.Errorf("vector index params: unknown filter strategy %d", p.FilterStrategy)
+	}
+	return &proto.VectorIndexParams{
+		Ef:             NilZero(uint32(p.Ef)),
+		SearchProbe:    NilZero(uint32(p.SearchProbe)),
+		FilterStrategy: NilZero(proto.FilterStrategy(p.FilterStrategy)),
+	}, nil
+}
+
+// marshalTargetVectorIndexParams emits per-target entries sorted by target name,
+// so that the request is deterministic. An all-zero entry is still sent.
+func marshalTargetVectorIndexParams(m map[string]VectorIndexParams) ([]*proto.VectorIndexParamsForTarget, error) {
+	if len(m) == 0 {
+		return nil, nil
+	}
+	out := make([]*proto.VectorIndexParamsForTarget, 0, len(m))
+	for _, target := range slices.Sorted(maps.Keys(m)) {
+		if target == "" {
+			return nil, errors.New("vector index params: target name must be set")
+		}
+		p := m[target]
+		params := &proto.VectorIndexParams{}
+		if !p.IsZero() {
+			var err error
+			if params, err = marshalVectorIndexParams(p); err != nil {
+				return nil, fmt.Errorf("target %q: %w", target, err)
+			}
+		}
+		out = append(out, &proto.VectorIndexParamsForTarget{Target: target, Params: params})
+	}
+	return out, nil
+}
+
 type MediaKind int
 
 const (
@@ -400,7 +487,26 @@ func (r *SearchRequest) MarshalMessage() (*proto.SearchRequest, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if !r.VectorIndexParams.IsZero() || len(r.TargetVectorIndexParams) > 0 {
+		if !r.hasVectorSearch() {
+			return nil, errors.New("vector index params require a near* or hybrid search")
+		}
+		req.VectorIndexParams, err = marshalVectorIndexParams(r.VectorIndexParams)
+		if err != nil {
+			return nil, err
+		}
+		req.VectorIndexParamsForTargets, err = marshalTargetVectorIndexParams(r.TargetVectorIndexParams)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return req, nil
+}
+
+// hasVectorSearch reports whether the request carries a search that walks a vector index.
+func (r *SearchRequest) hasVectorSearch() bool {
+	return r.NearVector != nil || r.NearObject != nil || r.NearText != nil || r.NearMedia != nil || r.Hybrid != nil
 }
 
 func marshalReturnProperties(req *proto.PropertiesRequest, rps []ReturnProperty) {
@@ -967,6 +1073,10 @@ func marshalKeywordSimilarity(kw KeywordSimilarity) *proto.SearchOperatorOptions
 
 func marshalHybrid(req *Hybrid) (*proto.Hybrid, error) {
 	dev.AssertNotNil(req, "req")
+
+	if req.NestedVectorIndexParams {
+		return nil, errors.New("hybrid: set VectorIndexParams on Hybrid, not on its NearVector or NearText")
+	}
 
 	h := &proto.Hybrid{
 		Query:              req.Query,
