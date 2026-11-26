@@ -21,6 +21,7 @@ type AggregateRequest struct {
 	TotalCount  bool
 	ObjectLimit int32
 	GroupBy     *GroupBy
+	Filter      FilterExpr
 
 	NearVector *NearVector
 	NearObject *NearObject
@@ -169,6 +170,11 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 		})
 	}
 
+	f, err := marshalFilter(r.Filter)
+	if err != nil {
+		return nil, err
+	}
+
 	req := &proto.AggregateRequest{
 		Collection: r.CollectionName,
 		Tenant:     r.Tenant,
@@ -176,6 +182,7 @@ func (r *AggregateRequest) MarshalMessage() (*proto.AggregateRequest, error) {
 		ObjectsCount: r.TotalCount,
 		ObjectLimit:  NilZero(uint32(r.ObjectLimit)),
 		Aggregations: aggregations,
+		Filters:      f,
 	}
 
 	if r.GroupBy != nil {
