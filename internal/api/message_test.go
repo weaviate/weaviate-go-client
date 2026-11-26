@@ -1888,6 +1888,31 @@ func TestAggregateRequest_MarshalMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "with filter",
+			req: &api.AggregateRequest{
+				RequestDefaults: api.RequestDefaults{
+					CollectionName: "Songs",
+				},
+				TotalCount: true,
+				Filter: api.FilterExpr{
+					Target:   []string{"album"},
+					Operator: api.FilterOperatorEqual,
+					Value:    "Thriller",
+				},
+			},
+			want: &proto.AggregateRequest{
+				Collection:   "Songs",
+				ObjectsCount: true,
+				Filters: &proto.Filters{
+					Target: &proto.FilterTarget{
+						Target: &proto.FilterTarget_Property{Property: "album"},
+					},
+					Operator:  proto.Filters_OPERATOR_EQUAL,
+					TestValue: &proto.Filters_ValueText{ValueText: "Thriller"},
+				},
+			},
+		},
+		{
 			name: "count objects",
 			req: &api.CountObjectsRequest{
 				CollectionName: "Songs",

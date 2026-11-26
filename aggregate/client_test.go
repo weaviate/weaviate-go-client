@@ -10,6 +10,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/testkit"
 	"github.com/weaviate/weaviate-go-client/v6/query"
+	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 	"github.com/weaviate/weaviate-go-client/v6/types"
 )
 
@@ -372,6 +373,42 @@ func TestClient_OverAll(t *testing.T) {
 			},
 		},
 		{
+			name: "with filter",
+			request: aggregate.OverAll{
+				TotalCount: true,
+				Filter: &filter.Cond{
+					Target:   "colour",
+					Operator: filter.Equal,
+					Value:    "red",
+				},
+			},
+			stubs: []testkit.Stub[api.AggregateRequest, api.AggregateResponse]{
+				{
+					Request: &api.AggregateRequest{
+						RequestDefaults: rd,
+						TotalCount:      true,
+						Filter: api.FilterExpr{
+							Target:   []string{"colour"},
+							Operator: api.FilterOperatorEqual,
+							Value:    "red",
+						},
+					},
+					Response: api.AggregateResponse{
+						Took: 42,
+						Results: api.Aggregations{
+							TotalCount: testkit.Ptr[int64](3),
+						},
+					},
+				},
+			},
+			want: &aggregate.Result{
+				Took: 42,
+				Aggregations: result(aggregate.Aggregations{
+					TotalCount: testkit.Ptr[int64](3),
+				}),
+			},
+		},
+		{
 			name: "request error",
 			stubs: []testkit.Stub[api.AggregateRequest, api.AggregateResponse]{
 				{Err: testkit.ErrWhaam},
@@ -664,6 +701,34 @@ func TestClient_Query(t *testing.T) {
 						NearText: &api.NearText{
 							Concepts: []string{"a", "b", "c"},
 						},
+					},
+				}},
+			},
+		},
+		{
+			name: "hybrid with filter",
+			query: func(ctx context.Context, c *aggregate.Client) {
+				c.Hybrid(ctx, aggregate.Hybrid{
+					Filter: &filter.Cond{
+						Target:   "colour",
+						Operator: filter.Equal,
+						Value:    "blue",
+					},
+					Query: query.Hybrid{
+						Query: "search",
+					},
+				})
+			},
+			stubs: []testkit.Stub[api.AggregateRequest, any]{
+				{Request: &api.AggregateRequest{
+					RequestDefaults: rd,
+					Filter: api.FilterExpr{
+						Target:   []string{"colour"},
+						Operator: api.FilterOperatorEqual,
+						Value:    "blue",
+					},
+					Hybrid: &api.Hybrid{
+						Query: "search",
 					},
 				}},
 			},

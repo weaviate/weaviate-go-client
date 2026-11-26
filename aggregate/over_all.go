@@ -5,6 +5,7 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
+	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 )
 
 type (
@@ -18,6 +19,7 @@ type (
 
 		TotalCount  bool // Return total object count.
 		ObjectLimit int32
+		Filter      filter.Expr // Filter objects based on their properties.
 		groupBy     *GroupBy
 	}
 	OverAllFunc func(context.Context, OverAll) (*Result, error)
@@ -34,6 +36,7 @@ func overAllFunc(t internal.Transport, rd api.RequestDefaults) OverAllFunc {
 			Date:        oa.Date,
 			TotalCount:  oa.TotalCount,
 			ObjectLimit: oa.ObjectLimit,
+			Filter:      oa.Filter,
 			groupBy:     oa.groupBy,
 		}, nil, "over all")
 	}

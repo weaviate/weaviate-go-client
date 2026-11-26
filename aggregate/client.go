@@ -8,6 +8,7 @@ import (
 	"github.com/weaviate/weaviate-go-client/v6/internal"
 	"github.com/weaviate/weaviate-go-client/v6/internal/api"
 	"github.com/weaviate/weaviate-go-client/v6/internal/dev"
+	"github.com/weaviate/weaviate-go-client/v6/query/filter"
 )
 
 func NewClient(t internal.Transport, rd api.RequestDefaults) *Client {
@@ -46,8 +47,9 @@ type Request[Query any] struct {
 	Boolean []Boolean // Aggregations for boolean properties.
 	Date    []Date    // Aggregations for date properties.
 
-	TotalCount  bool // Return total object count.
+	TotalCount  bool        // Return total object count.
 	ObjectLimit int32
+	Filter      filter.Expr // Filter objects based on their properties.
 
 	// groupBy can only be set by a GroupBy method, as it changes the shape of the response.
 	groupBy *GroupBy
@@ -108,6 +110,11 @@ func aggregate[Query any](ctx context.Context, t internal.Transport, rd api.Requ
 		RequestDefaults: rd,
 		TotalCount:      r.TotalCount,
 		ObjectLimit:     r.ObjectLimit,
+	}
+	if r.Filter != nil {
+		if expr := r.Filter.Expr(); expr != nil {
+			req.Filter = *expr
+		}
 	}
 	for _, txt := range r.Text {
 		req.Text = append(req.Text, api.AggregateTextRequest(txt))
